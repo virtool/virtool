@@ -8,6 +8,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_app
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import apply_transforms
@@ -426,7 +427,8 @@ async def test_finalize(spawn_client, snapshot, tmp_path, dbi, fake2, pg: AsyncE
     result = await finalize(dbi, pg, "test", quality, m_run_in_thread, tmp_path)
 
     assert result == snapshot
-    assert not await get_data_from_app(client.app).uploads.get(1)
+    with pytest.raises(ResourceNotFoundError):
+        await get_data_from_app(client.app).uploads.get(1)
     assert not (await get_row_by_id(pg, SampleReads, 1)).upload
 
 

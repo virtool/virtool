@@ -344,7 +344,7 @@ async def job_remove(req):
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
 
     if upload_ids:
-        await virtool.uploads.db.release(req.app["pg"], upload_ids)
+        await get_data_from_req(req).uploads.release(upload_ids)
 
     try:
         await get_data_from_req(req).samples.delete(sample_id)
@@ -575,7 +575,7 @@ async def upload_artifact(req):
         await run_in_thread(os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
 
-    artifact = await get_data_from_req(req).uploads.finalize(size, upload_id, SampleArtifact)
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
 
     headers = {"Location": f"/samples/{sample_id}/artifact/{name}"}
 
@@ -750,7 +750,9 @@ async def upload_cache_artifact(req):
         await run_in_thread(os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
-    artifact = await get_data_from_req(req).uploads.finalize(size, upload_id, SampleArtifactCache)
+    artifact = await virtool.uploads.db.finalize(
+        pg, size, upload_id, SampleArtifactCache
+    )
 
     headers = {"Location": f"/samples/{sample_id}/caches/{key}/artifacts/{name}"}
 

@@ -47,3 +47,17 @@ async def test_uploads(pg, fake2, static_time):
             ]
         )
         await session.commit()
+
+
+@pytest.fixture
+async def test_upload():
+    return Upload(
+        id=1,
+        name="test.fq.gz",
+        size=123456,
+        type="hmm",
+        created_at=virtool.utils.timestamp(),
+        uploaded_at=virtool.utils.timestamp(),
+        user="test",
+        name_on_disk="1-Test.fq.gz",
+    )

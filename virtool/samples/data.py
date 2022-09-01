@@ -33,7 +33,6 @@ from virtool.samples.db import (
 from virtool.samples.oas import CreateSampleSchema, EditSampleSchema
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.uploads.db import reserve
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor, run_in_thread, wait_for_checks
 
@@ -162,10 +161,9 @@ class SamplesData(DataLayerPiece):
 
         try:
             uploads = [
-                (await self.data.uploads.get(file_)).to_dict()
-                for file_ in data.files
+                (await self.data.uploads.get(file_)).dict() for file_ in data.files
             ]
-        except AttributeError:
+        except ResourceNotFoundError:
             raise ResourceConflictError("File does not exist")
 
         group = "none"
@@ -218,7 +216,7 @@ class SamplesData(DataLayerPiece):
                     },
                     session=session,
                 ),
-                reserve(self._pg, data.files),
+                self.data.uploads.reserve(data.files),
             )
 
             sample_id = document["_id"]

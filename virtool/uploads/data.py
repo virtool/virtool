@@ -1,19 +1,18 @@
 from logging import getLogger
-from typing import List, Optional, Type
+from typing import List, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from virtool_core.models.upload import UploadMinimal
+from sqlalchemy import select, update
+from virtool_core.models.upload import UploadMinimal, UploadSearchResult
 
 import virtool.utils
-from virtool.api.response import NotFound
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 
 
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
-from virtool.pg.base import Base
-
+from virtool.uploads.db import finalize
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread, rm
@@ -29,7 +28,7 @@ class UploadsData(DataLayerPiece):
 
     async def find(
         self, user: str = None, upload_type: str = None, ready: bool = None
-    ) -> List[UploadMinimal]:
+    ) -> UploadSearchResult:
         """
         Find and filter uploads.
         """
@@ -54,7 +53,7 @@ class UploadsData(DataLayerPiece):
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
 
-        return [UploadMinimal(**upload) for upload in uploads]
+        return UploadSearchResult(documents=uploads)
 
     async def create(
         self,
@@ -90,7 +89,7 @@ class UploadsData(DataLayerPiece):
 
         return Upload(**upload)
 
-    async def get(self, upload_id: int) -> Optional[Upload]:
+    async def get(self, upload_id: int) -> UploadMinimal:
         """
         Get a single upload by its ID.
 
@@ -105,22 +104,39 @@ class UploadsData(DataLayerPiece):
             ).scalar()
 
             if not upload:
-                return None
+                raise ResourceNotFoundError
 
-        return upload
+        return UploadMinimal(
+            **await apply_transforms(upload.to_dict(), [AttachUserTransform(self._db)])
+        )
 
-    async def delete(self, upload_id: int) -> Upload:
+    async def delete(self, upload_id: int) -> UploadMinimal:
         """
-        "Delete" a row in the `uploads` table and remove it from the local disk.
+        Delete an upload by its id.
 
-        :param upload_id: Row `id` to "delete"
+        :param upload_id: The upload id
         :return: the upload
         """
 
-        upload = await self.delete_row(upload_id)
+        async with AsyncSession(self._pg) as session:
+            upload = (
+                await session.execute(select(Upload).where(Upload.id == upload_id))
+            ).scalar()
 
-        if not upload:
-            return None
+            if not upload or upload.removed:
+                raise ResourceNotFoundError
+
+            upload.reads.clear()
+            upload.removed = True
+            upload.removed_at = virtool.utils.timestamp()
+
+            upload = upload.to_dict()
+
+            await session.commit()
+
+        upload = UploadMinimal(
+            **await apply_transforms(upload, [AttachUserTransform(self._db)])
+        )
 
         try:
             await run_in_thread(
@@ -131,69 +147,57 @@ class UploadsData(DataLayerPiece):
 
         return upload
 
-    async def delete_row(self, upload_id: int) -> Optional[Upload]:
+    async def finalize(self, size: int, id_: int) -> Optional[UploadMinimal]:
         """
-        Set the `removed` and `removed_at` attributes of the upload in the given row.
+        Finalize an upload by marking it as ready.
 
-        :param pg: PostgreSQL AsyncEngine object
-        :param upload_id: Row `id` to set attributes for
+        :param size: Size of the newly uploaded file in bytes
+        :param id_: id of the upload
         :return: The upload
         """
+        upload = await finalize(self._pg, size, id_, Upload)
+
+        return UploadMinimal(
+            **await apply_transforms(upload, [AttachUserTransform(self._db)])
+        )
+
+    async def release(self, upload_ids: Union[int, List[int]]):
+        """
+        Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
+
+        :param upload_ids: List of upload ids
+        """
+        if isinstance(upload_ids, int):
+            query = Upload.id == upload_ids
+        else:
+            query = Upload.id.in_(upload_ids)
+
         async with AsyncSession(self._pg) as session:
-            upload = (
-                await session.execute(select(Upload).where(Upload.id == upload_id))
-            ).scalar()
-
-            if not upload or upload.removed:
-                return None
-
-            upload.reads.clear()
-            upload.removed = True
-            upload.removed_at = virtool.utils.timestamp()
-
-            upload = upload.to_dict()
+            await session.execute(
+                update(Upload)
+                .where(query)
+                .values(reserved=False)
+                .execution_options(synchronize_session="fetch")
+            )
 
             await session.commit()
 
-        return Upload(**upload)
-
-    async def finalize(
-        self, size: int, id_: int, model: Type[Base]
-    ) -> Optional[dict]:
+    async def reserve(self, upload_ids: Union[int, List[int]]):
         """
-        Finalize row creation for tables that store uploaded files.
+        Reserve the uploads in `upload_ids` by setting the `reserved` field to `True`.
 
-        Updates table with file information and sets `ready`    to `True`.
-
-        :param size: Size of a newly uploaded file in bytes
-        :param id_: Row `id` corresponding to the recently created `upload` entry
-        :param model: model for uploaded file
-        :return: Dictionary representation of new row in `table`
+        :param upload_ids: List of upload ids
         """
+        if isinstance(upload_ids, int):
+            query = Upload.id == upload_ids
+        else:
+            query = Upload.id.in_(upload_ids)
+
         async with AsyncSession(self._pg) as session:
-            upload = (await session.execute(select(model).filter_by(id=id_))).scalar()
-
-            if not upload:
-                return None
-
-            upload.size = size
-            upload.uploaded_at = virtool.utils.timestamp()
-            upload.ready = True
-
-            upload = upload.to_dict()
-
+            await session.execute(
+                update(Upload)
+                .where(query)
+                .values(reserved=True)
+                .execution_options(synchronize_session="fetch")
+            )
             await session.commit()
-
-        return upload
-
-    async def get_upload_path(self, name_on_disk: str) -> str:
-        """
-        Get the local upload path and return it.
-        """
-        upload_path = self._config.data_path / "files" / name_on_disk
-
-        # check if the file has been manually removed by the user
-        if not upload_path.exists():
-            raise NotFound("Uploaded file not found at expected location")
-
-        return upload_path

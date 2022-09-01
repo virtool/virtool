@@ -247,8 +247,8 @@ class AnalysisData(DataLayerPiece):
 
             return None
 
-        analysis_file = await self.data.uploads.finalize(
-            size, upload_id, AnalysisFile
+        analysis_file = await virtool.uploads.db.finalize(
+            self._pg, size, upload_id, AnalysisFile
         )
 
         return AnalysisFile(**analysis_file)

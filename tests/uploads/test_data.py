@@ -1,16 +1,14 @@
 import pytest
 
-import virtool.uploads.db
-
 import asyncio
 
 from virtool.data.utils import get_data_from_app
 
 
 @pytest.mark.parametrize("to_release", [1, [1, 2, 3]])
-async def test_release(spawn_client, pg, test_uploads, to_release):
+async def test_release(spawn_client, test_uploads, to_release):
     client = await spawn_client(authorize=True)
-    await virtool.uploads.db.release(pg, to_release)
+    await get_data_from_app(client.app).uploads.release(to_release)
 
     if isinstance(to_release, int):
         upload = await get_data_from_app(client.app).uploads.get(to_release)

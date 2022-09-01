@@ -7,18 +7,15 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
-from virtool_core.models.upload import UploadMinimal
-
-from virtool.api.response import InvalidQuery, NotFound, json_response
+from virtool.api.response import InvalidQuery, json_response, NotFound
 from virtool.api.utils import get_req_bool
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import PermissionsRoutePolicy, policy
 from virtool.http.routes import Routes
-from virtool.mongo.transforms import apply_transforms
-from virtool.uploads.models import Upload, UploadType
+from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
-from virtool.uploads.utils import naive_validator, naive_writer
-from virtool.users.db import AttachUserTransform
+from virtool.uploads.utils import naive_validator, naive_writer, get_upload_path
 from virtool.users.utils import Permission
 
 
@@ -47,7 +44,7 @@ class UploadsView(PydanticView):
             user, upload_type, ready
         )
 
-        return json_response({"documents": uploads})
+        return json_response(uploads)
 
     @policy(PermissionsRoutePolicy(Permission.upload_file))
     async def post(self) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
@@ -81,31 +78,27 @@ class UploadsView(PydanticView):
             name, upload_type, user=self.request["client"].user_id
         )
 
-        upload_id = upload.id
-
         file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
 
         try:
             size = await naive_writer(await self.request.multipart(), file_path)
 
             upload = await get_data_from_req(self.request).uploads.finalize(
-                size, upload.id, Upload
+                size, upload.id
             )
         except CancelledError:
-            logger.debug(f"Upload aborted: {upload_id}")
+            logger.debug(f"Upload aborted: {upload.id}")
 
-            await get_data_from_req(self.request).uploads.delete(upload_id)
+            await get_data_from_req(self.request).uploads.delete(upload.id)
 
             return Response(status=499)
 
-        logger.debug(f"Upload succeeded: {upload_id}")
+        logger.debug(f"Upload succeeded: {upload.id}")
 
         return json_response(
-            UploadMinimal(**await apply_transforms(
-                upload, [AttachUserTransform(self.request.app["db"])]
-            )),
+            upload,
             status=201,
-            headers={"Location": f"/uploads/{upload_id}"},
+            headers={"Location": f"/uploads/{upload.id}"},
         )
 
 
@@ -128,14 +121,13 @@ class UploadView(PydanticView):
 
         upload_id = int(self.request.match_info["id"])
 
-        upload = await get_data_from_req(self.request).uploads.get(upload_id)
-
-        if not upload:
-            raise NotFound()
-
-        upload_path = await get_data_from_req(self.request).uploads.get_upload_path(
-            upload.name_on_disk
-        )
+        try:
+            upload = await get_data_from_req(self.request).uploads.get(upload_id)
+            upload_path = await get_upload_path(
+                self.request.app["config"], upload.name_on_disk
+            )
+        except ResourceNotFoundError:
+            raise NotFound
 
         return FileResponse(
             upload_path,
@@ -160,10 +152,10 @@ class UploadView(PydanticView):
         """
         upload_id = int(self.request.match_info["id"])
 
-        upload = await get_data_from_req(self.request).uploads.delete(upload_id)
-
-        if not upload:
-            raise NotFound()
+        try:
+            await get_data_from_req(self.request).uploads.delete(upload_id)
+        except ResourceNotFoundError:
+            raise NotFound
 
         return Response(status=204)
 
@@ -176,10 +168,10 @@ async def download(req):
     """
     upload_id = int(req.match_info["id"])
 
-    upload = await get_data_from_req(req).uploads.get(upload_id)
-
-    if not upload:
-        raise NotFound()
+    try:
+        upload = await get_data_from_req(req).uploads.get(upload_id)
+    except ResourceNotFoundError:
+        raise NotFound
 
     upload_path = await get_data_from_req(req).uploads.get_upload_path(
         upload.name_on_disk
