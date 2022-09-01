@@ -7,6 +7,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
+import virtool.uploads.db
 import virtool.references.db
 import virtool.utils
 from virtool.api.json import CustomEncoder
@@ -319,7 +320,7 @@ async def upload(req):
         await delete_row(pg, upload_id, IndexFile)
         return Response(status=499)
 
-    index_file = await get_data_from_req(req).uploads.finalize(size, upload_id, IndexFile)
+    index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
     headers = {"Location": f"/indexes/{index_id}/files/{name}"}
 
