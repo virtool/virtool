@@ -1,7 +1,8 @@
+from typing import Optional
+
 from pydantic import BaseModel, constr, Field, validator
 from virtool_core.models.label import Label
-
-from virtool_core.models import normalize_hex_color
+from virtool_core.models.validators import normalize_hex_color
 
 
 class CreateLabelSchema(BaseModel):
@@ -12,7 +13,9 @@ class CreateLabelSchema(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="unique name for the label document"
     )
-    color: constr(strip_whitespace=True) = Field(default="#A0AEC0", description="color of the label")
+    color: constr(strip_whitespace=True) = Field(
+        default="#A0AEC0", description="color of the label"
+    )
     description: constr(strip_whitespace=True) = Field(
         default="", description="description of the document"
     )
@@ -26,7 +29,7 @@ class CreateLabelSchema(BaseModel):
             "example": {
                 "color": "#374151",
                 "description": "dsRNA/binding protein",
-                "name": "Binding protein"
+                "name": "Binding protein",
             }
         }
 
@@ -39,22 +42,24 @@ class CreateLabelResponse(Label):
                 "count": 0,
                 "description": "dsRNA/binding protein",
                 "id": 23,
-                "name": "Binding protein"
+                "name": "Binding protein",
             }
         }
 
 
-class EditLabelSchema(BaseModel):
+class UpdateLabelSchema(BaseModel):
     """
     Label fields for editing an existing label.
     """
 
-    name: constr(strip_whitespace=True) = Field(
-        description="name of the existing label document"
+    name: Optional[constr(strip_whitespace=True)] = Field(
+        description="A short display name"
     )
-    color: constr(strip_whitespace=True)
-    description: constr(strip_whitespace=True) = Field(
-        description="description of the existing label document"
+    color: Optional[constr(strip_whitespace=True)] = Field(
+        description="A hexadecimal color for the label"
+    )
+    description: Optional[constr(strip_whitespace=True)] = Field(
+        description="A longer description for the label"
     )
 
     _ensure_color_is_normalized: classmethod = validator("color", allow_reuse=True)(
@@ -65,8 +70,8 @@ class EditLabelSchema(BaseModel):
         schema_extra = {
             "example": {
                 "color": "#93C5FD",
-                "description": "Blueberry",
-                "name": "Blueberry"
+                "description": "Field samples from 2022 harvest",
+                "name": "Blueberry 2022",
             }
         }
 
@@ -79,7 +84,7 @@ class LabelResponse(Label):
                 "count": 0,
                 "description": "dsRNA/Ab",
                 "id": 22,
-                "name": "Ab"
+                "name": "Ab",
             }
         }
 
@@ -93,7 +98,7 @@ class GetLabelResponse(Label):
                     "count": 0,
                     "description": "dsRNA/Ab",
                     "id": 22,
-                    "name": "Ab"
+                    "name": "Ab",
                 }
             ]
         }

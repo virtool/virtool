@@ -35,7 +35,9 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
 
     try:
         pg = create_async_engine(
-            postgres_connection_string, json_serializer=pretty_dumps
+            postgres_connection_string,
+            json_serializer=pretty_dumps,
+            pool_recycle=1800,
         )
 
         await check_version(pg)

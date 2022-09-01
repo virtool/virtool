@@ -23,6 +23,7 @@ from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
+from virtool.data.utils import get_data_from_app
 from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
@@ -31,6 +32,7 @@ from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
+from virtool.hmm.data import HmmData
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
     AddIndexFilesTask,
@@ -39,7 +41,9 @@ from virtool.indexes.tasks import (
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
+from virtool.settings.data import SettingsData
 from virtool.mongo.core import DB
+from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.otus.data import OTUData
@@ -50,6 +54,7 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
 )
 from virtool.routes import setup_routes
+from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
 from virtool.settings.db import ensure
@@ -124,14 +129,17 @@ async def startup_data(app: App):
 
     :param app: the application object
     """
-    data = DataLayer(
-        AnalysisData(app),
+    app["data"] = DataLayer(
+        AnalysisData(app["db"], app["config"], app["pg"], app["tasks"]),
         BLASTData(app["db"], app["pg"], app["tasks"]),
         GroupsData(app["db"]),
-        HistoryData(app["db"]),
+        SettingsData(app["db"]),
+        HistoryData(app["config"].data_path, app["db"]),
+        HmmData(app["client"], app["config"], app["db"], app["tasks"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
+        SamplesData(app["config"], app["db"], app["pg"]),
         SubtractionsData(app["config"].base_url, app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
     )
@@ -277,7 +285,7 @@ async def startup_databases(app: Application):
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-    app["db"] = DB(mongo, dispatcher_interface.enqueue_change)
+    app["db"] = DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider())
 
     app["dispatcher_interface"] = dispatcher_interface
 
@@ -306,9 +314,10 @@ async def startup_routes(app: Application):
 
 
 async def startup_sentry(app: typing.Union[dict, Application]):
+    settings = await get_data_from_app(app).settings.get_all()
     if (
         not app["config"].no_sentry
-        and app["settings"].enable_sentry is not False
+        and settings.enable_sentry is not False
         and not app["config"].dev
     ):
         logger.info("Configuring Sentry")
@@ -320,14 +329,14 @@ async def startup_sentry(app: typing.Union[dict, Application]):
 
 async def startup_settings(app: typing.Union[dict, Application]):
     """
-    Draws settings from the settings database collection and populates `app["settings"`.
+    Draws settings from the settings database collection.
 
     Performs migration of old settings style to `v3.3.0` if necessary.
 
     :param app: the app object
 
     """
-    app["settings"] = await ensure(app["db"])
+    await get_data_from_app(app).settings.ensure()
 
 
 async def startup_version(app: typing.Union[dict, Application]):

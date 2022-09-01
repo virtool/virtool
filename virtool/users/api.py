@@ -1,8 +1,8 @@
 from typing import Union
 
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from virtool_core.models.user import User
 
 import virtool.http.auth
@@ -32,7 +32,7 @@ routes = Routes()
 @routes.view("/users")
 class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def get(self) -> Union[r200, r403]:
+    async def get(self) -> Union[r200[User], r403]:
         """
         List all users.
 
@@ -65,7 +65,6 @@ class UsersView(PydanticView):
 
         Creates a new user.
 
-
         Status Codes:
             201: Successful operation
             400: User already exists
@@ -86,10 +85,61 @@ class UsersView(PydanticView):
             raise HTTPBadRequest(text=str(err))
 
         return json_response(
+            user,
+            headers={"Location": f"/users/{user.id}"},
+            status=201,
+        )
+
+
+@routes.view("/users/first")
+class FirstUserView(PydanticView):
+    @policy(PublicRoutePolicy)
+    async def put(self, data: CreateFirstUserSchema) -> Union[r201[User], r400, r403]:
+        """
+        Create a first user.
+
+        Creates the first user for the instance. This endpoint will not succeed more
+        than once.
+
+        After calling this endpoint, authenticate as the first user and use those
+        credentials to continue interacting with the API.
+
+        Status Codes:
+            201: Successful operation
+            400: Bad request
+            403: Not permitted
+        """
+        db = self.request.app["db"]
+
+        if await db.users.count_documents({}, limit=1):
+            raise HTTPConflict(text="Virtool already has at least one user")
+
+        if data.handle == "virtool":
+            raise HTTPBadRequest(text="Reserved user name: virtool")
+
+        if error := await check_password_length(self.request, password=data.password):
+            raise HTTPBadRequest(text=error)
+
+        user = await get_data_from_req(self.request).users.create_first(
+            data.handle, data.password
+        )
+
+        session, token = await create_session(
+            db, virtool.http.auth.get_ip(self.request), user.id
+        )
+
+        self.request["client"].authorize(session, is_api=False)
+
+        response = json_response(
             user.dict(),
             headers={"Location": f"/users/{user.id}"},
             status=201,
         )
+
+        set_session_id_cookie(response, session["_id"])
+        set_session_token_cookie(response, token)
+
+        return response
 
 
 @routes.view("/users/{user_id}")
@@ -113,7 +163,7 @@ class UserView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(user.dict())
+        return json_response(user)
 
     @policy(AdministratorRoutePolicy)
     async def patch(
@@ -153,80 +203,4 @@ class UserView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound("User does not exist")
 
-        return json_response(user.dict())
-
-    @policy(AdministratorRoutePolicy)
-    async def delete(self) -> Union[r204, r400, r403, r404]:
-        """
-        Delete a user.
-
-        Deletes an existing user. Users cannot delete their own accounts.
-
-        Status Codes:
-            204: No content
-            400: Bad request
-            403: Not permitted
-            404: Not found
-        """
-        user_id = self.request.match_info["user_id"]
-
-        if user_id == self.request["client"].user_id:
-            raise HTTPBadRequest(text="Cannot remove own account")
-
-        try:
-            await get_data_from_req(self.request).users.delete(user_id)
-        except ResourceNotFoundError:
-            raise NotFound
-
-        raise HTTPNoContent
-
-
-@routes.view("/users/first")
-class FirstUserView(PydanticView):
-    @policy(PublicRoutePolicy)
-    async def put(self, data: CreateFirstUserSchema) -> Union[r201[User], r400, r403]:
-        """
-        Create a first user.
-
-        Creates the first user for the instance. This endpoint will not succeed more
-        than once.
-
-        After calling this endpoint, authenticate as the first user and use those
-        credentials to continue interacting with the API.
-
-        Status Codes:
-            201: Successful operation
-            400: Bad request
-            403: Not permitted
-        """
-        db = self.request.app["db"]
-
-        if await db.users.count_documents({}):
-            raise HTTPConflict(text="Virtool already has at least one user")
-
-        if data.handle == "virtool":
-            raise HTTPBadRequest(text="Reserved user name: virtool")
-
-        if error := await check_password_length(self.request, password=data.password):
-            raise HTTPBadRequest(text=error)
-
-        user = await get_data_from_req(self.request).users.create_first(
-            data.handle, data.password
-        )
-
-        session, token = await create_session(
-            db, virtool.http.auth.get_ip(self.request), user.id
-        )
-
-        self.request["client"].authorize(session, is_api=False)
-
-        response = json_response(
-            user.dict(),
-            headers={"Location": f"/users/{user.id}"},
-            status=201,
-        )
-
-        set_session_id_cookie(response, session["_id"])
-        set_session_token_cookie(response, token)
-
-        return response
+        return json_response(user)

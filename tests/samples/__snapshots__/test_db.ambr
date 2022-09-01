@@ -105,16 +105,16 @@
     'id': 'foo',
     'labels': <class 'list'> [
       <class 'dict'> {
-        'color': '#a83432',
-        'description': 'This is a bug',
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
         'id': 1,
-        'name': 'Bug',
+        'name': 'Three',
       },
       <class 'dict'> {
-        'color': '#03fc20',
-        'description': 'This is a question',
+        'color': '#955887',
+        'description': 'Measure example sense peace economy.',
         'id': 2,
-        'name': 'Question',
+        'name': 'Help',
       },
     ],
     'name': 'Foo',
@@ -269,7 +269,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---

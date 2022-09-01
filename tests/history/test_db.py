@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 import virtool.history.db
+from virtool.history.data import HistoryData
 from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import HistoryMethod
 
@@ -66,14 +67,14 @@ class TestAdd:
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, dbi, fake, tmp_path, config):
-    user = await fake.users.insert()
+async def test_get(file, mocker, snapshot, dbi, fake2, tmp_path, config):
+    user = await fake2.users.create()
 
     await dbi.history.insert_one(
         {
             "_id": "baz.2",
             "diff": "file" if file else {"foo": "bar"},
-            "user": {"id": user["_id"]},
+            "user": {"id": user.id},
         }
     )
 
@@ -83,7 +84,9 @@ async def test_get(file, mocker, snapshot, dbi, fake, tmp_path, config):
 
     app = {"db": dbi, "config": config}
 
-    assert await virtool.history.db.get(app, "baz.2") == snapshot
+    history = HistoryData(app["config"].data_path, dbi)
+
+    assert await history.get("baz.2") == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -124,13 +127,11 @@ async def test_get_most_recent_change(exists, snapshot, dbi, static_time):
 
 
 @pytest.mark.parametrize("remove", [True, False])
-async def test_patch_to_version(remove, snapshot, dbi, create_mock_history):
+async def test_patch_to_version(remove, snapshot, config, dbi, create_mock_history):
     await create_mock_history(remove=remove)
 
-    app = {"db": dbi}
-
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        app, "6116cba1", 1
+        config.data_path, dbi, "6116cba1", 1
     )
 
     assert current == snapshot

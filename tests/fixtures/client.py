@@ -7,6 +7,7 @@ import virtool.app
 import virtool.jobs.main
 from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
+from virtool.mongo.identifier import FakeIdProvider
 from virtool.utils import hash_key
 
 
@@ -16,7 +17,6 @@ class VirtoolTestClient:
 
         self.server = self._test_client.server
         self.app = self.server.app
-        self.settings = self.app["settings"]
         self.db = self.app["db"]
 
         self.auth = self._test_client.session.auth
@@ -32,8 +32,8 @@ class VirtoolTestClient:
     def has_cookie(self, key, value):
         return self.get_cookie(key) == value
 
-    async def get(self, url, params=None):
-        return await self._test_client.get(url, params=params)
+    async def get(self, url, headers=None, params=None):
+        return await self._test_client.get(url, headers=headers, params=params)
 
     async def post(self, url, data=None):
         payload = None
@@ -87,9 +87,7 @@ def create_app(
 
 
 @pytest.fixture
-def spawn_client(
-    pg, request, aiohttp_client, test_motor, dbi, create_app, create_user
-):
+def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, create_user):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
         auth=None,
@@ -144,7 +142,10 @@ def spawn_client(
             app, auth=auth, cookies=cookies, auto_decompress=False
         )
 
-        return VirtoolTestClient(test_client)
+        test_client.app["db"].id_provider = FakeIdProvider()
+
+        return VirtoolTestClient(
+            test_client)
 
     return func
 
@@ -189,7 +190,7 @@ def spawn_job_client(
                 fake=False,
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
-                no_sentry=True
+                no_sentry=True,
             )
         )
 
@@ -198,7 +199,6 @@ def spawn_job_client(
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
         client.db = dbi
-        client.settings = app["settings"]
 
         return client
 

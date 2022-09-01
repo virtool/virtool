@@ -6,8 +6,8 @@ from pathlib import Path
 import aiofiles
 
 import virtool.tasks.pg
+from virtool.data.utils import get_data_from_app
 from virtool.github import create_update_subdocument
-from virtool.hmm.db import purge
 from virtool.http.utils import download_file
 from virtool.tasks.task import Task
 from virtool.utils import decompress_tgz
@@ -43,6 +43,7 @@ class HMMInstallTask(Task):
         self.steps = [
             self.download,
             self.decompress,
+            self.purge,
             self.install_profiles,
             self.import_annotations,
         ]
@@ -74,6 +75,9 @@ class HMMInstallTask(Task):
             decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path
         )
 
+    async def purge(self):
+        await get_data_from_app(self.app).hmms.purge()
+
     async def install_profiles(self):
         tracker = await self.get_tracker()
 
@@ -95,8 +99,6 @@ class HMMInstallTask(Task):
 
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
-
-        await purge(self.db, self.app["config"])
 
         tracker = await self.get_tracker(len(annotations))
 
@@ -124,4 +126,4 @@ class HMMInstallTask(Task):
         )
 
     async def cleanup(self):
-        await purge(self.db, self.app["config"])
+        await get_data_from_app(self.app).hmms.purge()

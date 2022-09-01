@@ -1,6 +1,6 @@
 # name: test_create_fake_bob_user[uvloop]
   <class 'dict'> {
-    '_id': 'abc123',
+    '_id': 'bf1b993c',
     'administrator': True,
     'force_reset': False,
     'groups': <class 'list'> [

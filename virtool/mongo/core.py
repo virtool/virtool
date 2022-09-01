@@ -7,12 +7,19 @@ collection.
 
 """
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Optional,
+    Sequence,
+    Union,
+)
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorClientSession,
-    AsyncIOMotorCollection,
 )
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
@@ -20,21 +27,21 @@ from pymongo.results import DeleteResult, UpdateResult
 
 import virtool.analyses.db
 import virtool.caches.db
-import virtool.mongo.utils
 import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.mongo.connect
+import virtool.mongo.utils
 import virtool.otus.db
 import virtool.references.db
 import virtool.samples.db
-import virtool.settings.db
 import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.users.db
 import virtool.utils
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
+from virtool.mongo.identifier import AbstractIdProvider
 from virtool.types import Document, Projection
 
 
@@ -49,17 +56,16 @@ class Collection:
 
     def __init__(
         self,
+        mongo: "DB",
         name: str,
-        collection: AsyncIOMotorCollection,
-        enqueue_change: Callable[[str, str, Sequence[str]], None],
         processor: Callable[[Any, Document], Awaitable[Document]],
         projection: Optional[Projection],
         silent: bool = False,
     ):
+        self.mongo = mongo
         self.name = name
-        self._collection = collection
-        self.database = collection.database
-        self._enqueue_change = enqueue_change
+        self._collection = mongo.motor_client[name]
+        self._enqueue_change = mongo.enqueue_change
         self.processor = processor
         self.projection = projection
         self.silent = silent
@@ -81,7 +87,7 @@ class Collection:
 
     async def apply_processor(self, document):
         if self.processor:
-            return await self.processor(self._collection.database, document)
+            return await self.processor(self._collection.mongo, document)
 
         return virtool.utils.base_processor(document)
 
@@ -99,7 +105,7 @@ class Collection:
 
         """
         if not self.silent:
-            self._enqueue_change(self.name, operation, id_list)
+            self.mongo.enqueue_change(self.name, operation, id_list)
 
     async def delete_many(
         self,
@@ -209,24 +215,25 @@ class Collection:
         :return: the inserted document
 
         """
-        generate_id = "_id" not in document
-
-        if generate_id:
-            document["_id"] = virtool.utils.random_alphanumeric(8)
-
-        try:
+        if "_id" in document:
             await self._collection.insert_one(document, session=session)
+            inserted = document
+        else:
+            try:
+                inserted = {**document, "_id": self.mongo.id_provider.get()}
+                await self._collection.insert_one(inserted, session=session)
+            except DuplicateKeyError as err:
+                keys = list(err.details["keyPattern"].keys())
 
-            if not silent:
-                self.enqueue_change(INSERT, document["_id"])
+                if len(keys) == 1 and keys[0] == "_id":
+                    return await self.insert_one(document, session=session)
 
-            return document
-        except DuplicateKeyError:
-            if generate_id:
-                document.pop("_id")
-                return await self._collection.insert_one(document, session=session)
+                raise
 
-            raise
+        if not silent:
+            self.enqueue_change(INSERT, inserted["_id"])
+
+        return inserted
 
     async def replace_one(
         self,
@@ -318,11 +325,13 @@ class DB:
     def __init__(
         self,
         motor_client: AsyncIOMotorClient,
-        enqueue_change: Callable[[str, str, List[str]], None],
+        enqueue_change: Callable[[str, str, Sequence[str]], None],
+        id_provider: AbstractIdProvider,
     ):
         self.motor_client = motor_client
         self.start_session = motor_client.start_session
         self.enqueue_change = enqueue_change
+        self.id_provider = id_provider
 
         self.analyses = self.bind_collection(
             "analyses", projection=virtool.analyses.db.PROJECTION
@@ -372,7 +381,7 @@ class DB:
             "samples", projection=virtool.samples.db.LIST_PROJECTION
         )
         self.settings = self.bind_collection(
-            "settings", projection=virtool.settings.db.PROJECTION
+            "settings", projection={"_id": False}
         )
 
         self.sequences = self.bind_collection("sequences")
@@ -389,11 +398,16 @@ class DB:
             "users", projection=virtool.users.db.PROJECTION
         )
 
-    def bind_collection(self, name: str, processor=None, projection=None, silent=False):
+    def bind_collection(
+        self,
+        name: str,
+        processor: Optional[Callable] = None,
+        projection: Optional[Projection] = None,
+        silent: bool = False,
+    ) -> Collection:
         return Collection(
+            self,
             name,
-            self.motor_client[name],
-            self.enqueue_change,
             processor,
             projection,
             silent,
@@ -401,5 +415,11 @@ class DB:
 
     @asynccontextmanager
     async def create_session(self):
-        async with await self.motor_client.client.start_session() as s, s.start_transaction():
+        async with await self.motor_client.client.start_session() as s:
+            async with s.start_transaction():
+                yield s
+
+    @asynccontextmanager
+    async def with_session(self):
+        async with await self.motor_client.client.start_session() as s:
             yield s

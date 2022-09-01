@@ -9,9 +9,9 @@ from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.uploads.db
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.utils import get_data_from_app
 from virtool.labels.db import AttachLabelsTransform
-from virtool.labels.models import Label
+from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import (
     check_is_legacy,
@@ -234,22 +234,11 @@ class TestRemoveSamples:
         assert not await dbi.samples.count_documents({})
 
 
-async def test_attach_labels(snapshot, pg: AsyncEngine):
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
-                Label(
-                    id=2,
-                    name="Question",
-                    color="#03fc20",
-                    description="This is a question",
-                ),
-            ]
-        )
-        await session.commit()
+async def test_attach_labels(fake2, snapshot, pg: AsyncEngine):
+    label_1 = await fake2.labels.create()
+    label_2 = await fake2.labels.create()
 
-    document = {"id": "foo", "name": "Foo", "labels": [1, 2]}
+    document = {"id": "foo", "name": "Foo", "labels": [label_1.id, label_2.id]}
 
     assert await apply_transforms(document, [AttachLabelsTransform(pg)]) == snapshot
 
@@ -263,6 +252,8 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
 
     mocker.patch("virtool.mongo.utils.get_new_id", return_value="a2oj3gfd")
 
+    settings = await get_data_from_app(client.app).settings.get_all()
+
     result = await create_sample(
         dbi,
         "foo",
@@ -275,7 +266,7 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
         "test",
         [],
         "bob",
-        settings=client.app["settings"],
+        settings=settings,
     )
 
     assert result == snapshot
@@ -411,12 +402,12 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine):
+async def test_finalize(snapshot, tmp_path, dbi, fake2, pg: AsyncEngine):
     quality = {"count": 10000000, "gc": 43}
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    await dbi.samples.insert_one({"_id": "test", "user": {"id": user["_id"]}})
+    await dbi.samples.insert_one({"_id": "test", "user": {"id": user.id}})
 
     async with AsyncSession(pg) as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
@@ -441,22 +432,21 @@ async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine):
 
 class TestComposeWorkflowQuery:
     @pytest.mark.parametrize(
-        "url",
+        "workflows",
         [
-            "/samples?workflows=pathoscope%3Aready foo%3Apending foo%3Anone",
-            "/samples?workflows=pathoscope%3Aready foo%3Apending&workflows=foo%3Anone",
+            ["pathoscope:ready", "foo:pending", "foo:none"],
+            ["pathoscope:ready", " foo:pending", "foo:none"],
         ],
         ids=["single", "multiple"],
     )
-    def test(self, url):
+    def test(self, workflows):
         """
-        Test that the workflow query is composed from a single `workflows` parameter as well as
+        Test that the workflow query is composed of a single `workflows` parameter as well as
         two.
 
         """
-        req = make_mocked_request("GET", url)
+        result = compose_sample_workflow_query(workflows)
 
-        result = compose_sample_workflow_query(req.query)
         assert len(result) == 2
         assert result["pathoscope"]["$in"] == [True]
         assert set(result["foo"]["$in"]) == {False, "ip"}
@@ -475,19 +465,13 @@ class TestComposeWorkflowQuery:
         Check that an invalid condition doesn't make it into the query.
 
         """
-        req = make_mocked_request(
-            "GET", "/samples?workflows=pathoscope%3Abar pathoscope%3Aready"
-        )
-
-        assert compose_sample_workflow_query(req.query) == {
-            "pathoscope": {"$in": [True]}
-        }
+        assert compose_sample_workflow_query(
+            ["pathoscope:bar", "pathoscope:ready"]
+        ) == {"pathoscope": {"$in": [True]}}
 
     def test_all_conditions_invalid(self):
         """
         Check that if no valid conditions are found, `None` is returned.
 
         """
-        req = make_mocked_request("GET", "/samples?workflows=pathoscope%3Abar")
-
-        assert compose_sample_workflow_query(req.query) is None
+        assert compose_sample_workflow_query(["pathoscope:bar"]) is None

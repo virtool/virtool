@@ -1,0 +1,114 @@
+# name: test_fake[uvloop]
+  <class 'dict'> {
+    'id': 'musicians',
+    'name': 'musicians',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'users': <class 'list'> [
+    ],
+  }
+---
+# name: test_fake[uvloop].1
+  <class 'dict'> {
+    'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'laura56',
+    'id': 'bf1b993c',
+    'last_password_change': <class 'datetime'>,
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: test_fake[uvloop].2
+  <class 'dict'> {
+    'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'musicians',
+        'name': 'musicians',
+      },
+    ],
+    'handle': 'sjohnson',
+    'id': 'fb085f7f',
+    'last_password_change': <class 'datetime'>,
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: test_fake[uvloop][job]
+  <class 'dict'> {
+    'acquired': False,
+    'archived': False,
+    'args': <class 'dict'> {
+      'age': 'tphorteObohEsZgfLWqS',
+      'beat': -72199579.2991181,
+      'face': -5262745923324.53,
+      'local': 'ufCpVOLlelZEijfQSbBN',
+      'product': 'SgBHsToacJDXWVcMKILU',
+      'white': 'fVyRYryKwpMUVGtYHdeM',
+    },
+    'created_at': <class 'datetime'>,
+    'id': '7cf872dc',
+    'progress': 0,
+    'rights': <class 'dict'> {
+    },
+    'stage': None,
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'datetime'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'laura56',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'jobs_aodp',
+  }
+---

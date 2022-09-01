@@ -3,7 +3,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
     ],
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'index': <class 'dict'> {
       'id': 'test_index',
       'version': 11,
@@ -32,7 +32,7 @@
 ---
 # name: test_create[uvloop-None].1
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
     ],

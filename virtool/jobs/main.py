@@ -20,7 +20,10 @@ from virtool.startup import (
     startup_fake_config,
     startup_settings,
     startup_data,
-    startup_task_runner, startup_sentry, startup_version,
+    startup_task_runner,
+    startup_sentry,
+    startup_version,
+    startup_http_client,
 )
 from virtool.types import App
 
@@ -28,7 +31,7 @@ from virtool.types import App
 async def create_app(config: Config):
     """Create the :class:`aiohttp.web.Application` for the jobs API process."""
     app = Application(
-        client_max_size=1024 ** 2 * 50,
+        client_max_size=1024**2 * 50,
         middlewares=[
             virtool.http.accept.middleware,
             virtool.jobs.auth.middleware,
@@ -44,16 +47,17 @@ async def create_app(config: Config):
     app.on_startup.extend(
         [
             startup_version,
+            startup_http_client,
             startup_fake_config,
             startup_databases,
-            startup_settings,
             startup_executors,
             startup_fake,
             startup_task_runner,
             startup_data,
             startup_events,
             startup_routes,
-            startup_sentry
+            startup_settings,
+            startup_sentry,
         ]
     )
 

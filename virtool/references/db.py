@@ -15,6 +15,7 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
+from virtool_core.models.settings import Settings
 
 import virtool.mongo.utils
 import virtool.errors
@@ -33,7 +34,6 @@ from virtool.references.utils import (
     get_owner_user,
     load_reference_file,
 )
-from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform, extend_user
@@ -174,15 +174,13 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
 
     subdocument_id = data.get("group_id") or data["user_id"]
 
-    if (
-        field == "groups"
-        and await db.groups.count_documents({"_id": subdocument_id}) == 0
+    if field == "groups" and not await db.groups.count_documents(
+        {"_id": subdocument_id}, limit=1
     ):
         raise virtool.errors.DatabaseError("group does not exist")
 
-    if (
-        field == "users"
-        and await db.users.count_documents({"_id": subdocument_id}) == 0
+    if field == "users" and not await db.users.count_documents(
+        {"_id": subdocument_id}, limit=1
     ):
         raise virtool.errors.DatabaseError("user does not exist")
 
@@ -580,7 +578,7 @@ async def create_document(
     if ref_id and await db.references.count_documents({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
-    ref_id = ref_id or await virtool.mongo.utils.get_new_id(db.otus)
+    ref_id = ref_id or await virtool.mongo.utils.get_new_id(db.references)
 
     user = None
 

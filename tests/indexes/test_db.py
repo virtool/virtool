@@ -72,8 +72,8 @@ async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     assert await get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_processor(mocker, snapshot, fake, dbi):
-    user = await fake.users.insert()
+async def test_processor(snapshot, fake2, dbi):
+    user = await fake2.users.create()
 
     await dbi.history.insert_many(
         [
@@ -86,11 +86,10 @@ async def test_processor(mocker, snapshot, fake, dbi):
         ]
     )
 
-    document = {"_id": "baz", "user": {"id": user["_id"]}}
-
-    result = await virtool.indexes.db.processor(dbi, document)
-
-    assert result == snapshot
+    assert (
+        await virtool.indexes.db.processor(dbi, {"_id": "baz", "user": {"id": user.id}})
+        == snapshot
+    )
 
 
 async def test_get_patched_otus(mocker, dbi, config):
@@ -105,13 +104,11 @@ async def test_get_patched_otus(mocker, dbi, config):
 
     assert list(patched_otus) == [{"_id": "foo"}, {"_id": "foo"}, {"_id": "foo"}]
 
-    app_dict = {"db": dbi, "config": config}
-
     m.assert_has_calls(
         [
-            mocker.call(app_dict, "foo", 2),
-            mocker.call(app_dict, "bar", 10),
-            mocker.call(app_dict, "baz", 4),
+            mocker.call(config.data_path, dbi, "foo", 2),
+            mocker.call(config.data_path, dbi, "bar", 10),
+            mocker.call(config.data_path, dbi, "baz", 4),
         ]
     )
 

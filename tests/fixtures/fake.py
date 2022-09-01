@@ -6,6 +6,7 @@ import pytest
 import arrow
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
 from virtool.subtractions.models import SubtractionFile
 from virtool.types import Document
@@ -239,12 +240,11 @@ class FakeGenerator:
 
 
 @pytest.fixture
-def app(dbi, pg, tmp_path, config, settings):
+def app(dbi, pg, tmp_path, config):
     return {
         "db": dbi,
         "fake": FakerWrapper(),
         "pg": pg,
-        "settings": settings,
         "config": config,
     }
 
@@ -252,3 +252,8 @@ def app(dbi, pg, tmp_path, config, settings):
 @pytest.fixture
 def fake(dbi, pg):
     return FakeGenerator(dbi, pg)
+
+
+@pytest.fixture
+def fake2(data_layer):
+    return DataFaker(data_layer)

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Callable, Tuple
 
 from aiohttp import BasicAuth, web
@@ -18,8 +19,6 @@ from virtool.oidc.utils import validate_token
 from virtool.users.db import B2CUserAttributes
 from virtool.users.sessions import clear_reset_code, create_session, get_session
 from virtool.utils import hash_key
-
-AUTHORIZATION_PROJECTION = ["user", "administrator", "groups", "permissions"]
 
 
 def get_ip(req: Request) -> str:
@@ -67,18 +66,19 @@ async def authenticate_with_key(req: Request, handler: Callable) -> Response:
 
 
 async def authenticate_with_api_key(
-    req: Request, handler: Callable, user_id: str, key: str
+    req: Request, handler: Callable, handle: str, key: str
 ) -> Response:
     db = req.app["db"]
 
-    document = await db.keys.find_one(
-        {"_id": hash_key(key), "user.id": user_id}, ["permissions"]
+    document, user = await asyncio.gather(
+        db.keys.find_one({"_id": hash_key(key)}, ["permissions", "user"]),
+        db.users.find_one(
+            {"handle": handle}, ["administrator", "groups", "permissions"]
+        ),
     )
 
-    if not document:
+    if not document or not user or document["user"]["id"] != user["_id"]:
         raise HTTPUnauthorized(text="Invalid authorization header")
-
-    user = db.users.find_one({"_id": user_id}, AUTHORIZATION_PROJECTION)
 
     req["client"] = UserClient(
         db=db,
@@ -86,7 +86,7 @@ async def authenticate_with_api_key(
         force_reset=False,
         groups=user["groups"],
         permissions=document["permissions"],
-        user_id=user_id,
+        user_id=user["_id"],
         authenticated=True,
     )
 

@@ -9,17 +9,17 @@ from virtool.subtractions.models import SubtractionFile
 from virtool_core.models.enums import Permission
 
 
-async def test_find(fake, spawn_client, snapshot):
+async def test_find(fake2, spawn_client, snapshot):
     client = await spawn_client(authorize=True, administrator=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     document = {
         "_id": "id",
         "name": "test",
         "deleted": False,
         "ready": False,
-        "user": {"id": user["_id"]},
+        "user": {"id": user.id},
     }
 
     await client.db.subtraction.insert_one(document)
@@ -30,16 +30,16 @@ async def test_find(fake, spawn_client, snapshot):
     assert await resp.json() == snapshot
 
 
-async def test_get(fake, spawn_job_client, snapshot):
+async def test_get(fake2, spawn_job_client, snapshot):
     client = await spawn_job_client(authorize=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     subtraction = {
         "_id": "foo",
         "name": "Foo",
         "nickname": "Foo Subtraction",
-        "user": {"id": user["_id"]},
+        "user": {"id": user.id},
     }
 
     await client.db.subtraction.insert_one(subtraction)
@@ -74,14 +74,14 @@ async def test_get(fake, spawn_client):
     ],
 )
 @pytest.mark.parametrize("has_user", [True, False])
-async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
+async def test_edit(data, has_user, mocker, snapshot, fake2, spawn_client):
     mocker.patch("virtool.subtractions.db.get_linked_samples", make_mocked_coro(12))
 
     document = {"_id": "foo", "name": "Foo", "nickname": "Foo Subtraction"}
 
     if has_user:
-        user = await fake.users.insert()
-        document["user"] = {"id": user["_id"]}
+        user = await fake2.users.create()
+        document["user"] = {"id": user.id}
 
     client = await spawn_client(
         authorize=True, permissions=[Permission.modify_subtraction]
@@ -97,33 +97,29 @@ async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_remove(exists, fake, spawn_client, tmp_path, resp_is):
+async def test_remove(exists, fake2, spawn_client, tmp_path, resp_is):
     client = await spawn_client(
         authorize=True, permissions=Permission.modify_subtraction
     )
     client.app["config"].data_path = tmp_path
 
-    user = await fake.users.insert()
-
     if exists:
-        subtraction = {
-            "_id": "foo",
-            "name": "Foo",
-            "deleted": False,
-            "ready": False,
-            "nickname": "Foo Subtraction",
-            "user": {"id": user["_id"]},
-        }
+        user = await fake2.users.create()
 
-        await client.db.subtraction.insert_one(subtraction)
+        await client.db.subtraction.insert_one(
+            {
+                "_id": "foo",
+                "name": "Foo",
+                "deleted": False,
+                "ready": False,
+                "nickname": "Foo Subtraction",
+                "user": {"id": user.id},
+            }
+        )
 
     resp = await client.delete("subtractions/foo")
 
-    if exists:
-        await resp_is.no_content(resp)
-        assert resp.status == 204
-    else:
-        assert resp.status == 404
+    assert resp.status == 204 if exists else 400
 
 
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
@@ -173,15 +169,15 @@ async def test_upload(
 
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize_subtraction(
-    error, fake, spawn_job_client, snapshot, resp_is, test_subtraction_files
+    error, fake2, spawn_job_client, snapshot, resp_is, test_subtraction_files
 ):
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     subtraction = {
         "_id": "foo",
         "name": "Foo",
         "nickname": "Foo Subtraction",
-        "user": {"id": user["_id"]},
+        "user": {"id": user.id},
     }
 
     data = {

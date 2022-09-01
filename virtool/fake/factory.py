@@ -11,6 +11,7 @@ import yaml
 import virtool.indexes.db
 import virtool.subtractions.db
 from virtool.analyses.files import create_analysis_file
+from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms
@@ -21,7 +22,6 @@ from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.references.db import create_document
 from virtool.samples.fake import create_fake_sample
-from virtool.settings.db import Settings
 from virtool.subtractions.fake import (
     create_fake_fasta_upload,
     create_fake_finalized_subtraction,
@@ -66,7 +66,6 @@ class TestCaseDataFactory:
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]
-        self.settings: Settings = app["settings"]
         self.data_path = app["config"].data_path
 
     async def analysis(
@@ -152,7 +151,7 @@ class TestCaseDataFactory:
         id_ = self.fake.get_mongo_id()
         document = await create_document(
             db=self.db,
-            settings=self.settings,
+            settings=await get_data_from_app(self.app).settings.get_all(),
             ref_id=id_,
             name=self.fake.words(1)[0],
             organism="virus",
@@ -230,7 +229,9 @@ async def load_test_case_from_yml(
 
     job_args = {}
 
-    factory = TestCaseDataFactory(job_id=job_id, app=app, user_id=user_id)
+    factory = TestCaseDataFactory(
+        job_id=job_id, app=app, user_id=user_id
+    )
     test_case = SimpleNamespace()
 
     test_case.reference = await factory.reference()

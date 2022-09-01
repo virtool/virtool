@@ -60,7 +60,9 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 class AccountView(PydanticView):
     async def get(self) -> Union[r200[AccountResponse], r401]:
         """
-        Get complete user document.
+        Get account.
+
+        Retrieves the details for the account associated with the user agent.
 
         Status Codes:
             200: Successful Operation
@@ -75,7 +77,9 @@ class AccountView(PydanticView):
         self, data: EditAccountSchema
     ) -> Union[r200[EditAccountResponse], r400, r401]:
         """
-        Update the account.
+        Update account.
+
+        Updates the account associated with the user agent.
 
         Provide a ``password`` to update the account password. The ``old_password`` must
         also be provided in the request.
@@ -91,24 +95,25 @@ class AccountView(PydanticView):
         db = self.request.app["db"]
         user_id = self.request["client"].user_id
 
-        password = data.password
-        old_password = data.old_password
-
         update = {}
 
-        if password is not None:
-            error = await check_password_length(self.request, password)
+        data = data.dict(exclude_unset=True)
 
-            if error:
+        if "password" in data:
+            # Request model ensures that if one password is passed in,
+            # the other is as well.
+            if error := await check_password_length(self.request, data["password"]):
+
                 raise HTTPBadRequest(text=error)
 
-            if not await validate_credentials(db, user_id, old_password or ""):
+            if not await validate_credentials(db, user_id, data["old_password"] or ""):
+
                 raise HTTPBadRequest(text="Invalid credentials")
 
-            update = virtool.account.db.compose_password_update(password)
+            update = virtool.account.db.compose_password_update(data["password"])
 
-        if data.email is not None:
-            update["email"] = data.email
+        if "email" in data:
+            update["email"] = data["email"]
 
         if update:
             document = await db.users.find_one_and_update(
@@ -126,7 +131,9 @@ class AccountView(PydanticView):
 class SettingsView(PydanticView):
     async def get(self) -> Union[r200[AccountSettingsResponse], r401]:
         """
-        Get account settings
+        Get account settings.
+
+        Retrieves the settings for the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -142,7 +149,9 @@ class SettingsView(PydanticView):
         self, data: EditSettingsSchema
     ) -> Union[r200[AccountSettingsResponse], r400, r401]:
         """
-        Update account settings. All fields are optional.
+        Update account settings.
+
+        Updates the settings of the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -155,9 +164,9 @@ class SettingsView(PydanticView):
 
         settings_from_db = await get_one_field(db.users, "settings", user_id)
 
-        data_dict = data.dict(exclude_unset=True)
+        data = data.dict(exclude_unset=True)
 
-        settings = {**settings_from_db, **data_dict}
+        settings = {**settings_from_db, **data}
 
         await db.users.update_one({"_id": user_id}, {"$set": settings})
 
@@ -168,7 +177,9 @@ class SettingsView(PydanticView):
 class KeysView(PydanticView):
     async def get(self) -> Union[r200[List[GetAPIKeysResponse]], r401]:
         """
-        List API keys associated with the authenticated user account.
+        List API keys.
+
+        Lists all API keys registered on the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -186,10 +197,12 @@ class KeysView(PydanticView):
         self, data: CreateKeysSchema
     ) -> Union[r201[CreateAPIKeyResponse], r400, r401]:
         """
-        Create a new API key.
+        Create an API key.
 
-        The new key value is returned in the response. This is the only response
-        from the server that will ever include the key.
+        Creates a new API key on the account associated with the user agent.
+
+        The new key value is returned in the response. **This is the only response
+        from the server that will ever include the key**.
 
         Status Codes:
             201: Successful operation
@@ -200,8 +213,10 @@ class KeysView(PydanticView):
 
         user_id = self.request["client"].user_id
 
+        data = data.dict(exclude_none=True)
+
         document = await virtool.account.db.create_api_key(
-            db, data.name, data.permissions, user_id
+            db, data["name"], data["permissions"], user_id
         )
 
         headers = {"Location": f"/account/keys/{document['id']}"}
@@ -210,7 +225,9 @@ class KeysView(PydanticView):
 
     async def delete(self) -> Union[r204, r401]:
         """
-        Remove all API keys for the account associated with the requesting session.
+        Purge API keys
+
+        Deletes all API keys registered for the account associated with the user agent.
 
         Status Codes:
             204: Successful operation
@@ -226,7 +243,10 @@ class KeysView(PydanticView):
 class KeyView(PydanticView):
     async def get(self) -> Union[r200[APIKeyResponse], r404]:
         """
-        Get the complete representation of the API key identified by the `key_id`.
+        Get an API key.
+
+        Retrieves the details for an API key registered on the account associated with
+        the user agent.
 
         Status Codes:
             200: Successful operation
@@ -249,7 +269,10 @@ class KeyView(PydanticView):
         self, data: EditKeySchema
     ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
         """
-        Change the permissions for an existing API key.
+        Update an API key.
+
+        Updates the permissions an existing API key registered on the account
+        associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -273,7 +296,11 @@ class KeyView(PydanticView):
             db.keys, "permissions", {"id": key_id, "user.id": user_id}
         )
 
-        permissions.update(data.permissions)
+        data = data.dict(exclude_unset=True)
+
+        if "permissions" in data:
+            permissions_dict = data["permissions"]
+            permissions.update(permissions_dict)
 
         if not user["administrator"]:
             permissions = limit_permissions(permissions, user["permissions"])
@@ -288,6 +315,7 @@ class KeyView(PydanticView):
 
     async def delete(self) -> Union[r204, r401, r404]:
         """
+        Delete
         Remove an API key by its ID.
 
         Status Codes:
@@ -310,11 +338,14 @@ class KeyView(PydanticView):
 @routes.view("/account/login")
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(
-        self, data: CreateLoginSchema
-    ) -> Union[r201[LoginResponse], r400]:
+    async def post(self, data: CreateLoginSchema) -> Union[r201[LoginResponse], r400]:
         """
-        Create a new session for the user with `username`.
+        Login.
+
+        Logs in using the passed credentials.
+
+        This creates a new session for the user with `username`. The session ID and
+        token are returned in cookies.
 
         Status Codes:
             201: Successful operation
@@ -322,19 +353,18 @@ class LoginView(PydanticView):
         """
         db = self.request.app["db"]
 
-        handle = data.username
-        password = data.password
+        data = data.dict(exclude_none=True)
 
         # When this value is set, the session will last for 1 month instead of the
         # 1-hour default.
-        remember = data.remember
+        remember = data["remember"]
 
         # Re-render the login page with an error message if the username doesn't
         # correlate to a user_id value in
         # the database and/or password are invalid.
-        document = await db.users.find_one({"handle": handle})
+        document = await db.users.find_one({"handle": data["username"]})
         if not document or not await validate_credentials(
-            db, document["_id"], password
+            db, document["_id"], data["password"]
         ):
             raise HTTPBadRequest(text="Invalid username or password")
 
@@ -373,7 +403,10 @@ class LogoutView(PydanticView):
     @policy(PublicRoutePolicy)
     async def get(self) -> r204:
         """
-        Invalidates the requesting session, effectively logging out the user.
+        Logout.
+
+        Logout the user by invalidating the session associated with the user agent. A
+        new unauthenticated session ID is returned in cookies.
 
         Status Codes:
             204: Successful operation
@@ -400,7 +433,9 @@ class ResetView(PydanticView):
         self, data: ResetPasswordSchema
     ) -> Union[r200[AccountResetPasswordResponse], r400]:
         """
-        Handles `POST` requests for resetting the password for a session user.
+        Reset password.
+
+        Reset the password for the account associated with the requesting session.
 
         Status Codes:
             200: Successful operation

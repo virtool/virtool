@@ -8,7 +8,7 @@ from virtool_core.models.label import Label, LabelMinimal
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import Label as LabelSQL
-from virtool.labels.oas import EditLabelSchema
+from virtool.labels.oas import UpdateLabelSchema
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_generic
@@ -27,6 +27,7 @@ class LabelsData:
         :return: a list of all sample labels.
         """
         statement = select(LabelSQL).order_by(LabelSQL.name)
+
         if term:
             statement = statement.filter(LabelSQL.name.ilike(f"%{term}%"))
 
@@ -84,7 +85,7 @@ class LabelsData:
 
         return Label(**document)
 
-    async def edit(self, label_id: int, data: EditLabelSchema) -> Label:
+    async def update(self, label_id: int, data: UpdateLabelSchema) -> Label:
         """
         Edit an existing label.
 
@@ -92,6 +93,8 @@ class LabelsData:
         :param data: label fields for editing the existing label
         :return: the label
         """
+        data = data.dict(exclude_unset=True)
+
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(LabelSQL).filter_by(id=label_id))
             label = result.scalar()
@@ -99,9 +102,15 @@ class LabelsData:
             if label is None:
                 raise ResourceNotFoundError()
 
-            label.name = data.name
-            label.color = data.color
-            label.description = data.description
+            if "name" in data:
+                label.name = data["name"]
+
+            if "color" in data:
+                label.color = data["color"]
+
+            if "description" in data:
+                label.description = data["description"]
+
             row = label.to_dict()
 
             try:

@@ -6,7 +6,7 @@ import virtool.analyses.format
 
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
-async def test_format_analysis(workflow, mocker):
+async def test_format_analysis(workflow, config, dbi, mocker):
     """
     Ensure that:
     * the correct formatting function is called based on the workflow field.
@@ -25,9 +25,7 @@ async def test_format_analysis(workflow, mocker):
     if workflow:
         document["workflow"] = workflow
 
-    app = {"db": "db", "settings": "settings"}
-
-    coroutine = virtool.analyses.format.format_analysis(app, document)
+    coroutine = virtool.analyses.format.format_analysis(config, dbi, document)
 
     if workflow is None or workflow == "foobar":
         with pytest.raises(ValueError) as excinfo:
@@ -43,11 +41,11 @@ async def test_format_analysis(workflow, mocker):
     }
 
     if workflow == "nuvs":
-        m_format_nuvs.assert_called_with(app, document)
+        m_format_nuvs.assert_called_with(config, dbi, document)
         assert not m_format_pathoscope.called
 
     elif workflow == "pathoscope":
-        m_format_pathoscope.assert_called_with(app, document)
+        m_format_pathoscope.assert_called_with(config, dbi, document)
         assert not m_format_nuvs.called
 
 
