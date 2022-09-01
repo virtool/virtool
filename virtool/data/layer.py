@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 
-from sqlalchemy.ext.asyncio import AsyncEngine
-
 from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
+from virtool.hmm.data import HmmData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
@@ -28,6 +27,7 @@ class DataLayer:
     groups: GroupsData
     settings: SettingsData
     history: HistoryData
+    hmms: HmmData
     labels: LabelsData
     jobs: JobsData
     otus: OTUData
@@ -35,4 +35,5 @@ class DataLayer:
     users: UsersData
 
     def __post_init__(self):
+        self.hmms.bind_layer(self)
         self.samples.bind_layer(self)

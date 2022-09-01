@@ -26,6 +26,8 @@ from virtool.shutdown import (
 from virtool.startup import (
     startup_b2c,
     startup_check_db,
+    startup_task_runner,
+    startup_tasks,
     startup_databases,
     startup_data,
     startup_dispatcher,
@@ -37,8 +39,6 @@ from virtool.startup import (
     startup_routes,
     startup_sentry,
     startup_settings,
-    startup_task_runner,
-    startup_tasks,
     startup_version,
 )
 

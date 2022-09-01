@@ -31,6 +31,7 @@ from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
+from virtool.hmm.data import HmmData
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
     AddIndexFilesTask,
@@ -131,6 +132,7 @@ async def startup_data(app: App):
         GroupsData(app["db"]),
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
+        HmmData(app["client"], app["config"], app["db"], app["tasks"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
