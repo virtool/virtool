@@ -10,7 +10,7 @@ from virtool_core.models.hmm import (
     HMMRelease,
     HMMInstalled,
 )
-from virtool_core.utils import rm
+from virtool_core.utils import rm, compress_file_with_gzip
 
 import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate
@@ -34,7 +34,7 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.client import TasksClient
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread, rm, compress_file_with_gzip
+from virtool.utils import run_in_thread
 
 
 class HmmData(DataLayerPiece):
