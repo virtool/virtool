@@ -6,10 +6,11 @@ trimmed read and QC data generated during analyses.
 from typing import Any, Dict
 
 import pymongo.errors
+from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.types import App
-from virtool.utils import run_in_thread
+from virtool.utils import run_in_thread, base_processor
 
 PROJECTION = ("_id", "created_at", "files", "key", "program", "ready", "sample")
 
@@ -24,7 +25,7 @@ async def get(db, cache_id: str) -> Dict[str, Any]:
 
     """
     document = await db.caches.find_one(cache_id)
-    return virtool.utils.base_processor(document)
+    return base_processor(document)
 
 
 async def create(
@@ -61,7 +62,7 @@ async def create(
 
         await db.caches.insert_one(document)
 
-        return virtool.utils.base_processor(document)
+        return base_processor(document)
 
     except pymongo.errors.DuplicateKeyError as e:
         # Check if key-sample.id uniqueness was enforced
@@ -88,6 +89,6 @@ async def remove(app: App, cache_id: str):
     path = config.data_path / "caches" / cache_id
 
     try:
-        await run_in_thread(virtool.utils.rm, path, True)
+        await run_in_thread(rm, path, True)
     except FileNotFoundError:
         pass

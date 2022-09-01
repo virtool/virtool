@@ -14,6 +14,7 @@ from pydantic import constr, conint, Field
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.samples import SampleSearchResult
+from virtool_core.utils import file_stats
 
 import virtool.analyses.db
 import virtool.caches.db
@@ -22,7 +23,6 @@ import virtool.samples.db
 import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
-import virtool.utils
 from virtool.analyses.db import PROJECTION
 from virtool.api.response import (
     InsufficientRights,
@@ -73,7 +73,7 @@ from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.db import AttachUserTransform
 from virtool.users.utils import Permission
-from virtool.utils import run_in_thread
+from virtool.utils import run_in_thread, base_processor
 
 logger = logging.getLogger("samples")
 
@@ -247,7 +247,7 @@ async def get_cache(req):
     if document is None:
         raise NotFound()
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(base_processor(document))
 
 
 @routes.jobs_api.patch("/samples/{sample_id}")
@@ -497,7 +497,7 @@ class AnalysesView(PydanticView):
         await recalculate_workflow_tags(db, sample_id)
 
         return json_response(
-            virtool.utils.base_processor(document),
+            base_processor(document),
             status=201,
             headers={"Location": f"/analyses/{analysis_id}"},
         )
@@ -770,9 +770,7 @@ async def finalize_cache(req):
         {"key": key}, {"$set": {"quality": data["quality"], "ready": True}}
     )
 
-    processed = virtool.utils.base_processor(document)
-
-    return json_response(processed)
+    return json_response(base_processor(document))
 
 
 @routes.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
@@ -803,9 +801,9 @@ async def download_reads(req: aiohttp.web.Request):
     if not os.path.isfile(file_path):
         raise NotFound()
 
-    file_stats = virtool.utils.file_stats(file_path)
+    stats = await run_in_thread(file_stats, file_path)
 
-    headers = {"Content-Length": file_stats["size"], "Content-Type": "application/gzip"}
+    headers = {"Content-Length": stats["size"], "Content-Type": "application/gzip"}
 
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
@@ -844,9 +842,9 @@ async def download_artifact(req: aiohttp.web.Request):
     if not os.path.isfile(file_path):
         raise NotFound()
 
-    file_stats = virtool.utils.file_stats(file_path)
+    stats = await run_in_thread(file_stats, file_path)
 
-    headers = {"Content-Length": file_stats["size"], "Content-Type": "application/gzip"}
+    headers = {"Content-Length": stats["size"], "Content-Type": "application/gzip"}
 
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
@@ -881,9 +879,9 @@ async def download_cache_reads(req):
     if not os.path.isfile(file_path):
         raise NotFound()
 
-    file_stats = virtool.utils.file_stats(file_path)
+    stats = await run_in_thread(file_stats, file_path)
 
-    headers = {"Content-Length": file_stats["size"], "Content-Type": "application/gzip"}
+    headers = {"Content-Length": stats["size"], "Content-Type": "application/gzip"}
 
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
@@ -925,8 +923,13 @@ async def download_cache_artifact(req):
     if not file_path.exists():
         raise NotFound()
 
-    file_stats = virtool.utils.file_stats(file_path)
+    stats = await run_in_thread(file_stats, file_path)
 
-    headers = {"Content-Length": file_stats["size"], "Content-Type": "application/gzip"}
-
-    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
+    return FileResponse(
+        file_path,
+        chunk_size=1024 * 1024,
+        headers={
+            "Content-Length": stats["size"],
+            "Content-Type": "application/gzip",
+        },
+    )

@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Type, Union
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.pg.base import Base
@@ -85,7 +86,9 @@ async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]
     return upload
 
 
-async def find(pg, user: str = None, upload_type: str = None, ready: bool = None) -> List[dict]:
+async def find(
+    pg, user: str = None, upload_type: str = None, ready: bool = None
+) -> List[dict]:
     """
     Retrieves a list of `Upload` documents in the `uploads` SQL table.
 
@@ -153,7 +156,7 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
 
     try:
         await run_in_thread(
-            virtool.utils.rm,
+            rm,
             req.app["config"].data_path / "files" / upload["name_on_disk"],
         )
     except FileNotFoundError:

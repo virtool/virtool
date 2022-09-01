@@ -4,6 +4,7 @@ from typing import Dict, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from virtool_core.utils import file_stats
 
 from virtool.history.db import patch_to_version
 from virtool.indexes.db import FILES
@@ -11,7 +12,7 @@ from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.utils import join_index_path
 from virtool.tasks.task import Task
 from virtool.types import App, Document
-from virtool.utils import compress_json_with_gzip, file_stats
+from virtool.utils import compress_json_with_gzip, run_in_thread
 
 
 class AddIndexFilesTask(Task):
@@ -50,7 +51,7 @@ class AddIndexFilesTask(Task):
                             name=path.name,
                             index=index_id,
                             type=get_index_file_type_from_name(path.name),
-                            size=file_stats(path)["size"],
+                            size=(await run_in_thread(file_stats, path))["size"],
                         )
                         for path in sorted(index_path.iterdir())
                         if path.name in FILES
@@ -86,25 +87,27 @@ class AddIndexJSONTask(Task):
                 ref_id, ["data_type", "organism", "targets"]
             )
 
-            json_string = json.dumps(
-                {
-                    "data_type": reference["data_type"],
-                    "organism": reference["organism"],
-                    "otus": index_data,
-                    "targets": reference.get("targets"),
-                }
+            await run_in_thread(
+                compress_json_with_gzip,
+                json.dumps(
+                    {
+                        "data_type": reference["data_type"],
+                        "organism": reference["organism"],
+                        "otus": index_data,
+                        "targets": reference.get("targets"),
+                    }
+                ),
+                index_json_path,
             )
 
-            await self.run_in_thread(
-                compress_json_with_gzip, json_string, index_json_path
-            )
+            stats = await run_in_thread(file_stats, index_json_path)
 
             session.add(
                 IndexFile(
                     name="reference.json.gz",
                     index=index_id,
                     type="json",
-                    size=file_stats(index_json_path)["size"],
+                    size=stats["size"],
                 ),
             )
 

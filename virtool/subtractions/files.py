@@ -3,10 +3,11 @@ from typing import Dict, List, Union
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.utils import file_stats
 
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import check_subtraction_file_type
-from virtool.utils import file_stats
+from virtool.utils import run_in_thread
 
 
 async def create_subtraction_file(
@@ -57,7 +58,7 @@ async def create_subtraction_files(
                 name=filename,
                 subtraction=subtraction_id,
                 type=check_subtraction_file_type(filename),
-                size=file_stats(path / filename)["size"],
+                size=(await run_in_thread(file_stats, path / filename))["size"],
             )
         )
 
