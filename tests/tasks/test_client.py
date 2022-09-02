@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.client import TasksClient
 from virtool.tasks.models import Task
+from virtool.tasks.data import TasksData
 
 
 async def test_client(loop, snapshot, pg, redis: Redis, static_time):
@@ -14,8 +15,8 @@ async def test_client(loop, snapshot, pg, redis: Redis, static_time):
 
     """
     (channel,) = await redis.subscribe("channel:tasks")
-
-    tasks_client = TasksClient(redis, pg)
+    tasks_data = TasksData(pg)
+    tasks_client = TasksClient(redis, tasks_data)
 
     await tasks_client.add(AddSubtractionFilesTask)
 

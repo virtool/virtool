@@ -32,6 +32,7 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmData
+from virtool.tasks.data import TasksData
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
     AddIndexFilesTask,
@@ -70,6 +71,7 @@ from virtool.users.data import UsersData
 from virtool.utils import ensure_data_dir, random_alphanumeric
 from virtool.uploads.data import UploadsData
 from virtool.version import determine_server_version
+from virtool.data.utils import get_data_from_app
 
 logger = logging.getLogger("startup")
 
@@ -142,6 +144,7 @@ async def startup_data(app: App):
         SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
         UploadsData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
+        TasksData(app["pg"])
     )
 
 
@@ -403,12 +406,15 @@ async def startup_task_runner(app: Application):
     scheduler = get_scheduler_from_app(app)
     (channel,) = await app["redis"].subscribe("channel:tasks")
 
-    app["tasks"] = TasksClient(app["redis"], app["pg"])
+    app["tasks"] = TasksClient(app["redis"], None)
 
     await scheduler.spawn(TaskRunner(channel, app).run())
 
 
 async def startup_tasks(app: Application):
+
+    app["tasks"].tasks_data = get_data_from_app(app).tasks
+
     if app["config"].no_check_db:
         return logger.info("Skipping subtraction FASTA files checks")
 

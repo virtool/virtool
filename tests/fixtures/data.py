@@ -18,6 +18,8 @@ from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.client import TasksClient
 from virtool.users.data import UsersData
 from virtool.uploads.data import UploadsData
+from virtool.tasks.data import TasksData
+
 
 
 @pytest.fixture
@@ -38,4 +40,5 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, tasks: TasksClient):
         SubtractionsData(base_url, config, dbi, pg),
         UploadsData(config, dbi, pg),
         UsersData(dbi, pg),
+        TasksData(pg)
     )

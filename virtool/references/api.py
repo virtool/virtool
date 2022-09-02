@@ -330,7 +330,7 @@ async def create(req):
 
         task = await req.app["tasks"].add(ImportReferenceTask, context=context)
 
-        document["task"] = {"id": task["id"]}
+        document["task"] = {"id": task.id}
 
     elif remote_from:
         try:

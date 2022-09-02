@@ -3,16 +3,15 @@ from asyncio import CancelledError
 from typing import Type
 
 from aioredis import Redis
-from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.tasks.pg import register
 from virtool.tasks.task import Task
+from virtool.tasks.data import TasksData
 
 
 class TasksClient:
-    def __init__(self, redis: Redis, pg: AsyncEngine):
+    def __init__(self, redis: Redis, tasks_data: TasksData):
         self._redis = redis
-        self.pg = pg
+        self.tasks_data = tasks_data
 
     async def add(self, task_class: Type[Task], context: dict = None):
         """
@@ -24,10 +23,10 @@ class TasksClient:
 
         """
         try:
-            row = await register(self.pg, task_class, context=context)
-            await self._redis.publish("channel:tasks", row["id"])
+            registered_task = await self.tasks_data.register(task_class, context=context)
+            await self._redis.publish("channel:tasks", registered_task.id)
 
-            return row
+            return registered_task
         except CancelledError:
             pass
 
@@ -47,7 +46,7 @@ class TasksClient:
         """
         try:
             while True:
-                row = await register(self.pg, task_class, context=context)
+                row = await self.tasks_data.register(task_class, context=context)
 
                 await self._redis.publish("channel:tasks", row["id"])
                 await asyncio.sleep(interval)

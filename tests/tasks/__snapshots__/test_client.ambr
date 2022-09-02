@@ -9,7 +9,7 @@
     'file_size': None,
     'id': 1,
     'progress': 0,
-    'step': None,
+    'step': 'add_subtraction_files',
     'type': 'add_subtraction_files',
   }
 ---

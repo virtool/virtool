@@ -4,9 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.tasks.models
-import virtool.tasks.pg
 from virtool.utils import get_temp_dir, run_in_thread
-
+from virtool.data.utils import get_data_from_app
+from virtool_core.models.task import Task as TaskModel
 logger = getLogger("task")
 
 
@@ -18,6 +18,7 @@ class Task:
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]
+        self.tasks_data = get_data_from_app(app).tasks
         self.run_in_thread = run_in_thread
         self.id = task_id
         self.step = None
@@ -32,8 +33,8 @@ class Task:
         return f"<{type(self).__name__} id={self.id} step={self.step.__name__}>"
 
     async def init_db(self):
-        self.document = await virtool.tasks.pg.get(self.pg, self.id)
-        self.context = self.document["context"]
+        self.document = await get_data_from_app(self.app).tasks.get(self.id)
+        self.context = self.document.context
 
     async def run(self):
         await self.init_db()
@@ -44,7 +45,7 @@ class Task:
 
             self.step = func
 
-            await virtool.tasks.pg.update(self.pg, self.id, step=self.step.__name__)
+            await get_data_from_app(self.app).tasks.update(self.id, step=self.step.__name__)
 
             logger.info(f"Starting task step '{self.task_type}.{func.__name__}'")
 
@@ -55,7 +56,7 @@ class Task:
                 await self.error(str(err))
 
         if not self.errored:
-            await virtool.tasks.pg.complete(self.pg, self.id)
+            await get_data_from_app(self.app).tasks.complete(self.id)
             self.temp_dir.cleanup()
 
     async def update_context(self, update: dict) -> dict:
@@ -74,8 +75,8 @@ class Task:
             for key, value in update.items():
                 task.context[key] = value
 
-            self.document = task.to_dict()
-            self.context = self.document["context"]
+            self.document = TaskModel(**task.to_dict())
+            self.context = self.document.context
             await session.commit()
 
         return self.context

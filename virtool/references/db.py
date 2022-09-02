@@ -17,14 +17,14 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.settings import Settings
 
-import virtool.mongo.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
-import virtool.tasks.pg
+import virtool.mongo.utils
 import virtool.utils
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.utils import get_data_from_app
 from virtool.http.utils import download_file
+from virtool.mongo.transforms import apply_transforms
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
@@ -698,14 +698,13 @@ async def create_remote(
 async def download_and_parse_release(
     app, url: str, task_id: int, progress_handler: callable
 ):
-    pg = app["pg"]
 
     with virtool.utils.get_temp_dir() as tempdir:
         download_path = Path(tempdir) / "reference.tar.gz"
 
         await download_file(app, url, download_path, progress_handler)
 
-        await virtool.tasks.pg.update(pg, task_id, step="unpack")
+        await get_data_from_app(app).tasks.pg.update(task_id, step="unpack")
 
         return await run_in_thread(load_reference_file, download_path)
 

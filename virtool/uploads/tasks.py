@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.tasks.pg
 import virtool.tasks.task
+from virtool.data.utils import get_data_from_app
 from virtool.types import App
 from virtool.uploads.models import Upload
 
@@ -46,6 +46,6 @@ class MigrateFilesTask(virtool.tasks.task.Task):
 
                     await self.db.files.delete_one({"_id": document["_id"]})
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, step="transform_documents_to_rows"
+        await get_data_from_app(self.app).tasks.update(
+            self.id, step="transform_documents_to_rows"
         )
