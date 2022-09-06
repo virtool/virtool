@@ -11,6 +11,7 @@ from virtool.otus.data import OTUData
 from virtool.samples.data import SamplesData
 from virtool.users.data import UsersData
 from virtool.settings.data import SettingsData
+from virtool.subtractions.data import SubtractionsData
 
 
 @dataclass
@@ -32,8 +33,10 @@ class DataLayer:
     jobs: JobsData
     otus: OTUData
     samples: SamplesData
+    subtractions: SubtractionsData
     users: UsersData
 
     def __post_init__(self):
         self.hmms.bind_layer(self)
         self.samples.bind_layer(self)
+        self.subtractions.bind_layer(self)

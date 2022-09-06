@@ -23,7 +23,7 @@ from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
-from virtool.dev.fake import create_fake_data_path, populate
+from virtool.dev.fake import create_fake_data_path
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
@@ -40,7 +40,6 @@ from virtool.indexes.tasks import (
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
-from virtool.settings.data import SettingsData
 from virtool.mongo.core import DB
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
@@ -56,6 +55,8 @@ from virtool.routes import setup_routes
 from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
+from virtool.settings.data import SettingsData
+from virtool.subtractions.data import SubtractionsData
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
@@ -137,6 +138,7 @@ async def startup_data(app: App):
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
         SamplesData(app["config"], app["db"], app["pg"]),
+        SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
     )
 
@@ -199,7 +201,6 @@ async def startup_executors(app: Application):
 async def startup_fake(app: Application):
     if app["config"].fake:
         app["fake"] = FakerWrapper()
-        await populate(app)
 
 
 async def startup_fake_config(app: App):
@@ -415,6 +416,7 @@ async def startup_tasks(app: Application):
     subtractions_without_fasta = await check_subtraction_fasta_files(
         app["db"], app["config"]
     )
+
     for subtraction in subtractions_without_fasta:
         await app["tasks"].add(
             WriteSubtractionFASTATask, context={"subtraction": subtraction}
