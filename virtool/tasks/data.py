@@ -16,7 +16,6 @@ class TasksData:
         """
         Get a list of all tasks.
 
-        :param pg: an AsyncEngine object
         :return: a list of task records
 
         """
@@ -31,7 +30,6 @@ class TasksData:
         """
         Get the task corresponding with passed "task_id".
 
-        :param pg: an AsyncEngine object
         :param task_id: ths ID of the task
         :return: a task record
 
@@ -46,9 +44,8 @@ class TasksData:
 
     async def register(self, task_class, context: dict = None) -> TaskModel:
         """
-        Create a new task record and insert it into SQL databse.
+        Create a new task record and store it.
 
-        :param pg: an AsyncEngine object
         :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
         :param context: A dict containing data used by the task
 
@@ -81,9 +78,8 @@ class TasksData:
             error: str = None,
     ) -> TaskModel:
         """
-        Update a task record with given `task_id`.
+        Update a task record with given `task_id`
 
-        :param pg: an AsyncEngine object
         :param task_id: ID of the task
         :param count: a counter that can be used to calculate progress
         :param progress: task progress for the current step
@@ -124,7 +120,6 @@ class TasksData:
 
         Set complete to True and progress to 100
 
-        :param pg: an AsyncEngine object
         :param task_id: ID of the task
 
         """
@@ -139,7 +134,6 @@ class TasksData:
         """
         Delete a task record.
 
-        :param pg: an AsyncEngine object
         :param task_id: ID of the task
 
         """
