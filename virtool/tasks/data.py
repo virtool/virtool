@@ -2,7 +2,7 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.task import Task as Task
+from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
