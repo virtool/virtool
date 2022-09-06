@@ -36,7 +36,7 @@ class CompressSamplesTask(Task):
             await tracker.add(1)
 
             logger.info(
-                f"Compressed legacy sample {sample['_id']} ({tracker.progress}%)"
+                "Compressed legacy sample %s (%s%),", sample['_id'], tracker.progress
             )
 
         await get_data_from_app(self.app).tasks.update(self.id, step="compress_samples")
@@ -75,7 +75,7 @@ class MoveSampleFilesTask(Task):
             await tracker.add(1)
 
             logger.info(
-                f"Moved files in sample {sample['_id']} to SQL ({tracker.progress}%)"
+                "Moved files in sample %s to SQL (%s%)", sample['_id'], tracker.progress
             )
 
         await get_data_from_app(self.app).tasks.update(self.id, step="move_sample_files")

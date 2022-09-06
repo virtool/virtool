@@ -1,11 +1,12 @@
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.task import Task as TaskModel
 
 import virtool.utils
-from virtool.tasks.models import Task
-from virtool_core.models.task import Task as TaskModel
 from virtool.data.errors import ResourceNotFoundError
+from virtool.tasks.models import Task
+
 
 class TasksData:
     def __init__(self,  pg: AsyncEngine):
@@ -42,7 +43,6 @@ class TasksData:
             raise ResourceNotFoundError
 
         return TaskModel(**result.to_dict())
-
 
 
     async def register(self, task_class, context: dict = None) -> TaskModel:

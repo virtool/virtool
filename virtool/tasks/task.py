@@ -47,12 +47,12 @@ class Task:
 
             await get_data_from_app(self.app).tasks.update(self.id, step=self.step.__name__)
 
-            logger.info(f"Starting task step '{self.task_type}.{func.__name__}'")
+            logger.info("Starting task step '%s.%s'", self.task_type, func.__name__ )
 
             try:
                 await func()
             except Exception as err:
-                logger.exception(f"Encountered error in {self}")
+                logger.exception("Encountered error in %s", self)
                 await self.error(str(err))
 
         if not self.errored:
@@ -123,7 +123,7 @@ class Task:
 
         await self.cleanup()
 
-        logger.info(f"Task {self.id} encountered error '{error}'")
+        logger.info("Task %s encountered error '%s'", self.id, error)
 
 
 class ProgressTracker:

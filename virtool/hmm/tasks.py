@@ -60,7 +60,7 @@ class HMMInstallTask(Task):
         try:
             await download_file(self.app, release["download_url"], path, tracker.add)
         except Exception as err:
-            logger.warning(f"Request for HMM release encountered exception: {err}")
+            logger.warning("Request for HMM release encountered exception: %s", err)
             await self.error("Could not download HMM data.")
 
     async def decompress(self):
@@ -105,7 +105,7 @@ class HMMInstallTask(Task):
             await self.db.hmm.insert_one(dict(annotation, hidden=False))
             await tracker.add(1)
 
-        logger.debug(f"Inserted {len(annotations)} annotations")
+        logger.debug("Inserted %s annotations", len(annotations))
 
         try:
             release_id = int(release["id"])

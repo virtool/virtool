@@ -32,7 +32,6 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmData
-from virtool.tasks.data import TasksData
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
     AddIndexFilesTask,
@@ -64,6 +63,7 @@ from virtool.subtractions.tasks import (
     WriteSubtractionFASTATask,
 )
 from virtool.tasks.client import TasksClient
+from virtool.tasks.data import TasksData
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
@@ -71,7 +71,6 @@ from virtool.users.data import UsersData
 from virtool.utils import ensure_data_dir, random_alphanumeric
 from virtool.uploads.data import UploadsData
 from virtool.version import determine_server_version
-from virtool.data.utils import get_data_from_app
 
 logger = logging.getLogger("startup")
 
