@@ -1,32 +1,29 @@
+from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.task import Task as TaskModel
+from virtool_core.models.task import Task as Task
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
-from virtool.tasks.models import Task
+from virtool.tasks.models import Task as SQLTask
 
 
 class TasksData:
     def __init__(self,  pg: AsyncEngine):
         self._pg = pg
 
-    async def find(self) -> list:
+    async def find(self) -> List[Task]:
         """
         Get a list of all tasks.
 
         :return: a list of task records
 
         """
-        documents = []
         async with AsyncSession(self._pg) as session:
-            tasks = (await session.execute(select(Task))).scalars().all()
-            for task in tasks:
-                documents.append(TaskModel(**task.to_dict()))
-        return documents
+            return [Task(**task.to_dict()) for task in (await session.execute(select(SQLTask))).scalars().all()]
 
-    async def get(self, task_id: int) -> TaskModel:
+    async def get(self, task_id: int) -> Task:
         """
         Get the task corresponding with passed "task_id".
 
@@ -35,14 +32,14 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = (await session.execute(select(Task).filter_by(id=task_id))).scalar()
+            result = (await session.execute(select(SQLTask).filter_by(id=task_id))).scalar()
 
         if result is None:
             raise ResourceNotFoundError
 
-        return TaskModel(**result.to_dict())
+        return Task(**result.to_dict())
 
-    async def register(self, task_class, context: dict = None) -> TaskModel:
+    async def register(self, task_class, context: dict = None) -> Task:
         """
         Create a new task record and store it.
 
@@ -52,7 +49,7 @@ class TasksData:
         :return: the new task record
 
         """
-        task = Task(
+        task = SQLTask(
             complete=False,
             context=context or {},
             step=task_class.task_type,
@@ -61,12 +58,13 @@ class TasksData:
             progress=0,
             type=task_class.task_type,
         )
+
         async with AsyncSession(self._pg) as session:
             session.add(task)
             await session.flush()
             document = task.to_dict()
             await session.commit()
-        return TaskModel(**document)
+        return Task(**document)
 
     async def update(
             self,
@@ -76,7 +74,7 @@ class TasksData:
             step: str = None,
             context_update: dict = None,
             error: str = None,
-    ) -> TaskModel:
+    ) -> Task:
         """
         Update a task record with given `task_id`
 
@@ -91,7 +89,7 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(Task).filter_by(id=task_id))
+            result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
 
             if count is not None:
@@ -109,7 +107,7 @@ class TasksData:
             if context_update:
                 for key, value in context_update.items():
                     task.context[key] = value
-            task = TaskModel(**task.to_dict())
+            task = Task(**task.to_dict())
             await session.commit()
 
         return task
@@ -124,7 +122,7 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(Task).filter_by(id=task_id))
+            result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
             task.complete = True
             task.progress = 100
@@ -138,7 +136,7 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(Task).filter_by(id=task_id))
+            result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
 
             session.delete(task)

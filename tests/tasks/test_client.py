@@ -15,8 +15,7 @@ async def test_client(loop, snapshot, pg, redis: Redis, static_time):
 
     """
     (channel,) = await redis.subscribe("channel:tasks")
-    tasks_data = TasksData(pg)
-    tasks_client = TasksClient(redis, tasks_data)
+    tasks_client = TasksClient(redis, TasksData(pg))
 
     await tasks_client.add(AddSubtractionFilesTask)
 
