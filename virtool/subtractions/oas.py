@@ -1,4 +1,5 @@
 from typing import Optional
+
 from pydantic import BaseModel, Field, constr
 from virtool_core.models.subtraction import (
     SubtractionMinimal,
