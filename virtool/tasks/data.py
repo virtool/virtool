@@ -44,7 +44,6 @@ class TasksData:
 
         return TaskModel(**result.to_dict())
 
-
     async def register(self, task_class, context: dict = None) -> TaskModel:
         """
         Create a new task record and insert it into SQL databse.

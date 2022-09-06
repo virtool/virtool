@@ -47,7 +47,7 @@ class Task:
 
             await get_data_from_app(self.app).tasks.update(self.id, step=self.step.__name__)
 
-            logger.info("Starting task step '%s.%s'", self.task_type, func.__name__ )
+            logger.info("Starting task step '%s.%s'", self.task_type, func.__name__)
 
             try:
                 await func()
