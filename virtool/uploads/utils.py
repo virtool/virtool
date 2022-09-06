@@ -81,14 +81,14 @@ async def naive_writer(
     return size
 
 
-async def get_upload_path(config: Config, name_on_disk: str) -> str:
+async def get_upload_path(config: Config, name_on_disk: str) -> pathlib.Path:
     """
     Get the local upload path and return it.
     """
     upload_path = config.data_path / "files" / name_on_disk
 
     # check if the file has been manually removed by the user
-    if not upload_path.exists():
+    if not await run_in_thread(upload_path.exists):
         raise ResourceNotFoundError("Uploaded file not found at expected location")
 
     return upload_path

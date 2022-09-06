@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from virtool_core.models.upload import UploadMinimal, UploadSearchResult
+from virtool_core.models.upload import UploadSearchResult, Upload
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
@@ -13,7 +13,7 @@ from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
-from virtool.uploads.models import Upload
+from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread, rm
 
@@ -33,20 +33,20 @@ class UploadsData(DataLayerPiece):
         Find and filter uploads.
         """
 
-        filters = [Upload.removed == False]
+        filters = [SQLUpload.removed == False]
         uploads = []
 
         async with AsyncSession(self._pg) as session:
             if user:
-                filters.append(Upload.user == user)
+                filters.append(SQLUpload.user == user)
 
             if upload_type:
-                filters.append(Upload.type == upload_type)
+                filters.append(SQLUpload.type == upload_type)
 
             if ready is not None:
-                filters.append(Upload.ready == ready)
+                filters.append(SQLUpload.ready == ready)
 
-            results = await session.execute(select(Upload).filter(*filters))
+            results = await session.execute(select(SQLUpload).filter(*filters))
 
         for result in results.unique().scalars().all():
             uploads.append(result.to_dict())
@@ -67,7 +67,7 @@ class UploadsData(DataLayerPiece):
         """
 
         async with AsyncSession(self._pg) as session:
-            upload = Upload(
+            upload = SQLUpload(
                 created_at=virtool.utils.timestamp(),
                 name=name,
                 ready=False,
@@ -89,7 +89,7 @@ class UploadsData(DataLayerPiece):
 
         return Upload(**upload)
 
-    async def get(self, upload_id: int) -> UploadMinimal:
+    async def get(self, upload_id: int) -> Upload:
         """
         Get a single upload by its ID.
 
@@ -99,18 +99,18 @@ class UploadsData(DataLayerPiece):
         async with AsyncSession(self._pg) as session:
             upload = (
                 await session.execute(
-                    select(Upload).filter_by(id=upload_id, removed=False)
+                    select(SQLUpload).filter_by(id=upload_id, removed=False)
                 )
             ).scalar()
 
             if not upload:
                 raise ResourceNotFoundError
 
-        return UploadMinimal(
+        return Upload(
             **await apply_transforms(upload.to_dict(), [AttachUserTransform(self._db)])
         )
 
-    async def delete(self, upload_id: int) -> UploadMinimal:
+    async def delete(self, upload_id: int) -> Upload:
         """
         Delete an upload by its id.
 
@@ -120,7 +120,7 @@ class UploadsData(DataLayerPiece):
 
         async with AsyncSession(self._pg) as session:
             upload = (
-                await session.execute(select(Upload).where(Upload.id == upload_id))
+                await session.execute(select(SQLUpload).where(SQLUpload.id == upload_id))
             ).scalar()
 
             if not upload or upload.removed:
@@ -134,7 +134,7 @@ class UploadsData(DataLayerPiece):
 
             await session.commit()
 
-        upload = UploadMinimal(
+        upload = Upload(
             **await apply_transforms(upload, [AttachUserTransform(self._db)])
         )
 
@@ -147,7 +147,7 @@ class UploadsData(DataLayerPiece):
 
         return upload
 
-    async def finalize(self, size: int, id_: int) -> Optional[UploadMinimal]:
+    async def finalize(self, size: int, id_: int) -> Optional[Upload]:
         """
         Finalize an upload by marking it as ready.
 
@@ -155,9 +155,9 @@ class UploadsData(DataLayerPiece):
         :param id_: id of the upload
         :return: The upload
         """
-        upload = await finalize(self._pg, size, id_, Upload)
+        upload = await finalize(self._pg, size, id_, SQLUpload)
 
-        return UploadMinimal(
+        return Upload(
             **await apply_transforms(upload, [AttachUserTransform(self._db)])
         )
 
@@ -168,13 +168,13 @@ class UploadsData(DataLayerPiece):
         :param upload_ids: List of upload ids
         """
         if isinstance(upload_ids, int):
-            query = Upload.id == upload_ids
+            query = SQLUpload.id == upload_ids
         else:
-            query = Upload.id.in_(upload_ids)
+            query = SQLUpload.id.in_(upload_ids)
 
         async with AsyncSession(self._pg) as session:
             await session.execute(
-                update(Upload)
+                update(SQLUpload)
                 .where(query)
                 .values(reserved=False)
                 .execution_options(synchronize_session="fetch")
@@ -189,13 +189,13 @@ class UploadsData(DataLayerPiece):
         :param upload_ids: List of upload ids
         """
         if isinstance(upload_ids, int):
-            query = Upload.id == upload_ids
+            query = SQLUpload.id == upload_ids
         else:
-            query = Upload.id.in_(upload_ids)
+            query = SQLUpload.id.in_(upload_ids)
 
         async with AsyncSession(self._pg) as session:
             await session.execute(
-                update(Upload)
+                update(SQLUpload)
                 .where(query)
                 .values(reserved=True)
                 .execution_options(synchronize_session="fetch")
