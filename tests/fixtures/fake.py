@@ -1,6 +1,5 @@
 import datetime
 from abc import ABC, abstractmethod
-from datetime import datetime
 
 import arrow
 import pytest
@@ -121,7 +120,7 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
             upload = Upload(
                 id=1,
                 created_at=self._faker.fake.date_time_between(
-                    datetime(2015, 10, 6), datetime(2050, 1, 1)
+                    datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
                 ),
                 name="palm.fa.gz",
                 name_on_disk="1-palm.fa.gz",
@@ -132,7 +131,7 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
                 type="subtraction",
                 user=user["_id"],
                 uploaded_at=self._faker.fake.date_time_between(
-                    datetime(2015, 10, 6), datetime(2050, 1, 1)
+                    datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
                 ),
             )
 
@@ -187,7 +186,7 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
             "upload": 1,
             "user": {"id": user["_id"]},
             "created_at": self._faker.fake.date_time_between(
-                datetime(2015, 10, 6), datetime(2050, 1, 1)
+                datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
             ),
             **finalization_update,
         }
