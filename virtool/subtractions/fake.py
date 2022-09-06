@@ -3,10 +3,10 @@ from shutil import copytree
 from typing import Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from virtool.example import example_path
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
-from virtool.subtractions.db import finalize
 from virtool.types import App
 from virtool.uploads.models import Upload
 
@@ -40,9 +40,11 @@ async def create_fake_finalized_subtraction(
             "name": "subtraction_1",
             "nickname": "",
             "deleted": False,
-            "ready": True,
             "file": {"id": upload_id, "name": upload_name},
             "user": {"id": user_id},
+            "gc": {"a": 0.25, "t": 0.25, "g": 0.25, "c": 0.25},
+            "ready": True,
+            "count": 100,
         }
     )
 
@@ -57,11 +59,3 @@ async def create_fake_finalized_subtraction(
     copytree(subtractions_example_path, subtractions_path, dirs_exist_ok=True)
 
     await create_subtraction_files(pg, document["_id"], FILES, subtractions_path)
-
-    return await finalize(
-        db,
-        pg,
-        subtraction_id,
-        gc={"a": 0.25, "t": 0.25, "g": 0.25, "c": 0.25},
-        count=100,
-    )

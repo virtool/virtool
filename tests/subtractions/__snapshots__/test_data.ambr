@@ -1,0 +1,56 @@
+# name: test_finalize[uvloop][db]
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 100,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'deleted': False,
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'malus.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    },
+    'has_file': True,
+    'name': 'Malus',
+    'nickname': 'Apple',
+    'ready': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_finalize[uvloop][obj]
+  <class 'dict'> {
+    'count': 100,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'malus.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    },
+    'id': 'apple',
+    'linked_samples': <class 'list'> [
+    ],
+    'name': 'Malus',
+    'nickname': 'Apple',
+    'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---

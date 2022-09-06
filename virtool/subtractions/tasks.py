@@ -9,7 +9,6 @@ import virtool.subtractions.utils
 import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.utils
-
 from virtool.subtractions.db import ADD_SUBTRACTION_FILES_QUERY
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
@@ -47,9 +46,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
             path = virtool.subtractions.utils.join_subtraction_path(
                 self.app["config"], subtraction["_id"]
             )
-            await run_in_thread(
-                virtool.subtractions.utils.rename_bowtie_files, path
-            )
+            await run_in_thread(virtool.subtractions.utils.rename_bowtie_files, path)
 
     async def store_subtraction_files(self):
         """
