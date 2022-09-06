@@ -181,17 +181,8 @@ def start_server(
 @cli.command("jobsAPI")
 @click.option("--host", default="localhost", help="The host to listen on", type=str)
 @click.option("--port", default=9950, help="The port to listen on", type=int)
-@click.option(
-    "--fake-path",
-    help=(
-        "Start the jobs API with fake data for integration testing. "
-        "The data will be loaded from any YAML files under this path."
-    ),
-    type=click.Path(exists=True, dir_okay=True),
-    default=None,
-)
 @click.pass_context
-def start_jobs_api(ctx, fake_path, port, host):
+def start_jobs_api(ctx, port, host):
     """Start a Virtool Jobs API server"""
     debug = ctx.obj["dev"] or ctx.obj["verbose"]
     configure_logs(debug)
@@ -201,8 +192,6 @@ def start_jobs_api(ctx, fake_path, port, host):
     config = Config(
         **ctx.obj,
         host=host,
-        fake=fake_path is not None,
-        fake_path=fake_path,
         port=port,
     )
 
