@@ -4,23 +4,21 @@ Work with subtractions in the database.
 """
 import asyncio
 import glob
-import shutil
 from typing import Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.subtraction import Subtraction
 
-import virtool.mongo.utils
 import virtool.utils
 from virtool.config.cls import Config
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
-from virtool.types import App, Document
+from virtool.types import Document
 from virtool.uploads.db import AttachUploadTransform
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread, base_processor
+from virtool.utils import base_processor
 
 PROJECTION = [
     "_id",
@@ -136,23 +134,6 @@ async def check_subtraction_fasta_files(db, config: Config) -> list:
         )
 
     return subtractions_without_fasta
-
-
-async def delete(app: App, subtraction_id: str) -> int:
-    db = app["db"]
-    config = app["config"]
-
-    update_result = await db.subtraction.update_one(
-        {"_id": subtraction_id, "deleted": False}, {"$set": {"deleted": True}}
-    )
-
-    await unlink_default_subtractions(db, subtraction_id)
-
-    if update_result.modified_count:
-        path = join_subtraction_path(config, subtraction_id)
-        await run_in_thread(shutil.rmtree, path, True)
-
-    return update_result.modified_count
 
 
 async def get_linked_samples(db, subtraction_id: str) -> List[dict]:

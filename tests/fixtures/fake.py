@@ -2,15 +2,15 @@ import datetime
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-import pytest
 import arrow
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+from virtool_core.models.enums import Permission
 
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
 from virtool.subtractions.models import SubtractionFile
 from virtool.types import Document
-from virtool_core.models.enums import Permission
 from virtool.uploads.models import Upload
 
 

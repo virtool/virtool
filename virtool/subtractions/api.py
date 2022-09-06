@@ -36,8 +36,8 @@ class SubtractionsView(PydanticView):
         """
         Find subtractions.
 
-        Finds subtractions by their `name` or `nickname` by providing a `term` as a query
-        parameter. Partial matches are supported.
+        Finds subtractions by their `name` or `nickname` by providing a `term` as a
+        query parameter. Partial matches are supported.
 
         Supports pagination unless the `short` query parameter is set. In this case, an
         array of objects containing the `id` and `name` of every subtraction is
