@@ -23,7 +23,7 @@ from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
-from virtool.dev.fake import create_fake_data_path, populate
+from virtool.dev.fake import create_fake_data_path
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
@@ -199,7 +199,6 @@ async def startup_executors(app: Application):
 async def startup_fake(app: Application):
     if app["config"].fake:
         app["fake"] = FakerWrapper()
-        await populate(app)
 
 
 async def startup_fake_config(app: App):
