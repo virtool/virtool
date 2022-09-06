@@ -7,16 +7,20 @@ import glob
 import shutil
 from typing import Any, Dict, List, Optional
 
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.models.subtraction import Subtraction
 
 import virtool.mongo.utils
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.mongo.transforms import AbstractTransform
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import App, Document
-from virtool.utils import run_in_thread
+from virtool.uploads.db import AttachUploadTransform
+from virtool.users.db import AttachUserTransform
+from virtool.utils import run_in_thread, base_processor
 
 PROJECTION = [
     "_id",
@@ -90,6 +94,23 @@ async def attach_computed(
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 
 
+async def fetch_complete_subtraction(
+    mongo, pg: AsyncEngine, base_url: str, subtraction_id: str
+) -> Optional[Subtraction]:
+    document = await mongo.subtraction.find_one({"_id": subtraction_id})
+
+    if document:
+        document = await attach_computed(mongo, pg, base_url, document)
+
+        return await apply_transforms(
+            base_processor(document),
+            [
+                AttachUserTransform(mongo, ignore_errors=True),
+                AttachUploadTransform(pg),
+            ],
+        )
+
+
 async def check_subtraction_fasta_files(db, config: Config) -> list:
     """
     Check subtraction directories for files and set 'has_file' to boolean based on
@@ -117,45 +138,6 @@ async def check_subtraction_fasta_files(db, config: Config) -> list:
     return subtractions_without_fasta
 
 
-async def create(
-    db,
-    user_id: str,
-    filename: str,
-    name: str,
-    nickname: str,
-    upload_id: int,
-    subtraction_id: Optional[str] = None,
-) -> dict:
-    """
-    Create a new subtraction document.
-
-    :param db: the application database client
-    :param user_id: the id of the current user
-    :param filename: the name of the `subtraction_file`
-    :param name: the name of the subtraction
-    :param nickname: the nickname of the subtraction
-    :param upload_id: the id of the `subtraction_file`
-    :param subtraction_id: the id of the subtraction
-
-    :return: the new document
-
-    """
-    document = {
-        "_id": subtraction_id or await virtool.mongo.utils.get_new_id(db.subtraction),
-        "name": name,
-        "nickname": nickname,
-        "deleted": False,
-        "ready": False,
-        "file": {"id": upload_id, "name": filename},
-        "user": {"id": user_id},
-        "created_at": virtool.utils.timestamp(),
-    }
-
-    await db.subtraction.insert_one(document)
-
-    return document
-
-
 async def delete(app: App, subtraction_id: str) -> int:
     db = app["db"]
     config = app["config"]
@@ -173,38 +155,6 @@ async def delete(app: App, subtraction_id: str) -> int:
     return update_result.modified_count
 
 
-async def finalize(
-    db,
-    pg: AsyncEngine,
-    subtraction_id: str,
-    gc: Dict[str, float],
-    count: int,
-) -> dict:
-    """
-    Finalize a subtraction by setting `ready` to True and updating the `gc` and `files`
-    fields.
-
-    :param db: the application database client
-    :param pg: the PostgreSQL AsyncEngine object
-    :param subtraction_id: the id of the subtraction
-    :param gc: a dict contains gc data
-    :return: the updated subtraction document
-
-    """
-    updated_document = await db.subtraction.find_one_and_update(
-        {"_id": subtraction_id},
-        {
-            "$set": {
-                "gc": gc,
-                "ready": True,
-                "count": count,
-            }
-        },
-    )
-
-    return updated_document
-
-
 async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
     """
     Find all samples containing given 'subtraction_id' in 'subtractions' field.
@@ -218,7 +168,18 @@ async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
     return [virtool.utils.base_processor(d) async for d in cursor]
 
 
-async def unlink_default_subtractions(db, subtraction_id: str):
+async def unlink_default_subtractions(
+    db, subtraction_id: str, session: AsyncIOMotorClientSession
+):
+    """
+    Remove a subtraction as a default subtraction for samples.
+
+    :param db: the application mongo object
+    :param subtraction_id: the id of the subtraction to remove
+    :param session: a motor session to use
+    """
     await db.samples.update_many(
-        {"subtractions": subtraction_id}, {"$pull": {"subtractions": subtraction_id}}
+        {"subtractions": subtraction_id},
+        {"$pull": {"subtractions": subtraction_id}},
+        session=session,
     )

@@ -1,6 +1,10 @@
 from typing import Optional
 from pydantic import BaseModel, Field, constr
-from virtool_core.models.subtraction import SubtractionMinimal, Subtraction
+from virtool_core.models.subtraction import (
+    SubtractionMinimal,
+    Subtraction,
+    NucleotideComposition,
+)
 
 
 class EditSubtractionSchema(BaseModel):
@@ -9,14 +13,13 @@ class EditSubtractionSchema(BaseModel):
     """
 
     name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
-        description="A unique name for the host (eg. " "Arabidopsis)"
+        description="A unique name for the host"
     )
     nickname: Optional[constr(strip_whitespace=True)] = Field(
-        description="A nickname of the host"
+        description="A nickname for the host"
     )
 
     class Config:
-
         schema_extra = {"example": {"name": "Arabidopsis", "nickname": "Thale cress"}}
 
 
@@ -60,6 +63,11 @@ class CreateSubtractionResponse(Subtraction):
                 },
             }
         }
+
+
+class FinalizeSubtractionRequest(BaseModel):
+    count: int
+    gc: NucleotideComposition
 
 
 class GetSubtractionResponse(SubtractionMinimal):

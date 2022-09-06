@@ -1,50 +1,41 @@
+import asyncio
 import os
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.subtraction import Subtraction
-
-from virtool.subtractions.models import SubtractionFile
 from virtool_core.models.enums import Permission
 
+from virtool.subtractions.models import SubtractionFile
+from virtool.uploads.models import Upload
 
-async def test_find(fake2, spawn_client, snapshot):
+
+async def test_find(fake2, spawn_client, snapshot, static_time):
     client = await spawn_client(authorize=True, administrator=True)
 
     user = await fake2.users.create()
 
-    document = {
-        "_id": "id",
-        "name": "test",
-        "deleted": False,
-        "ready": False,
-        "user": {"id": user.id},
-    }
-
-    await client.db.subtraction.insert_one(document)
+    await client.db.subtraction.insert_many(
+        [
+            {
+                "_id": f"id_{number}",
+                "created_at": static_time.datetime,
+                "file": {
+                    "id": 642,
+                    "name": f"Apis_mellifera.{number}.fa.gz",
+                },
+                "has_file": True,
+                "name": f"Test {number}",
+                "nickname": "",
+                "deleted": False,
+                "ready": True,
+                "user": {"id": user.id},
+            }
+            for number in range(0, 5)
+        ]
+    )
 
     resp = await client.get("/subtractions")
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-
-
-async def test_get(fake2, spawn_job_client, snapshot):
-    client = await spawn_job_client(authorize=True)
-
-    user = await fake2.users.create()
-
-    subtraction = {
-        "_id": "foo",
-        "name": "Foo",
-        "nickname": "Foo Subtraction",
-        "user": {"id": user.id},
-    }
-
-    await client.db.subtraction.insert_one(subtraction)
-
-    resp = await client.get("/subtractions/foo")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -59,9 +50,16 @@ async def test_get(fake, spawn_client):
 
     assert resp.status == 200
 
-    print(await resp.json())
 
-    assert 0
+async def test_get_from_job(fake, spawn_job_client, snapshot):
+    client = await spawn_job_client(authorize=True)
+
+    subtraction = await fake.subtractions.insert()
+
+    resp = await client.get(f"/subtractions/{subtraction['_id']}")
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize(
@@ -74,10 +72,27 @@ async def test_get(fake, spawn_client):
     ],
 )
 @pytest.mark.parametrize("has_user", [True, False])
-async def test_edit(data, has_user, mocker, snapshot, fake2, spawn_client):
-    mocker.patch("virtool.subtractions.db.get_linked_samples", make_mocked_coro(12))
+async def test_edit(data, fake2, has_user, mocker, snapshot, spawn_client, static_time):
+    mocker.patch(
+        "virtool.subtractions.db.get_linked_samples",
+        make_mocked_coro(
+            [{"id": "12", "name": "Sample 12"}, {"id": "22", "name": "Sample 22"}]
+        ),
+    )
 
-    document = {"_id": "foo", "name": "Foo", "nickname": "Foo Subtraction"}
+    document = {
+        "_id": "apple",
+        "count": 11,
+        "created_at": static_time.datetime,
+        "file": {
+            "id": 642,
+            "name": "Apis_mellifera.1.fa.gz",
+        },
+        "gc": {"a": 0.21, "t": 0.26, "g": 0.19, "c": 0.29, "n": 0.2},
+        "name": "Malus domestica",
+        "nickname": "Apple",
+        "ready": True,
+    }
 
     if has_user:
         user = await fake2.users.create()
@@ -89,7 +104,7 @@ async def test_edit(data, has_user, mocker, snapshot, fake2, spawn_client):
 
     await client.db.subtraction.insert_one(document)
 
-    resp = await client.patch("/subtractions/foo", data)
+    resp = await client.patch("/subtractions/apple", data)
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -97,7 +112,7 @@ async def test_edit(data, has_user, mocker, snapshot, fake2, spawn_client):
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_remove(exists, fake2, spawn_client, tmp_path, resp_is):
+async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
     client = await spawn_client(
         authorize=True, permissions=Permission.modify_subtraction
     )
@@ -169,12 +184,23 @@ async def test_upload(
 
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize_subtraction(
-    error, fake2, spawn_job_client, snapshot, resp_is, test_subtraction_files
+    error,
+    fake2,
+    spawn_job_client,
+    snapshot,
+    resp_is,
+    test_subtraction_files,
+    static_time,
 ):
     user = await fake2.users.create()
 
     subtraction = {
         "_id": "foo",
+        "created_at": static_time.datetime,
+        "file": {
+            "id": 642,
+            "name": "Apis_mellifera.1.fa.gz",
+        },
         "name": "Foo",
         "nickname": "Foo Subtraction",
         "user": {"id": user.id},
@@ -219,23 +245,34 @@ async def test_finalize_subtraction(
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, resp_is):
+async def test_job_remove(
+    exists, fake2, ready, tmp_path, spawn_job_client, snapshot, resp_is, static_time
+):
     client = await spawn_job_client(authorize=True)
     client.app["config"].data_path = tmp_path
 
-    if exists:
-        await client.db.subtraction.insert_one(
-            {
-                "_id": "foo",
-                "name": "Foo",
-                "nickname": "Foo Subtraction",
-                "deleted": False,
-                "ready": ready,
-            }
-        )
+    user = await fake2.users.create()
 
-        await client.db.samples.insert_one(
-            {"_id": "test", "name": "Test", "subtractions": ["foo"]}
+    if exists:
+        await asyncio.gather(
+            client.db.subtraction.insert_one(
+                {
+                    "_id": "foo",
+                    "created_at": static_time.datetime,
+                    "file": {
+                        "id": 642,
+                        "name": "Apis_mellifera.1.fa.gz",
+                    },
+                    "name": "Foo",
+                    "nickname": "Foo Subtraction",
+                    "deleted": False,
+                    "ready": ready,
+                    "user": {"id": user.id},
+                }
+            ),
+            client.db.samples.insert_one(
+                {"_id": "test", "name": "Test", "subtractions": ["foo"]}
+            ),
         )
 
     resp = await client.delete("/subtractions/foo")
@@ -306,12 +343,32 @@ async def test_download_subtraction_files(
     assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()
 
 
-async def test_create(spawn_client, mocker, snapshot):
-    upload = mocker.Mock()
-    upload.name = "test_upload"
+async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
+    user = await fake2.users.create()
+
+    async with AsyncSession(pg) as session:
+        upload = Upload(
+            created_at=static_time.datetime,
+            name="palm.fa.gz",
+            name_on_disk="1-palm.fa.gz",
+            ready=True,
+            removed=False,
+            reserved=False,
+            size=12345,
+            type="subtraction",
+            user=user.id,
+            uploaded_at=static_time.datetime,
+        )
+
+        session.add(upload)
+
+        await session.flush()
+
+        upload_id = upload.id
+
+        await session.commit()
 
     mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
-    mocker.patch("virtool.pg.utils.get_row_by_id", return_value=upload)
 
     client = await spawn_client(
         authorize=True,
@@ -319,7 +376,7 @@ async def test_create(spawn_client, mocker, snapshot):
         permissions=Permission.modify_subtraction.value,
     )
 
-    data = {"name": "Foobar", "nickname": "foo", "upload_id": 1234}
+    data = {"name": "Calamus", "nickname": "Rim Palm", "upload_id": upload_id}
 
     resp = await client.post("/subtractions", data)
 

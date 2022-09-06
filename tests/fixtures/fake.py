@@ -178,6 +178,8 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
 
         document = {
             "_id": subtraction_id,
+            "has_file": True,
+            "file": {"id": 1, "name": "fake.fa.gz"},
             "name": self._faker.fake.word(),
             "nickname": self._faker.fake.word(),
             "deleted": self._faker.boolean(),

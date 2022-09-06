@@ -1,6 +1,5 @@
 import asyncio
 import concurrent.futures
-import dataclasses
 import logging
 import signal
 import sys
@@ -41,7 +40,6 @@ from virtool.indexes.tasks import (
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
-from virtool.settings.data import SettingsData
 from virtool.mongo.core import DB
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
@@ -57,7 +55,7 @@ from virtool.routes import setup_routes
 from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
-from virtool.settings.db import ensure
+from virtool.settings.data import SettingsData
 from virtool.subtractions.data import SubtractionsData
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
@@ -140,11 +138,9 @@ async def startup_data(app: App):
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
         SamplesData(app["config"], app["db"], app["pg"]),
-        SubtractionsData(app["config"].base_url, app["db"], app["pg"]),
+        SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
     )
-
-    app["data"] = data
 
 
 async def startup_dispatcher(app: Application):
@@ -421,6 +417,7 @@ async def startup_tasks(app: Application):
     subtractions_without_fasta = await check_subtraction_fasta_files(
         app["db"], app["config"]
     )
+
     for subtraction in subtractions_without_fasta:
         await app["tasks"].add(
             WriteSubtractionFASTATask, context={"subtraction": subtraction}

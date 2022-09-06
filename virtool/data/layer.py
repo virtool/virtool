@@ -33,9 +33,10 @@ class DataLayer:
     jobs: JobsData
     otus: OTUData
     samples: SamplesData
-    users: UsersData
     subtractions: SubtractionsData
+    users: UsersData
 
     def __post_init__(self):
         self.hmms.bind_layer(self)
         self.samples.bind_layer(self)
+        self.subtractions.bind_layer(self)
