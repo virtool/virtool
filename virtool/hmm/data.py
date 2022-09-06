@@ -1,13 +1,12 @@
 import asyncio
 from pathlib import Path
 
-from aiohttp import ClientSession, ClientConnectorError
+from aiohttp import ClientSession
 from multidict import MultiDictProxy
 from virtool_core.models.hmm import (
     HMMSearchResult,
     HMM,
     HMMStatus,
-    HMMRelease,
     HMMInstalled,
 )
 from virtool_core.utils import rm, compress_file_with_gzip
@@ -17,12 +16,10 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.config.cls import Config
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceRemoteError,
     ResourceConflictError,
     ResourceError,
 )
 from virtool.data.piece import DataLayerPiece
-from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
     PROJECTION,
@@ -127,30 +124,6 @@ class HmmData(DataLayerPiece):
         )
 
         return HMMStatus(**document)
-
-    async def get_release(self):
-        settings = await self.data.settings.get_all()
-
-        try:
-            release = await virtool.hmm.db.fetch_and_update_release(
-                self._config,
-                self._client,
-                self._mongo,
-                settings.hmm_slug,
-            )
-        except GitHubError as err:
-            if "404" in str(err):
-                raise ResourceRemoteError("GitHub repository does not exist")
-
-            raise ResourceRemoteError(str(err))
-
-        except ClientConnectorError:
-            raise ResourceRemoteError("Could not reach GitHub")
-
-        if release:
-            return HMMRelease(**release)
-
-        raise ResourceNotFoundError("Release not found")
 
     async def install_update(self, user_id: str) -> HMMInstalled:
         if await self._mongo.status.count_documents(
