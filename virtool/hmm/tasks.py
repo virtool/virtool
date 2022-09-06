@@ -4,13 +4,13 @@ import shutil
 from pathlib import Path
 
 import aiofiles
+from virtool_core.utils import decompress_tgz
 
 import virtool.tasks.pg
 from virtool.data.utils import get_data_from_app
 from virtool.github import create_update_subdocument
 from virtool.http.utils import download_file
 from virtool.tasks.task import Task
-from virtool.utils import decompress_tgz
 
 logger = logging.getLogger(__name__)
 

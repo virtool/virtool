@@ -2,11 +2,11 @@ import asyncio
 import math
 from typing import List, Optional
 
+import virtool_core.utils
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import SampleSearchResult, Sample
-from virtool_core.utils import rm
 
 import virtool.uploads.db
 import virtool.utils
@@ -307,7 +307,7 @@ class SamplesData(DataLayerPiece):
 
         if result.deleted_count:
             await run_in_thread(
-                rm,
+                virtool_core.utils.rm,
                 join_sample_path(self._config, sample_id),
                 recursive=True,
             )
