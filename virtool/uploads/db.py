@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Type, Union, Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.mongo.transforms import AbstractTransform
@@ -196,7 +197,7 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
 
     try:
         await run_in_thread(
-            virtool.utils.rm,
+            rm,
             req.app["config"].data_path / "files" / upload["name_on_disk"],
         )
     except FileNotFoundError:

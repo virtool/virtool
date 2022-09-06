@@ -5,9 +5,9 @@ import aiofiles
 import pytest
 from aiohttp import ClientConnectorError
 from aiohttp.test_utils import make_mocked_coro
+from virtool_core.utils import decompress_file
 
 from virtool.errors import GitHubError
-from virtool.utils import decompress_file
 
 
 @pytest.fixture

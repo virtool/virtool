@@ -228,7 +228,7 @@ async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
             }
         )
 
-    m_remove = mocker.patch("virtool.utils.rm")
+    m_remove = mocker.patch("virtool_core.utils.rm")
 
     resp = await client.delete("/analyses/foobar")
 
@@ -469,7 +469,9 @@ async def test_blast(
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_finalize(fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is):
+async def test_finalize(
+    fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
+):
     user = await fake2.users.create()
 
     analysis_document = {

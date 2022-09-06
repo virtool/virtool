@@ -1,13 +1,13 @@
 import asyncio
 import datetime
-import gzip
-import json
 import os
 import shutil
 from pathlib import Path
 
 import arrow
 import pytest
+from virtool_core.utils import decompress_tgz
+
 import virtool.utils
 from virtool.utils import run_in_thread
 
@@ -50,7 +50,7 @@ def test_decompress_tgz(tmp_path):
 
     shutil.copy(src_path, path)
 
-    virtool.utils.decompress_tgz(path / "virtool.tar.gz", path / "de")
+    decompress_tgz(path / "virtool.tar.gz", path / "de")
 
     assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
 
@@ -83,45 +83,6 @@ class TestRandomAlphanumeric:
             assert result != "87e9wa"
             assert len(result) == 6
             assert all(a in alphanumeric for a in result)
-
-
-@pytest.mark.parametrize(
-    "recursive,expected", [(True, {"foo.txt"}), (False, {"foo.txt", "baz"})]
-)
-def test_rm(recursive, expected, tmp_path):
-    """
-    Test that a file can be removed and that a folder can be removed when `recursive` is set to
-    `True`.
-
-    """
-    tmp_path.joinpath("foo.txt").write_text("hello world")
-    tmp_path.joinpath("bar.txt").write_text("hello world")
-    (tmp_path / "baz").mkdir()
-
-    assert set(os.listdir(tmp_path)) == {"foo.txt", "bar.txt", "baz"}
-
-    virtool.utils.rm(tmp_path / "bar.txt")
-
-    if recursive:
-        virtool.utils.rm(tmp_path / "baz", recursive=recursive)
-    else:
-        with pytest.raises(IsADirectoryError):
-            virtool.utils.rm(tmp_path / "baz", recursive=recursive)
-
-    assert set(os.listdir(tmp_path)) == expected
-
-
-@pytest.mark.parametrize("processes", [1, 4])
-@pytest.mark.parametrize("which", [None, "/usr/local/bin/pigz"])
-def test_should_use_pigz(processes, which, mocker):
-    mocker.patch("shutil.which", return_value=which)
-
-    result = virtool.utils.should_use_pigz(processes)
-
-    if processes == 4 and which is not None:
-        assert result is True
-    else:
-        assert result is False
 
 
 def test_timestamp(mocker):
@@ -158,28 +119,6 @@ def test_to_bool(value, result):
     assert virtool.utils.to_bool(value) == result
 
 
-def test_compress_json_with_gzip(tmpdir):
-    """
-    Test that `utils.compress_json_with_gzip` correctly compresses a JSON string.
-
-    """
-    data = json.dumps({"foo": "bar"})
-
-    target = Path(tmpdir) / "data.json.gz"
-    target_with_sub_paths = target.parent / "foo/bar/data.json.gz"
-
-    virtool.utils.compress_json_with_gzip(data, target)
-    virtool.utils.compress_json_with_gzip(data, target_with_sub_paths)
-
-    assert target.exists()
-    assert target_with_sub_paths.exists()
-
-    for _target in (target, target_with_sub_paths):
-        with gzip.open(_target, "r") as f:
-            json_data = f.read().decode("utf-8")
-            assert json_data == data
-
-
 async def test_run_in_thread():
 
     assert asyncio.iscoroutinefunction(run_in_thread) is True
@@ -193,7 +132,3 @@ async def test_run_in_thread():
         return testsum
 
     assert await run_in_thread(func, 1, 3, 5, key1=5, key2=-4) == 10
-
-
-
-

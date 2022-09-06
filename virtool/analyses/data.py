@@ -1,15 +1,17 @@
 from asyncio import gather, CancelledError
 from datetime import datetime
-from typing import Union, Tuple, Dict, Optional
 from logging import getLogger
+from typing import Union, Tuple, Dict, Optional
 
 from multidict import MultiDictProxy
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis
+from virtool_core.utils import rm
 
-import virtool.samples.db
 import virtool.analyses.format
+import virtool.samples.db
+import virtool.uploads.db
 from virtool.analyses.db import PROJECTION, processor
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
@@ -25,19 +27,16 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.mongo.core import DB
-import virtool.uploads.db
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
+from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.tasks.client import TasksClient
 from virtool.uploads.utils import naive_writer
-
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread, rm
-from virtool.samples.db import recalculate_workflow_tags
-
+from virtool.utils import run_in_thread
 
 logger = getLogger("analyses")
 

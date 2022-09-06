@@ -3,12 +3,12 @@ import os
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from virtool_core.utils import compress_file, rm
 
 import virtool.subtractions.files
 import virtool.subtractions.utils
 import virtool.tasks.pg
 import virtool.tasks.task
-import virtool.utils
 from virtool.subtractions.db import ADD_SUBTRACTION_FILES_QUERY
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
@@ -116,9 +116,9 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
             / "subtraction.fa.gz"
         )
 
-        await self.run_in_thread(virtool.utils.compress_file, fasta_path, target_path)
+        await self.run_in_thread(compress_file, fasta_path, target_path)
 
-        virtool.utils.rm(fasta_path)
+        await run_in_thread(rm, fasta_path)
 
         await self.db.subtraction.find_one_and_update(
             {"_id": subtraction}, {"$set": {"has_file": True}}

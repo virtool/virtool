@@ -45,16 +45,16 @@ def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dic
     if not isinstance(fields, (list, tuple)):
         raise TypeError("Type of 'fields' must be one of 'list' or 'tuple'")
 
-    # Stringify fields.
-    fields = [str(field) for field in coerce_list(fields)]
-
     term = re.escape(term)
 
-    # Compile regex, making is case-insensitive.
     regex = re.compile(str(term), re.IGNORECASE)
 
-    # Compose and return $or-based query.
-    return {"$or": [{field: {"$regex": regex}} for field in fields]}
+    return {
+        "$or": [
+            {field: {"$regex": regex}}
+            for field in [str(field) for field in coerce_list(fields)]
+        ]
+    }
 
 
 async def paginate(

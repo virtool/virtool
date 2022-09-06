@@ -13,6 +13,8 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.settings import Settings
+from virtool_core.utils import compress_file, rm, file_stats
 
 import virtool.errors
 import virtool.mongo.utils
@@ -28,8 +30,7 @@ from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import App, Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor, compress_file, file_stats, run_in_thread
-from virtool_core.models.settings import Settings
+from virtool.utils import base_processor, run_in_thread
 
 logger = logging.getLogger(__name__)
 
@@ -304,7 +305,7 @@ async def remove_samples(db, config: Config, id_list: List[str]) -> DeleteResult
     for sample_id in id_list:
         try:
             path = virtool.samples.utils.join_sample_path(config, sample_id)
-            virtool.utils.rm(path, recursive=True)
+            rm(path, recursive=True)
         except FileNotFoundError:
             pass
 
@@ -504,9 +505,7 @@ async def finalize(
             row.removed_at = virtool.utils.timestamp()
 
             try:
-                await run_in_thread(
-                    virtool.utils.rm, data_path / "files" / row.name_on_disk
-                )
+                await run_in_thread(rm, data_path / "files" / row.name_on_disk)
             except FileNotFoundError:
                 pass
 
@@ -535,12 +534,12 @@ async def get_sample(app, sample_id: str):
         raise ValueError(f"Sample {sample_id} does not exist.")
 
     document["caches"] = [
-        virtool.utils.base_processor(cache)
+        base_processor(cache)
         async for cache in db.caches.find({"sample.id": sample_id})
     ]
 
     document = await apply_transforms(
-        virtool.utils.base_processor(document),
+        base_processor(document),
         [
             ArtifactsAndReadsTransform(pg),
             AttachLabelsTransform(pg),

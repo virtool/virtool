@@ -300,11 +300,10 @@ class TestCreate:
                 sample_group_write=True,
             )
         )
-        
+
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
-        
-        
+
         label = await fake2.labels.create()
 
         await client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"})
@@ -734,7 +733,7 @@ async def test_job_remove(
             }
         )
 
-    mocker.patch("virtool.utils.rm", return_value=True)
+    mocker.patch("virtool_core.utils.rm", return_value=True)
 
     resp = await client.delete("/samples/test")
 
