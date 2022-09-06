@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.utils import file_stats
 
 import virtool.analyses.utils
-import virtool.utils
 from virtool.analyses.models import AnalysisFile
 from virtool.utils import run_in_thread
 
