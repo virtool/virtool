@@ -106,7 +106,7 @@
     'total_entropy': 101.49,
   }
 ---
-# name: test_get_release[uvloop-None][json]
+# name: test_get_release[uvloop][json]
   <class 'dict'> {
     'body': "- remove some annotations that didn't have corresponding profiles",
     'content_type': 'application/gzip',
