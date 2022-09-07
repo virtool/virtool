@@ -1,4 +1,5 @@
 import asyncio
+from pprint import pprint
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -570,49 +571,12 @@ class TestAddIsolate:
 
         await client.db.otus.insert_one(test_otu)
 
-        data = {"source_name": "Beta", "source_type": "Isolate", "default": False}
-
         mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
 
-        resp = await client.post("/otus/6116cba1/isolates", data)
-
-        if not check_ref_right:
-            await resp_is.insufficient_rights(resp)
-            return
-
-        assert resp.status == 201
-        assert resp.headers["Location"] == snapshot
-        assert await resp.json() == snapshot
-
-        assert await client.db.otus.find_one("6116cba1") == snapshot
-        assert await client.db.history.find_one() == snapshot
-
-    async def test_empty(
-        self,
-        mocker,
-        snapshot,
-        spawn_client,
-        check_ref_right,
-        resp_is,
-        test_otu,
-        test_random_alphanumeric,
-    ):
-        """
-        Test that an isolate can be added without any POST input. The resulting document should contain the defined
-        default values.
-
-        """
-        client = await spawn_client(
-            authorize=True,
-            base_url="https://virtool.example.com",
-            permissions=[ReferencePermission.modify_otu],
+        resp = await client.post(
+            "/otus/6116cba1/isolates",
+            {"source_name": "Beta", "source_type": "Isolate", "default": False},
         )
-
-        await client.db.otus.insert_one(test_otu)
-
-        mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
-
-        resp = await client.post("/otus/6116cba1/isolates", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -637,7 +601,7 @@ class TestAddIsolate:
         await resp_is.not_found(resp)
 
 
-class TestEditIsolate:
+class TestUpdateIsolate:
     @pytest.mark.parametrize(
         "data,description",
         [

@@ -2858,6 +2858,442 @@
     'version': 0,
   }
 ---
+# name: TestUpdateIsolate.test[True-uvloop-data0-Renamed Isolate b to Variant b]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'variant',
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data0-Renamed Isolate b to Variant b].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'b',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data0-Renamed Isolate b to Variant b].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Variant b',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data1-Renamed Isolate b to Variant b]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'variant',
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data1-Renamed Isolate b to Variant b].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'b',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data1-Renamed Isolate b to Variant b].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Variant b',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data2-Renamed Isolate b to Variant A]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'A',
+    'source_type': 'variant',
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data2-Renamed Isolate b to Variant A].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'A',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data2-Renamed Isolate b to Variant A].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Variant A',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_name',
+        ],
+        <class 'list'> [
+          'b',
+          'A',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data3-Renamed Isolate b to Isolate A]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'A',
+    'source_type': 'isolate',
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data3-Renamed Isolate b to Isolate A].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'A',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestUpdateIsolate.test[True-uvloop-data3-Renamed Isolate b to Isolate A].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Isolate A',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_name',
+        ],
+        <class 'list'> [
+          'b',
+          'A',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestUpdateIsolate.test_force_case[True-uvloop]
+  <class 'dict'> {
+    'default': True,
+    'id': 'cab8b360',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': '8816-v2',
+    'source_type': 'variant',
+  }
+---
+# name: TestUpdateIsolate.test_force_case[True-uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestUpdateIsolate.test_force_case[True-uvloop].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate 8816-v2 to Variant 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
 # name: test_create_sequence[True-uvloop-None-null]
   'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/bf1b993c'
 ---

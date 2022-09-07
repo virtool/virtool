@@ -3,11 +3,13 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from pymongo.results import DeleteResult
+from virtool_core.models.otu import OTU
 
 import virtool.mongo.utils
 import virtool.history.db
 import virtool.otus.db
 import virtool.utils
+from virtool.data.errors import ResourceNotFoundError
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.downloads.utils import format_fasta_entry, format_fasta_filename
@@ -28,16 +30,19 @@ class OTUData:
         self._app = app
         self._db: DB = app["db"]
 
-    async def get(self, otu_id: str) -> Optional[Document]:
+    async def get(self, otu_id: str) -> OTU:
         """
         Get a single OTU by ID.
-
-        Return ``None`` if the OTU does not exist.
 
         :param otu_id: the ID of the OTU to get
         :return: the OTU
         """
-        return await virtool.otus.db.join_and_format(self._db, otu_id)
+        document = await virtool.otus.db.join_and_format(self._db, otu_id)
+
+        if document is None:
+            raise ResourceNotFoundError
+
+        return OTU(**document)
 
     async def get_fasta(self, otu_id: str) -> Optional[Tuple[str, str]]:
         """
