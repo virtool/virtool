@@ -106,22 +106,6 @@
     'total_entropy': 101.49,
   }
 ---
-# name: test_get_release[uvloop-None][json]
-  <class 'dict'> {
-    'body': "- remove some annotations that didn't have corresponding profiles",
-    'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz',
-    'etag': 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
-    'filename': 'vthmm.tar.gz',
-    'html_url': 'https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1',
-    'id': 1230982,
-    'name': 'v0.2.1',
-    'newer': False,
-    'published_at': '2015-10-06T20:00:00Z',
-    'retrieved_at': '2015-10-06T20:00:00Z',
-    'size': 85904451,
-  }
----
 # name: test_get_release[uvloop][json]
   <class 'dict'> {
     'body': "- remove some annotations that didn't have corresponding profiles",
