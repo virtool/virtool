@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from virtool_core.models.upload import UploadSearchResult, Upload
+from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
@@ -15,7 +16,7 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread, rm
+from virtool.utils import run_in_thread
 
 logger = getLogger(__name__)
 
@@ -120,7 +121,9 @@ class UploadsData(DataLayerPiece):
 
         async with AsyncSession(self._pg) as session:
             upload = (
-                await session.execute(select(SQLUpload).where(SQLUpload.id == upload_id))
+                await session.execute(
+                    select(SQLUpload).where(SQLUpload.id == upload_id)
+                )
             ).scalar()
 
             if not upload or upload.removed:
@@ -157,9 +160,7 @@ class UploadsData(DataLayerPiece):
         """
         upload = await finalize(self._pg, size, id_, SQLUpload)
 
-        return Upload(
-            **await apply_transforms(upload, [AttachUserTransform(self._db)])
-        )
+        return Upload(**await apply_transforms(upload, [AttachUserTransform(self._db)]))
 
     async def release(self, upload_ids: Union[int, List[int]]):
         """
