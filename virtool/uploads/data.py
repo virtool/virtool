@@ -27,9 +27,7 @@ class UploadsData(DataLayerPiece):
         self._db: DB = db
         self._pg = pg
 
-    async def find(
-        self, user: str = None, upload_type: str = None, ready: bool = None
-    ) -> UploadSearchResult:
+    async def find(self, user, upload_type, ready) -> UploadSearchResult:
         """
         Find and filter uploads.
         """
@@ -60,7 +58,7 @@ class UploadsData(DataLayerPiece):
         self,
         name: str,
         upload_type: str,
-        reserved: bool = False,
+        reserved: bool,
         user: Optional[str] = None,
     ) -> Upload:
         """

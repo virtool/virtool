@@ -1,6 +1,6 @@
 from asyncio import CancelledError
 from logging import getLogger
-from typing import List, Union
+from typing import List, Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
@@ -8,7 +8,6 @@ from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
 from virtool.api.response import InvalidQuery, json_response, NotFound
-from virtool.api.utils import get_req_bool
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import PermissionsRoutePolicy, policy
@@ -26,7 +25,12 @@ routes = Routes()
 
 @routes.view("/uploads")
 class UploadsView(PydanticView):
-    async def get(self) -> r200[List[GetUploadsResponse]]:
+    async def get(
+        self,
+        user: Optional[str] = None,
+        type: Optional[str] = None,
+        ready: Optional[bool] = None,
+    ) -> r200[List[GetUploadsResponse]]:
         """
         List uploads.
 
@@ -35,19 +39,15 @@ class UploadsView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        user = self.request.query.get("user")
-        upload_type = self.request.query.get("type")
 
-        ready = get_req_bool(self.request, "ready")
-
-        uploads = await get_data_from_req(self.request).uploads.find(
-            user, upload_type, ready
-        )
+        uploads = await get_data_from_req(self.request).uploads.find(user, type, ready)
 
         return json_response(uploads)
 
     @policy(PermissionsRoutePolicy(Permission.upload_file))
-    async def post(self) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
+    async def post(
+        self, name: str, type: str, reserved: Optional[bool] = False
+    ) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
         """
         Upload a file.
 
@@ -62,20 +62,17 @@ class UploadsView(PydanticView):
             403: Not permitted
             404: Not found
         """
-        upload_type = self.request.query.get("type")
 
         errors = naive_validator(self.request)
 
         if errors:
             raise InvalidQuery(errors)
 
-        name = self.request.query["name"]
-
-        if upload_type and upload_type not in UploadType.to_list():
+        if type and type not in UploadType.to_list():
             raise HTTPBadRequest(text="Unsupported upload type")
 
         upload = await get_data_from_req(self.request).uploads.create(
-            name, upload_type, user=self.request["client"].user_id
+            name, type, reserved, user=self.request["client"].user_id
         )
 
         file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
@@ -104,7 +101,7 @@ class UploadsView(PydanticView):
 
 @routes.view("/uploads/{id}")
 class UploadView(PydanticView):
-    async def get(self) -> Union[r200[FileResponse], r404]:
+    async def get(self, id: int, /) -> Union[r200[FileResponse], r404]:
         """
         Download an upload.
 
@@ -119,10 +116,8 @@ class UploadView(PydanticView):
             404: Not found
         """
 
-        upload_id = int(self.request.match_info["id"])
-
         try:
-            upload = await get_data_from_req(self.request).uploads.get(upload_id)
+            upload = await get_data_from_req(self.request).uploads.get(id)
             upload_path = await get_upload_path(
                 self.request.app["config"], upload.name_on_disk
             )
@@ -138,7 +133,7 @@ class UploadView(PydanticView):
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_file))
-    async def delete(self) -> Union[r204, r401, r403, r404]:
+    async def delete(self, id: int, /) -> Union[r204, r401, r403, r404]:
         """
         Delete an upload.
 
@@ -150,10 +145,9 @@ class UploadView(PydanticView):
             403: Not permitted
             404: Not found
         """
-        upload_id = int(self.request.match_info["id"])
 
         try:
-            await get_data_from_req(self.request).uploads.delete(upload_id)
+            await get_data_from_req(self.request).uploads.delete(id)
         except ResourceNotFoundError:
             raise NotFound
 

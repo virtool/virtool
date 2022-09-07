@@ -58,7 +58,7 @@ class TestUpload:
 
         resp = await client.post_form("/uploads", data=files)
 
-        await resp_is.invalid_query(resp, {"name": ["required field"]})
+        assert resp.status == 400
 
     async def test_bad_type(self, files, spawn_client, resp_is):
         """

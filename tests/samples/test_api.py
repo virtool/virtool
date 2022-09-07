@@ -1070,7 +1070,7 @@ class TestUploadReads:
 
         user = await fake2.users.create()
 
-        await get_data_from_app(client.app).uploads.create("test", "reads", user=user.id)
+        await get_data_from_app(client.app).uploads.create("test", "reads", False, user=user.id)
 
         if not compressed:
             mocker.patch(
