@@ -8,7 +8,6 @@ from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import SampleSearchResult, Sample
 
-import virtool.uploads.db
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config

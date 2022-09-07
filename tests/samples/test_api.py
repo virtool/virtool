@@ -1047,6 +1047,7 @@ class TestUploadReads:
         pg,
         test_files_path,
         tmp_path,
+        fake2
     ):
         """
         Test that new sample reads can be uploaded using the Jobs API.
@@ -1067,7 +1068,9 @@ class TestUploadReads:
             }
         )
 
-        await get_data_from_app(client.app).uploads.create("test", "reads")
+        user = await fake2.users.create()
+
+        await get_data_from_app(client.app).uploads.create("test", "reads", user=user.id)
 
         if not compressed:
             mocker.patch(
