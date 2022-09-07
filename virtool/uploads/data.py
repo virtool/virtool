@@ -87,7 +87,7 @@ class UploadsData(DataLayerPiece):
 
             await session.commit()
 
-        return Upload(**upload)
+        return Upload(**await apply_transforms(upload, [AttachUserTransform(self._db)]))
 
     async def get(self, upload_id: int) -> Upload:
         """
