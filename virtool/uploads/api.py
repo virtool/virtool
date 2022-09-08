@@ -28,7 +28,7 @@ class UploadsView(PydanticView):
     async def get(
         self,
         user: Optional[str] = None,
-        type: Optional[str] = None,
+        upload_type: Optional[str] = None,
         ready: Optional[bool] = None,
     ) -> r200[List[GetUploadsResponse]]:
         """
@@ -40,13 +40,13 @@ class UploadsView(PydanticView):
             200: Successful operation
         """
 
-        uploads = await get_data_from_req(self.request).uploads.find(user, type, ready)
+        uploads = await get_data_from_req(self.request).uploads.find(user, upload_type, ready)
 
         return json_response(uploads)
 
     @policy(PermissionsRoutePolicy(Permission.upload_file))
     async def post(
-        self, name: str, type: str, reserved: Optional[bool] = False
+        self, name: str, upload_type: str, reserved: Optional[bool] = False
     ) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
         """
         Upload a file.
@@ -68,11 +68,11 @@ class UploadsView(PydanticView):
         if errors:
             raise InvalidQuery(errors)
 
-        if type and type not in UploadType.to_list():
+        if upload_type and upload_type not in UploadType.to_list():
             raise HTTPBadRequest(text="Unsupported upload type")
 
         upload = await get_data_from_req(self.request).uploads.create(
-            name, type, reserved, user=self.request["client"].user_id
+            name, upload_type, reserved, user=self.request["client"].user_id
         )
 
         file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk

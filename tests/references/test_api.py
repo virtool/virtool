@@ -196,7 +196,7 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
 
     with open(test_files_path / "reference.json.gz", "rb") as f:
         resp = await client.post_form(
-            "/uploads?type=reference&name=reference.json.gz", data={"file": f}
+            "/uploads?upload_type=reference&name=reference.json.gz", data={"file": f}
         )
 
         upload = await resp.json()
