@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy.matchers import path_type
 
-import virtool.uploads.db
+from virtool.data.utils import get_data_from_app
 from virtool.references.tasks import CleanReferencesTask, ImportReferenceTask
 from virtool.tasks.models import Task
 from virtool.uploads.models import UploadType
@@ -92,8 +92,8 @@ async def test_import_reference_task(snapshot, spawn_client, pg, static_time, tm
     path = Path(tmpdir.mkdir("files")) / "reference.json.gz"
     shutil.copyfile(TEST_FILES_PATH / "reference.json.gz", path)
 
-    await virtool.uploads.db.create(
-        pg, "import.json.gz", UploadType.reference, False, "test"
+    await get_data_from_app(client.app).uploads.create(
+        "import.json.gz", UploadType.reference, False, "test"
     )
 
     async with AsyncSession(pg) as session:

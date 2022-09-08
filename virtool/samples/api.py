@@ -344,7 +344,7 @@ async def job_remove(req):
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
 
     if upload_ids:
-        await virtool.uploads.db.release(req.app["pg"], upload_ids)
+        await get_data_from_req(req).uploads.release(upload_ids)
 
     try:
         await get_data_from_req(req).samples.delete(sample_id)

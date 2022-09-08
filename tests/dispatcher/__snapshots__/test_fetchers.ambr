@@ -76,17 +76,17 @@
   <class 'list'> [
     <class 'dict'> {
       'data': <class 'dict'> {
-        'created_at': None,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': None,
+        'name_on_disk': '1-Test.fq.gz',
         'ready': False,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': None,
+        'size': 9081,
         'type': <UploadType.reads: 'reads'>,
-        'uploaded_at': None,
+        'uploaded_at': datetime.datetime(2015, 10, 6, 20, 0),
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -98,17 +98,17 @@
     },
     <class 'dict'> {
       'data': <class 'dict'> {
-        'created_at': None,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': None,
+        'name_on_disk': '1-Test.fq.gz',
         'ready': False,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': None,
+        'size': 9081,
         'type': <UploadType.reads: 'reads'>,
-        'uploaded_at': None,
+        'uploaded_at': datetime.datetime(2015, 10, 6, 20, 0),
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -120,17 +120,17 @@
     },
     <class 'dict'> {
       'data': <class 'dict'> {
-        'created_at': None,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': None,
+        'name_on_disk': '1-Test.fq.gz',
         'ready': False,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': None,
+        'size': 9081,
         'type': <UploadType.reads: 'reads'>,
-        'uploaded_at': None,
+        'uploaded_at': datetime.datetime(2015, 10, 6, 20, 0),
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -146,17 +146,17 @@
   <class 'list'> [
     <class 'dict'> {
       'data': <class 'dict'> {
-        'created_at': None,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': None,
+        'name_on_disk': '1-Test.fq.gz',
         'ready': False,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': None,
+        'size': 9081,
         'type': <UploadType.reads: 'reads'>,
-        'uploaded_at': None,
+        'uploaded_at': datetime.datetime(2015, 10, 6, 20, 0),
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -168,17 +168,17 @@
     },
     <class 'dict'> {
       'data': <class 'dict'> {
-        'created_at': None,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': None,
+        'name_on_disk': '1-Test.fq.gz',
         'ready': False,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': None,
+        'size': 9081,
         'type': <UploadType.reads: 'reads'>,
-        'uploaded_at': None,
+        'uploaded_at': datetime.datetime(2015, 10, 6, 20, 0),
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -190,17 +190,17 @@
     },
     <class 'dict'> {
       'data': <class 'dict'> {
-        'created_at': None,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': None,
+        'name_on_disk': '1-Test.fq.gz',
         'ready': False,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': None,
+        'size': 9081,
         'type': <UploadType.reads: 'reads'>,
-        'uploaded_at': None,
+        'uploaded_at': datetime.datetime(2015, 10, 6, 20, 0),
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',

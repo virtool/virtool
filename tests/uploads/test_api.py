@@ -3,6 +3,7 @@ import os
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.utils
 from virtool.uploads.models import Upload, UploadType
 from virtool_core.models.enums import Permission
 
@@ -36,7 +37,7 @@ class TestUpload:
 
         if upload_type:
             resp = await client.post_form(
-                f"/uploads?type={upload_type}&name=Test.fq.gz", data=files
+                f"/uploads?upload_type={upload_type}&name=Test.fq.gz", data=files
             )
         else:
             resp = await client.post_form("/uploads?name=Test.fq.gz", data=files)
@@ -57,7 +58,7 @@ class TestUpload:
 
         resp = await client.post_form("/uploads", data=files)
 
-        await resp_is.invalid_query(resp, {"name": ["required field"]})
+        assert resp.status == 400
 
     async def test_bad_type(self, files, spawn_client, resp_is):
         """
@@ -69,7 +70,7 @@ class TestUpload:
         )
 
         resp = await client.post_form(
-            "/uploads?type=foobar&name=Test.fq.gz", data=files
+            "/uploads?upload_type=foobar&name=Test.fq.gz", data=files
         )
 
         await resp_is.bad_request(resp, "Unsupported upload type")
@@ -87,7 +88,7 @@ class TestFind:
         url = "/uploads"
 
         if upload_type:
-            url += f"?type={upload_type}"
+            url += f"?upload_type={upload_type}"
 
         resp = await client.get(url)
 
@@ -126,7 +127,7 @@ class TestGet:
         client.app["config"].data_path = tmp_path
 
         if exists:
-            await client.post_form("/uploads?name=test.fq.gz", data=files)
+            await client.post_form("/uploads?name=test.fq.gz&upload_type=hmm", data=files)
 
         resp = await client.get("/uploads/1")
 
@@ -148,7 +149,22 @@ class TestGet:
         client.app["config"].data_path = tmp_path
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
+            session.add(
+                Upload(
+                    id=1,
+                    created_at=virtool.utils.timestamp(),
+                    name="test.fq.gz",
+                    name_on_disk="1-test.fq.gz",
+                    ready=True,
+                    removed=exists,
+                    removed_at=None,
+                    reserved=False,
+                    size=9081,
+                    type="hmm",
+                    uploaded_at=virtool.utils.timestamp(),
+                    user="test",
+                )
+            )
             await session.commit()
 
         resp = await client.get("/uploads/1")
@@ -165,7 +181,7 @@ class TestDelete:
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["config"].data_path = tmp_path
-        await client.post_form("/uploads?name=test.fq.gz", data=files)
+        await client.post_form("/uploads?name=test.fq.gz&upload_type=hmm", data=files)
 
         resp = await client.delete("/uploads/1")
         await resp_is.no_content(resp)
@@ -186,7 +202,22 @@ class TestDelete:
         client.app["config"].data_path = tmp_path
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
+            session.add(
+                Upload(
+                    id=1,
+                    created_at=virtool.utils.timestamp(),
+                    name="test.fq.gz",
+                    name_on_disk="1-test.fq.gz",
+                    ready=True,
+                    removed=exists,
+                    removed_at=None,
+                    reserved=False,
+                    size=9081,
+                    type="hmm",
+                    uploaded_at=virtool.utils.timestamp(),
+                    user="test",
+                )
+            )
 
             await session.commit()
 
@@ -212,7 +243,21 @@ class TestDelete:
 
         if exists:
             async with AsyncSession(pg) as session:
-                session.add(Upload(name_on_disk="1-test.fq.gz"))
+                session.add(
+                    Upload(
+                        id=1,
+                        created_at=virtool.utils.timestamp(),
+                        name="test.fq.gz",
+                        name_on_disk="1-test.fq.gz",
+                        ready=True,
+                        removed_at=None,
+                        reserved=False,
+                        size=9081,
+                        type="hmm",
+                        uploaded_at=virtool.utils.timestamp(),
+                        user="test",
+                    )
+                )
                 await session.commit()
 
         resp = await client.delete("/uploads/1")
