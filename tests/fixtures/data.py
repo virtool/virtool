@@ -1,5 +1,6 @@
 import pytest
 from aiohttp import ClientSession
+from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.analyses.data import AnalysisData
@@ -15,7 +16,6 @@ from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
 from virtool.samples.data import SamplesData
 from virtool.subtractions.data import SubtractionsData
-from virtool.tasks.client import TasksClient
 from virtool.users.data import UsersData
 from virtool.uploads.data import UploadsData
 from virtool.tasks.data import TasksData
@@ -23,16 +23,16 @@ from virtool.tasks.data import TasksData
 
 
 @pytest.fixture
-def data_layer(dbi, config, mocker, pg: AsyncEngine, tasks: TasksClient):
+def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
     base_url = "https://virtool.example.com"
-
+    tasks_data = TasksData(pg, redis)
     return DataLayer(
-        AnalysisData(dbi, config, pg, tasks),
+        AnalysisData(dbi, config, pg, tasks_data),
         mocker.Mock(spec=BLASTData),
         GroupsData(dbi),
         SettingsData(dbi),
         HistoryData(config.data_path, dbi),
-        HmmData(mocker.Mock(spec=ClientSession), config, dbi, tasks),
+        HmmData(mocker.Mock(spec=ClientSession), config, dbi, tasks_data),
         LabelsData(dbi, pg),
         JobsData(DummyJobsClient(), dbi, pg),
         OTUData({"db": dbi, "pg": pg}),
@@ -40,5 +40,5 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, tasks: TasksClient):
         SubtractionsData(base_url, config, dbi, pg),
         UploadsData(config, dbi, pg),
         UsersData(dbi, pg),
-        TasksData(pg)
+        tasks_data
     )

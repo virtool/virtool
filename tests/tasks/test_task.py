@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
+from aioredis import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -85,13 +86,13 @@ async def test_update_context(task):
 
 
 
-async def test_get_tracker(task, pg: AsyncEngine):
+async def test_get_tracker(task, pg: AsyncEngine, redis: Redis):
     task.step = task.steps[0]
     tracker_1 = await task.get_tracker()
     assert tracker_1.initial == 0
     assert tracker_1.step_completed == 50
 
-    await TasksData(pg).update(
+    await TasksData(pg, redis).update(
         task.id,
         progress=50,
     )

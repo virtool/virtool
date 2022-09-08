@@ -29,19 +29,20 @@ from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
-from virtool.tasks.client import TasksClient
+from virtool.tasks.data import TasksData
+
 from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread
 
 
 class HmmData(DataLayerPiece):
     def __init__(
-        self, client: ClientSession, config: Config, mongo, tasks: TasksClient
+        self, client: ClientSession, config: Config, mongo, tasks_data: TasksData
     ):
         self._client = client
         self._config = config
         self._mongo = mongo
-        self._tasks = tasks
+        self._tasks_data = tasks_data
 
     async def find(self, query: MultiDictProxy):
         db_query = {}
@@ -145,7 +146,7 @@ class HmmData(DataLayerPiece):
         if release:
             raise ResourceError("Target release does not exist")
 
-        task = await self._tasks.add(
+        task = await self._tasks_data.add(
             HMMInstallTask, context={"user_id": user_id, "release": release}
         )
 

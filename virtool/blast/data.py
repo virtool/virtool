@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.blast.models import NuVsBlast
 from virtool.blast.task import BLASTTask
-from virtool.tasks.client import TasksClient
+from virtool.tasks.data import TasksData
 from virtool.types import Document
 
 
@@ -16,10 +16,10 @@ class BLASTData:
     A data layer domain for NuVs BLAST data.
     """
 
-    def __init__(self, db, pg: AsyncEngine, tasks: TasksClient):
+    def __init__(self, db, pg: AsyncEngine, tasks_data: TasksData):
         self._db = db
         self._pg = pg
-        self._tasks = tasks
+        self._tasks_data = tasks_data
 
     async def create_nuvs_blast(
         self, analysis_id: str, sequence_index: int
@@ -54,7 +54,7 @@ class BLASTData:
             session.add(blast)
             await session.flush()
 
-            await self._tasks.add(
+            await self._tasks_data.add(
                 BLASTTask,
                 {"analysis_id": analysis_id, "sequence_index": sequence_index},
             )
