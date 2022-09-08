@@ -1160,7 +1160,7 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "mypy (>=0.800)", "psutil", "pyOp
 
 [[package]]
 name = "virtool-core"
-version = "2.27.1"
+version = "2.27.5"
 description = "Core utilities for Virtool."
 category = "main"
 optional = false
@@ -1223,7 +1223,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "0f90ed77289ef198933c185c843994f6ba5109ad2b6245c5f4565999d79e9415"
+content-hash = "89c207ef6e11f30a3c022ed815a42a0a51381ad3d2605f38209c3ce910770163"
 
 [metadata.files]
 aiodns = [
@@ -2228,6 +2228,7 @@ pymongo = [
     {file = "pymongo-3.12.3-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:71c0db2c313ea8a80825fb61b7826b8015874aec29ee6364ade5cb774fe4511b"},
     {file = "pymongo-3.12.3-cp27-cp27mu-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:5b779e87300635b8075e8d5cfd4fdf7f46078cd7610c381d956bca5556bb8f97"},
     {file = "pymongo-3.12.3-cp27-cp27mu-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:351a2efe1c9566c348ad0076f4bf541f4905a0ebe2d271f112f60852575f3c16"},
+    {file = "pymongo-3.12.3-cp310-cp310-macosx_10_15_universal2.whl", hash = "sha256:858af7c2ab98f21ed06b642578b769ecfcabe4754648b033168a91536f7beef9"},
     {file = "pymongo-3.12.3-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0a02313e71b7c370c43056f6b16c45effbb2d29a44d24403a3d5ba6ed322fa3f"},
     {file = "pymongo-3.12.3-cp310-cp310-manylinux1_i686.whl", hash = "sha256:d3082e5c4d7b388792124f5e805b469109e58f1ab1eb1fbd8b998e8ab766ffb7"},
     {file = "pymongo-3.12.3-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:514e78d20d8382d5b97f32b20c83d1d0452c302c9a135f0a9022236eb9940fda"},
@@ -2517,8 +2518,8 @@ uvloop = [
     {file = "uvloop-0.16.0.tar.gz", hash = "sha256:f74bc20c7b67d1c27c72601c78cf95be99d5c2cdd4514502b4f3eb0933ff1228"},
 ]
 virtool-core = [
-    {file = "virtool-core-2.27.1.tar.gz", hash = "sha256:b4a43d3260eca4a62f660c288a700f0bba61a3b7b3df6912cf3912f1b3b37e9e"},
-    {file = "virtool_core-2.27.1-py3-none-any.whl", hash = "sha256:d37863595aea3436a463f5f78531fc151eb7a2fe036651981562667285f48172"},
+    {file = "virtool-core-2.27.5.tar.gz", hash = "sha256:4f7d109e5f07cfb22e122d36c34bad938d5003d6a0ac13415e17fa589382d7c8"},
+    {file = "virtool_core-2.27.5-py3-none-any.whl", hash = "sha256:792802875ae1d73b3ab12d6d256648e2a4d4a2155b2c5a55a2d3a3eb3320037b"},
 ]
 virtualenv = [
     {file = "virtualenv-20.16.3-py2.py3-none-any.whl", hash = "sha256:4193b7bc8a6cd23e4eb251ac64f29b4398ab2c233531e66e40b19a6b7b0d30c1"},

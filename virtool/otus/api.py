@@ -1,10 +1,10 @@
 from ctypes import Union
-from typing import List, Union
+from typing import List, Union, Optional
 
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r404, r204, r401, r403
+from aiohttp_pydantic.oas.typing import r200, r201, r404, r204, r401, r403, r400
 from virtool_core.models.otu import OTU, OTUMinimal, OTUIsolate, OTUSequence
 
 import virtool.otus.db
@@ -24,6 +24,7 @@ from virtool.otus.oas import (
     CreateIsolateRequest,
     UpdateIsolateRequest,
     CreateSequenceRequest,
+    UpdateSequenceRequest,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform
@@ -53,7 +54,12 @@ routes = Routes()
 
 @routes.view("/otus")
 class OTUsView(PydanticView):
-    async def get(self, find: str, names: bool, verified: bool) -> List[OTUMinimal]:
+    async def get(
+        self,
+        find: Optional[str] = None,
+        names: bool = False,
+        verified: Optional[bool] = None,
+    ) -> r200[List[OTUMinimal]]:
         """
         Find OTUs.
 
@@ -69,7 +75,31 @@ class OTUsView(PydanticView):
 
 @routes.view("/otus/{otu_id}")
 class OTUView(PydanticView):
-    async def get(self, otu_id: str, /) -> OTU:
+    async def get(self, otu_id: str, /) -> Union[r200[OTU], r403, r404]:
+        """
+        Get an OTU.
+
+        Retrieves the details of an OTU.
+
+        A FASTA file containing all sequences in the OTU can be downloaded by appending
+        `.fa` to the path.
+
+        """
+        if self.request.path.endswith(".fa"):
+            otu_id = otu_id.rstrip(".fa")
+
+            try:
+                filename, fasta = await get_data_from_req(self.request).otus.get_fasta(
+                    otu_id
+                )
+            except ResourceNotFoundError:
+                raise NotFound
+
+            return web.Response(
+                text=fasta,
+                headers={"Content-Disposition": f"attachment; filename={filename}"},
+            )
+
         try:
             otu = await get_data_from_req(self.request).otus.get(otu_id)
         except ResourceNotFoundError:
@@ -79,10 +109,12 @@ class OTUView(PydanticView):
 
     async def patch(
         self, otu_id: str, /, data: UpdateOTURequest
-    ) -> Union[r200[OTU], r404]:
+    ) -> Union[r200[OTU], r400, r403, r404]:
         """
-        Edit an existing OTU. Checks to make sure the supplied OTU name and abbreviation are
-        not already in use in the collection.
+        Update an OTU.
+
+        Checks to make sure the supplied OTU name and abbreviation don't already exist
+        in the parent reference.
 
         """
         db = self.request.app["db"]
@@ -101,10 +133,10 @@ class OTUView(PydanticView):
         if not await virtool.references.db.check_right(
             self.request, ref_id, "modify_otu"
         ):
-            raise InsufficientRights()
+            raise InsufficientRights
 
         name, abbreviation, otu_schema = evaluate_changes(
-            data.dict(exclude_unset=True), document
+            data.dict(by_alias=True, exclude_unset=True), document
         )
 
         # Send ``200`` with the existing otu record if no change will be made.
@@ -125,7 +157,7 @@ class OTUView(PydanticView):
 
         return json_response(document)
 
-    async def delete(self, otu_id: str, /) -> Union[r204, r404]:
+    async def delete(self, otu_id: str, /) -> Union[r204, r401, r403, r404]:
         """
         Remove an OTU document and its associated sequence documents.
 
@@ -152,6 +184,12 @@ class OTUView(PydanticView):
 @routes.view("/otus/{otu_id}/isolates")
 class IsolatesView(PydanticView):
     async def get(self, otu_id: str, /):
+        """
+        List isolates.
+
+        Lists all the isolates and sequences for an OTU.
+
+        """
         db = self.request.app["db"]
 
         document = await virtool.otus.db.join_and_format(db, otu_id)
@@ -164,6 +202,12 @@ class IsolatesView(PydanticView):
     async def post(
         self, otu_id: str, /, data: CreateIsolateRequest
     ) -> Union[r201[OTUIsolate], r401, r404]:
+        """
+        Create an isolate.
+
+        Creates an isolate on the OTU specified by `otu_id`.
+
+        """
         db = self.request.app["db"]
 
         reference = await get_one_field(db.otus, "reference", otu_id)
@@ -204,7 +248,31 @@ class IsolateView(PydanticView):
     async def get(
         self, otu_id: str, isolate_id: str, /
     ) -> Union[r200[OTUIsolate], r404]:
+        """
+        Get an isolate.
+
+        Retrieves the details of an isolate.
+
+        A FASTA file containing all sequences in the isolate can be downloaded by
+        appending `.fa` to the path.
+        """
         db = self.request.app["db"]
+
+        isolate_id = isolate_id.rstrip(".fa")
+
+        if self.request.path.endswith(".fa"):
+            try:
+                filename, fasta = await generate_isolate_fasta(db, otu_id, isolate_id)
+            except DatabaseError as err:
+                if "does not exist" in str(err):
+                    raise NotFound
+
+                raise
+
+            return web.Response(
+                text=fasta,
+                headers={"Content-Disposition": f"attachment; filename={filename}"},
+            )
 
         document = await db.otus.find_one(
             {"_id": otu_id, "isolates.id": isolate_id}, ["isolates"]
@@ -213,16 +281,15 @@ class IsolateView(PydanticView):
         if not document:
             raise NotFound()
 
-        isolate = dict(find_isolate(document["isolates"], isolate_id), sequences=[])
+        isolate = find_isolate(document["isolates"], isolate_id)
 
-        cursor = db.sequences.find(
-            {"otu_id": otu_id, "isolate_id": isolate_id},
-            {"otu_id": False, "isolate_id": False},
-        )
-
-        async for sequence in cursor:
-            sequence["id"] = sequence.pop("_id")
-            isolate["sequences"].append(sequence)
+        isolate["sequences"] = [
+            base_processor(sequence)
+            async for sequence in db.sequences.find(
+                {"otu_id": otu_id, "isolate_id": isolate_id},
+                {"otu_id": False, "isolate_id": False},
+            )
+        ]
 
         return json_response(isolate)
 
@@ -302,28 +369,6 @@ class IsolateView(PydanticView):
         raise HTTPNoContent
 
 
-@routes.view("/otus/")
-@routes.get("/otus/{otu_id}.fa")
-@routes.jobs_api.get("/otus/{otu_id}.fa")
-async def download_otu(req):
-    """
-    Download a FASTA file containing the sequences for all isolates in a single Virtool
-    otu.
-
-    """
-    db = req.app["db"]
-    otu_id = req.match_info["otu_id"]
-
-    if not await db.otus.count_documents({"_id": otu_id}, limit=1):
-        raise NotFound("OTU not found")
-
-    filename, fasta = await get_data_from_req(req).otus.get_fasta(otu_id)
-
-    return web.Response(
-        text=fasta, headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
-
-
 @routes.post("/refs/{ref_id}/otus")
 @schema(
     {
@@ -380,63 +425,6 @@ async def create(req):
     )
 
 
-@routes.get("/otus/{otu_id}/isolates/{isolate_id}.fa")
-async def download_isolate(req):
-    """
-    Download a FASTA file containing the sequences for a single Virtool isolate.
-
-    """
-    db = req.app["db"]
-
-    otu_id = req.match_info["otu_id"]
-    isolate_id = req.match_info["isolate_id"]
-
-    try:
-        filename, fasta = await generate_isolate_fasta(db, otu_id, isolate_id)
-    except DatabaseError as err:
-        if "OTU does not exist" in str(err):
-            raise NotFound("OTU not found")
-
-        if "Isolate does not exist" in str(err):
-            raise NotFound("Isolate not found")
-
-        raise
-
-    return web.Response(
-        text=fasta, headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
-
-
-@routes.put("/otus/{otu_id}/isolates/{isolate_id}/default")
-async def set_as_default(req):
-    """
-    Set default isolate.
-
-    Sets an isolate as default.
-
-    """
-    otu_id = req.match_info["otu_id"]
-    isolate_id = req.match_info["isolate_id"]
-
-    document = await req.app["db"].otus.find_one(
-        {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
-    )
-
-    if not document:
-        raise NotFound()
-
-    if not await virtool.references.db.check_right(
-        req, document["reference"]["id"], "modify_otu"
-    ):
-        raise InsufficientRights()
-
-    isolate = await get_data_from_req(req).otus.set_isolate_as_default(
-        otu_id, isolate_id, req["client"].user_id
-    )
-
-    return json_response(isolate)
-
-
 @routes.view("/otus/{otu_id}/isolates/{isolate_id}/sequences")
 class SequencesView(PydanticView):
     async def get(
@@ -471,7 +459,7 @@ class SequencesView(PydanticView):
 
     async def post(
         self, otu_id: str, isolate_id: str, /, data: CreateSequenceRequest
-    ) -> Union[r201[OTUSequence], r401, r403, r404]:
+    ) -> Union[r201[OTUSequence], r400, r403, r404]:
         """
         Create a sequence.
 
@@ -511,165 +499,134 @@ class SequencesView(PydanticView):
             target=data.target,
         )
 
-        sequence_id = sequence_document["id"]
-
         return json_response(
             sequence_document,
             status=201,
             headers={
-                "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}"
+                "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}"
             },
         )
 
 
-@routes.get("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}.fa")
-async def download_sequence(req):
-    """
-    Download a FASTA file containing a single Virtool sequence.
+@routes.view("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
+class SequenceView(PydanticView):
+    async def get(self, otu_id: str, isolate_id: str, sequence_id: str, /):
+        """
+        Get a sequence.
 
-    """
-    db = req.app["db"]
+        Retrieves the details for a sequence.
 
-    sequence_id = req.match_info["sequence_id"]
+        A FASTA file containing the nucelotide sequence can be downloaded by appending
+        `.fa` to the path.
 
-    try:
-        filename, fasta = await generate_sequence_fasta(db, sequence_id)
-    except DatabaseError as err:
-        if "Sequence does not exist" in str(err):
-            raise NotFound("Sequence not found")
+        """
+        if self.request.path.endswith(".fa"):
+            sequence_id = sequence_id.rstrip(".fa")
 
-        if "Isolate does not exist" in str(err):
-            raise NotFound("Isolate not found")
+            try:
+                filename, fasta = await generate_sequence_fasta(
+                    self.request.app["db"], sequence_id
+                )
+            except DatabaseError as err:
+                if "does not exist" in str(err):
+                    raise NotFound
 
-        if "OTU does not exist" in str(err):
-            raise NotFound("OTU not found")
+                raise
 
-        raise
+            if fasta is None:
+                raise NotFound
 
-    if fasta is None:
-        return web.Response(status=404)
+            return web.Response(
+                text=fasta,
+                headers={"Content-Disposition": f"attachment; filename={filename}"},
+            )
 
-    return web.Response(
-        text=fasta, headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
+        try:
+            sequence = await get_data_from_req(self.request).otus.get_sequence(
+                otu_id,
+                isolate_id,
+                sequence_id,
+            )
+        except ResourceNotFoundError:
+            raise NotFound
 
+        return json_response(sequence)
 
-@routes.get("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
-async def get_sequence(req):
-    """
-    Get a single sequence document by its ``accession`.
+    async def patch(
+        self,
+        otu_id: str,
+        isolate_id: str,
+        sequence_id: str,
+        /,
+        data: UpdateSequenceRequest,
+    ) -> Union[r200[OTUSequence], r400, r401, r403, r404]:
+        """
+        Update a sequence.
 
-    """
-    sequence = await get_data_from_req(req).otus.get_sequence(
-        req.match_info["otu_id"],
-        req.match_info["isolate_id"],
-        req.match_info["sequence_id"],
-    )
+        """
+        db = self.request.app["db"]
 
-    if sequence is None:
-        raise NotFound()
+        document = await db.otus.find_one(
+            {"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"]
+        )
 
-    return json_response(sequence)
+        if not document or not await db.sequences.count_documents(
+            {"_id": sequence_id}, limit=1
+        ):
+            raise NotFound()
 
+        if not await virtool.references.db.check_right(
+            self.request, document["reference"]["id"], "modify_otu"
+        ):
+            raise InsufficientRights()
 
-@routes.patch("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
-@schema(
-    {
-        "accession": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "empty": False,
-        },
-        "host": {"type": "string", "coerce": virtool.validators.strip},
-        "definition": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "empty": False,
-        },
-        "segment": {"type": "string", "nullable": True},
-        "sequence": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "empty": False,
-        },
-        "target": {"type": "string"},
-    }
-)
-async def edit_sequence(req):
-    db = req.app["db"]
-    data = req["data"]
+        if message := await virtool.otus.db.check_sequence_segment_or_target(
+            db,
+            otu_id,
+            isolate_id,
+            sequence_id,
+            document["reference"]["id"],
+            data.dict(exclude_unset=True),
+        ):
+            raise HTTPBadRequest(text=message)
 
-    otu_id = req.match_info["otu_id"]
-    isolate_id = req.match_info["isolate_id"]
-    sequence_id = req.match_info["sequence_id"]
+        sequence_document = await get_data_from_req(self.request).otus.edit_sequence(
+            otu_id,
+            isolate_id,
+            sequence_id,
+            self.request["client"].user_id,
+            data,
+        )
 
-    document = await db.otus.find_one(
-        {"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"]
-    )
+        return json_response(sequence_document)
 
-    if not document or not await db.sequences.count_documents(
-        {"_id": sequence_id}, limit=1
-    ):
-        raise NotFound()
+    async def delete(self, otu_id: str, isolate_id: str, sequence_id: str, /):
+        """
+        Delete a sequence.
 
-    if not await virtool.references.db.check_right(
-        req, document["reference"]["id"], "modify_otu"
-    ):
-        raise InsufficientRights()
+        """
+        db = self.request.app["db"]
 
-    if message := await virtool.otus.db.check_sequence_segment_or_target(
-        db, otu_id, isolate_id, sequence_id, document["reference"]["id"], data
-    ):
-        raise HTTPBadRequest(text=message)
+        if not await db.sequences.count_documents({"_id": sequence_id}, limit=1):
+            raise NotFound()
 
-    sequence_document = await get_data_from_req(req).otus.edit_sequence(
-        otu_id,
-        isolate_id,
-        sequence_id,
-        req["client"].user_id,
-        data.get("accession"),
-        data.get("definition"),
-        data.get("host"),
-        data.get("segment"),
-        data.get("sequence"),
-        data.get("target"),
-    )
+        document = await db.otus.find_one(
+            {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
+        )
 
-    return json_response(sequence_document)
+        if document is None:
+            raise NotFound()
 
+        if not await virtool.references.db.check_right(
+            self.request, document["reference"]["id"], "modify_otu"
+        ):
+            raise InsufficientRights()
 
-@routes.delete("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
-async def remove_sequence(req):
-    """
-    Remove a sequence from an isolate.
+        await get_data_from_req(self.request).otus.remove_sequence(
+            otu_id, isolate_id, sequence_id, self.request["client"].user_id
+        )
 
-    """
-    db = req.app["db"]
-
-    otu_id = req.match_info["otu_id"]
-    isolate_id = req.match_info["isolate_id"]
-    sequence_id = req.match_info["sequence_id"]
-
-    if not await db.sequences.count_documents({"_id": sequence_id}, limit=1):
-        raise NotFound()
-
-    document = await db.otus.find_one(
-        {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
-    )
-
-    if document is None:
-        raise NotFound()
-
-    if not await virtool.references.db.check_right(
-        req, document["reference"]["id"], "modify_otu"
-    ):
-        raise InsufficientRights()
-
-    await get_data_from_req(req).otus.remove_sequence(
-        otu_id, isolate_id, sequence_id, req["client"].user_id
-    )
-
-    raise HTTPNoContent
+        raise HTTPNoContent
 
 
 @routes.get("/otus/{otu_id}/history")
@@ -688,3 +645,33 @@ async def list_history(req):
     return json_response(
         await apply_transforms(documents, [AttachUserTransform(db, ignore_errors=True)])
     )
+
+
+@routes.put("/otus/{otu_id}/isolates/{isolate_id}/default")
+async def set_as_default(req):
+    """
+    Set default isolate.
+
+    Sets an isolate as default.
+
+    """
+    otu_id = req.match_info["otu_id"]
+    isolate_id = req.match_info["isolate_id"]
+
+    document = await req.app["db"].otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
+    )
+
+    if not document:
+        raise NotFound()
+
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
+        raise InsufficientRights()
+
+    isolate = await get_data_from_req(req).otus.set_isolate_as_default(
+        otu_id, isolate_id, req["client"].user_id
+    )
+
+    return json_response(isolate)

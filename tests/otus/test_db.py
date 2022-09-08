@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
@@ -37,7 +39,13 @@ async def test_check_name_and_abbreviation(
 @pytest.mark.parametrize("in_db", [True, False])
 @pytest.mark.parametrize("pass_document", [True, False])
 async def test_join(
-    in_db, pass_document, mocker, dbi, test_otu, test_sequence, test_merged_otu
+    in_db,
+    pass_document,
+    mocker,
+    dbi,
+    snapshot,
+    test_otu,
+    test_sequence,
 ):
     """
     Test that an OTU is properly joined when only a ``otu_id`` is provided.
@@ -56,10 +64,7 @@ async def test_join(
 
     assert m_find_one.called != pass_document
 
-    if in_db or (not in_db and pass_document):
-        assert joined == test_merged_otu
-    else:
-        assert joined is None
+    assert joined == snapshot(name="return")
 
 
 async def test_increment_otu_version(dbi, snapshot):
@@ -81,19 +86,19 @@ async def test_check_segment_or_target(
     detected.
 
     """
-    await dbi.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]})
-
-    await dbi.references.insert_one(
-        {"_id": "bar", "data_type": data_type, "targets": [{"name": "CPN60"}]}
-    )
-
-    await dbi.sequences.insert_one(
-        {
-            "_id": "boo",
-            "otu_id": "foo",
-            "isolate_id": "baz",
-            "target": "CPN60" if used else "ITS2",
-        }
+    await asyncio.gather(
+        dbi.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]}),
+        dbi.references.insert_one(
+            {"_id": "bar", "data_type": data_type, "targets": [{"name": "CPN60"}]}
+        ),
+        dbi.sequences.insert_one(
+            {
+                "_id": "boo",
+                "otu_id": "foo",
+                "isolate_id": "baz",
+                "target": "CPN60" if used else "ITS2",
+            }
+        ),
     )
 
     data = {}

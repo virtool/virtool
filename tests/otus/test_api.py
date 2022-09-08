@@ -1,26 +1,25 @@
 import asyncio
-from pprint import pprint
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from virtool_core.models.enums import ReferencePermission
 
 import virtool.otus.db
-from virtool_core.models.enums import ReferencePermission
 
 
 @pytest.mark.parametrize("find", [None, "tobacco"])
 @pytest.mark.parametrize("verified", [None, True, False])
 @pytest.mark.parametrize("names", [None, True, False])
-async def test_find(find, verified, names, mocker, spawn_client, test_otu):
+async def test_find(find, verified, names, mocker, snapshot, spawn_client, test_otu):
     """
     Test that OTUs can be found be `find` and `verified` fields. Ensure names returns a list of names and ids.
 
     """
     client = await spawn_client(authorize=True)
 
-    result = {"documents": [test_otu]}
-
-    m = mocker.patch("virtool.otus.db.find", make_mocked_coro(result))
+    m = mocker.patch(
+        "virtool.otus.db.find", make_mocked_coro({"documents": [test_otu]})
+    )
 
     params = {}
 
@@ -34,23 +33,29 @@ async def test_find(find, verified, names, mocker, spawn_client, test_otu):
     resp = await client.get("/otus", params=params)
 
     assert resp.status == 200
-    assert await resp.json() == result
+    assert await resp.json() == snapshot
 
     m.assert_called_with(client.db, names or False, find, mocker.ANY, verified)
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, snapshot, spawn_client, resp_is, test_otu, test_sequence):
+async def test_get(
+    error, fake2, snapshot, spawn_client, resp_is, test_change, test_otu, test_sequence
+):
     """
     Test that a valid request returns a complete otu document.
 
     """
     client = await spawn_client(authorize=True)
 
-    if not error:
-        await client.db.otus.insert_one(test_otu)
+    user = await fake2.users.create()
 
-    await client.db.sequences.insert_one(test_sequence)
+    if not error:
+        await asyncio.gather(
+            client.db.otus.insert_one({**test_otu, "user": {"id": user.id}}),
+            client.db.history.insert_one({**test_change, "user": {"id": user.id}}),
+            client.db.sequences.insert_one(test_sequence),
+        )
 
     resp = await client.get("/otus/6116cba1")
 
@@ -234,9 +239,10 @@ class TestEdit:
         test_otu,
     ):
         """
-        Test that changing the name and abbreviation results in changes to the otu document and a new change
-        document in history. The that change both fields or one or the other results in the correct changes and
-        history record.
+        Test that changing the name and abbreviation results:
+
+        * Changes to the otu
+        * A new change document in history.
 
         """
         client = await spawn_client(authorize=True)
@@ -674,14 +680,15 @@ class TestUpdateIsolate:
             authorize=True, permissions=[ReferencePermission.modify_otu]
         )
 
-        await client.db.otus.insert_one(test_otu)
-
-        await client.db.references.insert_one(
-            {
-                "_id": "hxn167",
-                "restrict_source_types": False,
-                "source_types": ["isolate"],
-            }
+        await asyncio.gather(
+            client.db.otus.insert_one(test_otu),
+            client.db.references.insert_one(
+                {
+                    "_id": "hxn167",
+                    "restrict_source_types": False,
+                    "source_types": ["isolate"],
+                }
+            ),
         )
 
         data = {
@@ -950,7 +957,9 @@ async def test_get_sequence(
     if error != "404_sequence":
         await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
+    resp = await client.get(
+        f"/otus/6116cba1/isolates/cab8b360/sequences/{test_sequence['_id']}"
+    )
 
     if error:
         await resp_is.not_found(resp)
@@ -996,10 +1005,17 @@ async def test_create_sequence(
     }
 
     if segment:
-        segment_data = {
-            "schema": [{"name": "test_segment", "molecule": "ssDNA", "required": False}]
-        }
-        await client.patch("/otus/6116cba1", segment_data)
+        resp = await client.patch(
+            "/otus/6116cba1",
+            {
+                "schema": [
+                    {"name": "test_segment", "molecule": "ssDNA", "required": False}
+                ]
+            },
+        )
+
+        if check_ref_right:
+            assert resp.status == 200
 
         data["segment"] = segment if segment != "null" else None
 
@@ -1073,7 +1089,7 @@ async def test_edit_sequence(
         await client.patch("/otus/6116cba1", segment_data)
 
     resp = await client.patch(
-        "/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data
+        f"/otus/6116cba1/isolates/cab8b360/sequences/{test_sequence['_id']}", data
     )
 
     if error:
@@ -1109,7 +1125,9 @@ async def test_remove_sequence(
     if error != "404_sequence":
         await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.delete("/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
+    resp = await client.delete(
+        f"/otus/6116cba1/isolates/cab8b360/sequences/{test_sequence['_id']}"
+    )
 
     if error:
         await resp_is.not_found(resp)
@@ -1141,6 +1159,34 @@ async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_ot
         return
 
     assert resp.status == 200
+
+
+@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
+async def test_download_isolate(
+    error, resp_is, spawn_client, test_otu, test_isolate, test_sequence
+):
+    client = await spawn_client(authorize=True)
+
+    isolate = test_otu["isolates"][0]
+
+    isolate_id = isolate["id"]
+
+    if error == "404_isolate":
+        isolate["id"] = "different"
+
+    if error != "404_otu":
+        await client.db.otus.insert_one(test_otu)
+
+    await client.db.sequences.insert_one(test_sequence)
+
+    resp = await client.get(f"/otus/{test_otu['_id']}/isolates/{isolate_id}.fa")
+
+    if error is None:
+        assert resp.status == 200
+        return
+
+    await resp_is.not_found(resp)
+    return
 
 
 @pytest.mark.parametrize("get", ["isolate", "sequence"])

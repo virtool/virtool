@@ -18,10 +18,12 @@ PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
 
 SEQUENCE_PROJECTION = [
     "_id",
+    "accession",
     "definition",
     "host",
     "otu_id",
     "isolate_id",
+    "reference",
     "sequence",
     "segment",
 ]
@@ -61,11 +63,11 @@ async def check_name_and_abbreviation(
 
 async def find(
     db,
-    names: Union[bool, str],
-    term: str,
+    names: Optional[Union[bool, str]],
+    term: Optional[str],
     req_query: dict,
-    verified: bool,
-    ref_id: str = None,
+    verified: Optional[bool],
+    ref_id: Optional[str] = None,
 ) -> Union[Dict[str, Any], List[Optional[dict]]]:
     db_query = {}
 

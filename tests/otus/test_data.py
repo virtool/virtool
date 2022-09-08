@@ -1,8 +1,11 @@
+import asyncio
 from asyncio import gather
 
 import pytest
 
+from virtool.data.errors import ResourceNotFoundError
 from virtool.otus.data import OTUData
+from virtool.otus.oas import UpdateSequenceRequest
 
 
 @pytest.mark.parametrize("abbreviation,otu_id", [("", "TMV"), (None, "otu")])
@@ -21,7 +24,7 @@ async def test_create(
     assert await dbi.history.find_one() == snapshot
 
 
-async def test_get_fasta(dbi, test_otu, test_sequence):
+async def test_get_fasta(dbi, snapshot, test_otu, test_sequence):
     await gather(
         dbi.otus.insert_one(
             {
@@ -47,11 +50,7 @@ async def test_get_fasta(dbi, test_otu, test_sequence):
 
     otu_data = OTUData({"db": dbi})
 
-    assert await otu_data.get_fasta(test_otu["_id"]) == (
-        "prunus_virus_f.fa",
-        ">Prunus virus F|Isolate 8816-v2|KX269872|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
-        ">Prunus virus F|Isolate A|AX12345|12\nATAGAGGAGTTA",
-    )
+    assert await otu_data.get_fasta(test_otu["_id"]) == snapshot
 
 
 @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
@@ -72,8 +71,11 @@ async def test_edit(
         await otu_data.edit("6116cba1", "Foo Virus", abbreviation, None, "bob")
         == snapshot
     )
-    assert await dbi.otus.find_one() == snapshot
-    assert await dbi.history.find_one() == snapshot
+
+    otus, history = await asyncio.gather(dbi.otus.find_one(), dbi.history.find_one())
+
+    assert otus == snapshot
+    assert history == snapshot
 
 
 @pytest.mark.parametrize("default", [True, False])
@@ -139,6 +141,7 @@ async def test_edit_isolate(dbi, snapshot, test_otu, static_time, tmp_path):
         )
         == snapshot
     )
+
     assert await dbi.otus.find_one() == snapshot
     assert await dbi.history.find_one() == snapshot
 
@@ -166,9 +169,14 @@ async def test_remove_isolate(
 
     await otu_data.remove_isolate("6116cba1", isolate_id, "bob")
 
-    assert await dbi.otus.find_one() == snapshot
-    assert await dbi.history.find_one() == snapshot
-    assert await dbi.sequences.find().to_list(None) == snapshot
+    assert (
+        await asyncio.gather(
+            dbi.otus.find_one(),
+            dbi.history.find_one(),
+            dbi.sequences.find().to_list(None),
+        )
+        == snapshot
+    )
 
 
 async def test_set_default(dbi, snapshot, test_otu, static_time, tmp_path):
@@ -240,20 +248,17 @@ async def test_create_sequence(
         }
     )
 
-    assert (
-        await otu_data.create_sequence(
-            "bar",
-            "baz",
-            "abc123",
-            "A made up sequence",
-            "ATGCGTGTACTG AGAGTAT\nATTTATACCACAC",
-            "bob",
-            host=host,
-            segment=segment,
-            sequence_id=sequence_id,
-        )
-        == snapshot(name="return")
-    )
+    assert await otu_data.create_sequence(
+        "bar",
+        "baz",
+        "abc123",
+        "A made up sequence",
+        "ATGCGTGTACTG AGAGTAT\nATTTATACCACAC",
+        "bob",
+        host=host,
+        segment=segment,
+        sequence_id=sequence_id,
+    ) == snapshot(name="return")
 
     assert await dbi.otus.find_one() == snapshot(name="otu")
     assert await dbi.sequences.find_one() == snapshot(name="sequence")
@@ -261,79 +266,70 @@ async def test_create_sequence(
 
 
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
-async def test_get_sequence(missing, snapshot, dbi):
-    isolates = []
-
-    if missing != "isolate":
-        isolates.append({"id": "bar"})
+async def test_get_sequence(
+    missing, snapshot, dbi, test_otu, test_isolate, test_sequence
+):
+    if missing == "isolate":
+        test_otu["isolates"][0]["id"] = "missing"
 
     if missing != "otu":
-        await dbi.otus.insert_one({"_id": "foo", "isolates": isolates})
+        await dbi.otus.insert_one(test_otu)
 
     if missing != "sequence":
-        await dbi.sequences.insert_one(
-            {
-                "_id": "baz",
-                "isolate_id": "bar",
-                "otu_id": "foo",
-                "sequence": "ATGC",
-                "comment": "hello world",
-            }
-        )
+        await dbi.sequences.insert_one(test_sequence)
 
     otu_data = OTUData({"db": dbi})
 
-    assert await otu_data.get_sequence("foo", "bar", "baz") == snapshot
+    if missing:
+        with pytest.raises(ResourceNotFoundError):
+            await otu_data.get_sequence(
+                test_otu["_id"], test_sequence["isolate_id"], test_sequence["_id"]
+            )
+    else:
+        assert (
+            await otu_data.get_sequence(
+                test_otu["_id"], test_sequence["isolate_id"], test_sequence["_id"]
+            )
+            == snapshot
+        )
 
 
 @pytest.mark.parametrize("sequence", ["ATAGAG GAGTA\nAGAGTGA", None])
-async def test_edit_sequence(sequence, snapshot, dbi, static_time, tmp_path):
+async def test_edit_sequence(
+    sequence,
+    snapshot,
+    dbi,
+    static_time,
+    test_otu,
+    test_isolate,
+    test_sequence,
+    tmp_path,
+):
     """
     Test that an existing sequence is edited, creating an appropriate history document
     in the process.
 
     """
-    await gather(
-        dbi.otus.insert_one(
-            {
-                "_id": "foo",
-                "name": "Foo Virus",
-                "isolates": [
-                    {"id": "bar", "source_type": "isolate", "source_name": "A"}
-                ],
-                "reference": {"id": "foo"},
-                "verified": True,
-                "version": 3,
-            }
-        ),
-        dbi.sequences.insert_one(
-            {
-                "_id": "baz",
-                "accession": "123abc",
-                "host": "",
-                "definition": "Apple virus organism",
-                "segment": "RNA-B",
-                "sequence": "ATGC",
-                "otu_id": "foo",
-                "isolate_id": "bar",
-            }
-        ),
-    )
+    await gather(dbi.otus.insert_one(test_otu), dbi.sequences.insert_one(test_sequence))
 
     otu_data = OTUData({"db": dbi})
 
-    await otu_data.edit_sequence(
-        "foo",
-        "bar",
-        "baz",
-        "bob",
+    update = UpdateSequenceRequest(
         accession="987xyz",
         definition="Hello world",
         host="Apple",
         segment="RNA-A",
-        sequence=sequence,
     )
 
-    assert await dbi.otus.find_one() == snapshot
-    assert await dbi.history.find_one() == snapshot
-    assert await dbi.sequences.find_one() == snapshot
+    if sequence:
+        update.sequence = sequence
+
+    return_value = await otu_data.edit_sequence(
+        test_otu["_id"], test_isolate["id"], test_sequence["_id"], "bob", update
+    )
+
+    assert return_value == snapshot(name="return")
+
+    assert await asyncio.gather(
+        dbi.otus.find_one(), dbi.history.find_one(), dbi.sequences.find_one()
+    ) == snapshot(name="db")

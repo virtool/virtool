@@ -3,32 +3,36 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from pymongo.results import DeleteResult
-from virtool_core.models.otu import OTU
+from virtool_core.models.enums import HistoryMethod
+from virtool_core.models.otu import OTU, OTUSequence
 
-import virtool.mongo.utils
 import virtool.history.db
+import virtool.mongo.utils
 import virtool.otus.db
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
-from virtool.mongo.core import DB
-from virtool.mongo.utils import get_one_field
 from virtool.downloads.utils import format_fasta_entry, format_fasta_filename
 from virtool.history.utils import (
     compose_create_description,
     compose_edit_description,
     compose_remove_description,
 )
+from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
+from virtool.otus.oas import UpdateSequenceRequest
 from virtool.otus.utils import find_isolate, format_isolate_name, format_otu
 from virtool.types import App, Document
+from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
-from virtool_core.models.enums import HistoryMethod
 
 
 class OTUData:
     def __init__(self, app: App):
         self._app = app
         self._db: DB = app["db"]
+        self._mongo = self._db
 
     async def get(self, otu_id: str) -> OTU:
         """
@@ -41,6 +45,12 @@ class OTUData:
 
         if document is None:
             raise ResourceNotFoundError
+
+        document["most_recent_change"] = await apply_transforms(
+            document["most_recent_change"], [AttachUserTransform(self._mongo)]
+        )
+
+        document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
 
         return OTU(**document)
 
@@ -55,7 +65,7 @@ class OTUData:
         otu = await self._db.otus.find_one(otu_id, ["name", "isolates"])
 
         if otu is None:
-            return None
+            raise ResourceNotFoundError
 
         fasta = []
 
@@ -137,7 +147,7 @@ class OTUData:
         user_id: str,
     ):
         """
-        Edit an existing OTU.
+        Edit an OTU.
 
         Modifiable fields are `name`, `abbreviation`, and `schema`. Method creates a
         corresponding history record.
@@ -214,12 +224,12 @@ class OTUData:
         :return: `True` if the removal was successful
 
         """
+        joined = await virtool.otus.db.join(self._db, otu_id)
+
+        if not joined:
+            return None
+
         async with self._db.create_session() as session:
-            joined = await virtool.otus.db.join(self._db, otu_id, session=session)
-
-            if not joined:
-                return None
-
             _, delete_result, _ = await gather(
                 self._db.sequences.delete_many(
                     {"otu_id": otu_id}, silent=True, session=session
@@ -262,6 +272,20 @@ class OTUData:
         default: bool = False,
         isolate_id: Optional[str] = None,
     ):
+        document = await self._db.otus.find_one(otu_id)
+
+        isolates = deepcopy(document["isolates"])
+
+        # True if the new isolate should be default and any existing isolates should
+        # be non-default.
+        will_be_default = not isolates or default
+
+        # Set ``default`` to ``False`` for all existing isolates if the new one
+        # should be default.
+        if will_be_default:
+            for isolate in isolates:
+                isolate["default"] = False
+
         async with self._db.create_session() as session:
             document = await self._db.otus.find_one(otu_id, session=session)
 
@@ -574,16 +598,19 @@ class OTUData:
 
         return base_processor(sequence_document)
 
-    async def get_sequence(self, otu_id: str, isolate_id: str, sequence_id: str):
+    async def get_sequence(
+        self, otu_id: str, isolate_id: str, sequence_id: str
+    ) -> OTUSequence:
         if await self._db.otus.count_documents(
-            {"_id": otu_id, "isolates.id": isolate_id}
+            {"_id": otu_id, "isolates.id": isolate_id}, limit=1
         ):
-            return base_processor(
-                await self._db.sequences.find_one(
-                    {"_id": sequence_id, "otu_id": otu_id, "isolate_id": isolate_id},
-                    virtool.otus.db.SEQUENCE_PROJECTION,
-                )
-            )
+            if document := await self._db.sequences.find_one(
+                {"_id": sequence_id, "otu_id": otu_id, "isolate_id": isolate_id},
+                virtool.otus.db.SEQUENCE_PROJECTION,
+            ):
+                return OTUSequence(**document)
+
+        raise ResourceNotFoundError
 
     async def edit_sequence(
         self,
@@ -591,35 +618,25 @@ class OTUData:
         isolate_id: str,
         sequence_id: str,
         user_id: str,
-        accession: Optional[str] = None,
-        definition: Optional[str] = None,
-        host: Optional[str] = None,
-        segment: Optional[str] = None,
-        sequence: Optional[str] = None,
-        target: Optional[str] = None,
+        data: UpdateSequenceRequest,
     ):
-        if sequence:
-            sequence = sequence.replace(" ", "").replace("\n", "")
+        data = data.dict(exclude_unset=True)
+
+        update = {
+            key: data[key]
+            for key in ("accession", "definition", "host", "segment", "target")
+            if key in data
+        }
+
+        if "sequence" in data:
+            update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
+
+        old = await virtool.otus.db.join(self._db, otu_id)
 
         async with self._db.create_session() as session:
-            old = await virtool.otus.db.join(self._db, otu_id, session=session)
-
             sequence_document = await self._db.sequences.find_one_and_update(
                 {"_id": sequence_id},
-                {
-                    "$set": {
-                        key: value
-                        for key, value in (
-                            ("accession", accession),
-                            ("definition", definition),
-                            ("host", host),
-                            ("segment", segment),
-                            ("sequence", sequence),
-                            ("target", target),
-                        )
-                        if value is not None
-                    }
-                },
+                {"$set": update},
                 session=session,
             )
 
@@ -661,8 +678,9 @@ class OTUData:
         :param user_id: the ID of the requesting user
 
         """
+        old = await virtool.otus.db.join(self._db, otu_id)
+
         async with self._db.create_session() as session:
-            old = await virtool.otus.db.join(self._db, otu_id, session=session)
 
             await self._db.sequences.delete_one({"_id": sequence_id}, session=session)
 

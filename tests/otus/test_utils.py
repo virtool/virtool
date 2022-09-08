@@ -102,7 +102,7 @@ def test_find_isolate(exists, test_otu, test_isolate):
 class TestExtractSequenceIds:
     def test_valid(self, test_merged_otu):
         sequence_ids = virtool.otus.utils.extract_sequence_ids(test_merged_otu)
-        assert sequence_ids == ["KX269872"]
+        assert sequence_ids == ["abcd1234"]
 
     def test_missing_isolates(self, test_merged_otu):
         del test_merged_otu["isolates"]
