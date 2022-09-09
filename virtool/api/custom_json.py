@@ -46,7 +46,7 @@ def isoformat(obj: datetime.datetime) -> str:
 
 def dumps(obj: object) -> str:
     """
-    A wrapper for :func:`json.dumps` is able to encode datetime objects in input.
+    A wrapper for :func:`dumps` is able to encode datetime objects in input.
 
     Used as `dumps` argument for :func:`.json_response`.
 

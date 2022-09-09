@@ -20,7 +20,7 @@ from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 
 from virtool.analyses.models import AnalysisFormat
 from virtool.analyses.oas import GetAnalysisResponse, AnalysisResponse
-from virtool.api.json import isoformat
+from virtool.api.custom_json import isoformat
 from virtool.api.response import (
     InsufficientRights,
     InvalidQuery,

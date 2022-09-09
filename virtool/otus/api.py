@@ -1,4 +1,3 @@
-from ctypes import Union
 from typing import List, Union, Optional
 
 from aiohttp import web

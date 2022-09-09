@@ -2,7 +2,7 @@ from typing import Union
 
 from aiohttp.web_ws import WebSocketResponse
 
-import virtool.api.json
+import virtool.api.custom_json
 
 
 class Connection:

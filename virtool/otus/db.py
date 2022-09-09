@@ -2,7 +2,7 @@
 Work with OTUs in the database.
 
 """
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Mapping
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from multidict import MultiDictProxy
@@ -66,7 +66,7 @@ async def find(
     db,
     names: Optional[Union[bool, str]],
     term: Optional[str],
-    req_query: Union[Dict, MultiDictProxy],
+    req_query: Mapping,
     verified: Optional[bool],
     ref_id: Optional[str] = None,
 ) -> Union[Dict[str, Any], List[Optional[dict]]]:

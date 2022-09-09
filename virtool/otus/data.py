@@ -1,7 +1,6 @@
 import asyncio
-from asyncio import gather
 from copy import deepcopy
-from typing import List, Optional, Tuple, Union, Mapping
+from typing import Optional, Tuple, Mapping
 
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
@@ -23,7 +22,7 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
 from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
-from virtool.otus.utils import find_isolate, format_isolate_name, format_otu
+from virtool.otus.utils import find_isolate, format_isolate_name
 from virtool.types import App, Document
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
@@ -190,7 +189,7 @@ class OTUData:
                 self._db, otu_id, document, session=session
             )
 
-            issues = await update_otu_verification(self._db, new, session=session)
+            await update_otu_verification(self._db, new, session=session)
 
             await virtool.history.db.add(
                 self._app,
@@ -208,7 +207,7 @@ class OTUData:
 
     async def remove(
         self, otu_id: str, user_id: str, silent: bool = False
-    ) -> DeleteResult:
+    ) -> Optional[DeleteResult]:
         """
         Remove an OTU.
 
@@ -226,7 +225,7 @@ class OTUData:
             return None
 
         async with self._db.create_session() as session:
-            _, delete_result, _ = await gather(
+            _, delete_result, _ = await asyncio.gather(
                 self._db.sequences.delete_many(
                     {"otu_id": otu_id}, silent=True, session=session
                 ),
@@ -510,7 +509,7 @@ class OTUData:
                 self._db, otu_id, document, session=session
             )
 
-            await gather(
+            await asyncio.gather(
                 virtool.otus.db.update_otu_verification(self._db, new, session=session),
                 self._db.sequences.delete_many(
                     {"otu_id": otu_id, "isolate_id": isolate_id}, session=session

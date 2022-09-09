@@ -1,4 +1,4 @@
-import virtool.api.json
+import virtool.api.custom_json
 from virtool.users.utils import Permission
 
 

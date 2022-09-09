@@ -2,7 +2,7 @@ from typing import Callable
 
 import aiohttp.web
 
-import virtool.api.json
+import virtool.api.custom_json
 
 
 @aiohttp.web.middleware
