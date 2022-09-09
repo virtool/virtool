@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import virtool.users.utils
 import virtool.utils
-from virtool.types import Document
+
 
 PROJECTION = (
     "_id",

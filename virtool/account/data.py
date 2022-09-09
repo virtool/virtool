@@ -1,21 +1,13 @@
-import collections
-
 import virtool
 from virtool.account.api import API_KEY_PROJECTION
 from virtool.mongo.core import DB
 import virtool.account.db
+import virtool.utils
 from virtool_core.models.account import AccountSettings, APIKey
-
-from virtool.users.checks import check_password_length
-from virtool.utils import base_processor
 
 from typing import Union, Tuple, List
 
 from virtool_core.models.account import Account
-
-import virtool.account.db
-import virtool.http.auth
-import virtool.http.routes
 from virtool.account.oas import (
     EditSettingsSchema,
     CreateKeysSchema,
@@ -165,7 +157,7 @@ class AccountData:
                 key_permissions, user["permissions"]
             )
 
-        raw, hashed = virtool.utils.generate_key()
+        _, hashed = virtool.utils.generate_key()
 
         document = {
             "_id": hashed,

@@ -12,7 +12,6 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
-import virtool.account.db
 import virtool.http.auth
 import virtool.http.routes
 from virtool.account.oas import (
@@ -39,7 +38,6 @@ from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 
 from virtool.users.checks import check_password_length
 from virtool.users.oas import UpdateUserSchema
-from virtool.users.sessions import create_reset_code
 
 
 API_KEY_PROJECTION = {
