@@ -1,4 +1,3 @@
-import virtool.api.custom_json
 from virtool.api.custom_json import dumps
 from virtool.users.utils import Permission
 
