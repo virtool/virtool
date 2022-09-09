@@ -7,7 +7,6 @@ from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.otu import OTU, OTUSequence
 
 import virtool.history.db
-import virtool.mongo.utils
 import virtool.otus.db
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError

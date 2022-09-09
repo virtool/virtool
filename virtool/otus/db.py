@@ -5,13 +5,12 @@ Work with OTUs in the database.
 from typing import Any, Dict, List, Optional, Union, Mapping
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from multidict import MultiDictProxy
 
 import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.mongo.utils import get_one_field
 from virtool.errors import DatabaseError
+from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.utils import base_processor, to_bool
 
