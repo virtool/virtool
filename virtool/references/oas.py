@@ -42,7 +42,8 @@ class CreateReferenceSchema(BaseModel):
     @root_validator
     def check_values(cls, values: Union[str, constr]):
         """
-        Checks that only one of clone_from, import_from or remote_from are inputted, if any.
+        Checks that only one of clone_from, import_from or
+        remote_from are inputted, if any.
         """
 
         clone_from, import_from, remote_from = (
