@@ -66,7 +66,7 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
         "virtool.utils.generate_key", return_value=("bar", "baz")
     )
 
-    groups = ["technicians", "managers"]
+    groups = [{"id": "technicians"}, {"id": "managers"}]
 
     # Vary the key owner's administrator status and permissions.
     await dbi.users.insert_one(
@@ -88,14 +88,15 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
     )
 
     document = await account.create_key(data, "bob")
+    document = document.dict()
 
     permissions = {p.value: False for p in Permission}
     permissions[Permission.create_sample.value] = True
     permissions["modify_subtraction"] = False
 
     expected = {
+        "administrator": administrator,
         "id": "foo_0",
-        "key": "bar",
         "name": "Foo",
         "created_at": static_time.datetime,
         "groups": groups,
@@ -112,10 +113,14 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
     m_generate_key.assert_called()
 
     # Check returned document matches expected.
+    for group in expected["groups"]:
+        group.update({"name": group["id"]})
+
     assert document == expected
 
     # Modify expected document to check what we expect to have been inserted in the database.
-    del expected["key"]
+    del expected["groups"][0]["name"]
+    del expected["groups"][1]["name"]
 
     expected.update({"_id": "baz", "user": {"id": "bob"}})
 
