@@ -1,9 +1,7 @@
-from datetime import datetime
-from typing import Union, Optional, List
+from typing import Union, Optional
 from pydantic import BaseModel, constr, Field, root_validator, validator
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.account import Account, AccountSettings, check_email
-from virtool_core.models.group import GroupMinimal, Permissions
+from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
 
 from virtool.groups.oas import EditPermissionsSchema
 
@@ -114,7 +112,7 @@ class CreateKeysSchema(BaseModel):
         description="a non-unique name for the API key"
     )
     permissions: Optional[EditPermissionsSchema] = Field(
-        default={},
+        default=EditPermissionsSchema(),
         description="an object describing the permissions the new key will have. "
         "Any unset permissions will default to false",
     )
@@ -125,14 +123,7 @@ class CreateKeysSchema(BaseModel):
         }
 
 
-class CreateAPIKeyResponse(BaseModel):
-    created_at: datetime
-    groups: List[GroupMinimal]
-    id: str
-    key: str
-    name: str
-    permissions: Permissions
-
+class CreateAPIKeyResponse(APIKey):
     class Config:
         schema_extra = {
             "example": {
@@ -165,13 +156,7 @@ class EditKeySchema(BaseModel):
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
 
 
-class APIKeyResponse(BaseModel):
-    created_at: datetime
-    groups: List[GroupMinimal]
-    id: str
-    name: str
-    permissions: Permissions
-
+class APIKeyResponse(APIKey):
     class Config:
         schema_extra = {
             "example": {
@@ -277,13 +262,25 @@ class AccountSettingsResponse(AccountSettings):
         }
 
 
-class GetAPIKeysResponse(BaseModel):
-    id: str
-    name: str
-
+class ListAPIKeysResponse(APIKey):
     class Config:
         schema_extra = {
             "example": [
-                {"id": "baz_1", "name": "Baz"},
+                {
+                    "created_at": "2015-10-06T20:00:00Z",
+                    "groups": [],
+                    "id": "baz_1",
+                    "name": "Baz",
+                    "permissions": {
+                        "cancel_job": False,
+                        "create_ref": False,
+                        "create_sample": True,
+                        "modify_hmm": False,
+                        "modify_subtraction": False,
+                        "remove_file": False,
+                        "remove_job": False,
+                        "upload_file": False,
+                    },
+                },
             ]
         }

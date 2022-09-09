@@ -25,11 +25,11 @@ from virtool.account.oas import (
     AccountResponse,
     EditAccountResponse,
     AccountSettingsResponse,
-    GetAPIKeysResponse,
     CreateAPIKeyResponse,
     APIKeyResponse,
     LoginResponse,
     AccountResetPasswordResponse,
+    ListAPIKeysResponse,
 )
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceError, ResourceNotFoundError
@@ -42,7 +42,10 @@ from virtool.users.oas import UpdateUserSchema
 from virtool.users.sessions import create_reset_code
 
 
-API_KEY_PROJECTION = {"_id": False, "user": False}
+API_KEY_PROJECTION = {
+    "_id": False,
+    "user": False,
+}
 """
 A MongoDB projection to use when returning API key documents to clients.
 
@@ -68,7 +71,7 @@ class AccountView(PydanticView):
             401: Requires Authorization
         """
 
-        account = await get_data_from_req(self.request).account.find(
+        account = await get_data_from_req(self.request).account.get(
             self.request["client"].user_id
         )
 
@@ -93,22 +96,22 @@ class AccountView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        password = data.password
+        data_dict = data.dict(exclude_unset=True)
 
-        if password is not None:
-            error = await check_password_length(self.request, password)
+        if "password" in data_dict:
+            error = await check_password_length(self.request, data.password)
 
             if error:
                 raise HTTPBadRequest(text=error)
 
         try:
-            updated_account = await get_data_from_req(self.request).account.edit(
-                self.request["client"].user_id, data
+            account = await get_data_from_req(self.request).account.edit(
+                self.request["client"].user_id, data_dict
             )
         except ResourceError:
             raise HTTPBadRequest(text="Invalid credentials")
 
-        return json_response(EditAccountResponse.parse_obj(updated_account))
+        return json_response(EditAccountResponse.parse_obj(account))
 
 
 @routes.view("/account/settings")
@@ -127,7 +130,7 @@ class SettingsView(PydanticView):
             "settings", self.request["client"].user_id
         )
 
-        return json_response(AccountSettingsResponse.parse_obj(account_settings).dict())
+        return json_response(AccountSettingsResponse.parse_obj(account_settings))
 
     async def patch(
         self, data: EditSettingsSchema
@@ -146,12 +149,12 @@ class SettingsView(PydanticView):
             data, "settings", self.request["client"].user_id
         )
 
-        return json_response(AccountSettingsResponse.parse_obj(settings).dict())
+        return json_response(AccountSettingsResponse.parse_obj(settings))
 
 
 @routes.view("/account/keys")
 class KeysView(PydanticView):
-    async def get(self) -> Union[r200[List[GetAPIKeysResponse]], r401]:
+    async def get(self) -> Union[r200[List[ListAPIKeysResponse]], r401]:
         """
         List API keys.
 
@@ -161,12 +164,12 @@ class KeysView(PydanticView):
             200: Successful operation
             401: Requires authorization
         """
-        cursor = await get_data_from_req(self.request).account.get_keys(
-            self.request["client"].user_id, API_KEY_PROJECTION
+        keys = await get_data_from_req(self.request).account.get_keys(
+            self.request["client"].user_id
         )
 
         return json_response(
-            [GetAPIKeysResponse.parse_obj(d) async for d in cursor], status=200
+            [ListAPIKeysResponse.parse_obj(key) for key in keys], status=200
         )
 
     async def post(
@@ -189,7 +192,7 @@ class KeysView(PydanticView):
             data, self.request["client"].user_id
         )
 
-        headers = {"Location": f"/account/keys/{key['id']}"}
+        headers = {"Location": f"/account/keys/{key.id}"}
 
         return json_response(
             CreateAPIKeyResponse.parse_obj(key), headers=headers, status=201
@@ -227,14 +230,12 @@ class KeyView(PydanticView):
         """
         try:
             key = await get_data_from_req(self.request).account.get_key(
-                self.request["client"].user_id,
-                self.request.match_info["key_id"],
-                API_KEY_PROJECTION,
+                self.request["client"].user_id, self.request.match_info["key_id"]
             )
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(APIKeyResponse.parse_obj(key).dict(), status=200)
+        return json_response(APIKeyResponse.parse_obj(key), status=200)
 
     async def patch(
         self, data: EditKeySchema
@@ -256,12 +257,11 @@ class KeyView(PydanticView):
                 self.request["client"].user_id,
                 self.request.match_info.get("key_id"),
                 data,
-                API_KEY_PROJECTION,
             )
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(APIKeyResponse.parse_obj(key).dict())
+        return json_response(APIKeyResponse.parse_obj(key))
 
     async def delete(self) -> Union[r204, r401, r404]:
         """
@@ -377,9 +377,7 @@ class ResetView(PydanticView):
             200: Successful operation
             400: Invalid input
         """
-        password = data.password
-
-        if error := await check_password_length(self.request, password):
+        if error := await check_password_length(self.request, data.password):
             raise HTTPBadRequest(text=error)
 
         status, user_id, reset = await get_data_from_req(self.request).account.reset(
@@ -399,7 +397,7 @@ class ResetView(PydanticView):
 
         await get_data_from_req(self.request).users.update(
             user_id,
-            UpdateUserSchema(force_reset=False, password=password),
+            UpdateUserSchema(force_reset=False, password=data.password),
         )
 
         try:

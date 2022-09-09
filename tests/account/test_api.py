@@ -141,7 +141,7 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
         }
 
 
-async def test_get_api_keys(spawn_client):
+async def test_get_api_keys(spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     await client.db.keys.insert_many(
@@ -151,16 +151,61 @@ async def test_get_api_keys(spawn_client):
                 "id": "foobar_0",
                 "name": "Foobar",
                 "user": {"id": "test"},
+                "created_at": static_time.datetime,
+                "administrator": True,
+                "groups": [],
+                "permissions": {},
             },
-            {"_id": "xyz321", "id": "baz_1", "name": "Baz", "user": {"id": "test"}},
+            {
+                "_id": "xyz321",
+                "id": "baz_1",
+                "name": "Baz",
+                "user": {"id": "test"},
+                "created_at": static_time.datetime,
+                "administrator": False,
+                "groups": [],
+                "permissions": {},
+            },
         ]
     )
 
     resp = await client.get("/account/keys")
 
     assert await resp.json() == [
-        {"id": "foobar_0", "name": "Foobar"},
-        {"id": "baz_1", "name": "Baz"},
+        {
+            "administrator": True,
+            "created_at": "2015-10-06T20:00:00Z",
+            "groups": [],
+            "id": "foobar_0",
+            "name": "Foobar",
+            "permissions": {
+                "cancel_job": False,
+                "create_ref": False,
+                "create_sample": False,
+                "modify_hmm": False,
+                "modify_subtraction": False,
+                "remove_file": False,
+                "remove_job": False,
+                "upload_file": False,
+            },
+        },
+        {
+            "administrator": False,
+            "created_at": "2015-10-06T20:00:00Z",
+            "groups": [],
+            "id": "baz_1",
+            "name": "Baz",
+            "permissions": {
+                "cancel_job": False,
+                "create_ref": False,
+                "create_sample": False,
+                "modify_hmm": False,
+                "modify_subtraction": False,
+                "remove_file": False,
+                "remove_job": False,
+                "upload_file": False,
+            },
+        },
     ]
 
 
@@ -258,6 +303,7 @@ class TestUpdateAPIKey:
                 "id": "foobar_0",
                 "name": "Foobar",
                 "created_at": static_time.datetime,
+                "administrator": True,
                 "user": {"id": "test"},
                 "groups": [],
                 "permissions": {p.value: False for p in Permission},
