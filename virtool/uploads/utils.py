@@ -6,7 +6,10 @@ from typing import Any, Callable, Optional
 import aiofiles
 from cerberus import Validator
 
+from virtool.data.errors import ResourceNotFoundError
 from virtool.utils import run_in_thread
+
+from virtool.config.cls import Config
 
 logger = getLogger(__name__)
 
@@ -76,3 +79,16 @@ async def naive_writer(
             size += len(chunk)
 
     return size
+
+
+async def get_upload_path(config: Config, name_on_disk: str) -> pathlib.Path:
+    """
+    Get the local upload path and return it.
+    """
+    upload_path = config.data_path / "files" / name_on_disk
+
+    # check if the file has been manually removed by the user
+    if not await run_in_thread(upload_path.exists):
+        raise ResourceNotFoundError("Uploaded file not found at expected location")
+
+    return upload_path

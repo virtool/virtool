@@ -10,10 +10,10 @@ from virtool_core.models.enums import Permission, LibraryType
 
 import virtool.caches.db
 import virtool.pg.utils
-import virtool.uploads.db
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.config.cls import Config
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_app
 from virtool.jobs.client import DummyJobsClient
 from virtool.pg.utils import get_row_by_id
@@ -288,6 +288,7 @@ class TestCreate:
         spawn_client,
         pg: AsyncEngine,
         static_time,
+        test_upload,
     ):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
@@ -309,7 +310,7 @@ class TestCreate:
         await client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"})
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+            session.add(test_upload)
             await session.commit()
 
         await client.db.groups.insert_many(
@@ -341,7 +342,9 @@ class TestCreate:
 
         assert upload.reserved is True
 
-    async def test_name_exists(self, pg, spawn_client, static_time, resp_is):
+    async def test_name_exists(
+        self, pg, spawn_client, static_time, resp_is, test_upload
+    ):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
@@ -351,7 +354,7 @@ class TestCreate:
         )
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+            session.add(test_upload)
 
             await asyncio.gather(
                 client.db.samples.insert_one(
@@ -376,7 +379,9 @@ class TestCreate:
         await resp_is.bad_request(resp, "Sample name is already in use")
 
     @pytest.mark.parametrize("group", ["", "diagnostics", None])
-    async def test_force_choice(self, spawn_client, pg: AsyncEngine, resp_is, group):
+    async def test_force_choice(
+        self, spawn_client, pg: AsyncEngine, resp_is, group, test_upload
+    ):
         """
         Test that when ``force_choice`` is enabled, a request with no group field passed results in
         an error response, that "" is accepted as a valid user group and that valid user groups are accepted as expected
@@ -387,7 +392,7 @@ class TestCreate:
         )
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+            session.add(test_upload)
 
             await asyncio.gather(
                 session.commit(),
@@ -412,7 +417,7 @@ class TestCreate:
             resp = await client.post("/samples", request_data)
             assert resp.status == 201
 
-    async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
+    async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is, test_upload):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
@@ -422,7 +427,7 @@ class TestCreate:
         )
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+            session.add(test_upload)
 
             await asyncio.gather(
                 session.commit(),
@@ -445,13 +450,15 @@ class TestCreate:
         )
         await resp_is.bad_request(resp, "Group does not exist")
 
-    async def test_subtraction_dne(self, pg: AsyncEngine, spawn_client, resp_is):
+    async def test_subtraction_dne(
+        self, pg: AsyncEngine, spawn_client, resp_is, test_upload
+    ):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+            session.add(test_upload)
             await session.commit()
 
         resp = await client.post(
@@ -460,7 +467,9 @@ class TestCreate:
         await resp_is.bad_request(resp, "Subtractions do not exist: apple")
 
     @pytest.mark.parametrize("one_exists", [True, False])
-    async def test_file_dne(self, one_exists, spawn_client, pg: AsyncEngine, resp_is):
+    async def test_file_dne(
+        self, one_exists, spawn_client, pg: AsyncEngine, resp_is, test_upload
+    ):
         """
         Test that a ``404`` is returned if one or more of the file ids passed in ``files`` does not
         exist.
@@ -482,7 +491,7 @@ class TestCreate:
 
         if one_exists:
             async with AsyncSession(pg) as session:
-                session.add(Upload(id=1, name="test.fq.gz", size=123456))
+                session.add(test_upload)
                 await session.commit()
 
         resp = await client.post(
@@ -490,7 +499,7 @@ class TestCreate:
         )
         await resp_is.bad_request(resp, "File does not exist")
 
-    async def test_label_dne(self, spawn_client, pg: AsyncEngine, resp_is):
+    async def test_label_dne(self, spawn_client, pg: AsyncEngine, resp_is, test_upload):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
@@ -500,7 +509,7 @@ class TestCreate:
         )
 
         async with AsyncSession(pg) as session:
-            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+            session.add(test_upload)
             await session.commit()
 
         resp = await client.post(
@@ -671,7 +680,8 @@ async def test_finalize(
     if field == "quality":
         assert resp.status == 200
         assert await resp.json() == snapshot
-        assert not await virtool.uploads.db.get(pg, 1)
+        with pytest.raises(ResourceNotFoundError):
+            await get_data_from_app(client.app).uploads.get(1)
         assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
     else:
         assert resp.status == 422
@@ -706,10 +716,19 @@ async def test_remove(spawn_client, create_delete_result, tmpdir):
     assert not sample_path.exists()
 
 
-@pytest.mark.parametrize("ready", [True, False])
+@pytest.mark.parametrize("ready", [False])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_job_remove(
-    exists, ready, mocker, resp_is, static_time, spawn_job_client, pg, tmp_path
+    exists,
+    ready,
+    mocker,
+    resp_is,
+    static_time,
+    spawn_job_client,
+    pg,
+    tmp_path,
+    test_upload,
+    fake2,
 ):
     """
     Test that a sample can be removed when called using the Jobs API.
@@ -718,10 +737,15 @@ async def test_job_remove(
     client = await spawn_job_client(authorize=True)
     client.app["config"].data_path = tmp_path
 
+    user = await fake2.users.create()
+
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     if exists:
-        file = await virtool.uploads.db.create(pg, "test", "reads", reserved=True)
+        file = await get_data_from_app(client.app).uploads.create(
+            "test", "reads", reserved=True, user=user.id
+        )
+        await get_data_from_app(client.app).uploads.finalize(9000, file.id)
         await create_reads_file(pg, 0, "test", "test", "test", upload_id=1)
 
         await client.db.samples.insert_one(
@@ -739,7 +763,7 @@ async def test_job_remove(
 
     if exists and not ready:
         await resp_is.no_content(resp)
-        upload = await virtool.uploads.db.get(pg, file["id"])
+        upload = await get_data_from_app(client.app).uploads.get(file.id)
         assert not upload.reserved
     elif exists:
         await resp_is.bad_request(resp, "Only unfinalized samples can be deleted")
@@ -1023,6 +1047,7 @@ class TestUploadReads:
         pg,
         test_files_path,
         tmp_path,
+        fake2
     ):
         """
         Test that new sample reads can be uploaded using the Jobs API.
@@ -1043,7 +1068,9 @@ class TestUploadReads:
             }
         )
 
-        await virtool.uploads.db.create(pg, "test", "reads")
+        user = await fake2.users.create()
+
+        await get_data_from_app(client.app).uploads.create("test", "reads", False, user=user.id)
 
         if not compressed:
             mocker.patch(

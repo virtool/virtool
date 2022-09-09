@@ -68,6 +68,7 @@ from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
 from virtool.users.data import UsersData
 from virtool.utils import ensure_data_dir, random_alphanumeric
+from virtool.uploads.data import UploadsData
 from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
@@ -139,6 +140,7 @@ async def startup_data(app: App):
         OTUData(app),
         SamplesData(app["config"], app["db"], app["pg"]),
         SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
+        UploadsData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
     )
 

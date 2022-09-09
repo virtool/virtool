@@ -116,13 +116,13 @@ class ReleaseView(PydanticView):
             502: Cannot reach GitHub
         """
         try:
-            release = await get_data_from_req(self.request).hmms.get_release()
+            status = await get_data_from_req(self.request).hmms.get_status()
         except ResourceNotFoundError:
             raise NotFound
         except ResourceRemoteError as err:
             raise HTTPBadGateway(text=str(err))
 
-        return json_response(release)
+        return json_response(status.release)
 
 
 @routes.view("/hmms/status/updates")
