@@ -77,7 +77,7 @@ def format_otu(
     joined: Optional[Document],
     issues: Optional[Union[Document, bool]] = False,
     most_recent_change: Optional[Document] = None,
-) -> dict:
+) -> Document:
     """
     Join and format an OTU.
 

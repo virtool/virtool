@@ -318,51 +318,49 @@ class TestEdit:
         await resp_is.bad_request(resp, message)
 
     @pytest.mark.parametrize(
-        "old_name,old_abbreviation,data",
+        "change_count,data",
         [
-            (
-                "Tobacco mosaic otu",
-                "TMV",
-                {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
-            ),
-            ("Tobacco mosaic otu", "TMV", {"name": "Tobacco mosaic otu"}),
-            ("Tobacco mosaic otu", "TMV", {"abbreviation": "TMV"}),
+            (0, {"abbreviation": "PVF"}),
+            (0, {"abbreviation": "PVF", "name": "Prunus virus F"}),
+            (1, {"abbreviation": "PVF2"}),
+            (1, {"abbreviation": "PVF", "name": "Prunus virus G"}),
         ],
     )
     async def test_no_change(
         self,
-        old_name,
-        old_abbreviation,
+        change_count,
         data,
+        fake2,
         snapshot,
         spawn_client,
         check_ref_right,
         resp_is,
+        test_change,
+        test_otu,
+        test_sequence,
     ):
         client = await spawn_client(
             authorize=True, permissions=[ReferencePermission.modify_otu]
         )
 
-        await client.db.otus.insert_one(
-            {
-                "_id": "test",
-                "name": old_name,
-                "lower_name": "tobacco mosaic otu",
-                "abbreviation": old_abbreviation,
-                "isolates": [],
-                "reference": {"id": "foo"},
-            }
+        user = await fake2.users.create()
+        test_change.update({"user": {"id": user.id}, "_id": "6116cba1.0"})
+
+        await asyncio.gather(
+            client.db.otus.insert_one(test_otu),
+            client.db.sequences.insert_one(test_sequence),
+            client.db.history.insert_one(test_change),
         )
 
-        resp = await client.patch("/otus/test", data)
+        resp = await client.patch(f"/otus/{test_otu['_id']}", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 200
-        assert await resp.json() == snapshot
-        assert await client.db.history.count_documents({}) == 0
+        assert await client.db.history.count_documents({}) == 1 + change_count
+        assert await resp.json() == snapshot(name="json")
 
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
@@ -779,6 +777,7 @@ class TestSetAsDefault:
         resp_is,
         test_otu,
         static_time,
+        test_change,
         test_random_alphanumeric,
     ):
         """
@@ -799,7 +798,10 @@ class TestSetAsDefault:
             }
         )
 
-        await client.db.otus.insert_one(test_otu)
+        await asyncio.gather(
+            client.db.otus.insert_one(test_otu),
+            client.db.history.insert_one(test_change),
+        )
 
         resp = await client.put("/otus/6116cba1/isolates/cab8b360/default", {})
 
@@ -811,7 +813,7 @@ class TestSetAsDefault:
         assert await resp.json() == snapshot
 
         assert await virtool.otus.db.join(client.db, "6116cba1") == snapshot
-        assert await client.db.history.count_documents({}) == 0
+        assert await client.db.history.count_documents({}) == 1
 
     @pytest.mark.parametrize(
         "otu_id,isolate_id",
@@ -838,8 +840,8 @@ class TestRemoveIsolate:
         self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
     ):
         """
-        Test that a valid request results in a ``204`` response and the isolate and sequence data is removed from the
-        database.
+        Test that a valid request results in a ``204`` response and the isolate and
+        sequence data is removed from MongoDB.
 
         """
         client = await spawn_client(
@@ -1083,10 +1085,14 @@ async def test_edit_sequence(
 
     if segment:
         data["segment"] = segment if segment != "null" else None
-        segment_data = {
-            "schema": [{"name": "test_segment", "molecule": "ssDNA", "required": False}]
-        }
-        await client.patch("/otus/6116cba1", segment_data)
+        await client.patch(
+            "/otus/6116cba1",
+            {
+                "schema": [
+                    {"name": "test_segment", "molecule": "ssDNA", "required": False}
+                ]
+            },
+        )
 
     resp = await client.patch(
         f"/otus/6116cba1/isolates/cab8b360/sequences/{test_sequence['_id']}", data

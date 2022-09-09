@@ -5,23 +5,28 @@ import pytest
 
 from virtool.data.errors import ResourceNotFoundError
 from virtool.otus.data import OTUData
-from virtool.otus.oas import UpdateSequenceRequest
+from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
 
 
-@pytest.mark.parametrize("abbreviation,otu_id", [("", "TMV"), (None, "otu")])
+@pytest.mark.parametrize(
+    "data",
+    [
+        CreateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus"),
+        CreateOTURequest(name="Prunus virus A"),
+    ],
+)
 async def test_create(
-    abbreviation, otu_id, snapshot, dbi, test_random_alphanumeric, static_time, tmp_path
+    data, dbi, fake2, snapshot, static_time, test_random_alphanumeric, tmp_path
 ):
     otu_data = OTUData({"db": dbi})
 
-    assert (
-        await otu_data.create(
-            "foo", "Bar", "bob", abbreviation=abbreviation, otu_id=otu_id
-        )
-        == snapshot
-    )
-    assert await dbi.otus.find_one() == snapshot
-    assert await dbi.history.find_one() == snapshot
+    user = await fake2.users.create()
+
+    assert await otu_data.create("foo", data, user.id) == snapshot(name="return")
+
+    assert await asyncio.gather(
+        dbi.otus.find_one(), dbi.history.find_one()
+    ) == snapshot(name="db")
 
 
 async def test_get_fasta(dbi, snapshot, test_otu, test_sequence):
@@ -53,29 +58,28 @@ async def test_get_fasta(dbi, snapshot, test_otu, test_sequence):
     assert await otu_data.get_fasta(test_otu["_id"]) == snapshot
 
 
-@pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
+@pytest.mark.parametrize(
+    "data", [UpdateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus")]
+)
 async def test_edit(
-    abbreviation,
-    snapshot,
+    data,
     dbi,
-    test_otu,
+    fake2,
+    snapshot,
     static_time,
+    test_otu,
     test_random_alphanumeric,
     tmp_path,
 ):
     otu_data = OTUData({"db": dbi})
 
-    await dbi.otus.insert_one(test_otu)
+    user, _ = await asyncio.gather(fake2.users.create(), dbi.otus.insert_one(test_otu))
 
-    assert (
-        await otu_data.edit("6116cba1", "Foo Virus", abbreviation, None, "bob")
-        == snapshot
-    )
+    assert await otu_data.edit("6116cba1", data, user.id) == snapshot
 
-    otus, history = await asyncio.gather(dbi.otus.find_one(), dbi.history.find_one())
-
-    assert otus == snapshot
-    assert history == snapshot
+    assert await asyncio.gather(
+        dbi.otus.find_one(), dbi.history.find_one()
+    ) == snapshot(name="db")
 
 
 @pytest.mark.parametrize("default", [True, False])
@@ -97,8 +101,7 @@ async def test_add_isolate(
     """
     Test that adding an isolate works correctly.
 
-    Parametrize to make sure that setting the default isolate works correctly in all
-    cases.
+    Ensures that setting the default isolate works correctly in all cases.
 
     """
 

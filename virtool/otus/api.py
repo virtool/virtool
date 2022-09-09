@@ -14,10 +14,9 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.downloads.db import generate_isolate_fasta, generate_sequence_fasta
 from virtool.errors import DatabaseError
-from virtool.mongo.transforms import apply_transforms
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.routes import Routes
-from virtool.http.schema import schema
+from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
     UpdateOTURequest,
@@ -25,29 +24,11 @@ from virtool.otus.oas import (
     UpdateIsolateRequest,
     CreateSequenceRequest,
     UpdateSequenceRequest,
+    CreateOTURequest,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
-from virtool.validators import has_unique_segment_names
-
-SCHEMA_VALIDATOR = {
-    "type": "list",
-    "check_with": has_unique_segment_names,
-    "schema": {
-        "type": "dict",
-        "allow_unknown": False,
-        "schema": {
-            "name": {"type": "string", "required": True},
-            "required": {"type": "boolean", "default": True},
-            "molecule": {
-                "type": "string",
-                "default": "",
-                "allowed": ["", "ssDNA", "dsDNA", "ssRNA", "ssRNA+", "ssRNA-", "dsRNA"],
-            },
-        },
-    },
-}
 
 routes = Routes()
 
@@ -64,10 +45,8 @@ class OTUsView(PydanticView):
         Find OTUs.
 
         """
-        db = self.request.app["db"]
-
-        search_result = await virtool.otus.db.find(
-            db, names, find, self.request.query, verified
+        search_result = await get_data_from_req(self.request).otus.find(
+            names, self.request.query, find, verified
         )
 
         return json_response(search_result)
@@ -141,25 +120,26 @@ class OTUView(PydanticView):
 
         # Send ``200`` with the existing otu record if no change will be made.
         if name is None and abbreviation is None and otu_schema is None:
-            return json_response(await virtool.otus.db.join_and_format(db, otu_id))
+            otu = await get_data_from_req(self.request).otus.get(otu_id)
+            return json_response(otu)
 
         # Make sure new name or abbreviation are not already in use.
-        message = await virtool.otus.db.check_name_and_abbreviation(
+        if message := await virtool.otus.db.check_name_and_abbreviation(
             db, ref_id, name, abbreviation
-        )
-
-        if message:
+        ):
             raise HTTPBadRequest(text=message)
 
-        document = await get_data_from_req(self.request).otus.edit(
-            otu_id, name, abbreviation, otu_schema, self.request["client"].user_id
+        otu = await get_data_from_req(self.request).otus.edit(
+            otu_id, data, self.request["client"].user_id
         )
 
-        return json_response(document)
+        return json_response(otu)
 
     async def delete(self, otu_id: str, /) -> Union[r204, r401, r403, r404]:
         """
-        Remove an OTU document and its associated sequence documents.
+        Delete an OTU.
+
+        Deletes and OTU and its associated isolates and sequences.
 
         """
         db = self.request.app["db"]
@@ -369,60 +349,37 @@ class IsolateView(PydanticView):
         raise HTTPNoContent
 
 
-@routes.post("/refs/{ref_id}/otus")
-@schema(
-    {
-        "name": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "empty": False,
-            "required": True,
-        },
-        "abbreviation": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "default": "",
-        },
-        "schema": SCHEMA_VALIDATOR,
-    }
-)
-async def create(req):
-    """
-    Add a new otu to the collection.
+@routes.view("/refs/{ref_id}/otus")
+class ReferenceOTUsView(PydanticView):
+    async def post(
+        self, ref_id: str, /, data: CreateOTURequest
+    ) -> Union[r201[OTU], r400, r403, r404]:
+        db = self.request.app["db"]
 
-    Checks to make sure the supplied otu name and abbreviation are not already in use in
-    the collection. Any errors are sent back to the client.
+        reference = await db.references.find_one(ref_id, ["groups", "users"])
 
-    """
-    db = req.app["db"]
+        if reference is None:
+            raise NotFound()
 
-    ref_id = req.match_info["ref_id"]
+        if not await virtool.references.db.check_right(
+            self.request, reference, "modify_otu"
+        ):
+            raise InsufficientRights()
 
-    reference = await db.references.find_one(ref_id, ["groups", "users"])
+        # Check if either the name or abbreviation are already in use. Send a ``400`` if
+        # they are.
+        if message := await virtool.otus.db.check_name_and_abbreviation(
+            db, ref_id, data.name, data.abbreviation
+        ):
+            raise HTTPBadRequest(text=message)
 
-    if reference is None:
-        raise NotFound()
+        otu = await get_data_from_req(self.request).otus.create(
+            ref_id,
+            data,
+            user_id=self.request["client"].user_id,
+        )
 
-    if not await virtool.references.db.check_right(req, reference, "modify_otu"):
-        raise InsufficientRights()
-
-    name = req["data"]["name"].strip()
-    abbreviation = req["data"]["abbreviation"].strip()
-
-    # Check if either the name or abbreviation are already in use. Send a ``400`` if
-    # they are.
-    if message := await virtool.otus.db.check_name_and_abbreviation(
-        db, ref_id, name, abbreviation
-    ):
-        raise HTTPBadRequest(text=message)
-
-    document = await get_data_from_req(req).otus.create(
-        ref_id, name, user_id=req["client"].user_id, abbreviation=abbreviation
-    )
-
-    return json_response(
-        document, status=201, headers={"Location": f"/otus/{document['id']}"}
-    )
+        return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
 @routes.view("/otus/{otu_id}/isolates/{isolate_id}/sequences")

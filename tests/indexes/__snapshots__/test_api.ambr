@@ -200,7 +200,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -215,6 +214,7 @@
     'reference': <class 'dict'> {
       'id': 'hxn167',
     },
+    'remote_id': None,
     'schema': <class 'list'> [
     ],
     'verified': False,

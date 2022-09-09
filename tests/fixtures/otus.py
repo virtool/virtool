@@ -24,10 +24,8 @@ def import_data(import_data_file):
 @pytest.fixture
 def test_otu(static_time):
     return {
-        "created_at": static_time.datetime,
         "version": 0,
         "abbreviation": "PVF",
-        "imported": True,
         "isolates": [
             {
                 "default": True,
@@ -44,7 +42,6 @@ def test_otu(static_time):
         "reference": {"id": "hxn167"},
         "remote_id": None,
         "_id": "6116cba1",
-        "user": {"id": "test"},
     }
 
 
@@ -77,12 +74,9 @@ def test_sequence():
 @pytest.fixture
 def test_merged_otu(static_time):
     return {
-        "created_at": static_time.datetime,
         "remote_id": None,
-        "user": {"id": "test"},
         "version": 0,
         "abbreviation": "PVF",
-        "imported": True,
         "isolates": [
             {
                 "default": True,

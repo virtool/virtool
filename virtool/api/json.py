@@ -28,7 +28,7 @@ class CustomEncoder(json.JSONEncoder):
             return isoformat(obj)
 
         if issubclass(type(obj), BaseModel):
-            return obj.dict()
+            return obj.dict(by_alias=True)
 
         return json.JSONEncoder.default(self, obj)
 

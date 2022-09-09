@@ -110,7 +110,7 @@ def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
         )
 
     if seen:
-        seen_sequence_ids.add("KX269872")
+        seen_sequence_ids.add("abcd1234")
 
     duplicate_sequence_ids = set()
 
@@ -119,11 +119,11 @@ def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
     )
 
     if intra or seen:
-        assert duplicate_sequence_ids == {"KX269872"}
+        assert duplicate_sequence_ids == {"abcd1234"}
     else:
         assert duplicate_sequence_ids == set()
 
-    assert seen_sequence_ids == {"KX269872"}
+    assert seen_sequence_ids == {"abcd1234"}
 
 
 @pytest.mark.parametrize("strict", [True, False])
@@ -159,7 +159,7 @@ def test_detect_duplicates(strict, test_merged_otu):
                 "message": "Duplicate OTU names found",
             },
             {
-                "duplicates": {"KX269872"},
+                "duplicates": {"abcd1234"},
                 "id": "duplicate_sequence_ids",
                 "message": "Duplicate sequence ids found",
             },

@@ -5,6 +5,7 @@ Work with OTUs in the database.
 from typing import Any, Dict, List, Optional, Union
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from multidict import MultiDictProxy
 
 import virtool.history.db
 import virtool.otus.utils
@@ -65,7 +66,7 @@ async def find(
     db,
     names: Optional[Union[bool, str]],
     term: Optional[str],
-    req_query: dict,
+    req_query: Union[Dict, MultiDictProxy],
     verified: Optional[bool],
     ref_id: Optional[str] = None,
 ) -> Union[Dict[str, Any], List[Optional[dict]]]:

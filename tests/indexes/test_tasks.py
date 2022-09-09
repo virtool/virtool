@@ -1,3 +1,4 @@
+import asyncio
 import gzip
 from pathlib import Path
 
@@ -87,21 +88,21 @@ async def test_add_index_json(
     client.app["config"].data_path = Path(tmp_path)
 
     test_sequence["accession"] = "KX269872"
-
-    await client.db.otus.insert_one(test_otu)
-    await client.db.sequences.insert_one(test_sequence)
-
     ref_id = test_otu["reference"]["id"]
 
-    await client.db.references.insert_one({**reference, "_id": ref_id})
-    await client.db.indexes.insert_one(
-        {
-            "_id": "index_1",
-            "deleted": False,
-            "manifest": {test_otu["_id"]: test_otu["version"]},
-            "ready": True,
-            "reference": {"id": ref_id},
-        }
+    await asyncio.gather(
+        client.db.otus.insert_one(test_otu),
+        client.db.sequences.insert_one(test_sequence),
+        client.db.references.insert_one({**reference, "_id": ref_id}),
+        client.db.indexes.insert_one(
+            {
+                "_id": "index_1",
+                "deleted": False,
+                "manifest": {test_otu["_id"]: test_otu["version"]},
+                "ready": True,
+                "reference": {"id": ref_id},
+            }
+        ),
     )
 
     index_dir = tmp_path / "references" / ref_id / "index_1"

@@ -1,8 +1,11 @@
 from dataclasses import dataclass
 from typing import List
 
+from virtool_core.models.otu import OTU
+
 from virtool.fake.wrapper import FakerWrapper
 from virtool.otus.data import OTUData
+from virtool.otus.oas import CreateOTURequest
 from virtool.types import App
 
 SEQUENCE = """
@@ -39,14 +42,14 @@ class FakeSequence:
 
 
 class FakeOTU:
-    def __init__(self, app: App, ref_id: str, user_id: str, document: dict):
+    def __init__(self, app: App, ref_id: str, user_id: str, document: OTU):
         self._app = app
         self._data = OTUData(app)
         self._ref_id = ref_id
         self._user_id = user_id
         self._document = document
 
-        self.otu_id = document["id"]
+        self.otu_id = document.id
         self._faker: FakerWrapper = self._app["fake"]
 
     async def add_isolate(
@@ -86,10 +89,8 @@ class FakeOTUCreator:
 
         document = await otu_data.create(
             self._ref_id,
-            name,
+            CreateOTURequest(abbreviation=abbreviation, name=name),
             self._user_id,
-            abbreviation=abbreviation,
-            otu_id=self._faker.get_mongo_id(),
         )
 
         return FakeOTU(self._app, self._ref_id, self._user_id, document)

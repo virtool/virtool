@@ -12,8 +12,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -47,9 +45,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 0,
   }
@@ -58,8 +53,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -93,9 +86,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 0,
   }
@@ -104,8 +94,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -139,9 +127,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 0,
   }

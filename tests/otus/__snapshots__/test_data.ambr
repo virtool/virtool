@@ -12,8 +12,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -31,9 +29,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -102,8 +97,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -121,9 +114,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -192,8 +182,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': False,
@@ -217,9 +205,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -288,8 +273,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': False,
@@ -313,9 +296,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -384,8 +364,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -403,9 +381,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -474,8 +449,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -493,9 +466,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -564,8 +534,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -589,9 +557,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -660,8 +625,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': False,
@@ -685,9 +648,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -768,8 +728,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -787,9 +745,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -858,8 +813,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -877,9 +830,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -948,8 +898,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': False,
@@ -973,9 +921,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -1044,8 +989,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': False,
@@ -1069,9 +1012,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -1140,8 +1080,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -1159,9 +1097,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -1230,8 +1165,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -1249,9 +1182,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -1320,8 +1250,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -1345,9 +1273,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -1416,8 +1341,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': False,
@@ -1441,9 +1364,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -1742,6 +1662,394 @@
     'user': <class 'dict'> {
       'id': 'bob',
     },
+  }
+---
+# name: test_create[uvloop-data0]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': 'fb085f7f',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'id': 'fb085f7f.0',
+      'method_name': <HistoryMethod.create: 'create'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'otu_schema': <class 'list'> [
+    ],
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'remote': None,
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create[uvloop-data0].1
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'abbreviation': 'TMV',
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'tobacco mosaic virus',
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create[uvloop-data0].2
+  <class 'dict'> {
+    '_id': 'fb085f7f.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Tobacco mosaic virus (TMV)',
+    'diff': <class 'dict'> {
+      '_id': 'fb085f7f',
+      'abbreviation': 'TMV',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': 'fb085f7f',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_create[uvloop-data0][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'fb085f7f',
+      'abbreviation': 'TMV',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    <class 'dict'> {
+      '_id': 'fb085f7f.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'diff': <class 'dict'> {
+        '_id': 'fb085f7f',
+        'abbreviation': 'TMV',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'bf1b993c',
+      },
+    },
+  ]
+---
+# name: test_create[uvloop-data0][return]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': 'fb085f7f',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'id': 'fb085f7f.0',
+      'method_name': <HistoryMethod.create: 'create'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'otu_schema': <class 'list'> [
+    ],
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'remote': None,
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create[uvloop-data1]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': 'fb085f7f',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Prunus virus A',
+      'id': 'fb085f7f.0',
+      'method_name': <HistoryMethod.create: 'create'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    },
+    'name': 'Prunus virus A',
+    'otu_schema': <class 'list'> [
+    ],
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'remote': None,
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create[uvloop-data1].1
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'abbreviation': '',
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'prunus virus a',
+    'name': 'Prunus virus A',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create[uvloop-data1].2
+  <class 'dict'> {
+    '_id': 'fb085f7f.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Prunus virus A',
+    'diff': <class 'dict'> {
+      '_id': 'fb085f7f',
+      'abbreviation': '',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'prunus virus a',
+      'name': 'Prunus virus A',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': 'fb085f7f',
+      'name': 'Prunus virus A',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_create[uvloop-data1][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'fb085f7f',
+      'abbreviation': '',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'prunus virus a',
+      'name': 'Prunus virus A',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    <class 'dict'> {
+      '_id': 'fb085f7f.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Prunus virus A',
+      'diff': <class 'dict'> {
+        '_id': 'fb085f7f',
+        'abbreviation': '',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'prunus virus a',
+        'name': 'Prunus virus A',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'Prunus virus A',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'bf1b993c',
+      },
+    },
+  ]
+---
+# name: test_create[uvloop-data1][return]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': 'fb085f7f',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Prunus virus A',
+      'id': 'fb085f7f.0',
+      'method_name': <HistoryMethod.create: 'create'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    },
+    'name': 'Prunus virus A',
+    'otu_schema': <class 'list'> [
+    ],
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'remote': None,
+    'verified': False,
+    'version': 0,
   }
 ---
 # name: test_create_sequence[uvloop-None-None-None][change]
@@ -3036,6 +3344,220 @@
     },
   }
 ---
+# name: test_edit[uvloop-data0]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Changed name to Tobacco mosaic virus and changed abbreviation to TMV and modified schema',
+      'id': '6116cba1.1',
+      'method_name': <HistoryMethod.edit: 'edit'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'otu_schema': <class 'list'> [
+    ],
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'remote': None,
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_edit[uvloop-data0].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'tobacco mosaic virus',
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'remote_id': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_edit[uvloop-data0].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Tobacco mosaic virus and changed abbreviation to TMV and modified schema',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          'TMV',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'tobacco mosaic virus',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Tobacco mosaic virus',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-data0][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'TMV',
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'id': 'cab8b360',
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
+      ],
+      'last_indexed_version': 0,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'remote_id': None,
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 1,
+    },
+    <class 'dict'> {
+      '_id': '6116cba1.1',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Changed name to Tobacco mosaic virus and changed abbreviation to TMV and modified schema',
+      'diff': <class 'list'> [
+        <class 'list'> [
+          'change',
+          'version',
+          <class 'list'> [
+            0,
+            1,
+          ],
+        ],
+        <class 'list'> [
+          'change',
+          'abbreviation',
+          <class 'list'> [
+            'PVF',
+            'TMV',
+          ],
+        ],
+        <class 'list'> [
+          'change',
+          'lower_name',
+          <class 'list'> [
+            'prunus virus f',
+            'tobacco mosaic virus',
+          ],
+        ],
+        <class 'list'> [
+          'change',
+          'name',
+          <class 'list'> [
+            'Prunus virus F',
+            'Tobacco mosaic virus',
+          ],
+        ],
+      ],
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'user': <class 'dict'> {
+        'id': 'bf1b993c',
+      },
+    },
+  ]
+---
 # name: test_edit_isolate[uvloop]
   <class 'dict'> {
     'default': True,
@@ -3050,8 +3572,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -3069,9 +3589,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -3352,8 +3869,6 @@
     <class 'dict'> {
       '_id': '6116cba1',
       'abbreviation': 'PVF',
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'imported': True,
       'isolates': <class 'list'> [
         <class 'dict'> {
           'default': True,
@@ -3371,9 +3886,6 @@
       'remote_id': None,
       'schema': <class 'list'> [
       ],
-      'user': <class 'dict'> {
-        'id': 'test',
-      },
       'verified': True,
       'version': 1,
     },
@@ -3666,8 +4178,6 @@
     <class 'dict'> {
       '_id': '6116cba1',
       'abbreviation': 'PVF',
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'imported': True,
       'isolates': <class 'list'> [
         <class 'dict'> {
           'default': True,
@@ -3685,9 +4195,6 @@
       'remote_id': None,
       'schema': <class 'list'> [
       ],
-      'user': <class 'dict'> {
-        'id': 'test',
-      },
       'verified': True,
       'version': 1,
     },
@@ -3857,8 +4364,6 @@
     <class 'dict'> {
       '_id': '6116cba1',
       'abbreviation': 'PVF',
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'imported': True,
       'isolates': <class 'list'> [
         <class 'dict'> {
           'default': True,
@@ -3876,9 +4381,6 @@
       'remote_id': None,
       'schema': <class 'list'> [
       ],
-      'user': <class 'dict'> {
-        'id': 'test',
-      },
       'verified': True,
       'version': 1,
     },
@@ -4067,8 +4569,6 @@
     <class 'dict'> {
       '_id': '6116cba1',
       'abbreviation': 'PVF',
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'imported': True,
       'isolates': <class 'list'> [
         <class 'dict'> {
           'default': True,
@@ -4086,9 +4586,6 @@
       'remote_id': None,
       'schema': <class 'list'> [
       ],
-      'user': <class 'dict'> {
-        'id': 'test',
-      },
       'verified': False,
       'version': 1,
     },
@@ -4334,8 +4831,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': True,
@@ -4353,9 +4848,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }
@@ -4430,8 +4922,6 @@
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'imported': True,
     'isolates': <class 'list'> [
       <class 'dict'> {
         'default': False,
@@ -4455,9 +4945,6 @@
     'remote_id': None,
     'schema': <class 'list'> [
     ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
     'verified': False,
     'version': 1,
   }

@@ -1,6 +1,7 @@
+import asyncio
 from asyncio import gather
 from copy import deepcopy
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union, Mapping
 
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
@@ -21,7 +22,7 @@ from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
-from virtool.otus.oas import UpdateSequenceRequest
+from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
 from virtool.otus.utils import find_isolate, format_isolate_name, format_otu
 from virtool.types import App, Document
 from virtool.users.db import AttachUserTransform
@@ -33,6 +34,11 @@ class OTUData:
         self._app = app
         self._db: DB = app["db"]
         self._mongo = self._db
+
+    async def find(
+        self, names: bool, query: Mapping, term: Optional[str], verified: Optional[bool]
+    ):
+        return await virtool.otus.db.find(self._mongo, names, term, query, verified)
 
     async def get(self, otu_id: str) -> OTU:
         """
@@ -46,13 +52,14 @@ class OTUData:
         if document is None:
             raise ResourceNotFoundError
 
-        document["most_recent_change"] = await apply_transforms(
-            document["most_recent_change"], [AttachUserTransform(self._mongo)]
+        return OTU(
+            **{
+                **document,
+                "most_recent_change": await apply_transforms(
+                    document["most_recent_change"], [AttachUserTransform(self._mongo)]
+                ),
+            }
         )
-
-        document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
-
-        return OTU(**document)
 
     async def get_fasta(self, otu_id: str) -> Optional[Tuple[str, str]]:
         """
@@ -91,33 +98,26 @@ class OTUData:
     async def create(
         self,
         ref_id: str,
-        name: str,
+        data: CreateOTURequest,
         user_id: str,
-        abbreviation: str = "",
-        otu_id: Optional[str] = None,
-    ) -> Document:
+    ) -> OTU:
         """
         Create an OTU and it's first history record.
 
         :param ref_id: the ID of the parent reference
-        :param name: the OTU name
+        :param data: an OTU creation request
         :param user_id: the ID of the creating user
-        :param abbreviation: the OTU abbreviation
-        :param otu_id: an optional ID to force for the OTU
         :return: the OTU
         """
         async with self._db.create_session() as session:
+
             document = await self._db.otus.insert_one(
                 {
-                    "_id": otu_id
-                    or await virtool.mongo.utils.get_new_id(
-                        self._db.otus, session=session
-                    ),
-                    "name": name,
-                    "abbreviation": abbreviation,
+                    "name": data.name,
+                    "abbreviation": data.abbreviation,
                     "last_indexed_version": None,
                     "verified": False,
-                    "lower_name": name.lower(),
+                    "lower_name": data.name.lower(),
                     "isolates": [],
                     "version": 0,
                     "reference": {"id": ref_id},
@@ -126,7 +126,7 @@ class OTUData:
                 session=session,
             )
 
-            change = await virtool.history.db.add(
+            await virtool.history.db.add(
                 self._app,
                 HistoryMethod.create,
                 None,
@@ -136,16 +136,14 @@ class OTUData:
                 session=session,
             )
 
-        return format_otu(document, most_recent_change=change)
+        return await self.get(document["_id"])
 
     async def edit(
         self,
         otu_id: str,
-        name: Optional[str],
-        abbreviation: Optional[str],
-        schema: Optional[List[Document]],
+        data: UpdateOTURequest,
         user_id: str,
-    ):
+    ) -> OTU:
         """
         Edit an OTU.
 
@@ -153,10 +151,8 @@ class OTUData:
         corresponding history record.
 
         :param otu_id: the ID of the OTU to edit
-        :param name: a new name
-        :param abbreviation: a new abbreviation
-        :param schema: a new schema
-        :param user_id: the requesting user Id
+        :param data: the update request
+        :param user_id: the requesting user id
         :return: the updated and joined OTU document
 
         """
@@ -164,20 +160,22 @@ class OTUData:
         # because we are definitely going to modify the otu.
         update = {"verified": False}
 
+        data = data.dict(by_alias=True, exclude_unset=True)
+
         # If the name is changing, update the ``lower_name`` field in the otu document.
-        if name is not None:
+        if "name" in data:
+            name = data["name"]
             update.update({"name": name, "lower_name": name.lower()})
 
-        if abbreviation is not None:
-            update["abbreviation"] = abbreviation
+        if "abbreviation" in data:
+            update["abbreviation"] = data["abbreviation"]
 
-        if schema is not None:
-            update["schema"] = schema
+        if "schema" in data:
+            update["schema"] = data["schema"]
+
+        old = await virtool.otus.db.join(self._db, otu_id)
 
         async with self._db.create_session() as session:
-            old = await virtool.otus.db.join(self._db, otu_id, session=session)
-
-            # Update the database collection.
             document = await self._db.otus.find_one_and_update(
                 {"_id": otu_id},
                 {"$set": update, "$inc": {"version": 1}},
@@ -200,15 +198,13 @@ class OTUData:
                 old,
                 new,
                 compose_edit_description(
-                    name, abbreviation, old["abbreviation"], schema
+                    new["name"], new["abbreviation"], old["abbreviation"], new["schema"]
                 ),
                 user_id,
                 session=session,
             )
 
-        return await virtool.otus.db.join_and_format(
-            self._db, otu_id, joined=new, issues=issues
-        )
+        return await self.get(otu_id)
 
     async def remove(
         self, otu_id: str, user_id: str, silent: bool = False
