@@ -229,7 +229,7 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
-@pytest.mark.parametrize("error", [None, "403", "404", "422", "400"])
+@pytest.mark.parametrize("error", [None, "403", "404", "invalid_input", "400"])
 async def test_edit(data_type, error, mocker, snapshot, fake2, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
@@ -254,7 +254,7 @@ async def test_edit(data_type, error, mocker, snapshot, fake2, spawn_client, res
         "targets": [{"name": "CPN60", "description": "", "required": True}],
     }
 
-    if error == "422":
+    if error == "invalid_input":
         data["targets"] = [{"description": True}]
 
     if error == "400":
@@ -280,22 +280,15 @@ async def test_edit(data_type, error, mocker, snapshot, fake2, spawn_client, res
         )
         return
 
-    if error == "422":
-        await resp_is.invalid_input(
-            resp,
+    if error == "invalid_input":
+        assert await resp.json() == [
             {
-                "targets": [
-                    {
-                        "0": [
-                            {
-                                "description": ["must be of string type"],
-                                "name": ["required field"],
-                            }
-                        ]
-                    }
-                ]
-            },
-        )
+                "loc": ["targets", 0, "name"],
+                "msg": "field required",
+                "type": "value_error.missing",
+                "in": "body",
+            }
+        ]
         return
 
     if error == "404":
