@@ -6,7 +6,6 @@ from pathlib import Path
 import aiofiles
 from virtool_core.utils import decompress_tgz
 
-import virtool.tasks.pg
 from virtool.data.utils import get_data_from_app
 from virtool.github import create_update_subdocument
 from virtool.http.utils import download_file
@@ -52,7 +51,7 @@ class HMMInstallTask(Task):
 
     async def download(self):
         release = self.context["release"]
-        await virtool.tasks.pg.update(self.pg, self.id, 0, step="download")
+        await get_data_from_app(self.app).tasks.update(self.id, 0, step="download")
 
         tracker = await self.get_tracker(release["size"])
 
@@ -61,14 +60,14 @@ class HMMInstallTask(Task):
         try:
             await download_file(self.app, release["download_url"], path, tracker.add)
         except Exception as err:
-            logger.warning(f"Request for HMM release encountered exception: {err}")
+            logger.warning("Request for HMM release encountered exception: %s", err)
             await self.error("Could not download HMM data.")
 
     async def decompress(self):
         tracker = await self.get_tracker()
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="unpack"
+        await get_data_from_app(self.app).tasks.update(
+            self.id, progress=tracker.step_completed, step="unpack"
         )
 
         await self.run_in_thread(
@@ -81,8 +80,8 @@ class HMMInstallTask(Task):
     async def install_profiles(self):
         tracker = await self.get_tracker()
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="install_profiles"
+        await get_data_from_app(self.app).tasks.update(
+            self.id, progress=tracker.step_completed, step="install_profiles"
         )
 
         decompressed_path = self.temp_path / "hmm"
@@ -95,7 +94,7 @@ class HMMInstallTask(Task):
 
     async def import_annotations(self):
         release = self.context["release"]
-        await virtool.tasks.pg.update(self.pg, self.id, step="import_annotations")
+        await get_data_from_app(self.app).tasks.update(self.id, step="import_annotations")
 
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
@@ -106,7 +105,7 @@ class HMMInstallTask(Task):
             await self.db.hmm.insert_one(dict(annotation, hidden=False))
             await tracker.add(1)
 
-        logger.debug(f"Inserted {len(annotations)} annotations")
+        logger.debug("Inserted %s annotations", len(annotations))
 
         try:
             release_id = int(release["id"])

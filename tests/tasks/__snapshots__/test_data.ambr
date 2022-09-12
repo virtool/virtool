@@ -1,0 +1,37 @@
+# name: test_add[uvloop]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': 'add_subtraction_files',
+    'type': 'add_subtraction_files',
+  }
+---
+# name: test_find[uvloop]
+  <class 'list'> [
+    Task(complete=True, context={'user_id': 'test_1'}, count=40, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, file_size=1024, id=1, progress=100, step='download', type='clone_reference'),
+    Task(complete=False, context={'user_id': 'test_2'}, count=30, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, file_size=14754, id=2, progress=80, step='download', type='import_reference'),
+  ]
+---
+# name: test_get[uvloop]
+  <class 'dict'> {
+    'complete': True,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 40,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': 1024,
+    'id': 1,
+    'progress': 100,
+    'step': 'download',
+    'type': 'clone_reference',
+  }
+---

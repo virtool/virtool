@@ -62,7 +62,7 @@ from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
     WriteSubtractionFASTATask,
 )
-from virtool.tasks.client import TasksClient
+from virtool.tasks.data import TasksData
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
@@ -128,13 +128,14 @@ async def startup_data(app: App):
 
     :param app: the application object
     """
+
     app["data"] = DataLayer(
-        AnalysisData(app["db"], app["config"], app["pg"], app["tasks"]),
-        BLASTData(app["db"], app["pg"], app["tasks"]),
+        AnalysisData(app["db"], app["config"], app["pg"]),
+        BLASTData(app["db"], app["pg"]),
         GroupsData(app["db"]),
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
-        HmmData(app["client"], app["config"], app["db"], app["tasks"]),
+        HmmData(app["client"], app["config"], app["db"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
@@ -142,6 +143,7 @@ async def startup_data(app: App):
         SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
         UploadsData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
+        TasksData(app["pg"], app["redis"])
     )
 
 
@@ -402,13 +404,12 @@ async def startup_task_runner(app: Application):
     """
     scheduler = get_scheduler_from_app(app)
     (channel,) = await app["redis"].subscribe("channel:tasks")
-
-    app["tasks"] = TasksClient(app["redis"], app["pg"])
-
     await scheduler.spawn(TaskRunner(channel, app).run())
 
 
 async def startup_tasks(app: Application):
+    tasks_data = get_data_from_app(app).tasks
+
     if app["config"].no_check_db:
         return logger.info("Skipping subtraction FASTA files checks")
 
@@ -420,17 +421,17 @@ async def startup_tasks(app: Application):
     )
 
     for subtraction in subtractions_without_fasta:
-        await app["tasks"].add(
+        await tasks_data.create(
             WriteSubtractionFASTATask, context={"subtraction": subtraction}
         )
 
-    await app["tasks"].add(AddIndexFilesTask)
-    await app["tasks"].add(AddIndexJSONTask)
-    await app["tasks"].add(DeleteReferenceTask, context={"user_id": "virtool"})
-    await app["tasks"].add(AddSubtractionFilesTask)
-    await app["tasks"].add(StoreNuvsFilesTask)
-    await app["tasks"].add(CompressSamplesTask)
-    await app["tasks"].add(MoveSampleFilesTask)
-    await app["tasks"].add(CleanReferencesTask)
+    await tasks_data.create(AddIndexFilesTask)
+    await tasks_data.create(AddIndexJSONTask)
+    await tasks_data.create(DeleteReferenceTask, context={"user_id": "virtool"})
+    await tasks_data.create(AddSubtractionFilesTask)
+    await tasks_data.create(StoreNuvsFilesTask)
+    await tasks_data.create(CompressSamplesTask)
+    await tasks_data.create(MoveSampleFilesTask)
+    await tasks_data.create(CleanReferencesTask)
 
-    await scheduler.spawn(app["tasks"].add_periodic(MigrateFilesTask, 3600))
+    await scheduler.spawn(tasks_data.create_periodic(MigrateFilesTask, 3600))

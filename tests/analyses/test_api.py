@@ -381,7 +381,7 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
     [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"],
 )
 async def test_blast(
-    error, mocker, spawn_client, resp_is, snapshot, static_time, tasks
+    error,  spawn_client, resp_is, snapshot, static_time
 ):
     """
     Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
@@ -389,7 +389,6 @@ async def test_blast(
 
     """
     client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
-    client.app["tasks"] = tasks
 
     if error != "404_analysis":
         analysis_document = {

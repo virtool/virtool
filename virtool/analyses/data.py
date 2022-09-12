@@ -34,7 +34,6 @@ from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.tasks.client import TasksClient
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread
@@ -43,11 +42,11 @@ logger = getLogger("analyses")
 
 
 class AnalysisData(DataLayerPiece):
-    def __init__(self, db: DB, config, pg: AsyncEngine, tasks: TasksClient):
+    def __init__(self, db: DB, config, pg: AsyncEngine):
+
         self._db = db
         self._config = config
         self._pg = pg
-        self._tasks = tasks
 
     async def find(
         self, query: Union[Dict, MultiDictProxy[str]], client
@@ -348,7 +347,7 @@ class AnalysisData(DataLayerPiece):
             session.add(blast)
             await session.flush()
 
-            await self._tasks.add(
+            await self.data.tasks.create(
                 BLASTTask,
                 {"analysis_id": analysis_id, "sequence_index": sequence_index},
             )

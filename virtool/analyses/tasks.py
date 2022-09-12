@@ -4,7 +4,6 @@ import shutil
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.tasks.pg
 from virtool.analyses.db import TARGET_FILES
 from virtool.analyses.files import create_nuvs_analysis_files
 from virtool.analyses.models import AnalysisFile
@@ -67,7 +66,7 @@ class StoreNuvsFilesTask(Task):
                     self.app["pg"], analysis_id, analysis_files, target_path
                 )
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="store_nuvs_files")
+        await self.tasks_data.update(self.id, step="store_nuvs_files")
 
     async def remove_directory(self):
         """
@@ -87,4 +86,4 @@ class StoreNuvsFilesTask(Task):
             if (config.data_path / "analyses" / analysis_id).is_dir():
                 await run_in_thread(shutil.rmtree, path, True)
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="remove_directory")
+        await self.tasks_data.update(self.id, step="remove_directory")

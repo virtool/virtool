@@ -2,12 +2,14 @@ import os
 from pathlib import Path
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from aioredis import Redis
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.tasks.pg
 import virtool.tasks.task
+from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task
+from virtool.data.utils import get_data_from_app
 
 
 class DummyTask(virtool.tasks.task.Task):
@@ -21,13 +23,13 @@ class DummyTask(virtool.tasks.task.Task):
         with open(self.temp_path / "test.txt", "w") as f:
             f.write("This is a test file.")
 
-        await virtool.tasks.pg.update(self.pg, self.id, progress=50, step="create_file")
+        await get_data_from_app(self.app).tasks.update(self.id, progress=50, step="create_file")
 
     async def remove_file(self):
         os.remove(self.temp_path / "test.txt")
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=100, step="remove_file"
+        await self.tasks_data.update(
+            self.id, progress=100, step="remove_file"
         )
 
 
@@ -83,14 +85,14 @@ async def test_update_context(task):
     assert context == {"user_id": "test", "ref_id": "askfllfk"}
 
 
-async def test_get_tracker(task, pg):
+
+async def test_get_tracker(task, pg: AsyncEngine, redis: Redis):
     task.step = task.steps[0]
     tracker_1 = await task.get_tracker()
     assert tracker_1.initial == 0
     assert tracker_1.step_completed == 50
 
-    await virtool.tasks.pg.update(
-        pg,
+    await TasksData(pg, redis).update(
         task.id,
         progress=50,
     )

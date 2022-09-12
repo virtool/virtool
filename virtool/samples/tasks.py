@@ -1,8 +1,8 @@
 import logging
 
 import virtool.samples.db
-import virtool.tasks.pg
 from virtool.tasks.task import Task
+from virtool.data.utils import get_data_from_app
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +36,10 @@ class CompressSamplesTask(Task):
             await tracker.add(1)
 
             logger.info(
-                f"Compressed legacy sample {sample['_id']} ({tracker.progress}%)"
+                "Compressed legacy sample %s (%s%%),", sample['_id'], tracker.progress
             )
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="compress_samples")
+        await get_data_from_app(self.app).tasks.update(self.id, step="compress_samples")
 
 
 class MoveSampleFilesTask(Task):
@@ -75,7 +75,7 @@ class MoveSampleFilesTask(Task):
             await tracker.add(1)
 
             logger.info(
-                f"Moved files in sample {sample['_id']} to SQL ({tracker.progress}%)"
+                "Moved files in sample %s to SQL (%s%%)", sample['_id'], tracker.progress
             )
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="move_sample_files")
+        await get_data_from_app(self.app).tasks.update(self.id, step="move_sample_files")

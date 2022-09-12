@@ -10,7 +10,6 @@ import aiohttp
 import arrow
 from semver import VersionInfo
 
-import virtool.tasks.pg
 from virtool.data.utils import get_data_from_app
 from virtool.mongo.utils import get_one_field
 from virtool.errors import GitHubError
@@ -54,7 +53,7 @@ class CloneReferenceTask(Task):
 
         inserted_otu_ids = []
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="copy_otus")
+        await get_data_from_app(self.app).tasks.update(self.id, step="copy_otus")
 
         for source_otu_id, version in manifest.items():
             _, patched, _ = await patch_to_version(
@@ -77,7 +76,7 @@ class CloneReferenceTask(Task):
 
         tracker = await self.get_tracker(len(inserted_otu_ids))
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="create_history")
+        await get_data_from_app(self.app).tasks.update(self.id, step="create_history")
 
         for otu_id in inserted_otu_ids:
             await insert_change(self.app, otu_id, HistoryMethod.clone, user_id)
@@ -92,7 +91,7 @@ class CloneReferenceTask(Task):
             "_id", {**query, "diff": "file"}
         )
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="cleanup")
+        await get_data_from_app(self.app).tasks.update(self.id, step="cleanup")
 
         await gather(
             self.db.references.delete_one({"_id": ref_id}),
@@ -216,15 +215,15 @@ class RemoteReferenceTask(Task):
                 self.app, self.context["release"]["download_url"], self.id, tracker.add
             )
         except (aiohttp.ClientConnectorError, GitHubError):
-            return await virtool.tasks.pg.update(
-                self.pg, self.id, error="Could not download reference data"
+            return await get_data_from_app(self.app).tasks.update(
+                self.id, error="Could not download reference data"
             )
 
         try:
             data_type = self.import_data["data_type"]
         except KeyError:
-            return await virtool.tasks.pg.update(
-                self.pg, self.id, error="Could not infer data type"
+            return await get_data_from_app(self.app).tasks.update(
+                self.id, error="Could not infer data type"
             )
 
         await self.db.references.update_one(
@@ -240,9 +239,9 @@ class RemoteReferenceTask(Task):
         error = check_import_data(self.import_data, strict=True, verify=True)
 
         if error:
-            return await virtool.tasks.pg.update(self.pg, self.id, error=error)
+            return await get_data_from_app(self.app).tasks.update(self.id, error=error)
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="import")
+        await get_data_from_app(self.app).tasks.update(self.id, step="import")
 
     async def create_history(self):
         otus = self.import_data["otus"]
@@ -260,7 +259,7 @@ class RemoteReferenceTask(Task):
             self.inserted_otu_ids.append(otu_id)
             await tracker.add(1)
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="create_history")
+        await get_data_from_app(self.app).tasks.update(self.id, step="create_history")
 
     async def update_reference(self):
         tracker = await self.get_tracker(len(self.import_data["otus"]))
@@ -290,7 +289,7 @@ class RemoteReferenceTask(Task):
 
         await fetch_and_update_release(self.app, self.context["ref_id"])
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="Update_reference")
+        await get_data_from_app(self.app).tasks.update(self.id, step="Update_reference")
 
 
 class DeleteReferenceTask(Task):
@@ -324,8 +323,8 @@ class DeleteReferenceTask(Task):
         for dir_name in self.non_existent_references:
             await run_in_thread(shutil.rmtree, path / dir_name, True)
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="remove_directory"
+        await get_data_from_app(self.app).tasks.update(
+             self.id, progress=tracker.step_completed, step="remove_directory"
         )
 
     async def remove_indexes(self):
@@ -335,8 +334,8 @@ class DeleteReferenceTask(Task):
             {"reference.id": {"$in": self.non_existent_references}}
         )
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="remove_indexes"
+        await get_data_from_app(self.app).tasks.update(
+            self.id, progress=tracker.step_completed, step="remove_indexes"
         )
 
     async def remove_unreferenced_otus(self):
@@ -365,8 +364,7 @@ class DeleteReferenceTask(Task):
                 remove_diff_files(self.app, diff_file_change_ids),
             )
 
-            await virtool.tasks.pg.update(
-                self.pg,
+            await get_data_from_app(self.app).tasks.update(
                 self.id,
                 progress=tracker.step_completed,
                 step="remove_unreferenced_otus",
@@ -383,8 +381,7 @@ class DeleteReferenceTask(Task):
                     document["_id"], user_id, silent=True
                 )
 
-        await virtool.tasks.pg.update(
-            self.pg,
+        await get_data_from_app(self.app).tasks.update(
             self.id,
             progress=tracker.step_completed,
             step="remove_referenced_otus",
@@ -424,7 +421,7 @@ class UpdateRemoteReferenceTask(Task):
         except (aiohttp.ClientConnectorError, GitHubError):
             return await self.error("Could not download reference data")
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="download_and_extract")
+        await get_data_from_app(self.app).tasks.update(self.id, step="download_and_extract")
 
     async def update_otus(self):
         update_data = self.intermediate["update_data"]
@@ -454,7 +451,7 @@ class UpdateRemoteReferenceTask(Task):
             {"otu_ids_in_update": otu_ids_in_update, "updated_list": updated_list}
         )
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="update_otus")
+        await get_data_from_app(self.app).tasks.update(self.id, step="update_otus")
 
     async def create_history(self):
         updated_list = self.intermediate["updated_list"]
@@ -479,7 +476,7 @@ class UpdateRemoteReferenceTask(Task):
 
             await tracker.add(1)
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="create_history")
+        await get_data_from_app(self.app).tasks.update(self.id, step="create_history")
 
     async def remove_otus(self):
         """Delete OTUs with remote ids that were not in the update."""
@@ -499,7 +496,7 @@ class UpdateRemoteReferenceTask(Task):
             )
             await tracker.add(1)
 
-        await virtool.tasks.pg.update(self.pg, self.id, step="remove_otus")
+        await get_data_from_app(self.app).tasks.update(self.id, step="remove_otus")
 
     async def update_reference(self):
         tracker = await self.get_tracker()
@@ -524,8 +521,8 @@ class UpdateRemoteReferenceTask(Task):
             {"_id": ref_id}, {"$set": {"updating": False}}
         )
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="update_reference"
+        await get_data_from_app(self.app).tasks.update(
+            self.id, progress=tracker.step_completed, step="update_reference"
         )
 
 

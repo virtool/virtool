@@ -7,13 +7,13 @@ from virtool_core.utils import compress_file, rm
 
 import virtool.subtractions.files
 import virtool.subtractions.utils
-import virtool.tasks.pg
 import virtool.tasks.task
 from virtool.subtractions.db import ADD_SUBTRACTION_FILES_QUERY
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 from virtool.types import App
 from virtool.utils import run_in_thread
+from virtool.data.utils import get_data_from_app
 
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
@@ -40,7 +40,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         Change Bowtie2 index name from 'reference' to 'subtraction'
 
         """
-        await virtool.tasks.pg.update(self.pg, self.id, step="rename_index_files")
+        await get_data_from_app(self.app).tasks.update(self.id, step="rename_index_files")
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             path = virtool.subtractions.utils.join_subtraction_path(
@@ -54,7 +54,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         files can be downloaded for that subtraction
 
         """
-        await virtool.tasks.pg.update(self.pg, self.id, step="store_subtraction_files")
+        await get_data_from_app(self.app).tasks.update(self.id, step="store_subtraction_files")
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             path = virtool.subtractions.utils.join_subtraction_path(
@@ -124,6 +124,6 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
             {"_id": subtraction}, {"$set": {"has_file": True}}
         )
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=100, step="generate_fasta_file"
+        await get_data_from_app(self.app).tasks.update(
+            self.id, progress=100, step="generate_fasta_file"
         )

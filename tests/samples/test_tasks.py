@@ -5,10 +5,10 @@ from virtool.samples.models import SampleReads
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
-
+from virtool.data.layer import DataLayer
 
 async def test_compress_samples_task(
-    mocker, dbi, pg: AsyncEngine, static_time
+    mocker, dbi, pg: AsyncEngine, data_layer: DataLayer, static_time
 ):
     """
     Ensure `compress_reads` is called correctly given a samples collection.
@@ -18,6 +18,7 @@ async def test_compress_samples_task(
         "db": dbi,
         "pg": pg,
         "settings": {},
+        "data": data_layer,
     }
 
     await dbi.samples.insert_many(
@@ -70,12 +71,13 @@ async def test_compress_samples_task(
 @pytest.mark.parametrize("compressed", [True, False])
 @pytest.mark.parametrize("paired", [True, False])
 async def test_move_sample_files_task(
-    legacy, compressed, paired, dbi, pg: AsyncEngine, snapshot, static_time
+    legacy, compressed, paired, dbi, pg: AsyncEngine, data_layer: DataLayer, snapshot, static_time
 ):
     app_dict = {
         "db": dbi,
         "pg": pg,
         "settings": {},
+        "data": data_layer
     }
 
     sample = {
