@@ -158,9 +158,7 @@ class ReferencesView(PydanticView):
                 "user_id": user_id,
             }
 
-            task = await self.request.app["tasks"].add(
-                CloneReferenceTask, context=context
-            )
+            task = await get_data_from_req(self.request).tasks.create(CloneReferenceTask, context=context)
 
             document["task"] = {"id": task["id"]}
 
@@ -181,11 +179,9 @@ class ReferencesView(PydanticView):
                 "user_id": user_id,
             }
 
-            task = await self.request.app["tasks"].add(
-                ImportReferenceTask, context=context
-            )
+            task = await get_data_from_req(self.request).tasks.create(ImportReferenceTask, context=context)
 
-            document["task"] = {"id": task["id"]}
+            document["task"] = {"id": task.id}
 
         elif data.remote_from:
             try:
@@ -220,9 +216,7 @@ class ReferencesView(PydanticView):
                 "user_id": user_id,
             }
 
-            task = await self.request.app["tasks"].add(
-                RemoteReferenceTask, context=context
-            )
+            task = await get_data_from_req(self.request).tasks.create(RemoteReferenceTask, context=context)
 
             document["task"] = {"id": task["id"]}
 
@@ -339,7 +333,7 @@ class ReferenceView(PydanticView):
 
         context = {"ref_id": ref_id, "user_id": user_id}
 
-        task = await self.request.app["tasks"].add(DeleteReferenceTask, context=context)
+        task = await get_data_from_req(self.request).tasks.create(DeleteReferenceTask, context=context)
 
         await db.references.delete_one({"_id": ref_id})
 
