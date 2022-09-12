@@ -15,37 +15,25 @@ def mock_create_reference_schema():
 
 
 @pytest.mark.parametrize(
-    "error", [None, "data_type", "remote_from", "two_values", "all_values"]
+    "update_dict",
+    [
+        {},
+        {"data_type": "bad type"},
+        {"remote_from": "test"},
+        {"import_from": "test", "clone_from": "test"},
+        {
+            "import_from": "test",
+            "clone_from": "test",
+            "remote_from": "virtool/ref-plant-viruses",
+        },
+    ],
 )
-def test_schema(error, mock_create_reference_schema):
+def test_schema(update_dict, mock_create_reference_schema):
     CreateReferenceSchema(**mock_create_reference_schema)
 
-    if error == "data_type":
+    if update_dict:
         with pytest.raises(ValidationError):
-            mock_create_reference_schema.update({"data_type": "bad type"})
-            CreateReferenceSchema(**mock_create_reference_schema)
-
-    elif error == "remote_from":
-        with pytest.raises(ValidationError):
-            mock_create_reference_schema.update({"remote_from": "test"})
-            CreateReferenceSchema(**mock_create_reference_schema)
-
-    elif error == "two_values":
-        with pytest.raises(ValidationError):
-            mock_create_reference_schema.update(
-                {"import_from": "test", "clone_from": "test"}
-            )
-            CreateReferenceSchema(**mock_create_reference_schema)
-
-    elif error == "all_values":
-        with pytest.raises(ValidationError):
-            mock_create_reference_schema.update(
-                {
-                    "import_from": "test",
-                    "clone_from": "test",
-                    "remote_from": "virtool/ref-plant-viruses",
-                }
-            )
+            mock_create_reference_schema.update(update_dict)
             CreateReferenceSchema(**mock_create_reference_schema)
 
 
@@ -57,4 +45,3 @@ def test_values(value, mock_create_reference_schema):
         mock_create_reference_schema.update({value: "virtool/ref-plant-viruses"})
 
     CreateReferenceSchema(**mock_create_reference_schema)
-
