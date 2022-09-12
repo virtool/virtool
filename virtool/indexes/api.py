@@ -1,9 +1,12 @@
 import asyncio
 import json
 import logging
+from typing import Union
 
 from aiohttp.web import FileResponse, Request, Response
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r403, r404
 from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
@@ -15,10 +18,12 @@ from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.utils import get_data_from_req
 from virtool.history.db import LIST_PROJECTION
+from virtool.history.oas import GetHistoryResponse
 from virtool.http.routes import Routes
 from virtool.indexes.db import FILES, reset_history
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
+from virtool.indexes.oas import GetIndexesResponse, GetIndexResponse, CreateIndexesResponse
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.jobs.utils import JobRights
 from virtool.mongo.utils import get_new_id
@@ -31,89 +36,100 @@ logger = logging.getLogger("indexes")
 routes = Routes()
 
 
-@routes.get("/indexes")
-async def find(req):
-    """
-    Return a list of indexes.
+@routes.view("/indexes")
+class IndexesView(PydanticView):
+    async def get(self) -> Union[r200[GetIndexesResponse]]:
+        """
+        Find indexes.
 
-    """
-    db = req.app["db"]
+        Return a list of indexes.
 
-    ready = req.query.get("ready", False)
+        Status Codes:
+            200: Successful operation
 
-    if not ready:
-        data = await virtool.indexes.db.find(db, req.query)
-        return json_response(data)
+        """
+        db = self.request.app["db"]
 
-    pipeline = [
-        {"$match": {"ready": True}},
-        {"$sort": {"version": -1}},
-        {
-            "$group": {
-                "_id": "$reference.id",
-                "index": {"$first": "$_id"},
-                "version": {"$first": "$version"},
-            }
-        },
-    ]
+        ready = self.request.query.get("ready", False)
 
-    ready_indexes = []
+        if not ready:
+            data = await virtool.indexes.db.find(db, self.request.query)
+            return json_response(data)
 
-    async for agg in db.indexes.aggregate(pipeline):
-        reference = await db.references.find_one(agg["_id"], ["data_type", "name"])
-
-        ready_indexes.append(
+        pipeline = [
+            {"$match": {"ready": True}},
+            {"$sort": {"version": -1}},
             {
-                "id": agg["index"],
-                "version": agg["version"],
-                "reference": {
-                    "id": agg["_id"],
-                    "name": reference["name"],
-                    "data_type": reference["data_type"],
-                },
+                "$group": {
+                    "_id": "$reference.id",
+                    "index": {"$first": "$_id"},
+                    "version": {"$first": "$version"},
+                }
+            },
+        ]
+
+        ready_indexes = []
+
+        async for agg in db.indexes.aggregate(pipeline):
+            reference = await db.references.find_one(agg["_id"], ["data_type", "name"])
+
+            ready_indexes.append(
+                {
+                    "id": agg["index"],
+                    "version": agg["version"],
+                    "reference": {
+                        "id": agg["_id"],
+                        "name": reference["name"],
+                        "data_type": reference["data_type"],
+                    },
+                }
+            )
+
+        return json_response(ready_indexes)
+
+
+@routes.view("/indexes/{index_id}")
+@routes.jobs_api.get("/indexes/{index_id}")
+class IndexView(PydanticView):
+    async def get(self) -> Union[r200[GetIndexResponse], r404]:
+        """
+        Get the complete document for a given index.
+
+        Status Codes:
+            200: Successful operation
+            404: Not found
+
+        """
+        db = self.request.app["db"]
+        pg = self.request.app["pg"]
+
+        index_id = self.request.match_info["index_id"]
+
+        document = await db.indexes.find_one(index_id)
+
+        if not document:
+            raise NotFound()
+
+        contributors, otus = await asyncio.gather(
+            virtool.indexes.db.get_contributors(db, index_id),
+            virtool.indexes.db.get_otus(db, index_id),
+        )
+
+        document.update(
+            {
+                "change_count": sum(v["change_count"] for v in otus),
+                "contributors": contributors,
+                "otus": otus,
             }
         )
 
-    return json_response(ready_indexes)
+        document = await virtool.indexes.db.attach_files(
+            pg, self.request.app["config"].base_url, document
+        )
 
+        document = await virtool.indexes.db.processor(db, document)
 
-@routes.get("/indexes/{index_id}")
-@routes.jobs_api.get("/indexes/{index_id}")
-async def get(req):
-    """
-    Get the complete document for a given index.
-
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-
-    index_id = req.match_info["index_id"]
-
-    document = await db.indexes.find_one(index_id)
-
-    if not document:
-        raise NotFound()
-
-    contributors, otus = await asyncio.gather(
-        virtool.indexes.db.get_contributors(db, index_id),
-        virtool.indexes.db.get_otus(db, index_id),
-    )
-
-    document.update(
-        {
-            "change_count": sum(v["change_count"] for v in otus),
-            "contributors": contributors,
-            "otus": otus,
-        }
-    )
-
-    document = await virtool.indexes.db.attach_files(
-        pg, req.app["config"].base_url, document
-    )
-
-    document = await virtool.indexes.db.processor(db, document)
-
-    return json_response(document)
+        return json_response(document)
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/otus.json.gz")
@@ -154,42 +170,47 @@ async def download_otus_json(req):
     )
 
 
-@routes.get("/indexes/{index_id}/files/{filename}")
-async def download_index_file(req: Request):
-    """
-    Download files relating to a given index.
-    """
-    index_id = req.match_info["index_id"]
-    filename = req.match_info["filename"]
+@routes.view("/indexes/{index_id}/files/{filename}")
+class IndexFileView(PydanticView):
+    async def get(self) -> Union[r200, r404]:
+        """
+        Download files relating to a given index.
 
-    if filename not in FILES:
-        raise NotFound()
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        index_id = self.request.match_info["index_id"]
+        filename = self.request.match_info["filename"]
 
-    index_document = await req.app["db"].indexes.find_one(index_id)
+        if filename not in FILES:
+            raise NotFound()
 
-    if index_document is None:
-        raise NotFound()
+        index_document = await self.request.app["db"].indexes.find_one(index_id)
 
-    # check the requesting user has read access to the parent reference
-    if not await check_right(req, index_document["reference"], "read"):
-        raise InsufficientRights()
+        if index_document is None:
+            raise NotFound()
 
-    reference_id = index_document["reference"]["id"]
+        # check the requesting user has read access to the parent reference
+        if not await check_right(self.request, index_document["reference"], "read"):
+            raise InsufficientRights()
 
-    path = (
-        join_index_path(req.app["config"].data_path, reference_id, index_id) / filename
-    )
+        reference_id = index_document["reference"]["id"]
 
-    if not path.exists():
-        raise NotFound("File not found")
+        path = (
+            join_index_path(self.request.app["config"].data_path, reference_id, index_id) / filename
+        )
 
-    return FileResponse(
-        path,
-        headers={
-            "Content-Disposition": f"attachment; filename={filename}",
-            "Content-Type": "application/octet-stream",
-        },
-    )
+        if not path.exists():
+            raise NotFound("File not found")
+
+        return FileResponse(
+            path,
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "application/octet-stream",
+            },
+        )
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
@@ -218,71 +239,79 @@ async def download_index_file_for_jobs(req: Request):
     return FileResponse(path)
 
 
-@routes.post("/refs/{ref_id}/indexes")
-async def create(req):
-    """
-    Starts a job to rebuild the otus Bowtie2 index on disk.
+@routes.view("/refs/{ref_id}/indexes")
+class ReferenceIndexView(PydanticView):
+    async def post(self) -> Union[r201[CreateIndexesResponse], r403, r404]:
+        """
+        Create an index.
 
-    Does a check to make sure there are no unverified OTUs in the collection and updates
-    otu history to show the version and id of the new index.
+        Starts a job to rebuild the otus Bowtie2 index on disk.
 
-    """
-    db = req.app["db"]
+        Does a check to make sure there are no unverified OTUs in the collection and updates
+        otu history to show the version and id of the new index.
 
-    ref_id = req.match_info["ref_id"]
+        Status Codes:
+            201: Successful operation
+            403: Insufficient rights
+            404: Not found
 
-    reference = await db.references.find_one(ref_id, ["groups", "users"])
+        """
+        db = self.request.app["db"]
 
-    if reference is None:
-        raise NotFound()
+        ref_id = self.request.match_info["ref_id"]
 
-    if not await virtool.references.db.check_right(req, reference, "build"):
-        raise InsufficientRights()
+        reference = await db.references.find_one(ref_id, ["groups", "users"])
 
-    if await db.indexes.count_documents(
-        {"reference.id": ref_id, "ready": False}, limit=1
-    ):
-        raise HTTPConflict(text="Index build already in progress")
+        if reference is None:
+            raise NotFound()
 
-    if await db.otus.count_documents(
-        {"reference.id": ref_id, "verified": False}, limit=1
-    ):
-        raise HTTPBadRequest(text="There are unverified OTUs")
+        if not await virtool.references.db.check_right(self.request, reference, "build"):
+            raise InsufficientRights()
 
-    if not await db.history.count_documents(
-        {"reference.id": ref_id, "index.id": "unbuilt"}, limit=1
-    ):
-        raise HTTPBadRequest(text="There are no unbuilt changes")
+        if await db.indexes.count_documents(
+            {"reference.id": ref_id, "ready": False}, limit=1
+        ):
+            raise HTTPConflict(text="Index build already in progress")
 
-    user_id = req["client"].user_id
+        if await db.otus.count_documents(
+            {"reference.id": ref_id, "verified": False}, limit=1
+        ):
+            raise HTTPBadRequest(text="There are unverified OTUs")
 
-    job_id = await get_new_id(db.jobs)
+        if not await db.history.count_documents(
+            {"reference.id": ref_id, "index.id": "unbuilt"}, limit=1
+        ):
+            raise HTTPBadRequest(text="There are no unbuilt changes")
 
-    document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
+        user_id = self.request["client"].user_id
 
-    rights = JobRights()
-    rights.indexes.can_modify(document["_id"])
-    rights.references.can_read(ref_id)
+        job_id = await get_new_id(db.jobs)
 
-    await get_data_from_req(req).jobs.create(
-        "build_index",
-        {
-            "ref_id": ref_id,
-            "user_id": user_id,
-            "index_id": document["_id"],
-            "index_version": document["version"],
-            "manifest": document["manifest"],
-        },
-        user_id,
-        rights,
-        job_id=job_id,
-    )
+        document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
 
-    headers = {"Location": f"/indexes/{document['_id']}"}
+        rights = JobRights()
+        rights.indexes.can_modify(document["_id"])
+        rights.references.can_read(ref_id)
 
-    return json_response(
-        await virtool.indexes.db.processor(db, document), status=201, headers=headers
-    )
+        await get_data_from_req(self.request).jobs.create(
+            "build_index",
+            {
+                "ref_id": ref_id,
+                "user_id": user_id,
+                "index_id": document["_id"],
+                "index_version": document["version"],
+                "manifest": document["manifest"],
+            },
+            user_id,
+            rights,
+            job_id=job_id,
+        )
+
+        headers = {"Location": f"/indexes/{document['_id']}"}
+
+        return json_response(
+            await virtool.indexes.db.processor(db, document), status=201, headers=headers
+        )
 
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
@@ -379,36 +408,43 @@ async def finalize(req):
     return json_response(await virtool.indexes.db.processor(db, document))
 
 
-@routes.get("/indexes/{index_id}/history")
-async def find_history(req):
-    """
-    Find history changes for a specific index.
+@routes.view("/indexes/{index_id}/history")
+class IndexHistoryView(PydanticView):
+    async def get(self) -> Union[r200[GetHistoryResponse], r404]:
+        """
+        List history.
 
-    """
-    db = req.app["db"]
+        Find history changes for a specific index.
 
-    index_id = req.match_info["index_id"]
+        Status Codes:
+            200: Successful operation
+            404: Not found
 
-    if not await db.indexes.count_documents({"_id": index_id}):
-        raise NotFound()
+        """
+        db = self.request.app["db"]
 
-    term = req.query.get("term")
+        index_id = self.request.match_info["index_id"]
 
-    db_query = {"index.id": index_id}
+        if not await db.indexes.count_documents({"_id": index_id}):
+            raise NotFound()
 
-    if term:
-        db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
+        term = self.request.query.get("term")
 
-    data = await paginate(
-        db.history,
-        db_query,
-        req.query,
-        sort=[("otu.name", 1), ("otu.version", -1)],
-        projection=LIST_PROJECTION,
-        reverse=True,
-    )
+        db_query = {"index.id": index_id}
 
-    return json_response(data)
+        if term:
+            db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
+
+        data = await paginate(
+            db.history,
+            db_query,
+            self.request.query,
+            sort=[("otu.name", 1), ("otu.version", -1)],
+            projection=LIST_PROJECTION,
+            reverse=True,
+        )
+
+        return json_response(data)
 
 
 @routes.jobs_api.delete("/indexes/{index_id}")
