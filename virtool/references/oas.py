@@ -301,12 +301,24 @@ class ReferenceTargetSchema(BaseModel):
 
 
 class EditReferenceSchema(BaseModel):
-    name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(description="the virus name")
-    description: Optional[constr(strip_whitespace=True)] = Field(description="a longer description for the reference")
-    organism: Optional[constr(strip_whitespace=True)] = Field(description="the organism")
-    internal_control: Optional[str] = Field(description="set the OTU identified by the passed id as the internal control for the reference")
-    restrict_source_types: Optional[bool] = Field(description="option to restrict source types")
-    source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(description="source types")
+    name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
+        description="the virus name"
+    )
+    description: Optional[constr(strip_whitespace=True)] = Field(
+        description="a longer description for the reference"
+    )
+    organism: Optional[constr(strip_whitespace=True)] = Field(
+        description="the organism"
+    )
+    internal_control: Optional[str] = Field(
+        description="set the OTU identified by the passed id as the internal control for the reference"
+    )
+    restrict_source_types: Optional[bool] = Field(
+        description="option to restrict source types"
+    )
+    source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
+        description="source types"
+    )
     targets: List[ReferenceTargetSchema] = Field(description="targets")
 
     class Config:
@@ -320,9 +332,15 @@ class EditReferenceSchema(BaseModel):
 
 
 class ReferenceRightsSchema(BaseModel):
-    build: Optional[bool] = Field(description="allow members to build new indexes for the reference")
-    modify: Optional[bool] = Field(description="allow members to modify the reference metadata and settings")
-    modify_otu: Optional[bool] = Field(description="allow members to modify the reference’s member OTUs")
+    build: Optional[bool] = Field(
+        description="allow members to build new indexes for the reference"
+    )
+    modify: Optional[bool] = Field(
+        description="allow members to modify the reference metadata and settings"
+    )
+    modify_otu: Optional[bool] = Field(
+        description="allow members to modify the reference’s member OTUs"
+    )
     remove: Optional[bool] = Field(description="allow members to remove the reference")
 
     class Config:

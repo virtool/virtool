@@ -6,6 +6,7 @@ import aiohttp
 from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
+from virtool_core.models.enums import Permission
 
 import virtool.history.db
 import virtool.indexes.db
@@ -20,6 +21,7 @@ from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
 from virtool.history.oas import GetHistoryResponse
 from virtool.http.routes import Routes
+from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_row
 from virtool.references.db import (
@@ -53,7 +55,10 @@ from virtool.references.oas import (
     GetReferenceUpdateResponse,
     ReferenceOTUResponse,
     ReferenceIndexResponse,
-    ReferenceGroupsResponse, CreateReferenceGroupResponse, ReferenceGroupResponse, ReferenceUsersSchema,
+    ReferenceGroupsResponse,
+    CreateReferenceGroupResponse,
+    ReferenceGroupResponse,
+    ReferenceUsersSchema,
 )
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform, extend_user
@@ -114,11 +119,14 @@ class ReferencesView(PydanticView):
             {**data, "documents": documents, "official_installed": official_installed}
         )
 
+    @policy(PermissionsRoutePolicy(Permission.create_ref))
     async def post(
         self, data: CreateReferenceSchema
     ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:
         """
-        Create a new, empty reference.
+        Create a reference.
+
+        Creates an empty reference.
 
         Status Codes:
             200: Successful operation
@@ -241,12 +249,15 @@ class ReferencesView(PydanticView):
 @routes.view("/refs/{ref_id}")
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
-    async def get(self) -> Union[r200[ReferenceResponse], r404]:
+    async def get(self) -> Union[r200[ReferenceResponse], r403, r404]:
         """
-        Get the complete representation of a specific reference.
+        Get a reference.
+
+        Retrieves the details of a reference.
 
         Status Codes:
             200: Successful operation
+            403: Not permitted
             404: Not found
 
         """
@@ -265,7 +276,9 @@ class ReferenceView(PydanticView):
         self, data: EditReferenceSchema
     ) -> Union[r200[ReferenceResponse], r403, r404]:
         """
-        Edit an existing reference.
+        Update a reference.
+
+        Updates an existing reference.
 
         Status Codes:
             200: Successful operation
@@ -301,7 +314,10 @@ class ReferenceView(PydanticView):
 
     async def delete(self) -> Union[r202, r403, r404]:
         """
-        Delete a reference and its otus, history, and indexes.
+        Delete a reference.
+
+        Deletes a reference and its associated OTUs, history, and indexes. Deleting a
+        reference does not break dependent analyses and other resources.
 
         Status Codes:
             202: Accepted
@@ -336,7 +352,9 @@ class ReferenceView(PydanticView):
 class ReferenceReleaseView(PydanticView):
     async def get(self) -> r200[ReferenceReleaseResponse]:
         """
-        Get the latest update from GitHub and return it.
+        Get latest update.
+
+        Retrieves the latest remote reference update from GitHub.
 
         Also updates the reference document. This is the only way of doing so without
         waiting for an automatic refresh every 10 minutes.
@@ -373,7 +391,9 @@ class ReferenceReleaseView(PydanticView):
 class ReferenceUpdatesView(PydanticView):
     async def get(self) -> r200[GetReferenceUpdateResponse]:
         """
-        List all updates made to the reference.
+        List updates.
+
+        Lists all updates made to the reference.
 
         Status Codes:
             200: Successful operation
@@ -395,7 +415,9 @@ class ReferenceUpdatesView(PydanticView):
 
     async def post(self) -> Union[r201[CreateReferenceUpdateResponse], r403, r404]:
         """
-        Update the reference using the linked remote reference.
+        Update a reference.
+
+        Updates the reference to the last version of the linked remote reference.
 
         Status Codes:
             201: Successful operation
@@ -446,7 +468,9 @@ class ReferenceUpdatesView(PydanticView):
 class ReferenceOtusView(PydanticView):
     async def get(self) -> Union[r200[ReferenceOTUResponse], r404]:
         """
-        Get OTUs of a reference
+        Find OTUs.
+
+        Finds OTUs by name or abbreviation. Results are paginated.
 
         Status Codes:
             200: Successful operation
@@ -474,7 +498,9 @@ class ReferenceOtusView(PydanticView):
 class ReferenceHistoryView(PydanticView):
     async def get(self) -> Union[r200[GetHistoryResponse], r404]:
         """
-        List history of the reference.
+        List history.
+
+        Retrieves a paginated list of changes made to OTUs in the reference.
 
         Status Codes:
             200: Successful operation
@@ -506,7 +532,9 @@ class ReferenceHistoryView(PydanticView):
 class ReferenceIndexesView(PydanticView):
     async def get(self) -> Union[r200[ReferenceIndexResponse], r404]:
         """
-        List indexes of the reference.
+        List indexes.
+
+        Retrieves a paginated list of indexes that have been created for the reference.
 
         Status Codes:
             200: Successful operation
@@ -529,7 +557,9 @@ class ReferenceIndexesView(PydanticView):
 class ReferenceGroupsView(PydanticView):
     async def get(self) -> Union[r200[ReferenceGroupsResponse], r404]:
         """
-        List groups of the reference.
+        List groups.
+
+        Lists all groups that have access to the reference.
 
         Status Codes:
             200: Successful operation
@@ -551,7 +581,9 @@ class ReferenceGroupsView(PydanticView):
         self, data: CreateReferenceGroupsSchema
     ) -> Union[r201[CreateReferenceGroupResponse], r400, r403, r404]:
         """
-        Allow groups to view, use and modify the reference.
+        Add a group.
+
+        Adds a group to the reference. Groups can view, use, and modify the reference.
 
         Status Codes:
             201: Successful operation
@@ -595,7 +627,9 @@ class ReferenceGroupsView(PydanticView):
 class ReferenceGroupView(PydanticView):
     async def get(self) -> Union[r200[ReferenceGroupResponse], r404]:
         """
-        Get a specific group of the reference
+        Get a group.
+
+        Retrieves the details of a group that has access to the reference.
 
         Status Codes:
             200: Successful operation
@@ -621,7 +655,9 @@ class ReferenceGroupView(PydanticView):
         self, data: ReferenceRightsSchema
     ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
         """
-        Edit the reference rights of a specific group.
+        Update a group.
+
+        Updates the access rights a group has on the reference.
 
         Status Codes:
             200: Successful operation
@@ -651,7 +687,9 @@ class ReferenceGroupView(PydanticView):
 
     async def delete(self) -> Union[r204, r403, r404]:
         """
-        Remove the group from the reference.
+        Remove a group.
+
+        Removes a group from the reference.
 
         Status Codes:
             204: No content
@@ -683,7 +721,9 @@ class ReferenceUsersView(PydanticView):
         self, data: CreateReferenceUsersSchema
     ) -> Union[r200[List[ReferenceUsersSchema]], r400, r403, r404]:
         """
-        Allow users to view, use and modify the reference.
+        Add a user.
+
+        Adds a user to the reference. Users can view, use, and modify the reference.
 
         Status Codes:
             201: Successful operation
@@ -729,7 +769,9 @@ class ReferenceUserView(PydanticView):
         self, data: ReferenceRightsSchema
     ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
         """
-        Edit the reference rights of a specific user.
+        Update a user.
+
+        Updates the access rights a user has on the reference.
 
         Status Codes:
             200: Successful operation
@@ -762,7 +804,9 @@ class ReferenceUserView(PydanticView):
 
     async def delete(self) -> Union[r204, r403, r404]:
         """
-        Remove the user from the reference.
+        Remove a user.
+
+        Removes a user from the reference.
 
         Status Codes:
             204: No content
