@@ -247,8 +247,8 @@ class ReferenceIndexView(PydanticView):
 
         Starts a job to rebuild the otus Bowtie2 index on disk.
 
-        Does a check to make sure there are no unverified OTUs in the collection and updates
-        otu history to show the version and id of the new index.
+        Does a check to make sure there are no unverified OTUs in the collection
+        and updates otu history to show the version and id of the new index.
 
         Status Codes:
             201: Successful operation

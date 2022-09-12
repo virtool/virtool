@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from virtool_core.models.basemodel import BaseModel
 
 
@@ -94,7 +92,6 @@ class GetIndexResponse(BaseModel):
                         "name": "Test",
                     },
                 ],
-                "ready": False,
                 "manifest": [],
             },
         }
