@@ -73,7 +73,7 @@ async def test_add(loop, snapshot, pg, redis: Redis, static_time, tasks_data: Ta
     """
     (channel,) = await redis.subscribe("channel:tasks")
 
-    await tasks_data.add(AddSubtractionFilesTask)
+    await tasks_data.create(AddSubtractionFilesTask)
 
     task_id = await wait_for(channel.get_json(), timeout=3)
 

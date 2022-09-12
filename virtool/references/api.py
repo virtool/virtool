@@ -188,7 +188,7 @@ async def update(req):
         "user_id": user_id,
     }
 
-    task = await get_data_from_req(req).tasks.add(UpdateRemoteReferenceTask, context=context)
+    task = await get_data_from_req(req).tasks.create(UpdateRemoteReferenceTask, context=context)
 
     release, update_subdocument = await asyncio.shield(
         virtool.references.db.update(
@@ -307,7 +307,7 @@ async def create(req):
             "user_id": user_id,
         }
 
-        task = await get_data_from_req(req).tasks.add(CloneReferenceTask, context=context)
+        task = await get_data_from_req(req).tasks.create(CloneReferenceTask, context=context)
 
         document["task"] = {"id": task["id"]}
 
@@ -328,7 +328,7 @@ async def create(req):
             "user_id": user_id,
         }
 
-        task = await get_data_from_req(req).tasks.add(ImportReferenceTask, context=context)
+        task = await get_data_from_req(req).tasks.create(ImportReferenceTask, context=context)
 
         document["task"] = {"id": task.id}
 
@@ -358,7 +358,7 @@ async def create(req):
             "user_id": user_id,
         }
 
-        task = await get_data_from_req(req).tasks.add(RemoteReferenceTask, context=context)
+        task = await get_data_from_req(req).tasks.create(RemoteReferenceTask, context=context)
 
         document["task"] = {"id": task["id"]}
 
@@ -455,7 +455,7 @@ async def remove(req):
 
     context = {"ref_id": ref_id, "user_id": user_id}
 
-    task = await get_data_from_req(req).tasks.add(DeleteReferenceTask, context=context)
+    task = await get_data_from_req(req).tasks.create(DeleteReferenceTask, context=context)
 
     await db.references.delete_one({"_id": ref_id})
 

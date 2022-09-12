@@ -1,19 +1,18 @@
 from datetime import timedelta
 
 import pytest
-from aioredis import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.blast.data import BLASTData
 from virtool.blast.models import NuVsBlast
 from virtool.tasks.models import Task
-from virtool.tasks.data import TasksData
+
 
 @pytest.fixture
 async def blast_data(dbi, pg, static_time, redis):
 
-    blast_data = BLASTData(dbi, pg, TasksData(pg, redis))
+    blast_data = BLASTData(dbi, pg)
 
     async with AsyncSession(pg) as session:
         task = Task(created_at=static_time.datetime, type="blast")

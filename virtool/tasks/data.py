@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import CancelledError
-from typing import List, Type
+from typing import List, Type, Optional, Dict
 
 from aioredis import Redis
 from sqlalchemy import select
@@ -43,7 +43,7 @@ class TasksData:
 
         return Task(**result.to_dict())
 
-    async def register(self, task_class, context: dict = None) -> Task:
+    async def register(self, task_class: Type[Task], context: dict = None) -> Task:
         """
         Create a new task record and store it.
 
@@ -146,7 +146,7 @@ class TasksData:
             session.delete(task)
             await session.commit()
 
-    async def add(self, task_class: Type[Task], context: dict = None):
+    async def create(self, task_class: Type[Task], context: dict = None):
         """
         Register a new task.
 
@@ -163,8 +163,8 @@ class TasksData:
         except CancelledError:
             pass
 
-    async def add_periodic(
-        self, task_class: Task, interval: int = None, context: dict = None
+    async def create_periodic(
+            self, task_class: Type[Task], interval: int = None, context: Optional[Dict] = None
     ):
         """
         Register a new task that will be run regularly at the given interval.

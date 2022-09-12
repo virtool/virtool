@@ -129,14 +129,13 @@ async def startup_data(app: App):
     :param app: the application object
     """
 
-    tasks_data = TasksData(app["pg"], app["redis"])
     app["data"] = DataLayer(
-        AnalysisData(app["db"], app["config"], app["pg"], tasks_data),
-        BLASTData(app["db"], app["pg"], tasks_data),
+        AnalysisData(app["db"], app["config"], app["pg"]),
+        BLASTData(app["db"], app["pg"]),
         GroupsData(app["db"]),
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
-        HmmData(app["client"], app["config"], app["db"], tasks_data),
+        HmmData(app["client"], app["config"], app["db"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
@@ -144,7 +143,7 @@ async def startup_data(app: App):
         SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
         UploadsData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
-        tasks_data
+        TasksData(app["pg"], app["redis"])
     )
 
 
@@ -409,6 +408,8 @@ async def startup_task_runner(app: Application):
 
 
 async def startup_tasks(app: Application):
+    tasks_data = get_data_from_app(app).tasks
+
 
     if app["config"].no_check_db:
         return logger.info("Skipping subtraction FASTA files checks")
@@ -421,17 +422,17 @@ async def startup_tasks(app: Application):
     )
 
     for subtraction in subtractions_without_fasta:
-        await get_data_from_app(app).tasks.add(
+        await tasks_data.create(
             WriteSubtractionFASTATask, context={"subtraction": subtraction}
         )
 
-    await get_data_from_app(app).tasks.add(AddIndexFilesTask)
-    await get_data_from_app(app).tasks.add(AddIndexJSONTask)
-    await get_data_from_app(app).tasks.add(DeleteReferenceTask, context={"user_id": "virtool"})
-    await get_data_from_app(app).tasks.add(AddSubtractionFilesTask)
-    await get_data_from_app(app).tasks.add(StoreNuvsFilesTask)
-    await get_data_from_app(app).tasks.add(CompressSamplesTask)
-    await get_data_from_app(app).tasks.add(MoveSampleFilesTask)
-    await get_data_from_app(app).tasks.add(CleanReferencesTask)
+    await tasks_data.create(AddIndexFilesTask)
+    await tasks_data.create(AddIndexJSONTask)
+    await tasks_data.create(DeleteReferenceTask, context={"user_id": "virtool"})
+    await tasks_data.create(AddSubtractionFilesTask)
+    await tasks_data.create(StoreNuvsFilesTask)
+    await tasks_data.create(CompressSamplesTask)
+    await tasks_data.create(MoveSampleFilesTask)
+    await tasks_data.create(CleanReferencesTask)
 
-    await scheduler.spawn(get_data_from_app(app).tasks.add_periodic(MigrateFilesTask, 3600))
+    await scheduler.spawn(tasks_data.create_periodic(MigrateFilesTask, 3600))

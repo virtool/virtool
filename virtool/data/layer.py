@@ -9,11 +9,11 @@ from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
 from virtool.samples.data import SamplesData
-from virtool.uploads.data import UploadsData
-from virtool.users.data import UsersData
 from virtool.settings.data import SettingsData
 from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.data import TasksData
+from virtool.uploads.data import UploadsData
+from virtool.users.data import UsersData
 
 
 @dataclass
@@ -44,4 +44,5 @@ class DataLayer:
         self.hmms.bind_layer(self)
         self.samples.bind_layer(self)
         self.subtractions.bind_layer(self)
+        self.blast.bind_layer(self)
         self.analyses.bind_layer(self)
