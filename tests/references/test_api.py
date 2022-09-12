@@ -88,7 +88,7 @@ async def test_update(
     mocker.patch("virtool.references.tasks.UpdateRemoteReferenceTask")
 
     m_add_task = mocker.patch(
-        "virtool.tasks.data.TasksData.add", make_mocked_coro({"id": "task"})
+        "virtool.tasks.data.TasksData.create", make_mocked_coro({"id": "task"})
     )
 
     mocker.patch("aiojobs.aiohttp.spawn", make_mocked_coro())

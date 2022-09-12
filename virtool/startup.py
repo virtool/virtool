@@ -410,7 +410,6 @@ async def startup_task_runner(app: Application):
 async def startup_tasks(app: Application):
     tasks_data = get_data_from_app(app).tasks
 
-
     if app["config"].no_check_db:
         return logger.info("Skipping subtraction FASTA files checks")
 
