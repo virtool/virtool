@@ -1,7 +1,7 @@
-from virtool_core.models.basemodel import BaseModel
+from virtool_core.models.index import IndexSearchResult, Index
 
 
-class GetIndexesResponse(BaseModel):
+class ListIndexesResponse(IndexSearchResult):
     class Config:
         schema_extra = {
             "example": {
@@ -51,7 +51,7 @@ class GetIndexesResponse(BaseModel):
         }
 
 
-class GetIndexResponse(BaseModel):
+class GetIndexResponse(Index):
     class Config:
         schema_extra = {
             "example": {

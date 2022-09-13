@@ -16,12 +16,12 @@ from virtool.api.custom_json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.history.db import LIST_PROJECTION
-from virtool.history.oas import GetHistoryResponse
+from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
 from virtool.indexes.db import FILES, reset_history
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
-from virtool.indexes.oas import GetIndexesResponse, GetIndexResponse
+from virtool.indexes.oas import ListIndexesResponse, GetIndexResponse
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.pg.utils import delete_row, get_rows
 from virtool.references.db import check_right
@@ -34,11 +34,11 @@ routes = Routes()
 
 @routes.view("/indexes")
 class IndexesView(PydanticView):
-    async def get(self) -> Union[r200[GetIndexesResponse]]:
+    async def get(self) -> Union[r200[ListIndexesResponse]]:
         """
         Find indexes.
 
-        Return a list of indexes.
+        Retrieves a list of indexes.
 
         Status Codes:
             200: Successful operation
@@ -89,7 +89,9 @@ class IndexesView(PydanticView):
 class IndexView(PydanticView):
     async def get(self) -> Union[r200[GetIndexResponse], r404]:
         """
-        Get the complete document for a given index.
+        Get an index.
+
+        Retrieves the details for an index.
 
         Status Codes:
             200: Successful operation
@@ -331,7 +333,7 @@ async def finalize(req):
 
 @routes.view("/indexes/{index_id}/history")
 class IndexHistoryView(PydanticView):
-    async def get(self) -> Union[r200[GetHistoryResponse], r404]:
+    async def get(self) -> Union[r200[ListHistoryResponse], r404]:
         """
         List history.
 

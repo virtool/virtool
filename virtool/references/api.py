@@ -19,10 +19,10 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
-from virtool.history.oas import GetHistoryResponse
+from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
 from virtool.http.policy import policy, PermissionsRoutePolicy
-from virtool.indexes.oas import GetIndexesResponse
+from virtool.indexes.oas import ListIndexesResponse
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id
@@ -493,7 +493,7 @@ class ReferenceOtusView(PydanticView):
 
 @routes.view("/refs/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
-    async def get(self) -> Union[r200[GetHistoryResponse], r404]:
+    async def get(self) -> Union[r200[ListHistoryResponse], r404]:
         """
         List history.
 
@@ -527,7 +527,7 @@ class ReferenceHistoryView(PydanticView):
 
 @routes.view("/refs/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
-    async def get(self) -> Union[r200[GetIndexesResponse], r404]:
+    async def get(self) -> Union[r200[ListIndexesResponse], r404]:
         """
         List indexes.
 
