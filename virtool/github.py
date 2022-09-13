@@ -105,7 +105,7 @@ async def get_release(
 
         if int(rate_limit) / int(rate_limit_remaining) > 2.0:
             logger.warning(
-                f"Less than half of GitHub remaining (%s of %s)",
+                "Less than half of GitHub remaining (%s of %s)",
                 rate_limit_remaining,
                 rate_limit,
             )
