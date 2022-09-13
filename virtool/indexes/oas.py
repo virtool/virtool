@@ -95,23 +95,3 @@ class GetIndexResponse(BaseModel):
                 "manifest": [],
             },
         }
-
-
-class CreateIndexesResponse(BaseModel):
-    class Config:
-        schema_extra = {
-            "example": {
-                "change_count": 0,
-                "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
-                "has_json": False,
-                "id": "fb085f7f",
-                "job": {"id": "bf1b993c"},
-                "manifest": "manifest",
-                "modified_otu_count": 0,
-                "ready": False,
-                "reference": {"id": "foo"},
-                "user": {"administrator": False, "handle": "bob", "id": "test"},
-                "version": 9,
-            }
-        }

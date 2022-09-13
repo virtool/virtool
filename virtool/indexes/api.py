@@ -23,7 +23,7 @@ from virtool.http.routes import Routes
 from virtool.indexes.db import FILES, reset_history
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
-from virtool.indexes.oas import GetIndexesResponse, GetIndexResponse, CreateIndexesResponse
+from virtool.indexes.oas import GetIndexesResponse, GetIndexResponse
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.jobs.utils import JobRights
 from virtool.mongo.utils import get_new_id
@@ -237,81 +237,6 @@ async def download_index_file_for_jobs(req: Request):
         raise NotFound("File not found")
 
     return FileResponse(path)
-
-
-@routes.view("/refs/{ref_id}/indexes")
-class ReferenceIndexView(PydanticView):
-    async def post(self) -> Union[r201[CreateIndexesResponse], r403, r404]:
-        """
-        Create an index.
-
-        Starts a job to rebuild the otus Bowtie2 index on disk.
-
-        Does a check to make sure there are no unverified OTUs in the collection
-        and updates otu history to show the version and id of the new index.
-
-        Status Codes:
-            201: Successful operation
-            403: Insufficient rights
-            404: Not found
-
-        """
-        db = self.request.app["db"]
-
-        ref_id = self.request.match_info["ref_id"]
-
-        reference = await db.references.find_one(ref_id, ["groups", "users"])
-
-        if reference is None:
-            raise NotFound()
-
-        if not await virtool.references.db.check_right(self.request, reference, "build"):
-            raise InsufficientRights()
-
-        if await db.indexes.count_documents(
-            {"reference.id": ref_id, "ready": False}, limit=1
-        ):
-            raise HTTPConflict(text="Index build already in progress")
-
-        if await db.otus.count_documents(
-            {"reference.id": ref_id, "verified": False}, limit=1
-        ):
-            raise HTTPBadRequest(text="There are unverified OTUs")
-
-        if not await db.history.count_documents(
-            {"reference.id": ref_id, "index.id": "unbuilt"}, limit=1
-        ):
-            raise HTTPBadRequest(text="There are no unbuilt changes")
-
-        user_id = self.request["client"].user_id
-
-        job_id = await get_new_id(db.jobs)
-
-        document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
-
-        rights = JobRights()
-        rights.indexes.can_modify(document["_id"])
-        rights.references.can_read(ref_id)
-
-        await get_data_from_req(self.request).jobs.create(
-            "build_index",
-            {
-                "ref_id": ref_id,
-                "user_id": user_id,
-                "index_id": document["_id"],
-                "index_version": document["version"],
-                "manifest": document["manifest"],
-            },
-            user_id,
-            rights,
-            job_id=job_id,
-        )
-
-        headers = {"Location": f"/indexes/{document['_id']}"}
-
-        return json_response(
-            await virtool.indexes.db.processor(db, document), status=201, headers=headers
-        )
 
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
