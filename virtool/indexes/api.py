@@ -4,19 +4,17 @@ import logging
 from typing import Union
 
 from aiohttp.web import FileResponse, Request, Response
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r403, r404
+from aiohttp_pydantic.oas.typing import r200, r404
 from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
 import virtool.uploads.db
-import virtool.references.db
 import virtool.utils
 from virtool.api.custom_json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.data.utils import get_data_from_req
 from virtool.history.db import LIST_PROJECTION
 from virtool.history.oas import GetHistoryResponse
 from virtool.http.routes import Routes
@@ -25,8 +23,6 @@ from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.oas import GetIndexesResponse, GetIndexResponse
 from virtool.indexes.utils import check_index_file_type, join_index_path
-from virtool.jobs.utils import JobRights
-from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_rows
 from virtool.references.db import check_right
 from virtool.uploads.utils import naive_writer
