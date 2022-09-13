@@ -713,7 +713,7 @@ class ReferenceGroupView(PydanticView):
 class ReferenceUsersView(PydanticView):
     async def post(
         self, data: CreateReferenceUsersSchema
-    ) -> Union[r200[List[ReferenceUsersSchema]], r400, r403, r404]:
+    ) -> Union[r201[List[ReferenceUsersSchema]], r400, r403, r404]:
         """
         Add a user.
 
