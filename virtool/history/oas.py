@@ -1,7 +1,7 @@
 from virtool_core.models.history import History, HistoryMinimal
 
 
-class GetHistoryResponse(HistoryMinimal):
+class ListHistoryResponse(HistoryMinimal):
     class Config:
         schema_extra = {
             "example": [

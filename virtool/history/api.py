@@ -3,7 +3,7 @@ from typing import Union, List
 from aiohttp.web import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
-from virtool.history.oas import GetHistoryResponse, HistoryResponse
+from virtool.history.oas import ListHistoryResponse, HistoryResponse
 
 import virtool.http.routes
 import virtool.references.db
@@ -17,7 +17,7 @@ routes = virtool.http.routes.Routes()
 
 @routes.view("/history")
 class ChangesView(PydanticView):
-    async def get(self) -> Union[r200[List[GetHistoryResponse]], r422]:
+    async def get(self) -> Union[r200[ListHistoryResponse], r422]:
         """
         List history.
 
@@ -33,7 +33,7 @@ class ChangesView(PydanticView):
 
         return json_response(
             [
-                GetHistoryResponse.parse_obj(document).dict()
+                ListHistoryResponse.parse_obj(document).dict()
                 for document in data.documents
             ]
         )
