@@ -3,7 +3,7 @@ from asyncio.tasks import gather
 from typing import Union, List
 
 import aiohttp
-from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent
+from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.enums import Permission
@@ -19,10 +19,13 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
-from virtool.history.oas import GetHistoryResponse
+from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
 from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.indexes.oas import ListIndexesResponse
+from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import get_row
 from virtool.references.db import (
     attach_computed,
@@ -54,7 +57,7 @@ from virtool.references.oas import (
     CreateReferenceUpdateResponse,
     GetReferenceUpdateResponse,
     ReferenceOTUResponse,
-    ReferenceIndexResponse,
+    CreateReferenceIndexesResponse,
     ReferenceGroupsResponse,
     CreateReferenceGroupResponse,
     ReferenceGroupResponse,
@@ -490,7 +493,7 @@ class ReferenceOtusView(PydanticView):
 
 @routes.view("/refs/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
-    async def get(self) -> Union[r200[GetHistoryResponse], r404]:
+    async def get(self) -> Union[r200[ListHistoryResponse], r404]:
         """
         List history.
 
@@ -524,7 +527,7 @@ class ReferenceHistoryView(PydanticView):
 
 @routes.view("/refs/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
-    async def get(self) -> Union[r200[ReferenceIndexResponse], r404]:
+    async def get(self) -> Union[r200[ListIndexesResponse], r404]:
         """
         List indexes.
 
@@ -545,6 +548,78 @@ class ReferenceIndexesView(PydanticView):
         data = await virtool.indexes.db.find(db, self.request.query, ref_id=ref_id)
 
         return json_response(data)
+
+    async def post(self) -> Union[r201[CreateReferenceIndexesResponse], r403, r404]:
+        """
+        Create an index.
+
+        Starts a job to rebuild the otus Bowtie2 index on disk.
+
+        Does a check to make sure there are no unverified OTUs in the collection
+        and updates otu history to show the version and id of the new index.
+
+        Status Codes:
+            201: Successful operation
+            403: Insufficient rights
+            404: Not found
+
+        """
+        db = self.request.app["db"]
+
+        ref_id = self.request.match_info["ref_id"]
+
+        reference = await db.references.find_one(ref_id, ["groups", "users"])
+
+        if reference is None:
+            raise NotFound()
+
+        if not await virtool.references.db.check_right(self.request, reference, "build"):
+            raise InsufficientRights()
+
+        if await db.indexes.count_documents(
+            {"reference.id": ref_id, "ready": False}, limit=1
+        ):
+            raise HTTPConflict(text="Index build already in progress")
+
+        if await db.otus.count_documents(
+            {"reference.id": ref_id, "verified": False}, limit=1
+        ):
+            raise HTTPBadRequest(text="There are unverified OTUs")
+
+        if not await db.history.count_documents(
+            {"reference.id": ref_id, "index.id": "unbuilt"}, limit=1
+        ):
+            raise HTTPBadRequest(text="There are no unbuilt changes")
+
+        user_id = self.request["client"].user_id
+
+        job_id = await get_new_id(db.jobs)
+
+        document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
+
+        rights = JobRights()
+        rights.indexes.can_modify(document["_id"])
+        rights.references.can_read(ref_id)
+
+        await get_data_from_req(self.request).jobs.create(
+            "build_index",
+            {
+                "ref_id": ref_id,
+                "user_id": user_id,
+                "index_id": document["_id"],
+                "index_version": document["version"],
+                "manifest": document["manifest"],
+            },
+            user_id,
+            rights,
+            job_id=job_id,
+        )
+
+        headers = {"Location": f"/indexes/{document['_id']}"}
+
+        return json_response(
+            await virtool.indexes.db.processor(db, document), status=201, headers=headers
+        )
 
 
 @routes.view("/refs/{ref_id}/groups")
