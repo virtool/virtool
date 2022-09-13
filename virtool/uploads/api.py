@@ -84,13 +84,13 @@ class UploadsView(PydanticView):
                 size, upload.id
             )
         except CancelledError:
-            logger.debug(f"Upload aborted: {upload.id}")
+            logger.debug("Upload aborted: %s", upload.id)
 
             await get_data_from_req(self.request).uploads.delete(upload.id)
 
             return Response(status=499)
 
-        logger.debug(f"Upload succeeded: {upload.id}")
+        logger.debug("Upload succeeded: %s", upload.id)
 
         return json_response(
             upload,

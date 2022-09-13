@@ -46,7 +46,7 @@ class RedisDispatcherListener(AsyncIterable):
                 try:
                     self._channel = await asyncio.wait_for(resubscribe(self._redis, self._channel_name), 10)
                 except asyncio.TimeoutError:
-                    logger.fatal(f"Could not resubscribe to redis {self._channel_name}")
+                    logger.fatal("Could not resubscribe to redis %s", self._channel_name)
                     sys.exit(1)
             except TypeError:
                 pass

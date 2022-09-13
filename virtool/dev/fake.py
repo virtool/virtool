@@ -31,7 +31,7 @@ async def remove_fake_data_path(app: App):
     # Be extra sure this is a fake application directory we should remove.
     if data_path and app["config"].fake and "virtool_fake_" in data_path:
         rmtree(data_path)
-        logger.debug(f"Removed fake data directory: {data_path}")
+        logger.debug("Removed fake data directory: %s", data_path)
 
 
 async def drop_fake_mongo(app: App):
@@ -46,7 +46,7 @@ async def drop_fake_mongo(app: App):
     # Be extra sure this is a fake database we should drop.
     if "fake-" in db_name and app["config"].fake:
         await app["db"].motor_client.client.drop_database(db_name)
-        logger.debug(f"Dropped fake Mongo database: {db_name}")
+        logger.debug("Dropped fake Mongo database: %s", db_name)
 
 
 def create_fake_data_path() -> Path:

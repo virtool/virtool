@@ -97,7 +97,7 @@ async def get_release(
     if etag:
         headers["If-None-Match"] = etag
 
-    logger.debug(f"Making GitHub request to {url}")
+    logger.debug("Making GitHub request to %s", url)
 
     async with ProxyRequest(config, session.get, url, headers=headers) as resp:
         rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
@@ -105,10 +105,12 @@ async def get_release(
 
         if int(rate_limit) / int(rate_limit_remaining) > 2.0:
             logger.warning(
-                f"Less than half of GitHub remaining ({rate_limit_remaining} of {rate_limit})"
+                "Less than half of GitHub remaining (%s of %s)",
+                rate_limit_remaining,
+                rate_limit,
             )
 
-        logger.debug(f"Fetched release: {slug}/{release_id} ({resp.status})")
+        logger.debug("Fetched release: %s/%s (%s)", slug, release_id, resp.status)
 
         if resp.status == 200:
             data = await resp.json()

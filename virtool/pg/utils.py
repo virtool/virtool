@@ -60,7 +60,7 @@ async def check_version(engine: AsyncEngine):
         info = await conn.execute(text("SHOW server_version"))
 
     version = info.first()[0].split()[0]
-    logger.info(f"Found PostgreSQL {version}")
+    logger.info("Found PostgreSQL %s", version)
 
 
 async def create_models(engine):

@@ -48,11 +48,13 @@ async def check_mongo_version(db: AsyncIOMotorClient) -> str:
 
     if VersionInfo.parse(mongo_version) < VersionInfo.parse(MINIMUM_MONGO_VERSION):
         logger.critical(
-            f"Virtool requires MongoDB {MINIMUM_MONGO_VERSION}. Found {mongo_version}."
+            "Virtool requires MongoDB %s. Found %s.",
+            MINIMUM_MONGO_VERSION,
+            mongo_version,
         )
         sys.exit(1)
 
-    logger.info(f"Found MongoDB {mongo_version}")
+    logger.info("Found MongoDB %s", mongo_version)
 
     return mongo_version
 

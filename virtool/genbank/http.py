@@ -46,7 +46,7 @@ async def fetch(
 
         if resp.status != 200:
             if "Failed to retrieve sequence" not in body:
-                logger.warning(f"Unexpected Genbank error: {body}")
+                logger.warning("Unexpected Genbank error: %s", body)
 
             return None
 

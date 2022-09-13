@@ -355,8 +355,8 @@ async def startup_version(app: typing.Union[dict, Application]):
     else:
         version = await determine_server_version()
 
-    logger.info(f"Virtool {version}")
-    logger.info(f"Mode: {app['mode']}")
+    logger.info("Virtool %s", version)
+    logger.info("Mode: %s", app['mode'])
 
     app["version"] = version
 

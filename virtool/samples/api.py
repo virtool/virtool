@@ -570,7 +570,7 @@ async def upload_artifact(req):
             await req.multipart(), artifact_file_path
         )
     except asyncio.CancelledError:
-        logger.debug(f"Artifact file upload aborted for sample: {sample_id}")
+        logger.debug("Artifact file upload aborted for sample: %s", sample_id)
         await delete_row(pg, upload_id, SampleArtifact)
         await run_in_thread(os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
@@ -616,7 +616,7 @@ async def upload_reads(req):
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
     except asyncio.CancelledError:
-        logger.debug(f"Reads file upload aborted for {sample_id}")
+        logger.debug("Reads file upload aborted for %s", sample_id)
         return aiohttp.web.Response(status=499)
     try:
         reads = await create_reads_file(
@@ -689,7 +689,7 @@ async def upload_cache_reads(req):
     except exc.IntegrityError:
         raise HTTPConflict(text="File name is already uploaded for this cache")
     except asyncio.CancelledError:
-        logger.debug(f"Reads cache file upload aborted for {key}")
+        logger.debug("Reads cache file upload aborted for %s", key)
         return aiohttp.web.Response(status=499)
 
     reads = await create_reads_file(
@@ -745,7 +745,7 @@ async def upload_cache_artifact(req):
             await req.multipart(), cache_path
         )
     except asyncio.CancelledError:
-        logger.debug(f"Artifact file cache upload aborted for sample: {sample_id}")
+        logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)
         await delete_row(pg, upload_id, SampleArtifact)
         await run_in_thread(os.remove, cache_path)
         return aiohttp.web.Response(status=499)

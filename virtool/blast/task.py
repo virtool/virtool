@@ -72,7 +72,7 @@ class BLASTTask(Task):
                     self.app["config"], self.rid
                 )
 
-                logger.debug(f"Checked BLAST {self.rid} ({self.interval}s)")
+                logger.debug("Checked BLAST %s (%ss)", self.rid, self.interval)
 
                 if self.ready:
                     try:
@@ -85,7 +85,7 @@ class BLASTTask(Task):
                         )
                         return
 
-                    logger.info(f"Retrieved result for BLAST {self.rid}")
+                    logger.info("Retrieved result for BLAST %s", self.rid)
                     result = virtool.blast.utils.format_blast_content(result_json)
 
                     return await self._update(True, result, None)
@@ -97,7 +97,7 @@ class BLASTTask(Task):
                 self.analysis_id, self.sequence_index
             )
 
-            logger.info(f"Removed BLAST due to cancellation: {self.rid}")
+            logger.info("Removed BLAST due to cancellation: %s", self.rid)
 
     async def _sleep(self):
         """

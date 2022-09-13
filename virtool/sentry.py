@@ -23,7 +23,7 @@ def traces_sampler(sampling_context: Dict) -> float:
 
 
 def setup(server_version: Optional[str], dsn: str):
-    logger.info(f"Initializing Sentry with DSN {dsn[:20]}...")
+    logger.info("Initializing Sentry with DSN %s...", dsn[:20])
     sentry_sdk.init(
         dsn=dsn,
         integrations=[
