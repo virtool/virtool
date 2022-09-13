@@ -7,7 +7,7 @@ from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
-from virtool.api.json import pretty_dumps
+from virtool.api.custom_json import pretty_dumps
 from virtool.pg.base import Base
 
 logger = logging.getLogger(__name__)

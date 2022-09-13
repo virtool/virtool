@@ -2,10 +2,12 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.otus.fake import create_fake_otus
 
 
-async def test_create_fake_otus(dbi, snapshot, tmp_path):
+async def test_create_fake_otus(dbi, fake2, snapshot, tmp_path):
     app = {"db": dbi, "data_path": tmp_path, "fake": FakerWrapper()}
 
-    await create_fake_otus(app, "reference_1", "bob")
+    user = await fake2.users.create()
+
+    await create_fake_otus(app, "reference_1", user.id)
 
     assert await dbi.otus.find().to_list(None) == snapshot
     assert await dbi.sequences.find().to_list(None) == snapshot

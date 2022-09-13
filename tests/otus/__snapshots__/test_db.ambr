@@ -5,3 +5,129 @@
     'version': 4,
   }
 ---
+# name: test_join[uvloop-False-False][return]
+  None
+---
+# name: test_join[uvloop-False-True][return]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+          <class 'dict'> {
+            '_id': 'abcd1234',
+            'accession': 'KX269872',
+            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+            'host': 'sweet cherry',
+            'isolate_id': 'cab8b360',
+            'otu_id': '6116cba1',
+            'reference': <class 'dict'> {
+              'id': 'ref',
+            },
+            'remote': None,
+            'segment': None,
+            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+          },
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'remote_id': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_join[uvloop-True-False][return]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+          <class 'dict'> {
+            '_id': 'abcd1234',
+            'accession': 'KX269872',
+            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+            'host': 'sweet cherry',
+            'isolate_id': 'cab8b360',
+            'otu_id': '6116cba1',
+            'reference': <class 'dict'> {
+              'id': 'ref',
+            },
+            'remote': None,
+            'segment': None,
+            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+          },
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'remote_id': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_join[uvloop-True-True][return]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+          <class 'dict'> {
+            '_id': 'abcd1234',
+            'accession': 'KX269872',
+            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+            'host': 'sweet cherry',
+            'isolate_id': 'cab8b360',
+            'otu_id': '6116cba1',
+            'reference': <class 'dict'> {
+              'id': 'ref',
+            },
+            'remote': None,
+            'segment': None,
+            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+          },
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'remote_id': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---

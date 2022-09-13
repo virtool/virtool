@@ -2,15 +2,15 @@
 Work with OTUs in the database.
 
 """
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Mapping
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.mongo.utils import get_one_field
 from virtool.errors import DatabaseError
+from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.utils import base_processor, to_bool
 
@@ -18,10 +18,12 @@ PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
 
 SEQUENCE_PROJECTION = [
     "_id",
+    "accession",
     "definition",
     "host",
     "otu_id",
     "isolate_id",
+    "reference",
     "sequence",
     "segment",
 ]
@@ -61,11 +63,11 @@ async def check_name_and_abbreviation(
 
 async def find(
     db,
-    names: Union[bool, str],
-    term: str,
-    req_query: dict,
-    verified: bool,
-    ref_id: str = None,
+    names: Optional[Union[bool, str]],
+    term: Optional[str],
+    req_query: Mapping,
+    verified: Optional[bool],
+    ref_id: Optional[str] = None,
 ) -> Union[Dict[str, Any], List[Optional[dict]]]:
     db_query = {}
 

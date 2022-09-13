@@ -133,7 +133,7 @@ def format_sequence_for_export(sequence: Document) -> Document:
     """
     try:
         sequence_id = sequence["remote"]["id"]
-    except KeyError:
+    except (KeyError, TypeError):
         sequence_id = sequence["_id"]
 
     cleaned_sequence = {

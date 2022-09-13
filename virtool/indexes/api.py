@@ -10,7 +10,7 @@ import virtool.indexes.db
 import virtool.uploads.db
 import virtool.references.db
 import virtool.utils
-from virtool.api.json import CustomEncoder
+from virtool.api.custom_json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.utils import get_data_from_req

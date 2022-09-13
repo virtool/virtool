@@ -28,7 +28,7 @@ class CustomEncoder(json.JSONEncoder):
             return isoformat(obj)
 
         if issubclass(type(obj), BaseModel):
-            return obj.dict()
+            return obj.dict(by_alias=True)
 
         return json.JSONEncoder.default(self, obj)
 
@@ -46,7 +46,7 @@ def isoformat(obj: datetime.datetime) -> str:
 
 def dumps(obj: object) -> str:
     """
-    A wrapper for :func:`json.dumps` is able to encode datetime objects in input.
+    A wrapper for :func:`dumps` is able to encode datetime objects in input.
 
     Used as `dumps` argument for :func:`.json_response`.
 

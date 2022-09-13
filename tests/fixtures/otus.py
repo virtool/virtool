@@ -22,11 +22,10 @@ def import_data(import_data_file):
 
 
 @pytest.fixture
-def test_otu():
+def test_otu(static_time):
     return {
         "version": 0,
         "abbreviation": "PVF",
-        "imported": True,
         "isolates": [
             {
                 "default": True,
@@ -41,6 +40,7 @@ def test_otu():
         "name": "Prunus virus F",
         "schema": [],
         "reference": {"id": "hxn167"},
+        "remote_id": None,
         "_id": "6116cba1",
     }
 
@@ -58,35 +58,41 @@ def test_isolate():
 @pytest.fixture
 def test_sequence():
     return {
-        "_id": "KX269872",
+        "_id": "abcd1234",
+        "accession": "KX269872",
         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
         "host": "sweet cherry",
-        "otu_id": "6116cba1",
         "isolate_id": "cab8b360",
+        "reference": {"id": "ref"},
+        "remote": None,
+        "otu_id": "6116cba1",
         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
         "segment": None,
     }
 
 
 @pytest.fixture
-def test_merged_otu():
+def test_merged_otu(static_time):
     return {
+        "remote_id": None,
         "version": 0,
         "abbreviation": "PVF",
-        "imported": True,
         "isolates": [
             {
                 "default": True,
                 "id": "cab8b360",
                 "sequences": [
                     {
-                        "_id": "KX269872",
+                        "_id": "abcd1234",
+                        "accession": "KX269872",
                         "otu_id": "6116cba1",
                         "isolate_id": "cab8b360",
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                         "host": "sweet cherry",
                         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
                         "segment": None,
+                        "reference": {"id": "ref"},
+                        "remote": None,
                     }
                 ],
                 "source_name": "8816-v2",

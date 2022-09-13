@@ -6,8 +6,8 @@ async def test_generate_sequence_fasta(dbi, test_otu, test_sequence):
     await dbi.sequences.insert_one(test_sequence)
 
     expected = (
-        "prunus_virus_f.isolate_8816-v2.kx269872.fa",
-        ">Prunus virus F|Isolate 8816-v2|KX269872|27\nTGTTTAAGAGATTAAACAACCGCTTTC",
+        "prunus_virus_f.isolate_8816-v2.abcd1234.fa",
+        ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC",
     )
 
     assert (
@@ -25,7 +25,7 @@ async def test_generate_isolate_fasta(dbi, test_otu, test_sequence):
 
     expected = (
         "prunus_virus_f.isolate_8816-v2.fa",
-        ">Prunus virus F|Isolate 8816-v2|KX269872|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
+        ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
         ">Prunus virus F|Isolate 8816-v2|AX12345|12\nATAGAGGAGTTA",
     )
 
