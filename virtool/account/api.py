@@ -104,7 +104,7 @@ class AccountView(PydanticView):
 
         try:
             account = await get_data_from_req(self.request).account.edit(
-                self.request["client"].user_id, data_dict
+                self.request["client"].user_id, data
             )
         except ResourceError:
             raise HTTPBadRequest(text="Invalid credentials")
@@ -186,14 +186,18 @@ class KeysView(PydanticView):
             400: Invalid input
             401: Requires authorization
         """
-        key = await get_data_from_req(self.request).account.create_key(
+        raw, key = await get_data_from_req(self.request).account.create_key(
             data, self.request["client"].user_id
         )
 
         headers = {"Location": f"/account/keys/{key.id}"}
 
+        key_dict = key.dict()
+
+        key_dict["key"] = raw
+
         return json_response(
-            CreateAPIKeyResponse.parse_obj(key), headers=headers, status=201
+            CreateAPIKeyResponse.parse_obj(key_dict), headers=headers, status=201
         )
 
     async def delete(self) -> Union[r204, r401]:

@@ -81,13 +81,13 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
         }
     )
 
-    account = AccountData(dbi)
+    account_data = AccountData(dbi)
     data = CreateKeysSchema(
         name="Foo",
         permissions=EditPermissionsSchema(create_sample=True, modify_subtraction=True),
     )
 
-    document = await account.create_key(data, "bob")
+    document = await account_data.create_key(data, "bob")
     document = document.dict()
 
     permissions = {p.value: False for p in Permission}

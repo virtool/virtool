@@ -14,6 +14,7 @@ from virtool.account.oas import (
     EditKeySchema,
     ResetPasswordSchema,
     CreateLoginSchema,
+    EditAccountSchema,
 )
 
 from virtool.data.errors import ResourceError, ResourceNotFoundError
@@ -54,7 +55,7 @@ class AccountData:
 
         return Account(**document)
 
-    async def edit(self, user_id: str, data: dict) -> Account:
+    async def edit(self, user_id: str, data: EditAccountSchema) -> Account:
         """
         Edit the user account.
 
@@ -64,17 +65,19 @@ class AccountData:
         """
         update = {}
 
-        if "password" in data:
+        data_dict = data.dict(exclude_unset=True)
+
+        if "password" in data_dict:
 
             if not await validate_credentials(
-                self._db, user_id, data["old_password"] or ""
+                self._db, user_id, data_dict["old_password"] or ""
             ):
                 raise ResourceError("Invalid credentials")
 
-            update = virtool.account.db.compose_password_update(data["password"])
+            update = virtool.account.db.compose_password_update(data_dict["password"])
 
-        if "email" in data:
-            update["email"] = data["email"]
+        if "email" in data_dict:
+            update["email"] = data_dict["email"]
 
         if update:
             document = await self._db.users.find_one_and_update(
@@ -133,7 +136,9 @@ class AccountData:
 
         return [APIKey(**d) async for d in cursor]
 
-    async def create_key(self, data: CreateKeysSchema, user_id: str) -> APIKey:
+    async def create_key(
+        self, data: CreateKeysSchema, user_id: str
+    ) -> Tuple[str, APIKey]:
         """
         Create a new API key.
 
@@ -157,7 +162,7 @@ class AccountData:
                 key_permissions, user["permissions"]
             )
 
-        _, hashed = virtool.utils.generate_key()
+        raw, hashed = virtool.utils.generate_key()
 
         document = {
             "_id": hashed,
@@ -175,7 +180,7 @@ class AccountData:
         del document["_id"]
         del document["user"]
 
-        return APIKey(**document)
+        return raw, APIKey(**document)
 
     async def delete_keys(self, user_id: str):
         """

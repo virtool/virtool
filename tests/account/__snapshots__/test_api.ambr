@@ -5,6 +5,7 @@
     'groups': <class 'list'> [
     ],
     'id': 'foobar_0',
+    'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -49,6 +50,7 @@
     'groups': <class 'list'> [
     ],
     'id': 'foobar_0',
+    'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -93,6 +95,7 @@
     'groups': <class 'list'> [
     ],
     'id': 'foobar_0',
+    'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -137,6 +140,7 @@
     'groups': <class 'list'> [
     ],
     'id': 'foobar_0',
+    'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -181,6 +185,7 @@
     'groups': <class 'list'> [
     ],
     'id': 'foobar_1',
+    'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
       'cancel_job': False,

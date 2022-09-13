@@ -124,6 +124,8 @@ class CreateKeysSchema(BaseModel):
 
 
 class CreateAPIKeyResponse(APIKey):
+    key: str
+
     class Config:
         schema_extra = {
             "example": {
