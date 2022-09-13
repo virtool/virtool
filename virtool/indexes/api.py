@@ -316,7 +316,7 @@ async def upload(req):
     try:
         size = await naive_writer(await req.multipart(), path)
     except asyncio.CancelledError:
-        logger.debug(f"Index file upload aborted: {upload_id}")
+        logger.debug("Index file upload aborted: %s", upload_id)
         await delete_row(pg, upload_id, IndexFile)
         return Response(status=499)
 

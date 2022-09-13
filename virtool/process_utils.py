@@ -36,10 +36,10 @@ async def create_app_runner(
         await site.start()
     except OSError as err:
         if err.args[0] == 48:
-            logger.fatal(f"Could not bind address {(host, port)}")
+            logger.fatal("Could not bind address (%s, %s)", host, port)
             sys.exit(1)
 
-    logger.info(f"Listening at http://{host}:{port}")
+    logger.info("Listening at http://%s:%s", host, port)
 
     return runner
 

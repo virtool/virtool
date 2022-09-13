@@ -52,7 +52,7 @@ async def check_mongo_version(db: AsyncIOMotorClient) -> str:
         )
         sys.exit(1)
 
-    logger.info(f"Found MongoDB {mongo_version}")
+    logger.info("Found MongoDB %s", mongo_version)
 
     return mongo_version
 

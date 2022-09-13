@@ -241,7 +241,7 @@ class AnalysisData(DataLayerPiece):
         try:
             size = await naive_writer(reader, analysis_file_path)
         except CancelledError:
-            logger.debug(f"Analysis file upload aborted: {upload_id}")
+            logger.debug("Analysis file upload aborted: %s", upload_id)
             await delete_row(self._pg, upload_id, AnalysisFile)
 
             return None
