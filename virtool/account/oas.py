@@ -1,7 +1,8 @@
 from typing import Union, Optional
 from pydantic import BaseModel, constr, Field, root_validator, validator
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.account import Account, AccountSettings, check_email
+from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
+
 from virtool.groups.oas import EditPermissionsSchema
 
 
@@ -111,7 +112,7 @@ class CreateKeysSchema(BaseModel):
         description="a non-unique name for the API key"
     )
     permissions: Optional[EditPermissionsSchema] = Field(
-        default={},
+        default=EditPermissionsSchema(),
         description="an object describing the permissions the new key will have. "
         "Any unset permissions will default to false",
     )
@@ -122,7 +123,9 @@ class CreateKeysSchema(BaseModel):
         }
 
 
-class CreateAPIKeyResponse(BaseModel):
+class CreateAPIKeyResponse(APIKey):
+    key: str
+
     class Config:
         schema_extra = {
             "example": {
@@ -155,7 +158,7 @@ class EditKeySchema(BaseModel):
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
 
 
-class APIKeyResponse(BaseModel):
+class APIKeyResponse(APIKey):
     class Config:
         schema_extra = {
             "example": {
@@ -261,10 +264,25 @@ class AccountSettingsResponse(AccountSettings):
         }
 
 
-class GetAPIKeysResponse(BaseModel):
+class ListAPIKeysResponse(APIKey):
     class Config:
         schema_extra = {
             "example": [
-                {"id": "baz_1", "name": "Baz"},
+                {
+                    "created_at": "2015-10-06T20:00:00Z",
+                    "groups": [],
+                    "id": "baz_1",
+                    "name": "Baz",
+                    "permissions": {
+                        "cancel_job": False,
+                        "create_ref": False,
+                        "create_sample": True,
+                        "modify_hmm": False,
+                        "modify_subtraction": False,
+                        "remove_file": False,
+                        "remove_job": False,
+                        "upload_file": False,
+                    },
+                },
             ]
         }

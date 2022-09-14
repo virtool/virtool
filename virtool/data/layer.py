@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.groups.data import GroupsData
@@ -25,6 +26,7 @@ class DataLayer:
 
     """
 
+    account: AccountData
     analyses: AnalysisData
     blast: BLASTData
     groups: GroupsData
