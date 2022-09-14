@@ -69,14 +69,12 @@ class SubtractionsData(DataLayerPiece):
             db_query["ready"] = True
 
         if short:
-            return json_response(
-                [
-                    base_processor(document)
-                    async for document in self._mongo.subtraction.find(
-                        {**db_query, "deleted": False}, ["name", "ready"]
-                    ).sort("name")
-                ]
-            )
+            return [
+                base_processor(document)
+                async for document in self._mongo.subtraction.find(
+                    {**db_query, "deleted": False}, ["name", "ready"]
+                ).sort("name")
+            ]
 
         data = await paginate(
             self._mongo.subtraction,
