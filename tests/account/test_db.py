@@ -1,5 +1,5 @@
 import pytest
-from virtool.account.data import AccountData
+
 import virtool.account.db
 
 
