@@ -7,8 +7,7 @@ from typing import Any, Dict
 import virtool.users.utils
 import virtool.utils
 
-
-PROJECTION = (
+ACCOUNT_PROJECTION = (
     "_id",
     "handle",
     "administrator",

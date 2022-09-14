@@ -1,13 +1,11 @@
-import virtool
-from virtool.account.api import API_KEY_PROJECTION
-from virtool.mongo.core import DB
-import virtool.account.db
-import virtool.utils
-from virtool_core.models.account import AccountSettings, APIKey
-
 from typing import Union, Tuple, List
 
 from virtool_core.models.account import Account
+from virtool_core.models.account import AccountSettings, APIKey
+
+import virtool.utils
+from virtool.account.api import API_KEY_PROJECTION
+from virtool.account.db import compose_password_update, ACCOUNT_PROJECTION
 from virtool.account.oas import (
     EditSettingsSchema,
     CreateKeysSchema,
@@ -16,13 +14,12 @@ from virtool.account.oas import (
     CreateLoginSchema,
     EditAccountSchema,
 )
-
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials
 from virtool.users.sessions import create_reset_code, replace_session
 from virtool.users.utils import limit_permissions
-
 
 PROJECTION = (
     "_id",
@@ -74,7 +71,7 @@ class AccountData:
             ):
                 raise ResourceError("Invalid credentials")
 
-            update = virtool.account.db.compose_password_update(data_dict["password"])
+            update = compose_password_update(data_dict["password"])
 
         if "email" in data_dict:
             update["email"] = data_dict["email"]
@@ -83,7 +80,7 @@ class AccountData:
             document = await self._db.users.find_one_and_update(
                 {"_id": user_id},
                 {"$set": update},
-                projection=virtool.account.db.PROJECTION,
+                projection=ACCOUNT_PROJECTION,
             )
         else:
             document = await self._db.users.find_one(user_id, PROJECTION)
