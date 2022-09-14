@@ -34,9 +34,7 @@ from virtool.utils import run_in_thread
 
 
 class HmmData(DataLayerPiece):
-    def __init__(
-        self, client: ClientSession, config: Config, mongo
-    ):
+    def __init__(self, client: ClientSession, config: Config, mongo):
         self._client = client
         self._config = config
         self._mongo = mongo
@@ -117,9 +115,10 @@ class HmmData(DataLayerPiece):
             len(document["updates"]) > 1 and document["updates"][-1]["ready"]
         )
 
-        document["installed"] = await apply_transforms(
-            document["installed"], [AttachUserTransform(self._mongo)]
-        )
+        if installed := document.get("installed"):
+            document["installed"] = await apply_transforms(
+                installed, [AttachUserTransform(self._mongo)]
+            )
 
         return HMMStatus(**document)
 
