@@ -404,3 +404,21 @@
     ],
   }
 ---
+# name: test_update[True-True-uvloop-None][call]
+  <class 'tuple'> (
+    <Request POST /refs/foo/updates >,
+    datetime.datetime(2015, 10, 6, 20, 0),
+    10921,
+    'foo',
+    <class 'dict'> {
+      'id': 'bar',
+    },
+    'test',
+  )
+---
+# name: test_update[True-True-uvloop-None][json]
+  <class 'dict'> {
+    'created_at': 'time',
+    'id': 'update',
+  }
+---

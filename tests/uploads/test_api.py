@@ -37,7 +37,7 @@ class TestUpload:
 
         if upload_type:
             resp = await client.post_form(
-                f"/uploads?upload_type={upload_type}&name=Test.fq.gz", data=files
+                f"/uploads?name=Test.fq.gz&type={upload_type}", data=files
             )
         else:
             resp = await client.post_form("/uploads?name=Test.fq.gz", data=files)
@@ -70,7 +70,7 @@ class TestUpload:
         )
 
         resp = await client.post_form(
-            "/uploads?upload_type=foobar&name=Test.fq.gz", data=files
+            "/uploads?name=Test.fq.gz&type=foobar", data=files
         )
 
         await resp_is.bad_request(resp, "Unsupported upload type")
@@ -127,14 +127,11 @@ class TestGet:
         client.app["config"].data_path = tmp_path
 
         if exists:
-            await client.post_form("/uploads?name=test.fq.gz&upload_type=hmm", data=files)
+            await client.post_form("/uploads?name=test.fq.gz&type=hmm", data=files)
 
         resp = await client.get("/uploads/1")
 
-        if exists:
-            assert resp.status == 200
-        else:
-            assert resp.status == 404
+        assert resp.status == 200 if exists else 404
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_upload_removed(
@@ -181,7 +178,7 @@ class TestDelete:
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["config"].data_path = tmp_path
-        await client.post_form("/uploads?name=test.fq.gz&upload_type=hmm", data=files)
+        await client.post_form("/uploads?name=test.fq.gz&type=hmm", data=files)
 
         resp = await client.delete("/uploads/1")
         await resp_is.no_content(resp)

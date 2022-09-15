@@ -4,15 +4,15 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from aiohttp.web import Request
 from syrupy.matchers import path_type
+from virtool_core.models.enums import Permission
+from virtool_core.models.task import Task
 
 from virtool.data.utils import get_data_from_app
 from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsSchema
-from virtool.tasks.models import Task
-from virtool_core.models.enums import Permission
+from virtool.tasks.models import Task as SQLTask
 
 
 @pytest.mark.parametrize("error", [None, "400", "404"])
@@ -78,7 +78,14 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is):
 
 @pytest.mark.parametrize("error", [None, "400"])
 async def test_update(
-    error, mocker, spawn_client, check_ref_right, id_exists, resp_is, static_time
+    error,
+    mocker,
+    spawn_client,
+    check_ref_right,
+    id_exists,
+    resp_is,
+    static_time,
+    snapshot,
 ):
     client = await spawn_client(authorize=True)
 
@@ -87,8 +94,22 @@ async def test_update(
 
     mocker.patch("virtool.references.tasks.UpdateRemoteReferenceTask")
 
+    task = Task(
+        id=10921,
+        complete=False,
+        context={},
+        count=0,
+        created_at=static_time.datetime,
+        error=None,
+        file_size=None,
+        progress=22,
+        step="test",
+        type="update_remote_reference",
+    )
+
     m_add_task = mocker.patch(
-        "virtool.tasks.data.TasksData.create", make_mocked_coro({"id": "task"})
+        "virtool.tasks.data.TasksData.create",
+        make_mocked_coro(task),
     )
 
     mocker.patch("aiojobs.aiohttp.spawn", make_mocked_coro())
@@ -124,15 +145,9 @@ async def test_update(
         },
     )
 
-    m_update.assert_called_with(
-        mocker.ANY, static_time.datetime, "task", "foo", {"id": "bar"}, "test"
-    )
-
-    assert isinstance(m_update.call_args[0][0], Request)
-
     assert resp.status == 201
-
-    assert await resp.json() == {"id": "update", "created_at": "time"}
+    assert await resp.json() == snapshot(name="json")
+    assert m_update.call_args[0] == snapshot(name="call")
 
 
 async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
@@ -196,7 +211,8 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
 
     with open(test_files_path / "reference.json.gz", "rb") as f:
         resp = await client.post_form(
-            "/uploads?upload_type=reference&name=reference.json.gz", data={"file": f}
+            "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
+            data={"file": f},
         )
 
         upload = await resp.json()
@@ -206,6 +222,7 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
     )
 
     reference = await resp.json()
+
     assert reference == snapshot(
         matcher=path_type({"id": (str,)}),
     )
@@ -215,10 +232,9 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
     while True:
         await asyncio.sleep(1)
 
-        task: Task = await get_row_by_id(pg, Task, task_id)
-        complete = task.complete
+        task: SQLTask = await get_row_by_id(pg, SQLTask, task_id)
 
-        if complete:
+        if task.complete:
             assert await gather(
                 client.db.otus.count_documents({}),
                 client.db.sequences.count_documents({}),
@@ -229,7 +245,9 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
-@pytest.mark.parametrize("error", [None, "403", "404", "400_invalid_input", "400_duplicates"])
+@pytest.mark.parametrize(
+    "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
+)
 async def test_edit(data_type, error, mocker, snapshot, fake2, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
