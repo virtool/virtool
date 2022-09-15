@@ -10,10 +10,11 @@ from virtool_core.models.task import Task
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.task import Task as TaskClass
 
 
 class TasksData:
-    def __init__(self,  pg: AsyncEngine, redis: Redis):
+    def __init__(self, pg: AsyncEngine, redis: Redis):
         self._pg = pg
         self._redis = redis
 
@@ -25,7 +26,10 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            return [Task(**task.to_dict()) for task in (await session.execute(select(SQLTask))).scalars().all()]
+            return [
+                Task(**task.to_dict())
+                for task in (await session.execute(select(SQLTask))).scalars().all()
+            ]
 
     async def get(self, task_id: int) -> Task:
         """
@@ -36,14 +40,16 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = (await session.execute(select(SQLTask).filter_by(id=task_id))).scalar()
+            result = (
+                await session.execute(select(SQLTask).filter_by(id=task_id))
+            ).scalar()
 
         if result is None:
             raise ResourceNotFoundError
 
         return Task(**result.to_dict())
 
-    async def register(self, task_class: Type[Task], context: dict = None) -> Task:
+    async def register(self, task_class: Type[TaskClass], context: dict = None) -> Task:
         """
         Create a new task record and store it.
 
@@ -68,16 +74,17 @@ class TasksData:
             await session.flush()
             document = task.to_dict()
             await session.commit()
+
         return Task(**document)
 
     async def update(
-            self,
-            task_id: int,
-            count: int = None,
-            progress: int = None,
-            step: str = None,
-            context_update: dict = None,
-            error: str = None,
+        self,
+        task_id: int,
+        count: int = None,
+        progress: int = None,
+        step: str = None,
+        context_update: dict = None,
+        error: str = None,
     ) -> Task:
         """
         Update a task record with given `task_id`
@@ -111,7 +118,9 @@ class TasksData:
             if context_update:
                 for key, value in context_update.items():
                     task.context[key] = value
+
             task = Task(**task.to_dict())
+
             await session.commit()
 
         return task
@@ -142,11 +151,11 @@ class TasksData:
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
-
             session.delete(task)
+
             await session.commit()
 
-    async def create(self, task_class: Type[Task], context: dict = None):
+    async def create(self, task_class: Type[TaskClass], context: dict = None) -> Task:
         """
         Register a new task.
 
@@ -156,16 +165,19 @@ class TasksData:
 
         """
         try:
-            registered_task = await self.register(task_class, context=context)
-            await self._redis.publish("channel:tasks", registered_task.id)
+            task = await self.register(task_class, context=context)
+            await self._redis.publish("channel:tasks", task.id)
+            return task
 
-            return registered_task
         except CancelledError:
             pass
 
     async def create_periodic(
-            self, task_class: Type[Task], interval: int = None, context: Optional[Dict] = None
-    ):
+        self,
+        task_class: Type[TaskClass],
+        interval: int = None,
+        context: Optional[Dict] = None,
+    ) -> Task:
         """
         Register a new task that will be run regularly at the given interval.
 
@@ -178,8 +190,7 @@ class TasksData:
         try:
             while True:
                 task = await self.register(task_class, context=context)
-
-                await self._redis.publish("channel:tasks", task["id"])
+                await self._redis.publish("channel:tasks", task.id)
                 await asyncio.sleep(interval)
 
                 return task

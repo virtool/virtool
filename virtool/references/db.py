@@ -704,7 +704,7 @@ async def download_and_parse_release(
 
         await download_file(app, url, download_path, progress_handler)
 
-        await get_data_from_app(app).tasks.pg.update(task_id, step="unpack")
+        await get_data_from_app(app).tasks.update(task_id, step="unpack")
 
         return await run_in_thread(load_reference_file, download_path)
 
