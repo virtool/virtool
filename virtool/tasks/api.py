@@ -24,8 +24,7 @@ class TasksView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        task_list = await get_data_from_req(self.request).tasks.find()
-        return json_response(task_list)
+        return json_response(await get_data_from_req(self.request).tasks.find())
 
 
 @routes.view("/tasks/{task_id}")

@@ -3,7 +3,12 @@ from asyncio.tasks import gather
 from typing import Union, List
 
 import aiohttp
-from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent, HTTPConflict
+from aiohttp.web_exceptions import (
+    HTTPBadGateway,
+    HTTPBadRequest,
+    HTTPNoContent,
+    HTTPConflict,
+)
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.enums import Permission
@@ -161,9 +166,11 @@ class ReferencesView(PydanticView):
                 "user_id": user_id,
             }
 
-            task = await get_data_from_req(self.request).tasks.create(CloneReferenceTask, context=context)
+            task = await get_data_from_req(self.request).tasks.create(
+                CloneReferenceTask, context=context
+            )
 
-            document["task"] = {"id": task["id"]}
+            document["task"] = {"id": task.id}
 
         elif data.import_from:
             if not await get_row(pg, Upload, ("name_on_disk", data.import_from)):
@@ -182,7 +189,9 @@ class ReferencesView(PydanticView):
                 "user_id": user_id,
             }
 
-            task = await get_data_from_req(self.request).tasks.create(ImportReferenceTask, context=context)
+            task = await get_data_from_req(self.request).tasks.create(
+                ImportReferenceTask, context=context
+            )
 
             document["task"] = {"id": task.id}
 
@@ -219,9 +228,11 @@ class ReferencesView(PydanticView):
                 "user_id": user_id,
             }
 
-            task = await get_data_from_req(self.request).tasks.create(RemoteReferenceTask, context=context)
+            task = await get_data_from_req(self.request).tasks.create(
+                RemoteReferenceTask, context=context
+            )
 
-            document["task"] = {"id": task["id"]}
+            document["task"] = {"id": task.id}
 
         else:
             document = await create_document(
@@ -332,17 +343,14 @@ class ReferenceView(PydanticView):
         if not await virtool.references.db.check_right(self.request, ref_id, "remove"):
             raise InsufficientRights()
 
-        user_id = self.request["client"].user_id
-
-        context = {"ref_id": ref_id, "user_id": user_id}
-
-        task = await get_data_from_req(self.request).tasks.create(DeleteReferenceTask, context=context)
+        task = await get_data_from_req(self.request).tasks.create(
+            DeleteReferenceTask,
+            context={"ref_id": ref_id, "user_id": self.request["client"].user_id},
+        )
 
         await db.references.delete_one({"_id": ref_id})
 
-        headers = {"Content-Location": f"/tasks/{task['id']}"}
-
-        return json_response(task, 202, headers)
+        return json_response(task, 202, {"Content-Location": f"/tasks/{task.id}"})
 
 
 @routes.view("/refs/{ref_id}/release")
@@ -450,11 +458,13 @@ class ReferenceUpdatesView(PydanticView):
             "user_id": user_id,
         }
 
-        task = await get_data_from_req(self.request).tasks.create(UpdateRemoteReferenceTask, context=context)
+        task = await get_data_from_req(self.request).tasks.create(
+            UpdateRemoteReferenceTask, context=context
+        )
 
         release, update_subdocument = await asyncio.shield(
             virtool.references.db.update(
-                self.request, created_at, task["id"], ref_id, release, user_id
+                self.request, created_at, task.id, ref_id, release, user_id
             )
         )
 
@@ -573,7 +583,9 @@ class ReferenceIndexesView(PydanticView):
         if reference is None:
             raise NotFound()
 
-        if not await virtool.references.db.check_right(self.request, reference, "build"):
+        if not await virtool.references.db.check_right(
+            self.request, reference, "build"
+        ):
             raise InsufficientRights()
 
         if await db.indexes.count_documents(
@@ -618,7 +630,9 @@ class ReferenceIndexesView(PydanticView):
         headers = {"Location": f"/indexes/{document['_id']}"}
 
         return json_response(
-            await virtool.indexes.db.processor(db, document), status=201, headers=headers
+            await virtool.indexes.db.processor(db, document),
+            status=201,
+            headers=headers,
         )
 
 

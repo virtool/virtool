@@ -150,7 +150,7 @@ class HmmData(DataLayerPiece):
 
         await self._mongo.status.find_one_and_update(
             {"_id": "hmm"},
-            {"$set": {"task": {"id": task["id"]}}, "$push": {"updates": update}},
+            {"$set": {"task": {"id": task.id}}, "$push": {"updates": update}},
         )
 
         return HMMInstalled(**update)
