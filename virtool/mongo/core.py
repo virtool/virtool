@@ -147,7 +147,7 @@ class Collection:
 
         """
         document_id = await virtool.mongo.utils.get_one_field(
-            self._collection, "_id", query
+            self._collection, "_id", query, session=session
         )
 
         delete_result = await self._collection.delete_one(query, session=session)
@@ -380,9 +380,7 @@ class DB:
         self.samples = self.bind_collection(
             "samples", projection=virtool.samples.db.LIST_PROJECTION
         )
-        self.settings = self.bind_collection(
-            "settings", projection={"_id": False}
-        )
+        self.settings = self.bind_collection("settings", projection={"_id": False})
 
         self.sequences = self.bind_collection("sequences")
 
