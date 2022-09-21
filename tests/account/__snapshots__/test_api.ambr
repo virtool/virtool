@@ -495,7 +495,7 @@
     'b2c_family_name': None,
     'b2c_given_name': None,
     'b2c_oid': None,
-    'email': 'dev@virtool.ca',
+    'email': None,
     'force_reset': False,
     'groups': <class 'list'> [
     ],
@@ -512,15 +512,12 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': <class 'dict'> {
-      'id': 'technician',
-      'name': 'technician',
-    },
+    'primary_group': None,
     'settings': <class 'dict'> {
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
     },
   }
 ---
@@ -532,7 +529,7 @@
     'b2c_family_name': None,
     'b2c_given_name': None,
     'b2c_oid': None,
-    'email': 'dev@virtool.ca',
+    'email': None,
     'force_reset': False,
     'groups': <class 'list'> [
     ],
@@ -549,15 +546,12 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': <class 'dict'> {
-      'id': 'technician',
-      'name': 'technician',
-    },
+    'primary_group': None,
     'settings': <class 'dict'> {
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
     },
   }
 ---
@@ -604,15 +598,12 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': <class 'dict'> {
-      'id': 'technician',
-      'name': 'technician',
-    },
+    'primary_group': None,
     'settings': <class 'dict'> {
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
     },
   }
 ---
@@ -641,15 +632,12 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': <class 'dict'> {
-      'id': 'technician',
-      'name': 'technician',
-    },
+    'primary_group': None,
     'settings': <class 'dict'> {
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
     },
   }
 ---
@@ -708,15 +696,12 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': <class 'dict'> {
-      'id': 'technician',
-      'name': 'technician',
-    },
+    'primary_group': None,
     'settings': <class 'dict'> {
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
     },
   }
 ---
