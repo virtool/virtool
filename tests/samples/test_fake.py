@@ -7,14 +7,14 @@ from virtool.samples.db import LIST_PROJECTION
 from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_sample
 
 
-# @pytest.fixture
-# def app(dbi, pg, tmp_path, config):
-#     return {
-#         "db": dbi,
-#         "fake": FakerWrapper(),
-#         "pg": pg,
-#         "config": config,
-#     }
+@pytest.fixture
+def app(dbi, pg, tmp_path, config):
+    return {
+        "db": dbi,
+        "fake": FakerWrapper(),
+        "pg": pg,
+        "config": config,
+    }
 
 
 @pytest.mark.parametrize("paired", [True, False])

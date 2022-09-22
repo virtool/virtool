@@ -1,4 +1,3 @@
-import random
 import asyncio
 from asyncio import gather
 from typing import List, Optional, Union
@@ -23,6 +22,7 @@ from virtool_core.models.reference import (
 )
 
 from virtool_core.models.task import TaskNested
+from virtool_core.models.upload import Upload
 
 
 from virtool.api.response import NotFound, InsufficientRights
@@ -31,10 +31,8 @@ from virtool.github import format_release
 from virtool.jobs.utils import JobRights
 from virtool.mongo.utils import get_new_id
 from virtool.uploads.models import Upload as SQLUpload
-from virtool_core.models.upload import Upload
 
 
-import virtool.users.utils
 import virtool.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.errors import (

@@ -44,8 +44,8 @@ class UpdateSequenceRequest(BaseModel):
     sequence: Optional[constr(min_length=1, strip_whitespace=True)]
     target: Optional[str]
 
-class GetOTUResponse(OTUSearchResult):
 
+class GetOTUResponse(OTUSearchResult):
     class Config:
         schema_extra = {
             "example": {

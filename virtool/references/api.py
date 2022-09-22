@@ -107,12 +107,12 @@ class ReferencesView(PydanticView):
         except ResourceNotFoundError as err:
             if "Source reference does not exist" in str(err):
                 raise HTTPBadRequest(text=str(err))
-            elif "File not found" in str(err):
+            if "File not found" in str(err):
                 raise NotFound(str(err))
         except ResourceRemoteError as err:
             if "Could not reach GitHub" in str(err):
                 raise HTTPBadGateway(text=str(err))
-            elif "Could not retrieve latest GitHub release" in str(err):
+            if "Could not retrieve latest GitHub release" in str(err):
                 raise HTTPBadGateway(text=str(err))
 
         headers = {"Location": f"/refs/{document.id}"}
@@ -225,7 +225,7 @@ class ReferenceReleaseView(PydanticView):
         except ResourceRemoteError as err:
             if "Could not reach GitHub" in str(err):
                 raise HTTPBadGateway(text=str(err))
-            elif "Release repository does not exist on GitHub" in str(err):
+            if "Release repository does not exist on GitHub" in str(err):
                 raise HTTPBadGateway(text=str(err))
         return json_response(release)
 
@@ -413,7 +413,7 @@ class ReferenceIndexesView(PydanticView):
         except ResourceError as err:
             if "There are unverified OTUs" in str(err):
                 raise HTTPBadRequest(text=str(err))
-            elif "There are no unbuilt changes" in str(err):
+            if "There are no unbuilt changes" in str(err):
                 raise HTTPBadRequest(text=str(err))
 
         headers = {"Location": f"/indexes/{document.id}"}
@@ -468,7 +468,7 @@ class ReferenceGroupsView(PydanticView):
         except ResourceConflictError as err:
             if "Group already exists" in str(err):
                 raise HTTPBadRequest(text=str(err))
-            elif "Group does not exist" in str(err):
+            if "Group does not exist" in str(err):
                 raise HTTPBadRequest(text=str(err))
 
         headers = {"Location": f"/refs/{ref_id}/groups/{subdocument.id}"}
@@ -570,7 +570,7 @@ class ReferenceUsersView(PydanticView):
         except ResourceConflictError as err:
             if "User already exists" in str(err):
                 raise HTTPBadRequest(text=str(err))
-            elif "User does not exist" in str(err):
+            if "User does not exist" in str(err):
                 raise HTTPBadRequest(text=str(err))
         headers = {"Location": f"/refs/{ref_id}/users/{subdocument.id}"}
 
