@@ -209,13 +209,14 @@ def test_get_otu_schema(require_id):
     }
 
 
-def test_get_owner_user():
-    assert get_owner_user("fred") == {
+def test_get_owner_user(static_time):
+    assert get_owner_user("fred", static_time.datetime) == {
         "id": "fred",
         "build": True,
         "modify": True,
         "modify_otu": True,
         "remove": True,
+        "created_at": static_time.datetime
     }
 
 

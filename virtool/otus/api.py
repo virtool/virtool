@@ -4,7 +4,7 @@ from aiohttp import web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r404, r204, r401, r403, r400
-from virtool_core.models.otu import OTU, OTUMinimal, OTUIsolate, OTUSequence
+from virtool_core.models.otu import OTU, OTUIsolate, OTUSequence
 
 import virtool.otus.db
 import virtool.references.db
@@ -23,6 +23,8 @@ from virtool.otus.oas import (
     UpdateIsolateRequest,
     CreateSequenceRequest,
     UpdateSequenceRequest,
+    GetOTUResponse,
+
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform
@@ -38,7 +40,7 @@ class OTUsView(PydanticView):
         find: Optional[str] = None,
         names: bool = False,
         verified: Optional[bool] = None,
-    ) -> r200[List[OTUMinimal]]:
+    ) -> r200[GetOTUResponse]:
         """
         Find OTUs.
 

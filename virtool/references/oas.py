@@ -1,6 +1,13 @@
 from typing import Optional, Union, List
 
 from pydantic import BaseModel, constr, Field, root_validator, validator
+from virtool_core.models.history import HistorySearchResult
+from virtool_core.models.index import IndexMinimal
+from virtool_core.models.reference import (
+    ReferenceInstalled,
+    Reference,
+    ReferenceSearchResult, ReferenceUser, ReferenceRelease, ReferenceGroup,
+)
 
 ALLOWED_REMOTE = ["virtool/ref-plant-viruses"]
 ALLOWED_DATA_TYPE = ["barcode", "genome"]
@@ -85,7 +92,7 @@ class CreateReferenceSchema(BaseModel):
         }
 
 
-class CreateReferenceResponse(BaseModel):
+class CreateReferenceResponse(Reference):
     class Config:
         schema_extra = {
             "example": {
@@ -165,7 +172,7 @@ class CreateReferenceResponse(BaseModel):
         }
 
 
-class GetReferencesResponse(BaseModel):
+class GetReferencesResponse(ReferenceSearchResult):
     class Config:
         schema_extra = {
             "example": {
@@ -224,7 +231,7 @@ class GetReferencesResponse(BaseModel):
         }
 
 
-class ReferenceResponse(BaseModel):
+class ReferenceResponse(Reference):
     class Config:
         schema_extra = {
             "example": {
@@ -273,7 +280,7 @@ class ReferenceResponse(BaseModel):
         }
 
 
-class ReferenceReleaseResponse(BaseModel):
+class ReferenceReleaseResponse(ReferenceRelease):
     class Config:
         schema_extra = {
             "example": {
@@ -354,7 +361,7 @@ class CreateReferenceGroupsSchema(ReferenceRightsSchema):
         schema_extra = {"example": {"group_id": "baz", "modify_otu": True}}
 
 
-class CreateReferenceGroupResponse(BaseModel):
+class CreateReferenceGroupResponse(ReferenceGroup):
     class Config:
         schema_extra = {
             "example": [
@@ -370,7 +377,7 @@ class CreateReferenceGroupResponse(BaseModel):
         }
 
 
-class ReferenceGroupsResponse(BaseModel):
+class ReferenceGroupsResponse(ReferenceGroup):
     class Config:
         schema_extra = {
             "example": [
@@ -386,7 +393,7 @@ class ReferenceGroupsResponse(BaseModel):
         }
 
 
-class ReferenceGroupResponse(BaseModel):
+class ReferenceGroupResponse(ReferenceGroup):
     class Config:
         schema_extra = {
             "example": {
@@ -407,7 +414,7 @@ class CreateReferenceUsersSchema(ReferenceRightsSchema):
         schema_extra = {"example": {"user_id": "sidney", "modify_otu": True}}
 
 
-class ReferenceUsersSchema(BaseModel):
+class ReferenceUsersSchema(ReferenceUser):
     class Config:
         schema_extra = {
             "example": {
@@ -421,7 +428,7 @@ class ReferenceUsersSchema(BaseModel):
         }
 
 
-class GetReferenceUpdateResponse(BaseModel):
+class GetReferenceUpdateResponse(ReferenceInstalled):
     class Config:
         schema_extra = {
             "example": [
@@ -441,256 +448,72 @@ class GetReferenceUpdateResponse(BaseModel):
         }
 
 
-class CreateReferenceUpdateResponse(BaseModel):
+class CreateReferenceUpdateResponse(ReferenceRelease):
     class Config:
         schema_extra = {
-            "example": {
-                "id": 11447367,
-                "name": "v0.1.1",
-                "body": "#### Fixed\r\n- fixed uploading to GitHub releases in `.travis.yml`",
-                "filename": "reference.json.gz",
-                "size": 3695872,
-                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1",
-                "published_at": "2018-06-12T19:20:57Z",
-                "created_at": "2018-06-14T18:37:54.242000Z",
-                "user": {"id": "igboyes"},
-                "ready": True,
-            }
+            "example":                 {
+                    "id": 10742520,
+                    "name": "v0.3.0",
+                    "body": "The release consists of a gzipped JSON file containing:\r\n\r\n- a `data_type` field with value _genome_\r\n- an `organism` field with value _virus_\r\n- the `version` name (eg. *v0.2.0*)\r\n- a timestamp with the key `created_at`\r\n- virus data compatible for import into Virtool v2.0.0+\r\n\r\nScripts have been updated to follow upcoming convention changes in Virtool v3.0.0.",
+                    "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
+                    "filename": "reference.json.gz",
+                    "size": 3709091,
+                    "html_url": "https://api.github.com/repos/virtool/virtool-database/releases/10742520",
+                    "download_url": "https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz",
+                    "published_at": "2018-04-26T19:35:33Z",
+                    "content_type": "application/gzip",
+                    "newer": True,
+                    "retrieved_at": "2018-04-14T19:52:17.465000Z",
+                },
         }
 
 
-class ReferenceOTUResponse(BaseModel):
-    # Should be replaced by GetOTUResponse when it is converted to auto-doc.
-    class Config:
-        schema_extra = {
-            "example": {
-                "documents": [
-                    {
-                        "abbreviation": "ABTV",
-                        "id": "k77wgf8x",
-                        "name": "Abaca bunchy top virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 18,
-                    },
-                    {
-                        "abbreviation": "AbBV",
-                        "id": "7hpwj4yh",
-                        "name": "Abutilon Brazil virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 4,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "p9ohme8k",
-                        "name": "Abutilon golden mosaic Yucatan virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 3,
-                    },
-                    {
-                        "abbreviation": "AbMBoV",
-                        "id": "qrspg5w3",
-                        "name": "Abutilon mosaic Bolivia virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 6,
-                    },
-                    {
-                        "abbreviation": "AbMoBrV",
-                        "id": "yb7kpm43",
-                        "name": "Abutilon mosaic Brazil virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 4,
-                    },
-                    {
-                        "abbreviation": "AbMV",
-                        "id": "8540rw7b",
-                        "name": "Abutilon mosaic virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 9,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "3zwrpu3y",
-                        "name": "Abutilon yellow mosaic virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 1,
-                    },
-                    {
-                        "abbreviation": "AcLV",
-                        "id": "30n6qo2x",
-                        "name": "Aconitum latent virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 1,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "x5qw901r",
-                        "name": "Actinidia chlorotic ringspot associated virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 5,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "ss6bios9",
-                        "name": "Actinidia emaravirus 2",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 13,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "nn5gt7db",
-                        "name": "Actinidia seed borne latent virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 3,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "xo3khtnd",
-                        "name": "Actinidia virus 1",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 2,
-                    },
-                    {
-                        "abbreviation": "AVA",
-                        "id": "qg8optks",
-                        "name": "Actinidia virus A",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 1,
-                    },
-                    {
-                        "abbreviation": "AVB",
-                        "id": "fnhtwiux",
-                        "name": "Actinidia virus B",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 1,
-                    },
-                    {
-                        "abbreviation": "AVX",
-                        "id": "5uh1jzzk",
-                        "name": "Actinidia virus X",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 1,
-                    },
-                    {
-                        "abbreviation": "AYV1",
-                        "id": "7ag9wwrr",
-                        "name": "Actinidia yellowing virus 1",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 3,
-                    },
-                    {
-                        "abbreviation": "AYV2",
-                        "id": "f87f3cs7",
-                        "name": "Actinidia yellowing virus 2",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 3,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "e2xpkmgy",
-                        "name": "Adonis mosaic virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 3,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "3ly2pqbk",
-                        "name": "Aeonium ringspot virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 0,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "3xa1dbt0",
-                        "name": "African cassava mosaic Burkina Faso virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 5,
-                    },
-                    {
-                        "abbreviation": "ACMV",
-                        "id": "0ommwgyh",
-                        "name": "African cassava mosaic virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 9,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "iyw0y3ta",
-                        "name": "African eggplant mosaic virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 3,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "set9w2zc",
-                        "name": "African eggplant yellowing virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 3,
-                    },
-                    {
-                        "abbreviation": "AOPRV",
-                        "id": "taecz4c9",
-                        "name": "African oil palm ringspot virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 2,
-                    },
-                    {
-                        "abbreviation": "",
-                        "id": "zgsytbul",
-                        "name": "Agave tequilana leaf virus",
-                        "reference": {"id": "d19exr83"},
-                        "verified": True,
-                        "version": 2,
-                    },
-                ],
-                "found_count": 2102,
-                "modified_count": 1,
-                "page": 1,
-                "page_count": 85,
-                "per_page": 25,
-                "total_count": 2102,
-            }
-        }
-
-
-class CreateReferenceIndexesResponse(BaseModel):
+class CreateReferenceIndexesResponse(IndexMinimal):
     class Config:
         schema_extra = {
             "example": {
                 "change_count": 0,
                 "created_at": "2015-10-06T20:00:00Z",
                 "has_files": True,
-                "has_json": False,
                 "id": "fb085f7f",
                 "job": {"id": "bf1b993c"},
-                "manifest": "manifest",
                 "modified_otu_count": 0,
                 "ready": False,
                 "reference": {"id": "foo"},
                 "user": {"administrator": False, "handle": "bob", "id": "test"},
                 "version": 9,
+            }
+        }
+
+
+class ReferenceHistoryResponse(HistorySearchResult):
+    class Config:
+        schema_extra = {
+            "example": {
+                "documents": [
+                    {
+                        "created_at": "2022-01-28T23:28:53.881000Z",
+                        "description": "Removed Betaflexivirus from Camelia #1 (BFV_CAM1)",
+                        "id": "1wfc5x6e.removed",
+                        "index": {"id": "s7frhn8n", "version": 1},
+                        "method_name": "remove",
+                        "otu": {
+                            "id": "1wfc5x6e",
+                            "name": "Betaflexivirus from Camelia #1",
+                            "version": "removed",
+                        },
+                        "reference": {"id": "pat6xdn3"},
+                        "user": {
+                            "administrator": True,
+                            "handle": "igboyes",
+                            "id": "igboyes",
+                        },
+                    }
+                ],
+                "total_count": 1419,
+                "found_count": 1419,
+                "page_count": 710,
+                "per_page": 1,
+                "page": 1,
             }
         }

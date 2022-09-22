@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from virtool.uploads.models import Upload as SQLUpload
 import pymongo
 from aiohttp import ClientConnectorError
 from aiohttp.web import Request
@@ -35,7 +36,6 @@ from virtool.references.utils import (
     load_reference_file,
 )
 from virtool.types import App
-from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform, extend_user
 from virtool.utils import run_in_thread
 
@@ -586,7 +586,7 @@ async def create_document(
         user = {"id": user_id}
 
     if not users:
-        users = [get_owner_user(user_id)]
+        users = [get_owner_user(user_id, created_at)]
 
     document = {
         "_id": ref_id,
@@ -617,6 +617,8 @@ async def create_import(
     description: str,
     import_from: str,
     user_id: str,
+    data_type: str,
+    organism: str,
 ) -> dict:
     """
     Import a previously exported Virtool reference.
@@ -628,6 +630,8 @@ async def create_import(
     :param description: a description for the new reference
     :param import_from: the uploaded file to import from
     :param user_id: the id of the creating user
+    :param data_type: the data type of the reference
+    :param organism: the organism
     :return: a reference document
 
     """
@@ -637,14 +641,14 @@ async def create_import(
         db,
         settings,
         name or "Unnamed Import",
-        None,
+        organism,
         description,
-        None,
+        data_type,
         created_at=created_at,
         user_id=user_id,
     )
 
-    upload = await get_row(pg, Upload, ("name_on_disk", import_from))
+    upload = await get_row(pg, SQLUpload, ("name_on_disk", import_from))
 
     document["imported_from"] = upload.to_dict()
 
@@ -709,31 +713,31 @@ async def download_and_parse_release(
         return await run_in_thread(load_reference_file, download_path)
 
 
-async def edit(db, ref_id: str, data: dict) -> dict:
-    """
-    Edit and existing reference using the passed update `data`.
-
-    :param db: the application database object
-    :param ref_id: the id of the reference to update
-    :param data: update data from the HTTP request
-    :return: the updated reference document
-
-    """
-    document = await db.references.find_one(ref_id)
-
-    if document["data_type"] != "barcode":
-        data.pop("targets", None)
-
-    document = await db.references.find_one_and_update({"_id": ref_id}, {"$set": data})
-
-    document = await attach_computed(db, document)
-
-    if "name" in data:
-        await db.analyses.update_many(
-            {"reference.id": ref_id}, {"$set": {"reference.name": document["name"]}}
-        )
-
-    return document
+# async def edit(db, ref_id: str, data: dict) -> dict:
+#     """
+#     Edit and existing reference using the passed update `data`.
+#
+#     :param db: the application database object
+#     :param ref_id: the id of the reference to update
+#     :param data: update data from the HTTP request
+#     :return: the updated reference document
+#
+#     """
+#     document = await db.references.find_one(ref_id)
+#
+#     if document["data_type"] != "barcode":
+#         data.pop("targets", None)
+#
+#     document = await db.references.find_one_and_update({"_id": ref_id}, {"$set": data})
+#
+#     document = await attach_computed(db, document)
+#
+#     if "name" in data:
+#         await db.analyses.update_many(
+#             {"reference.id": ref_id}, {"$set": {"reference.name": document["name"]}}
+#         )
+#
+#     return document
 
 
 async def insert_change(
