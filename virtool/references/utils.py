@@ -267,13 +267,13 @@ def get_otu_schema(require_id: bool) -> dict:
     }
 
 
-def get_owner_user(user_id: str, created_at: Optional[datetime]) -> dict:
+def get_owner_user(user_id: str, created_at: datetime) -> dict:
     return {
         "id": user_id,
         "build": True,
         "modify": True,
         "modify_otu": True,
-        "created_at": created_at or virtool.utils.timestamp(),
+        "created_at": created_at,
         "remove": True,
     }
 

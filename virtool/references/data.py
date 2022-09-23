@@ -239,6 +239,7 @@ class ReferencesData(DataLayerPiece):
                 data.organism,
                 data.description,
                 data.data_type,
+                created_at=virtool.utils.timestamp(),
                 user_id=user_id,
             )
 

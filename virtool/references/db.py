@@ -570,7 +570,7 @@ async def create_document(
     organism: Optional[str],
     description: str,
     data_type: Optional[str],
-    created_at=None,
+    created_at: datetime,
     ref_id: Optional[str] = None,
     user_id: Optional[str] = None,
     users=None,
@@ -590,7 +590,7 @@ async def create_document(
 
     document = {
         "_id": ref_id,
-        "created_at": created_at or virtool.utils.timestamp(),
+        "created_at": created_at,
         "data_type": data_type,
         "description": description,
         "name": name,
