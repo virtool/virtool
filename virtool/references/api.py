@@ -32,7 +32,8 @@ from virtool.indexes.oas import ListIndexesResponse
 
 from virtool.otus.oas import CreateOTURequest
 
-from virtool.otus.oas import GetOTUResponse
+
+from virtool.otus.oas import FindOTUsResponse
 from virtool.references.oas import (
     CreateReferenceSchema,
     EditReferenceSchema,
@@ -40,7 +41,7 @@ from virtool.references.oas import (
     ReferenceRightsSchema,
     CreateReferenceUsersSchema,
     CreateReferenceResponse,
-    GetReferencesResponse,
+    FindReferencesResponse,
     ReferenceResponse,
     ReferenceReleaseResponse,
     CreateReferenceUpdateResponse,
@@ -65,7 +66,7 @@ RIGHTS_SCHEMA = {
 
 @routes.view("/refs")
 class ReferencesView(PydanticView):
-    async def get(self, find: Optional[str]) -> r200[GetReferencesResponse]:
+    async def get(self, find: Optional[str]) -> r200[FindReferencesResponse]:
         """
         Find references.
 
@@ -286,7 +287,7 @@ class ReferenceOTUsView(PydanticView):
         names: Optional[Union[bool, str]],
         ref_id: str,
         /,
-    ) -> Union[r200[GetOTUResponse], r404]:
+    ) -> Union[r200[FindOTUsResponse], r404]:
         """
         Find OTUs.
 
@@ -562,7 +563,7 @@ class ReferenceUsersView(PydanticView):
             404: Not found
         """
         try:
-            subdocument = await get_data_from_req(self.request).references.add_user(
+            subdocument = await get_data_from_req(self.request).references.create_user(
                 data, ref_id, self.request
             )
         except ResourceNotFoundError:
@@ -593,7 +594,7 @@ class ReferenceUserView(PydanticView):
             404: Not found
         """
         try:
-            subdocument = await get_data_from_req(self.request).references.edit_user(
+            subdocument = await get_data_from_req(self.request).references.update_user(
                 data, ref_id, user_id, self.request
             )
         except ResourceNotFoundError:
@@ -613,7 +614,7 @@ class ReferenceUserView(PydanticView):
             404: Not found
         """
         try:
-            await get_data_from_req(self.request).references.remove_user(
+            await get_data_from_req(self.request).references.delete_user(
                 ref_id, user_id, self.request
             )
         except ResourceNotFoundError:

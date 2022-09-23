@@ -106,6 +106,57 @@
     ],
   }
 ---
+# name: test_create[uvloop-genome]
+  'https://virtool.example.com/refs/bf1b993c'
+---
+# name: test_create[uvloop-genome].1
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
 # name: test_delete_group_or_user[True-uvloop-group-None]
   <class 'dict'> {
     '_id': 'foo',
@@ -137,6 +188,30 @@
     'users': <class 'list'> [
     ],
   }
+---
+# name: test_edit[uvloop-400_duplicates-barcode]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'targets',
+      ],
+      'msg': 'The targets field may not contain duplicate names',
+      'type': 'value_error',
+    },
+  ]
+---
+# name: test_edit[uvloop-400_duplicates-genome]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'targets',
+      ],
+      'msg': 'The targets field may not contain duplicate names',
+      'type': 'value_error',
+    },
+  ]
 ---
 # name: test_edit[uvloop-None-barcode][db]
   <class 'dict'> {

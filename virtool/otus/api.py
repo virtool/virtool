@@ -23,8 +23,7 @@ from virtool.otus.oas import (
     UpdateIsolateRequest,
     CreateSequenceRequest,
     UpdateSequenceRequest,
-    GetOTUResponse,
-
+    FindOTUsResponse,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform
@@ -40,7 +39,7 @@ class OTUsView(PydanticView):
         find: Optional[str] = None,
         names: bool = False,
         verified: Optional[bool] = None,
-    ) -> r200[GetOTUResponse]:
+    ) -> r200[FindOTUsResponse]:
         """
         Find OTUs.
 

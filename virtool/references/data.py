@@ -110,13 +110,13 @@ class ReferencesData(DataLayerPiece):
             projection=virtool.references.db.PROJECTION,
         )
 
-        await apply_transforms(data["documents"], [AttachUserTransform(self._mongo)])
+        documents = await apply_transforms(data["documents"], [AttachUserTransform(self._mongo)])
 
         documents, official_installed = await gather(
             gather(
                 *[
                     virtool.references.db.processor(self._mongo, d)
-                    for d in data["documents"]
+                    for d in documents
                 ]
             ),
             (
@@ -141,7 +141,7 @@ class ReferencesData(DataLayerPiece):
             ):
                 raise ResourceNotFoundError("Source reference does not exist")
 
-            manifest = get_manifest(self._mongo, data.clone_from)
+            manifest = await get_manifest(self._mongo, data.clone_from)
 
             document = await virtool.references.db.create_clone(
                 self._mongo,
@@ -242,9 +242,9 @@ class ReferencesData(DataLayerPiece):
                 user_id=user_id,
             )
 
-        document = await attach_computed(self._mongo, document)
-
         await self._mongo.references.insert_one(document)
+
+        document = await attach_computed(self._mongo, document)
 
         if data.import_from:
             document["imported_from"] = Upload(
@@ -281,31 +281,7 @@ class ReferencesData(DataLayerPiece):
         if not await virtool.references.db.check_right(req, ref_id, "modify"):
             raise InsufficientRights()
 
-        targets = data.get("targets")
-
-        if targets:
-            names = [t["name"] for t in targets]
-
-            if len(names) != len(set(names)):
-                raise ResourceConflictError(
-                    "The targets field may not contain duplicate names"
-                )
-
-        document = await self._mongo.references.find_one(ref_id)
-
-        if document["data_type"] != "barcode":
-            data.pop("targets", None)
-
-        document = await self._mongo.references.find_one_and_update(
-            {"_id": ref_id}, {"$set": data}
-        )
-
-        document = await attach_computed(self._mongo, document)
-
-        if "name" in data:
-            await self._mongo.analyses.update_many(
-                {"reference.id": ref_id}, {"$set": {"reference.name": document["name"]}}
-            )
+        document = await self.data.references.edit_reference(ref_id, data)
 
         return Reference(**document)
 
@@ -492,7 +468,7 @@ class ReferencesData(DataLayerPiece):
 
         return IndexMinimal(**document)
 
-    async def find_groups(self, ref_id: str) -> ReferenceGroup:
+    async def list_groups(self, ref_id: str) -> ReferenceGroup:
 
         if not await self._mongo.references.count_documents({"_id": ref_id}):
             raise ResourceNotFoundError()
@@ -586,7 +562,7 @@ class ReferencesData(DataLayerPiece):
 
         raise HTTPNoContent
 
-    async def add_user(
+    async def create_user(
         self, data: CreateReferenceUsersSchema, ref_id: str, req
     ) -> ReferenceUser:
 
@@ -615,7 +591,7 @@ class ReferencesData(DataLayerPiece):
 
         return ReferenceUser(**await extend_user(self._mongo, subdocument))
 
-    async def edit_user(
+    async def update_user(
         self, data: ReferenceRightsSchema, ref_id: str, user_id: str, req
     ) -> ReferenceUser:
 
@@ -640,7 +616,7 @@ class ReferencesData(DataLayerPiece):
 
         return ReferenceUser(**await extend_user(self._mongo, subdocument))
 
-    async def remove_user(self, ref_id: str, user_id: str, req):
+    async def delete_user(self, ref_id: str, user_id: str, req):
         document = await self._mongo.references.find_one(
             {"_id": ref_id, "users.id": user_id}, ["groups", "users"]
         )
@@ -656,3 +632,24 @@ class ReferencesData(DataLayerPiece):
         )
 
         raise HTTPNoContent
+
+    async def edit_reference(self, ref_id: str, data: dict) -> dict:
+        """
+        Edit and existing reference using the passed update data.
+        """
+        document = await self._mongo.references.find_one(ref_id)
+
+        if document["data_type"] != "barcode":
+            data.pop("targets", None)
+
+        document = await self._mongo.references.find_one_and_update({"_id": ref_id}, {"$set": data})
+
+        document = await attach_computed(self._mongo, document)
+
+        if "name" in data:
+            await self._mongo.analyses.update_many(
+                {"reference.id": ref_id}, {"$set": {"reference.name": document["name"]}}
+            )
+
+        return document
+

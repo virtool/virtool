@@ -172,7 +172,7 @@ class CreateReferenceResponse(Reference):
         }
 
 
-class GetReferencesResponse(ReferenceSearchResult):
+class FindReferencesResponse(ReferenceSearchResult):
     class Config:
         schema_extra = {
             "example": {
@@ -336,6 +336,19 @@ class EditReferenceSchema(BaseModel):
                 "internal_control": "ah4m5jqz",
             }
         }
+
+    @validator("targets", always=True)
+    def check_targets_name(cls, targets):
+        """
+        Sets `name` to the provided `id` if it is `None`.
+        """
+        names = [t.name for t in targets]
+
+        if len(names) != len(set(names)):
+            raise ValueError(
+                "The targets field may not contain duplicate names"
+            )
+        return targets
 
 
 class ReferenceRightsSchema(BaseModel):

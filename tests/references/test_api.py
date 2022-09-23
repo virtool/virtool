@@ -282,7 +282,7 @@ async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
     m_find.assert_called_with(client.db, md_proxy(), ref_id="foo")
 
 
-@pytest.mark.parametrize("data_type", ["barcode"])
+@pytest.mark.parametrize("data_type", ["genome", "barcode"])
 async def test_create(data_type, snapshot, spawn_client, static_time):
     client = await spawn_client(
         authorize=True,
@@ -430,9 +430,7 @@ async def test_edit(
     resp = await client.patch("/refs/foo", data)
 
     if error == "400_duplicates":
-        await resp_is.bad_request(
-            resp, "The targets field may not contain duplicate names"
-        )
+        await resp.json() == snapshot
         return
 
     if error == "400_invalid_input":
