@@ -652,4 +652,3 @@ class ReferencesData(DataLayerPiece):
             )
 
         return document
-

@@ -430,7 +430,7 @@ async def test_edit(
     resp = await client.patch("/refs/foo", data)
 
     if error == "400_duplicates":
-        await resp.json() == snapshot
+        assert await resp.json() == snapshot
         return
 
     if error == "400_invalid_input":
