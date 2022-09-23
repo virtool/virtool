@@ -96,6 +96,60 @@
 # name: TestCreate.test[True-uvloop][location]
   'https://virtool.example.com/indexes/fb085f7f'
 ---
+# name: TestFind.test[uvloop]
+  <class 'dict'> {
+    'change_count': 12,
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'change_count': 4,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'bar',
+        'job': <class 'dict'> {
+          'id': 'bar',
+        },
+        'modified_otu_count': 3,
+        'ready': False,
+        'reference': <class 'dict'> {
+          'id': 'bar',
+        },
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+        'version': 1,
+      },
+      <class 'dict'> {
+        'change_count': 2,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'foo',
+        'job': <class 'dict'> {
+          'id': 'foo',
+        },
+        'modified_otu_count': 2,
+        'ready': False,
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+        'version': 0,
+      },
+    ],
+    'found_count': 2,
+    'modified_otu_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+    'total_otu_count': 123,
+  }
+---
 # name: test_finalize[uvloop-404_reference]
   <class 'dict'> {
     'id': 'not_found',
@@ -117,6 +171,9 @@
 # name: test_finalize[uvloop-None]
   <class 'dict'> {
     'change_count': 0,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
       <class 'dict'> {
         'download_url': '/indexes/test_index/files/reference.fa.gz',
@@ -183,8 +240,17 @@
         'type': 'bowtie2',
       },
     ],
+    'has_files': True,
     'id': 'test_index',
+    'job': <class 'dict'> {
+      'id': 'sj82la',
+    },
+    'manifest': <class 'dict'> {
+      'foo': 4,
+    },
     'modified_otu_count': 0,
+    'otus': <class 'list'> [
+    ],
     'ready': True,
     'reference': <class 'dict'> {
       'id': 'hxn167',
@@ -194,6 +260,7 @@
       'handle': 'leeashley',
       'id': 'bf1b993c',
     },
+    'version': 2,
   }
 ---
 # name: test_finalize[uvloop-None].1
@@ -221,80 +288,35 @@
     'version': 1,
   }
 ---
-# name: test_find[uvloop]
-  <class 'dict'> {
-    'change_count': 12,
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'change_count': 4,
-        'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
-        'id': 'bar',
-        'job': <class 'dict'> {
-          'id': 'bar',
-        },
-        'modified_otu_count': 3,
-        'ready': False,
-        'reference': <class 'dict'> {
-          'id': 'bar',
-        },
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-        'version': 1,
-      },
-      <class 'dict'> {
-        'change_count': 2,
-        'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
-        'id': 'foo',
-        'job': <class 'dict'> {
-          'id': 'foo',
-        },
-        'modified_otu_count': 2,
-        'ready': False,
-        'reference': <class 'dict'> {
-          'id': 'foo',
-        },
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-        'version': 0,
-      },
-    ],
-    'found_count': 2,
-    'modified_otu_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 2,
-    'total_otu_count': 123,
-  }
----
 # name: test_find_history[uvloop-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Edited sequence wrta20tr in Islolate chilli-CR',
         'id': 'kjs8sa99.3',
         'index': <class 'dict'> {
           'id': 'foobar',
           'version': 0,
         },
-        'method_name': 'add_sequence',
+        'method_name': 'edit_sequence',
         'otu': <class 'dict'> {
           'id': 'kjs8sa99',
           'name': 'Foo',
           'version': 3,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'fred',
           'id': 'fred',
         },
       },
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.2',
         'index': <class 'dict'> {
           'id': 'foobar',
@@ -306,11 +328,18 @@
           'name': 'Test',
           'version': 2,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'ian',
           'id': 'igboyes',
         },
       },
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.1',
         'index': <class 'dict'> {
           'id': 'foobar',
@@ -322,22 +351,35 @@
           'name': 'Test',
           'version': 1,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'ian',
           'id': 'igboyes',
         },
       },
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.0',
         'index': <class 'dict'> {
           'id': 'foobar',
           'version': 0,
         },
+        'method_name': 'add_isolate',
         'otu': <class 'dict'> {
           'id': 'zxbbvngc',
           'name': 'Test',
           'version': 0,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'ian',
           'id': 'igboyes',
         },
       },
@@ -354,11 +396,15 @@
     'change_count': 2,
     'contributors': <class 'list'> [
       <class 'dict'> {
+        'administrator': True,
         'count': 1,
+        'handle': 'fred',
         'id': 'fred',
       },
       <class 'dict'> {
+        'administrator': True,
         'count': 3,
+        'handle': 'ian',
         'id': 'igboyes',
       },
     ],
@@ -369,6 +415,9 @@
     'id': 'foobar',
     'job': <class 'dict'> {
       'id': 'sj82la',
+    },
+    'manifest': <class 'dict'> {
+      'foo': 2,
     },
     'modified_otu_count': 2,
     'otus': <class 'list'> [
@@ -384,6 +433,9 @@
       },
     ],
     'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'bar',
+    },
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',

@@ -200,7 +200,13 @@ async def get_contributors(db, query: dict) -> List[dict]:
         [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}]
     )
 
-    contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
+    contributors = [
+        {
+            "id": c["_id"],
+            "count": c["count"],
+        }
+        async for c in cursor
+    ]
 
     users = await db.users.find(
         {"_id": {"$in": [c["id"] for c in contributors]}}, projection=ATTACH_PROJECTION

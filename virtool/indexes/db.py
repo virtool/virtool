@@ -16,7 +16,6 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
-from virtool.mongo.utils import get_new_id
 from virtool.indexes.models import IndexFile
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
@@ -185,19 +184,6 @@ async def finalize(
     return await attach_files(pg, base_url, document)
 
 
-async def get_contributors(db, index_id: str) -> List[dict]:
-    """
-    Return an list of contributors and their contribution count for a specific index.
-
-    :param db: the application database client
-    :param index_id: the id of the index to get contributors for
-
-    :return: a list of contributors to the index
-
-    """
-    return await virtool.history.db.get_contributors(db, {"index.id": index_id})
-
-
 async def get_current_id_and_version(db, ref_id: str) -> Tuple[Optional[str], int]:
     """
     Return the current index id and version number.
@@ -290,21 +276,6 @@ async def get_unbuilt_stats(db, ref_id: Optional[str] = None) -> dict:
         "change_count": await db.history.count_documents(history_query),
         "modified_otu_count": len(await db.history.distinct("otu.id", history_query)),
     }
-
-
-async def reset_history(db, index_id: str):
-    """
-    Set the index.id and index.version fields with the given index id to 'unbuilt'.
-
-    :param db: The virtool database
-    :param index_id: The ID of the index which failed to build
-
-    """
-    query = {"_id": {"$in": await db.history.distinct("_id", {"index.id": index_id})}}
-
-    return await db.history.update_many(
-        query, {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}}
-    )
 
 
 async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List[dict]:

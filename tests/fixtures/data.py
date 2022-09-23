@@ -10,6 +10,7 @@ from virtool.data.layer import DataLayer
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmData
+from virtool.indexes.data import IndexData
 from virtool.jobs.client import DummyJobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
@@ -33,6 +34,7 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
         SettingsData(dbi),
         HistoryData(config.data_path, dbi),
         HmmData(mocker.Mock(spec=ClientSession), config, dbi),
+        IndexData(dbi, config, pg),
         LabelsData(dbi, pg),
         JobsData(DummyJobsClient(), dbi, pg),
         OTUData({"db": dbi, "pg": pg}),
@@ -40,5 +42,5 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
         SubtractionsData(base_url, config, dbi, pg),
         UploadsData(config, dbi, pg),
         UsersData(dbi, pg),
-        TasksData(pg, redis)
+        TasksData(pg, redis),
     )
