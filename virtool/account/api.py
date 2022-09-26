@@ -301,17 +301,21 @@ class LoginView(PydanticView):
             201: Successful operation
             400: Invalid input
         """
+
         session_id = self.request.cookies.get("session_id")
 
         try:
-            result = await get_data_from_req(self.request).account.login(
+            user_id = await get_data_from_req(self.request).account.login(
                 session_id, data
             )
         except ResourceError:
             raise HTTPBadRequest(text="Invalid username or password")
 
-        if type(result) is int:
-            reset_code = result
+        reset_code = await get_data_from_req(self.request).account.get_reset_code(
+                user_id, session_id, data
+            )
+
+        if reset_code:
             return json_response(
                 {
                     "reset": True,
@@ -320,10 +324,9 @@ class LoginView(PydanticView):
                 status=200,
             )
 
-        user_id = result
-
-        session, token = await virtool.users.sessions.replace_session(
+        session_id, session, token = await virtool.users.sessions.replace_session(
             self.request.app["db"],
+            self.request.app["redis"],
             session_id,
             virtool.http.auth.get_ip(self.request),
             user_id,
@@ -332,7 +335,7 @@ class LoginView(PydanticView):
 
         resp = json_response({"reset": False}, status=201)
 
-        set_session_id_cookie(resp, session["_id"])
+        set_session_id_cookie(resp, session_id)
         set_session_token_cookie(resp, token)
 
         return resp
@@ -351,14 +354,14 @@ class LogoutView(PydanticView):
         Status Codes:
             204: Successful operation
         """
-        session, _ = await get_data_from_req(self.request).account.logout(
+        session_id, _, _ = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
             virtool.http.auth.get_ip(self.request),
         )
 
         resp = Response(status=200)
 
-        set_session_id_cookie(resp, session["_id"])
+        set_session_id_cookie(resp, session_id)
         resp.del_cookie("session_token")
 
         return resp
@@ -382,34 +385,31 @@ class ResetView(PydanticView):
         if error := await check_password_length(self.request, data.password):
             raise HTTPBadRequest(text=error)
 
-        status, user_id, reset = await get_data_from_req(self.request).account.reset(
+        result = await get_data_from_req(self.request).account.reset(
             self.request.cookies.get("session_id"),
             data,
             virtool.http.auth.get_ip(self.request),
         )
 
-        if status == 400:
+        if result.get("status") == 400:
             return json_response(
-                {"error": error, "reset_code": reset},
+                {"error": error, "reset_code": result["reset_code"]},
                 status=400,
             )
 
-        new_session = status
-        token = reset
-
         await get_data_from_req(self.request).users.update(
-            user_id,
+            result["user_id"],
             UpdateUserSchema(force_reset=False, password=data.password),
         )
 
         try:
-            self.request["client"].authorize(new_session, is_api=False)
+            self.request["client"].authorize(result["new_session"], is_api=False)
         except AttributeError:
             pass
 
         resp = json_response({"login": False, "reset": False}, status=200)
 
-        set_session_id_cookie(resp, new_session["_id"])
-        set_session_token_cookie(resp, token)
+        set_session_id_cookie(resp, result["session_id"])
+        set_session_token_cookie(resp, result["token"])
 
         return resp

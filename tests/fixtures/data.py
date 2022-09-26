@@ -27,7 +27,7 @@ from virtool.users.data import UsersData
 def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
     base_url = "https://virtool.example.com"
     return DataLayer(
-        AccountData(dbi),
+        AccountData(dbi, redis),
         AnalysisData(dbi, config, pg),
         mocker.Mock(spec=BLASTData),
         GroupsData(dbi),

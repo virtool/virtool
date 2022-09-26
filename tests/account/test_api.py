@@ -498,7 +498,7 @@ async def test_login(
     )
 
     mocker.patch(
-        "virtool.users.sessions.replace_session", return_value=[{"_id": None}, None]
+        "virtool.users.sessions.replace_session", return_value=[None, {"_id": None}, None]
     )
 
     resp = await client.post("/account/login", body)

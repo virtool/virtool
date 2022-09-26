@@ -1,5 +1,7 @@
+import json
 from typing import Union, Tuple, List
 
+from aioredis import Redis
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 
@@ -36,8 +38,9 @@ PROJECTION = (
 
 
 class AccountData:
-    def __init__(self, db: DB):
+    def __init__(self, db: DB, redis: Redis):
         self._db = db
+        self._redis = redis
 
     async def get(self, user_id: str) -> Account:
         """
@@ -254,7 +257,7 @@ class AccountData:
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, session_id: str, data: CreateLoginSchema) -> Union[int, str]:
+    async def login(self, session_id: str, data: CreateLoginSchema) -> Union[str]:
         """
         Create a new session for the user with `username`.
 
@@ -274,14 +277,22 @@ class AccountData:
         ):
             raise ResourceError()
 
-        user_id = document["_id"]
+        return document["_id"]
+
+    async def get_reset_code(self, user_id, session_id, remember) -> Union[str, None]:
+        """
+               Check if user password must be reset and return reset code if needed.
+
+               :param user_id: the login session ID
+               :param session_id: the id of the session getting the reset code
+               :param remember: boolean indicating whether the sessions should be remembered
+        """
 
         if await get_one_field(self._db.users, "force_reset", user_id):
-            return await create_reset_code(self._db, session_id, user_id, data.remember)
+            return await create_reset_code(self._redis, session_id, user_id, remember)
 
-        return user_id
 
-    async def logout(self, old_session_id: str, ip: str) -> Tuple[dict, str]:
+    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, dict, str]:
         """
         Invalidates the requesting session, effectively logging out the user.
 
@@ -289,7 +300,7 @@ class AccountData:
         :param ip: the ip
         :return: the
         """
-        return await replace_session(self._db, old_session_id, ip)
+        return await replace_session(self._db, self._redis, old_session_id, ip)
 
     async def reset(self, session_id, data: ResetPasswordSchema, ip: str):
         """
@@ -302,7 +313,7 @@ class AccountData:
 
         reset_code = data.reset_code
 
-        session = await self._db.sessions.find_one(session_id)
+        session = json.loads(await self._redis.get(session_id))
 
         user_id = session["reset_user_id"]
 
@@ -311,18 +322,19 @@ class AccountData:
             or not session.get("reset_user_id")
             or reset_code != session.get("reset_code")
         ):
-            return (
-                400,
-                user_id,
-                await create_reset_code(self._db, session_id, user_id=user_id),
-            )
+            return {
+                "status": 400,
+                "user_id": user_id,
+                "reset_code": await create_reset_code(self._redis, session_id, user_id=user_id)
+            }
 
-        new_session, token = await replace_session(
+        session_id, new_session, token = await replace_session(
             self._db,
+            self._redis,
             session_id,
             ip,
             user_id,
             remember=session.get("reset_remember", False),
         )
 
-        return new_session, user_id, token
+        return {"new_session": new_session, "user_id": user_id, "token": token, "session_id": session_id}
