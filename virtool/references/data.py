@@ -21,7 +21,7 @@ from virtool_core.models.reference import (
     ReferenceGroup,
 )
 
-from virtool_core.models.task import TaskNested
+from virtool_core.models.task import TaskNested, Task
 from virtool_core.models.upload import Upload
 
 
@@ -286,7 +286,7 @@ class ReferencesData(DataLayerPiece):
 
         return Reference(**document)
 
-    async def remove(self, ref_id: str, user_id: str, req) -> TaskNested:
+    async def remove(self, ref_id: str, user_id: str, req) -> Task:
 
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
@@ -300,7 +300,7 @@ class ReferencesData(DataLayerPiece):
 
         await self._mongo.references.delete_one({"_id": ref_id})
 
-        return TaskNested(**task)
+        return Task(**task.dict())
 
     async def get_release(self, ref_id: str, app) -> ReferenceRelease:
 

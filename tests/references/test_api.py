@@ -457,6 +457,88 @@ async def test_edit(
     assert await client.db.references.find_one() == snapshot(name="db")
 
 
+async def test_delete_reference(
+    mocker, snapshot, fake2, spawn_client, resp_is, static_time
+):
+    client = await spawn_client(authorize=True)
+
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+
+    await client.db.references.insert_one(
+        {
+            "_id": "foo",
+            "created_at": virtool.utils.timestamp(),
+            "data_type": "genome",
+            "name": "Foo",
+            "organism": "virus",
+            "internal_control": None,
+            "restrict_source_types": False,
+            "source_types": ["isolate", "strain"],
+            "user": {"id": user_1.id},
+            "groups": [],
+            "users": [
+                {
+                    "id": user_2.id,
+                    "build": True,
+                    "created_at": static_time.datetime,
+                    "modify": True,
+                    "modify_otu": True,
+                    "remove": True,
+                },
+            ],
+        }
+    )
+
+    mocker.patch(
+        "virtool.references.db.check_right", make_mocked_coro(return_value=True)
+    )
+
+    resp = await client.delete("/refs/foo")
+
+    assert await client.db.references.count_documents({}) == 0
+
+    assert resp.status == 202
+
+
+async def test_create_index(
+    mocker,
+    snapshot,
+    spawn_client,
+    check_ref_right,
+    resp_is
+):
+    """
+    Test that a valid request results in the creation of a otu document and a ``201`` response.
+
+    """
+    client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
+
+    await client.db.references.insert_one({"_id": "foo"})
+
+    # Insert unbuilt changes to prevent initial check failure.
+    await client.db.history.insert_one(
+        {
+            "_id": "history_1",
+            "index": {"id": "unbuilt", "version": "unbuilt"},
+            "reference": {"id": "foo"},
+        }
+    )
+
+    # Pass ref exists check.
+    mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(False))
+
+    resp = await client.post("/refs/foo/indexes")
+
+    if not check_ref_right:
+        await resp_is.insufficient_rights(resp)
+        return
+
+    assert resp.status == 201
+    assert await resp.json() == snapshot(name="json")
+    assert await client.db.indexes.find_one() == snapshot(name="index")
+
+
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_add_group_or_user(

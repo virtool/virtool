@@ -187,7 +187,7 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
-        # Missing test
+
         try:
             task = await get_data_from_req(self.request).references.remove(
                 ref_id, self.request["client"].user_id, self.request
