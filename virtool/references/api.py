@@ -12,6 +12,7 @@ from aiohttp.web_exceptions import (
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.enums import Permission
+from virtool_core.models.otu import OTU
 
 import virtool.history.db
 import virtool.indexes.db
@@ -25,12 +26,13 @@ from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
 from virtool.history.oas import ListHistoryResponse
-from virtool.http.routes import Routes
 from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id
+from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
 from virtool.references.db import (
     attach_computed,
@@ -41,13 +43,6 @@ from virtool.references.db import (
     create_remote,
     get_manifest,
     get_official_installed,
-)
-from virtool.references.tasks import (
-    CloneReferenceTask,
-    DeleteReferenceTask,
-    ImportReferenceTask,
-    RemoteReferenceTask,
-    UpdateRemoteReferenceTask,
 )
 from virtool.references.oas import (
     CreateReferenceSchema,
@@ -67,6 +62,13 @@ from virtool.references.oas import (
     CreateReferenceGroupResponse,
     ReferenceGroupResponse,
     ReferenceUsersSchema,
+)
+from virtool.references.tasks import (
+    CloneReferenceTask,
+    DeleteReferenceTask,
+    ImportReferenceTask,
+    RemoteReferenceTask,
+    UpdateRemoteReferenceTask,
 )
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform, extend_user
@@ -472,7 +474,7 @@ class ReferenceUpdatesView(PydanticView):
 
 
 @routes.view("/refs/{ref_id}/otus")
-class ReferenceOtusView(PydanticView):
+class ReferenceOTUsView(PydanticView):
     async def get(self) -> Union[r200[ReferenceOTUResponse], r404]:
         """
         Find OTUs.
@@ -499,6 +501,40 @@ class ReferenceOtusView(PydanticView):
         )
 
         return json_response(data)
+
+    async def post(
+        self, ref_id: str, /, data: CreateOTURequest
+    ) -> Union[r201[OTU], r400, r403, r404]:
+        """
+        Create an OTU.
+
+        """
+        db = self.request.app["db"]
+
+        reference = await db.references.find_one(ref_id, ["groups", "users"])
+
+        if reference is None:
+            raise NotFound()
+
+        if not await virtool.references.db.check_right(
+            self.request, reference, "modify_otu"
+        ):
+            raise InsufficientRights()
+
+        # Check if either the name or abbreviation are already in use. Send a ``400`` if
+        # they are.
+        if message := await virtool.otus.db.check_name_and_abbreviation(
+            db, ref_id, data.name, data.abbreviation
+        ):
+            raise HTTPBadRequest(text=message)
+
+        otu = await get_data_from_req(self.request).otus.create(
+            ref_id,
+            data,
+            user_id=self.request["client"].user_id,
+        )
+
+        return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
 @routes.view("/refs/{ref_id}/history")
