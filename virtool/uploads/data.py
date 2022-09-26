@@ -1,9 +1,13 @@
+import math
 from logging import getLogger
 from typing import List, Optional, Union
 
+
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.upload import Upload, UploadMinimal
+from virtool_core.models.upload import Upload, UploadMinimal, UploadSearchResult
 from virtool_core.utils import rm
 
 import virtool.utils
@@ -23,9 +27,11 @@ class UploadsData(DataLayerPiece):
     def __init__(self, config, db, pg):
         self._config = config
         self._db: DB = db
-        self._pg = pg
+        self._pg: AsyncEngine = pg
 
-    async def find(self, user, upload_type, ready) -> List[UploadMinimal]:
+    async def find(
+        self, user, page: int, per_page: int, upload_type, ready
+    ) -> UploadSearchResult:
         """
         Find and filter uploads.
         """
@@ -43,17 +49,36 @@ class UploadsData(DataLayerPiece):
             if ready is not None:
                 filters.append(SQLUpload.ready == ready)
 
-            results = await session.execute(select(SQLUpload).filter(*filters))
+            skip_count = 0
+
+            if page > 1:
+                skip_count = (page - 1) * per_page
+
+            results = await session.execute(
+                select(SQLUpload).filter(*filters).offset(skip_count).limit(per_page)
+            )
+
+            total_count = await session.execute(select(SQLUpload))
+
+            found_count = await session.execute(select(SQLUpload).filter(*filters))
 
         for result in results.unique().scalars().all():
             uploads.append(result.to_dict())
 
-        return [
-            UploadMinimal(**upload)
-            for upload in await apply_transforms(
-                uploads, [AttachUserTransform(self._db)]
-            )
-        ]
+        total_count = len(total_count.unique().scalars().all())
+
+        found_count = len(found_count.unique().scalars().all())
+
+        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
+
+        return UploadSearchResult(
+            items=uploads,
+            found_count=found_count,
+            total_count=total_count,
+            page=page,
+            page_count=int(math.ceil(found_count / per_page)),
+            per_page=per_page,
+        )
 
     async def create(
         self,

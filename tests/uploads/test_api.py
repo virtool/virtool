@@ -114,6 +114,33 @@ class TestFind:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
+    @pytest.mark.parametrize(
+        "per_page,page",
+        [
+            (None, None),
+            (1, None),
+            (1, 2),
+            (2, None),
+            (3, 1),
+            (None, 2),
+        ],
+    )
+    async def test_pagination(self, per_page, page, test_uploads, spawn_client, snapshot):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        url = "/uploads?"
+
+        if per_page is not None:
+            url += f"&per_page={per_page}"
+
+        if page is not None:
+            url += f"&page={page}"
+
+        resp = await client.get(url)
+
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+
 
 class TestGet:
     @pytest.mark.parametrize("exists", [True, False])
