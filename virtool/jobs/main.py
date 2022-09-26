@@ -52,7 +52,6 @@ async def create_app(config: Config):
             startup_databases,
             startup_executors,
             startup_fake,
-            startup_task_runner,
             startup_data,
             startup_events,
             startup_routes,
