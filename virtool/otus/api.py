@@ -23,7 +23,6 @@ from virtool.otus.oas import (
     UpdateIsolateRequest,
     CreateSequenceRequest,
     UpdateSequenceRequest,
-    CreateOTURequest,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform
@@ -346,39 +345,6 @@ class IsolateView(PydanticView):
         )
 
         raise HTTPNoContent
-
-
-@routes.view("/refs/{ref_id}/otus")
-class ReferenceOTUsView(PydanticView):
-    async def post(
-        self, ref_id: str, /, data: CreateOTURequest
-    ) -> Union[r201[OTU], r400, r403, r404]:
-        db = self.request.app["db"]
-
-        reference = await db.references.find_one(ref_id, ["groups", "users"])
-
-        if reference is None:
-            raise NotFound()
-
-        if not await virtool.references.db.check_right(
-            self.request, reference, "modify_otu"
-        ):
-            raise InsufficientRights()
-
-        # Check if either the name or abbreviation are already in use. Send a ``400`` if
-        # they are.
-        if message := await virtool.otus.db.check_name_and_abbreviation(
-            db, ref_id, data.name, data.abbreviation
-        ):
-            raise HTTPBadRequest(text=message)
-
-        otu = await get_data_from_req(self.request).otus.create(
-            ref_id,
-            data,
-            user_id=self.request["client"].user_id,
-        )
-
-        return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
 @routes.view("/otus/{otu_id}/isolates/{isolate_id}/sequences")
