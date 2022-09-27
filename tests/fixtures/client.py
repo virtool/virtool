@@ -130,7 +130,7 @@ def spawn_client(pg, request, redis, aiohttp_client, test_motor, dbi, create_app
                                 "user_agent": "Python/3.6 aiohttp/3.4.4",
                                 "user": {"id": "test"},
                             }, cls=CustomEncoder),
-                            expire=600
+                            expire=3600
                             )
 
 

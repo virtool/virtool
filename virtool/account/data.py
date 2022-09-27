@@ -281,7 +281,8 @@ class AccountData:
 
     async def get_reset_code(self, user_id, session_id, remember) -> Union[str, None]:
         """
-               Check if user password should be reset and return a reset code if it should be.
+               Check if user password should be reset and return a reset code if it
+               should be.
 
                :param user_id: the login session ID
                :param session_id: the id of the session getting the reset code

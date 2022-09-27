@@ -14,7 +14,7 @@ from virtool.types import Document
 
 
 async def create_session(
-    db: virtool.mongo.core.DB,
+    db: DB,
     redis: Redis,
     ip: str,
     user_id: Optional[str] = None,
@@ -139,6 +139,7 @@ async def create_reset_code(
 
     session = json.loads(await redis.get(session_id))
     session_expiry = await redis.ttl(session_id)
+    print(session_expiry)
 
     session.update({"reset_code": reset_code, "reset_remember": remember, "reset_user_id": user_id})
     await redis.set(session_id, json.dumps(session, cls=CustomEncoder), expire=session_expiry)
@@ -157,7 +158,7 @@ async def clear_reset_code(redis: Redis, session_id: str):
     """
     session = json.loads(await redis.get(session_id))
     session_expiry = await redis.ttl(session_id)
-
+    print(session_expiry)
     for key in ["reset_code", "reset_remember", "reset_user_id"]:
         if key in session:
             del session[key]
@@ -166,7 +167,7 @@ async def clear_reset_code(redis: Redis, session_id: str):
 
 
 async def replace_session(
-    db: virtool.mongo.core.DB,
+    db: DB,
     redis: Redis,
     session_id: str,
     ip: str,
