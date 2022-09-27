@@ -20,7 +20,6 @@ from virtool.startup import (
     startup_fake_config,
     startup_settings,
     startup_data,
-    startup_task_runner,
     startup_sentry,
     startup_version,
     startup_http_client,
