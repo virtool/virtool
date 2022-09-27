@@ -241,12 +241,13 @@ class FakeGenerator:
 
 
 @pytest.fixture
-def app(dbi, pg, tmp_path, config):
+def app(dbi, pg, tmp_path, config, data_layer):
     return {
         "db": dbi,
         "fake": FakerWrapper(),
         "pg": pg,
         "config": config,
+        "data": data_layer
     }
 
 

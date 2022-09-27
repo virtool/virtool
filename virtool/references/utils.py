@@ -1,7 +1,8 @@
 import gzip
 import json
+from datetime import datetime
 from operator import itemgetter
-from typing import List, Set
+from typing import List, Set, Optional
 
 from cerberus import Validator
 
@@ -266,12 +267,13 @@ def get_otu_schema(require_id: bool) -> dict:
     }
 
 
-def get_owner_user(user_id: str) -> dict:
+def get_owner_user(user_id: str, created_at: datetime) -> dict:
     return {
         "id": user_id,
         "build": True,
         "modify": True,
         "modify_otu": True,
+        "created_at": created_at,
         "remove": True,
     }
 
