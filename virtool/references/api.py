@@ -10,14 +10,6 @@ from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404
 from virtool_core.models.enums import Permission
 from virtool_core.models.otu import OTU
 
-import virtool.history.db
-import virtool.indexes.db
-import virtool.mongo.utils
-import virtool.otus.db
-import virtool.references.db
-import virtool.utils
-from virtool.api.response import InsufficientRights
-
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -313,30 +305,14 @@ class ReferenceOTUsView(PydanticView):
         Create an OTU.
 
         """
-        db = self.request.app["db"]
-
-        reference = await db.references.find_one(ref_id, ["groups", "users"])
-
-        if reference is None:
+        try:
+            otu = await get_data_from_req(self.request).references.create_otus(
+                ref_id, data, self.request, self.request["client"].user_id
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        if not await virtool.references.db.check_right(
-            self.request, reference, "modify_otu"
-        ):
-            raise InsufficientRights()
-
-        # Check if either the name or abbreviation are already in use. Send a ``400`` if
-        # they are.
-        if message := await virtool.otus.db.check_name_and_abbreviation(
-            db, ref_id, data.name, data.abbreviation
-        ):
-            raise HTTPBadRequest(text=message)
-
-        otu = await get_data_from_req(self.request).otus.create(
-            ref_id,
-            data,
-            user_id=self.request["client"].user_id,
-        )
+        except ResourceError as err:
+            raise HTTPBadRequest(text=str(err))
 
         return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 

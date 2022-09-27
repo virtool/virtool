@@ -11,7 +11,7 @@ from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexSearchResult, IndexMinimal
-from virtool_core.models.otu import OTUSearchResult
+from virtool_core.models.otu import OTUSearchResult, OTU
 from virtool_core.models.reference import (
     ReferenceSearchResult,
     Reference,
@@ -21,7 +21,7 @@ from virtool_core.models.reference import (
     ReferenceGroup,
 )
 
-from virtool_core.models.task import TaskNested, Task
+from virtool_core.models.task import Task
 from virtool_core.models.upload import Upload
 
 
@@ -30,6 +30,8 @@ from virtool.config import Config
 from virtool.github import format_release
 from virtool.jobs.utils import JobRights
 from virtool.mongo.utils import get_new_id
+from virtool.otus.oas import CreateOTURequest
+import virtool.otus.db
 from virtool.uploads.models import Upload as SQLUpload
 
 
@@ -215,9 +217,10 @@ class ReferencesData(DataLayerPiece):
                 raise
 
             release = format_release(release)
+            release["newer"] = False
 
             document = await virtool.references.db.create_remote(
-                self._mongo, settings, release, data.remote_from, user_id
+                self._mongo, settings, data.name, release, data.remote_from, user_id, data.data_type
             )
 
             context = {
@@ -389,6 +392,33 @@ class ReferencesData(DataLayerPiece):
         )
 
         return OTUSearchResult(**data)
+
+    async def create_otus(self, ref_id: str, data: CreateOTURequest, req, user_id: str) -> OTU:
+
+        reference = await self._mongo.references.find_one(ref_id, ["groups", "users"])
+
+        if reference is None:
+            raise ResourceNotFoundError()
+
+        if not await virtool.references.db.check_right(
+            req, reference, "modify_otu"
+        ):
+            raise InsufficientRights()
+
+        # Check if either the name or abbreviation are already in use. Send a ``400`` if
+        # they are.
+        if message := await virtool.otus.db.check_name_and_abbreviation(
+            self._mongo, ref_id, data.name, data.abbreviation
+        ):
+            raise ResourceError(message)
+
+        otu = await self.data.otus.create(
+            ref_id,
+            data,
+            user_id=user_id
+        )
+
+        return otu
 
     async def get_history(
         self, ref_id: str, unbuilt: str, query

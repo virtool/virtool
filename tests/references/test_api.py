@@ -16,6 +16,290 @@ from virtool.settings.oas import UpdateSettingsSchema
 from virtool.tasks.models import Task as SQLTask
 
 
+class TestCreateRef:
+    @pytest.mark.parametrize("data_type", ["genome", "barcode"])
+    async def test_create(self, data_type, snapshot, spawn_client, static_time):
+        client = await spawn_client(
+            authorize=True,
+            base_url="https://virtool.example.com",
+            permissions=[Permission.create_ref],
+        )
+
+        default_source_type = ["strain", "isolate"]
+
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(default_source_types=default_source_type)
+        )
+
+        data = {
+            "name": "Test Viruses",
+            "description": "A bunch of viruses used for testing",
+            "data_type": data_type,
+            "organism": "virus",
+        }
+
+        resp = await client.post("/refs", data)
+
+        assert resp.status == 201
+        assert resp.headers["Location"] == snapshot
+        assert await resp.json() == snapshot
+
+    @pytest.mark.flaky(reruns=2)
+    async def test_import_reference(
+        self, pg, snapshot, spawn_client, test_files_path, tmpdir
+    ):
+        client = await spawn_client(
+            authorize=True,
+            permissions=[Permission.create_ref, Permission.upload_file],
+        )
+
+        tmpdir.mkdir("files")
+
+        client.app["config"].data_path = Path(tmpdir)
+
+        with open(test_files_path / "reference.json.gz", "rb") as f:
+            resp = await client.post_form(
+                "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
+                data={"file": f},
+            )
+
+            upload = await resp.json()
+
+        resp = await client.post(
+            "/refs",
+            {"name": "Test Viruses", "import_from": str(upload["name_on_disk"])},
+        )
+
+        reference = await resp.json()
+
+        assert reference == snapshot(
+            matcher=path_type({"id": (str,)}),
+        )
+
+        task_id = reference["task"]["id"]
+
+        while True:
+            await asyncio.sleep(1)
+
+            task: SQLTask = await get_row_by_id(pg, SQLTask, task_id)
+
+            if task.complete:
+                assert await gather(
+                    client.db.otus.count_documents({}),
+                    client.db.sequences.count_documents({}),
+                    client.db.history.count_documents({}),
+                ) == [20, 26, 20]
+
+                break
+
+    async def test_clone_reference(
+        self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
+    ):
+        client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+
+        user_1 = await fake2.users.create()
+        user_2 = await fake2.users.create()
+
+        await client.db.references.insert_one(
+            {
+                "_id": "foo",
+                "created_at": virtool.utils.timestamp(),
+                "data_type": "genome",
+                "name": "Foo",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": False,
+                "source_types": ["isolate", "strain"],
+                "user": {"id": user_1.id},
+                "groups": [],
+                "users": [
+                    {
+                        "id": user_2.id,
+                        "build": True,
+                        "created_at": static_time.datetime,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                ],
+            }
+        )
+
+        data = {
+            "name": "Test 1",
+            "organism": "viruses",
+            "data_type": "genome",
+            "clone_from": "foo",
+        }
+
+        resp = await client.post("/refs", data)
+
+        assert resp.status == 201
+        assert resp.headers["Location"] == snapshot
+        assert await resp.json() == snapshot
+
+    async def test_remote_reference(
+        self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
+    ):
+        client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+
+        data = {
+            "name": "Test Remote",
+            "organism": "viruses",
+            "data_type": "genome",
+            "remote_from": "virtool/ref-plant-viruses",
+        }
+
+        resp = await client.post("/refs", data)
+
+        assert resp.status == 201
+        assert resp.headers["Location"] == snapshot
+        assert await resp.json() == snapshot
+
+
+@pytest.mark.parametrize("data_type", ["genome", "barcode"])
+@pytest.mark.parametrize(
+    "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
+)
+async def test_edit(
+    data_type, error, mocker, snapshot, fake2, spawn_client, resp_is, static_time
+):
+    client = await spawn_client(authorize=True)
+
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+    user_3 = await fake2.users.create()
+
+    if error != "404":
+        await client.db.references.insert_one(
+            {
+                "_id": "foo",
+                "created_at": virtool.utils.timestamp(),
+                "data_type": data_type,
+                "name": "Foo",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": False,
+                "source_types": ["isolate", "strain"],
+                "user": {"id": user_1.id},
+                "groups": [],
+                "users": [
+                    {
+                        "id": user_2.id,
+                        "build": True,
+                        "created_at": static_time.datetime,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                    {
+                        "id": user_3.id,
+                        "created_at": static_time.datetime,
+                        "build": True,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                ],
+            }
+        )
+
+    data = {
+        "name": "Bar",
+        "description": "This is a test reference.",
+        "targets": [{"name": "CPN60", "description": "", "required": True}],
+    }
+
+    if error == "400_invalid_input":
+        data["targets"] = [{"description": True}]
+
+    if error == "400_duplicates":
+        data["targets"].append(
+            {
+                "name": "CPN60",
+                "description": "This has a duplicate name",
+                "required": False,
+            }
+        )
+
+    can_modify = error != "403"
+
+    mocker.patch(
+        "virtool.references.db.check_right", make_mocked_coro(return_value=can_modify)
+    )
+
+    resp = await client.patch("/refs/foo", data)
+
+    if error == "400_duplicates":
+        assert await resp.json() == snapshot
+        return
+
+    if error == "400_invalid_input":
+        assert resp.status == 400
+        assert await resp.json() == [
+            {
+                "loc": ["targets", 0, "name"],
+                "msg": "field required",
+                "type": "value_error.missing",
+                "in": "body",
+            }
+        ]
+        return
+
+    if error == "404":
+        await resp_is.not_found(resp)
+        return
+
+    if error == "403":
+        await resp_is.insufficient_rights(resp)
+        return
+
+    assert await resp.json() == snapshot(name="resp")
+    assert await client.db.references.find_one() == snapshot(name="db")
+
+
+async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static_time):
+    client = await spawn_client(authorize=True)
+
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+
+    await client.db.references.insert_one(
+        {
+            "_id": "foo",
+            "created_at": virtool.utils.timestamp(),
+            "data_type": "genome",
+            "name": "Foo",
+            "organism": "virus",
+            "internal_control": None,
+            "restrict_source_types": False,
+            "source_types": ["isolate", "strain"],
+            "user": {"id": user_1.id},
+            "groups": [],
+            "users": [
+                {
+                    "id": user_2.id,
+                    "build": True,
+                    "created_at": static_time.datetime,
+                    "modify": True,
+                    "modify_otu": True,
+                    "remove": True,
+                },
+            ],
+        }
+    )
+
+    mocker.patch(
+        "virtool.references.db.check_right", make_mocked_coro(return_value=True)
+    )
+
+    resp = await client.delete("/refs/foo")
+
+    assert await client.db.references.count_documents({}) == 0
+    assert await resp.json() == snapshot
+    assert resp.status == 202
+
+
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
     client = await spawn_client(authorize=True)
@@ -219,6 +503,112 @@ async def test_update(
     assert m_update.call_args[0] == snapshot(name="call")
 
 
+class TestCreateOTU:
+    @pytest.mark.parametrize("exists", [True, False])
+    @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
+    async def test(
+        self,
+        exists,
+        abbreviation,
+        mocker,
+        snapshot,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        static_time,
+        test_random_alphanumeric,
+    ):
+        """
+        Test that a valid request results in the creation of a otu document and a ``201`` response.
+
+        """
+        client = await spawn_client(
+            authorize=True, base_url="https://virtool.example.com"
+        )
+
+        if exists:
+            await client.db.references.insert_one({"_id": "foo"})
+
+        # Pass ref exists check.
+        mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(False))
+
+        data = {"name": "Tobacco mosaic virus"}
+
+        if abbreviation is not None:
+            data["abbreviation"] = abbreviation
+
+        resp = await client.post("/refs/foo/otus", data)
+
+        if not exists:
+            await resp_is.not_found(resp)
+            return
+
+        if not check_ref_right:
+            await resp_is.insufficient_rights(resp)
+            return
+
+        assert resp.status == 201
+        assert resp.headers["Location"] == snapshot(name="location")
+        assert await resp.json() == snapshot(name="json")
+
+        assert await asyncio.gather(
+            client.db.otus.find_one(), client.db.history.find_one()
+        ) == snapshot(name="db")
+
+    @pytest.mark.parametrize(
+        "error,message",
+        [
+            (None, None),
+            ("400_name_exists", "Name already exists"),
+            ("400_abbr_exists", "Abbreviation already exists"),
+            ("400_both_exist", "Name and abbreviation already exist"),
+            ("404", None),
+        ],
+    )
+    async def test_field_exists(
+        self, error, message, mocker, spawn_client, check_ref_right, resp_is
+    ):
+        """
+        Test that the request fails with ``409 Conflict`` if the requested otu name already exists.
+
+        """
+        # Pass ref exists check.
+        mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(True))
+
+        # Pass name and abbreviation check.
+        m_check_name_and_abbreviation = mocker.patch(
+            "virtool.otus.db.check_name_and_abbreviation", make_mocked_coro(message)
+        )
+
+        client = await spawn_client(authorize=True)
+
+        if error != "404":
+            await client.db.references.insert_one({"_id": "foo"})
+
+        data = {"name": "Tobacco mosaic virus", "abbreviation": "TMV"}
+
+        resp = await client.post("/refs/foo/otus", data)
+
+        if error == "404":
+            await resp_is.not_found(resp)
+            return
+
+        if not check_ref_right:
+            await resp_is.insufficient_rights(resp)
+            return
+
+        # Abbreviation defaults to empty string for OTU creation.
+        m_check_name_and_abbreviation.assert_called_with(
+            client.db, "foo", "Tobacco mosaic virus", "TMV"
+        )
+
+        if error:
+            await resp_is.bad_request(resp, message)
+            return
+
+        assert resp.status == 201
+
+
 async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
     client = await spawn_client(authorize=True)
 
@@ -282,232 +672,7 @@ async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
     m_find.assert_called_with(client.db, md_proxy(), ref_id="foo")
 
 
-@pytest.mark.parametrize("data_type", ["genome", "barcode"])
-async def test_create(data_type, snapshot, spawn_client, static_time):
-    client = await spawn_client(
-        authorize=True,
-        base_url="https://virtool.example.com",
-        permissions=[Permission.create_ref],
-    )
-
-    default_source_type = ["strain", "isolate"]
-
-    await get_data_from_app(client.app).settings.update(
-        UpdateSettingsSchema(default_source_types=default_source_type)
-    )
-
-    data = {
-        "name": "Test Viruses",
-        "description": "A bunch of viruses used for testing",
-        "data_type": data_type,
-        "organism": "virus",
-    }
-
-    resp = await client.post("/refs", data)
-
-    assert resp.status == 201
-    assert resp.headers["Location"] == snapshot
-    assert await resp.json() == snapshot
-
-
-@pytest.mark.flaky(reruns=2)
-async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmpdir):
-    client = await spawn_client(
-        authorize=True,
-        permissions=[Permission.create_ref, Permission.upload_file],
-    )
-
-    tmpdir.mkdir("files")
-
-    client.app["config"].data_path = Path(tmpdir)
-
-    with open(test_files_path / "reference.json.gz", "rb") as f:
-        resp = await client.post_form(
-            "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
-            data={"file": f},
-        )
-
-        upload = await resp.json()
-
-    resp = await client.post(
-        "/refs", {"name": "Test Viruses", "import_from": str(upload["name_on_disk"])}
-    )
-
-    reference = await resp.json()
-
-    assert reference == snapshot(
-        matcher=path_type({"id": (str,)}),
-    )
-
-    task_id = reference["task"]["id"]
-
-    while True:
-        await asyncio.sleep(1)
-
-        task: SQLTask = await get_row_by_id(pg, SQLTask, task_id)
-
-        if task.complete:
-            assert await gather(
-                client.db.otus.count_documents({}),
-                client.db.sequences.count_documents({}),
-                client.db.history.count_documents({}),
-            ) == [20, 26, 20]
-
-            break
-
-
-@pytest.mark.parametrize("data_type", ["genome", "barcode"])
-@pytest.mark.parametrize(
-    "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
-)
-async def test_edit(
-    data_type, error, mocker, snapshot, fake2, spawn_client, resp_is, static_time
-):
-    client = await spawn_client(authorize=True)
-
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
-    user_3 = await fake2.users.create()
-
-    if error != "404":
-        await client.db.references.insert_one(
-            {
-                "_id": "foo",
-                "created_at": virtool.utils.timestamp(),
-                "data_type": data_type,
-                "name": "Foo",
-                "organism": "virus",
-                "internal_control": None,
-                "restrict_source_types": False,
-                "source_types": ["isolate", "strain"],
-                "user": {"id": user_1.id},
-                "groups": [],
-                "users": [
-                    {
-                        "id": user_2.id,
-                        "build": True,
-                        "created_at": static_time.datetime,
-                        "modify": True,
-                        "modify_otu": True,
-                        "remove": True,
-                    },
-                    {
-                        "id": user_3.id,
-                        "created_at": static_time.datetime,
-                        "build": True,
-                        "modify": True,
-                        "modify_otu": True,
-                        "remove": True,
-                    },
-                ],
-            }
-        )
-
-    data = {
-        "name": "Bar",
-        "description": "This is a test reference.",
-        "targets": [{"name": "CPN60", "description": "", "required": True}],
-    }
-
-    if error == "400_invalid_input":
-        data["targets"] = [{"description": True}]
-
-    if error == "400_duplicates":
-        data["targets"].append(
-            {
-                "name": "CPN60",
-                "description": "This has a duplicate name",
-                "required": False,
-            }
-        )
-
-    can_modify = error != "403"
-
-    mocker.patch(
-        "virtool.references.db.check_right", make_mocked_coro(return_value=can_modify)
-    )
-
-    resp = await client.patch("/refs/foo", data)
-
-    if error == "400_duplicates":
-        assert await resp.json() == snapshot
-        return
-
-    if error == "400_invalid_input":
-        assert resp.status == 400
-        assert await resp.json() == [
-            {
-                "loc": ["targets", 0, "name"],
-                "msg": "field required",
-                "type": "value_error.missing",
-                "in": "body",
-            }
-        ]
-        return
-
-    if error == "404":
-        await resp_is.not_found(resp)
-        return
-
-    if error == "403":
-        await resp_is.insufficient_rights(resp)
-        return
-
-    assert await resp.json() == snapshot(name="resp")
-    assert await client.db.references.find_one() == snapshot(name="db")
-
-
-async def test_delete_reference(
-    mocker, snapshot, fake2, spawn_client, resp_is, static_time
-):
-    client = await spawn_client(authorize=True)
-
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
-
-    await client.db.references.insert_one(
-        {
-            "_id": "foo",
-            "created_at": virtool.utils.timestamp(),
-            "data_type": "genome",
-            "name": "Foo",
-            "organism": "virus",
-            "internal_control": None,
-            "restrict_source_types": False,
-            "source_types": ["isolate", "strain"],
-            "user": {"id": user_1.id},
-            "groups": [],
-            "users": [
-                {
-                    "id": user_2.id,
-                    "build": True,
-                    "created_at": static_time.datetime,
-                    "modify": True,
-                    "modify_otu": True,
-                    "remove": True,
-                },
-            ],
-        }
-    )
-
-    mocker.patch(
-        "virtool.references.db.check_right", make_mocked_coro(return_value=True)
-    )
-
-    resp = await client.delete("/refs/foo")
-
-    assert await client.db.references.count_documents({}) == 0
-
-    assert resp.status == 202
-
-
-async def test_create_index(
-    mocker,
-    snapshot,
-    spawn_client,
-    check_ref_right,
-    resp_is
-):
+async def test_create_index(mocker, snapshot, spawn_client, check_ref_right, resp_is):
     """
     Test that a valid request results in the creation of a otu document and a ``201`` response.
 
@@ -525,6 +690,14 @@ async def test_create_index(
         }
     )
 
+    m_get_next_version = mocker.patch(
+        "virtool.indexes.db.get_next_version", new=make_mocked_coro(9)
+    )
+
+    m_create_manifest = mocker.patch(
+        "virtool.references.db.get_manifest", new=make_mocked_coro("manifest")
+    )
+
     # Pass ref exists check.
     mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(False))
 
@@ -537,6 +710,9 @@ async def test_create_index(
     assert resp.status == 201
     assert await resp.json() == snapshot(name="json")
     assert await client.db.indexes.find_one() == snapshot(name="index")
+
+    m_get_next_version.assert_called_with(client.db, "foo")
+    m_create_manifest.assert_called_with(client.db, "foo")
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])

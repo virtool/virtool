@@ -656,7 +656,7 @@ async def create_import(
 
 
 async def create_remote(
-    db, settings: Settings, release: dict, remote_from: str, user_id: str
+    db, settings: Settings, name: str, release: dict, remote_from: str, user_id: str, data_type: str
 ) -> dict:
     """
     Create a remote reference document in the database.
@@ -675,9 +675,9 @@ async def create_remote(
         db,
         settings,
         "Plant Viruses",
-        None,
+        name or "Unnamed Remote",
         "The official plant virus reference from the Virtool developers",
-        None,
+        data_type,
         created_at=created_at,
         user_id=user_id,
     )
