@@ -306,7 +306,7 @@ class LoginView(PydanticView):
 
         try:
             user_id = await get_data_from_req(self.request).account.login(
-                session_id, data
+             data
             )
         except ResourceError:
             raise HTTPBadRequest(text="Invalid username or password")
@@ -324,7 +324,7 @@ class LoginView(PydanticView):
                 status=200,
             )
 
-        session_id, session, token = await virtool.users.sessions.replace_session(
+        session_id, _, token = await virtool.users.sessions.replace_session(
             self.request.app["db"],
             self.request.app["redis"],
             session_id,

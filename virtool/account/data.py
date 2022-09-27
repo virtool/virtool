@@ -257,12 +257,12 @@ class AccountData:
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, session_id: str, data: CreateLoginSchema) -> Union[str]:
+    async def login(self, data: CreateLoginSchema) -> Union[str]:
         """
         Create a new session for the user with `username`.
 
-        :param session_id: the login session ID
         :param data: the login data
+        :return: string representation of user_id
         """
         # When `remember` is set, the session will last for 1 month instead of the
         # 1-hour default
@@ -281,16 +281,16 @@ class AccountData:
 
     async def get_reset_code(self, user_id, session_id, remember) -> Union[str, None]:
         """
-               Check if user password must be reset and return reset code if needed.
+               Check if user password should be reset and return a reset code if it should be.
 
                :param user_id: the login session ID
                :param session_id: the id of the session getting the reset code
-               :param remember: boolean indicating whether the sessions should be remembered
+               :param remember: boolean indicating whether the sessions
+               should be remembered
         """
 
         if await get_one_field(self._db.users, "force_reset", user_id):
             return await create_reset_code(self._redis, session_id, user_id, remember)
-
 
     async def logout(self, old_session_id: str, ip: str) -> Tuple[str, dict, str]:
         """
@@ -298,7 +298,7 @@ class AccountData:
 
         :param old_session_id: the ID of the old session
         :param ip: the ip
-        :return: the
+        :return: the session_id, session, and session token
         """
         return await replace_session(self._db, self._redis, old_session_id, ip)
 
@@ -308,7 +308,7 @@ class AccountData:
 
         :param session_id: the ID of the session to reset
         :param data: the data needed to reset session
-        :param ip: the ip
+        :param ip: the ip address of the client
         """
 
         reset_code = data.reset_code

@@ -1,20 +1,20 @@
 import hashlib
+import json
 import secrets
-from typing import Optional, Tuple, Dict, Union
+from typing import Optional, Tuple
 
 import arrow
 from aioredis import Redis
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.utils
+from virtool.api.custom_json import CustomEncoder
 from virtool.mongo.core import DB
 from virtool.types import Document
-from virtool.api.custom_json import CustomEncoder
-import json
 
 
 async def create_session(
-    db,
+    db: virtool.mongo.core.DB,
     redis: Redis,
     ip: str,
     user_id: Optional[str] = None,

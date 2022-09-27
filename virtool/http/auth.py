@@ -190,7 +190,6 @@ async def middleware(req, handler) -> Response:
     if session is None:
         session_id, session, session_token = await create_session(db, redis, ip)
 
-
     if session_token:
         req["client"] = UserClient(
             db,
