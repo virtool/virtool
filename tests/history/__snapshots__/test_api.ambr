@@ -12,7 +12,7 @@
       'otu': <class 'dict'> {
         'id': '6116cba1',
         'name': 'Prunus virus F',
-        'version': '1',
+        'version': 1,
       },
       'reference': <class 'dict'> {
         'id': 'hxn167',
@@ -35,7 +35,7 @@
       'otu': <class 'dict'> {
         'id': '6116cba1',
         'name': 'Prunus virus F',
-        'version': '1',
+        'version': 1,
       },
       'reference': <class 'dict'> {
         'id': 'hxn167',
@@ -58,7 +58,7 @@
       'otu': <class 'dict'> {
         'id': '6116cba1',
         'name': 'Prunus virus F',
-        'version': '1',
+        'version': 1,
       },
       'reference': <class 'dict'> {
         'id': 'hxn167',
@@ -110,7 +110,7 @@
     'otu': <class 'dict'> {
       'id': '6116cba1',
       'name': 'Prunus virus F',
-      'version': '1',
+      'version': 1,
     },
     'reference': <class 'dict'> {
       'id': 'hxn167',

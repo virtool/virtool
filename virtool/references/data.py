@@ -1,4 +1,5 @@
 import asyncio
+from pprint import pprint
 from typing import List, Optional, Union
 
 import aiohttp
@@ -267,6 +268,15 @@ class ReferencesData(DataLayerPiece):
             )
 
         document["installed"] = installed
+
+        imported_from = document.get("imported_from")
+
+        if imported_from:
+            imported_from = await apply_transforms(
+                imported_from, [AttachUserTransform(self._mongo)]
+            )
+
+        document["imported_from"] = imported_from
 
         return Reference(**document)
 

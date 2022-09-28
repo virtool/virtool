@@ -48,7 +48,7 @@
   <class 'dict'> {
     '_id': 'abc',
     'index': <class 'dict'> {
-      'id': None,
+      'id': 'bf1b993c',
       'version': 0,
     },
     'reference': <class 'dict'> {

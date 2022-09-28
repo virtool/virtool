@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from virtool_core.models.upload import UploadSearchResult, Upload
+from virtool_core.models.upload import UploadSearchResult, Upload, UploadMinimal
 from virtool_core.utils import rm
 
 import virtool.utils
@@ -27,7 +27,7 @@ class UploadsData(DataLayerPiece):
         self._db: DB = db
         self._pg = pg
 
-    async def find(self, user, upload_type, ready) -> UploadSearchResult:
+    async def find(self, user, upload_type, ready) -> List[UploadMinimal]:
         """
         Find and filter uploads.
         """
@@ -50,9 +50,12 @@ class UploadsData(DataLayerPiece):
         for result in results.unique().scalars().all():
             uploads.append(result.to_dict())
 
-        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
-
-        return UploadSearchResult(documents=uploads)
+        return [
+            UploadMinimal(**upload)
+            for upload in await apply_transforms(
+                uploads, [AttachUserTransform(self._db)]
+            )
+        ]
 
     async def create(
         self,
