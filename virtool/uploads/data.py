@@ -104,7 +104,6 @@ class UploadsData(DataLayerPiece):
             )
         ]
 
-
     async def create(
         self,
         name: str,
