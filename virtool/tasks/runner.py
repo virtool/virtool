@@ -1,9 +1,6 @@
 import asyncio
 import logging
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import virtool.tasks.task
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.models import Task

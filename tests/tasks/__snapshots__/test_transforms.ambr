@@ -1,0 +1,36 @@
+# name: test_attach_task_transform[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'id': 1,
+      'task': <class 'dict'> {
+        'complete': False,
+        'context': <class 'dict'> {
+        },
+        'count': 0,
+        'created_at': <class 'datetime'>,
+        'error': None,
+        'file_size': None,
+        'id': 3,
+        'progress': 0,
+        'step': 'add_index_files',
+        'type': 'add_index_files',
+      },
+    },
+    <class 'dict'> {
+      'id': 2,
+      'task': <class 'dict'> {
+        'complete': False,
+        'context': <class 'dict'> {
+        },
+        'count': 0,
+        'created_at': <class 'datetime'>,
+        'error': None,
+        'file_size': None,
+        'id': 4,
+        'progress': 0,
+        'step': 'add_subtraction_files',
+        'type': 'add_subtraction_files',
+      },
+    },
+  ]
+---

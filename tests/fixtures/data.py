@@ -34,7 +34,7 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
         SettingsData(dbi),
         HistoryData(config.data_path, dbi),
         ReferencesData(dbi, pg, config, mocker.Mock(spec=ClientSession)),
-        HmmData(mocker.Mock(spec=ClientSession), config, dbi),
+        HmmData(mocker.Mock(spec=ClientSession), config, dbi, pg),
         LabelsData(dbi, pg),
         JobsData(DummyJobsClient(), dbi, pg),
         OTUData({"db": dbi, "pg": pg}),
@@ -42,5 +42,5 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
         SubtractionsData(base_url, config, dbi, pg),
         UploadsData(config, dbi, pg),
         UsersData(dbi, pg),
-        TasksData(pg, redis)
+        TasksData(pg, redis),
     )
