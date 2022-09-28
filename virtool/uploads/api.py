@@ -30,7 +30,7 @@ class UploadsView(PydanticView):
     async def get(
         self,
         user: Optional[str] = None,
-        page: conint(gt=0) = 1,
+        page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
         upload_type: Optional[str] = None,
         ready: Optional[bool] = None,

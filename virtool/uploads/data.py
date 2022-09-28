@@ -1,13 +1,14 @@
 import math
+import asyncio
 from logging import getLogger
 from typing import List, Optional, Union
 
 
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.upload import Upload, UploadMinimal, UploadSearchResult
+from sqlalchemy import select, update, func
+from virtool_core.models.upload import Upload, UploadSearchResult
+
 from virtool_core.utils import rm
 
 import virtool.utils
@@ -54,20 +55,35 @@ class UploadsData(DataLayerPiece):
             if page > 1:
                 skip_count = (page - 1) * per_page
 
-            results = await session.execute(
+            total_query = select(
+                func.count(SQLUpload.id).over().label("total")
+            ).subquery()
+
+            found_query = (
+                select(func.count(SQLUpload.id).over().label("found"))
+                .filter(*filters)
+                .subquery()
+            )
+
+            query = (
                 select(SQLUpload).filter(*filters).offset(skip_count).limit(per_page)
             )
 
-            total_count = await session.execute(select(SQLUpload))
+            count, results = await asyncio.gather(
+                session.execute(select(total_query, found_query)),
+                session.execute(query),
+            )
 
-            found_count = await session.execute(select(SQLUpload).filter(*filters))
+        count = count.unique().all()
 
-        for result in results.unique().scalars().all():
-            uploads.append(result.to_dict())
+        if count:
+            total_count = count[0].total
+            found_count = count[0].found
 
-        total_count = len(total_count.unique().scalars().all())
+        results = results.unique().fetchall()
 
-        found_count = len(found_count.unique().scalars().all())
+        for row in results:
+            uploads.append(row.Upload.to_dict())
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
 
