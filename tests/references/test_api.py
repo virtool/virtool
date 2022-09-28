@@ -1,6 +1,5 @@
 import asyncio
 from asyncio import gather
-from os import path
 from pathlib import Path
 
 import pytest

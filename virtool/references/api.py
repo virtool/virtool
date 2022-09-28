@@ -1,4 +1,3 @@
-from pprint import pprint
 from typing import Union, List, Optional
 
 from aiohttp.web_exceptions import (
@@ -23,10 +22,7 @@ from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
-
 from virtool.otus.oas import CreateOTURequest
-
-
 from virtool.otus.oas import FindOTUsResponse
 from virtool.references.oas import (
     CreateReferenceSchema,
