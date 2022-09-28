@@ -132,8 +132,7 @@ async def paginate(
             cursor.skip((page - 1) * per_page)
 
         documents = [
-            await collection.apply_processor(d)
-            for d in await asyncio.shield(cursor.to_list(per_page))
+            await collection.apply_processor(d) for d in await cursor.to_list(per_page)
         ]
 
     total_count = await collection.count_documents(base_query)

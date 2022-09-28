@@ -46,7 +46,7 @@ class UploadsView(PydanticView):
             user, upload_type, ready
         )
 
-        return json_response(uploads)
+        return json_response({"documents": uploads})
 
     @policy(PermissionsRoutePolicy(Permission.upload_file))
     async def post(
