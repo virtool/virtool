@@ -128,7 +128,7 @@ class TestFind:
     async def test_pagination(self, per_page, page, test_uploads, spawn_client, snapshot):
         client = await spawn_client(authorize=True, administrator=True)
 
-        url = "/uploads?"
+        url = "/uploads?paginate=True"
 
         if per_page is not None:
             url += f"&per_page={per_page}"

@@ -7,7 +7,7 @@ from typing import List, Optional, Union
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from sqlalchemy import select, update, func
-from virtool_core.models.upload import Upload, UploadSearchResult
+from virtool_core.models.upload import Upload, UploadSearchResult, UploadMinimal
 
 from virtool_core.utils import rm
 
@@ -31,8 +31,8 @@ class UploadsData(DataLayerPiece):
         self._pg: AsyncEngine = pg
 
     async def find(
-        self, user, page: int, per_page: int, upload_type, ready
-    ) -> UploadSearchResult:
+        self, user, page: int, per_page: int, upload_type, ready, paginate
+    ) -> Union[List[UploadMinimal], UploadSearchResult]:
         """
         Find and filter uploads.
         """
@@ -85,16 +85,25 @@ class UploadsData(DataLayerPiece):
         for row in results:
             uploads.append(row.Upload.to_dict())
 
-        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
+        if paginate:
+            uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
 
-        return UploadSearchResult(
-            items=uploads,
-            found_count=found_count,
-            total_count=total_count,
-            page=page,
-            page_count=int(math.ceil(found_count / per_page)),
-            per_page=per_page,
-        )
+            return UploadSearchResult(
+                items=uploads,
+                found_count=found_count,
+                total_count=total_count,
+                page=page,
+                page_count=int(math.ceil(found_count / per_page)),
+                per_page=per_page,
+            )
+
+        return [
+            UploadMinimal(**upload)
+            for upload in await apply_transforms(
+                uploads, [AttachUserTransform(self._db)]
+            )
+        ]
+
 
     async def create(
         self,

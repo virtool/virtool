@@ -34,6 +34,7 @@ class UploadsView(PydanticView):
         per_page: conint(ge=1, le=100) = 25,
         upload_type: Optional[str] = None,
         ready: Optional[bool] = None,
+        paginate: Optional[bool] = False
     ) -> r200[List[GetUploadsResponse]]:
         """
         List uploads.
@@ -45,8 +46,11 @@ class UploadsView(PydanticView):
         """
 
         uploads = await get_data_from_req(self.request).uploads.find(
-            user, page, per_page, upload_type, ready
+            user, page, per_page, upload_type, ready, paginate
         )
+
+        if paginate:
+            return json_response(uploads)
 
         return json_response({"documents": uploads})
 
