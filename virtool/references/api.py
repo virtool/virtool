@@ -1,49 +1,31 @@
-import asyncio
-from asyncio.tasks import gather
-from typing import Union, List
+from typing import Union, List, Optional
 
-import aiohttp
-from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent, HTTPConflict
+from aiohttp.web_exceptions import (
+    HTTPBadGateway,
+    HTTPBadRequest,
+    HTTPConflict,
+)
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.enums import Permission
+from virtool_core.models.otu import OTU
 
-import virtool.history.db
-import virtool.indexes.db
-import virtool.mongo.utils
-import virtool.otus.db
-import virtool.references.db
-import virtool.utils
-from virtool.api.response import InsufficientRights, NotFound, json_response
-from virtool.api.utils import compose_regex_query, paginate
+from virtool.api.response import NotFound, json_response
+from virtool.data.errors import (
+    ResourceNotFoundError,
+    ResourceRemoteError,
+    ResourceConflictError,
+    ResourceError,
+)
 from virtool.data.utils import get_data_from_req
-from virtool.errors import DatabaseError, GitHubError
-from virtool.github import format_release
-from virtool.history.oas import ListHistoryResponse
-from virtool.http.routes import Routes
 from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
-from virtool.jobs.utils import JobRights
-from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_new_id
-from virtool.pg.utils import get_row
-from virtool.references.db import (
-    attach_computed,
-    compose_base_find_query,
-    create_clone,
-    create_document,
-    create_import,
-    create_remote,
-    get_manifest,
-    get_official_installed,
-)
-from virtool.references.tasks import (
-    CloneReferenceTask,
-    DeleteReferenceTask,
-    ImportReferenceTask,
-    RemoteReferenceTask,
-    UpdateRemoteReferenceTask,
-)
+
+from virtool.otus.oas import CreateOTURequest
+
+
+from virtool.otus.oas import FindOTUsResponse
 from virtool.references.oas import (
     CreateReferenceSchema,
     EditReferenceSchema,
@@ -51,20 +33,18 @@ from virtool.references.oas import (
     ReferenceRightsSchema,
     CreateReferenceUsersSchema,
     CreateReferenceResponse,
-    GetReferencesResponse,
+    FindReferencesResponse,
     ReferenceResponse,
     ReferenceReleaseResponse,
     CreateReferenceUpdateResponse,
     GetReferenceUpdateResponse,
-    ReferenceOTUResponse,
     CreateReferenceIndexesResponse,
     ReferenceGroupsResponse,
     CreateReferenceGroupResponse,
     ReferenceGroupResponse,
     ReferenceUsersSchema,
+    ReferenceHistoryResponse,
 )
-from virtool.uploads.models import Upload
-from virtool.users.db import AttachUserTransform, extend_user
 
 routes = Routes()
 
@@ -78,49 +58,24 @@ RIGHTS_SCHEMA = {
 
 @routes.view("/refs")
 class ReferencesView(PydanticView):
-    async def get(self) -> r200[GetReferencesResponse]:
+    async def get(self, find: Optional[str]) -> r200[FindReferencesResponse]:
         """
         Find references.
 
         Status Codes:
             200: Successful operation
         """
-        db = self.request.app["db"]
 
-        term = self.request.query.get("find")
+        # Missing test
 
-        db_query = {}
-
-        if term:
-            db_query = compose_regex_query(term, ["name", "data_type"])
-
-        base_query = compose_base_find_query(
+        search_result = get_data_from_req(self.request).references.find(
+            find,
             self.request["client"].user_id,
             self.request["client"].administrator,
             self.request["client"].groups,
         )
 
-        data = await paginate(
-            db.references,
-            db_query,
-            self.request.query,
-            sort="name",
-            base_query=base_query,
-            projection=virtool.references.db.PROJECTION,
-        )
-
-        await apply_transforms(data["documents"], [AttachUserTransform(db)])
-
-        documents, official_installed = await gather(
-            gather(
-                *[virtool.references.db.processor(db, d) for d in data["documents"]]
-            ),
-            get_official_installed(db),
-        )
-
-        return json_response(
-            {**data, "documents": documents, "official_installed": official_installed}
-        )
+        return json_response(search_result)
 
     @policy(PermissionsRoutePolicy(Permission.create_ref))
     async def post(
@@ -137,116 +92,33 @@ class ReferencesView(PydanticView):
             403: Not permitted
             502: Could not reach GitHub
         """
-        db = self.request.app["db"]
-        pg = self.request.app["pg"]
-
-        settings = await get_data_from_req(self.request).settings.get_all()
-
-        user_id = self.request["client"].user_id
-
-        if data.clone_from:
-            if not await db.references.count_documents({"_id": data.clone_from}):
-                raise HTTPBadRequest(text="Source reference does not exist")
-
-            manifest = await get_manifest(db, data.clone_from)
-
-            document = await create_clone(
-                db, settings, data.name, data.clone_from, data.description, user_id
+        # Missing remote_from and cloned_from tests
+        try:
+            document = await get_data_from_req(self.request).references.create(
+                data, self.request["client"].user_id
             )
+        except ResourceNotFoundError as err:
+            if "Source reference does not exist" in str(err):
+                raise HTTPBadRequest(text=str(err))
+            if "File not found" in str(err):
+                raise NotFound(str(err))
+        except ResourceRemoteError as err:
+            if "Could not reach GitHub" in str(err):
+                raise HTTPBadGateway(text=str(err))
+            if "Could not retrieve latest GitHub release" in str(err):
+                raise HTTPBadGateway(text=str(err))
 
-            context = {
-                "created_at": document["created_at"],
-                "manifest": manifest,
-                "ref_id": document["_id"],
-                "user_id": user_id,
-            }
+        headers = {"Location": f"/refs/{document.id}"}
 
-            task = await get_data_from_req(self.request).tasks.create(CloneReferenceTask, context=context)
-
-            document["task"] = {"id": task["id"]}
-
-        elif data.import_from:
-            if not await get_row(pg, Upload, ("name_on_disk", data.import_from)):
-                raise NotFound("File not found")
-
-            path = self.request.app["config"].data_path / "files" / data.import_from
-
-            document = await create_import(
-                db, pg, settings, data.name, data.description, data.import_from, user_id
-            )
-
-            context = {
-                "created_at": document["created_at"],
-                "path": str(path),
-                "ref_id": document["_id"],
-                "user_id": user_id,
-            }
-
-            task = await get_data_from_req(self.request).tasks.create(ImportReferenceTask, context=context)
-
-            document["task"] = {"id": task.id}
-
-        elif data.remote_from:
-            try:
-                release = await virtool.github.get_release(
-                    self.request.app["config"],
-                    self.request.app["client"],
-                    data.remote_from,
-                    release_id=data.release_id,
-                )
-
-            except aiohttp.ClientConnectionError:
-                raise HTTPBadGateway(text="Could not reach GitHub")
-
-            except GitHubError as err:
-                if "404" in str(err):
-                    raise HTTPBadGateway(
-                        text="Could not retrieve latest GitHub release"
-                    )
-
-                raise
-
-            release = format_release(release)
-
-            document = await create_remote(
-                db, settings, release, data.remote_from, user_id
-            )
-
-            context = {
-                "release": release,
-                "ref_id": document["_id"],
-                "created_at": document["created_at"],
-                "user_id": user_id,
-            }
-
-            task = await get_data_from_req(self.request).tasks.create(RemoteReferenceTask, context=context)
-
-            document["task"] = {"id": task["id"]}
-
-        else:
-            document = await create_document(
-                db,
-                settings,
-                data.name,
-                data.organism,
-                data.description,
-                data.data_type,
-                user_id=self.request["client"].user_id,
-            )
-
-        await db.references.insert_one(document)
-
-        headers = {"Location": f"/refs/{document['_id']}"}
-
-        return json_response(
-            await attach_computed(db, document), headers=headers, status=201
-        )
+        return json_response(document, headers=headers, status=201)
 
 
 @routes.view("/refs/{ref_id}")
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
-    async def get(self) -> Union[r200[ReferenceResponse], r403, r404]:
+    async def get(
+        self, ref_id: Optional[str]
+    ) -> Union[r200[ReferenceResponse], r403, r404]:
         """
         Get a reference.
 
@@ -258,19 +130,19 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
-        db = self.request.app["db"]
-
-        ref_id = self.request.match_info["ref_id"]
-
-        document = await db.references.find_one(ref_id)
-
-        if not document:
+        # Missing test
+        try:
+            document = get_data_from_req(self.request).references.get(ref_id)
+        except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(await attach_computed(db, document))
+        return json_response(document)
 
     async def patch(
-        self, data: EditReferenceSchema
+        self,
+        ref_id: str,
+        /,
+        data: EditReferenceSchema,
     ) -> Union[r200[ReferenceResponse], r403, r404]:
         """
         Update a reference.
@@ -283,33 +155,18 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
-        db = self.request.app["db"]
-
-        data = data.dict(exclude_unset=True)
-
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await virtool.mongo.utils.id_exists(db.references, ref_id):
+        try:
+            document = await get_data_from_req(self.request).references.update(
+                ref_id, data, self.request
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
-
-        targets = data.get("targets")
-
-        if targets:
-            names = [t["name"] for t in targets]
-
-            if len(names) != len(set(names)):
-                raise HTTPBadRequest(
-                    text="The targets field may not contain duplicate names"
-                )
-
-        document = await virtool.references.db.edit(db, ref_id, data)
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
 
         return json_response(document)
 
-    async def delete(self) -> Union[r202, r403, r404]:
+    async def delete(self, ref_id: str, /) -> Union[r202, r403, r404]:
         """
         Delete a reference.
 
@@ -322,32 +179,22 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
-        db = self.request.app["db"]
 
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await virtool.mongo.utils.id_exists(db.references, ref_id):
+        try:
+            task = await get_data_from_req(self.request).references.remove(
+                ref_id, self.request["client"].user_id, self.request
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        if not await virtool.references.db.check_right(self.request, ref_id, "remove"):
-            raise InsufficientRights()
-
-        user_id = self.request["client"].user_id
-
-        context = {"ref_id": ref_id, "user_id": user_id}
-
-        task = await get_data_from_req(self.request).tasks.create(DeleteReferenceTask, context=context)
-
-        await db.references.delete_one({"_id": ref_id})
-
-        headers = {"Content-Location": f"/tasks/{task['id']}"}
+        headers = {"Content-Location": f"/tasks/{task.id}"}
 
         return json_response(task, 202, headers)
 
 
 @routes.view("/refs/{ref_id}/release")
 class ReferenceReleaseView(PydanticView):
-    async def get(self) -> r200[ReferenceReleaseResponse]:
+    async def get(self, ref_id: str, /) -> r200[ReferenceReleaseResponse]:
         """
         Get latest update.
 
@@ -360,33 +207,25 @@ class ReferenceReleaseView(PydanticView):
             200: Successful operation
 
         """
-        db = self.request.app["db"]
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await virtool.mongo.utils.id_exists(db.references, ref_id):
-            raise NotFound()
-
-        if not await db.references.count_documents(
-            {"_id": ref_id, "remotes_from": {"$exists": True}}
-        ):
-            raise HTTPBadRequest(text="Not a remote reference")
-
         try:
-            release = await virtool.references.db.fetch_and_update_release(
-                self.request.app, ref_id
+            release = await get_data_from_req(self.request).references.get_release(
+                ref_id, self.request.app
             )
-        except aiohttp.ClientConnectorError:
-            raise HTTPBadGateway(text="Could not reach GitHub")
-
-        if release is None:
-            raise HTTPBadGateway(text="Release repository does not exist on GitHub")
-
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
+        except ResourceRemoteError as err:
+            if "Could not reach GitHub" in str(err):
+                raise HTTPBadGateway(text=str(err))
+            if "Release repository does not exist on GitHub" in str(err):
+                raise HTTPBadGateway(text=str(err))
         return json_response(release)
 
 
 @routes.view("/refs/{ref_id}/updates")
 class ReferenceUpdatesView(PydanticView):
-    async def get(self) -> r200[GetReferenceUpdateResponse]:
+    async def get(self, ref_id: str, /) -> r200[GetReferenceUpdateResponse]:
         """
         List updates.
 
@@ -395,22 +234,18 @@ class ReferenceUpdatesView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        db = self.request.app["db"]
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await virtool.mongo.utils.id_exists(db.references, ref_id):
+        try:
+            updates = await get_data_from_req(self.request).references.get_updates(
+                ref_id
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        updates = await virtool.mongo.utils.get_one_field(
-            db.references, "updates", ref_id
-        )
+        return json_response(updates)
 
-        if updates is not None:
-            updates.reverse()
-
-        return json_response(updates or [])
-
-    async def post(self) -> Union[r201[CreateReferenceUpdateResponse], r403, r404]:
+    async def post(
+        self, ref_id: str, /
+    ) -> Union[r201[CreateReferenceUpdateResponse], r403, r404]:
         """
         Update a reference.
 
@@ -421,49 +256,30 @@ class ReferenceUpdatesView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-
-        ref_id = self.request.match_info["ref_id"]
-        user_id = self.request["client"].user_id
-
-        if not await virtool.mongo.utils.id_exists(db.references, ref_id):
-            raise NotFound()
-
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
-
-        release = await virtool.mongo.utils.get_one_field(
-            db.references, "release", ref_id
-        )
-
-        if release is None:
-            raise HTTPBadRequest(text="Target release does not exist")
-
-        created_at = virtool.utils.timestamp()
-
-        context = {
-            "created_at": created_at,
-            "ref_id": ref_id,
-            "release": await virtool.mongo.utils.get_one_field(
-                db.references, "release", ref_id
-            ),
-            "user_id": user_id,
-        }
-
-        task = await get_data_from_req(self.request).tasks.create(UpdateRemoteReferenceTask, context=context)
-
-        release, update_subdocument = await asyncio.shield(
-            virtool.references.db.update(
-                self.request, created_at, task["id"], ref_id, release, user_id
+        try:
+            sub_document = await get_data_from_req(
+                self.request
+            ).references.create_update(
+                ref_id, self.request["client"].user_id, self.request
             )
-        )
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceError as err:
+            raise HTTPBadRequest(text=str(err))
 
-        return json_response(update_subdocument, status=201)
+        return json_response(sub_document, status=201)
 
 
 @routes.view("/refs/{ref_id}/otus")
-class ReferenceOtusView(PydanticView):
-    async def get(self) -> Union[r200[ReferenceOTUResponse], r404]:
+class ReferenceOTUsView(PydanticView):
+    async def get(
+        self,
+        find: Optional[str],
+        verified: Optional[bool],
+        names: Optional[Union[bool, str]],
+        ref_id: str,
+        /,
+    ) -> Union[r200[FindOTUsResponse], r404]:
         """
         Find OTUs.
 
@@ -473,27 +289,39 @@ class ReferenceOtusView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        db = self.request.app["db"]
-
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await virtool.mongo.utils.id_exists(db.references, ref_id):
+        # Missing test
+        try:
+            data = await get_data_from_req(self.request).references.get_otus(
+                find, verified, names, ref_id, self.request.query
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        term = self.request.query.get("find")
-        verified = self.request.query.get("verified")
-        names = self.request.query.get("names", False)
-
-        data = await virtool.otus.db.find(
-            db, names, term, self.request.query, verified, ref_id
-        )
-
         return json_response(data)
+
+    async def post(
+        self, ref_id: str, /, data: CreateOTURequest
+    ) -> Union[r201[OTU], r400, r403, r404]:
+        """
+        Create an OTU.
+
+        """
+        try:
+            otu = await get_data_from_req(self.request).references.create_otus(
+                ref_id, data, self.request, self.request["client"].user_id
+            )
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceError as err:
+            raise HTTPBadRequest(text=str(err))
+
+        return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
 @routes.view("/refs/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
-    async def get(self) -> Union[r200[ListHistoryResponse], r404]:
+    async def get(
+        self, unbuilt: Optional[str], ref_id: str, /
+    ) -> Union[r200[ReferenceHistoryResponse], r404]:
         """
         List history.
 
@@ -503,31 +331,19 @@ class ReferenceHistoryView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        db = self.request.app["db"]
-
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await db.references.count_documents({"_id": ref_id}):
+        # Missing test
+        try:
+            data = await get_data_from_req(self.request).references.get_history(
+                ref_id, unbuilt, self.request.query
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        base_query = {"reference.id": ref_id}
-
-        unbuilt = self.request.query.get("unbuilt")
-
-        if unbuilt == "true":
-            base_query["index.id"] = "unbuilt"
-
-        elif unbuilt == "false":
-            base_query["index.id"] = {"$ne": "unbuilt"}
-
-        data = await virtool.history.db.find(db, self.request.query, base_query)
-
         return json_response(data)
 
 
 @routes.view("/refs/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
-    async def get(self) -> Union[r200[ListIndexesResponse], r404]:
+    async def get(self, ref_id: str, /) -> Union[r200[ListIndexesResponse], r404]:
         """
         List indexes.
 
@@ -537,19 +353,18 @@ class ReferenceIndexesView(PydanticView):
             200: Successful operation
             404: Not found
         """
-
-        db = self.request.app["db"]
-
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await virtool.mongo.utils.id_exists(db.references, ref_id):
+        try:
+            data = await get_data_from_req(self.request).references.find_indexes(
+                ref_id, self.request.query
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        data = await virtool.indexes.db.find(db, self.request.query, ref_id=ref_id)
 
         return json_response(data)
 
-    async def post(self) -> Union[r201[CreateReferenceIndexesResponse], r403, r404]:
+    async def post(
+        self, ref_id: str, /
+    ) -> Union[r201[CreateReferenceIndexesResponse], r403, r404]:
         """
         Create an index.
 
@@ -564,67 +379,32 @@ class ReferenceIndexesView(PydanticView):
             404: Not found
 
         """
-        db = self.request.app["db"]
-
-        ref_id = self.request.match_info["ref_id"]
-
-        reference = await db.references.find_one(ref_id, ["groups", "users"])
-
-        if reference is None:
+        try:
+            document = await get_data_from_req(self.request).references.create_index(
+                ref_id, self.request, self.request["client"].user_id
+            )
+        except ResourceNotFoundError:
             raise NotFound()
+        except ResourceConflictError as err:
+            raise HTTPConflict(text=str(err))
+        except ResourceError as err:
+            if "There are unverified OTUs" in str(err):
+                raise HTTPBadRequest(text=str(err))
+            if "There are no unbuilt changes" in str(err):
+                raise HTTPBadRequest(text=str(err))
 
-        if not await virtool.references.db.check_right(self.request, reference, "build"):
-            raise InsufficientRights()
-
-        if await db.indexes.count_documents(
-            {"reference.id": ref_id, "ready": False}, limit=1
-        ):
-            raise HTTPConflict(text="Index build already in progress")
-
-        if await db.otus.count_documents(
-            {"reference.id": ref_id, "verified": False}, limit=1
-        ):
-            raise HTTPBadRequest(text="There are unverified OTUs")
-
-        if not await db.history.count_documents(
-            {"reference.id": ref_id, "index.id": "unbuilt"}, limit=1
-        ):
-            raise HTTPBadRequest(text="There are no unbuilt changes")
-
-        user_id = self.request["client"].user_id
-
-        job_id = await get_new_id(db.jobs)
-
-        document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
-
-        rights = JobRights()
-        rights.indexes.can_modify(document["_id"])
-        rights.references.can_read(ref_id)
-
-        await get_data_from_req(self.request).jobs.create(
-            "build_index",
-            {
-                "ref_id": ref_id,
-                "user_id": user_id,
-                "index_id": document["_id"],
-                "index_version": document["version"],
-                "manifest": document["manifest"],
-            },
-            user_id,
-            rights,
-            job_id=job_id,
-        )
-
-        headers = {"Location": f"/indexes/{document['_id']}"}
+        headers = {"Location": f"/indexes/{document.id}"}
 
         return json_response(
-            await virtool.indexes.db.processor(db, document), status=201, headers=headers
+            document,
+            status=201,
+            headers=headers,
         )
 
 
 @routes.view("/refs/{ref_id}/groups")
 class ReferenceGroupsView(PydanticView):
-    async def get(self) -> Union[r200[ReferenceGroupsResponse], r404]:
+    async def get(self, ref_id: str, /) -> Union[r200[ReferenceGroupsResponse], r404]:
         """
         List groups.
 
@@ -634,20 +414,16 @@ class ReferenceGroupsView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        db = self.request.app["db"]
-        ref_id = self.request.match_info["ref_id"]
-
-        if not await db.references.count_documents({"_id": ref_id}):
+        # Missing test
+        try:
+            groups = get_data_from_req(self.request).references.find_groups(ref_id)
+        except ResourceNotFoundError:
             raise NotFound()
-
-        groups = await virtool.mongo.utils.get_one_field(
-            db.references, "groups", ref_id
-        )
 
         return json_response(groups)
 
     async def post(
-        self, data: CreateReferenceGroupsSchema
+        self, ref_id: str, /, data: CreateReferenceGroupsSchema
     ) -> Union[r201[CreateReferenceGroupResponse], r400, r403, r404]:
         """
         Add a group.
@@ -660,41 +436,28 @@ class ReferenceGroupsView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-        ref_id = self.request.match_info["ref_id"]
-        data = data.dict(exclude_none=True)
-
-        document = await db.references.find_one(ref_id, ["groups", "users"])
-
-        if document is None:
-            raise NotFound()
-
-        if not await virtool.references.db.check_right(
-            self.request, document, "modify"
-        ):
-            raise InsufficientRights()
-
         try:
-            subdocument = await virtool.references.db.add_group_or_user(
-                db, ref_id, "groups", data
+            subdocument = await get_data_from_req(self.request).references.create_group(
+                ref_id, data, self.request
             )
-        except DatabaseError as err:
-            if "already exists" in str(err):
-                raise HTTPBadRequest(text="Group already exists")
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceConflictError as err:
+            if "Group already exists" in str(err):
+                raise HTTPBadRequest(text=str(err))
+            if "Group does not exist" in str(err):
+                raise HTTPBadRequest(text=str(err))
 
-            if "does not exist" in str(err):
-                raise HTTPBadRequest(text="Group does not exist")
-
-            raise
-
-        headers = {"Location": f"/refs/{ref_id}/groups/{subdocument['id']}"}
+        headers = {"Location": f"/refs/{ref_id}/groups/{subdocument.id}"}
 
         return json_response(subdocument, headers=headers, status=201)
 
 
 @routes.view("/refs/{ref_id}/groups/{group_id}")
 class ReferenceGroupView(PydanticView):
-    async def get(self) -> Union[r200[ReferenceGroupResponse], r404]:
+    async def get(
+        self, ref_id: str, group_id: str, /
+    ) -> Union[r200[ReferenceGroupResponse], r404]:
         """
         Get a group.
 
@@ -704,24 +467,22 @@ class ReferenceGroupView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        db = self.request.app["db"]
-        ref_id = self.request.match_info["ref_id"]
-        group_id = self.request.match_info["group_id"]
-
-        document = await db.references.find_one(
-            {"_id": ref_id, "groups.id": group_id}, ["groups", "users"]
-        )
-
-        if document is None:
+        # Missing test
+        try:
+            group = await get_data_from_req(self.request).references.get_group(
+                ref_id, group_id
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        if document is not None:
-            for group in document.get("groups", []):
-                if group["id"] == group_id:
-                    return json_response(group)
+        return json_response(group)
 
     async def patch(
-        self, data: ReferenceRightsSchema
+        self,
+        ref_id: str,
+        group_id: str,
+        /,
+        data: ReferenceRightsSchema,
     ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
         """
         Update a group.
@@ -733,28 +494,16 @@ class ReferenceGroupView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-        data = data.dict(exclude_unset=True)
-        ref_id = self.request.match_info["ref_id"]
-        group_id = self.request.match_info["group_id"]
-
-        document = await db.references.find_one(
-            {"_id": ref_id, "groups.id": group_id}, ["groups", "users"]
-        )
-
-        if document is None:
+        try:
+            subdocument = await get_data_from_req(self.request).references.update_group(
+                data, ref_id, group_id, self.request
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
-
-        subdocument = await virtool.references.db.edit_group_or_user(
-            db, ref_id, group_id, "groups", data
-        )
 
         return json_response(subdocument)
 
-    async def delete(self) -> Union[r204, r403, r404]:
+    async def delete(self, ref_id: str, group_id: str, /) -> Union[r204, r403, r404]:
         """
         Remove a group.
 
@@ -765,29 +514,18 @@ class ReferenceGroupView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-        ref_id = self.request.match_info["ref_id"]
-        group_id = self.request.match_info["group_id"]
-
-        document = await db.references.find_one(
-            {"_id": ref_id, "groups.id": group_id}, ["groups", "users"]
-        )
-
-        if document is None:
+        try:
+            await get_data_from_req(self.request).references.delete_group(
+                ref_id, group_id, self.request
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
-
-        await virtool.references.db.delete_group_or_user(db, ref_id, group_id, "groups")
-
-        raise HTTPNoContent
 
 
 @routes.view("/refs/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
     async def post(
-        self, data: CreateReferenceUsersSchema
+        self, ref_id: str, /, data: CreateReferenceUsersSchema
     ) -> Union[r201[List[ReferenceUsersSchema]], r400, r403, r404]:
         """
         Add a user.
@@ -800,42 +538,26 @@ class ReferenceUsersView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-        data = data.dict(exclude_none=True)
-        ref_id = self.request.match_info["ref_id"]
-
-        document = await db.references.find_one(ref_id, ["groups", "users"])
-
-        if document is None:
-            raise NotFound()
-
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
-
         try:
-            subdocument = await virtool.references.db.add_group_or_user(
-                db, ref_id, "users", data
+            subdocument = await get_data_from_req(self.request).references.create_user(
+                data, ref_id, self.request
             )
-        except DatabaseError as err:
-            if "already exists" in str(err):
-                raise HTTPBadRequest(text="User already exists")
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceConflictError as err:
+            if "User already exists" in str(err):
+                raise HTTPBadRequest(text=str(err))
+            if "User does not exist" in str(err):
+                raise HTTPBadRequest(text=str(err))
+        headers = {"Location": f"/refs/{ref_id}/users/{subdocument.id}"}
 
-            if "does not exist" in str(err):
-                raise HTTPBadRequest(text="User does not exist")
-
-            raise
-
-        headers = {"Location": f"/refs/{ref_id}/users/{subdocument['id']}"}
-
-        return json_response(
-            await extend_user(db, subdocument), headers=headers, status=201
-        )
+        return json_response(subdocument, headers=headers, status=201)
 
 
 @routes.view("/refs/{ref_id}/users/{user_id}")
 class ReferenceUserView(PydanticView):
     async def patch(
-        self, data: ReferenceRightsSchema
+        self, ref_id: str, user_id: str, /, data: ReferenceRightsSchema
     ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
         """
         Update a user.
@@ -847,31 +569,16 @@ class ReferenceUserView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-        data = data.dict(exclude_unset=True)
-        ref_id = self.request.match_info["ref_id"]
-        user_id = self.request.match_info["user_id"]
-
-        document = await db.references.find_one(
-            {"_id": ref_id, "users.id": user_id}, ["groups", "users"]
-        )
-
-        if document is None:
+        try:
+            subdocument = await get_data_from_req(self.request).references.update_user(
+                data, ref_id, user_id, self.request
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
+        return json_response(subdocument)
 
-        subdocument = await virtool.references.db.edit_group_or_user(
-            db, ref_id, user_id, "users", data
-        )
-
-        if subdocument is None:
-            raise NotFound()
-
-        return json_response(await extend_user(db, subdocument))
-
-    async def delete(self) -> Union[r204, r403, r404]:
+    async def delete(self, ref_id: str, user_id: str, /) -> Union[r204, r403, r404]:
         """
         Remove a user.
 
@@ -882,20 +589,9 @@ class ReferenceUserView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-        ref_id = self.request.match_info["ref_id"]
-        user_id = self.request.match_info["user_id"]
-
-        document = await db.references.find_one(
-            {"_id": ref_id, "users.id": user_id}, ["groups", "users"]
-        )
-
-        if document is None:
+        try:
+            await get_data_from_req(self.request).references.delete_user(
+                ref_id, user_id, self.request
+            )
+        except ResourceNotFoundError:
             raise NotFound()
-
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
-
-        await virtool.references.db.delete_group_or_user(db, ref_id, user_id, "users")
-
-        raise HTTPNoContent

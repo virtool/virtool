@@ -324,7 +324,7 @@ class DeleteReferenceTask(Task):
             await run_in_thread(shutil.rmtree, path / dir_name, True)
 
         await get_data_from_app(self.app).tasks.update(
-             self.id, progress=tracker.step_completed, step="remove_directory"
+            self.id, progress=tracker.step_completed, step="remove_directory"
         )
 
     async def remove_indexes(self):
@@ -421,7 +421,9 @@ class UpdateRemoteReferenceTask(Task):
         except (aiohttp.ClientConnectorError, GitHubError):
             return await self.error("Could not download reference data")
 
-        await get_data_from_app(self.app).tasks.update(self.id, step="download_and_extract")
+        await get_data_from_app(self.app).tasks.update(
+            self.id, step="download_and_extract"
+        )
 
     async def update_otus(self):
         update_data = self.intermediate["update_data"]
@@ -551,9 +553,12 @@ class CleanReferencesTask(Task):
             if latest_update["ready"]:
                 continue
 
-            installed_version = VersionInfo.parse(
-                reference["installed"]["name"].lstrip("v")
-            )
+            try:
+                raw_version = reference["installed"]["name"].lstrip("v")
+            except (KeyError, TypeError):
+                continue
+
+            installed_version = VersionInfo.parse(raw_version)
 
             latest_update_version = VersionInfo.parse(latest_update["name"].lstrip("v"))
 

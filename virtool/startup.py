@@ -47,6 +47,7 @@ from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.otus.data import OTUData
 from virtool.pg.testing import create_test_database
+from virtool.references.data import ReferencesData
 from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
@@ -137,6 +138,7 @@ async def startup_data(app: App):
         GroupsData(app["db"]),
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
+        ReferencesData(app["db"], app["pg"], app["config"], app["client"]),
         HmmData(app["client"], app["config"], app["db"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),

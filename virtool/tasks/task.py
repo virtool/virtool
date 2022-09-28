@@ -7,6 +7,7 @@ import virtool.tasks.models
 from virtool.utils import get_temp_dir, run_in_thread
 from virtool.data.utils import get_data_from_app
 from virtool_core.models.task import Task as TaskModel
+
 logger = getLogger("task")
 
 
@@ -45,7 +46,9 @@ class Task:
 
             self.step = func
 
-            await get_data_from_app(self.app).tasks.update(self.id, step=self.step.__name__)
+            await get_data_from_app(self.app).tasks.update(
+                self.id, step=self.step.__name__
+            )
 
             logger.info("Starting task step '%s.%s'", self.task_type, func.__name__)
 

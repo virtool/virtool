@@ -86,23 +86,55 @@ class SamplesData(DataLayerPiece):
 
         search_query = {"$and": [base_query, query]}
 
-        cursor = self._db.samples.find(
-            search_query, LIST_PROJECTION, sort=[("created_at", -1)]
-        )
+        dict_projection = {item: True for item in LIST_PROJECTION}
 
-        found_count, total_count = await asyncio.gather(
-            self._db.samples.count_documents(search_query),
-            self._db.samples.count_documents(base_query),
-        )
+        sort = {"created_at": -1}
+
+        skip_count = 0
 
         if page > 1:
-            cursor.skip((page - 1) * per_page)
+            skip_count = (page - 1) * per_page
+
+        async for paginate_dict in self._db.samples.aggregate(
+            [
+                {
+                    "$facet": {
+                        "total_count": [
+                            {"$count": "total_count"},
+                        ],
+                        "found_count": [
+                            {"$match": search_query},
+                            {"$count": "found_count"},
+                        ],
+                        "data": [
+                            {
+                                "$match": search_query,
+                            },
+                            {"$sort": sort},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "data": dict_projection,
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0]
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0]
+                        },
+                    }
+                },
+            ],
+        ):
+            data = paginate_dict["data"]
+            found_count = paginate_dict.get("found_count", 0)
+            total_count = paginate_dict.get("total_count", 0)
 
         documents = await apply_transforms(
-            [
-                base_processor(document)
-                for document in await asyncio.shield(cursor.to_list(per_page))
-            ],
+            [base_processor(document) for document in data],
             [AttachLabelsTransform(self._pg), AttachUserTransform(self._db)],
         )
 
