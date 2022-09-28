@@ -5,7 +5,7 @@ from virtool_core.models.account import AccountSettings, APIKey
 
 import virtool.utils
 from virtool.account.api import API_KEY_PROJECTION
-from virtool.account.db import compose_password_update, ACCOUNT_PROJECTION
+from virtool.account.db import compose_password_update
 from virtool.account.oas import (
     EditSettingsSchema,
     CreateKeysSchema,
@@ -17,7 +17,7 @@ from virtool.account.oas import (
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
-from virtool.users.db import validate_credentials
+from virtool.users.db import validate_credentials, fetch_complete_user
 from virtool.users.sessions import create_reset_code, replace_session
 from virtool.users.utils import limit_permissions
 
@@ -46,11 +46,17 @@ class AccountData:
         :param user_id: the user ID
         :return: the user account
         """
-        document = await self._db.users.find_one(user_id, PROJECTION)
-
-        document["primary_group"] = {"id": document["primary_group"]}
-
-        return Account(**document)
+        return Account(
+            **{
+                **(await fetch_complete_user(self._db, user_id)).dict(),
+                "settings": {
+                    "quick_analyze_workflow": "nuvs",
+                    "show_ids": False,
+                    "show_versions": False,
+                    "skip_quick_analyze_dialog": False,
+                },
+            }
+        )
 
     async def edit(self, user_id: str, data: EditAccountSchema) -> Account:
         """
@@ -65,7 +71,6 @@ class AccountData:
         data_dict = data.dict(exclude_unset=True)
 
         if "password" in data_dict:
-
             if not await validate_credentials(
                 self._db, user_id, data_dict["old_password"] or ""
             ):
@@ -76,18 +81,12 @@ class AccountData:
         if "email" in data_dict:
             update["email"] = data_dict["email"]
 
-        if update:
-            document = await self._db.users.find_one_and_update(
-                {"_id": user_id},
-                {"$set": update},
-                projection=ACCOUNT_PROJECTION,
-            )
-        else:
-            document = await self._db.users.find_one(user_id, PROJECTION)
+        await self._db.users.update_one(
+            {"_id": user_id},
+            {"$set": update},
+        )
 
-        document["primary_group"] = {"id": document["primary_group"]}
-
-        return Account(**document)
+        return await self.get(user_id)
 
     async def get_settings(self, query_field: str, user_id: str) -> AccountSettings:
         """

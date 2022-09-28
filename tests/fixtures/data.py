@@ -15,6 +15,7 @@ from virtool.jobs.client import DummyJobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
+from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.settings.data import SettingsData
 from virtool.subtractions.data import SubtractionsData
@@ -33,6 +34,7 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
         GroupsData(dbi),
         SettingsData(dbi),
         HistoryData(config.data_path, dbi),
+        ReferencesData(dbi, pg, config, mocker.Mock(spec=ClientSession)),
         HmmData(mocker.Mock(spec=ClientSession), config, dbi),
         IndexData(dbi, config, pg),
         LabelsData(dbi, pg),

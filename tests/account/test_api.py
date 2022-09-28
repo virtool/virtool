@@ -13,32 +13,6 @@ async def test_get(snapshot, spawn_client, static_time):
     assert resp.status == 200
     assert await resp.json() == snapshot
 
-    assert await resp.json() == {
-        "groups": [],
-        "handle": "bob",
-        "id": "test",
-        "administrator": False,
-        "b2c": None,
-        "b2c_display_name": None,
-        "b2c_family_name": None,
-        "b2c_given_name": None,
-        "b2c_oid": None,
-        "email": None,
-        "force_reset": False,
-        "last_password_change": static_time.iso,
-        "permissions": {p.value: False for p in Permission},
-        "primary_group": {
-            "id": "technician",
-            "name": "technician",
-        },
-        "settings": {
-            "quick_analyze_workflow": "pathoscope_bowtie",
-            "show_ids": True,
-            "show_versions": True,
-            "skip_quick_analyze_dialog": True,
-        },
-    }
-
 
 @pytest.mark.parametrize(
     "body,status",

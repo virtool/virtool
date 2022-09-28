@@ -7,6 +7,8 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
+from pydantic import Field
+
 from virtool.api.response import InvalidQuery, json_response, NotFound
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
@@ -40,13 +42,18 @@ class UploadsView(PydanticView):
             200: Successful operation
         """
 
-        uploads = await get_data_from_req(self.request).uploads.find(user, upload_type, ready)
+        uploads = await get_data_from_req(self.request).uploads.find(
+            user, upload_type, ready
+        )
 
         return json_response(uploads)
 
     @policy(PermissionsRoutePolicy(Permission.upload_file))
     async def post(
-        self, name: str, upload_type: str, reserved: Optional[bool] = False
+        self,
+        name: str,
+        upload_type: str = Field(alias="type"),
+        reserved: Optional[bool] = False,
     ) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
         """
         Upload a file.

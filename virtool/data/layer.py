@@ -10,6 +10,7 @@ from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
+from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.settings.data import SettingsData
 from virtool.subtractions.data import SubtractionsData
@@ -33,6 +34,7 @@ class DataLayer:
     groups: GroupsData
     settings: SettingsData
     history: HistoryData
+    references: ReferencesData
     hmms: HmmData
     index: IndexData
     labels: LabelsData
@@ -50,3 +52,4 @@ class DataLayer:
         self.subtractions.bind_layer(self)
         self.blast.bind_layer(self)
         self.analyses.bind_layer(self)
+        self.references.bind_layer(self)

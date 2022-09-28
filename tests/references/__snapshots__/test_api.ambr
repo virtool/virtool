@@ -1,3 +1,587 @@
+# name: TestCreateOTU.test[True-uvloop--True][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
+      'abbreviation': '',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    <class 'dict'> {
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus',
+      'diff': <class 'dict'> {
+        '_id': 'bf1b993c',
+        'abbreviation': '',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+  ]
+---
+# name: TestCreateOTU.test[True-uvloop--True][json]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'remote': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreateOTU.test[True-uvloop--True][location]
+  'https://virtool.example.com/otus/bf1b993c'
+---
+# name: TestCreateOTU.test[True-uvloop-None-True][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
+      'abbreviation': '',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    <class 'dict'> {
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus',
+      'diff': <class 'dict'> {
+        '_id': 'bf1b993c',
+        'abbreviation': '',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+  ]
+---
+# name: TestCreateOTU.test[True-uvloop-None-True][json]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'remote': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreateOTU.test[True-uvloop-None-True][location]
+  'https://virtool.example.com/otus/bf1b993c'
+---
+# name: TestCreateOTU.test[True-uvloop-TMV-True][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
+      'abbreviation': 'TMV',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    <class 'dict'> {
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'diff': <class 'dict'> {
+        '_id': 'bf1b993c',
+        'abbreviation': 'TMV',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+  ]
+---
+# name: TestCreateOTU.test[True-uvloop-TMV-True][json]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': 'bf1b993c',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'remote': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreateOTU.test[True-uvloop-TMV-True][location]
+  'https://virtool.example.com/otus/bf1b993c'
+---
+# name: TestCreateRef.test_clone_reference[uvloop]
+  '/refs/bf1b993c'
+---
+# name: TestCreateRef.test_clone_reference[uvloop].1
+  <class 'dict'> {
+    'cloned_from': <class 'dict'> {
+      'id': 'foo',
+      'name': 'Foo',
+    },
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test 1',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'id': 1,
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreateRef.test_create[uvloop-barcode]
+  'https://virtool.example.com/refs/bf1b993c'
+---
+# name: TestCreateRef.test_create[uvloop-barcode].1
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'barcode',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': <class 'list'> [
+    ],
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreateRef.test_create[uvloop-genome]
+  'https://virtool.example.com/refs/bf1b993c'
+---
+# name: TestCreateRef.test_create[uvloop-genome].1
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreateRef.test_import_reference[uvloop]
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
+    'id': <class 'str'>,
+    'imported_from': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'name': 'reference.json.gz',
+      'name_on_disk': '1-reference.json.gz',
+      'ready': True,
+      'removed': False,
+      'removed_at': None,
+      'reserved': False,
+      'size': 102286,
+      'type': 'reference',
+      'uploaded_at': '2015-10-06T20:00:00Z',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+    },
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': '',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'id': 1,
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreateRef.test_remote_reference[uvloop]
+  '/refs/bf1b993c'
+---
+# name: TestCreateRef.test_remote_reference[uvloop].1
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'The official plant virus reference from the Virtool developers',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Plant Viruses',
+    'organism': 'Test Remote',
+    'otu_count': 0,
+    'release': <class 'dict'> {
+      'body': '
+        #### Fixed
+        - fixed uploading to GitHub releases in `.travis.yml`
+      ',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz',
+      'etag': 'W/"72075c0c338e7a482b4848f5856c9572a91da17af5e235ec9408f8a652f775dc"',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
+      'id': 11447367,
+      'name': 'v0.1.1',
+      'newer': False,
+      'published_at': '2018-06-12T19:20:57Z',
+      'retrieved_at': '2015-10-06T20:00:00Z',
+      'size': 3695872,
+    },
+    'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'id': 1,
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
 # name: test_add_group_or_user[True-uvloop-group-None]
   <class 'dict'> {
     'build': False,
@@ -27,9 +611,11 @@
 ---
 # name: test_add_group_or_user[True-uvloop-user-None]
   <class 'dict'> {
+    'administrator': False,
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'id': 'fred',
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
     'modify': True,
     'modify_otu': False,
     'remove': False,
@@ -44,7 +630,7 @@
       <class 'dict'> {
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fred',
+        'id': 'bf1b993c',
         'modify': True,
         'modify_otu': False,
         'remove': False,
@@ -52,90 +638,46 @@
     ],
   }
 ---
-# name: test_create[uvloop-barcode]
-  'https://virtool.example.com/refs/bf1b993c'
----
-# name: test_create[uvloop-barcode].1
+# name: test_create_index[True-uvloop][index]
   <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
-    'data_type': 'barcode',
-    'description': 'A bunch of viruses used for testing',
-    'groups': <class 'list'> [
-    ],
-    'id': 'bf1b993c',
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Test Viruses',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': <class 'list'> [
-      'strain',
-      'isolate',
-    ],
-    'targets': <class 'list'> [
-    ],
-    'unbuilt_change_count': 0,
+    '_id': 'fb085f7f',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'has_json': False,
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'manifest': 'manifest',
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
     'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
       'id': 'test',
     },
-    'users': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
-        'build': True,
-        'handle': 'bob',
-        'id': 'test',
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      },
-    ],
+    'version': 9,
   }
 ---
-# name: test_create[uvloop-genome]
-  'https://virtool.example.com/refs/bf1b993c'
----
-# name: test_create[uvloop-genome].1
+# name: test_create_index[True-uvloop][json]
   <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+    'change_count': 0,
     'created_at': '2015-10-06T20:00:00Z',
-    'data_type': 'genome',
-    'description': 'A bunch of viruses used for testing',
-    'groups': <class 'list'> [
-    ],
-    'id': 'bf1b993c',
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Test Viruses',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': <class 'list'> [
-      'strain',
-      'isolate',
-    ],
-    'unbuilt_change_count': 0,
+    'has_files': True,
+    'id': 'fb085f7f',
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'modified_otu_count': 0,
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
       'id': 'test',
     },
-    'users': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
-        'build': True,
-        'handle': 'bob',
-        'id': 'test',
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      },
-    ],
+    'version': 9,
   }
 ---
 # name: test_delete_group_or_user[True-uvloop-group-None]
@@ -170,12 +712,63 @@
     ],
   }
 ---
+# name: test_delete_ref[uvloop]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'ref_id': 'foo',
+      'user_id': 'test',
+    },
+    'count': 0,
+    'created_at': '2015-10-06T20:00:00Z',
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': 'delete_reference',
+    'type': 'delete_reference',
+  }
+---
+# name: test_edit[uvloop-400_duplicates-barcode]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'targets',
+      ],
+      'msg': 'The targets field may not contain duplicate names',
+      'type': 'value_error',
+    },
+  ]
+---
+# name: test_edit[uvloop-400_duplicates-genome]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'targets',
+      ],
+      'msg': 'The targets field may not contain duplicate names',
+      'type': 'value_error',
+    },
+  ]
+---
 # name: test_edit[uvloop-None-barcode][db]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'barcode',
     'description': 'This is a test reference.',
+    'groups': <class 'list'> [
+    ],
+    'internal_control': None,
     'name': 'Bar',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
     'targets': <class 'list'> [
       <class 'dict'> {
         'description': '',
@@ -188,25 +781,49 @@
     },
     'users': <class 'list'> [
       <class 'dict'> {
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
       <class 'dict'> {
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': '7cf872dc',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
     ],
   }
 ---
 # name: test_edit[uvloop-None-barcode][resp]
   <class 'dict'> {
+    'cloned_from': None,
     'contributors': <class 'list'> [
     ],
+    'created_at': '2015-10-06T20:00:00Z',
     'data_type': 'barcode',
     'description': 'This is a test reference.',
+    'groups': <class 'list'> [
+    ],
     'id': 'foo',
+    'imported_from': None,
+    'installed': None,
     'internal_control': None,
     'latest_build': None,
     'name': 'Bar',
+    'organism': 'virus',
     'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
     'targets': <class 'list'> [
       <class 'dict'> {
         'description': '',
@@ -214,7 +831,9 @@
         'required': True,
       },
     ],
+    'task': None,
     'unbuilt_change_count': 0,
+    'updating': None,
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
@@ -223,13 +842,23 @@
     'users': <class 'list'> [
       <class 'dict'> {
         'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
         'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
       <class 'dict'> {
         'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
         'handle': 'olopez',
         'id': '7cf872dc',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
     ],
   }
@@ -237,34 +866,71 @@
 # name: test_edit[uvloop-None-genome][db]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
+    'groups': <class 'list'> [
+    ],
+    'internal_control': None,
     'name': 'Bar',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
     'user': <class 'dict'> {
       'id': 'bf1b993c',
     },
     'users': <class 'list'> [
       <class 'dict'> {
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
       <class 'dict'> {
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': '7cf872dc',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
     ],
   }
 ---
 # name: test_edit[uvloop-None-genome][resp]
   <class 'dict'> {
+    'cloned_from': None,
     'contributors': <class 'list'> [
     ],
+    'created_at': '2015-10-06T20:00:00Z',
     'data_type': 'genome',
     'description': 'This is a test reference.',
+    'groups': <class 'list'> [
+    ],
     'id': 'foo',
+    'imported_from': None,
+    'installed': None,
     'internal_control': None,
     'latest_build': None,
     'name': 'Bar',
+    'organism': 'virus',
     'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': None,
     'unbuilt_change_count': 0,
+    'updating': None,
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
@@ -273,13 +939,23 @@
     'users': <class 'list'> [
       <class 'dict'> {
         'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
         'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
       <class 'dict'> {
         'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
         'handle': 'olopez',
         'id': '7cf872dc',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
       },
     ],
   }
@@ -287,6 +963,7 @@
 # name: test_edit_group_or_user[True-uvloop-group-None]
   <class 'dict'> {
     'build': False,
+    'created_at': '2015-10-06T20:00:00Z',
     'id': 'tech',
     'modify': False,
     'modify_otu': False,
@@ -299,6 +976,7 @@
     'groups': <class 'list'> [
       <class 'dict'> {
         'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 'tech',
         'modify': False,
         'modify_otu': False,
@@ -308,7 +986,8 @@
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
-        'id': 'fred',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'bf1b993c',
         'modify': False,
         'modify_otu': False,
         'remove': False,
@@ -318,8 +997,11 @@
 ---
 # name: test_edit_group_or_user[True-uvloop-user-None]
   <class 'dict'> {
+    'administrator': False,
     'build': False,
-    'id': 'fred',
+    'created_at': '2015-10-06T20:00:00Z',
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
     'modify': False,
     'modify_otu': False,
     'remove': True,
@@ -331,6 +1013,7 @@
     'groups': <class 'list'> [
       <class 'dict'> {
         'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 'tech',
         'modify': False,
         'modify_otu': False,
@@ -340,7 +1023,8 @@
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
-        'id': 'fred',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'bf1b993c',
         'modify': False,
         'modify_otu': False,
         'remove': True,
@@ -348,59 +1032,88 @@
     ],
   }
 ---
-# name: test_import_reference[uvloop]
+# name: test_get_release[uvloop-None]
   <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
-    'data_type': None,
-    'description': '',
-    'groups': <class 'list'> [
-    ],
-    'id': <class 'str'>,
-    'imported_from': <class 'dict'> {
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'name': 'reference.json.gz',
-      'name_on_disk': '1-reference.json.gz',
+    'body': '
+      #### Changed
+      - add new isolates to Cucurbit chlorotic yellows virus
+    ',
+    'content_type': 'application/gzip',
+    'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz',
+    'etag': 'W/"b7e8a7fb0fbe0cade0d6a86c9e0d4549"',
+    'filename': 'reference.json.gz',
+    'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2',
+    'id': 11449913,
+    'name': 'v0.1.2',
+    'newer': True,
+    'published_at': '2018-06-12T21:52:33Z',
+    'retrieved_at': '2018-06-14T19:52:17.465000Z',
+    'size': 3699729,
+  }
+---
+# name: test_list_updates[True-uvloop-False]
+  <class 'list'> [
+    <class 'dict'> {
+      'body': '
+        #### Fixed
+        - fixed uploading to GitHub releases in `.travis.yml`
+      ',
+      'created_at': '2018-06-14T18:37:54.242000Z',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
+      'id': 11447367,
+      'name': 'v0.1.1',
+      'newer': True,
+      'published_at': '2018-06-12T19:20:57Z',
       'ready': True,
-      'removed': False,
-      'removed_at': None,
-      'reserved': False,
-      'size': 102286,
-      'type': 'reference',
-      'uploaded_at': '2015-10-06T20:00:00Z',
-      'user': 'test',
-    },
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Test Viruses',
-    'organism': None,
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': <class 'list'> [
-      'isolate',
-      'strain',
-    ],
-    'task': <class 'dict'> {
-      'id': 1,
-    },
-    'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
-        'build': True,
-        'handle': 'bob',
-        'id': 'test',
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
+      'size': 3695872,
+      'user': <class 'dict'> {
+        'administrator': True,
+        'handle': 'igboyes',
+        'id': 'igboyes',
       },
-    ],
+    },
+  ]
+---
+# name: test_list_updates[True-uvloop-True]
+  <class 'list'> [
+  ]
+---
+# name: test_update[True-True-uvloop-None][call]
+  <class 'tuple'> (
+    <Request POST /refs/foo/updates >,
+    datetime.datetime(2015, 10, 6, 20, 0),
+    10921,
+    'foo',
+    <class 'dict'> {
+      'id': 'bar',
+    },
+    'test',
+  )
+---
+# name: test_update[True-True-uvloop-None][json]
+  <class 'dict'> {
+    'body': '
+      The release consists of a gzipped JSON file containing:
+      
+      - a `data_type` field with value _genome_
+      - an `organism` field with value _virus_
+      - the `version` name (eg. *v0.2.0*)
+      - a timestamp with the key `created_at`
+      - virus data compatible for import into Virtool v2.0.0+
+      
+      Scripts have been updated to follow upcoming convention changes in Virtool v3.0.0.
+    ',
+    'content_type': 'application/gzip',
+    'download_url': 'https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz',
+    'etag': 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
+    'filename': 'reference.json.gz',
+    'html_url': 'https://api.github.com/repos/virtool/virtool-database/releases/10742520',
+    'id': 10742520,
+    'name': 'v0.3.0',
+    'newer': True,
+    'published_at': '2018-04-26T19:35:33Z',
+    'retrieved_at': '2018-04-14T19:52:17.465000Z',
+    'size': 3709091,
   }
 ---
