@@ -4,8 +4,7 @@ from typing import Callable, Tuple
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
-from jose import ExpiredSignatureError
-from jose.exceptions import JWTClaimsError, JWTError
+from jose.exceptions import JWTError
 
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
