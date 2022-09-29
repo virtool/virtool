@@ -224,7 +224,7 @@ async def get_most_recent_change(
 
     """
     return await db.history.find_one(
-        {"otu.id": otu_id, "index.id": "unbuilt"},
+        {"otu.id": otu_id},
         MOST_RECENT_PROJECTION,
         sort=[("otu.version", -1)],
         session=session,
