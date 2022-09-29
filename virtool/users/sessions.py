@@ -102,7 +102,7 @@ async def get_session(
     if not unparsed_session:
         return None, None
 
-    session = json.loads(unparsed_session.decode())
+    session = json.loads(unparsed_session)
 
     try:
         stored_session_token = session["token"]
@@ -139,7 +139,6 @@ async def create_reset_code(
 
     session = json.loads(await redis.get(session_id))
     session_expiry = await redis.ttl(session_id)
-    print(session_expiry)
 
     session.update({"reset_code": reset_code, "reset_remember": remember, "reset_user_id": user_id})
     await redis.set(session_id, json.dumps(session, cls=CustomEncoder), expire=session_expiry)
@@ -158,7 +157,7 @@ async def clear_reset_code(redis: Redis, session_id: str):
     """
     session = json.loads(await redis.get(session_id))
     session_expiry = await redis.ttl(session_id)
-    print(session_expiry)
+
     for key in ["reset_code", "reset_remember", "reset_user_id"]:
         if key in session:
             del session[key]

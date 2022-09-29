@@ -117,7 +117,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
 
     try:
         token_claims = await validate_token(req.app, token)
-    except (JWTClaimsError, JWTError, ExpiredSignatureError):
+    except JWTError:
         raise HTTPUnauthorized(text="Invalid authorization")
 
     user = await get_data_from_req(req).users.find_or_create_b2c_user(
