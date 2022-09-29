@@ -42,7 +42,6 @@ class HMMInstallTask(Task):
         self.steps = [
             self.download,
             self.decompress,
-            self.purge,
             self.install_profiles,
             self.import_annotations,
         ]
@@ -51,6 +50,7 @@ class HMMInstallTask(Task):
 
     async def download(self):
         release = self.context["release"]
+
         await get_data_from_app(self.app).tasks.update(self.id, 0, step="download")
 
         tracker = await self.get_tracker(release["size"])
@@ -74,9 +74,6 @@ class HMMInstallTask(Task):
             decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path
         )
 
-    async def purge(self):
-        await get_data_from_app(self.app).hmms.purge()
-
     async def install_profiles(self):
         tracker = await self.get_tracker()
 
@@ -94,7 +91,9 @@ class HMMInstallTask(Task):
 
     async def import_annotations(self):
         release = self.context["release"]
-        await get_data_from_app(self.app).tasks.update(self.id, step="import_annotations")
+        await get_data_from_app(self.app).tasks.update(
+            self.id, step="import_annotations"
+        )
 
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())

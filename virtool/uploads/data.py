@@ -1,9 +1,14 @@
+import math
+import asyncio
 from logging import getLogger
 from typing import List, Optional, Union
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.upload import Upload, UploadMinimal
+
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+
+from sqlalchemy import select, update, func
+from virtool_core.models.upload import Upload, UploadSearchResult, UploadMinimal
+
 from virtool_core.utils import rm
 
 import virtool.utils
@@ -23,9 +28,11 @@ class UploadsData(DataLayerPiece):
     def __init__(self, config, db, pg):
         self._config = config
         self._db: DB = db
-        self._pg = pg
+        self._pg: AsyncEngine = pg
 
-    async def find(self, user, upload_type, ready) -> List[UploadMinimal]:
+    async def find(
+        self, user, page: int, per_page: int, upload_type, ready, paginate
+    ) -> Union[List[UploadMinimal], UploadSearchResult]:
         """
         Find and filter uploads.
         """
@@ -43,17 +50,64 @@ class UploadsData(DataLayerPiece):
             if ready is not None:
                 filters.append(SQLUpload.ready == ready)
 
-            results = await session.execute(select(SQLUpload).filter(*filters))
+            if not paginate:
+                results = await session.execute(select(SQLUpload).filter(*filters))
 
-        for result in results.unique().scalars().all():
-            uploads.append(result.to_dict())
+                for result in results.unique().scalars().all():
+                    uploads.append(result.to_dict())
 
-        return [
-            UploadMinimal(**upload)
-            for upload in await apply_transforms(
-                uploads, [AttachUserTransform(self._db)]
+                return [
+                    UploadMinimal(**upload)
+                    for upload in await apply_transforms(
+                        uploads, [AttachUserTransform(self._db)]
+                    )
+                ]
+
+            skip_count = 0
+
+            if page > 1:
+                skip_count = (page - 1) * per_page
+
+            total_query = select(
+                func.count(SQLUpload.id).over().label("total")
+            ).subquery()
+
+            found_query = (
+                select(func.count(SQLUpload.id).over().label("found"))
+                .filter(*filters)
+                .subquery()
             )
-        ]
+
+            query = (
+                select(SQLUpload).filter(*filters).offset(skip_count).limit(per_page)
+            )
+
+            count, results = await asyncio.gather(
+                session.execute(select(total_query, found_query)),
+                session.execute(query),
+            )
+
+        count = count.unique().all()
+
+        if count:
+            total_count = count[0].total
+            found_count = count[0].found
+
+        results = results.unique().fetchall()
+
+        for row in results:
+            uploads.append(row.Upload.to_dict())
+
+        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
+
+        return UploadSearchResult(
+            items=uploads,
+            found_count=found_count,
+            total_count=total_count,
+            page=page,
+            page_count=int(math.ceil(found_count / per_page)),
+            per_page=per_page,
+        )
 
     async def create(
         self,

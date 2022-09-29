@@ -139,7 +139,7 @@ async def startup_data(app: App):
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
         ReferencesData(app["db"], app["pg"], app["config"], app["client"]),
-        HmmData(app["client"], app["config"], app["db"]),
+        HmmData(app["client"], app["config"], app["db"], app["pg"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),

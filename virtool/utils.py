@@ -48,6 +48,24 @@ def base_processor(document: Optional[Dict]) -> Optional[Dict]:
     return document
 
 
+def get_safely(dct: Dict, *keys) -> Any:
+    """
+    Get values from nested dictionaries while returning ``None`` when a ``KeyError`` or
+    ``TypeError`` is raised.
+
+    """
+    for key in keys:
+        try:
+            dct = dct[key]
+        except (
+            KeyError,
+            TypeError,
+        ):
+            return None
+
+    return dct
+
+
 def chunk_list(lst: list, n: int):
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):

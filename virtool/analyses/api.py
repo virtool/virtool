@@ -3,7 +3,7 @@ Provides request handlers for managing and viewing analyses.
 
 """
 from logging import getLogger
-from typing import Union, List
+from typing import Union
 
 import arrow
 from aiohttp.web import (
@@ -19,7 +19,7 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 
 from virtool.analyses.models import AnalysisFormat
-from virtool.analyses.oas import GetAnalysisResponse, AnalysisResponse
+from virtool.analyses.oas import FindAnalysesResponse, AnalysisResponse
 from virtool.api.custom_json import isoformat
 from virtool.api.response import (
     InsufficientRights,
@@ -46,7 +46,7 @@ routes = Routes()
 
 @routes.view("/analyses")
 class AnalysesView(PydanticView):
-    async def get(self) -> r200[GetAnalysisResponse]:
+    async def get(self) -> r200[FindAnalysesResponse]:
         """
         Find analyses.
 
@@ -63,7 +63,7 @@ class AnalysesView(PydanticView):
             self.request["client"],
         )
 
-        return json_response(search_result)
+        return json_response(FindAnalysesResponse.parse_obj(search_result))
 
 
 @routes.view("/analyses/{analysis_id}")

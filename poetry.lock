@@ -57,6 +57,7 @@ swagger-ui-bundle = "*"
 ci = ["pytest (==6.1.2)", "pytest-aiohttp (==0.3.0)", "pytest-cov (==2.10.1)", "readme-renderer (==29.0)", "codecov (==2.1.11)", "twine (==3.4.2)"]
 test = ["pytest (==6.1.2)", "pytest-aiohttp (==0.3.0)", "pytest-cov (==2.10.1)", "readme-renderer (==29.0)"]
 
+
 [[package]]
 name = "aiojobs"
 version = "1.0.0"
@@ -1209,7 +1210,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "4d29ab555c443cc492fb84facb9d7acf5ed780f45359cf642699848fda0f8ff0"
+content-hash = "7818171038c3acce23e7f4a05877bdb8884d3029d614e531db454a23a1508ed3"
 
 [metadata.files]
 aiodns = []
