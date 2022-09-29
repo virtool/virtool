@@ -9,6 +9,7 @@ from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.utils import hash_key
+from virtool.api.custom_json import CustomEncoder
 
 
 class VirtoolTestClient:
@@ -87,7 +88,9 @@ def create_app(
 
 
 @pytest.fixture
-def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, create_user):
+def spawn_client(
+    pg, request, redis, aiohttp_client, test_motor, dbi, create_app, create_user
+):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
         auth=None,
@@ -115,22 +118,28 @@ def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, creat
 
         if authorize:
             session_token = "bar"
+            session_id = "foobar"
 
-            await dbi.sessions.insert_one(
-                {
-                    "_id": "foobar",
-                    "ip": "127.0.0.1",
-                    "administrator": administrator,
-                    "force_reset": False,
-                    "groups": user_document["groups"],
-                    "permissions": user_document["permissions"],
-                    "token": hash_key(session_token),
-                    "user_agent": "Python/3.6 aiohttp/3.4.4",
-                    "user": {"id": "test"},
-                }
+            await redis.set(
+                session_id,
+                json.dumps(
+                    {
+                        "_id": "foobar",
+                        "ip": "127.0.0.1",
+                        "administrator": administrator,
+                        "force_reset": False,
+                        "groups": user_document["groups"],
+                        "permissions": user_document["permissions"],
+                        "token": hash_key(session_token),
+                        "user_agent": "Python/3.6 aiohttp/3.4.4",
+                        "user": {"id": "test"},
+                    },
+                    cls=CustomEncoder,
+                ),
+                expire=3600,
             )
 
-            cookies = {"session_id": "foobar", "session_token": "bar"}
+            cookies = {"session_id": session_id, "session_token": session_token}
 
         elif use_b2c:
             cookies = {"id_token": "foobar"}
@@ -144,8 +153,7 @@ def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, creat
 
         test_client.app["db"].id_provider = FakeIdProvider()
 
-        return VirtoolTestClient(
-            test_client)
+        return VirtoolTestClient(test_client)
 
     return func
 

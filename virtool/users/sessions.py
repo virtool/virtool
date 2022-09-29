@@ -1,23 +1,28 @@
+import asyncio
 import hashlib
+import json
 import secrets
 from typing import Optional, Tuple
 
 import arrow
+from aioredis import Redis
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.utils
+from virtool.api.custom_json import CustomEncoder
 from virtool.mongo.core import DB
 from virtool.types import Document
 
 
 async def create_session(
-    db,
+    db: DB,
+    redis: Redis,
     ip: str,
     user_id: Optional[str] = None,
     remember: Optional[bool] = False,
     session: Optional[AsyncIOMotorClientSession] = None,
-) -> Tuple[Document, str]:
-    session_id = await create_session_id(db)
+) -> Tuple[str, Document, str]:
+    session_id = await create_session_id(redis)
 
     utc = arrow.utcnow()
 
@@ -29,18 +34,15 @@ async def create_session(
         expires_at = utc.shift(minutes=10)
 
     new_session = {
-        "_id": session_id,
-        "created_at": virtool.utils.timestamp(),
-        "expiresAt": expires_at.datetime,
+        "created_at": virtool.utils.timestamp().timestamp(),
         "ip": ip,
     }
-
+    print(new_session)
     token = None
 
     if user_id:
         token, hashed = virtool.utils.generate_key()
         user_document = await db.users.find_one(user_id, session=session)
-
         new_session.update(
             {
                 "token": hashed,
@@ -52,29 +54,30 @@ async def create_session(
             }
         )
 
-    await db.sessions.insert_one(new_session, session=session)
+    await redis.set(session_id, json.dumps(new_session, cls=CustomEncoder))
+    await redis.expireat(session_id, expires_at.timestamp())
 
-    return new_session, token
+    return session_id, new_session, token
 
 
-async def create_session_id(db: virtool.mongo.core.DB) -> str:
+async def create_session_id(redis: Redis) -> str:
     """
     Create a new unique session id.
 
-    :param db: the application database client
+    :param redis: the application redis client
     :return: a session id
 
     """
-    session_id = secrets.token_hex(32)
+    session_id = "session_" + secrets.token_hex(32)
 
-    if await db.sessions.count_documents({"_id": session_id}):
-        return await create_session_id(db)
+    if await redis.get(session_id):
+        return await create_session_id(redis)
 
     return session_id
 
 
 async def get_session(
-    db: DB, session_id: str, session_token: str
+    redis: Redis, session_id: str, session_token: str
 ) -> Tuple[Optional[dict], Optional[str]]:
     """
     Get a session and token by its id and token.
@@ -86,34 +89,39 @@ async def get_session(
     Will return `None` if the session doesn't exist or the session id and token do not
     go together.
 
-    :param db: the application database client
+    :param redis: the application redis client
     :param session_id: the session id
     :param session_token: the token for the session
     :return: a session document
 
     """
-    document = await db.sessions.find_one({"_id": session_id})
 
-    if document is None:
+    unparsed_session = None
+
+    if session_id:
+        unparsed_session = await redis.get(session_id)
+
+    if not unparsed_session:
         return None, None
 
+    session = json.loads(unparsed_session)
+
     try:
-        document_token = document["token"]
+        stored_session_token = session["token"]
     except KeyError:
-        return document, None
+        return session, None
 
     if session_token is None:
         return None, None
 
     hashed_token = hashlib.sha256(session_token.encode()).hexdigest()
-
-    if document_token == hashed_token:
-        return document, session_token
+    if stored_session_token == hashed_token:
+        return session, session_token
 
 
 async def create_reset_code(
-    db, session_id: str, user_id: str, remember: Optional[bool] = False
-) -> int:
+    redis: Redis, session_id: str, user_id: str, remember: Optional[bool] = False
+) -> str:
     """
     Create a secret code that is used to verify a password reset request. Properties:
 
@@ -122,7 +130,7 @@ async def create_reset_code(
     - the reset code is dropped from the session for any non-reset request sent after
       the code was generated
 
-    :param db:
+    :param redis:
     :param session_id:
     :param user_id:
     :param remember:
@@ -131,42 +139,63 @@ async def create_reset_code(
     """
     reset_code = secrets.token_hex(32)
 
-    await db.sessions.update_one(
-        {"_id": session_id},
-        {
-            "$set": {
+    unparsed_session, session_expiry = await asyncio.gather(
+        redis.get(session_id), redis.ttl(session_id)
+    )
+
+    session = json.loads(unparsed_session)
+
+    await redis.set(
+        session_id,
+        json.dumps(
+            {
+                **session,
                 "reset_code": reset_code,
                 "reset_remember": remember,
                 "reset_user_id": user_id,
-            }
-        },
+            },
+            cls=CustomEncoder,
+        ),
+        expire=session_expiry,
     )
 
     return reset_code
 
 
-async def clear_reset_code(db: virtool.mongo.core.DB, session_id: str):
+async def clear_reset_code(redis: Redis, session_id: str):
     """
     Clear the reset information attached to the session associated with the passed
     `session_id`.
 
-    :param db: the application database client
+    :param redis: the application redis client
     :param session_id: the session id
 
     """
-    await db.sessions.update_one(
-        {"_id": session_id},
-        {"$unset": {"reset_code": "", "reset_remember": "", "reset_user_id": ""}},
+    session = json.loads(await redis.get(session_id))
+    session_expiry = await redis.ttl(session_id)
+
+    await redis.set(
+        session_id,
+        json.dumps(
+            {
+                key: session[key]
+                for key in session
+                if key not in {"reset_code", "reset_remember", "reset_user_id"}
+            },
+            cls=CustomEncoder,
+        ),
+        expire=session_expiry,
     )
 
 
 async def replace_session(
-    db: virtool.mongo.core.DB,
+    db: DB,
+    redis: Redis,
     session_id: str,
     ip: str,
     user_id: Optional[str] = None,
     remember: Optional[bool] = False,
-) -> Tuple[dict, str]:
+) -> Tuple[str, dict, str]:
     """
     Replace the session associated with `session_id` with a new one. Return the new
     session document.
@@ -175,11 +204,12 @@ async def replace_session(
     will make the session last for 30 days instead of the default 30 minutes.
 
     :param db: the application database client
+    :param redis: the application redis pool
     :param session_id: the id of the session to replace
     :param ip:
     :param user_id:
     :param remember:
     :return: new session document and token
     """
-    await db.sessions.delete_one({"_id": session_id})
-    return await create_session(db, ip, user_id, remember=remember)
+    await redis.delete(session_id)
+    return await create_session(db, redis, ip, user_id, remember=remember)

@@ -54,8 +54,9 @@ pydantic = ">=1.7"
 swagger-ui-bundle = "*"
 
 [package.extras]
-test = ["readme-renderer (==29.0)", "pytest-cov (==2.10.1)", "pytest-aiohttp (==0.3.0)", "pytest (==6.1.2)"]
-ci = ["twine (==3.4.2)", "codecov (==2.1.11)", "readme-renderer (==29.0)", "pytest-cov (==2.10.1)", "pytest-aiohttp (==0.3.0)", "pytest (==6.1.2)"]
+ci = ["pytest (==6.1.2)", "pytest-aiohttp (==0.3.0)", "pytest-cov (==2.10.1)", "readme-renderer (==29.0)", "codecov (==2.1.11)", "twine (==3.4.2)"]
+test = ["pytest (==6.1.2)", "pytest-aiohttp (==0.3.0)", "pytest-cov (==2.10.1)", "readme-renderer (==29.0)"]
+
 
 [[package]]
 name = "aiojobs"
@@ -305,7 +306,7 @@ cron = ["capturer (>=2.4)"]
 
 [[package]]
 name = "coverage"
-version = "6.4.4"
+version = "6.5.0"
 description = "Code coverage measurement for Python"
 category = "dev"
 optional = false
