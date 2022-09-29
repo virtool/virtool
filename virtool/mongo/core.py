@@ -87,7 +87,7 @@ class Collection:
 
     async def apply_processor(self, document):
         if self.processor:
-            return await self.processor(self._collection.mongo, document)
+            return await self.processor(self.mongo, document)
 
         return virtool.utils.base_processor(document)
 

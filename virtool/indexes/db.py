@@ -105,7 +105,7 @@ async def create(
 
     await db.history.update_many(
         {"index.id": "unbuilt", "reference.id": ref_id},
-        {"$set": {"index": {"id": index_id, "version": index_version}}},
+        {"$set": {"index": {"id": document["_id"], "version": index_version}}},
     )
 
     return document

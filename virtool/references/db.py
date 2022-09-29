@@ -94,11 +94,15 @@ async def processor(db, document: dict) -> dict:
     )
 
     try:
-        document["installed"] = document.pop("updates")[-1]
+        installed = document.pop("updates")[-1]
     except (KeyError, IndexError):
-        pass
+        installed = None
+
+    if installed:
+        installed = await apply_transforms(installed, [AttachUserTransform(db)])
 
     document["id"] = ref_id
+    document["installed"] = installed
 
     return document
 
@@ -656,7 +660,13 @@ async def create_import(
 
 
 async def create_remote(
-    db, settings: Settings, name: str, release: dict, remote_from: str, user_id: str, data_type: str
+    db,
+    settings: Settings,
+    name: str,
+    release: dict,
+    remote_from: str,
+    user_id: str,
+    data_type: str,
 ) -> dict:
     """
     Create a remote reference document in the database.

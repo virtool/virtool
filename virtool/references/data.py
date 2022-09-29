@@ -1,12 +1,11 @@
 import asyncio
-from asyncio import gather
 from typing import List, Optional, Union
 
+import aiohttp
 from aiohttp import ClientSession
 from aiohttp.web_exceptions import (
     HTTPNoContent,
 )
-import aiohttp
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.history import HistorySearchResult
@@ -20,23 +19,13 @@ from virtool_core.models.reference import (
     ReferenceInstalled,
     ReferenceGroup,
 )
-
 from virtool_core.models.task import Task
-from virtool_core.models.upload import Upload
 
-
-from virtool.api.response import NotFound, InsufficientRights
-from virtool.config import Config
-from virtool.github import format_release
-from virtool.jobs.utils import JobRights
-from virtool.mongo.utils import get_new_id
-from virtool.otus.oas import CreateOTURequest
 import virtool.otus.db
-from virtool.uploads.models import Upload as SQLUpload
-
-
 import virtool.utils
+from virtool.api.response import NotFound, InsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.config import Config
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotFoundError,
@@ -45,7 +34,11 @@ from virtool.data.errors import (
 )
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError, GitHubError
+from virtool.github import format_release
+from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_new_id
+from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
 from virtool.references.db import (
     compose_base_find_query,
@@ -66,6 +59,7 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
     UpdateRemoteReferenceTask,
 )
+from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import (
     AttachUserTransform,
     extend_user,
@@ -112,25 +106,19 @@ class ReferencesData(DataLayerPiece):
             projection=virtool.references.db.PROJECTION,
         )
 
-        documents = await apply_transforms(data["documents"], [AttachUserTransform(self._mongo)])
-
-        documents, official_installed = await gather(
-            gather(
-                *[
-                    virtool.references.db.processor(self._mongo, d)
-                    for d in documents
-                ]
-            ),
-            (
-                await self._mongo.references.count_documents(
-                    {"remotes_from.slug": "virtool/ref-plant-viruses"}
-                )
-                > 0
+        documents, remote_slug_count = await asyncio.gather(
+            apply_transforms(data["documents"], [AttachUserTransform(self._mongo)]),
+            self._mongo.references.count_documents(
+                {"remotes_from.slug": "virtool/ref-plant-viruses"}
             ),
         )
 
         return ReferenceSearchResult(
-            **{**data, "documents": documents, "official_installed": official_installed}
+            **{
+                **data,
+                "documents": documents,
+                "official_installed": remote_slug_count > 0,
+            }
         )
 
     async def create(self, data: CreateReferenceSchema, user_id: str) -> Reference:
@@ -220,7 +208,13 @@ class ReferencesData(DataLayerPiece):
             release["newer"] = False
 
             document = await virtool.references.db.create_remote(
-                self._mongo, settings, data.name, release, data.remote_from, user_id, data.data_type
+                self._mongo,
+                settings,
+                data.name,
+                release,
+                data.remote_from,
+                user_id,
+                data.data_type,
             )
 
             context = {
@@ -246,30 +240,44 @@ class ReferencesData(DataLayerPiece):
                 user_id=user_id,
             )
 
-        await self._mongo.references.insert_one(document)
+        document = await self._mongo.references.insert_one(document)
 
-        document = await attach_computed(self._mongo, document)
-
-        if data.import_from:
-            document["imported_from"] = Upload(
-                **await apply_transforms(
-                    document["imported_from"], [AttachUserTransform(self._mongo)]
-                )
-            )
-
-        return Reference(**document)
+        return await self.get(document["_id"])
 
     async def get(self, ref_id: str) -> Reference:
         """
         Get a reference.
         """
-
         document = await self._mongo.references.find_one(ref_id)
 
         if not document:
             raise ResourceNotFoundError()
 
-        return Reference(**await attach_computed(self._mongo, document))
+        document = await attach_computed(self._mongo, document)
+        document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
+
+        try:
+            installed = document.pop("updates")[-1]
+        except (KeyError, IndexError):
+            installed = None
+
+        if installed:
+            installed = await apply_transforms(
+                installed, [AttachUserTransform(self._mongo)]
+            )
+
+        document["installed"] = installed
+
+        imported_from = document.get("imported_from")
+
+        if imported_from:
+            imported_from = await apply_transforms(
+                imported_from, [AttachUserTransform(self._mongo)]
+            )
+
+        document["imported_from"] = imported_from
+
+        return Reference(**document)
 
     async def update(self, ref_id: str, data: EditReferenceSchema, req) -> Reference:
         """
@@ -373,7 +381,7 @@ class ReferencesData(DataLayerPiece):
             )
         )
 
-        return ReferenceRelease(**update_subdocument)
+        return ReferenceRelease(**{**release, **update_subdocument})
 
     async def get_otus(
         self,
@@ -393,16 +401,16 @@ class ReferencesData(DataLayerPiece):
 
         return OTUSearchResult(**data)
 
-    async def create_otus(self, ref_id: str, data: CreateOTURequest, req, user_id: str) -> OTU:
+    async def create_otus(
+        self, ref_id: str, data: CreateOTURequest, req, user_id: str
+    ) -> OTU:
 
         reference = await self._mongo.references.find_one(ref_id, ["groups", "users"])
 
         if reference is None:
             raise ResourceNotFoundError()
 
-        if not await virtool.references.db.check_right(
-            req, reference, "modify_otu"
-        ):
+        if not await virtool.references.db.check_right(req, reference, "modify_otu"):
             raise InsufficientRights()
 
         # Check if either the name or abbreviation are already in use. Send a ``400`` if
@@ -412,11 +420,7 @@ class ReferencesData(DataLayerPiece):
         ):
             raise ResourceError(message)
 
-        otu = await self.data.otus.create(
-            ref_id,
-            data,
-            user_id=user_id
-        )
+        otu = await self.data.otus.create(ref_id, data, user_id=user_id)
 
         return otu
 
@@ -673,7 +677,9 @@ class ReferencesData(DataLayerPiece):
         if document["data_type"] != "barcode":
             data.pop("targets", None)
 
-        document = await self._mongo.references.find_one_and_update({"_id": ref_id}, {"$set": data})
+        document = await self._mongo.references.find_one_and_update(
+            {"_id": ref_id}, {"$set": data}
+        )
 
         document = await attach_computed(self._mongo, document)
 

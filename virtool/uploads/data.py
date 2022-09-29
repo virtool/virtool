@@ -1,16 +1,14 @@
 from logging import getLogger
 from typing import List, Optional, Union
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from virtool_core.models.upload import UploadSearchResult, Upload
+from sqlalchemy.ext.asyncio import AsyncSession
+from virtool_core.models.upload import Upload, UploadMinimal
 from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
-
-
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
@@ -27,7 +25,7 @@ class UploadsData(DataLayerPiece):
         self._db: DB = db
         self._pg = pg
 
-    async def find(self, user, upload_type, ready) -> UploadSearchResult:
+    async def find(self, user, upload_type, ready) -> List[UploadMinimal]:
         """
         Find and filter uploads.
         """
@@ -50,9 +48,12 @@ class UploadsData(DataLayerPiece):
         for result in results.unique().scalars().all():
             uploads.append(result.to_dict())
 
-        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
-
-        return UploadSearchResult(documents=uploads)
+        return [
+            UploadMinimal(**upload)
+            for upload in await apply_transforms(
+                uploads, [AttachUserTransform(self._db)]
+            )
+        ]
 
     async def create(
         self,
