@@ -4,7 +4,7 @@ from typing import Callable, Tuple
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
-from jose.exceptions import JWTError
+from jose.exceptions import JWTError, JWTClaimsError, ExpiredSignatureError
 
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
@@ -116,7 +116,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
 
     try:
         token_claims = await validate_token(req.app, token)
-    except JWTError:
+    except (JWTClaimsError, JWTError, ExpiredSignatureError):
         raise HTTPUnauthorized(text="Invalid authorization")
 
     user = await get_data_from_req(req).users.find_or_create_b2c_user(

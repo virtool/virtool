@@ -305,15 +305,13 @@ class LoginView(PydanticView):
         session_id = self.request.cookies.get("session_id")
 
         try:
-            user_id = await get_data_from_req(self.request).account.login(
-             data
-            )
+            user_id = await get_data_from_req(self.request).account.login(data)
         except ResourceError:
             raise HTTPBadRequest(text="Invalid username or password")
 
         reset_code = await get_data_from_req(self.request).account.get_reset_code(
-                user_id, session_id, data
-            )
+            user_id, session_id, data
+        )
 
         if reset_code:
             return json_response(

@@ -281,13 +281,13 @@ class AccountData:
 
     async def get_reset_code(self, user_id, session_id, remember) -> Union[str, None]:
         """
-               Check if user password should be reset and return a reset code if it
-               should be.
+        Check if user password should be reset and return a reset code if it
+        should be.
 
-               :param user_id: the login session ID
-               :param session_id: the id of the session getting the reset code
-               :param remember: boolean indicating whether the sessions
-               should be remembered
+        :param user_id: the login session ID
+        :param session_id: the id of the session getting the reset code
+        :param remember: boolean indicating whether the sessions
+        should be remembered
         """
 
         if await get_one_field(self._db.users, "force_reset", user_id):
@@ -326,7 +326,9 @@ class AccountData:
             return {
                 "status": 400,
                 "user_id": user_id,
-                "reset_code": await create_reset_code(self._redis, session_id, user_id=user_id)
+                "reset_code": await create_reset_code(
+                    self._redis, session_id, user_id=user_id
+                ),
             }
 
         session_id, new_session, token = await replace_session(
@@ -338,4 +340,9 @@ class AccountData:
             remember=session.get("reset_remember", False),
         )
 
-        return {"new_session": new_session, "user_id": user_id, "token": token, "session_id": session_id}
+        return {
+            "new_session": new_session,
+            "user_id": user_id,
+            "token": token,
+            "session_id": session_id,
+        }

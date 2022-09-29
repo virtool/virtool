@@ -13,7 +13,9 @@ from virtool.groups.oas import EditPermissionsSchema
 @pytest.mark.parametrize(
     "has_permission", [True, False], ids=["has permission", "missing permission"]
 )
-async def test_create_api_key(administrator, has_permission, mocker, dbi, redis, static_time):
+async def test_create_api_key(
+    administrator, has_permission, mocker, dbi, redis, static_time
+):
     """
     Test that an API key is created correctly with varying key owner administrator status and
     permissions.

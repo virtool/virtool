@@ -42,5 +42,5 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
         SubtractionsData(base_url, config, dbi, pg),
         UploadsData(config, dbi, pg),
         UsersData(dbi, pg),
-        TasksData(pg, redis)
+        TasksData(pg, redis),
     )

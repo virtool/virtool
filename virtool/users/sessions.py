@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import secrets
@@ -36,7 +37,7 @@ async def create_session(
         "created_at": virtool.utils.timestamp().timestamp(),
         "ip": ip,
     }
-
+    print(new_session)
     token = None
 
     if user_id:
@@ -76,7 +77,7 @@ async def create_session_id(redis: Redis) -> str:
 
 
 async def get_session(
-     redis: Redis, session_id: str, session_token: str
+    redis: Redis, session_id: str, session_token: str
 ) -> Tuple[Optional[dict], Optional[str]]:
     """
     Get a session and token by its id and token.
@@ -96,6 +97,7 @@ async def get_session(
     """
 
     unparsed_session = None
+
     if session_id:
         unparsed_session = await redis.get(session_id)
 
@@ -137,11 +139,25 @@ async def create_reset_code(
     """
     reset_code = secrets.token_hex(32)
 
-    session = json.loads(await redis.get(session_id))
-    session_expiry = await redis.ttl(session_id)
+    unparsed_session, session_expiry = await asyncio.gather(
+        redis.get(session_id), redis.ttl(session_id)
+    )
 
-    session.update({"reset_code": reset_code, "reset_remember": remember, "reset_user_id": user_id})
-    await redis.set(session_id, json.dumps(session, cls=CustomEncoder), expire=session_expiry)
+    session = json.loads(unparsed_session)
+
+    await redis.set(
+        session_id,
+        json.dumps(
+            {
+                **session,
+                "reset_code": reset_code,
+                "reset_remember": remember,
+                "reset_user_id": user_id,
+            },
+            cls=CustomEncoder,
+        ),
+        expire=session_expiry,
+    )
 
     return reset_code
 
@@ -158,11 +174,18 @@ async def clear_reset_code(redis: Redis, session_id: str):
     session = json.loads(await redis.get(session_id))
     session_expiry = await redis.ttl(session_id)
 
-    for key in ["reset_code", "reset_remember", "reset_user_id"]:
-        if key in session:
-            del session[key]
-
-    await redis.set(session_id, json.dumps(session, cls=CustomEncoder), expire=session_expiry)
+    await redis.set(
+        session_id,
+        json.dumps(
+            {
+                key: session[key]
+                for key in session
+                if key not in {"reset_code", "reset_remember", "reset_user_id"}
+            },
+            cls=CustomEncoder,
+        ),
+        expire=session_expiry,
+    )
 
 
 async def replace_session(

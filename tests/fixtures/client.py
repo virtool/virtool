@@ -88,7 +88,9 @@ def create_app(
 
 
 @pytest.fixture
-def spawn_client(pg, request, redis, aiohttp_client, test_motor, dbi, create_app, create_user):
+def spawn_client(
+    pg, request, redis, aiohttp_client, test_motor, dbi, create_app, create_user
+):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
         auth=None,
@@ -118,21 +120,24 @@ def spawn_client(pg, request, redis, aiohttp_client, test_motor, dbi, create_app
             session_token = "bar"
             session_id = "foobar"
 
-            await redis.set(session_id,
-                            json.dumps({
-                                "_id": "foobar",
-                                "ip": "127.0.0.1",
-                                "administrator": administrator,
-                                "force_reset": False,
-                                "groups": user_document["groups"],
-                                "permissions": user_document["permissions"],
-                                "token": hash_key(session_token),
-                                "user_agent": "Python/3.6 aiohttp/3.4.4",
-                                "user": {"id": "test"},
-                            }, cls=CustomEncoder),
-                            expire=3600
-                            )
-
+            await redis.set(
+                session_id,
+                json.dumps(
+                    {
+                        "_id": "foobar",
+                        "ip": "127.0.0.1",
+                        "administrator": administrator,
+                        "force_reset": False,
+                        "groups": user_document["groups"],
+                        "permissions": user_document["permissions"],
+                        "token": hash_key(session_token),
+                        "user_agent": "Python/3.6 aiohttp/3.4.4",
+                        "user": {"id": "test"},
+                    },
+                    cls=CustomEncoder,
+                ),
+                expire=3600,
+            )
 
             cookies = {"session_id": session_id, "session_token": session_token}
 
@@ -148,8 +153,7 @@ def spawn_client(pg, request, redis, aiohttp_client, test_motor, dbi, create_app
 
         test_client.app["db"].id_provider = FakeIdProvider()
 
-        return VirtoolTestClient(
-            test_client)
+        return VirtoolTestClient(test_client)
 
     return func
 
