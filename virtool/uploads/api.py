@@ -7,7 +7,7 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
-from pydantic import Field
+from pydantic import Field, conint
 
 from virtool.api.response import InvalidQuery, json_response, NotFound
 from virtool.data.errors import ResourceNotFoundError
@@ -30,8 +30,11 @@ class UploadsView(PydanticView):
     async def get(
         self,
         user: Optional[str] = None,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
         upload_type: Optional[str] = None,
         ready: Optional[bool] = None,
+        paginate: Optional[bool] = False
     ) -> r200[List[GetUploadsResponse]]:
         """
         List uploads.
@@ -43,8 +46,11 @@ class UploadsView(PydanticView):
         """
 
         uploads = await get_data_from_req(self.request).uploads.find(
-            user, upload_type, ready
+            user, page, per_page, upload_type, ready, paginate
         )
+
+        if paginate:
+            return json_response(uploads)
 
         return json_response({"documents": uploads})
 
