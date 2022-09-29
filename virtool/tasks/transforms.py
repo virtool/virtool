@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -31,15 +31,16 @@ class AttachTaskTransform(AbstractTransform):
 
         return attached
 
-    async def prepare_one(self, document):
-        task_id = document["task"]["id"]
+    async def prepare_one(self, document) -> Optional[Document]:
+        task_id = get_safely(document, "task", "id")
 
-        async with AsyncSession(self._pg) as session:
-            result = (
-                await session.execute(select(SQLTask).filter_by(id=task_id))
-            ).scalar()
+        if task_id:
+            async with AsyncSession(self._pg) as session:
+                result = (
+                    await session.execute(select(SQLTask).filter_by(id=task_id))
+                ).scalar()
 
-        return result.to_dict()
+            return result.to_dict()
 
     async def prepare_many(
         self, documents: List[Document]

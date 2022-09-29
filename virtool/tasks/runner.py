@@ -23,7 +23,7 @@ class TaskRunner:
 
                 await self.run_task(task_id)
 
-                logging.info(f"Task finished: {task_id}")
+                logging.info(f"Task finished: %s", task_id)
 
         except asyncio.CancelledError:
             logging.info("Stopped task runner")

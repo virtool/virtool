@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -27,3 +28,13 @@ async def test_attach_task_transform(fake2, pg: AsyncEngine, snapshot):
     assert transformed == snapshot(
         matcher=path_type({".*created_at": (datetime,)}, regex=True)
     )
+
+
+async def test_attach_task_transform_single(fake2, pg: AsyncEngine, snapshot):
+    await fake2.tasks.create()
+    task = await fake2.tasks.create()
+
+    assert await asyncio.gather(
+        apply_transforms({"id": 1, "task": {"id": task.id}}, [AttachTaskTransform(pg)]),
+        apply_transforms({"id": 2, "task": None}, [AttachTaskTransform(pg)]),
+    ) == snapshot(matcher=path_type({".*created_at": (datetime,)}, regex=True))
