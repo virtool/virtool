@@ -44,6 +44,7 @@ class TestCreate:
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
+    @pytest.mark.flaky(reruns=2)
     async def test_import_reference(
         self, pg, snapshot, spawn_client, test_files_path, tmpdir
     ):

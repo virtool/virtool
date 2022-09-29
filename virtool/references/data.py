@@ -122,7 +122,6 @@ class ReferencesData(DataLayerPiece):
         )
 
     async def create(self, data: CreateReferenceSchema, user_id: str) -> Reference:
-
         settings = await self.data.settings.get_all()
 
         if data.clone_from:
