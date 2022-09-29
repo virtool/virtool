@@ -50,6 +50,19 @@ class UploadsData(DataLayerPiece):
             if ready is not None:
                 filters.append(SQLUpload.ready == ready)
 
+            if not paginate:
+                results = await session.execute(select(SQLUpload).filter(*filters))
+
+                for result in results.unique().scalars().all():
+                    uploads.append(result.to_dict())
+
+                return [
+                    UploadMinimal(**upload)
+                    for upload in await apply_transforms(
+                        uploads, [AttachUserTransform(self._db)]
+                    )
+                ]
+
             skip_count = 0
 
             if page > 1:
@@ -85,24 +98,16 @@ class UploadsData(DataLayerPiece):
         for row in results:
             uploads.append(row.Upload.to_dict())
 
-        if paginate:
-            uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
+        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
 
-            return UploadSearchResult(
-                items=uploads,
-                found_count=found_count,
-                total_count=total_count,
-                page=page,
-                page_count=int(math.ceil(found_count / per_page)),
-                per_page=per_page,
-            )
-
-        return [
-            UploadMinimal(**upload)
-            for upload in await apply_transforms(
-                uploads, [AttachUserTransform(self._db)]
-            )
-        ]
+        return UploadSearchResult(
+            items=uploads,
+            found_count=found_count,
+            total_count=total_count,
+            page=page,
+            page_count=int(math.ceil(found_count / per_page)),
+            per_page=per_page,
+        )
 
     async def create(
         self,
