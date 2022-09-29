@@ -139,7 +139,7 @@ async def startup_data(app: App):
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
         ReferencesData(app["db"], app["pg"], app["config"], app["client"]),
-        HmmData(app["client"], app["config"], app["db"]),
+        HmmData(app["client"], app["config"], app["db"], app["pg"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
@@ -147,7 +147,7 @@ async def startup_data(app: App):
         SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
         UploadsData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
-        TasksData(app["pg"], app["redis"])
+        TasksData(app["pg"], app["redis"]),
     )
 
 
@@ -360,7 +360,7 @@ async def startup_version(app: typing.Union[dict, Application]):
         version = await determine_server_version()
 
     logger.info("Virtool %s", version)
-    logger.info("Mode: %s", app['mode'])
+    logger.info("Mode: %s", app["mode"])
 
     app["version"] = version
 
