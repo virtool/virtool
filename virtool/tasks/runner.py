@@ -1,9 +1,6 @@
 import asyncio
 import logging
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import virtool.tasks.task
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.models import Task
@@ -26,7 +23,7 @@ class TaskRunner:
 
                 await self.run_task(task_id)
 
-                logging.info(f"Task finished: {task_id}")
+                logging.info("Finished task: %s", task_id)
 
         except asyncio.CancelledError:
             logging.info("Stopped task runner")
@@ -40,7 +37,7 @@ class TaskRunner:
         """
         task: Task = await get_row_by_id(self.app["pg"], Task, task_id)
 
-        logging.info(f"Task starting: {task.id} {task.type}")
+        logging.info(f"Starting task: %s %s", task.id, task.type)
 
         loop = asyncio.get_event_loop()
 

@@ -44,10 +44,10 @@ class TasksData:
                 await session.execute(select(SQLTask).filter_by(id=task_id))
             ).scalar()
 
-        if result is None:
-            raise ResourceNotFoundError
+        if result:
+            return Task(**result.to_dict())
 
-        return Task(**result.to_dict())
+        raise ResourceNotFoundError
 
     async def register(self, task_class: Type[TaskClass], context: dict = None) -> Task:
         """

@@ -3,6 +3,7 @@ from pathlib import Path
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.hmm import (
     HMMSearchResult,
     HMM,
@@ -29,15 +30,17 @@ from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
+from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread
 
 
 class HmmData(DataLayerPiece):
-    def __init__(self, client: ClientSession, config: Config, mongo):
+    def __init__(self, client: ClientSession, config: Config, mongo, pg: AsyncEngine):
         self._client = client
         self._config = config
         self._mongo = mongo
+        self._pg = pg
 
     async def find(self, query: MultiDictProxy):
         db_query = {}
@@ -120,6 +123,8 @@ class HmmData(DataLayerPiece):
                 installed, [AttachUserTransform(self._mongo)]
             )
 
+        document = await apply_transforms(document, [AttachTaskTransform(self._pg)])
+
         return HMMStatus(**document)
 
     async def install_update(self, user_id: str) -> HMMInstalled:
@@ -139,7 +144,7 @@ class HmmData(DataLayerPiece):
 
         release = await get_one_field(self._mongo.status, "release", "hmm")
 
-        if release:
+        if not release:
             raise ResourceError("Target release does not exist")
 
         task = await self.data.tasks.create(
@@ -153,7 +158,11 @@ class HmmData(DataLayerPiece):
             {"$set": {"task": {"id": task.id}}, "$push": {"updates": update}},
         )
 
-        return HMMInstalled(**update)
+        installed = await apply_transforms(
+            {**release, **update}, [AttachUserTransform(self._mongo)]
+        )
+
+        return HMMInstalled(**installed)
 
     async def get_profiles_path(self) -> Path:
         file_path = self._config.data_path / "hmm" / "profiles.hmm"
