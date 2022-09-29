@@ -49,11 +49,13 @@ class BLASTTask(Task):
         self.sequence_index = self.context["sequence_index"]
 
     async def request(self):
-        document = await get_data_from_app(self.app).analyses.get_by_id(
-            self.analysis_id
+        analysis = await get_data_from_app(self.app).analyses.get(
+            self.analysis_id, None
         )
 
-        sequence = find_nuvs_sequence_by_index(document, self.sequence_index)
+        sequence = find_nuvs_sequence_by_index(
+            analysis.dict(by_alias=True), self.sequence_index
+        )
 
         rid, _ = await virtool.blast.utils.initialize_ncbi_blast(
             self.app["config"], sequence
