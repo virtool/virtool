@@ -110,13 +110,9 @@ async def create(
     created_at = virtool.utils.timestamp()
 
     document = {
-        "ready": False,
         "created_at": created_at,
-        "updated_at": created_at,
-        "job": {"id": job_id},
         "files": [],
-        "workflow": workflow,
-        "sample": {"id": sample_id},
+        "job": {"id": job_id},
         "index": {"id": index_id, "version": index_version},
         "reference": {
             "id": ref_id,
@@ -124,10 +120,15 @@ async def create(
                 db.references, "name", ref_id
             ),
         },
+        "ready": False,
+        "results": None,
+        "sample": {"id": sample_id},
         "subtractions": subtractions,
+        "updated_at": created_at,
         "user": {
             "id": user_id,
         },
+        "workflow": workflow,
     }
 
     if analysis_id:
