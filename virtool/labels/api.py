@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
@@ -21,7 +21,9 @@ routes = virtool.http.routes.Routes()
 
 @routes.view("/labels")
 class LabelsView(PydanticView):
-    async def get(self) -> Union[r200[List[GetLabelResponse]], r400]:
+    async def get(
+        self, find: Optional[str]
+    ) -> Union[r200[List[GetLabelResponse]], r400]:
         """
         List labels.
 
@@ -32,9 +34,7 @@ class LabelsView(PydanticView):
             200: Successful operation
             400: Invalid query
         """
-        term = self.request.query.get("find")
-
-        labels = await get_data_from_req(self.request).labels.find(term=term)
+        labels = await get_data_from_req(self.request).labels.find(term=find)
 
         return json_response([label.dict() for label in labels])
 
@@ -70,7 +70,7 @@ class LabelsView(PydanticView):
 
 @routes.view("/labels/{label_id}")
 class LabelView(PydanticView):
-    async def get(self) -> Union[r200[LabelResponse], r404]:
+    async def get(self, label_id: int, /) -> Union[r200[LabelResponse], r404]:
         """
         Get a label.
 
@@ -80,8 +80,6 @@ class LabelView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        label_id = int(self.request.match_info["label_id"])
-
         try:
             label = await get_data_from_req(self.request).labels.get(label_id)
         except ResourceNotFoundError:
@@ -90,7 +88,7 @@ class LabelView(PydanticView):
         return json_response(label)
 
     async def patch(
-        self, data: UpdateLabelSchema
+        self, label_id: int, /, data: UpdateLabelSchema
     ) -> Union[r200[LabelResponse], r400, r404]:
         """
         Update a label.
@@ -102,8 +100,6 @@ class LabelView(PydanticView):
             400: Invalid input
             404: Not found
         """
-        label_id = int(self.request.match_info["label_id"])
-
         if not data:
             raise EmptyRequest()
 
@@ -118,7 +114,7 @@ class LabelView(PydanticView):
 
         return json_response(label)
 
-    async def delete(self) -> Union[r204, r404]:
+    async def delete(self, label_id: int, /) -> Union[r204, r404]:
         """
         Delete a label.
 
@@ -129,9 +125,7 @@ class LabelView(PydanticView):
             404: Not found
         """
         try:
-            await get_data_from_req(self.request).labels.delete(
-                label_id=int(self.request.match_info["label_id"])
-            )
+            await get_data_from_req(self.request).labels.delete(label_id=label_id)
         except ResourceNotFoundError:
             raise NotFound()
 

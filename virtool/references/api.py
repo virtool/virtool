@@ -88,7 +88,6 @@ class ReferencesView(PydanticView):
             403: Not permitted
             502: Could not reach GitHub
         """
-        # Missing remote_from and cloned_from tests
         try:
             reference = await get_data_from_req(self.request).references.create(
                 data, self.request["client"].user_id
@@ -286,7 +285,6 @@ class ReferenceOTUsView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
             data = await get_data_from_req(self.request).references.get_otus(
                 find, verified, names, ref_id, self.request.query
@@ -328,7 +326,6 @@ class ReferenceHistoryView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
             data = await get_data_from_req(self.request).references.get_history(
                 ref_id, unbuilt, self.request.query
@@ -407,7 +404,6 @@ class ReferenceGroupsView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
             groups = await get_data_from_req(self.request).references.list_groups(
                 ref_id
@@ -461,7 +457,6 @@ class ReferenceGroupView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
             group = await get_data_from_req(self.request).references.get_group(
                 ref_id, group_id

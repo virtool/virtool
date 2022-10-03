@@ -219,7 +219,7 @@ class KeysView(PydanticView):
 
 @routes.view("/account/keys/{key_id}")
 class KeyView(PydanticView):
-    async def get(self) -> Union[r200[APIKeyResponse], r404]:
+    async def get(self, key_id: str, /) -> Union[r200[APIKeyResponse], r404]:
         """
         Get an API key.
 
@@ -232,7 +232,7 @@ class KeyView(PydanticView):
         """
         try:
             key = await get_data_from_req(self.request).account.get_key(
-                self.request["client"].user_id, self.request.match_info["key_id"]
+                self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
             raise NotFound()
@@ -240,7 +240,7 @@ class KeyView(PydanticView):
         return json_response(APIKeyResponse.parse_obj(key), status=200)
 
     async def patch(
-        self, data: EditKeySchema
+        self, key_id: str, /, data: EditKeySchema
     ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
         """
         Update an API key.
@@ -257,7 +257,7 @@ class KeyView(PydanticView):
         try:
             key = await get_data_from_req(self.request).account.edit_key(
                 self.request["client"].user_id,
-                self.request.match_info.get("key_id"),
+                key_id,
                 data,
             )
         except ResourceNotFoundError:
@@ -265,7 +265,7 @@ class KeyView(PydanticView):
 
         return json_response(APIKeyResponse.parse_obj(key))
 
-    async def delete(self) -> Union[r204, r401, r404]:
+    async def delete(self, key_id: str, /) -> Union[r204, r401, r404]:
         """
         Delete
         Remove an API key by its ID.
@@ -277,7 +277,7 @@ class KeyView(PydanticView):
         """
         try:
             await get_data_from_req(self.request).account.delete_key(
-                self.request["client"].user_id, self.request.match_info["key_id"]
+                self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
             raise NotFound()

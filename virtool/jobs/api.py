@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Union, List
+from typing import Union, List, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
@@ -44,7 +44,7 @@ class JobsView(PydanticView):
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_job))
-    async def delete(self) -> r200:
+    async def delete(self, filter: Optional[str]) -> r200:
         """
         Clear jobs.
 
@@ -53,13 +53,12 @@ class JobsView(PydanticView):
         Status Codes:
             200: Successful Operation
         """
-        job_filter = self.request.query.get("filter")
 
         # Remove jobs that completed successfully.
-        complete = job_filter in [None, "finished", "complete"]
+        complete = filter in [None, "finished", "complete"]
 
         # Remove jobs that errored or were cancelled.
-        failed = job_filter in [None, "failed", "finished" "terminated"]
+        failed = filter in [None, "failed", "finished" "terminated"]
 
         removed_job_ids = await get_data_from_req(self.request).jobs.clear(
             complete=complete, failed=failed
@@ -70,7 +69,7 @@ class JobsView(PydanticView):
 
 @routes.view("/jobs/{job_id}")
 class JobView(PydanticView):
-    async def get(self) -> Union[r200[JobResponse], r404]:
+    async def get(self, job_id: str, /) -> Union[r200[JobResponse], r404]:
         """
         Get a job.
 
@@ -81,16 +80,14 @@ class JobView(PydanticView):
             404: Not found
         """
         try:
-            document = await get_data_from_req(self.request).jobs.get(
-                self.request.match_info["job_id"]
-            )
+            document = await get_data_from_req(self.request).jobs.get(job_id)
         except ResourceNotFoundError:
             raise NotFound()
 
         return json_response(document)
 
     @policy(PermissionsRoutePolicy(Permission.remove_job))
-    async def delete(self) -> Union[r204, r403, r404, r409]:
+    async def delete(self, job_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete a job.
 
@@ -110,9 +107,7 @@ class JobView(PydanticView):
             409: Job is running or waiting and cannot be removed
         """
         try:
-            await get_data_from_req(self.request).jobs.delete(
-                self.request.match_info["job_id"]
-            )
+            await get_data_from_req(self.request).jobs.delete(job_id)
         except ResourceConflictError:
             raise HTTPConflict(text="Job is running or waiting and cannot be removed")
         except ResourceNotFoundError:
@@ -175,7 +170,7 @@ async def archive(req):
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.cancel_job))
-    async def put(self) -> Union[r200[JobResponse], r403, r404, r409]:
+    async def put(self, job_id: str, /) -> Union[r200[JobResponse], r403, r404, r409]:
         """
         Cancel a job.
 
@@ -186,9 +181,7 @@ class CancelJobView(PydanticView):
             409: Not cancellable
         """
         try:
-            document = await get_data_from_req(self.request).jobs.cancel(
-                self.request.match_info["job_id"]
-            )
+            document = await get_data_from_req(self.request).jobs.cancel(job_id)
         except ResourceNotFoundError:
             raise NotFound
         except ResourceConflictError:

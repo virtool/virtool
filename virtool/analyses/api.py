@@ -68,7 +68,9 @@ class AnalysesView(PydanticView):
 
 @routes.view("/analyses/{analysis_id}")
 class AnalysisView(PydanticView):
-    async def get(self) -> Union[r200[AnalysisResponse], r400, r403, r404]:
+    async def get(
+        self, analysis_id: str, /
+    ) -> Union[r200[AnalysisResponse], r400, r403, r404]:
         """
         Get analysis.
 
@@ -82,7 +84,7 @@ class AnalysisView(PydanticView):
         """
         try:
             if not await get_data_from_req(self.request).analyses.has_right(
-                self.request.match_info["analysis_id"], self.request["client"], "read"
+                analysis_id, self.request["client"], "read"
             ):
                 raise InsufficientRights()
         except ResourceError:
@@ -97,7 +99,7 @@ class AnalysisView(PydanticView):
 
         try:
             document = await get_data_from_req(self.request).analyses.get(
-                self.request.match_info["analysis_id"],
+                analysis_id,
                 if_modified_since,
             )
         except ResourceNotFoundError:
@@ -112,7 +114,7 @@ class AnalysisView(PydanticView):
 
         return json_response(document, headers=headers)
 
-    async def delete(self) -> Union[r204, r403, r404, r409]:
+    async def delete(self, analysis_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete an analysis.
 
@@ -127,7 +129,7 @@ class AnalysisView(PydanticView):
         for right in ["read", "write"]:
             try:
                 if not await get_data_from_req(self.request).analyses.has_right(
-                    self.request.match_info["analysis_id"],
+                    analysis_id,
                     self.request["client"],
                     right,
                 ):
@@ -138,9 +140,7 @@ class AnalysisView(PydanticView):
                 raise NotFound()
 
         try:
-            await get_data_from_req(self.request).analyses.delete(
-                self.request.match_info["analysis_id"], False
-            )
+            await get_data_from_req(self.request).analyses.delete(analysis_id, False)
         except ResourceNotFoundError:
             raise NotFound()
         except ResourceConflictError:
@@ -232,7 +232,7 @@ async def upload(req: Request) -> Response:
 
 @routes.view("/analyses/{analysis_id}/files/{upload_id}")
 class AnalysisFileView(PydanticView):
-    async def get(self) -> Union[r200[FileResponse], r404]:
+    async def get(self, upload_id: int, /) -> Union[r200[FileResponse], r404]:
         """
         Download a file.
 
@@ -245,7 +245,7 @@ class AnalysisFileView(PydanticView):
         """
         try:
             name_on_disk = await get_data_from_req(self.request).analyses.get_file_name(
-                int(self.request.match_info["upload_id"])
+                upload_id
             )
         except ResourceNotFoundError:
             raise NotFound()
@@ -262,7 +262,7 @@ class AnalysisFileView(PydanticView):
 
 @routes.view("/analyses/documents/{analysis_id}.{extension}")
 class DocumentDownloadView(PydanticView):
-    async def get(self) -> Union[r200[Response], r404]:
+    async def get(self, analysis_id: str, extension: str, /) -> Union[r200[Response], r404]:
         """
         Download an analysis.
 
@@ -274,8 +274,6 @@ class DocumentDownloadView(PydanticView):
             400: Invalid extension
             404: Not found
         """
-        analysis_id = self.request.match_info["analysis_id"]
-        extension = self.request.match_info["extension"]
 
         if extension not in ["xlsx", "csv"]:
             raise HTTPBadRequest(text=f"Invalid extension: {extension}")
@@ -297,7 +295,7 @@ class DocumentDownloadView(PydanticView):
 
 @routes.view("/analyses/{analysis_id}/{sequence_index}/blast")
 class BlastView(PydanticView):
-    async def put(self) -> Union[r200[Response], r400, r403, r404, r409]:
+    async def put(self, analysis_id: str, sequence_index: int, /) -> Union[r200[Response], r400, r403, r404, r409]:
         """
         BLAST a NuVs contig.
 
@@ -313,10 +311,6 @@ class BlastView(PydanticView):
             409: Not a NuVs analysis
             409: Analysis is still running
         """
-        analysis_id = self.request.match_info["analysis_id"]
-
-        sequence_index = int(self.request.match_info["sequence_index"])
-
         try:
             if not await get_data_from_req(self.request).analyses.has_right(
                 analysis_id,
