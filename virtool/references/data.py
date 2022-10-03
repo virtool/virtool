@@ -187,7 +187,6 @@ class ReferencesData(DataLayerPiece):
         elif data.remote_from:
             try:
                 release = await virtool.github.get_release(
-                    self._config,
                     self._client,
                     data.remote_from,
                     release_id=data.release_id,

@@ -15,7 +15,6 @@ from aiohttp import ClientSession
 import virtool.analyses.utils
 import virtool.errors
 import virtool.utils
-from virtool.config.cls import Config
 from virtool.data.utils import get_data_from_app
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
@@ -104,7 +103,6 @@ async def get_hmms_referenced_in_db(db) -> set:
 
 
 async def fetch_and_update_release(
-    config: Config,
     http_client: ClientSession,
     mongo,
     slug: str,
@@ -113,7 +111,6 @@ async def fetch_and_update_release(
     """
     Return the HMM install status document or create one if none exists.
 
-    :param config: the application config
     :param mongo: the application mongo client
     :param http_client: the application http client
     :param slug: the slug for the HMM GitHub repo
@@ -138,7 +135,7 @@ async def fetch_and_update_release(
     try:
         # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
         # has not changed and `None` is returned from `get_release()`.
-        updated = await get_release(config, http_client, slug, etag)
+        updated = await get_release(http_client, slug, etag)
 
         # Release is replace with updated release if an update was found on GitHub.
         if updated:
@@ -192,7 +189,6 @@ async def refresh(app: App):
             settings = await get_data_from_app(app).settings.get_all()
 
             await fetch_and_update_release(
-                app["config"],
                 app["client"],
                 app["db"],
                 settings.hmm_slug,
