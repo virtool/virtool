@@ -86,6 +86,7 @@ async def test_clean_references_task(
     assert await dbi.references.find_one({}) == snapshot
 
 
+@pytest.mark.flaky(reruns=2)
 async def test_import_reference_task(snapshot, spawn_client, pg, static_time, tmpdir):
     client = await spawn_client(authorize=True)
 
