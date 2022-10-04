@@ -276,6 +276,10 @@ class ReferencesData(DataLayerPiece):
 
         document["imported_from"] = imported_from
 
+        for user in document["users"]:
+            if "created_at" not in user:
+                user["created_at"] = document["created_at"]
+
         return Reference(**document)
 
     async def update(self, ref_id: str, data: EditReferenceSchema, req) -> Reference:
@@ -292,9 +296,9 @@ class ReferencesData(DataLayerPiece):
         if not await virtool.references.db.check_right(req, ref_id, "modify"):
             raise InsufficientRights()
 
-        document = await self.data.references.edit_reference(ref_id, data)
+        await self.data.references.edit_reference(ref_id, data)
 
-        return Reference(**document)
+        return await self.get(ref_id)
 
     async def remove(self, ref_id: str, user_id: str, req) -> Task:
 
@@ -304,9 +308,9 @@ class ReferencesData(DataLayerPiece):
         if not await virtool.references.db.check_right(req, ref_id, "remove"):
             raise InsufficientRights()
 
-        context = {"ref_id": ref_id, "user_id": user_id}
-
-        task = await self.data.tasks.create(DeleteReferenceTask, context=context)
+        task = await self.data.tasks.create(
+            DeleteReferenceTask, context={"ref_id": ref_id, "user_id": user_id}
+        )
 
         await self._mongo.references.delete_one({"_id": ref_id})
 
