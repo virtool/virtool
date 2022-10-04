@@ -7,6 +7,7 @@ from aiohttp.web import FileResponse, Request, Response
 from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
+from pydantic import Field
 from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
@@ -34,7 +35,13 @@ routes = Routes()
 
 @routes.view("/indexes")
 class IndexesView(PydanticView):
-    async def get(self, ready: Optional[bool] = False) -> Union[r200[ListIndexesResponse]]:
+    async def get(
+        self,
+        ready: Optional[bool] = Field(
+            default=False,
+            description="Return only indexes that are ready for use in analysis.",
+        ),
+    ) -> Union[r200[ListIndexesResponse]]:
         """
         Find indexes.
 

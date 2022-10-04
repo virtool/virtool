@@ -37,7 +37,8 @@ async def setup_update_user(fake2, spawn_client):
     return client, group_1, group_2, await fake2.users.create(groups=[group_1])
 
 
-async def test_find(fake2, snapshot, spawn_client):
+@pytest.mark.parametrize("find", [None, "test"])
+async def test_find(find, fake2, snapshot, spawn_client):
     """
     Test that a ``GET /users`` returns a list of users.
 
@@ -49,7 +50,12 @@ async def test_find(fake2, snapshot, spawn_client):
     await fake2.users.create()
     await fake2.users.create()
 
-    resp = await client.get("/users")
+    url = "/users?"
+
+    if find:
+        url += f"&find={find}"
+
+    resp = await client.get(url)
 
     assert resp.status == 200
     assert await resp.json() == snapshot(

@@ -4,6 +4,7 @@ from typing import Union, List, Optional
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
+from pydantic import Field
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -44,7 +45,13 @@ class JobsView(PydanticView):
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_job))
-    async def delete(self, filter: Optional[str]) -> r200:
+    async def delete(
+        self,
+        job_filter: Optional[str] = Field(
+            alias="filter",
+            description="Clear jobs that are in a certain state. Acceptable states are finished, complete, failed, terminated",
+        ),
+    ) -> r200:
         """
         Clear jobs.
 
@@ -55,10 +62,10 @@ class JobsView(PydanticView):
         """
 
         # Remove jobs that completed successfully.
-        complete = filter in [None, "finished", "complete"]
+        complete = job_filter in [None, "finished", "complete"]
 
         # Remove jobs that errored or were cancelled.
-        failed = filter in [None, "failed", "finished" "terminated"]
+        failed = job_filter in [None, "failed", "finished" "terminated"]
 
         removed_job_ids = await get_data_from_req(self.request).jobs.clear(
             complete=complete, failed=failed

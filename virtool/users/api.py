@@ -3,6 +3,7 @@ from typing import Union, Optional
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
+from pydantic import Field
 from virtool_core.models.user import User
 
 import virtool.http.auth
@@ -32,7 +33,12 @@ routes = Routes()
 @routes.view("/users")
 class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def get(self, find: Optional[str]) -> Union[r200[User], r403]:
+    async def get(
+        self,
+        find: Optional[str] = Field(
+            description="Provide text to filter by partial matches to the id field."
+        ),
+    ) -> Union[r200[User], r403]:
         """
         List all users.
 
@@ -155,9 +161,7 @@ class UserView(PydanticView):
             404: Not found
         """
         try:
-            user = await get_data_from_req(self.request).users.get(
-                user_id
-            )
+            user = await get_data_from_req(self.request).users.get(user_id)
         except ResourceNotFoundError:
             raise NotFound()
 

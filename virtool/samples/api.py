@@ -136,7 +136,9 @@ class SamplesView(PydanticView):
 
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
-    async def get(self, sample_id: str, /) -> Union[r200[GetSampleResponse], r403, r404]:
+    async def get(
+        self, sample_id: str, /
+    ) -> Union[r200[GetSampleResponse], r403, r404]:
         """
         Get a sample.
 
@@ -348,7 +350,14 @@ async def job_remove(req):
 
 @routes.view("/samples/{sample_id}/analyses")
 class AnalysesView(PydanticView):
-    async def get(self, sample_id: str, /, term: Optional[str]) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
+    async def get(
+        self,
+        sample_id: str,
+        /,
+        term: Optional[str] = Field(
+            description="Provide text to filter by partial matches to the reference name or user id in the sample."
+        ),
+    ) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
         """
         List the analyses associated with the given ``sample_id``.
 

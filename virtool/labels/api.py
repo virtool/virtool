@@ -3,6 +3,7 @@ from typing import List, Union, Optional
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
+from pydantic import Field
 
 import virtool.http.routes
 from virtool.api.response import EmptyRequest, NotFound, json_response
@@ -22,7 +23,10 @@ routes = virtool.http.routes.Routes()
 @routes.view("/labels")
 class LabelsView(PydanticView):
     async def get(
-        self, find: Optional[str]
+        self,
+        find: Optional[str] = Field(
+            description="Provide text to filter by partial matches to the name field."
+        ),
     ) -> Union[r200[List[GetLabelResponse]], r400]:
         """
         List labels.
