@@ -171,8 +171,15 @@ async def clear_reset_code(redis: Redis, session_id: str):
     :param session_id: the session id
 
     """
-    session = json.loads(await redis.get(session_id))
-    session_expiry = await redis.ttl(session_id)
+
+    unparsed_session, session_expiry = await asyncio.gather(
+        redis.get(session_id), redis.ttl(session_id)
+    )
+
+    if not unparsed_session:
+        return
+
+    session = json.loads(unparsed_session)
 
     await redis.set(
         session_id,
