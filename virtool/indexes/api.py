@@ -189,14 +189,18 @@ class IndexFileView(PydanticView):
         if index_document is None:
             raise NotFound()
 
-        # check the requesting user has read access to the parent reference
-        if not await check_right(self.request, index_document["reference"], "read"):
+        if not await check_right(
+            self.request, index_document["reference"]["id"], "read"
+        ):
             raise InsufficientRights()
 
         reference_id = index_document["reference"]["id"]
 
         path = (
-            join_index_path(self.request.app["config"].data_path, reference_id, index_id) / filename
+            join_index_path(
+                self.request.app["config"].data_path, reference_id, index_id
+            )
+            / filename
         )
 
         if not path.exists():
