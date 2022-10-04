@@ -113,9 +113,9 @@ class UploadsView(PydanticView):
         )
 
 
-@routes.view("/uploads/{id}")
+@routes.view("/uploads/{upload_id}")
 class UploadView(PydanticView):
-    async def get(self, upload_id: int = Field(alias="id"), /) -> Union[r200[FileResponse], r404]:
+    async def get(self, upload_id: int, /) -> Union[r200[FileResponse], r404]:
         """
         Download an upload.
 
@@ -147,7 +147,7 @@ class UploadView(PydanticView):
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_file))
-    async def delete(self, upload_id: int = Field(alias="id"), /) -> Union[r204, r401, r403, r404]:
+    async def delete(self, upload_id: int, /) -> Union[r204, r401, r403, r404]:
         """
         Delete an upload.
 
