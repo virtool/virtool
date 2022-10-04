@@ -115,7 +115,7 @@ class UploadsView(PydanticView):
 
 @routes.view("/uploads/{id}")
 class UploadView(PydanticView):
-    async def get(self, id: int, /) -> Union[r200[FileResponse], r404]:
+    async def get(self, upload_id: int = Field(alias="id"), /) -> Union[r200[FileResponse], r404]:
         """
         Download an upload.
 
@@ -131,7 +131,7 @@ class UploadView(PydanticView):
         """
 
         try:
-            upload = await get_data_from_req(self.request).uploads.get(id)
+            upload = await get_data_from_req(self.request).uploads.get(upload_id)
             upload_path = await get_upload_path(
                 self.request.app["config"], upload.name_on_disk
             )
@@ -147,7 +147,7 @@ class UploadView(PydanticView):
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_file))
-    async def delete(self, id: int, /) -> Union[r204, r401, r403, r404]:
+    async def delete(self, upload_id: int = Field(alias="id"), /) -> Union[r204, r401, r403, r404]:
         """
         Delete an upload.
 
@@ -161,7 +161,7 @@ class UploadView(PydanticView):
         """
 
         try:
-            await get_data_from_req(self.request).uploads.delete(id)
+            await get_data_from_req(self.request).uploads.delete(upload_id)
         except ResourceNotFoundError:
             raise NotFound
 
