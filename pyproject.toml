@@ -53,8 +53,8 @@ msal = "^1.16.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 aiojobs = "^1.0.0"
 aiohttp-pydantic = "^1.12.1"
-virtool-core = "^2.33.1"
 orjson = "^3.8.0"
+virtool-core = "2.33.6"
 
 
 [tool.poetry.dev-dependencies]
