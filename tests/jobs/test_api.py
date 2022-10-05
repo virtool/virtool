@@ -43,10 +43,10 @@ async def test_delete(job_filter, fake2, spawn_client, test_job, resp_is, snapsh
 
     await client.db.jobs.insert_one(test_job)
 
-    url = "/jobs?"
+    url = "/jobs"
 
     if job_filter:
-        url += f"&filter={job_filter}"
+        url += f"?filter={job_filter}"
 
     resp = await client.delete(url)
 

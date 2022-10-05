@@ -50,10 +50,10 @@ async def test_find(find, fake2, snapshot, spawn_client):
     await fake2.users.create()
     await fake2.users.create()
 
-    url = "/users?"
+    url = "/users"
 
     if find:
-        url += f"&find={find}"
+        url += f"?find={find}"
 
     resp = await client.get(url)
 
