@@ -22,9 +22,9 @@
 ---
 # name: test_add_index_json[uvloop]
   <class 'list'> [
-    <IndexFile(id=1, name=reference.json.gz, index=index_1, type=json, size=325)>,
+    <IndexFile(id=1, name=reference.json.gz, index=index_1, type=json, size=322)>,
   ]
 ---
 # name: test_add_index_json[uvloop][json]
-  '{"data_type": "genome", "organism": "virus", "otus": [{"_id": "6116cba1", "name": "Prunus virus F", "abbreviation": "PVF", "isolates": [{"id": "cab8b360", "default": true, "source_name": "8816-v2", "source_type": "isolate", "sequences": [{"_id": "abcd1234", "accession": "KX269872", "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.", "host": "sweet cherry", "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC", "segment": null}]}], "schema": []}], "targets": null}'
+  '{"data_type":"genome","organism":"virus","otus":[{"_id":"6116cba1","name":"Prunus virus F","abbreviation":"PVF","isolates":[{"id":"cab8b360","default":true,"source_name":"8816-v2","source_type":"isolate","sequences":[{"_id":"abcd1234","accession":"KX269872","definition":"Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.","host":"sweet cherry","sequence":"TGTTTAAGAGATTAAACAACCGCTTTC","segment":null}]}],"schema":[]}],"targets":null}'
 ---

@@ -3,11 +3,12 @@ import sys
 from enum import Enum
 from typing import Optional, Type, Union
 
+import orjson
 from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
-from virtool.api.custom_json import pretty_dumps
+from virtool.api.custom_json import pretty_orjson_serializer
 from virtool.pg.base import Base
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,8 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
     try:
         pg = create_async_engine(
             postgres_connection_string,
-            json_serializer=pretty_dumps,
+            json_serializer=pretty_orjson_serializer,
+            json_deserializer=orjson.loads,
             pool_recycle=1800,
         )
 

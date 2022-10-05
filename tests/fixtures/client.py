@@ -9,7 +9,7 @@ from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.utils import hash_key
-from virtool.api.custom_json import CustomEncoder
+from virtool.api.custom_json import dumps
 
 
 class VirtoolTestClient:
@@ -122,7 +122,7 @@ def spawn_client(
 
             await redis.set(
                 session_id,
-                json.dumps(
+                dumps(
                     {
                         "_id": "foobar",
                         "ip": "127.0.0.1",
@@ -133,8 +133,7 @@ def spawn_client(
                         "token": hash_key(session_token),
                         "user_agent": "Python/3.6 aiohttp/3.4.4",
                         "user": {"id": "test"},
-                    },
-                    cls=CustomEncoder,
+                    }
                 ),
                 expire=3600,
             )
