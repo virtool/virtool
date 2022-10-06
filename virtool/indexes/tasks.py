@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, List
 
-import orjson
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.utils import file_stats
