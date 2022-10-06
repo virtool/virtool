@@ -26,6 +26,9 @@ def isoformat(obj: datetime.datetime) -> str:
 
 
 def default(obj):
+    """
+    Converts Pydantic BaseModel objects into Python dictionaries for serialization.
+    """
     if issubclass(type(obj), BaseModel):
         return obj.dict(by_alias=True)
     raise TypeError
@@ -33,12 +36,12 @@ def default(obj):
 
 def dumps(obj: object) -> bytes:
     """
-    A wrapper for :func:`dumps` is able to encode datetime objects in input.
+    Calls orjson.dumps that encodes datetime objects in input.
 
     Used as `dumps` argument for :func:`.json_response`.
 
     :param obj: a JSON-serializable object
-    :return: a JSON string in bytes
+    :return: a JSON bytestring
 
     """
     return orjson.dumps(
@@ -50,13 +53,13 @@ def dumps(obj: object) -> bytes:
 
 def pretty_dumps(obj: object) -> bytes:
     """
-    A wrapper for :func:`json.dumps` that applies pretty formatting to the output.
+    Calls orjson.dumps that applies pretty formatting to the output.
 
-    Sorts keys and adds indentation. Used as ``dumps`` argument for
-    :func:`.json_response`.
+    Sorts keys, adds indentation and converts datetime objects to ISO format.
+    Used as ``dumps`` argument for :func:`.json_response`.
 
     :param obj: a JSON-serializable object
-    :return: a JSON string in bytes
+    :return: a JSON bytestring
 
     """
     return orjson.dumps(
@@ -67,13 +70,6 @@ def pretty_dumps(obj: object) -> bytes:
         | orjson.OPT_NAIVE_UTC
         | orjson.OPT_UTC_Z,
     )
-
-
-def pretty_orjson_serializer(obj) -> str:
-    """
-    Used by SQLAlchemy as they expect strings.
-    """
-    return pretty_dumps(obj).decode()
 
 
 def orjson_serializer(obj) -> str:

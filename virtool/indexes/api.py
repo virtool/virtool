@@ -154,9 +154,7 @@ async def download_otus_json(req):
             db, req.app["config"], index["manifest"]
         )
 
-        json_string = dumps(patched_otus)
-
-        await run_in_thread(compress_json_with_gzip, json_string, json_path)
+        await run_in_thread(compress_json_with_gzip, dumps(patched_otus), json_path)
 
     return FileResponse(
         json_path,
