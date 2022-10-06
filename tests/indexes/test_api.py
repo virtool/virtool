@@ -441,7 +441,7 @@ async def test_finalize(error, snapshot, fake2, spawn_job_client, test_otu, pg):
 
     for file_name in files:
         await create_index_file(
-            pg, "test_index", check_index_file_type(file_name), file_name
+            pg, "test_index", check_index_file_type(file_name), file_name, 9000
         )
 
     resp = await client.patch("/indexes/test_index")

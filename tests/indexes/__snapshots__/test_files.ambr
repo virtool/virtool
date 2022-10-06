@@ -3,10 +3,10 @@
     'id': 1,
     'index': 'foo',
     'name': 'reference.1.bt2',
-    'size': None,
+    'size': 9000,
     'type': 'bowtie2',
   }
 ---
 # name: test_create_index_file[uvloop].1
-  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=None)>
+  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=9000)>
 ---

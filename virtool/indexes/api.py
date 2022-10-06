@@ -257,17 +257,14 @@ async def upload(req):
     reference_id = document["reference"]["id"]
     file_type = check_index_file_type(name)
 
-    try:
-        index_file = await create_index_file(pg, index_id, file_type, name)
-    except IntegrityError:
-        raise HTTPConflict(text="File name already exists")
-
-    upload_id = index_file["id"]
-
     path = join_index_path(req.app["config"].data_path, reference_id, index_id) / name
 
     try:
         size = await naive_writer(await req.multipart(), path)
+        index_file = await create_index_file(pg, index_id, file_type, name, size)
+        upload_id = index_file["id"]
+    except IntegrityError:
+        raise HTTPConflict(text="File name already exists")
     except asyncio.CancelledError:
         logger.debug("Index file upload aborted: %s", upload_id)
         await delete_row(pg, upload_id, IndexFile)
