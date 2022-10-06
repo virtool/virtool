@@ -116,7 +116,7 @@ class TasksFakerPiece(DataFakerPiece):
     model = Task
 
     async def create(self):
-        return await self.layer.tasks.register(
+        return await self.layer.tasks.create(
             self.faker.random_element(
                 [
                     AddIndexFilesTask,

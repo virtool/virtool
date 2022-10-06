@@ -1,9 +1,13 @@
 from logging import getLogger
+from typing import Optional, Dict, List, Callable, Awaitable
 
+from pydantic import BaseModel, conint
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.tasks.models
+from virtool.data.layer import DataLayer
+from virtool.tasks.progress import AbstractProgressHandler, TaskProgressHandler
 from virtool.utils import get_temp_dir, run_in_thread
 from virtool.data.utils import get_data_from_app
 from virtool_core.models.task import Task as TaskModel
@@ -11,11 +15,122 @@ from virtool_core.models.task import Task as TaskModel
 logger = getLogger("task")
 
 
+class TaskUpdate(BaseModel):
+    step: Optional[str]
+    progress: Optional[conint(ge=1, le=100)]
+    error: Optional[str]
+
+
+class Task2:
+    steps: List[Callable[[], Awaitable]] = []
+    task_type: str
+
+    def __init__(self, task_id: int, data: DataLayer, context: Dict):
+        self.context = context
+        self.data = data
+        self.task_id = task_id
+
+        self.errored = False
+        self.step = None
+        self.temp_dir = await run_in_thread(get_temp_dir)
+
+    def create_progress_handler(self):
+        """
+        Get a ``TaskProgressHandler`` that is wired up to the task progress handling.
+        """
+        return TaskProgressHandler(self._set_error, self._set_step_progress)
+
+    @classmethod
+    async def from_task_id(cls, data: DataLayer, task_id: int):
+        task = await data.tasks.get(task_id)
+        return cls(data, task_id, task.context)
+
+    @property
+    def step_number(self):
+        """
+        The number of the active step.
+
+        """
+        if self.step is None:
+            return 0
+
+        return self.steps.index(self.step)
+
+    async def run(self):
+        """
+        Run the task.
+
+        """
+
+        for func in self.steps:
+            if self.errored:
+                break
+
+            self.step = func
+
+            await self.data.tasks.update(
+                self.task_id, TaskUpdate(step=self.step.__name__)
+            )
+
+            logger.info("Starting task step '%s.%s'", self.task_type, func.__name__)
+
+            try:
+                await func()
+            except Exception as err:
+                logger.exception("Encountered error in %s", self)
+                await self._set_error(str(err))
+
+        if not self.errored:
+            await self.data.tasks.complete(self.task_id)
+
+        await run_in_thread(self.temp_dir.cleanup)
+
+    async def cleanup(self):
+        """
+        Override this method to run cleanup if the task fails.
+        """
+        ...
+
+    async def _set_step_progress(self, progress: int):
+        """
+        Update the overall progress using the progress of a subtask
+        """
+        await self._set_progress(
+            round(
+                100
+                * (
+                    self.step_number / (len(self.steps))
+                    + (progress * (1 / len(self.steps)))
+                )
+            )
+        )
+
+    async def _set_progress(self, progress: int):
+        """
+        Update the overall progress value for the task.
+        """
+        await self.data.tasks.update(self.task_id, TaskUpdate(progress=progress))
+
+    async def _set_error(self, error: str):
+        """
+        Set task error status
+        """
+        await self.data.tasks.update(self.task_id, TaskUpdate(error=error))
+        self.errored = True
+
+
+class UpdateRemoteReferenceTask(Task2):
+    async def step_1(self):
+        progress_handler = AbstractProgressHandler()
+
+        await self.data.reference.update_remote_reference(ref_id, progress_handler)
+
+
 class Task:
 
     task_type = None
 
-    def __init__(self, app, task_id):
+    def __init__(self, update_task, app, task_id):
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]

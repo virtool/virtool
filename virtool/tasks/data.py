@@ -49,34 +49,6 @@ class TasksData:
 
         raise ResourceNotFoundError
 
-    async def register(self, task_class: Type[TaskClass], context: dict = None) -> Task:
-        """
-        Create a new task record and store it.
-
-        :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
-        :param context: A dict containing data used by the task
-
-        :return: the new task record
-
-        """
-        task = SQLTask(
-            complete=False,
-            context=context or {},
-            step=task_class.task_type,
-            count=0,
-            created_at=virtool.utils.timestamp(),
-            progress=0,
-            type=task_class.task_type,
-        )
-
-        async with AsyncSession(self._pg) as session:
-            session.add(task)
-            await session.flush()
-            document = task.to_dict()
-            await session.commit()
-
-        return Task(**document)
-
     async def update(
         self,
         task_id: int,
@@ -164,20 +136,34 @@ class TasksData:
         :return: the task record
 
         """
-        try:
-            task = await self.register(task_class, context=context)
-            await self._redis.publish("channel:tasks", task.id)
-            return task
+        task = SQLTask(
+            complete=False,
+            context=context or {},
+            step=task_class.task_type,
+            count=0,
+            created_at=virtool.utils.timestamp(),
+            progress=0,
+            type=task_class.task_type,
+        )
 
-        except CancelledError:
-            pass
+        async with AsyncSession(self._pg) as session:
+            session.add(task)
+            await session.flush()
+            document = task.to_dict()
+            await session.commit()
 
-    async def create_periodic(
+        task = Task(**document)
+
+        await self._redis.publish("channel:tasks", task.id)
+
+        return task
+
+    async def create_periodically(
         self,
         task_class: Type[TaskClass],
         interval: int = None,
         context: Optional[Dict] = None,
-    ) -> Task:
+    ):
         """
         Register a new task that will be run regularly at the given interval.
 
@@ -189,10 +175,7 @@ class TasksData:
         """
         try:
             while True:
-                task = await self.register(task_class, context=context)
-                await self._redis.publish("channel:tasks", task.id)
+                await self.create(task_class, context=context)
                 await asyncio.sleep(interval)
-
-                return task
         except asyncio.CancelledError:
             pass

@@ -7,7 +7,8 @@ from virtool.tasks.models import Task
 
 
 class TaskRunner:
-    def __init__(self, channel, app):
+    def __init__(self, data, channel, app):
+        self._data = data
         self._channel = channel
         self.app = app
 
@@ -43,5 +44,5 @@ class TaskRunner:
 
         for task_class in virtool.tasks.task.Task.__subclasses__():
             if task.type == task_class.task_type:
-                current_task = task_class(self.app, task_id)
+                current_task = task_class(self._data.tasks.update, task_id)
                 await loop.create_task(current_task.run())

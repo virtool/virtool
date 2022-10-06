@@ -36,6 +36,13 @@ logger = getLogger(__name__)
 
 
 class CloneReferenceTask(Task):
+    """
+    Clone an existing reference.
+
+    TODO: Remove use of update_context().
+
+    """
+
     task_type = "clone_reference"
 
     def __init__(self, app, task_id):
