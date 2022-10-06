@@ -9,12 +9,12 @@ from virtool_core.utils import decompress_tgz
 from virtool.data.utils import get_data_from_app
 from virtool.github import create_update_subdocument
 from virtool.http.utils import download_file
-from virtool.tasks.task import Task
+from virtool.tasks.task import Task, Task2
 
 logger = logging.getLogger(__name__)
 
 
-class HMMInstallTask(Task):
+class HMMInstallTask(Task2):
     """
     Runs a background Task that:
         - downloads the official profiles.hmm.gz file
@@ -36,8 +36,8 @@ class HMMInstallTask(Task):
 
     task_type = "install_hmms"
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+    def __init__(self, task_id, data, context, temp_dir):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [
             self.download,
@@ -45,8 +45,6 @@ class HMMInstallTask(Task):
             self.install_profiles,
             self.import_annotations,
         ]
-
-        self.temp_path = Path(self.temp_dir.name)
 
     async def download(self):
         release = self.context["release"]

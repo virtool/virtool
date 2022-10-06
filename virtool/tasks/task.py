@@ -30,6 +30,7 @@ class Task2:
         self.data = data
         self.task_id = task_id
         self.temp_dir = temp_dir
+        self.temp_path = Path(self.temp_dir.name)
 
         self.errored = False
         self.step = None
