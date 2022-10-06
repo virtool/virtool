@@ -40,3 +40,26 @@ class TaskProgressHandler(AbstractProgressHandler):
 
         if progress > self._progress:
             await self._set_progress(progress)
+
+
+class DownloadProgressHandlerWrapper:
+    """
+    Reports progress in a file download to a ``AbstractProgressHandler``.
+
+    """
+
+    def __init__(self, progress_handler: AbstractProgressHandler, total: int):
+        self._progress_handler = progress_handler
+        self._total = total
+        self._accumulated = 0
+
+    async def add(self, value: int):
+        """
+        Add a number of bytes onto the download handler and report progress.
+
+        """
+        self._accumulated += value
+
+        await self._progress_handler.set_progress(
+            round(self._accumulated * 100 / self._total)
+        )

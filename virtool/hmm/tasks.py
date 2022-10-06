@@ -10,6 +10,7 @@ from virtool.data.utils import get_data_from_app
 from virtool.github import create_update_subdocument
 from virtool.http.utils import download_file
 from virtool.tasks.task import Task, Task2
+from virtool.utils import run_in_thread
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +50,6 @@ class HMMInstallTask(Task2):
     async def download(self):
         release = self.context["release"]
 
-        await get_data_from_app(self.app).tasks.update(self.id, 0, step="download")
-
         tracker = await self.get_tracker(release["size"])
 
         path = self.temp_path / "hmm.tar.gz"
@@ -62,13 +61,7 @@ class HMMInstallTask(Task2):
             await self.error("Could not download HMM data.")
 
     async def decompress(self):
-        tracker = await self.get_tracker()
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=tracker.step_completed, step="unpack"
-        )
-
-        await self.run_in_thread(
+        await run_in_thread(
             decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path
         )
 
