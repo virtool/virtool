@@ -2,8 +2,8 @@ import pytest
 
 
 @pytest.fixture()
-async def test_settings(dbi):
-    await dbi.settings.delete_one({"_id": "settings"})
+async def test_settings(mongo):
+    await mongo.settings.delete_one({"_id": "settings"})
 
     settings = {
         "_id": "settings",
@@ -20,4 +20,4 @@ async def test_settings(dbi):
         "sample_unique_names": True,
     }
 
-    await dbi.settings.insert_one(settings)
+    await mongo.settings.insert_one(settings)

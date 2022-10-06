@@ -1,14 +1,14 @@
 from aiohttp.test_utils import make_mocked_coro
 
 
-async def test_get_status(config, data_layer, fake2, dbi, snapshot, static_time):
+async def test_get_status(config, data_layer, fake2, mongo, snapshot, static_time):
     """
     Test that function works when the HMM data are being updated and when they are not.
 
     """
     user = await fake2.users.create()
 
-    await dbi.status.insert_one(
+    await mongo.status.insert_one(
         {
             "_id": "hmm",
             "updating": False,
@@ -47,7 +47,7 @@ async def test_get_status(config, data_layer, fake2, dbi, snapshot, static_time)
     assert await data_layer.hmms.get_status() == snapshot
 
 
-async def test_purge(dbi, data_layer, mocker, tmp_path, config, static_time):
+async def test_purge(mongo, data_layer, mocker, tmp_path, config, static_time):
     """
     Test that the function calls `delete_unreferenced_hmms()` and hides all remaining
     HMM documents.
@@ -77,7 +77,7 @@ async def test_purge(dbi, data_layer, mocker, tmp_path, config, static_time):
         ),
     )
 
-    await dbi.hmm.insert_many(
+    await mongo.hmm.insert_many(
         [
             {"_id": "a"},
             {"_id": "b"},
@@ -91,7 +91,7 @@ async def test_purge(dbi, data_layer, mocker, tmp_path, config, static_time):
     await data_layer.settings.ensure()
     await data_layer.hmms.purge()
 
-    assert await dbi.hmm.find().sort("_id").to_list(None) == [
+    assert await mongo.hmm.find().sort("_id").to_list(None) == [
         {"_id": "b", "hidden": True},
         {"_id": "e", "hidden": True},
         {"_id": "f", "hidden": True},

@@ -1,11 +1,11 @@
 from virtool.subtractions.oas import FinalizeSubtractionRequest
 
 
-async def test_finalize(dbi, data_layer, fake2, snapshot, static_time):
+async def test_finalize(mongo, data_layer, fake2, snapshot, static_time):
 
     user = await fake2.users.create()
 
-    await dbi.subtraction.insert_one(
+    await mongo.subtraction.insert_one(
         {
             "_id": "apple",
             "created_at": static_time.datetime,
@@ -32,4 +32,4 @@ async def test_finalize(dbi, data_layer, fake2, snapshot, static_time):
     )
 
     assert subtraction == snapshot(name="obj")
-    assert await dbi.subtraction.find_one() == snapshot(name="db")
+    assert await mongo.subtraction.find_one() == snapshot(name="db")

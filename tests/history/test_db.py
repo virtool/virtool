@@ -9,10 +9,10 @@ from virtool_core.models.enums import HistoryMethod
 
 class TestAdd:
     async def test(
-        self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config
+        self, snapshot, mongo, static_time, test_otu_edit, test_change, tmp_path, config
     ):
 
-        app = {"db": dbi, "config": config}
+        app = {"db": mongo, "config": config}
 
         old, new = test_otu_edit
 
@@ -21,12 +21,12 @@ class TestAdd:
         )
 
         assert change == snapshot
-        assert await dbi.history.find_one() == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     async def test_create(
-        self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config
+        self, snapshot, mongo, static_time, test_otu_edit, test_change, tmp_path, config
     ):
-        app = {"db": dbi, "config": config}
+        app = {"db": mongo, "config": config}
 
         # There is no old document because this is a change document for a otu creation operation.
         old = None
@@ -40,16 +40,16 @@ class TestAdd:
         )
 
         assert change == snapshot
-        assert await dbi.history.find_one() == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     async def test_remove(
-        self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config
+        self, snapshot, mongo, static_time, test_otu_edit, test_change, tmp_path, config
     ):
         """
         Test that the addition of a change due to otu removal inserts the expected change document.
 
         """
-        app = {"db": dbi, "config": config}
+        app = {"db": mongo, "config": config}
 
         # There is no new document because this is a change document for a otu removal operation.
         new = None
@@ -63,14 +63,14 @@ class TestAdd:
         )
 
         assert change == snapshot
-        assert await dbi.history.find_one() == snapshot
+        assert await mongo.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, dbi, fake2, tmp_path, config):
+async def test_get(file, mocker, snapshot, mongo, fake2, tmp_path, config):
     user = await fake2.users.create()
 
-    await dbi.history.insert_one(
+    await mongo.history.insert_one(
         {
             "_id": "baz.2",
             "diff": "file" if file else {"foo": "bar"},
@@ -82,15 +82,15 @@ async def test_get(file, mocker, snapshot, dbi, fake2, tmp_path, config):
         "virtool.history.utils.read_diff_file", make_mocked_coro(return_value="loaded")
     )
 
-    app = {"db": dbi, "config": config}
+    app = {"db": mongo, "config": config}
 
-    history = HistoryData(app["config"].data_path, dbi)
+    history = HistoryData(app["config"].data_path, mongo)
 
     assert await history.get("baz.2") == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_get_most_recent_change(exists, snapshot, dbi, static_time):
+async def test_get_most_recent_change(exists, snapshot, mongo, static_time):
     """
     Test that the most recent change document is returned for the given ``otu_id``.
 
@@ -99,7 +99,7 @@ async def test_get_most_recent_change(exists, snapshot, dbi, static_time):
     delta = datetime.timedelta(3)
 
     if exists:
-        await dbi.history.insert_many(
+        await mongo.history.insert_many(
             [
                 {
                     "_id": "6116cba1.1",
@@ -122,16 +122,16 @@ async def test_get_most_recent_change(exists, snapshot, dbi, static_time):
             ]
         )
 
-    return_value = await virtool.history.db.get_most_recent_change(dbi, "6116cba1")
+    return_value = await virtool.history.db.get_most_recent_change(mongo, "6116cba1")
     assert return_value == snapshot
 
 
 @pytest.mark.parametrize("remove", [True, False])
-async def test_patch_to_version(remove, snapshot, config, dbi, create_mock_history):
+async def test_patch_to_version(remove, snapshot, config, mongo, create_mock_history):
     await create_mock_history(remove=remove)
 
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        config.data_path, dbi, "6116cba1", 1
+        config.data_path, mongo, "6116cba1", 1
     )
 
     assert current == snapshot

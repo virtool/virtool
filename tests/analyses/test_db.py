@@ -6,7 +6,7 @@ import virtool.analyses.format
 
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
-async def test_format_analysis(workflow, config, dbi, mocker):
+async def test_format_analysis(workflow, config, mongo, mocker):
     """
     Ensure that:
     * the correct formatting function is called based on the workflow field.
@@ -25,7 +25,7 @@ async def test_format_analysis(workflow, config, dbi, mocker):
     if workflow:
         document["workflow"] = workflow
 
-    coroutine = virtool.analyses.format.format_analysis(config, dbi, document)
+    coroutine = virtool.analyses.format.format_analysis(config, mongo, document)
 
     if workflow is None or workflow == "foobar":
         with pytest.raises(ValueError) as excinfo:
@@ -41,21 +41,21 @@ async def test_format_analysis(workflow, config, dbi, mocker):
     }
 
     if workflow == "nuvs":
-        m_format_nuvs.assert_called_with(config, dbi, document)
+        m_format_nuvs.assert_called_with(config, mongo, document)
         assert not m_format_pathoscope.called
 
     elif workflow == "pathoscope":
-        m_format_pathoscope.assert_called_with(config, dbi, document)
+        m_format_pathoscope.assert_called_with(config, mongo, document)
         assert not m_format_nuvs.called
 
 
 @pytest.mark.parametrize("analysis_id", [None, "test_analysis"])
 async def test_create(
-    analysis_id, snapshot, dbi, static_time, test_random_alphanumeric
+    analysis_id, snapshot, mongo, static_time, test_random_alphanumeric
 ):
     subtractions = ["subtraction_1", "subtraction_2"]
 
-    await dbi.indexes.insert_one(
+    await mongo.indexes.insert_one(
         {
             "_id": "test_index",
             "version": 11,
@@ -65,7 +65,7 @@ async def test_create(
     )
 
     document = await virtool.analyses.db.create(
-        dbi,
+        mongo,
         "test_sample",
         "test_ref",
         subtractions,
@@ -76,4 +76,4 @@ async def test_create(
     )
 
     assert document == snapshot
-    assert await dbi.analyses.find_one() == snapshot
+    assert await mongo.analyses.find_one() == snapshot

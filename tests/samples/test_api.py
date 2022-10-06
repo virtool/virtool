@@ -29,21 +29,21 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_data(dbi, fake2, pg, static_time):
+async def get_sample_data(mongo, fake2, pg, static_time):
     label = await fake2.labels.create()
     await fake2.labels.create()
 
     user = await fake2.users.create()
 
     await asyncio.gather(
-        dbi.subtraction.insert_many(
+        mongo.subtraction.insert_many(
             [
                 {"_id": "apple", "name": "Apple"},
                 {"_id": "pear", "name": "Pear"},
                 {"_id": "peach", "name": "Peach"},
             ]
         ),
-        dbi.samples.insert_one(
+        mongo.samples.insert_one(
             {
                 "_id": "test",
                 "all_read": True,
@@ -1250,7 +1250,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 class TestCreateCache:
     @pytest.mark.parametrize("key", ["key", "not_key"])
     async def test(
-        self, key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client
+        self, key, mongo, mocker, resp_is, snapshot, static_time, spawn_job_client
     ):
         """
         Test that a new cache document can be created in the `caches` db using the Jobs API.
@@ -1278,11 +1278,11 @@ class TestCreateCache:
 
             resp_json = await resp.json()
             assert resp_json == snapshot
-            assert await virtool.caches.db.get(dbi, resp_json["id"])
+            assert await virtool.caches.db.get(mongo, resp_json["id"])
         else:
             await resp_is.invalid_input(resp, {"key": ["required field"]})
 
-    async def test_duplicate_cache(self, dbi, spawn_job_client, static_time):
+    async def test_duplicate_cache(self, mongo, spawn_job_client, static_time):
         """
         Test that uniqueness is enforced on `key`-`sample.id` pairs for `caches`
 
@@ -1306,7 +1306,7 @@ class TestCreateCache:
         resp = await client.post("/samples/test/caches", json=data)
 
         assert resp.status == 409
-        assert await dbi.caches.count_documents({}) == 1
+        assert await mongo.caches.count_documents({}) == 1
 
 
 @pytest.mark.parametrize("error", [None, 400, 409])

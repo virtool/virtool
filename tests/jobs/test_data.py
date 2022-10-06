@@ -9,14 +9,14 @@ from virtool.jobs.utils import JobRights, compose_status
 
 
 @pytest.fixture
-async def jobs_data(dbi, mocker, pg: AsyncEngine) -> JobsData:
-    return JobsData(mocker.Mock(spec=JobsClient), dbi, pg)
+async def jobs_data(mongo, mocker, pg: AsyncEngine) -> JobsData:
+    return JobsData(mocker.Mock(spec=JobsClient), mongo, pg)
 
 
-async def test_cancel(dbi, fake2, jobs_data: JobsData, snapshot, static_time):
+async def test_cancel(mongo, fake2, jobs_data: JobsData, snapshot, static_time):
     user = await fake2.users.create()
 
-    await dbi.jobs.insert_one(
+    await mongo.jobs.insert_one(
         {
             "_id": "foo",
             "state": "waiting",
@@ -38,7 +38,7 @@ async def test_cancel(dbi, fake2, jobs_data: JobsData, snapshot, static_time):
     )
 
     assert await jobs_data.cancel("foo") == snapshot
-    assert await dbi.jobs.find_one() == snapshot
+    assert await mongo.jobs.find_one() == snapshot
 
 
 @pytest.mark.parametrize("job_id", ["bar", None])
@@ -47,7 +47,7 @@ async def test_create(
     jobs_data: JobsData,
     mocker,
     snapshot,
-    dbi,
+    mongo,
     test_random_alphanumeric,
     static_time,
     fake,
@@ -68,17 +68,17 @@ async def test_create(
         == snapshot
     )
 
-    assert await dbi.jobs.find_one() == snapshot
+    assert await mongo.jobs.find_one() == snapshot
 
 
 async def test_acquire(
-    dbi, fake2, jobs_data: JobsData, mocker, pg, snapshot, static_time
+    mongo, fake2, jobs_data: JobsData, mocker, pg, snapshot, static_time
 ):
     user = await fake2.users.create()
 
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
-    await dbi.jobs.insert_one(
+    await mongo.jobs.insert_one(
         {
             "_id": "foo",
             "acquired": False,
@@ -92,15 +92,15 @@ async def test_acquire(
     )
 
     assert await jobs_data.acquire("foo") == snapshot
-    assert await dbi.jobs.find_one() == snapshot
+    assert await mongo.jobs.find_one() == snapshot
 
 
-async def test_archive(dbi, fake2, jobs_data: JobsData, pg, snapshot, static_time):
+async def test_archive(mongo, fake2, jobs_data: JobsData, pg, snapshot, static_time):
     user = await fake2.users.create()
 
     status = compose_status("waiting", None)
 
-    await dbi.jobs.insert_one(
+    await mongo.jobs.insert_one(
         {
             "_id": "foo",
             "status": [status],
@@ -115,11 +115,11 @@ async def test_archive(dbi, fake2, jobs_data: JobsData, pg, snapshot, static_tim
     )
 
     assert await jobs_data.archive("foo") == snapshot
-    assert await dbi.jobs.find_one() == snapshot
+    assert await mongo.jobs.find_one() == snapshot
 
 
-async def test_force_delete_jobs(dbi, jobs_data: JobsData):
-    await dbi.jobs.insert_many([{"_id": "foo"}, {"_id": "bar"}])
+async def test_force_delete_jobs(mongo, jobs_data: JobsData):
+    await mongo.jobs.insert_many([{"_id": "foo"}, {"_id": "bar"}])
 
     await jobs_data.force_delete()
 
@@ -127,4 +127,4 @@ async def test_force_delete_jobs(dbi, jobs_data: JobsData):
         [call("foo"), call("bar")], any_order=True
     )
 
-    assert await dbi.jobs.count_documents({}) == 0
+    assert await mongo.jobs.count_documents({}) == 0

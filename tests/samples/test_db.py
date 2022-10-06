@@ -87,8 +87,8 @@ class TestCalculateWorkflowTags:
 
 
 class TestRecalculateWorkflowTags:
-    async def test(self, mocker, dbi):
-        await dbi.samples.insert_one(
+    async def test(self, mocker, mongo):
+        await mongo.samples.insert_one(
             {"_id": "test", "pathoscope": False, "nuvs": False}
         )
 
@@ -113,7 +113,7 @@ class TestRecalculateWorkflowTags:
             },
         ]
 
-        await dbi.analyses.insert_many(
+        await mongo.analyses.insert_many(
             analysis_documents
             + [
                 {
@@ -130,14 +130,14 @@ class TestRecalculateWorkflowTags:
             return_value={"pathoscope": True, "nuvs": "ip"},
         )
 
-        await recalculate_workflow_tags(dbi, "test")
+        await recalculate_workflow_tags(mongo, "test")
 
         for document in analysis_documents:
             del document["sample"]
 
         assert m.call_args[0][0] == analysis_documents
 
-        assert await dbi.samples.find_one() == {
+        assert await mongo.samples.find_one() == {
             "_id": "test",
             "pathoscope": True,
             "nuvs": "ip",
@@ -145,26 +145,26 @@ class TestRecalculateWorkflowTags:
 
 
 class TestGetSampleOwner:
-    async def test(self, dbi):
+    async def test(self, mongo):
         """
         Test that the correct owner id is returned given a sample id.
 
         """
-        await dbi.samples.insert_many(
+        await mongo.samples.insert_many(
             [
                 {"_id": "test", "user": {"id": "foobar"}},
                 {"_id": "baz", "user": {"id": "fred"}},
             ]
         )
 
-        assert await get_sample_owner(dbi, "test") == "foobar"
+        assert await get_sample_owner(mongo, "test") == "foobar"
 
-    async def test_none(self, dbi):
+    async def test_none(self, mongo):
         """
         Test that ``None`` is returned if the sample id does not exist.
 
         """
-        assert await get_sample_owner(dbi, "foobar") is None
+        assert await get_sample_owner(mongo, "foobar") is None
 
 
 class TestRemoveSamples:
@@ -175,7 +175,7 @@ class TestRemoveSamples:
             ["test_1", "test_2"],
         ],
     )
-    async def test(self, id_list, snapshot, tmp_path, dbi, config):
+    async def test(self, id_list, snapshot, tmp_path, mongo, config):
         """
         Test that the function can remove one or more samples, their analysis documents, and files.
 
@@ -192,11 +192,11 @@ class TestRemoveSamples:
         for handle in paths.values():
             handle.joinpath("text.txt").write_text("hello world")
 
-        await dbi.samples.insert_many(
+        await mongo.samples.insert_many(
             [{"_id": "test_1"}, {"_id": "test_2"}, {"_id": "test_3"}]
         )
 
-        await dbi.analyses.insert_many(
+        await mongo.analyses.insert_many(
             [
                 {"_id": "a_1", "sample": {"id": "test_1"}},
                 {"_id": "a_2", "sample": {"id": "test_1"}},
@@ -210,13 +210,13 @@ class TestRemoveSamples:
             ]
         )
 
-        await remove_samples(dbi, config, id_list)
+        await remove_samples(mongo, config, id_list)
 
         assert set(os.listdir(samples_dir)) == snapshot
-        assert await dbi.samples.find().to_list(None) == snapshot
-        assert await dbi.analyses.find().to_list(None) == snapshot
+        assert await mongo.samples.find().to_list(None) == snapshot
+        assert await mongo.analyses.find().to_list(None) == snapshot
 
-    async def test_file_not_found(self, tmp_path, dbi, config):
+    async def test_file_not_found(self, tmp_path, mongo, config):
         """
         Test that the function does not fail when a sample folder is missing.
 
@@ -226,12 +226,12 @@ class TestRemoveSamples:
 
         samples_dir.joinpath("test.txt").write_text("hello world")
 
-        await dbi.samples.insert_many([{"_id": "test_1"}, {"_id": "test_2"}])
+        await mongo.samples.insert_many([{"_id": "test_1"}, {"_id": "test_2"}])
 
-        await remove_samples(dbi, config, ["test_1", "test_2"])
+        await remove_samples(mongo, config, ["test_1", "test_2"])
 
         assert not samples_dir.exists()
-        assert not await dbi.samples.count_documents({})
+        assert not await mongo.samples.count_documents({})
 
 
 async def test_attach_labels(fake2, snapshot, pg: AsyncEngine):
@@ -243,7 +243,7 @@ async def test_attach_labels(fake2, snapshot, pg: AsyncEngine):
     assert await apply_transforms(document, [AttachLabelsTransform(pg)]) == snapshot
 
 
-async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
+async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client):
     """
     Test that a sample can be properly created.
 
@@ -255,7 +255,7 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
     settings = await get_data_from_app(client.app).settings.get_all()
 
     result = await create_sample(
-        dbi,
+        mongo,
         "foo",
         "",
         "",
@@ -270,7 +270,7 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
     )
 
     assert result == snapshot
-    assert await dbi.samples.find_one() == snapshot
+    assert await mongo.samples.find_one() == snapshot
 
 
 class TestCheckIsLegacy:
@@ -315,7 +315,7 @@ class TestCheckIsLegacy:
         assert check_is_legacy(sample) is False
 
 
-async def test_update_is_compressed(snapshot, dbi):
+async def test_update_is_compressed(snapshot, mongo):
     """
     Test that samples with both files gzipped are flagged with ``is_compressed``.
 
@@ -332,14 +332,14 @@ async def test_update_is_compressed(snapshot, dbi):
         {"_id": "bar", "files": [{"name": "reads_1.fq.gz"}]},
     ]
 
-    await dbi.samples.insert_many(samples)
-    await gather(*[update_is_compressed(dbi, s) for s in samples])
+    await mongo.samples.insert_many(samples)
+    await gather(*[update_is_compressed(mongo, s) for s in samples])
 
-    assert await dbi.samples.find().to_list(None) == snapshot
+    assert await mongo.samples.find().to_list(None) == snapshot
 
 
 @pytest.mark.parametrize("paired", [True, False])
-async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, config):
+async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, config):
     m_update_is_compressed = mocker.patch(
         "virtool.samples.db.update_is_compressed", make_mocked_coro()
     )
@@ -352,7 +352,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     if paired:
         shutil.copy(FASTQ_PATH, sample_dir / "reads_2.fastq")
 
-    app_dict = {"db": dbi, "config": config}
+    app_dict = {"db": mongo, "config": config}
 
     sample_id = "foo"
 
@@ -381,7 +381,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
 
     sample = {"_id": sample_id, "files": files, "paired": paired}
 
-    await dbi.samples.insert_one(sample)
+    await mongo.samples.insert_one(sample)
 
     await compress_sample_reads(app_dict, sample)
 
@@ -397,18 +397,18 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
         with gzip.open(sample_dir / "reads_2.fq.gz", "rt") as f:
             assert expected_content == f.read()
 
-    assert await dbi.samples.find_one() == snapshot
+    assert await mongo.samples.find_one() == snapshot
 
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(spawn_client, snapshot, tmp_path, dbi, fake2, pg: AsyncEngine):
+async def test_finalize(spawn_client, snapshot, tmp_path, mongo, fake2, pg: AsyncEngine):
     client = await spawn_client(authorize=True)
     quality = {"count": 10000000, "gc": 43}
 
     user = await fake2.users.create()
 
-    await dbi.samples.insert_one({"_id": "test", "user": {"id": user.id}})
+    await mongo.samples.insert_one({"_id": "test", "user": {"id": user.id}})
 
     async with AsyncSession(pg) as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
@@ -424,7 +424,7 @@ async def test_finalize(spawn_client, snapshot, tmp_path, dbi, fake2, pg: AsyncE
 
     m_run_in_thread = make_mocked_coro()
 
-    result = await finalize(dbi, pg, "test", quality, m_run_in_thread, tmp_path)
+    result = await finalize(mongo, pg, "test", quality, m_run_in_thread, tmp_path)
 
     assert result == snapshot
     with pytest.raises(ResourceNotFoundError):

@@ -13,8 +13,8 @@ from virtool.users.oas import UpdateUserSchema
 
 
 @pytest.fixture
-def users_data(dbi, pg):
-    return UsersData(dbi, pg)
+def users_data(mongo, pg):
+    return UsersData(mongo, pg)
 
 
 class TestCreate:
@@ -77,7 +77,7 @@ class TestUpdate:
         self,
         all_permissions,
         bob,
-        dbi,
+        mongo,
         no_permissions,
         snapshot,
         static_time,
@@ -89,8 +89,8 @@ class TestUpdate:
 
         """
         await gather(
-            dbi.users.insert_one(bob),
-            dbi.groups.insert_many(
+            mongo.users.insert_one(bob),
+            mongo.groups.insert_many(
                 [
                     {
                         "_id": "peasants",
@@ -105,25 +105,25 @@ class TestUpdate:
         )
 
         assert await users_data.update(bob["_id"], update) == snapshot(name="obj")
-        assert await dbi.users.find_one() == snapshot(name="db")
+        assert await mongo.users.find_one() == snapshot(name="db")
 
-    async def test_password(self, bob, dbi, snapshot, users_data):
+    async def test_password(self, bob, mongo, snapshot, users_data):
         """
         Test editing an existing user.
 
         """
-        await dbi.users.insert_one(bob)
+        await mongo.users.insert_one(bob)
 
         assert await users_data.update(
             bob["_id"], UpdateUserSchema(password="hello_world")
         ) == snapshot(name="obj")
 
-        document = await dbi.users.find_one()
+        document = await mongo.users.find_one()
 
         assert document == snapshot(name="db", exclude=props("password"))
 
         # Ensure the newly set password validates.
-        assert await validate_credentials(dbi, bob["_id"], "hello_world")
+        assert await validate_credentials(mongo, bob["_id"], "hello_world")
 
     async def test_does_not_exist(self, users_data: UsersData):
         with pytest.raises(ResourceNotFoundError) as err:
@@ -133,11 +133,11 @@ class TestUpdate:
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_find_or_create_b2c_user(
-    exists, dbi, fake2, snapshot, static_time, users_data
+    exists, mongo, fake2, snapshot, static_time, users_data
 ):
     fake_user = await fake2.users.create()
 
-    await dbi.users.update_one(
+    await mongo.users.update_one(
         {"_id": fake_user.id},
         {
             "$set": {
