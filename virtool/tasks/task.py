@@ -1,38 +1,38 @@
 from logging import getLogger
-from typing import Optional, Dict, List, Callable, Awaitable
+from pathlib import Path
+from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING
 
-from pydantic import BaseModel, conint
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 import virtool.tasks.models
-from virtool.data.layer import DataLayer
+
+from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.progress import AbstractProgressHandler, TaskProgressHandler
 from virtool.utils import get_temp_dir, run_in_thread
 from virtool.data.utils import get_data_from_app
 from virtool_core.models.task import Task as TaskModel
 
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
+
+
 logger = getLogger("task")
-
-
-class TaskUpdate(BaseModel):
-    step: Optional[str]
-    progress: Optional[conint(ge=1, le=100)]
-    error: Optional[str]
 
 
 class Task2:
     steps: List[Callable[[], Awaitable]] = []
     task_type: str
 
-    def __init__(self, task_id: int, data: DataLayer, context: Dict):
+    def __init__(self, task_id: int, data: "DataLayer", context: Dict, temp_dir: Path):
         self.context = context
         self.data = data
         self.task_id = task_id
+        self.temp_dir = temp_dir
 
         self.errored = False
         self.step = None
-        self.temp_dir = await run_in_thread(get_temp_dir)
 
     def create_progress_handler(self):
         """
@@ -41,9 +41,10 @@ class Task2:
         return TaskProgressHandler(self._set_error, self._set_step_progress)
 
     @classmethod
-    async def from_task_id(cls, data: DataLayer, task_id: int):
+    async def from_task_id(cls, data: "DataLayer", task_id: int):
         task = await data.tasks.get(task_id)
-        return cls(data, task_id, task.context)
+        temp_dir = await run_in_thread(get_temp_dir)
+        return cls(task_id, data, task.context, temp_dir)
 
     @property
     def step_number(self):

@@ -3,13 +3,14 @@ from asyncio import CancelledError
 from typing import List, Type, Optional, Dict
 
 from aioredis import Redis
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.task import Task as TaskClass
 
 
@@ -49,25 +50,12 @@ class TasksData:
 
         raise ResourceNotFoundError
 
-    async def update(
-        self,
-        task_id: int,
-        count: int = None,
-        progress: int = None,
-        step: str = None,
-        context_update: dict = None,
-        error: str = None,
-    ) -> Task:
+    async def update(self, task_id: int, task_update: TaskUpdate) -> Task:
         """
         Update a task record with given `task_id`
 
-        :param task_id: ID of the task
-        :param count: a counter that can be used to calculate progress
-        :param progress: task progress for the current step
-        :param step: the step of the current task
-        :param context_update: a dict containing data to be updated for context
-        :param error: the error for the current task
-
+        :param task_id: the id of the task
+        :param task_update: as task update object
         :return: the task record
 
         """
@@ -75,21 +63,11 @@ class TasksData:
             result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
 
-            if count is not None:
-                task.count = count
+            data = task_update.dict(exclude_unset=True)
 
-            if progress is not None:
-                task.progress = progress
-
-            if step:
-                task.step = step
-
-            if error is not None:
-                task.error = error
-
-            if context_update:
-                for key, value in context_update.items():
-                    task.context[key] = value
+            await session.execute(
+                update(SQLTask).where(SQLTask.id == task_id).values(**data)
+            )
 
             task = Task(**task.to_dict())
 
@@ -101,16 +79,21 @@ class TasksData:
         """
         Update a task record as completed.
 
-        Set complete to True and progress to 100
+        Set complete to ``true`` and progress to ``100``.
 
-        :param task_id: ID of the task
+        :param task_id: id of the task
 
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
+
+            if task.complete:
+                raise ValueError("Task is already complete")
+
             task.complete = True
             task.progress = 100
+
             await session.commit()
 
     async def remove(self, task_id: int):
