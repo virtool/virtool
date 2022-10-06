@@ -1,4 +1,3 @@
-from pathlib import PosixPath
 from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession

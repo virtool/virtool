@@ -262,13 +262,15 @@ async def upload(req):
     try:
         size = await naive_writer(await req.multipart(), path)
         index_file = await create_index_file(pg, index_id, file_type, name, size)
-        upload_id = index_file["id"]
     except IntegrityError:
         raise HTTPConflict(text="File name already exists")
     except asyncio.CancelledError:
+        upload_id = index_file["id"]
         logger.debug("Index file upload aborted: %s", upload_id)
         await delete_row(pg, upload_id, IndexFile)
         return Response(status=499)
+
+    upload_id = index_file["id"]
 
     index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
