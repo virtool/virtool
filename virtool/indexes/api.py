@@ -1,12 +1,13 @@
 import asyncio
 import json
 import logging
-from typing import Union
+from typing import Union, Optional
 
 from aiohttp.web import FileResponse, Request, Response
 from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
+from pydantic import Field
 from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
@@ -34,7 +35,13 @@ routes = Routes()
 
 @routes.view("/indexes")
 class IndexesView(PydanticView):
-    async def get(self) -> Union[r200[ListIndexesResponse]]:
+    async def get(
+        self,
+        ready: Optional[bool] = Field(
+            default=False,
+            description="Return only indexes that are ready for use in analysis.",
+        ),
+    ) -> Union[r200[ListIndexesResponse]]:
         """
         Find indexes.
 
@@ -45,8 +52,6 @@ class IndexesView(PydanticView):
 
         """
         db = self.request.app["db"]
-
-        ready = self.request.query.get("ready", False)
 
         if not ready:
             data = await virtool.indexes.db.find(db, self.request.query)
@@ -87,7 +92,7 @@ class IndexesView(PydanticView):
 @routes.view("/indexes/{index_id}")
 @routes.jobs_api.get("/indexes/{index_id}")
 class IndexView(PydanticView):
-    async def get(self) -> Union[r200[GetIndexResponse], r404]:
+    async def get(self, index_id: str, /) -> Union[r200[GetIndexResponse], r404]:
         """
         Get an index.
 
@@ -100,8 +105,6 @@ class IndexView(PydanticView):
         """
         db = self.request.app["db"]
         pg = self.request.app["pg"]
-
-        index_id = self.request.match_info["index_id"]
 
         document = await db.indexes.find_one(index_id)
 
@@ -170,7 +173,7 @@ async def download_otus_json(req):
 
 @routes.view("/indexes/{index_id}/files/{filename}")
 class IndexFileView(PydanticView):
-    async def get(self) -> Union[r200, r404]:
+    async def get(self, index_id: str, filename: str, /) -> Union[r200, r404]:
         """
         Download files relating to a given index.
 
@@ -178,9 +181,6 @@ class IndexFileView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        index_id = self.request.match_info["index_id"]
-        filename = self.request.match_info["filename"]
-
         if filename not in FILES:
             raise NotFound()
 
@@ -337,7 +337,7 @@ async def finalize(req):
 
 @routes.view("/indexes/{index_id}/history")
 class IndexHistoryView(PydanticView):
-    async def get(self) -> Union[r200[ListHistoryResponse], r404]:
+    async def get(self, index_id: str, /) -> Union[r200[ListHistoryResponse], r404]:
         """
         List history.
 
@@ -349,8 +349,6 @@ class IndexHistoryView(PydanticView):
 
         """
         db = self.request.app["db"]
-
-        index_id = self.request.match_info["index_id"]
 
         if not await db.indexes.count_documents({"_id": index_id}):
             raise NotFound()

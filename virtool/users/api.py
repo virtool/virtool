@@ -1,8 +1,9 @@
-from typing import Union
+from typing import Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
+from pydantic import Field
 from virtool_core.models.user import User
 
 import virtool.http.auth
@@ -32,7 +33,12 @@ routes = Routes()
 @routes.view("/users")
 class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def get(self) -> Union[r200[User], r403]:
+    async def get(
+        self,
+        find: Optional[str] = Field(
+            description="Provide text to filter by partial matches to the id field."
+        ),
+    ) -> Union[r200[User], r403]:
         """
         List all users.
 
@@ -44,9 +50,7 @@ class UsersView(PydanticView):
         """
         db = self.request.app["db"]
 
-        term = self.request.query.get("find")
-
-        db_query = compose_regex_query(term, ["_id"]) if term else {}
+        db_query = compose_regex_query(find, ["_id"]) if find else {}
 
         data = await paginate(
             db.users,
@@ -145,7 +149,7 @@ class FirstUserView(PydanticView):
 @routes.view("/users/{user_id}")
 class UserView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def get(self) -> Union[r200[User], r403, r404]:
+    async def get(self, user_id: str, /) -> Union[r200[User], r403, r404]:
         """
         Retrieve a user.
 
@@ -157,9 +161,7 @@ class UserView(PydanticView):
             404: Not found
         """
         try:
-            user = await get_data_from_req(self.request).users.get(
-                self.request.match_info["user_id"]
-            )
+            user = await get_data_from_req(self.request).users.get(user_id)
         except ResourceNotFoundError:
             raise NotFound()
 
@@ -167,7 +169,7 @@ class UserView(PydanticView):
 
     @policy(AdministratorRoutePolicy)
     async def patch(
-        self, data: UpdateUserSchema
+        self, user_id: str, /, data: UpdateUserSchema
     ) -> Union[r200[User], r400, r403, r404, r409]:
         """
         Update a user.
@@ -183,8 +185,6 @@ class UserView(PydanticView):
             404: Not found
             409: User is not member of group
         """
-        user_id = self.request.match_info["user_id"]
-
         if data.password is not None:
             if error := await check_password_length(
                 self.request, password=data.password

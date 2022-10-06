@@ -136,7 +136,9 @@ class SamplesView(PydanticView):
 
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
-    async def get(self) -> Union[r200[GetSampleResponse], r403, r404]:
+    async def get(
+        self, sample_id: str, /
+    ) -> Union[r200[GetSampleResponse], r403, r404]:
         """
         Get a sample.
 
@@ -146,8 +148,6 @@ class SampleView(PydanticView):
             200: Successful operation
             400: Invalid query
         """
-        sample_id = self.request.match_info["sample_id"]
-
         if not await get_data_from_req(self.request).samples.has_right(
             sample_id, self.request["client"], SampleRight.read
         ):
@@ -161,7 +161,7 @@ class SampleView(PydanticView):
         return json_response(sample)
 
     async def patch(
-        self, data: EditSampleSchema
+        self, sample_id: str, /, data: EditSampleSchema
     ) -> Union[r200[EditSampleResponse], r400, r403, r404]:
         """
         Update a sample.
@@ -173,8 +173,6 @@ class SampleView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        sample_id = self.request.match_info["sample_id"]
-
         if not await get_data_from_req(self.request).samples.has_right(
             sample_id, self.request["client"], SampleRight.write
         ):
@@ -191,7 +189,7 @@ class SampleView(PydanticView):
 
         return json_response(sample)
 
-    async def delete(self) -> Union[r204, r403, r404]:
+    async def delete(self, sample_id: str, /) -> Union[r204, r403, r404]:
         """
         Remove a sample document and all associated analyses.
 
@@ -200,8 +198,6 @@ class SampleView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        sample_id = self.request.match_info["sample_id"]
-
         if not await get_data_from_req(self.request).samples.has_right(
             sample_id, self.request["client"], SampleRight.write
         ):
@@ -278,7 +274,7 @@ async def finalize(req):
 @routes.view("/samples/{sample_id}/rights")
 class RightsView(PydanticView):
     async def patch(
-        self, data: EditRightsSchema
+        self, sample_id: str, /, data: EditRightsSchema
     ) -> Union[r200[EditRightsResponse], r400, r403, r404]:
         """
         Change rights settings for the specified sample document.
@@ -292,8 +288,6 @@ class RightsView(PydanticView):
         """
         db = self.request.app["db"]
         data = data.dict(exclude_unset=True)
-
-        sample_id = self.request.match_info["sample_id"]
 
         if not await db.samples.count_documents({"_id": sample_id}):
             raise NotFound()
@@ -356,7 +350,14 @@ async def job_remove(req):
 
 @routes.view("/samples/{sample_id}/analyses")
 class AnalysesView(PydanticView):
-    async def get(self) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
+    async def get(
+        self,
+        sample_id: str,
+        /,
+        term: Optional[str] = Field(
+            description="Provide text to filter by partial matches to the reference name or user id in the sample."
+        ),
+    ) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
         """
         List the analyses associated with the given ``sample_id``.
 
@@ -366,8 +367,6 @@ class AnalysesView(PydanticView):
             404: Not found
         """
         db = self.request.app["db"]
-
-        sample_id = self.request.match_info["sample_id"]
 
         try:
             if not await check_rights(
@@ -379,8 +378,6 @@ class AnalysesView(PydanticView):
                 raise NotFound()
 
             raise
-
-        term = self.request.query.get("term")
 
         db_query = {}
 
@@ -407,7 +404,7 @@ class AnalysesView(PydanticView):
         )
 
     async def post(
-        self, data: CreateAnalysisSchema
+        self, sample_id: str, /, data: CreateAnalysisSchema
     ) -> Union[r201[CreateAnalysisResponse], r400, r403, r404]:
         """
         Starts an analysis job for a given sample.
@@ -421,7 +418,6 @@ class AnalysesView(PydanticView):
             404: Not found
         """
         db = self.request.app["db"]
-        sample_id = self.request.match_info["sample_id"]
         ref_id = data.ref_id
 
         try:
