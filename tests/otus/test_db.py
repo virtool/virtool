@@ -22,16 +22,16 @@ from virtool.otus.db import (
     ids=["name_exists", "abbreviation_exists", "both_exist", "neither exist"],
 )
 async def test_check_name_and_abbreviation(
-    name, abbreviation, return_value, dbi, test_otu
+    name, abbreviation, return_value, mongo, test_otu
 ):
     """
     Test that the function works properly for all possible inputs.
 
     """
-    await dbi.otus.insert_one(test_otu)
+    await mongo.otus.insert_one(test_otu)
 
     assert (
-        await check_name_and_abbreviation(dbi, "hxn167", name, abbreviation)
+        await check_name_and_abbreviation(mongo, "hxn167", name, abbreviation)
         == return_value
     )
 
@@ -42,7 +42,7 @@ async def test_join(
     in_db,
     pass_document,
     mocker,
-    dbi,
+    mongo,
     snapshot,
     test_otu,
     test_sequence,
@@ -51,26 +51,26 @@ async def test_join(
     Test that an OTU is properly joined when only a ``otu_id`` is provided.
 
     """
-    await dbi.otus.insert_one(test_otu)
-    await dbi.sequences.insert_one(test_sequence)
+    await mongo.otus.insert_one(test_otu)
+    await mongo.sequences.insert_one(test_sequence)
 
     m_find_one = mocker.patch.object(
-        dbi.otus, "find_one", make_mocked_coro(test_otu if in_db else None)
+        mongo.otus, "find_one", make_mocked_coro(test_otu if in_db else None)
     )
 
     kwargs = {"document": test_otu} if pass_document else {}
 
-    joined = await join(dbi, "6116cba1", **kwargs)
+    joined = await join(mongo, "6116cba1", **kwargs)
 
     assert m_find_one.called != pass_document
 
     assert joined == snapshot(name="return")
 
 
-async def test_increment_otu_version(dbi, snapshot):
-    await dbi.otus.insert_one({"_id": "foo", "version": 3, "verified": True})
-    await increment_otu_version(dbi, "foo")
-    assert await dbi.otus.find_one() == snapshot
+async def test_increment_otu_version(mongo, snapshot):
+    await mongo.otus.insert_one({"_id": "foo", "version": 3, "verified": True})
+    await increment_otu_version(mongo, "foo")
+    assert await mongo.otus.find_one() == snapshot
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
@@ -79,7 +79,7 @@ async def test_increment_otu_version(dbi, snapshot):
 @pytest.mark.parametrize("used", [True, False])
 @pytest.mark.parametrize("sequence_id", ["boo", "bad", None])
 async def test_check_segment_or_target(
-    data_type, defined, missing, used, sequence_id, dbi
+    data_type, defined, missing, used, sequence_id, mongo
 ):
     """
     Test that issues with `segment` or `target` fields in sequence editing requests are
@@ -87,11 +87,11 @@ async def test_check_segment_or_target(
 
     """
     await asyncio.gather(
-        dbi.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]}),
-        dbi.references.insert_one(
+        mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]}),
+        mongo.references.insert_one(
             {"_id": "bar", "data_type": data_type, "targets": [{"name": "CPN60"}]}
         ),
-        dbi.sequences.insert_one(
+        mongo.sequences.insert_one(
             {
                 "_id": "boo",
                 "otu_id": "foo",
@@ -112,7 +112,7 @@ async def test_check_segment_or_target(
         data = {}
 
     message = await check_sequence_segment_or_target(
-        dbi, "foo", "baz", sequence_id, "bar", data
+        mongo, "foo", "baz", sequence_id, "bar", data
     )
 
     # The only case where an error message should be returned for a genome-type

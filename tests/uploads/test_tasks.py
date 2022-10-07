@@ -7,7 +7,7 @@ from virtool.uploads.tasks import MigrateFilesTask
 
 
 async def test_migrate_files_task(
-    snapshot, dbi, spawn_client, static_time, pg: AsyncEngine,
+    snapshot, mongo, spawn_client, static_time, pg: AsyncEngine,
 ):
     client = await spawn_client(authorize=True)
     await client.db.files.insert_one(
@@ -45,4 +45,4 @@ async def test_migrate_files_task(
             await session.execute(select(Upload).filter_by(id=1))
         ).scalar() == snapshot
 
-    assert await dbi.files.find().to_list(None) == []
+    assert await mongo.files.find().to_list(None) == []

@@ -35,7 +35,7 @@ TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
     ids=["no_updates", "too_old", "ready", "too_new", "clean"],
 )
 async def test_clean_references_task(
-    update, dbi, mocker, pg, snapshot, spawn_client, static_time
+    update, mongo, mocker, pg, snapshot, spawn_client, static_time
 ):
     """
     Test the following situations:
@@ -70,7 +70,7 @@ async def test_clean_references_task(
     if update:
         updates.append(update)
 
-    await dbi.references.insert_one(
+    await mongo.references.insert_one(
         {
             "_id": "foo",
             "updates": updates,
@@ -83,7 +83,7 @@ async def test_clean_references_task(
     clean_references_task = CleanReferencesTask(client.app, 1)
     await clean_references_task.run()
 
-    assert await dbi.references.find_one({}) == snapshot
+    assert await mongo.references.find_one({}) == snapshot
 
 
 @pytest.mark.flaky(reruns=2)

@@ -10,9 +10,9 @@ from virtool.tasks.models import Task
 
 
 @pytest.fixture
-async def blast_data(dbi, pg, static_time, redis):
+async def blast_data(mongo, pg, static_time, redis):
 
-    blast_data = BLASTData(dbi, pg)
+    blast_data = BLASTData(mongo, pg)
 
     async with AsyncSession(pg) as session:
         task = Task(created_at=static_time.datetime, type="blast")

@@ -18,8 +18,8 @@ def connections(ws):
 
 
 class TestSimpleMongoFetcher:
-    async def test_auto_delete(self, connections, dbi, ws):
-        fetcher = SimpleMongoFetcher(dbi.hmm)
+    async def test_auto_delete(self, connections, mongo, ws):
+        fetcher = SimpleMongoFetcher(mongo.hmm)
 
         pairs = []
 
@@ -33,9 +33,9 @@ class TestSimpleMongoFetcher:
     @pytest.mark.parametrize("operation", [INSERT, UPDATE])
     @pytest.mark.parametrize("use_projection", [True, False])
     async def test_insert_and_update(
-        self, operation, use_projection, connections, dbi, ws
+        self, operation, use_projection, connections, mongo, ws
     ):
-        await dbi.hmm.insert_many(
+        await mongo.hmm.insert_many(
             [
                 {"_id": "foo", "name": "Foo", "include": True, "hidden": True},
                 {"_id": "bar", "name": "Bar", "include": True, "hidden": True},
@@ -43,9 +43,9 @@ class TestSimpleMongoFetcher:
         )
 
         if use_projection:
-            fetcher = SimpleMongoFetcher(dbi.hmm, projection=["name", "include"])
+            fetcher = SimpleMongoFetcher(mongo.hmm, projection=["name", "include"])
         else:
-            fetcher = SimpleMongoFetcher(dbi.hmm)
+            fetcher = SimpleMongoFetcher(mongo.hmm)
 
         pairs = []
 
@@ -65,8 +65,8 @@ class TestSimpleMongoFetcher:
         assert pairs == [(ws, message), (ws, message), (ws, message)]
 
     @pytest.mark.parametrize("use_processor", [True, False])
-    async def test_processor(self, use_processor, connections, dbi, ws):
-        await dbi.hmm.insert_many(
+    async def test_processor(self, use_processor, connections, mongo, ws):
+        await mongo.hmm.insert_many(
             [
                 {"_id": "foo", "name": "Foo", "include": True},
                 {"_id": "bar", "name": "Bar", "include": True},
@@ -78,9 +78,9 @@ class TestSimpleMongoFetcher:
             async def processor(db, document):
                 return {**document, "processed": True}
 
-            fetcher = SimpleMongoFetcher(dbi.hmm, processor=processor)
+            fetcher = SimpleMongoFetcher(mongo.hmm, processor=processor)
         else:
-            fetcher = SimpleMongoFetcher(dbi.hmm)
+            fetcher = SimpleMongoFetcher(mongo.hmm)
 
         pairs = []
 
@@ -106,8 +106,8 @@ class TestSimpleMongoFetcher:
 
 
 class TestIndexesFetcher:
-    async def test_auto_delete(self, connections, dbi, ws):
-        fetcher = IndexesFetcher(dbi)
+    async def test_auto_delete(self, connections, mongo, ws):
+        fetcher = IndexesFetcher(mongo)
 
         pairs = []
 
@@ -126,16 +126,16 @@ class TestIndexesFetcher:
         operation,
         mocker,
         connections,
-        dbi,
+        mongo,
         reference,
         static_time,
         test_indexes,
         ws,
     ):
-        await dbi.indexes.insert_many(test_indexes)
+        await mongo.indexes.insert_many(test_indexes)
 
         async def m_indexes_processor(db, document):
-            assert db == dbi
+            assert db == mongo
 
             processed = dict(document)
             processed["id"] = processed.pop("_id")
@@ -145,7 +145,7 @@ class TestIndexesFetcher:
 
         mocker.patch("virtool.indexes.db.processor", m_indexes_processor)
 
-        fetcher = IndexesFetcher(dbi)
+        fetcher = IndexesFetcher(mongo)
 
         pairs = []
 
@@ -174,8 +174,8 @@ class TestIndexesFetcher:
 
 
 class TestLabelsFetcher:
-    async def test_auto_delete(self, connections, dbi, pg: AsyncEngine, ws):
-        fetcher = LabelsFetcher(pg, dbi)
+    async def test_auto_delete(self, connections, mongo, pg: AsyncEngine, ws):
+        fetcher = LabelsFetcher(pg, mongo)
 
         pairs = []
 
@@ -192,7 +192,7 @@ class TestLabelsFetcher:
         fake2,
         operation,
         connections,
-        dbi,
+        mongo,
         pg,
         reference,
         snapshot,
@@ -202,7 +202,7 @@ class TestLabelsFetcher:
         await fake2.labels.create()
         await fake2.labels.create()
 
-        fetcher = LabelsFetcher(pg, dbi)
+        fetcher = LabelsFetcher(pg, mongo)
 
         messages = []
 
@@ -216,8 +216,8 @@ class TestLabelsFetcher:
 
 
 class TestUploadsFetcher:
-    async def test_auto_delete(self, connections, dbi, pg, ws):
-        fetcher = UploadsFetcher(dbi, pg)
+    async def test_auto_delete(self, connections, mongo, pg, ws):
+        fetcher = UploadsFetcher(mongo, pg)
 
         pairs = []
 
@@ -234,14 +234,14 @@ class TestUploadsFetcher:
         operation,
         connections,
         snapshot,
-        dbi,
+        mongo,
         pg,
         reference,
         static_time,
         test_uploads,
         ws,
     ):
-        fetcher = UploadsFetcher(dbi, pg)
+        fetcher = UploadsFetcher(mongo, pg)
 
         messages = []
 

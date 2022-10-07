@@ -8,7 +8,7 @@ RIGHTS = {"build": False, "modify": False, "modify_otu": False, "remove": False}
 @pytest.mark.parametrize("error", [None, "duplicate", "missing", "missing_member"])
 @pytest.mark.parametrize("field", ["group", "user"])
 @pytest.mark.parametrize("rights", [True, False])
-async def test_add_group_or_user(error, field, rights, dbi, static_time):
+async def test_add_group_or_user(error, field, rights, mongo, static_time):
 
     ref_id = "foo"
 
@@ -18,14 +18,14 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
     ]
 
     if error != "missing":
-        await dbi.references.insert_one(
+        await mongo.references.insert_one(
             {"_id": ref_id, "groups": subdocuments, "users": subdocuments}
         )
 
     if error != "missing_member":
         for (_id, handle) in [("bar", "foo"), ("buzz", "boo")]:
-            await dbi.groups.insert_one({"_id": _id})
-            await dbi.users.insert_one({"_id": _id, "handle": handle})
+            await mongo.groups.insert_one({"_id": _id})
+            await mongo.users.insert_one({"_id": _id, "handle": handle})
 
     subdocument_id = "bar" if error == "duplicate" else "buzz"
 
@@ -34,7 +34,7 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
     if rights:
         payload["build"] = True
 
-    task = virtool.references.db.add_group_or_user(dbi, ref_id, field + "s", payload)
+    task = virtool.references.db.add_group_or_user(mongo, ref_id, field + "s", payload)
 
     if error == "duplicate" or error == "missing_member":
         with pytest.raises(virtool.errors.DatabaseError) as excinfo:
@@ -61,7 +61,7 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
             "remove": False,
         }
 
-        assert await dbi.references.find_one() == {
+        assert await mongo.references.find_one() == {
             "_id": ref_id,
             "groups": subdocuments + ([expected] if field == "group" else []),
             "users": subdocuments + ([expected] if field == "user" else []),
@@ -74,8 +74,8 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
 @pytest.mark.parametrize(
     "right,expect", [("read", True), ("modify_otu", True), ("modify", False)]
 )
-async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, dbi):
-    mock_req.app = {"db": dbi}
+async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, mongo):
+    mock_req.app = {"db": mongo}
 
     mock_req["client"] = mocker.Mock()
 
@@ -105,7 +105,7 @@ async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, 
         ],
     }
 
-    await dbi.references.insert_one(reference)
+    await mongo.references.insert_one(reference)
 
     if ref is None:
         ref = reference
@@ -122,9 +122,9 @@ async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, 
     assert result == expect
 
 
-async def test_create_manifest(dbi, test_otu):
+async def test_create_manifest(mongo, test_otu):
 
-    await dbi.otus.insert_many(
+    await mongo.otus.insert_many(
         [
             test_otu,
             dict(test_otu, _id="foo", version=5),
@@ -133,7 +133,7 @@ async def test_create_manifest(dbi, test_otu):
         ]
     )
 
-    assert await virtool.references.db.get_manifest(dbi, "hxn167") == {
+    assert await virtool.references.db.get_manifest(mongo, "hxn167") == {
         "6116cba1": 0,
         "foo": 5,
         "bar": 11,
@@ -142,41 +142,41 @@ async def test_create_manifest(dbi, test_otu):
 
 @pytest.mark.parametrize("missing", [None, "reference", "subdocument"])
 @pytest.mark.parametrize("field", ["group", "user"])
-async def test_edit_member(field, missing, snapshot, dbi, static_time):
+async def test_edit_member(field, missing, snapshot, mongo, static_time):
 
     ref_id = "foo"
 
     subdocuments = [{**RIGHTS, "id": "bar"}, {**RIGHTS, "id": "baz"}]
 
     if missing != "reference":
-        await dbi.references.insert_one(
+        await mongo.references.insert_one(
             {"_id": ref_id, "groups": subdocuments, "users": subdocuments}
         )
 
     subdocument_id = "buzz" if missing == "subdocument" else "baz"
 
     subdocument = await virtool.references.db.edit_group_or_user(
-        dbi, ref_id, subdocument_id, field + "s", {"build": True, "remove": True}
+        mongo, ref_id, subdocument_id, field + "s", {"build": True, "remove": True}
     )
 
     assert subdocument == snapshot
-    assert await dbi.references.find_one() == snapshot
+    assert await mongo.references.find_one() == snapshot
 
 
 @pytest.mark.parametrize("field", ["groups", "users"])
-async def test_delete_member(field, snapshot, dbi):
+async def test_delete_member(field, snapshot, mongo):
 
     ref_id = "foo"
 
     subdocuments = [{"id": "bar"}, {"id": "baz"}]
 
-    await dbi.references.insert_one(
+    await mongo.references.insert_one(
         {"_id": ref_id, "groups": subdocuments, "users": subdocuments}
     )
 
     subdocument_id = await virtool.references.db.delete_group_or_user(
-        dbi, "foo", "bar", field
+        mongo, "foo", "bar", field
     )
 
     assert subdocument_id == snapshot
-    assert await dbi.references.find_one() == snapshot
+    assert await mongo.references.find_one() == snapshot
