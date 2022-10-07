@@ -16,7 +16,6 @@ from virtool.http.policy import (
 from virtool.http.utils import set_session_id_cookie
 from virtool.oidc.utils import validate_token
 from virtool.users.db import B2CUserAttributes
-from virtool.users.sessions import clear_reset_code, create_session, get_session
 from virtool.utils import hash_key
 
 
@@ -182,12 +181,16 @@ async def middleware(req, handler) -> Response:
     # Get session information from cookies.
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
-    session, session_token = await get_session(redis, session_id, session_token)
+    session, session_token = await get_data_from_req(req).sessions.get_session(
+        session_id, session_token
+    )
 
     ip = get_ip(req)
 
     if session is None:
-        session_id, session, session_token = await create_session(db, redis, ip)
+        session_id, session, session_token = await get_data_from_req(
+            req
+        ).sessions.create_session(ip)
 
     if session_token:
         req["client"] = UserClient(
@@ -215,7 +218,7 @@ async def middleware(req, handler) -> Response:
     resp = await handler(req)
 
     if req.path != "/account/reset":
-        await clear_reset_code(redis, session_id)
+        await get_data_from_req(req).sessions.clear_reset_code(session_id)
 
     set_session_id_cookie(resp, session_id)
 

@@ -68,10 +68,11 @@ from virtool.subtractions.tasks import (
 from virtool.tasks.data import TasksData
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
+from virtool.uploads.data import UploadsData
 from virtool.uploads.tasks import MigrateFilesTask
 from virtool.users.data import UsersData
+from virtool.users.sessions import SessionData
 from virtool.utils import ensure_data_dir, random_alphanumeric
-from virtool.uploads.data import UploadsData
 from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
@@ -150,6 +151,7 @@ async def startup_data(app: App):
         UploadsData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
         TasksData(app["pg"], app["redis"]),
+        SessionData(app["pg"], app["redis"]),
     )
 
 

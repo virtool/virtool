@@ -25,7 +25,6 @@ from virtool.users.oas import (
     CreateUserRequest,
     CreateFirstUserRequest,
 )
-from virtool.users.sessions import create_session
 
 routes = Routes()
 
@@ -128,9 +127,9 @@ class FirstUserView(PydanticView):
             data.handle, data.password
         )
 
-        session, token = await create_session(
-            db, virtool.http.auth.get_ip(self.request), user.id
-        )
+        session_id, session, token = await get_data_from_req(
+            self.request
+        ).sessions.create_session(virtool.http.auth.get_ip(self.request), user.id)
 
         self.request["client"].authorize(session, is_api=False)
 
@@ -140,7 +139,7 @@ class FirstUserView(PydanticView):
             status=201,
         )
 
-        set_session_id_cookie(response, session["_id"])
+        set_session_id_cookie(response, session_id)
         set_session_token_cookie(response, token)
 
         return response

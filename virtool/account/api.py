@@ -322,9 +322,9 @@ class LoginView(PydanticView):
                 status=200,
             )
 
-        session_id, _, token = await virtool.users.sessions.replace_session(
-            self.request.app["db"],
-            self.request.app["redis"],
+        session_id, _, token = await get_data_from_req(
+            self.request
+        ).sessions.replace_session(
             session_id,
             virtool.http.auth.get_ip(self.request),
             user_id,

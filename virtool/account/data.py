@@ -17,10 +17,10 @@ from virtool.account.oas import (
     UpdateAccountRequest,
 )
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
-from virtool.users.sessions import create_reset_code, replace_session
 from virtool.users.utils import limit_permissions
 
 PROJECTION = (
@@ -37,7 +37,7 @@ PROJECTION = (
 )
 
 
-class AccountData:
+class AccountData(DataLayerPiece):
     def __init__(self, db: DB, redis: Redis):
         self._db = db
         self._redis = redis
@@ -293,7 +293,9 @@ class AccountData:
         """
 
         if await get_one_field(self._db.users, "force_reset", user_id):
-            return await create_reset_code(self._redis, session_id, user_id, remember)
+            return await self.data.sessions.create_reset_code(
+                session_id, user_id, remember
+            )
 
     async def logout(self, old_session_id: str, ip: str) -> Tuple[str, dict, str]:
         """
@@ -303,7 +305,7 @@ class AccountData:
         :param ip: the ip
         :return: the session_id, session, and session token
         """
-        return await replace_session(self._db, self._redis, old_session_id, ip)
+        return await self.data.sessions.replace_session(old_session_id, ip)
 
     async def reset(self, session_id, data: ResetPasswordRequest, ip: str):
         """
@@ -323,9 +325,7 @@ class AccountData:
 
         user_id = session["reset_user_id"]
 
-        session_id, new_session, token = await replace_session(
-            self._db,
-            self._redis,
+        session_id, new_session, token = await self.data.replace_session(
             session_id,
             ip,
             user_id,
