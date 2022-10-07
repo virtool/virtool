@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 from typing import Union, Optional
 
@@ -13,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 import virtool.indexes.db
 import virtool.uploads.db
 import virtool.utils
-from virtool.api.custom_json import CustomEncoder
+from virtool.api.custom_json import dumps
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.history.db import LIST_PROJECTION
@@ -158,9 +157,7 @@ async def download_otus_json(req):
             db, req.app["config"], index["manifest"]
         )
 
-        json_string = json.dumps(patched_otus, cls=CustomEncoder)
-
-        await run_in_thread(compress_json_with_gzip, json_string, json_path)
+        await run_in_thread(compress_json_with_gzip, dumps(patched_otus), json_path)
 
     return FileResponse(
         json_path,
