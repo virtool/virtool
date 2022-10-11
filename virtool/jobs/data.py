@@ -274,11 +274,12 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document, key=key)
 
-    async def archive(self, job_id: str) -> Job:
+    async def archive(self, job_id: str, bulk_archive: bool) -> Job:
         """
         Set the `archived` field on a job to `True` and return the complete document.
 
         :param job_id: the ID of the job to start
+        :param bulk_archive: the flag to indicate if it is a bulk or single archive operation
         :return: the complete job document
 
         """
@@ -288,8 +289,9 @@ class JobsData:
         if archived is None:
             raise ResourceNotFoundError("Job not found")
 
-        if archived is True:
-            raise ResourceConflictError("Job already archived")
+        if not bulk_archive:
+            if archived is True:
+                raise ResourceConflictError("Job already archived")
 
         document = await self._db.jobs.find_one_and_update(
             {"_id": job_id},

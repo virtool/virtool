@@ -150,6 +150,62 @@ async def test_archive(
 
 
 @pytest.mark.parametrize(
+    "error", [None, "not_found", "invalid_archived", "none_archived"]
+)
+async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
+    client = await spawn_client(authorize=True)
+
+    message = ""
+
+    jobs = [await fake.jobs.insert(randomize=True) for _ in range(10)]
+
+    data = {
+        "jobs": [
+            {"id": job["_id"], "archived": True}
+            for job in jobs
+            if job["archived"] is False
+        ]
+    }
+
+    if error == "not_found":
+        data["jobs"].append({"id": "foo", "archived": True})
+        data["jobs"].append({"id": "bar", "archived": True})
+        message += f"The following jobs were not found: {['foo', 'bar']}"
+    elif error == "invalid_archived":
+        data["jobs"][0]["archived"] = False
+        message += "The `archived` field can only be `true`"
+    elif error == "none_archived":
+        del data["jobs"][1]["archived"]
+    else:
+        pass
+
+    url = "/jobs?"
+
+    resp = await client.patch(url, data=data)
+
+    if error == "none_archived":
+        assert resp.status == 400
+        assert await resp.json() == [
+            {
+                "in": "body",
+                "loc": ["jobs", 1, "archived"],
+                "msg": "field required",
+                "type": "value_error.missing",
+            }
+        ]
+        return
+
+    if error is not None:
+        await resp_is.bad_request(resp, message)
+        return
+
+    assert resp.status == 200
+
+    body = await resp.json()
+    assert body == snapshot
+
+
+@pytest.mark.parametrize(
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
 async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test_job):

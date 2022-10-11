@@ -1,3 +1,6 @@
+from typing import List
+
+from pydantic import BaseModel
 from virtool_core.models.job import JobMinimal, Job
 
 
@@ -12,36 +15,14 @@ class GetJobResponse(JobMinimal):
                     "progress": 100,
                     "rights": {
                         "analyses": {
-                            "modify": [
-                                "rr8iryfy"
-                            ],
-                            "read": [
-                                "rr8iryfy"
-                            ],
-                            "remove": [
-                                "rr8iryfy"
-                            ]
+                            "modify": ["rr8iryfy"],
+                            "read": ["rr8iryfy"],
+                            "remove": ["rr8iryfy"],
                         },
-                        "indexes": {
-                            "read": [
-                                "u3lm1rk8"
-                            ]
-                        },
-                        "references": {
-                            "read": [
-                                "d19exr83"
-                            ]
-                        },
-                        "samples": {
-                            "read": [
-                                "4eynwmic"
-                            ]
-                        },
-                        "subtractions": {
-                            "read": [
-                                "0nhpi36p"
-                            ]
-                        }
+                        "indexes": {"read": ["u3lm1rk8"]},
+                        "references": {"read": ["d19exr83"]},
+                        "samples": {"read": ["4eynwmic"]},
+                        "subtractions": {"read": ["0nhpi36p"]},
                     },
                     "stage": "",
                     "state": "complete",
@@ -53,7 +34,7 @@ class GetJobResponse(JobMinimal):
                             "state": "waiting",
                             "step_description": None,
                             "step_name": None,
-                            "timestamp": "2022-07-08T18:37:44.936000Z"
+                            "timestamp": "2022-07-08T18:37:44.936000Z",
                         },
                         {
                             "error": None,
@@ -62,7 +43,7 @@ class GetJobResponse(JobMinimal):
                             "state": "preparing",
                             "step_description": None,
                             "step_name": None,
-                            "timestamp": "2022-07-08T18:41:20.647000Z"
+                            "timestamp": "2022-07-08T18:41:20.647000Z",
                         },
                         {
                             "error": None,
@@ -71,7 +52,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Map sample reads to reference OTUs and discard.",
                             "step_name": "Eliminate Otus",
-                            "timestamp": "2022-07-08T18:48:11.287000Z"
+                            "timestamp": "2022-07-08T18:48:11.287000Z",
                         },
                         {
                             "error": None,
@@ -80,7 +61,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Map remaining reads to the subtraction and discard.",
                             "step_name": "Eliminate Subtraction",
-                            "timestamp": "2022-07-08T19:00:24.291000Z"
+                            "timestamp": "2022-07-08T19:00:24.291000Z",
                         },
                         {
                             "error": None,
@@ -89,7 +70,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Reunite paired reads after elimination.",
                             "step_name": "Reunite Pairs",
-                            "timestamp": "2022-07-08T19:02:53.618000Z"
+                            "timestamp": "2022-07-08T19:02:53.618000Z",
                         },
                         {
                             "error": None,
@@ -98,7 +79,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Assemble reads using SPAdes.",
                             "step_name": "Assemble",
-                            "timestamp": "2022-07-08T19:02:53.644000Z"
+                            "timestamp": "2022-07-08T19:02:53.644000Z",
                         },
                         {
                             "error": None,
@@ -107,7 +88,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Find ORFs in the assembled contigs.",
                             "step_name": "Process Fasta",
-                            "timestamp": "2022-07-08T19:07:22.352000Z"
+                            "timestamp": "2022-07-08T19:07:22.352000Z",
                         },
                         {
                             "error": None,
@@ -116,7 +97,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Search for viral motifs in ORF translations.",
                             "step_name": "Vfam",
-                            "timestamp": "2022-07-08T19:07:44.531000Z"
+                            "timestamp": "2022-07-08T19:07:44.531000Z",
                         },
                         {
                             "error": None,
@@ -125,15 +106,15 @@ class GetJobResponse(JobMinimal):
                             "state": "complete",
                             "step_description": None,
                             "step_name": None,
-                            "timestamp": "2022-07-08T19:13:04.293000Z"
-                        }
+                            "timestamp": "2022-07-08T19:13:04.293000Z",
+                        },
                     ],
                     "user": {
                         "administrator": False,
                         "handle": "jonathan",
-                        "id": "88yksx67"
+                        "id": "88yksx67",
                     },
-                    "workflow": "nuvs"
+                    "workflow": "nuvs",
                 },
                 {
                     "archived": False,
@@ -142,36 +123,14 @@ class GetJobResponse(JobMinimal):
                     "progress": 100,
                     "rights": {
                         "analyses": {
-                            "modify": [
-                                "z436i72k"
-                            ],
-                            "read": [
-                                "z436i72k"
-                            ],
-                            "remove": [
-                                "z436i72k"
-                            ]
+                            "modify": ["z436i72k"],
+                            "read": ["z436i72k"],
+                            "remove": ["z436i72k"],
                         },
-                        "indexes": {
-                            "read": [
-                                "u3lm1rk8"
-                            ]
-                        },
-                        "references": {
-                            "read": [
-                                "d19exr83"
-                            ]
-                        },
-                        "samples": {
-                            "read": [
-                                "90xccap9"
-                            ]
-                        },
-                        "subtractions": {
-                            "read": [
-                                "0nhpi36p"
-                            ]
-                        }
+                        "indexes": {"read": ["u3lm1rk8"]},
+                        "references": {"read": ["d19exr83"]},
+                        "samples": {"read": ["90xccap9"]},
+                        "subtractions": {"read": ["0nhpi36p"]},
                     },
                     "stage": "",
                     "state": "complete",
@@ -183,7 +142,7 @@ class GetJobResponse(JobMinimal):
                             "state": "waiting",
                             "step_description": None,
                             "step_name": None,
-                            "timestamp": "2022-07-08T20:07:29.213000Z"
+                            "timestamp": "2022-07-08T20:07:29.213000Z",
                         },
                         {
                             "error": None,
@@ -192,7 +151,7 @@ class GetJobResponse(JobMinimal):
                             "state": "preparing",
                             "step_description": None,
                             "step_name": None,
-                            "timestamp": "2022-07-08T20:11:22.187000Z"
+                            "timestamp": "2022-07-08T20:11:22.187000Z",
                         },
                         {
                             "error": None,
@@ -201,7 +160,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Map sample reads to reference OTUs and discard.",
                             "step_name": "Eliminate Otus",
-                            "timestamp": "2022-07-08T20:16:11.688000Z"
+                            "timestamp": "2022-07-08T20:16:11.688000Z",
                         },
                         {
                             "error": None,
@@ -210,7 +169,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Map remaining reads to the subtraction and discard.",
                             "step_name": "Eliminate Subtraction",
-                            "timestamp": "2022-07-08T20:22:29.872000Z"
+                            "timestamp": "2022-07-08T20:22:29.872000Z",
                         },
                         {
                             "error": None,
@@ -219,7 +178,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Reunite paired reads after elimination.",
                             "step_name": "Reunite Pairs",
-                            "timestamp": "2022-07-08T20:23:59.985000Z"
+                            "timestamp": "2022-07-08T20:23:59.985000Z",
                         },
                         {
                             "error": None,
@@ -228,7 +187,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Assemble reads using SPAdes.",
                             "step_name": "Assemble",
-                            "timestamp": "2022-07-08T20:24:00.127000Z"
+                            "timestamp": "2022-07-08T20:24:00.127000Z",
                         },
                         {
                             "error": None,
@@ -237,7 +196,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Find ORFs in the assembled contigs.",
                             "step_name": "Process Fasta",
-                            "timestamp": "2022-07-08T20:30:17.383000Z"
+                            "timestamp": "2022-07-08T20:30:17.383000Z",
                         },
                         {
                             "error": None,
@@ -246,7 +205,7 @@ class GetJobResponse(JobMinimal):
                             "state": "running",
                             "step_description": "Search for viral motifs in ORF translations.",
                             "step_name": "Vfam",
-                            "timestamp": "2022-07-08T20:30:36.530000Z"
+                            "timestamp": "2022-07-08T20:30:36.530000Z",
                         },
                         {
                             "error": None,
@@ -255,16 +214,17 @@ class GetJobResponse(JobMinimal):
                             "state": "complete",
                             "step_description": None,
                             "step_name": None,
-                            "timestamp": "2022-07-08T20:39:54.874000Z"
-                        }
+                            "timestamp": "2022-07-08T20:39:54.874000Z",
+                        },
                     ],
                     "user": {
                         "administrator": False,
                         "handle": "jonathan",
-                        "id": "88yksx67"
+                        "id": "88yksx67",
                     },
-                    "workflow": "nuvs"
-                }, ]
+                    "workflow": "nuvs",
+                },
+            ]
         }
 
 
@@ -280,45 +240,21 @@ class JobResponse(Job):
                     "ref_id": "d19exr83",
                     "sample_id": "4eynwmic",
                     "sample_name": "21BP088",
-                    "subtractions": [
-                        "0nhpi36p"
-                    ]
+                    "subtractions": ["0nhpi36p"],
                 },
                 "created_at": "2022-07-08T18:37:44.936000Z",
                 "id": "splu0pq3",
                 "progress": 100,
                 "rights": {
                     "analyses": {
-                        "modify": [
-                            "rr8iryfy"
-                        ],
-                        "read": [
-                            "rr8iryfy"
-                        ],
-                        "remove": [
-                            "rr8iryfy"
-                        ]
+                        "modify": ["rr8iryfy"],
+                        "read": ["rr8iryfy"],
+                        "remove": ["rr8iryfy"],
                     },
-                    "indexes": {
-                        "read": [
-                            "u3lm1rk8"
-                        ]
-                    },
-                    "references": {
-                        "read": [
-                            "d19exr83"
-                        ]
-                    },
-                    "samples": {
-                        "read": [
-                            "4eynwmic"
-                        ]
-                    },
-                    "subtractions": {
-                        "read": [
-                            "0nhpi36p"
-                        ]
-                    }
+                    "indexes": {"read": ["u3lm1rk8"]},
+                    "references": {"read": ["d19exr83"]},
+                    "samples": {"read": ["4eynwmic"]},
+                    "subtractions": {"read": ["0nhpi36p"]},
                 },
                 "stage": "",
                 "state": "complete",
@@ -330,7 +266,7 @@ class JobResponse(Job):
                         "state": "waiting",
                         "step_description": None,
                         "step_name": None,
-                        "timestamp": "2022-07-08T18:37:44.936000Z"
+                        "timestamp": "2022-07-08T18:37:44.936000Z",
                     },
                     {
                         "error": None,
@@ -339,7 +275,7 @@ class JobResponse(Job):
                         "state": "preparing",
                         "step_description": None,
                         "step_name": None,
-                        "timestamp": "2022-07-08T18:41:20.647000Z"
+                        "timestamp": "2022-07-08T18:41:20.647000Z",
                     },
                     {
                         "error": None,
@@ -348,7 +284,7 @@ class JobResponse(Job):
                         "state": "running",
                         "step_description": "Map sample reads to reference OTUs and discard.",
                         "step_name": "Eliminate Otus",
-                        "timestamp": "2022-07-08T18:48:11.287000Z"
+                        "timestamp": "2022-07-08T18:48:11.287000Z",
                     },
                     {
                         "error": None,
@@ -357,7 +293,7 @@ class JobResponse(Job):
                         "state": "running",
                         "step_description": "Map remaining reads to the subtraction and discard.",
                         "step_name": "Eliminate Subtraction",
-                        "timestamp": "2022-07-08T19:00:24.291000Z"
+                        "timestamp": "2022-07-08T19:00:24.291000Z",
                     },
                     {
                         "error": None,
@@ -366,7 +302,7 @@ class JobResponse(Job):
                         "state": "running",
                         "step_description": "Reunite paired reads after elimination.",
                         "step_name": "Reunite Pairs",
-                        "timestamp": "2022-07-08T19:02:53.618000Z"
+                        "timestamp": "2022-07-08T19:02:53.618000Z",
                     },
                     {
                         "error": None,
@@ -375,7 +311,7 @@ class JobResponse(Job):
                         "state": "running",
                         "step_description": "Assemble reads using SPAdes.",
                         "step_name": "Assemble",
-                        "timestamp": "2022-07-08T19:02:53.644000Z"
+                        "timestamp": "2022-07-08T19:02:53.644000Z",
                     },
                     {
                         "error": None,
@@ -384,7 +320,7 @@ class JobResponse(Job):
                         "state": "running",
                         "step_description": "Find ORFs in the assembled contigs.",
                         "step_name": "Process Fasta",
-                        "timestamp": "2022-07-08T19:07:22.352000Z"
+                        "timestamp": "2022-07-08T19:07:22.352000Z",
                     },
                     {
                         "error": None,
@@ -393,7 +329,7 @@ class JobResponse(Job):
                         "state": "running",
                         "step_description": "Search for viral motifs in ORF translations.",
                         "step_name": "Vfam",
-                        "timestamp": "2022-07-08T19:07:44.531000Z"
+                        "timestamp": "2022-07-08T19:07:44.531000Z",
                     },
                     {
                         "error": None,
@@ -402,14 +338,23 @@ class JobResponse(Job):
                         "state": "complete",
                         "step_description": None,
                         "step_name": None,
-                        "timestamp": "2022-07-08T19:13:04.293000Z"
-                    }
+                        "timestamp": "2022-07-08T19:13:04.293000Z",
+                    },
                 ],
                 "user": {
                     "administrator": False,
                     "handle": "jonathan",
-                    "id": "88yksx67"
+                    "id": "88yksx67",
                 },
-                "workflow": "nuvs"
+                "workflow": "nuvs",
             }
         }
+
+
+class ArchiveJobSchema(BaseModel):
+    id: str
+    archived: bool
+
+
+class ArchiveJobsRequest(BaseModel):
+    jobs: List[ArchiveJobSchema]
