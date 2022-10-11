@@ -7,6 +7,7 @@ from sqlalchemy.future import select
 from virtool_core.utils import compress_file
 
 from virtool.analyses.models import AnalysisFile
+from virtool.utils import run_in_thread
 
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 
@@ -114,15 +115,12 @@ def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -
     return join_analysis_path(data_path, analysis_id, sample_id) / "results.json"
 
 
-async def move_nuvs_files(
-    filename: str, run_in_thread: callable, file_path: Path, target_path: Path
-):
+async def move_nuvs_files(filename: str, file_path: Path, target_path: Path):
     """
     Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files
     and FASTQ files.
 
     :param filename: the name of the analysis file
-    :param run_in_thread: the application thread running function
     :param file_path: the path to the original file
     :param target_path: the path to the new directory
 
