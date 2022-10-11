@@ -74,6 +74,6 @@ def pretty_dumps(obj: object) -> bytes:
 
 def orjson_serializer(obj) -> str:
     """
-    Used by SQLAlchemy as they expect strings.
+    Used by SQLAlchemy and aiohttp as they expect strings.
     """
     return dumps(obj).decode()
