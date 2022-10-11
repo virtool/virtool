@@ -1,10 +1,11 @@
+import os
 from asyncio import gather, CancelledError
 from datetime import datetime
 from logging import getLogger
 from typing import Union, Tuple, Dict, Optional
 
 from multidict import MultiDictProxy
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis
 from virtool_core.utils import rm
@@ -15,7 +16,11 @@ import virtool.uploads.db
 from virtool.analyses.db import PROJECTION, processor
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
-from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
+from virtool.analyses.utils import (
+    attach_analysis_files,
+    find_nuvs_sequence_by_index,
+    join_analysis_path,
+)
 from virtool.api.utils import paginate
 from virtool.blast.models import NuVsBlast
 from virtool.blast.task import BLASTTask
@@ -386,3 +391,63 @@ class AnalysisData(DataLayerPiece):
         document = await processor(self._db, document)
 
         return Analysis(**document)
+
+    async def store_nuvs_files(self):
+        """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
+
+        async for analysis in self._db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+
+            path = join_analysis_path(self._config.data_path, analysis_id, sample_id)
+
+            target_path = self._config.data_path / "analyses" / analysis_id
+
+            async with AsyncSession(self._pg) as session:
+                exists = (
+                    await session.execute(
+                        select(AnalysisFile).filter_by(analysis=analysis_id)
+                    )
+                ).scalar()
+
+            if await run_in_thread(path.is_dir) and not exists:
+                try:
+                    await run_in_thread(os.makedirs, target_path)
+                except FileExistsError:
+                    pass
+
+                analysis_files = []
+
+                for filename in sorted(os.listdir(path)):
+                    if filename in TARGET_FILES:
+                        analysis_files.append(filename)
+
+                        await move_nuvs_files(
+                            filename, self.run_in_thread, path, target_path
+                        )
+
+                await create_nuvs_analysis_files(
+                    self.app["pg"], analysis_id, analysis_files, target_path
+                )
+
+        await self.tasks_data.update(self.id, step="store_nuvs_files")
+
+    async def remove_directory(self):
+        """
+        Remove `<data_path>`/samples/:id/analysis/:id directory
+        after files have been preserved in
+        `<data_path>`/analyses/:id>.
+
+        """
+        config = self.app["config"]
+
+        async for analysis in self.db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+
+            path = join_analysis_path(config.data_path, analysis_id, sample_id)
+
+            if (config.data_path / "analyses" / analysis_id).is_dir():
+                await run_in_thread(shutil.rmtree, path, True)
+
+        await self.tasks_data.update(self.id, step="remove_directory")

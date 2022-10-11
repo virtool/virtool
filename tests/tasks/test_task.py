@@ -1,4 +1,5 @@
 import os
+from virtool.tasks.models import Task as SQLTask
 from pathlib import Path
 
 import pytest
@@ -7,9 +8,27 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.tasks.task
+from virtool.pg.utils import get_row_by_id
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task
 from virtool.data.utils import get_data_from_app
+from virtool.tasks.task import BaseTask
+from virtool.utils import get_temp_dir
+
+
+class DummyBaseTask(BaseTask):
+    name = "dummmy_base_task"
+
+    def __init__(self, task_id, data, context, temp_dir):
+        super().__init__(task_id, data, context, temp_dir)
+
+        self.steps = [self.step_one, self.step_two]
+
+    async def step_one(self):
+        ...
+
+    async def step_two(self):
+        ...
 
 
 class DummyTask(virtool.tasks.task.Task):
@@ -23,14 +42,14 @@ class DummyTask(virtool.tasks.task.Task):
         with open(self.temp_path / "test.txt", "w") as f:
             f.write("This is a test file.")
 
-        await get_data_from_app(self.app).tasks.update(self.id, progress=50, step="create_file")
+        await get_data_from_app(self.app).tasks.update(
+            self.id, progress=50, step="create_file"
+        )
 
     async def remove_file(self):
         os.remove(self.temp_path / "test.txt")
 
-        await self.tasks_data.update(
-            self.id, progress=100, step="remove_file"
-        )
+        await self.tasks_data.update(self.id, progress=100, step="remove_file")
 
 
 @pytest.fixture()
@@ -51,6 +70,34 @@ async def task(spawn_client, pg: AsyncEngine, static_time):
         await session.commit()
 
     return DummyTask(client.app, 1)
+
+
+async def test_base_task(data_layer, pg, static_time):
+    task = Task(
+        id=1,
+        complete=False,
+        context={"user_id": "test"},
+        count=0,
+        created_at=static_time.datetime,
+        progress=0,
+        step="create_file",
+        type="test_task",
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add(task)
+        await session.commit()
+
+    task = DummyBaseTask(1, data_layer, {}, get_temp_dir())
+
+    await task.run()
+
+    row: SQLTask = await get_row_by_id(pg, SQLTask, 1)
+
+    assert row.id == 1
+    assert row.complete is True
+    assert row.progress == 100
+    assert row.step == "step_two"
 
 
 async def test_init_db(snapshot, task, static_time):
@@ -83,7 +130,6 @@ async def test_update_context(task):
     context = await task.update_context({"ref_id": "askfllfk"})
 
     assert context == {"user_id": "test", "ref_id": "askfllfk"}
-
 
 
 async def test_get_tracker(task, pg: AsyncEngine, redis: Redis):

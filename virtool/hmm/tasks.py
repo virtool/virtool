@@ -1,21 +1,19 @@
 import json
 import logging
 import shutil
-from pathlib import Path
 
 import aiofiles
 from virtool_core.utils import decompress_tgz
 
-from virtool.data.utils import get_data_from_app
-from virtool.github import create_update_subdocument
 from virtool.http.utils import download_file
-from virtool.tasks.task import Task, Task2
+from virtool.tasks.progress import DownloadProgressHandlerWrapper
+from virtool.tasks.task import BaseTask
 from virtool.utils import run_in_thread
 
 logger = logging.getLogger(__name__)
 
 
-class HMMInstallTask(Task2):
+class HMMInstallTask(BaseTask):
     """
     Runs a background Task that:
         - downloads the official profiles.hmm.gz file
@@ -30,9 +28,6 @@ class HMMInstallTask(Task2):
         4. install_profiles
         5. import_annotations
 
-    :param app: the app object
-    :param task_id: the id for the process document
-
     """
 
     task_type = "install_hmms"
@@ -44,18 +39,28 @@ class HMMInstallTask(Task2):
             self.download,
             self.decompress,
             self.install_profiles,
-            self.import_annotations,
+            self.install_annotations,
         ]
 
     async def download(self):
+        """
+        Download the HMM release archive.
+
+        TODO: Replace or fix usage of download_file()
+        """
         release = self.context["release"]
 
-        tracker = await self.get_tracker(release["size"])
-
-        path = self.temp_path / "hmm.tar.gz"
+        tracker = DownloadProgressHandlerWrapper(
+            self.create_progress_handler(), release["size"]
+        )
 
         try:
-            await download_file(self.app, release["download_url"], path, tracker.add)
+            await download_file(
+                self.app,
+                release["download_url"],
+                self.temp_path / "hmm.tar.gz",
+                tracker.add,
+            )
         except Exception as err:
             logger.warning("Request for HMM release encountered exception: %s", err)
             await self.error("Could not download HMM data.")
@@ -66,53 +71,29 @@ class HMMInstallTask(Task2):
         )
 
     async def install_profiles(self):
-        tracker = await self.get_tracker()
+        """
+        Move the HMM profile file to its application data location.
 
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=tracker.step_completed, step="install_profiles"
+        TODO: Deal with configuration for data_path.
+
+        """
+        await run_in_thread(
+            shutil.move,
+            self.temp_path / "hmm" / "profiles.hmm",
+            self.data.hmms.profiles_path,
         )
 
-        decompressed_path = self.temp_path / "hmm"
-
-        install_path = self.app["config"].data_path / "hmm" / "profiles.hmm"
-
-        await self.run_in_thread(
-            shutil.move, decompressed_path / "profiles.hmm", install_path
-        )
-
-    async def import_annotations(self):
-        release = self.context["release"]
-        await get_data_from_app(self.app).tasks.update(
-            self.id, step="import_annotations"
-        )
+    async def install_annotations(self):
 
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
 
-        tracker = await self.get_tracker(len(annotations))
-
-        for annotation in annotations:
-            await self.db.hmm.insert_one(dict(annotation, hidden=False))
-            await tracker.add(1)
-
-        logger.debug("Inserted %s annotations", len(annotations))
-
-        try:
-            release_id = int(release["id"])
-        except TypeError:
-            release_id = release["id"]
-
-        await self.db.status.update_one(
-            {"_id": "hmm", "updates.id": release_id},
-            {
-                "$set": {
-                    "installed": create_update_subdocument(
-                        release, True, self.context["user_id"]
-                    ),
-                    "updates.$.ready": True,
-                }
-            },
+        await self.data.hmms.install_annotations(
+            annotations,
+            self.context["release"],
+            self.context["user_id"],
+            self.create_progress_handler(),
         )
 
     async def cleanup(self):
-        await get_data_from_app(self.app).hmms.purge()
+        await self.data.hmms.purge()

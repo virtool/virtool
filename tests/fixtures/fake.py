@@ -8,7 +8,7 @@ from virtool_core.models.enums import Permission
 
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
-from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.models import SQLSubtractionFile
 from virtool.types import Document
 from virtool.uploads.models import Upload
 
@@ -138,19 +138,19 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
             session.add_all(
                 [
                     upload,
-                    SubtractionFile(
+                    SQLSubtractionFile(
                         name="subtraction.fq.gz",
                         subtraction=subtraction_id,
                         type="fasta",
                         size=12345,
                     ),
-                    SubtractionFile(
+                    SQLSubtractionFile(
                         name="subtraction.1.bt2",
                         subtraction=subtraction_id,
                         type="bowtie2",
                         size=56437,
                     ),
-                    SubtractionFile(
+                    SQLSubtractionFile(
                         name="subtraction.2.bt2",
                         subtraction=subtraction_id,
                         type="bowtie2",
@@ -247,7 +247,7 @@ def app(dbi, pg, tmp_path, config, data_layer):
         "fake": FakerWrapper(),
         "pg": pg,
         "config": config,
-        "data": data_layer
+        "data": data_layer,
     }
 
 

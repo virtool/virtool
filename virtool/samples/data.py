@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import math
 from typing import List, Optional
 
@@ -32,8 +33,14 @@ from virtool.samples.db import (
 from virtool.samples.oas import CreateSampleSchema, EditSampleSchema
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.tasks.progress import (
+    AbstractProgressHandler,
+    DownloadProgressHandlerWrapper,
+)
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor, run_in_thread, wait_for_checks
+
+logger = logging.getLogger(__name__)
 
 
 class SamplesData(DataLayerPiece):
@@ -369,3 +376,40 @@ class SamplesData(DataLayerPiece):
             )
 
         raise ValueError(f"Invalid sample right: {right}")
+
+    async def compress_samples(self, progress_handler: AbstractProgressHandler):
+        query = {"is_legacy": True, "is_compressed": {"$exists": False}}
+
+        count = await self._db.samples.count_documents(query)
+
+        tracker = DownloadProgressHandlerWrapper(progress_handler, count)
+
+        while True:
+            sample = await self._db.samples.find_one(query)
+
+            if sample is None:
+                break
+
+            await virtool.samples.db.compress_sample_reads(
+                self._db, self._config, sample
+            )
+            await tracker.add(1)
+
+    async def move_sample_files(self, progress_handler: AbstractProgressHandler):
+        query = {
+            "files": {"$exists": True},
+            "$or": [{"is_legacy": False}, {"is_legacy": True, "is_compressed": True}],
+        }
+
+        count = await self._db.samples.count_documents(query)
+
+        tracker = DownloadProgressHandlerWrapper(progress_handler, count)
+
+        while True:
+            sample = await self._db.samples.find_one(query)
+
+            if sample is None:
+                break
+
+            await virtool.samples.db.move_sample_files_to_pg(self._db, self._pg, sample)
+            await tracker.add(1)

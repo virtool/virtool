@@ -6,7 +6,7 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import Permission
 
-from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import Upload
 
 
@@ -155,7 +155,7 @@ async def test_upload(
 
     if error == "409":
         async with AsyncSession(pg) as session:
-            session.add(SubtractionFile(name="subtraction.1.bt2", subtraction="foo"))
+            session.add(SQLSubtractionFile(name="subtraction.1.bt2", subtraction="foo"))
             await session.commit()
 
     await client.db.subtraction.insert_one(subtraction)
@@ -310,11 +310,11 @@ async def test_download_subtraction_files(
     if error != "400_subtraction":
         await client.db.subtraction.insert_one(subtraction)
 
-    file_1 = SubtractionFile(
+    file_1 = SQLSubtractionFile(
         id=1, name="subtraction.fa.gz", subtraction="foo", type="fasta"
     )
 
-    file_2 = SubtractionFile(
+    file_2 = SQLSubtractionFile(
         id=2, name="subtraction.1.bt2", subtraction="foo", type="bowtie2"
     )
 

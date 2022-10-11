@@ -4,7 +4,7 @@ from typing import List, Union
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.utils import file_stats
 
-from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.utils import check_subtraction_file_type
 from virtool.utils import run_in_thread
 
@@ -21,19 +21,16 @@ async def create_subtraction_files(
     :param path: The path to the subtraction files
 
     """
-    subtraction_files = []
-
-    for filename in files:
-        subtraction_files.append(
-            SubtractionFile(
-                name=filename,
-                subtraction=subtraction_id,
-                type=check_subtraction_file_type(filename),
-                size=(await run_in_thread(file_stats, path / filename))["size"],
-            )
-        )
-
     async with AsyncSession(pg) as session:
-        session.add_all(subtraction_files)
-
+        session.add_all(
+            [
+                SQLSubtractionFile(
+                    name=filename,
+                    subtraction=subtraction_id,
+                    type=check_subtraction_file_type(filename),
+                    size=(await run_in_thread(file_stats, path / filename))["size"],
+                )
+                for filename in files
+            ]
+        )
         await session.commit()

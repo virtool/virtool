@@ -1,6 +1,8 @@
 import os
 import shutil
+from typing import Dict
 
+from humanfriendly.testing import TemporaryDirectory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,20 +10,20 @@ from virtool.analyses.db import TARGET_FILES
 from virtool.analyses.files import create_nuvs_analysis_files
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import move_nuvs_files, join_analysis_path
-from virtool.tasks.task import Task
-from virtool.types import App
+from virtool.data.layer import DataLayer
+from virtool.tasks.task import BaseTask
 from virtool.utils import run_in_thread
 
 
-class StoreNuvsFilesTask(Task):
-    task_type = "store_nuvs_file_task"
+class StoreNuvsFilesTask(BaseTask):
+    name = "store_nuvs_files"
 
-    def __init__(self, app: App, task_id: int):
-        super().__init__(app, task_id)
+    def __init__(
+        self, task_id: int, data: DataLayer, context: Dict, temp_dir: TemporaryDirectory
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [self.store_nuvs_files, self.remove_directory]
-
-        self.nuvs_directory = []
 
     async def store_nuvs_files(self):
         """
@@ -66,8 +68,6 @@ class StoreNuvsFilesTask(Task):
                     self.app["pg"], analysis_id, analysis_files, target_path
                 )
 
-        await self.tasks_data.update(self.id, step="store_nuvs_files")
-
     async def remove_directory(self):
         """
         Remove `<data_path>`/samples/:id/analysis/:id directory
@@ -85,5 +85,3 @@ class StoreNuvsFilesTask(Task):
 
             if (config.data_path / "analyses" / analysis_id).is_dir():
                 await run_in_thread(shutil.rmtree, path, True)
-
-        await self.tasks_data.update(self.id, step="remove_directory")

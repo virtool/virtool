@@ -42,5 +42,5 @@ class TaskResponse(Task):
 
 class TaskUpdate(BaseModel):
     step: Optional[str]
-    progress: Optional[conint(ge=1, le=100)]
+    progress: Optional[conint(ge=0, le=100)]
     error: Optional[str]

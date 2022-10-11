@@ -6,21 +6,16 @@ from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
 from virtool.data.layer import DataLayer
+from virtool.utils import get_temp_dir
+
 
 async def test_compress_samples_task(
-    mocker, dbi, pg: AsyncEngine, data_layer: DataLayer, static_time
+    mocker, dbi, pg: AsyncEngine, data_layer: DataLayer, static_time, config
 ):
     """
     Ensure `compress_reads` is called correctly given a samples collection.
 
     """
-    app_dict = {
-        "db": dbi,
-        "pg": pg,
-        "settings": {},
-        "data": data_layer,
-    }
-
     await dbi.samples.insert_many(
         [
             {"_id": "foo", "is_legacy": True},
@@ -45,24 +40,24 @@ async def test_compress_samples_task(
 
     calls = []
 
-    async def compress_reads(app, sample):
-        calls.append((app, sample))
+    async def compress_reads(db, app_config, sample):
+        calls.append((db, app_config, sample))
 
         # Set is_compressed on the sample as would be expected after a successful compression
-        await app["db"].samples.update_one(
+        await db.samples.update_one(
             {"_id": sample["_id"]}, {"$set": {"is_compressed": True}}
         )
 
     mocker.patch("virtool.samples.db.compress_sample_reads", compress_reads)
 
-    task = CompressSamplesTask(app_dict, 1)
+    task = CompressSamplesTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 
     assert calls == (
         [
-            (app_dict, {"_id": "foo", "is_legacy": True}),
-            (app_dict, {"_id": "bar", "is_legacy": True}),
+            (dbi, config, {"_id": "foo", "is_legacy": True}),
+            (dbi, config, {"_id": "bar", "is_legacy": True}),
         ]
     )
 
@@ -71,14 +66,15 @@ async def test_compress_samples_task(
 @pytest.mark.parametrize("compressed", [True, False])
 @pytest.mark.parametrize("paired", [True, False])
 async def test_move_sample_files_task(
-    legacy, compressed, paired, dbi, pg: AsyncEngine, data_layer: DataLayer, snapshot, static_time
+    legacy,
+    compressed,
+    paired,
+    dbi,
+    pg: AsyncEngine,
+    data_layer: DataLayer,
+    snapshot,
+    static_time,
 ):
-    app_dict = {
-        "db": dbi,
-        "pg": pg,
-        "settings": {},
-        "data": data_layer
-    }
 
     sample = {
         "_id": "foo",
@@ -133,7 +129,7 @@ async def test_move_sample_files_task(
         )
         await session.commit()
 
-    task = MoveSampleFilesTask(app_dict, 1)
+    task = MoveSampleFilesTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 

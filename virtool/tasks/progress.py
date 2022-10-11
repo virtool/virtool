@@ -48,7 +48,11 @@ class DownloadProgressHandlerWrapper:
 
     """
 
-    def __init__(self, progress_handler: AbstractProgressHandler, total: int):
+    def __init__(
+        self,
+        progress_handler: AbstractProgressHandler,
+        total: int,
+    ):
         self._progress_handler = progress_handler
         self._total = total
         self._accumulated = 0

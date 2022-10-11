@@ -1,18 +1,18 @@
+import asyncio
 from logging import getLogger
 from pathlib import Path
-from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING
+from tempfile import TemporaryDirectory
+from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from virtool_core.models.task import Task as TaskModel
 
 import virtool.tasks.models
-
-from virtool.tasks.oas import TaskUpdate
-from virtool.tasks.progress import AbstractProgressHandler, TaskProgressHandler
-from virtool.utils import get_temp_dir, run_in_thread
 from virtool.data.utils import get_data_from_app
-from virtool_core.models.task import Task as TaskModel
+from virtool.tasks.oas import TaskUpdate
+from virtool.tasks.progress import TaskProgressHandler
+from virtool.utils import get_temp_dir, run_in_thread
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -21,34 +21,76 @@ if TYPE_CHECKING:
 logger = getLogger("task")
 
 
-class Task2:
+class BaseTask:
+
+    name: str
+    """The name of the task (eg. 'add_subtraction_files')."""
+
     steps: List[Callable[[], Awaitable]] = []
-    task_type: str
+    """A list of methods that are executed in sequence during the task run."""
 
-    def __init__(self, task_id: int, data: "DataLayer", context: Dict, temp_dir: Path):
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
         self.context = context
-        self.data = data
-        self.task_id = task_id
-        self.temp_dir = temp_dir
-        self.temp_path = Path(self.temp_dir.name)
+        """Context provided when the task was spawned."""
 
-        self.errored = False
-        self.step = None
+        self.data = data
+        """The application data layer."""
+
+        self.task_id = task_id
+        """The task's unique id."""
+
+        self.temp_dir = temp_dir
+
+        self.temp_path = Path(self.temp_dir.name)
+        """
+        The ``Path`` to a temporary directory to be used as a scratch space for the 
+        task.        
+        """
+
+        self.errored: bool = False
+        """Set ``True`` when the task has encountered an error."""
+
+        self.step: Optional[Callable] = None
+        """
+        The name of the step the task is current executing.
+        
+        The value will be ``None`` if the task's ``run`` method has not been called yet.
+        """
 
     def create_progress_handler(self):
         """
-        Get a ``TaskProgressHandler`` that is wired up to the task progress handling.
+        Get a ``TaskProgressHandler`` that is wired up to the task object's
+        progress handling.
+
         """
         return TaskProgressHandler(self._set_error, self._set_step_progress)
 
     @classmethod
     async def from_task_id(cls, data: "DataLayer", task_id: int):
-        task = await data.tasks.get(task_id)
-        temp_dir = await run_in_thread(get_temp_dir)
+        """
+        Create a task object given a ``task_id`` and a reference to the application data
+        layer.
+
+        """
+        task, temp_dir = await asyncio.gather(
+            data.tasks.get(task_id), run_in_thread(get_temp_dir)
+        )
+
         return cls(task_id, data, task.context, temp_dir)
 
     @property
-    def step_number(self):
+    def step_name(self) -> str:
+        if self.step:
+            return self.step.__name__
+
+    @property
+    def step_number(self) -> int:
         """
         The number of the active step.
 
@@ -56,7 +98,17 @@ class Task2:
         if self.step is None:
             return 0
 
-        return self.steps.index(self.step)
+        return self.steps.index(self.step) + 1
+
+    @property
+    def step_progress_basis(self) -> int:
+        """
+        The starting progress value for the current step.
+
+        If the step is the second of four, this value would be 25.
+
+        """
+        return round(100 * (self.step_number - 1) / (len(self.steps)))
 
     async def run(self):
         """
@@ -71,10 +123,14 @@ class Task2:
             self.step = func
 
             await self.data.tasks.update(
-                self.task_id, TaskUpdate(step=self.step.__name__)
+                self.task_id,
+                TaskUpdate(
+                    step=self.step.__name__,
+                    progress=self.step_progress_basis,
+                ),
             )
 
-            logger.info("Starting task step '%s.%s'", self.task_type, func.__name__)
+            logger.info("Starting task step '%s.%s'", self.name, func.__name__)
 
             try:
                 await func()
@@ -98,13 +154,7 @@ class Task2:
         Update the overall progress using the progress of a subtask
         """
         await self._set_progress(
-            round(
-                100
-                * (
-                    self.step_number / (len(self.steps))
-                    + (progress * (1 / len(self.steps)))
-                )
-            )
+            round(self.step_progress_basis + progress * (1 / len(self.steps)))
         )
 
     async def _set_progress(self, progress: int):
@@ -119,13 +169,6 @@ class Task2:
         """
         await self.data.tasks.update(self.task_id, TaskUpdate(error=error))
         self.errored = True
-
-
-class UpdateRemoteReferenceTask(Task2):
-    async def step_1(self):
-        progress_handler = AbstractProgressHandler()
-
-        await self.data.reference.update_remote_reference(ref_id, progress_handler)
 
 
 class Task:
@@ -164,7 +207,7 @@ class Task:
             self.step = func
 
             await get_data_from_app(self.app).tasks.update(
-                self.id, step=self.step.__name__
+                self.id, TaskUpdate(step=self.step.__name__)
             )
 
             logger.info("Starting task step '%s.%s'", self.task_type, func.__name__)

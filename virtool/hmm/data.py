@@ -1,5 +1,7 @@
 import asyncio
+from functools import cached_property
 from pathlib import Path
+from typing import List, Dict
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
@@ -30,6 +32,10 @@ from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
+from virtool.tasks.progress import (
+    AbstractProgressHandler,
+    DownloadProgressHandlerWrapper,
+)
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread
@@ -41,6 +47,11 @@ class HmmData(DataLayerPiece):
         self._config = config
         self._mongo = mongo
         self._pg = pg
+
+    @cached_property
+    def profiles_path(self) -> Path:
+        """The path to the HMM profiles file in the application data."""
+        return self._config.data_path / "hmm" / "profiles.hmm"
 
     async def find(self, query: MultiDictProxy):
         db_query = {}
@@ -163,6 +174,42 @@ class HmmData(DataLayerPiece):
         )
 
         return HMMInstalled(**installed)
+
+    async def install_annotations(
+        self,
+        annotations: List[Dict],
+        release,
+        user_id: str,
+        progress_handler: AbstractProgressHandler,
+    ):
+        """
+        Installs annotation given a list of annotation dictionaries.
+
+        """
+        tracker = DownloadProgressHandlerWrapper(progress_handler, len(annotations))
+
+        try:
+            release_id = int(release["id"])
+        except TypeError:
+            release_id = release["id"]
+
+        async with self._mongo.create_session() as session:
+            for annotation in annotations:
+                await self._mongo.hmm.insert_one(
+                    dict(annotation, hidden=False), session=session
+                )
+                await tracker.add(1)
+
+            await self._mongo.status.update_one(
+                {"_id": "hmm", "updates.id": release_id},
+                {
+                    "$set": {
+                        "installed": create_update_subdocument(release, True, user_id),
+                        "updates.$.ready": True,
+                    }
+                },
+                session=session,
+            )
 
     async def get_profiles_path(self) -> Path:
         file_path = self._config.data_path / "hmm" / "profiles.hmm"

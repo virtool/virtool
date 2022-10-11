@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
 
 import virtool.subtractions.files
-from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.models import SQLSubtractionFile
 
 
 async def test_create_subtraction_files(snapshot, tmp_path, pg: AsyncEngine):
@@ -20,5 +20,5 @@ async def test_create_subtraction_files(snapshot, tmp_path, pg: AsyncEngine):
     rows = []
     async with AsyncSession(pg) as session:
         assert (
-            await session.execute(select(SubtractionFile))
+            await session.execute(select(SQLSubtractionFile))
         ).scalars().all() == snapshot
