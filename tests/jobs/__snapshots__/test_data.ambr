@@ -226,6 +226,7 @@
       'sample_id': 'foo',
     },
     'key': None,
+    'ping': None,
     'rights': <class 'dict'> {
       'samples': <class 'dict'> {
         'modify': <class 'list'> [
@@ -310,6 +311,7 @@
       'sample_id': 'foo',
     },
     'key': None,
+    'ping': None,
     'rights': <class 'dict'> {
       'samples': <class 'dict'> {
         'modify': <class 'list'> [

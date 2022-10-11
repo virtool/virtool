@@ -221,6 +221,7 @@ class JobsData:
             "state": "waiting",
             "status": [compose_status("waiting", None)],
             "user": {"id": user_id},
+            "ping": None
         }
 
         if job_id:

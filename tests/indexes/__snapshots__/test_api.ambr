@@ -39,6 +39,7 @@
       'user_id': 'test',
     },
     'key': None,
+    'ping': None,
     'rights': <class 'dict'> {
       'indexes': <class 'dict'> {
         'modify': <class 'list'> [
