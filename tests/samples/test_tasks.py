@@ -8,20 +8,20 @@ from virtool.uploads.models import Upload
 from virtool.data.layer import DataLayer
 
 async def test_compress_samples_task(
-    mocker, dbi, pg: AsyncEngine, data_layer: DataLayer, static_time
+    mocker, mongo, pg: AsyncEngine, data_layer: DataLayer, static_time
 ):
     """
     Ensure `compress_reads` is called correctly given a samples collection.
 
     """
     app_dict = {
-        "db": dbi,
+        "db": mongo,
         "pg": pg,
         "settings": {},
         "data": data_layer,
     }
 
-    await dbi.samples.insert_many(
+    await mongo.samples.insert_many(
         [
             {"_id": "foo", "is_legacy": True},
             {"_id": "fab", "is_legacy": False},
@@ -71,10 +71,10 @@ async def test_compress_samples_task(
 @pytest.mark.parametrize("compressed", [True, False])
 @pytest.mark.parametrize("paired", [True, False])
 async def test_move_sample_files_task(
-    legacy, compressed, paired, dbi, pg: AsyncEngine, data_layer: DataLayer, snapshot, static_time
+    legacy, compressed, paired, mongo, pg: AsyncEngine, data_layer: DataLayer, snapshot, static_time
 ):
     app_dict = {
-        "db": dbi,
+        "db": mongo,
         "pg": pg,
         "settings": {},
         "data": data_layer
@@ -116,7 +116,7 @@ async def test_move_sample_files_task(
             }
         )
 
-    await dbi.samples.insert_one(sample)
+    await mongo.samples.insert_one(sample)
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -137,7 +137,7 @@ async def test_move_sample_files_task(
 
     await task.run()
 
-    assert await dbi.samples.find_one({"_id": "foo"}) == snapshot
+    assert await mongo.samples.find_one({"_id": "foo"}) == snapshot
 
     if not legacy or (legacy and compressed):
         async with AsyncSession(pg) as session:

@@ -16,7 +16,7 @@ from virtool.settings.oas import UpdateSettingsSchema
 from virtool.tasks.models import Task as SQLTask
 
 
-class TestCreateRef:
+class TestCreate:
     @pytest.mark.parametrize("data_type", ["genome", "barcode"])
     async def test_create(self, data_type, snapshot, spawn_client, static_time):
         client = await spawn_client(
@@ -154,7 +154,9 @@ class TestCreateRef:
 
         assert resp.status == 201
         assert resp.headers["Location"] == snapshot
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot(
+            matcher=path_type({".*etag": (str,)}, regex=True)
+        )
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])

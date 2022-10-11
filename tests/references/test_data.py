@@ -8,7 +8,7 @@ class TestEdit:
     @pytest.mark.parametrize("control_exists", [True, False])
     @pytest.mark.parametrize("control_id", [None, "", "baz"])
     async def test_control(
-        self, control_exists, fake2, control_id, mocker, snapshot, dbi, app
+        self, control_exists, fake2, control_id, mocker, snapshot, mongo, app
     ):
         """
         Test that the `internal_control` field is correctly set with various `internal_control` input value and the case
@@ -18,7 +18,7 @@ class TestEdit:
         user_1 = await fake2.users.create()
         user_2 = await fake2.users.create()
 
-        await dbi.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "data_type": "genome",
@@ -41,9 +41,9 @@ class TestEdit:
         document = await get_data_from_app(app).references.edit_reference("foo", update)
 
         assert document == snapshot
-        assert await dbi.references.find_one() == snapshot
+        assert await mongo.references.find_one() == snapshot
 
-    async def test_reference_name(self, snapshot, dbi, fake2, app):
+    async def test_reference_name(self, snapshot, mongo, fake2, app):
         """
         Test that analyses that are linked to the edited reference have their `reference.name` fields changed when
         the `name` field of the reference changes.
@@ -51,7 +51,7 @@ class TestEdit:
         user_1 = await fake2.users.create()
         user_2 = await fake2.users.create()
 
-        await dbi.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "name": "Foo",
@@ -62,7 +62,7 @@ class TestEdit:
             }
         )
 
-        await dbi.analyses.insert_many(
+        await mongo.analyses.insert_many(
             [
                 {"_id": "baz", "reference": {"id": "foo", "name": "Foo"}},
                 {"_id": "boo", "reference": {"id": "foo", "name": "Foo"}},
@@ -74,5 +74,5 @@ class TestEdit:
         )
 
         assert document == snapshot
-        assert await dbi.references.find_one() == snapshot
-        assert await dbi.analyses.find().to_list(None) == snapshot
+        assert await mongo.references.find_one() == snapshot
+        assert await mongo.analyses.find().to_list(None) == snapshot

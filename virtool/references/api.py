@@ -4,6 +4,7 @@ from aiohttp.web_exceptions import (
     HTTPBadGateway,
     HTTPBadRequest,
     HTTPConflict,
+    HTTPNoContent,
 )
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
@@ -21,10 +22,7 @@ from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
-
 from virtool.otus.oas import CreateOTURequest
-
-
 from virtool.otus.oas import FindOTUsResponse
 from virtool.references.oas import (
     CreateReferenceSchema,
@@ -65,14 +63,12 @@ class ReferencesView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-
-        # Missing test
-
-        search_result = get_data_from_req(self.request).references.find(
+        search_result = await get_data_from_req(self.request).references.find(
             find,
             self.request["client"].user_id,
             self.request["client"].administrator,
             self.request["client"].groups,
+            self.request.query,
         )
 
         return json_response(search_result)
@@ -92,9 +88,8 @@ class ReferencesView(PydanticView):
             403: Not permitted
             502: Could not reach GitHub
         """
-        # Missing remote_from and cloned_from tests
         try:
-            document = await get_data_from_req(self.request).references.create(
+            reference = await get_data_from_req(self.request).references.create(
                 data, self.request["client"].user_id
             )
         except ResourceNotFoundError as err:
@@ -102,23 +97,27 @@ class ReferencesView(PydanticView):
                 raise HTTPBadRequest(text=str(err))
             if "File not found" in str(err):
                 raise NotFound(str(err))
+
+            raise
         except ResourceRemoteError as err:
             if "Could not reach GitHub" in str(err):
                 raise HTTPBadGateway(text=str(err))
             if "Could not retrieve latest GitHub release" in str(err):
                 raise HTTPBadGateway(text=str(err))
 
-        headers = {"Location": f"/refs/{document.id}"}
+            raise
 
-        return json_response(document, headers=headers, status=201)
+        return json_response(
+            reference,
+            status=201,
+            headers={"Location": f"/refs/{reference.id}"},
+        )
 
 
 @routes.view("/refs/{ref_id}")
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
-    async def get(
-        self, ref_id: Optional[str]
-    ) -> Union[r200[ReferenceResponse], r403, r404]:
+    async def get(self, ref_id: str, /) -> Union[r200[ReferenceResponse], r403, r404]:
         """
         Get a reference.
 
@@ -130,13 +129,12 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
-        # Missing test
         try:
-            document = get_data_from_req(self.request).references.get(ref_id)
+            reference = await get_data_from_req(self.request).references.get(ref_id)
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(document)
+        return json_response(reference)
 
     async def patch(
         self,
@@ -156,7 +154,7 @@ class ReferenceView(PydanticView):
 
         """
         try:
-            document = await get_data_from_req(self.request).references.update(
+            reference = await get_data_from_req(self.request).references.update(
                 ref_id, data, self.request
             )
         except ResourceNotFoundError:
@@ -164,7 +162,7 @@ class ReferenceView(PydanticView):
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
-        return json_response(document)
+        return json_response(reference)
 
     async def delete(self, ref_id: str, /) -> Union[r202, r403, r404]:
         """
@@ -187,9 +185,9 @@ class ReferenceView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        headers = {"Content-Location": f"/tasks/{task.id}"}
-
-        return json_response(task, 202, headers)
+        return json_response(
+            task, status=202, headers={"Content-Location": f"/tasks/{task.id}"}
+        )
 
 
 @routes.view("/refs/{ref_id}/release")
@@ -216,10 +214,8 @@ class ReferenceReleaseView(PydanticView):
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
         except ResourceRemoteError as err:
-            if "Could not reach GitHub" in str(err):
-                raise HTTPBadGateway(text=str(err))
-            if "Release repository does not exist on GitHub" in str(err):
-                raise HTTPBadGateway(text=str(err))
+            raise HTTPBadGateway(text=str(err))
+
         return json_response(release)
 
 
@@ -289,7 +285,6 @@ class ReferenceOTUsView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
             data = await get_data_from_req(self.request).references.get_otus(
                 find, verified, names, ref_id, self.request.query
@@ -331,13 +326,13 @@ class ReferenceHistoryView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
             data = await get_data_from_req(self.request).references.get_history(
                 ref_id, unbuilt, self.request.query
             )
         except ResourceNotFoundError:
             raise NotFound()
+
         return json_response(data)
 
 
@@ -388,17 +383,12 @@ class ReferenceIndexesView(PydanticView):
         except ResourceConflictError as err:
             raise HTTPConflict(text=str(err))
         except ResourceError as err:
-            if "There are unverified OTUs" in str(err):
-                raise HTTPBadRequest(text=str(err))
-            if "There are no unbuilt changes" in str(err):
-                raise HTTPBadRequest(text=str(err))
-
-        headers = {"Location": f"/indexes/{document.id}"}
+            raise HTTPBadRequest(text=str(err))
 
         return json_response(
             document,
             status=201,
-            headers=headers,
+            headers={"Location": f"/indexes/{document.id}"},
         )
 
 
@@ -414,9 +404,10 @@ class ReferenceGroupsView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
-            groups = get_data_from_req(self.request).references.find_groups(ref_id)
+            groups = await get_data_from_req(self.request).references.list_groups(
+                ref_id
+            )
         except ResourceNotFoundError:
             raise NotFound()
 
@@ -437,20 +428,19 @@ class ReferenceGroupsView(PydanticView):
             404: Not found
         """
         try:
-            subdocument = await get_data_from_req(self.request).references.create_group(
+            group = await get_data_from_req(self.request).references.create_group(
                 ref_id, data, self.request
             )
         except ResourceNotFoundError:
             raise NotFound()
         except ResourceConflictError as err:
-            if "Group already exists" in str(err):
-                raise HTTPBadRequest(text=str(err))
-            if "Group does not exist" in str(err):
-                raise HTTPBadRequest(text=str(err))
+            raise HTTPBadRequest(text=str(err))
 
-        headers = {"Location": f"/refs/{ref_id}/groups/{subdocument.id}"}
-
-        return json_response(subdocument, headers=headers, status=201)
+        return json_response(
+            group,
+            status=201,
+            headers={"Location": f"/refs/{ref_id}/groups/{group.id}"},
+        )
 
 
 @routes.view("/refs/{ref_id}/groups/{group_id}")
@@ -467,7 +457,6 @@ class ReferenceGroupView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        # Missing test
         try:
             group = await get_data_from_req(self.request).references.get_group(
                 ref_id, group_id
@@ -495,13 +484,13 @@ class ReferenceGroupView(PydanticView):
             404: Not found
         """
         try:
-            subdocument = await get_data_from_req(self.request).references.update_group(
+            group = await get_data_from_req(self.request).references.update_group(
                 data, ref_id, group_id, self.request
             )
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(subdocument)
+        return json_response(group)
 
     async def delete(self, ref_id: str, group_id: str, /) -> Union[r204, r403, r404]:
         """
@@ -521,6 +510,8 @@ class ReferenceGroupView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
+        raise HTTPNoContent
+
 
 @routes.view("/refs/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
@@ -539,19 +530,17 @@ class ReferenceUsersView(PydanticView):
             404: Not found
         """
         try:
-            subdocument = await get_data_from_req(self.request).references.create_user(
+            user = await get_data_from_req(self.request).references.create_user(
                 data, ref_id, self.request
             )
         except ResourceNotFoundError:
             raise NotFound()
         except ResourceConflictError as err:
-            if "User already exists" in str(err):
-                raise HTTPBadRequest(text=str(err))
-            if "User does not exist" in str(err):
-                raise HTTPBadRequest(text=str(err))
-        headers = {"Location": f"/refs/{ref_id}/users/{subdocument.id}"}
+            raise HTTPBadRequest(text=str(err))
 
-        return json_response(subdocument, headers=headers, status=201)
+        return json_response(
+            user, status=201, headers={"Location": f"/refs/{ref_id}/users/{user.id}"}
+        )
 
 
 @routes.view("/refs/{ref_id}/users/{user_id}")
@@ -570,13 +559,13 @@ class ReferenceUserView(PydanticView):
             404: Not found
         """
         try:
-            subdocument = await get_data_from_req(self.request).references.update_user(
+            user = await get_data_from_req(self.request).references.update_user(
                 data, ref_id, user_id, self.request
             )
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(subdocument)
+        return json_response(user)
 
     async def delete(self, ref_id: str, user_id: str, /) -> Union[r204, r403, r404]:
         """
@@ -595,3 +584,5 @@ class ReferenceUserView(PydanticView):
             )
         except ResourceNotFoundError:
             raise NotFound()
+
+        raise HTTPNoContent

@@ -25,24 +25,24 @@ from virtool.users.data import UsersData
 
 
 @pytest.fixture
-def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
+def data_layer(mongo, config, mocker, pg: AsyncEngine, redis: Redis):
     base_url = "https://virtool.example.com"
     return DataLayer(
-        AccountData(dbi),
-        AnalysisData(dbi, config, pg),
+        AccountData(mongo, redis),
+        AnalysisData(mongo, config, pg),
         mocker.Mock(spec=BLASTData),
-        GroupsData(dbi),
-        SettingsData(dbi),
-        HistoryData(config.data_path, dbi),
-        ReferencesData(dbi, pg, config, mocker.Mock(spec=ClientSession)),
-        HmmData(mocker.Mock(spec=ClientSession), config, dbi),
-        IndexData(dbi, config, pg),
-        LabelsData(dbi, pg),
-        JobsData(DummyJobsClient(), dbi, pg),
-        OTUData({"db": dbi, "pg": pg}),
-        SamplesData(config, dbi, pg),
-        SubtractionsData(base_url, config, dbi, pg),
-        UploadsData(config, dbi, pg),
-        UsersData(dbi, pg),
+        GroupsData(mongo),
+        SettingsData(mongo),
+        HistoryData(config.data_path, mongo),
+        ReferencesData(mongo, pg, config, mocker.Mock(spec=ClientSession)),
+        HmmData(mocker.Mock(spec=ClientSession), config, mongo, pg),
+        IndexData(mongo, config, pg),
+        LabelsData(mongo, pg),
+        JobsData(DummyJobsClient(), mongo, pg),
+        OTUData({"db": mongo, "pg": pg}),
+        SamplesData(config, mongo, pg),
+        SubtractionsData(base_url, config, mongo, pg),
+        UploadsData(config, mongo, pg),
+        UsersData(mongo, pg),
         TasksData(pg, redis),
     )

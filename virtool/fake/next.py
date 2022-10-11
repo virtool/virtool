@@ -16,11 +16,19 @@ from faker.providers import BaseProvider, python, color, lorem
 from virtool_core.models.group import Group
 from virtool_core.models.job import Job
 from virtool_core.models.label import Label
+from virtool_core.models.task import Task
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.groups.oas import EditPermissionsSchema, EditGroupSchema
+from virtool.indexes.tasks import AddIndexFilesTask, AddIndexJSONTask
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
+from virtool.references.tasks import (
+    CloneReferenceTask,
+    CleanReferencesTask,
+    DeleteReferenceTask,
+)
+from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.users.oas import UpdateUserSchema
 
 
@@ -51,6 +59,7 @@ class DataFaker:
         self.groups = GroupsFakerPiece(self)
         self.labels = LabelsFakerPiece(self)
         self.jobs = JobsFakerPiece(self)
+        self.tasks = TasksFakerPiece(self)
         self.users = UsersFakerPiece(self)
 
 
@@ -100,6 +109,25 @@ class LabelsFakerPiece(DataFakerPiece):
             self.faker.word().capitalize(),
             self.faker.hex_color(),
             self.faker.sentence(),
+        )
+
+
+class TasksFakerPiece(DataFakerPiece):
+    model = Task
+
+    async def create(self):
+        return await self.layer.tasks.register(
+            self.faker.random_element(
+                [
+                    AddIndexFilesTask,
+                    AddIndexJSONTask,
+                    AddSubtractionFilesTask,
+                    CloneReferenceTask,
+                    CleanReferencesTask,
+                    DeleteReferenceTask,
+                ]
+            ),
+            {},
         )
 
 

@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 from pathlib import Path
 from typing import List, Union, Optional
@@ -7,28 +6,27 @@ from typing import List, Union, Optional
 from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool.api.utils import compose_regex_query, paginate
-from virtool.history.db import LIST_PROJECTION
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index
 from virtool_core.models.reference import ReferenceNested
 
-from virtool.api.custom_json import CustomEncoder
+import virtool.indexes.db
+import virtool.uploads.db
+from virtool.api.custom_json import dumps
+from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.db import (
     FILES,
 )
-from virtool.indexes.models import IndexFile, IndexType
-
-import virtool.indexes.db
 from virtool.indexes.files import create_index_file
+from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.pg.utils import delete_row, get_rows
 from virtool.uploads.utils import naive_writer
 from virtool.utils import run_in_thread, compress_json_with_gzip
-import virtool.uploads.db
 
 logger = logging.getLogger("indexes")
 
@@ -172,7 +170,7 @@ class IndexData:
                 self._db, self._config, index["manifest"]
             )
 
-            json_string = json.dumps(patched_otus, cls=CustomEncoder)
+            json_string = dumps(patched_otus)
 
             await run_in_thread(compress_json_with_gzip, json_string, json_path)
 
@@ -244,13 +242,11 @@ class IndexData:
                     f"Missing files: {', '.join(missing_files)}"
                 )
 
-        document = await virtool.indexes.db.finalize(
+        await virtool.indexes.db.finalize(
             self._db, self._pg, self._config.base_url, ref_id, index_id
         )
 
-        document = await self.get(index_id)
-
-        return document
+        return await self.get(index_id)
 
     async def find_changes(
         self, index_id: str, req_query: MultiDictProxy[str]

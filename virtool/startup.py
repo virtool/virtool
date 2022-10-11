@@ -133,14 +133,14 @@ async def startup_data(app: App):
     """
 
     app["data"] = DataLayer(
-        AccountData(app["db"]),
+        AccountData(app["db"], app["redis"]),
         AnalysisData(app["db"], app["config"], app["pg"]),
         BLASTData(app["db"], app["pg"]),
         GroupsData(app["db"]),
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
         ReferencesData(app["db"], app["pg"], app["config"], app["client"]),
-        HmmData(app["client"], app["config"], app["db"]),
+        HmmData(app["client"], app["config"], app["db"], app["pg"]),
         IndexData(app["db"], app["config"], app["pg"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
@@ -286,7 +286,6 @@ async def startup_databases(app: Application):
     await scheduler.spawn(periodically_ping_redis(redis))
 
     app["redis"] = redis
-
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 

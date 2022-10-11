@@ -37,9 +37,9 @@ class TestJob(MutableMapping):
 
 
 @pytest.fixture
-def test_job(dbi, static_time):
+def test_job(mongo, static_time):
     return TestJob(
-        dbi,
+        mongo,
         {
             "_id": "4c530449",
             "acquired": False,

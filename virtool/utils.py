@@ -48,6 +48,24 @@ def base_processor(document: Optional[Dict]) -> Optional[Dict]:
     return document
 
 
+def get_safely(dct: Dict, *keys) -> Any:
+    """
+    Get values from nested dictionaries while returning ``None`` when a ``KeyError`` or
+    ``TypeError`` is raised.
+
+    """
+    for key in keys:
+        try:
+            dct = dct[key]
+        except (
+            KeyError,
+            TypeError,
+        ):
+            return None
+
+    return dct
+
+
 def chunk_list(lst: list, n: int):
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):
@@ -78,7 +96,7 @@ def compress_json_with_gzip(json_string: str, target: str):
     target.parent.mkdir(exist_ok=True, parents=True)
 
     with gzip.open(target, "wb") as f:
-        f.write(bytes(json_string, "utf-8"))
+        f.write(json_string)
 
 
 def ensure_data_dir(data_path: Path):

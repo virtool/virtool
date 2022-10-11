@@ -9,28 +9,9 @@ into JSON. The pretty dumper is used for formatting JSON for viewing in the brow
 
 """
 import datetime
-import json
+import orjson
 
 from pydantic import BaseModel
-
-
-class CustomEncoder(json.JSONEncoder):
-    """
-    A custom :class:`JSONEncoder` that:
-
-    - Converts :class:`datetime` objects to ISO-formatting date strings.
-    - Converts Pydantic data objects to dictionaries.
-
-    """
-
-    def default(self, obj):
-        if isinstance(obj, datetime.datetime):
-            return isoformat(obj)
-
-        if issubclass(type(obj), BaseModel):
-            return obj.dict(by_alias=True)
-
-        return json.JSONEncoder.default(self, obj)
 
 
 def isoformat(obj: datetime.datetime) -> str:
@@ -44,28 +25,55 @@ def isoformat(obj: datetime.datetime) -> str:
     return obj.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def dumps(obj: object) -> str:
+def default(obj):
     """
-    A wrapper for :func:`dumps` is able to encode datetime objects in input.
+    Converts Pydantic BaseModel objects into Python dictionaries for serialization.
+    """
+    if issubclass(type(obj), BaseModel):
+        return obj.dict(by_alias=True)
+    raise TypeError
+
+
+def dumps(obj: object) -> bytes:
+    """
+    Calls orjson.dumps that encodes datetime objects in input.
 
     Used as `dumps` argument for :func:`.json_response`.
 
     :param obj: a JSON-serializable object
-    :return: a JSON string
+    :return: a JSON bytestring
 
     """
-    return json.dumps(obj, cls=CustomEncoder)
+    return orjson.dumps(
+        obj,
+        default=default,
+        option=orjson.OPT_NAIVE_UTC | orjson.OPT_UTC_Z,
+    )
 
 
-def pretty_dumps(obj: object) -> str:
+def pretty_dumps(obj: object) -> bytes:
     """
-    A wrapper for :func:`json.dumps` that applies pretty formatting to the output.
+    Calls orjson.dumps that applies pretty formatting to the output.
 
-    Sorts keys and adds indentation. Used as ``dumps`` argument for
-    :func:`.json_response`.
+    Sorts keys, adds indentation and converts datetime objects to ISO format.
+    Used as ``dumps`` argument for :func:`.json_response`.
 
     :param obj: a JSON-serializable object
-    :return: a JSON string
+    :return: a JSON bytestring
 
     """
-    return json.dumps(obj, cls=CustomEncoder, indent=4, sort_keys=True)
+    return orjson.dumps(
+        obj,
+        default=default,
+        option=orjson.OPT_INDENT_2
+        | orjson.OPT_SORT_KEYS
+        | orjson.OPT_NAIVE_UTC
+        | orjson.OPT_UTC_Z,
+    )
+
+
+def orjson_serializer(obj) -> str:
+    """
+    Used by SQLAlchemy as they expect strings.
+    """
+    return dumps(obj).decode()

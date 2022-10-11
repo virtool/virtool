@@ -14,17 +14,17 @@ from virtool.hmm.db import (
 JSON_RESULT_PATH = Path.cwd() / "tests" / "test_files" / "nuvs" / "results.json"
 
 
-async def test_get_hmms_referenced_in_files(dbi, tmp_path, config):
+async def test_get_hmms_referenced_in_files(mongo, tmp_path, config):
     path = tmp_path / "samples" / "foo" / "analysis" / "bar"
     path.mkdir(parents=True)
 
     shutil.copy(JSON_RESULT_PATH, path / "results.json")
 
-    await dbi.analyses.insert_one(
+    await mongo.analyses.insert_one(
         {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}, "results": "file"}
     )
 
-    result = await get_hmms_referenced_in_files(dbi, config.data_path)
+    result = await get_hmms_referenced_in_files(mongo, config.data_path)
 
     assert result == {
         "rejiddnd",
@@ -36,8 +36,8 @@ async def test_get_hmms_referenced_in_files(dbi, tmp_path, config):
     }
 
 
-async def test_get_hmms_referenced_in_db(dbi):
-    await dbi.analyses.insert_many(
+async def test_get_hmms_referenced_in_db(mongo):
+    await mongo.analyses.insert_many(
         [
             {
                 "_id": "foo",
@@ -63,12 +63,12 @@ async def test_get_hmms_referenced_in_db(dbi):
         ]
     )
 
-    results = await get_hmms_referenced_in_db(dbi)
+    results = await get_hmms_referenced_in_db(mongo)
 
     assert results == {"a", "b", "y", "z", "w", "d", "e"}
 
 
-async def test_get_referenced_hmm_ids(mocker, dbi, tmp_path, config):
+async def test_get_referenced_hmm_ids(mocker, mongo, tmp_path, config):
     mocker.patch(
         "virtool.hmm.db.get_hmms_referenced_in_db",
         make_mocked_coro({"a", "b", "d", "f"}),
@@ -78,7 +78,7 @@ async def test_get_referenced_hmm_ids(mocker, dbi, tmp_path, config):
         "virtool.hmm.db.get_hmms_referenced_in_files", make_mocked_coro({"a", "e", "f"})
     )
 
-    assert await get_referenced_hmm_ids(dbi, config.data_path) == [
+    assert await get_referenced_hmm_ids(mongo, config.data_path) == [
         "a",
         "b",
         "d",
@@ -87,11 +87,11 @@ async def test_get_referenced_hmm_ids(mocker, dbi, tmp_path, config):
     ]
 
 
-async def test_generate_annotations_json_file(dbi, tmp_path, config):
-    await dbi.hmm.insert_one({"_id": "foo"})
-    await dbi.hmm.insert_one({"_id": "bar"})
+async def test_generate_annotations_json_file(mongo, tmp_path, config):
+    await mongo.hmm.insert_one({"_id": "foo"})
+    await mongo.hmm.insert_one({"_id": "bar"})
 
-    path = await generate_annotations_json_file(config.data_path, dbi)
+    path = await generate_annotations_json_file(config.data_path, mongo)
 
     assert path.exists()
 

@@ -241,9 +241,9 @@ class FakeGenerator:
 
 
 @pytest.fixture
-def app(dbi, pg, tmp_path, config, data_layer):
+def app(mongo, pg, tmp_path, config, data_layer):
     return {
-        "db": dbi,
+        "db": mongo,
         "fake": FakerWrapper(),
         "pg": pg,
         "config": config,
@@ -252,8 +252,8 @@ def app(dbi, pg, tmp_path, config, data_layer):
 
 
 @pytest.fixture
-def fake(dbi, pg):
-    return FakeGenerator(dbi, pg)
+def fake(mongo, pg):
+    return FakeGenerator(mongo, pg)
 
 
 @pytest.fixture

@@ -7,9 +7,10 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
-from pydantic import Field
+from pydantic import Field, conint
 
 from virtool.api.response import InvalidQuery, json_response, NotFound
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import PermissionsRoutePolicy, policy
@@ -30,8 +31,11 @@ class UploadsView(PydanticView):
     async def get(
         self,
         user: Optional[str] = None,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
         upload_type: Optional[str] = None,
         ready: Optional[bool] = None,
+        paginate: Optional[bool] = False,
     ) -> r200[List[GetUploadsResponse]]:
         """
         List uploads.
@@ -43,10 +47,13 @@ class UploadsView(PydanticView):
         """
 
         uploads = await get_data_from_req(self.request).uploads.find(
-            user, upload_type, ready
+            user, page, per_page, upload_type, ready, paginate
         )
 
-        return json_response(uploads)
+        if paginate:
+            return json_response(uploads)
+
+        return json_response({"documents": uploads})
 
     @policy(PermissionsRoutePolicy(Permission.upload_file))
     async def post(
@@ -106,9 +113,9 @@ class UploadsView(PydanticView):
         )
 
 
-@routes.view("/uploads/{id}")
+@routes.view("/uploads/{upload_id}")
 class UploadView(PydanticView):
-    async def get(self, id: int, /) -> Union[r200[FileResponse], r404]:
+    async def get(self, upload_id: int, /) -> Union[r200[FileResponse], r404]:
         """
         Download an upload.
 
@@ -124,7 +131,7 @@ class UploadView(PydanticView):
         """
 
         try:
-            upload = await get_data_from_req(self.request).uploads.get(id)
+            upload = await get_data_from_req(self.request).uploads.get(upload_id)
             upload_path = await get_upload_path(
                 self.request.app["config"], upload.name_on_disk
             )
@@ -140,7 +147,7 @@ class UploadView(PydanticView):
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_file))
-    async def delete(self, id: int, /) -> Union[r204, r401, r403, r404]:
+    async def delete(self, upload_id: int, /) -> Union[r204, r401, r403, r404]:
         """
         Delete an upload.
 
@@ -154,7 +161,7 @@ class UploadView(PydanticView):
         """
 
         try:
-            await get_data_from_req(self.request).uploads.delete(id)
+            await get_data_from_req(self.request).uploads.delete(upload_id)
         except ResourceNotFoundError:
             raise NotFound
 
@@ -174,9 +181,7 @@ async def download(req):
     except ResourceNotFoundError:
         raise NotFound
 
-    upload_path = await get_data_from_req(req).uploads.get_upload_path(
-        upload.name_on_disk
-    )
+    upload_path = await get_upload_path(get_config_from_req(req), upload.name_on_disk)
 
     return FileResponse(
         upload_path,

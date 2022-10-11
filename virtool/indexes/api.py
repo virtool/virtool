@@ -1,17 +1,19 @@
 import logging
+from typing import Optional
 from typing import Union, List
 
 from aiohttp.web import FileResponse, Request, Response
 from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
+from pydantic import Field
 from virtool_core.models.index import IndexSearchResult
 
 import virtool.indexes.db
 import virtool.uploads.db
 import virtool.utils
-
 from virtool.api.response import InsufficientRights, NotFound, json_response
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
@@ -24,7 +26,7 @@ from virtool.indexes.oas import (
 )
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.references.db import check_right
-
+from virtool.utils import run_in_thread
 
 logger = logging.getLogger("indexes")
 routes = Routes()
@@ -34,6 +36,10 @@ routes = Routes()
 class IndexesView(PydanticView):
     async def get(
         self,
+        ready: Optional[bool] = Field(
+            default=False,
+            description="Return only indexes that are ready for use in analysis.",
+        ),
     ) -> Union[r200[ListIndexesResponse], r200[List[ReadyIndexesResponse]]]:
         """
         Find indexes.
@@ -45,7 +51,7 @@ class IndexesView(PydanticView):
 
         """
         data = await get_data_from_req(self.request).index.find(
-            self.request.query.get("ready", False), self.request.query
+            ready, self.request.query
         )
 
         if isinstance(data, IndexSearchResult):
@@ -57,7 +63,7 @@ class IndexesView(PydanticView):
 @routes.view("/indexes/{index_id}")
 @routes.jobs_api.get("/indexes/{index_id}")
 class IndexView(PydanticView):
-    async def get(self) -> Union[r200[GetIndexResponse], r404]:
+    async def get(self, index_id: str, /) -> Union[r200[GetIndexResponse], r404]:
         """
         Get an index.
 
@@ -69,13 +75,11 @@ class IndexView(PydanticView):
 
         """
         try:
-            index = await get_data_from_req(self.request).index.get(
-                self.request.match_info["index_id"]
-            )
+            index = await get_data_from_req(self.request).index.get(index_id)
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(GetIndexResponse.parse_obj(index))
+        return json_response(index)
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/otus.json.gz")
@@ -91,6 +95,21 @@ async def download_otus_json(req):
     except ResourceNotFoundError:
         raise NotFound()
 
+    """
+    ref_id = index["reference"]["id"]
+
+    json_path = (
+        join_index_path(req.app["config"].data_path, ref_id, index_id) / "otus.json.gz"
+    )
+
+    if not json_path.exists():
+        patched_otus = await virtool.indexes.db.get_patched_otus(
+            db, req.app["config"], index["manifest"]
+        )
+
+        await run_in_thread(compress_json_with_gzip, dumps(patched_otus), json_path)
+    """
+
     return FileResponse(
         json_path,
         headers={
@@ -102,7 +121,7 @@ async def download_otus_json(req):
 
 @routes.view("/indexes/{index_id}/files/{filename}")
 class IndexFileView(PydanticView):
-    async def get(self) -> Union[r200, r404]:
+    async def get(self, index_id: str, filename: str, /) -> Union[r200, r404]:
         """
         Download files relating to a given index.
 
@@ -110,9 +129,6 @@ class IndexFileView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        index_id = self.request.match_info["index_id"]
-        filename = self.request.match_info["filename"]
-
         if filename not in FILES:
             raise NotFound()
 
@@ -123,8 +139,7 @@ class IndexFileView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        # check the requesting user has read access to the parent reference
-        if not await check_right(self.request, reference.dict(), "read"):
+        if not await check_right(self.request, reference.id, "read"):
             raise InsufficientRights()
 
         path = (
@@ -134,16 +149,16 @@ class IndexFileView(PydanticView):
             / filename
         )
 
-        if not path.exists():
-            raise NotFound("File not found")
+        if await run_in_thread(path.exists):
+            return FileResponse(
+                path,
+                headers={
+                    "Content-Disposition": f"attachment; filename={filename}",
+                    "Content-Type": "application/octet-stream",
+                },
+            )
 
-        return FileResponse(
-            path,
-            headers={
-                "Content-Disposition": f"attachment; filename={filename}",
-                "Content-Type": "application/octet-stream",
-            },
-        )
+        raise NotFound("File not found")
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
@@ -161,13 +176,14 @@ async def download_index_file_for_jobs(req: Request):
         raise NotFound()
 
     path = (
-        join_index_path(req.app["config"].data_path, reference.id, index_id) / filename
+        join_index_path(get_config_from_req(req).data_path, reference.id, index_id)
+        / filename
     )
 
-    if not path.exists():
-        raise NotFound("File not found")
+    if await run_in_thread(path.exists):
+        return FileResponse(path)
 
-    return FileResponse(path)
+    raise NotFound("File not found")
 
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
@@ -196,13 +212,11 @@ async def upload(req):
     if index_file is None:
         return Response(status=499)
 
-    headers = {"Location": f"/indexes/{index_id}/files/{name}"}
-
-    index_file = index_file.to_dict()
-
-    index_file["uploaded_at"] = virtool.utils.timestamp()
-
-    return json_response(index_file, headers=headers, status=201)
+    return json_response(
+        {**index_file.to_dict(), "uploaded_at": virtool.utils.timestamp()},
+        headers={"Location": f"/indexes/{index_id}/files/{name}"},
+        status=201,
+    )
 
 
 @routes.jobs_api.patch("/indexes/{index_id}")
@@ -232,7 +246,7 @@ async def finalize(req):
 
 @routes.view("/indexes/{index_id}/history")
 class IndexHistoryView(PydanticView):
-    async def get(self) -> Union[r200[ListHistoryResponse], r404]:
+    async def get(self, index_id: str, /) -> Union[r200[ListHistoryResponse], r404]:
         """
         List history.
 
@@ -245,12 +259,12 @@ class IndexHistoryView(PydanticView):
         """
         try:
             data = await get_data_from_req(self.request).index.find_changes(
-                self.request.match_info["index_id"], self.request.query
+                index_id, self.request.query
             )
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(ListHistoryResponse.parse_obj(data))
+        return json_response(data)
 
 
 @routes.jobs_api.delete("/indexes/{index_id}")

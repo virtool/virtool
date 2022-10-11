@@ -69,21 +69,22 @@ class IndexCountsTransform(AbstractTransform):
 
 
 async def create(
-    db, ref_id: str, user_id: str, job_id: str, index_id: Optional[str] = None
+    mongo, ref_id: str, user_id: str, job_id: str, index_id: Optional[str] = None
 ) -> dict:
     """
     Create a new index and update history to show the version and id of the new index.
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param ref_id: the ID of the reference to create index for
     :param user_id: the ID of the current user
     :param job_id: the ID of the job
     :param index_id: the ID of the index
     :return: the new index document
     """
-    index_version = await get_next_version(db, ref_id)
-
-    manifest = await virtool.references.db.get_manifest(db, ref_id)
+    index_version, manifest = await asyncio.gather(
+        get_next_version(mongo, ref_id),
+        virtool.references.db.get_manifest(mongo, ref_id),
+    )
 
     document = {
         "version": index_version,
@@ -100,11 +101,11 @@ async def create(
     if index_id:
         document["_id"] = index_id
 
-    document = await db.indexes.insert_one(document)
+    document = await mongo.indexes.insert_one(document)
 
-    await db.history.update_many(
+    await mongo.history.update_many(
         {"index.id": "unbuilt", "reference.id": ref_id},
-        {"$set": {"index": {"id": index_id, "version": index_version}}},
+        {"$set": {"index": {"id": document["_id"], "version": index_version}}},
     )
 
     return document

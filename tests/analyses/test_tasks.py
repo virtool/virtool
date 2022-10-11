@@ -9,7 +9,7 @@ from virtool.tasks.models import Task
 
 
 async def test_store_nuvs_files_task(
-    snapshot, tmp_path, spawn_client, dbi, pg: AsyncEngine, static_time
+    snapshot, tmp_path, spawn_client, mongo, pg: AsyncEngine, static_time
 ):
     client = await spawn_client(authorize=True)
 
@@ -21,7 +21,7 @@ async def test_store_nuvs_files_task(
 
     client.app["config"].data_path = tmp_path
 
-    await dbi.analyses.insert_one(
+    await mongo.analyses.insert_one(
         {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}}
     )
 

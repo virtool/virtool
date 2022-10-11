@@ -215,7 +215,7 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
 
 
 @pytest.mark.parametrize("file_exists", [True, False])
-async def test_download_otus_json(file_exists, mocker, tmp_path, dbi, spawn_job_client):
+async def test_download_otus_json(file_exists, mocker, tmp_path, mongo, spawn_job_client):
     with gzip.open(OTUS_JSON_PATH, "rt") as f:
         expected = json.load(f)
 
@@ -235,7 +235,7 @@ async def test_download_otus_json(file_exists, mocker, tmp_path, dbi, spawn_job_
 
     manifest = {"foo": 2, "bar": 1, "bad": 5}
 
-    await dbi.indexes.insert_one(
+    await mongo.indexes.insert_one(
         {"_id": "bar", "manifest": manifest, "reference": {"id": "foo"}}
     )
 

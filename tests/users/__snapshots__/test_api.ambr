@@ -150,7 +150,7 @@
 # name: test_create[uvloop-None][location]
   '/users/fb085f7f'
 ---
-# name: test_find[uvloop]
+# name: test_find[uvloop-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -215,6 +215,37 @@
       },
     ],
     'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-test]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'administrator': True,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'bob',
+        'id': 'test',
+        'last_password_change': '2015-10-06T20:00:00Z',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': True,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': 'technician',
+      },
+    ],
+    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,

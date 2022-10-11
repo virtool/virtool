@@ -33,6 +33,27 @@ async def test_find_beta(archived, state, fake, snapshot, spawn_client):
         assert all(job["state"] == state for job in body["documents"])
 
 
+@pytest.mark.parametrize("job_filter", [None, "finished", "complete", "failed"])
+async def test_delete(job_filter, fake2, spawn_client, test_job, resp_is, snapshot):
+    client = await spawn_client(authorize=True, permissions=[Permission.remove_job])
+
+    user = await fake2.users.create()
+
+    test_job["user"] = {"id": user.id}
+
+    await client.db.jobs.insert_one(test_job)
+
+    url = "/jobs"
+
+    if job_filter:
+        url += f"?filter={job_filter}"
+
+    resp = await client.delete(url)
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
@@ -61,7 +82,7 @@ async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
 
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_acquire(
-    error, mocker, snapshot, dbi, fake2, test_job, spawn_job_client, resp_is
+    error, mocker, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
@@ -75,7 +96,7 @@ async def test_acquire(
         test_job["acquired"] = True
 
     if error != 404:
-        await dbi.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
     resp = await client.patch("/jobs/4c530449", json={"acquired": True})
 
@@ -98,7 +119,7 @@ async def test_acquire(
 
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_archive(
-    error, snapshot, dbi, fake2, test_job, spawn_job_client, resp_is
+    error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
 ):
     user = await fake2.users.create()
 
@@ -110,7 +131,7 @@ async def test_archive(
         test_job["archived"] = True
 
     if error != 404:
-        await dbi.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
     resp = await client.patch("/jobs/4c530449/archive", json={"archived": True})
 
@@ -131,7 +152,7 @@ async def test_archive(
 @pytest.mark.parametrize(
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
-async def test_cancel(error, snapshot, dbi, fake2, resp_is, spawn_client, test_job):
+async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test_job):
     client = await spawn_client(authorize=True, permissions=[Permission.cancel_job])
 
     user = await fake2.users.create()
@@ -150,7 +171,7 @@ async def test_cancel(error, snapshot, dbi, fake2, resp_is, spawn_client, test_j
         test_job["status"].append({**complete_status, "state": "errored"})
 
     if error != 404:
-        await dbi.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
     resp = await client.put("/jobs/4c530449/cancel", {})
 

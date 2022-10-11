@@ -9,6 +9,7 @@ from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.utils import hash_key
+from virtool.api.custom_json import dumps
 
 
 class VirtoolTestClient:
@@ -59,7 +60,7 @@ class VirtoolTestClient:
 @pytest.fixture
 def create_app(
     create_user,
-    dbi,
+    mongo,
     pg_connection_string,
     redis_connection_string,
     test_db_connection_string,
@@ -87,7 +88,9 @@ def create_app(
 
 
 @pytest.fixture
-def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, create_user):
+def spawn_client(
+    pg, request, redis, aiohttp_client, test_motor, mongo, create_app, create_user
+):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
         auth=None,
@@ -108,29 +111,34 @@ def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, creat
             groups=groups,
             permissions=permissions,
         )
-        await dbi.users.insert_one(user_document)
+        await mongo.users.insert_one(user_document)
 
         if addon_route_table:
             app.add_routes(addon_route_table)
 
         if authorize:
             session_token = "bar"
+            session_id = "foobar"
 
-            await dbi.sessions.insert_one(
-                {
-                    "_id": "foobar",
-                    "ip": "127.0.0.1",
-                    "administrator": administrator,
-                    "force_reset": False,
-                    "groups": user_document["groups"],
-                    "permissions": user_document["permissions"],
-                    "token": hash_key(session_token),
-                    "user_agent": "Python/3.6 aiohttp/3.4.4",
-                    "user": {"id": "test"},
-                }
+            await redis.set(
+                session_id,
+                dumps(
+                    {
+                        "_id": "foobar",
+                        "ip": "127.0.0.1",
+                        "administrator": administrator,
+                        "force_reset": False,
+                        "groups": user_document["groups"],
+                        "permissions": user_document["permissions"],
+                        "token": hash_key(session_token),
+                        "user_agent": "Python/3.6 aiohttp/3.4.4",
+                        "user": {"id": "test"},
+                    }
+                ),
+                expire=3600,
             )
 
-            cookies = {"session_id": "foobar", "session_token": "bar"}
+            cookies = {"session_id": session_id, "session_token": session_token}
 
         elif use_b2c:
             cookies = {"id_token": "foobar"}
@@ -144,15 +152,14 @@ def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, creat
 
         test_client.app["db"].id_provider = FakeIdProvider()
 
-        return VirtoolTestClient(
-            test_client)
+        return VirtoolTestClient(test_client)
 
     return func
 
 
 @pytest.fixture
 def spawn_job_client(
-    dbi,
+    mongo,
     aiohttp_client,
     test_db_connection_string,
     redis_connection_string,
@@ -170,7 +177,7 @@ def spawn_job_client(
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
-            await dbi.jobs.insert_one(
+            await mongo.jobs.insert_one(
                 {
                     "_id": job_id,
                     "key": hash_key(key),
@@ -198,7 +205,7 @@ def spawn_job_client(
             app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
-        client.db = dbi
+        client.db = mongo
 
         return client
 
