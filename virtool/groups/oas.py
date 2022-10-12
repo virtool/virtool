@@ -8,14 +8,14 @@ class EditPermissionsSchema(BaseModel):
     Possible permissions that will be updated for a user and group.
     """
 
-    cancel_job: Optional[bool] = None
-    create_ref: Optional[bool] = None
-    create_sample: Optional[bool] = None
-    modify_hmm: Optional[bool] = None
-    modify_subtraction: Optional[bool] = None
-    remove_file: Optional[bool] = None
-    remove_job: Optional[bool] = None
-    upload_file: Optional[bool] = None
+    cancel_job: Optional[bool]
+    create_ref: Optional[bool]
+    create_sample: Optional[bool]
+    modify_hmm: Optional[bool]
+    modify_subtraction: Optional[bool]
+    remove_file: Optional[bool]
+    remove_job: Optional[bool]
+    upload_file: Optional[bool]
 
 
 class CreateGroupSchema(BaseModel):
