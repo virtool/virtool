@@ -1,7 +1,6 @@
 import json
 from typing import Union, Tuple, List
 
-from aiohttp.web_exceptions import HTTPBadRequest
 from aioredis import Redis
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
