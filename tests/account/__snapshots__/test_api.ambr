@@ -489,6 +489,7 @@
 ---
 # name: test_edit[uvloop-all_valid][response]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -523,6 +524,7 @@
 ---
 # name: test_edit[uvloop-good_email][response]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -575,6 +577,7 @@
 ---
 # name: test_edit[uvloop-missing_all][response]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -609,6 +612,7 @@
 ---
 # name: test_edit[uvloop-missing_email][response]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -673,6 +677,7 @@
 ---
 # name: test_get[uvloop]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
