@@ -382,18 +382,14 @@ class ResetView(PydanticView):
         """
         if error := await check_password_length(self.request, data.password):
             raise HTTPBadRequest(text=error)
-
-        result = await get_data_from_req(self.request).account.reset(
-            self.request.cookies.get("session_id"),
-            data,
-            virtool.http.auth.get_ip(self.request),
-        )
-
-        if result.get("status") == 400:
-            return json_response(
-                {"error": error, "reset_code": result["reset_code"]},
-                status=400,
+        try:
+            result = await get_data_from_req(self.request).account.reset(
+                self.request.cookies.get("session_id"),
+                data,
+                virtool.http.auth.get_ip(self.request),
             )
+        except ResourceError:
+            raise HTTPBadRequest(text="Invalid session or reset code")
 
         await get_data_from_req(self.request).users.update(
             result["user_id"],

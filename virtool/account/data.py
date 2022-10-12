@@ -316,20 +316,10 @@ class AccountData:
 
         session = json.loads(await self._redis.get(session_id))
 
-        user_id = session["reset_user_id"]
+        if not session.get("reset_code") or reset_code != session.get("reset_code"):
+            raise ResourceError()
 
-        if (
-            not session.get("reset_code")
-            or not session.get("reset_user_id")
-            or reset_code != session.get("reset_code")
-        ):
-            return {
-                "status": 400,
-                "user_id": user_id,
-                "reset_code": await create_reset_code(
-                    self._redis, session_id, user_id=user_id
-                ),
-            }
+        user_id = session["reset_user_id"]
 
         session_id, new_session, token = await replace_session(
             self._db,
