@@ -38,10 +38,10 @@ def test_schema(update_dict, mock_create_reference_schema):
 
 
 @pytest.mark.parametrize("value", ["import_from", "clone_from", "remote_from"])
-def test_values(value, mock_create_reference_schema):
+def test_values(value, mock_create_reference_request):
     mock_create_reference_schema.update({value: "test"})
 
     if value == "remote_from":
         mock_create_reference_schema.update({value: "virtool/ref-plant-viruses"})
 
-    CreateReferenceRequest(**mock_create_reference_schema)
+    CreateReferenceRequest(**mock_create_reference_request)
