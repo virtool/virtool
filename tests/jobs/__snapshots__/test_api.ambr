@@ -1538,3 +1538,8 @@
     'workflow': 'build_index',
   }
 ---
+# name: test_ping[uvloop-None]
+  <class 'dict'> {
+    'pinged_at': '2015-10-06T20:00:00Z',
+  }
+---
