@@ -716,7 +716,7 @@ async def download_and_parse_release(
     with virtool.utils.get_temp_dir() as tempdir:
         download_path = Path(tempdir) / "reference.tar.gz"
 
-        await download_file(app, url, download_path, progress_handler)
+        await download_file(url, download_path, progress_handler)
 
         await get_data_from_app(app).tasks.update(task_id, step="unpack")
 

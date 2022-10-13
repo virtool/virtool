@@ -419,7 +419,7 @@ class UpdateRemoteReferenceTask(Task):
             with get_temp_dir() as tempdir:
                 download_path = Path(tempdir) / "reference.tar.gz"
 
-                await download_file(self.app, url, download_path, tracker.add)
+                await download_file(url, download_path, tracker.add)
 
                 self.intermediate["update_data"] = await self.run_in_thread(
                     load_reference_file, download_path
