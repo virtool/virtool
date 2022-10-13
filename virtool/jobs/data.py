@@ -9,7 +9,7 @@ from virtool_core.models.job import (
     JobMinimal,
     JobSearchResult,
     JobStatus,
-    Job,
+    Job, JobPing,
 )
 from virtool_core.models.user import UserNested
 
@@ -300,21 +300,16 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document)
 
-    async def ping(self, job_id: str) -> Job:
+    async def ping(self, job_id: str) -> JobPing:
         """
         Update the `ping` field on a job to the current time and
-        return the complete document.
+        return .
 
         :param job_id: the ID of the job to start
         :return: the complete job document
         """
 
-        ping = await get_one_field(self._db.jobs, "ping", job_id)
-
-        if ping is None:
-            ping = {"pinged_at": virtool.utils.timestamp()}
-        else:
-            ping["pinged_at"] = virtool.utils.timestamp()
+        ping = {"pinged_at": virtool.utils.timestamp()}
 
         document = await self._db.jobs.find_one_and_update(
             {"_id": job_id},
@@ -325,7 +320,7 @@ class JobsData:
         if document is None:
             raise ResourceNotFoundError("Job not found")
 
-        return await fetch_complete_job(self._db, document)
+        return JobPing(**ping)
 
     async def cancel(self, job_id: str) -> Job:
         """

@@ -145,8 +145,7 @@ async def test_archive(
 
     assert resp.status == 200
 
-    body = await resp.json()
-    assert body == snapshot
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, 404])
@@ -171,8 +170,7 @@ async def test_ping(
 
     assert resp.status == 200
 
-    body = await resp.json()
-    assert body == snapshot
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize(

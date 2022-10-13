@@ -199,12 +199,17 @@ class CancelJobView(PydanticView):
 
 @routes.jobs_api.put("/jobs/{job_id}/ping")
 async def ping(req):
+    """
+    Ping a job.
 
+    Updates the ping time on the job. The job will time out if this
+    endpoint isn't called at least once every five minutes.
+    """
     try:
-        document = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
+        ping = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
     except ResourceNotFoundError:
         raise NotFound()
-    return json_response(document)
+    return json_response(ping)
 
 
 @routes.post("/jobs/{job_id}/status")
