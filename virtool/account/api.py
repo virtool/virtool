@@ -103,7 +103,7 @@ class AccountView(PydanticView):
                 raise HTTPBadRequest(text=error)
 
         try:
-            account = await get_data_from_req(self.request).account.edit(
+            account = await get_data_from_req(self.request).account.update(
                 self.request["client"].user_id, data
             )
         except ResourceError:
@@ -143,7 +143,7 @@ class SettingsView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        settings = await get_data_from_req(self.request).account.edit_settings(
+        settings = await get_data_from_req(self.request).account.update_settings(
             data, "settings", self.request["client"].user_id
         )
 
@@ -255,7 +255,7 @@ class KeyView(PydanticView):
             404: Not found
         """
         try:
-            key = await get_data_from_req(self.request).account.edit_key(
+            key = await get_data_from_req(self.request).account.update_key(
                 self.request["client"].user_id,
                 key_id,
                 data,
