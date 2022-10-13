@@ -46,11 +46,11 @@ from virtool.references.db import (
     get_manifest,
 )
 from virtool.references.oas import (
-    CreateReferenceSchema,
-    EditReferenceSchema,
+    CreateReferenceRequest,
+    UpdateReferenceRequest,
     CreateReferenceGroupsSchema,
-    ReferenceRightsSchema,
-    CreateReferenceUsersSchema,
+    ReferenceRightsRequest,
+    CreateReferenceUsersRequest,
 )
 from virtool.references.tasks import (
     CloneReferenceTask,
@@ -121,7 +121,7 @@ class ReferencesData(DataLayerPiece):
             }
         )
 
-    async def create(self, data: CreateReferenceSchema, user_id: str) -> Reference:
+    async def create(self, data: CreateReferenceRequest, user_id: str) -> Reference:
         settings = await self.data.settings.get_all()
 
         if data.clone_from:
@@ -282,7 +282,7 @@ class ReferencesData(DataLayerPiece):
 
         return Reference(**document)
 
-    async def update(self, ref_id: str, data: EditReferenceSchema, req) -> Reference:
+    async def update(self, ref_id: str, data: UpdateReferenceRequest, req) -> Reference:
         """
         Update a reference.
 
@@ -561,7 +561,7 @@ class ReferencesData(DataLayerPiece):
                     return ReferenceGroup(**group)
 
     async def update_group(
-        self, data: ReferenceRightsSchema, ref_id: str, group_id: str, req
+        self, data: ReferenceRightsRequest, ref_id: str, group_id: str, req
     ) -> ReferenceGroup:
 
         data = data.dict(exclude_unset=True)
@@ -601,7 +601,7 @@ class ReferencesData(DataLayerPiece):
         raise HTTPNoContent
 
     async def create_user(
-        self, data: CreateReferenceUsersSchema, ref_id: str, req
+        self, data: CreateReferenceUsersRequest, ref_id: str, req
     ) -> ReferenceUser:
 
         data = data.dict(exclude_none=True)
@@ -630,7 +630,7 @@ class ReferencesData(DataLayerPiece):
         return ReferenceUser(**await extend_user(self._mongo, subdocument))
 
     async def update_user(
-        self, data: ReferenceRightsSchema, ref_id: str, user_id: str, req
+        self, data: ReferenceRightsRequest, ref_id: str, user_id: str, req
     ) -> ReferenceUser:
 
         data = data.dict(exclude_unset=True)

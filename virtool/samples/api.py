@@ -58,13 +58,13 @@ from virtool.samples.files import (
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
 from virtool.samples.oas import (
     GetSampleResponse,
-    CreateSampleSchema,
+    CreateSampleRequest,
     CreateSampleResponse,
-    EditSampleSchema,
-    EditSampleResponse,
-    EditRightsSchema,
-    EditRightsResponse,
-    CreateAnalysisSchema,
+    UpdateSampleRequest,
+    UpdateSampleResponse,
+    UpdateRightsRequest,
+    UpdateRightsResponse,
+    CreateAnalysisRequest,
     GetSampleAnalysesResponse,
     CreateAnalysisResponse,
 )
@@ -105,7 +105,7 @@ class SamplesView(PydanticView):
 
     @policy(PermissionsRoutePolicy(Permission.create_sample))
     async def post(
-        self, data: CreateSampleSchema
+        self, data: CreateSampleRequest
     ) -> Union[r201[CreateSampleResponse], r400, r403]:
         """
         Create a sample.
@@ -161,8 +161,8 @@ class SampleView(PydanticView):
         return json_response(sample)
 
     async def patch(
-        self, sample_id: str, /, data: EditSampleSchema
-    ) -> Union[r200[EditSampleResponse], r400, r403, r404]:
+        self, sample_id: str, /, data: UpdateSampleRequest
+    ) -> Union[r200[UpdateSampleResponse], r400, r403, r404]:
         """
         Update a sample.
 
@@ -274,8 +274,8 @@ async def finalize(req):
 @routes.view("/samples/{sample_id}/rights")
 class RightsView(PydanticView):
     async def patch(
-        self, sample_id: str, /, data: EditRightsSchema
-    ) -> Union[r200[EditRightsResponse], r400, r403, r404]:
+        self, sample_id: str, /, data: UpdateRightsRequest
+    ) -> Union[r200[UpdateRightsResponse], r400, r403, r404]:
         """
         Change rights settings for the specified sample document.
 
@@ -404,7 +404,7 @@ class AnalysesView(PydanticView):
         )
 
     async def post(
-        self, sample_id: str, /, data: CreateAnalysisSchema
+        self, sample_id: str, /, data: CreateAnalysisRequest
     ) -> Union[r201[CreateAnalysisResponse], r400, r403, r404]:
         """
         Starts an analysis job for a given sample.

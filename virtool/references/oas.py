@@ -6,7 +6,10 @@ from virtool_core.models.index import IndexMinimal
 from virtool_core.models.reference import (
     ReferenceInstalled,
     Reference,
-    ReferenceSearchResult, ReferenceUser, ReferenceRelease, ReferenceGroup,
+    ReferenceSearchResult,
+    ReferenceUser,
+    ReferenceRelease,
+    ReferenceGroup,
 )
 
 ALLOWED_REMOTE = ["virtool/ref-plant-viruses"]
@@ -24,7 +27,7 @@ def check_data_type(data_type: str) -> str:
     return data_type
 
 
-class CreateReferenceSchema(BaseModel):
+class CreateReferenceRequest(BaseModel):
     name: constr(strip_whitespace=True) = Field(
         default="", description="the virus name"
     )
@@ -300,14 +303,14 @@ class ReferenceReleaseResponse(ReferenceRelease):
         }
 
 
-class ReferenceTargetSchema(BaseModel):
+class ReferenceTargetRequest(BaseModel):
     name: constr(min_length=1)
     description: constr(strip_whitespace=True) = Field(default="")
     required: bool = Field(default=False)
     length: Optional[int]
 
 
-class EditReferenceSchema(BaseModel):
+class UpdateReferenceRequest(BaseModel):
     name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
         description="the virus name"
     )
@@ -326,7 +329,7 @@ class EditReferenceSchema(BaseModel):
     source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
         description="source types"
     )
-    targets: List[ReferenceTargetSchema] = Field(description="targets")
+    targets: List[ReferenceTargetRequest] = Field(description="targets")
 
     class Config:
         schema_extra = {
@@ -345,13 +348,11 @@ class EditReferenceSchema(BaseModel):
         names = [t.name for t in targets]
 
         if len(names) != len(set(names)):
-            raise ValueError(
-                "The targets field may not contain duplicate names"
-            )
+            raise ValueError("The targets field may not contain duplicate names")
         return targets
 
 
-class ReferenceRightsSchema(BaseModel):
+class ReferenceRightsRequest(BaseModel):
     build: Optional[bool] = Field(
         description="allow members to build new indexes for the reference"
     )
@@ -367,7 +368,7 @@ class ReferenceRightsSchema(BaseModel):
         schema_extra = {"example": {"build": True, "modify": True}}
 
 
-class CreateReferenceGroupsSchema(ReferenceRightsSchema):
+class CreateReferenceGroupsSchema(ReferenceRightsRequest):
     group_id: str = Field(description="the id of the group to add")
 
     class Config:
@@ -420,14 +421,14 @@ class ReferenceGroupResponse(ReferenceGroup):
         }
 
 
-class CreateReferenceUsersSchema(ReferenceRightsSchema):
+class CreateReferenceUsersRequest(ReferenceRightsRequest):
     user_id: str = Field(description="the id of the user to add")
 
     class Config:
         schema_extra = {"example": {"user_id": "sidney", "modify_otu": True}}
 
 
-class ReferenceUsersSchema(ReferenceUser):
+class ReferenceUsersResponse(ReferenceUser):
     class Config:
         schema_extra = {
             "example": {
@@ -464,20 +465,20 @@ class GetReferenceUpdateResponse(ReferenceInstalled):
 class CreateReferenceUpdateResponse(ReferenceRelease):
     class Config:
         schema_extra = {
-            "example":                 {
-                    "id": 10742520,
-                    "name": "v0.3.0",
-                    "body": "The release consists of a gzipped JSON file containing:\r\n\r\n- a `data_type` field with value _genome_\r\n- an `organism` field with value _virus_\r\n- the `version` name (eg. *v0.2.0*)\r\n- a timestamp with the key `created_at`\r\n- virus data compatible for import into Virtool v2.0.0+\r\n\r\nScripts have been updated to follow upcoming convention changes in Virtool v3.0.0.",
-                    "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
-                    "filename": "reference.json.gz",
-                    "size": 3709091,
-                    "html_url": "https://api.github.com/repos/virtool/virtool-database/releases/10742520",
-                    "download_url": "https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz",
-                    "published_at": "2018-04-26T19:35:33Z",
-                    "content_type": "application/gzip",
-                    "newer": True,
-                    "retrieved_at": "2018-04-14T19:52:17.465000Z",
-                },
+            "example": {
+                "id": 10742520,
+                "name": "v0.3.0",
+                "body": "The release consists of a gzipped JSON file containing:\r\n\r\n- a `data_type` field with value _genome_\r\n- an `organism` field with value _virus_\r\n- the `version` name (eg. *v0.2.0*)\r\n- a timestamp with the key `created_at`\r\n- virus data compatible for import into Virtool v2.0.0+\r\n\r\nScripts have been updated to follow upcoming convention changes in Virtool v3.0.0.",
+                "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
+                "filename": "reference.json.gz",
+                "size": 3709091,
+                "html_url": "https://api.github.com/repos/virtool/virtool-database/releases/10742520",
+                "download_url": "https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz",
+                "published_at": "2018-04-26T19:35:33Z",
+                "content_type": "application/gzip",
+                "newer": True,
+                "retrieved_at": "2018-04-14T19:52:17.465000Z",
+            },
         }
 
 

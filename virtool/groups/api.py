@@ -9,8 +9,8 @@ from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import (
-    CreateGroupSchema,
-    EditGroupSchema,
+    CreateGroupRequest,
+    UpdateGroupRequest,
     CreateGroupResponse,
     GroupResponse,
     GetGroupResponse,
@@ -39,7 +39,7 @@ class GroupsView(PydanticView):
 
     @policy(AdministratorRoutePolicy)
     async def post(
-        self, data: CreateGroupSchema
+        self, data: CreateGroupRequest
     ) -> Union[r201[CreateGroupResponse], r400]:
         """
         Create a new group. New groups have no permissions.
@@ -80,7 +80,9 @@ class GroupView(PydanticView):
         return json_response(GroupResponse.parse_obj(group))
 
     @policy(AdministratorRoutePolicy)
-    async def patch(self, group_id: str, /, data: EditGroupSchema) -> Union[r200[GroupResponse], r404]:
+    async def patch(
+        self, group_id: str, /, data: UpdateGroupRequest
+    ) -> Union[r200[GroupResponse], r404]:
         """
         Update the permissions of a group.
 

@@ -8,7 +8,7 @@ from virtool_core.models.subtraction import (
 )
 
 
-class EditSubtractionSchema(BaseModel):
+class UpdateSubtractionRequest(BaseModel):
     """
     Used when modifying a Subtraction
     """
@@ -24,7 +24,7 @@ class EditSubtractionSchema(BaseModel):
         schema_extra = {"example": {"name": "Arabidopsis", "nickname": "Thale cress"}}
 
 
-class CreateSubtractionSchema(BaseModel):
+class CreateSubtractionRequest(BaseModel):
     """
     Used for creating a new Subtraction.
     """

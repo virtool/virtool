@@ -11,7 +11,7 @@ from virtool.http.routes import Routes
 from virtool.settings.oas import (
     GetSettingsResponse,
     UpdateSettingsResponse,
-    UpdateSettingsSchema,
+    UpdateSettingsRequest,
 )
 
 routes = Routes()
@@ -34,7 +34,7 @@ class SettingsView(PydanticView):
 
     @policy(AdministratorRoutePolicy)
     async def patch(
-        self, data: UpdateSettingsSchema
+        self, data: UpdateSettingsRequest
     ) -> Union[r200[UpdateSettingsResponse], r403]:
         """
         Update settings.

@@ -11,7 +11,7 @@ from virtool.groups.db import (
     update_member_users,
     fetch_complete_group,
 )
-from virtool.groups.oas import EditGroupSchema
+from virtool.groups.oas import UpdateGroupRequest
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.utils import generate_base_permissions
@@ -67,7 +67,7 @@ class GroupsData:
 
         return Group(**base_processor(document), users=[])
 
-    async def update(self, group_id: str, data: EditGroupSchema) -> Group:
+    async def update(self, group_id: str, data: UpdateGroupRequest) -> Group:
         """
         Update the permissions for a group.
 

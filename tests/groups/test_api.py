@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.groups.oas import EditPermissionsSchema
+from virtool.groups.oas import UpdatePermissionsRequest
 
 
 @pytest.fixture
@@ -118,11 +118,11 @@ async def test_remove(status, fake2, snapshot, spawn_client):
     client = await spawn_client(authorize=True, administrator=True)
 
     group_1 = await fake2.groups.create(
-        permissions=EditPermissionsSchema(create_sample=True, remove_file=True)
+        permissions=UpdatePermissionsRequest(create_sample=True, remove_file=True)
     )
 
     group_2 = await fake2.groups.create(
-        permissions=EditPermissionsSchema(upload_file=True)
+        permissions=UpdatePermissionsRequest(upload_file=True)
     )
 
     await fake2.users.create(groups=[group_1, group_2])

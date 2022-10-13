@@ -15,7 +15,7 @@ from virtool.users.db import (
     fetch_complete_user,
 )
 from virtool.users.mongo import create_user
-from virtool.users.oas import UpdateUserSchema
+from virtool.users.oas import UpdateUserRequest
 from virtool.utils import base_processor
 
 
@@ -128,7 +128,7 @@ class UsersData:
 
         return user
 
-    async def update(self, user_id: str, data: UpdateUserSchema):
+    async def update(self, user_id: str, data: UpdateUserRequest):
         """
         Update a user.
 

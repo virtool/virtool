@@ -15,14 +15,14 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 import virtool.http.auth
 import virtool.http.routes
 from virtool.account.oas import (
-    EditAccountSchema,
-    EditSettingsSchema,
-    CreateKeysSchema,
-    EditKeySchema,
-    ResetPasswordSchema,
-    CreateLoginSchema,
+    UpdateAccountRequest,
+    UpdateSettingsRequest,
+    CreateKeysRequest,
+    UpdateKeyRequest,
+    ResetPasswordRequest,
+    CreateLoginRequest,
     AccountResponse,
-    EditAccountResponse,
+    UpdateAccountResponse,
     AccountSettingsResponse,
     CreateAPIKeyResponse,
     APIKeyResponse,
@@ -37,7 +37,7 @@ from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 
 from virtool.users.checks import check_password_length
-from virtool.users.oas import UpdateUserSchema
+from virtool.users.oas import UpdateUserRequest
 
 
 API_KEY_PROJECTION = {
@@ -76,8 +76,8 @@ class AccountView(PydanticView):
         return json_response(account)
 
     async def patch(
-        self, data: EditAccountSchema
-    ) -> Union[r200[EditAccountResponse], r400, r401]:
+        self, data: UpdateAccountRequest
+    ) -> Union[r200[UpdateAccountResponse], r400, r401]:
         """
         Update account.
 
@@ -109,7 +109,7 @@ class AccountView(PydanticView):
         except ResourceError:
             raise HTTPBadRequest(text="Invalid credentials")
 
-        return json_response(EditAccountResponse.parse_obj(account))
+        return json_response(UpdateAccountResponse.parse_obj(account))
 
 
 @routes.view("/account/settings")
@@ -131,7 +131,7 @@ class SettingsView(PydanticView):
         return json_response(AccountSettingsResponse.parse_obj(account_settings))
 
     async def patch(
-        self, data: EditSettingsSchema
+        self, data: UpdateSettingsRequest
     ) -> Union[r200[AccountSettingsResponse], r400, r401]:
         """
         Update account settings.
@@ -171,7 +171,7 @@ class KeysView(PydanticView):
         )
 
     async def post(
-        self, data: CreateKeysSchema
+        self, data: CreateKeysRequest
     ) -> Union[r201[CreateAPIKeyResponse], r400, r401]:
         """
         Create an API key.
@@ -240,7 +240,7 @@ class KeyView(PydanticView):
         return json_response(APIKeyResponse.parse_obj(key), status=200)
 
     async def patch(
-        self, key_id: str, /, data: EditKeySchema
+        self, key_id: str, /, data: UpdateKeyRequest
     ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
         """
         Update an API key.
@@ -288,7 +288,7 @@ class KeyView(PydanticView):
 @routes.view("/account/login")
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(self, data: CreateLoginSchema) -> Union[r201[LoginResponse], r400]:
+    async def post(self, data: CreateLoginRequest) -> Union[r201[LoginResponse], r400]:
         """
         Login.
 
@@ -369,7 +369,7 @@ class LogoutView(PydanticView):
 class ResetView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(
-        self, data: ResetPasswordSchema
+        self, data: ResetPasswordRequest
     ) -> Union[r200[AccountResetPasswordResponse], r400]:
         """
         Reset password.

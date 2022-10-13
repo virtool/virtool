@@ -2,14 +2,14 @@ from asyncio import gather
 from datetime import datetime
 
 import pytest
-from syrupy.extensions import AmberSnapshotExtension
+
 from syrupy.filters import props
 from syrupy.matchers import path_type
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.users.data import UsersData
 from virtool.users.db import validate_credentials, B2CUserAttributes
-from virtool.users.oas import UpdateUserSchema
+from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture
@@ -63,9 +63,9 @@ class TestUpdate:
     @pytest.mark.parametrize(
         "update",
         [
-            UpdateUserSchema(administrator=True),
-            UpdateUserSchema(force_reset=True),
-            UpdateUserSchema(groups=["peasants", "kings"], primary_group="peasants"),
+            UpdateUserRequest(administrator=True),
+            UpdateUserRequest(force_reset=True),
+            UpdateUserRequest(groups=["peasants", "kings"], primary_group="peasants"),
         ],
         ids=[
             "administrator",
@@ -115,7 +115,7 @@ class TestUpdate:
         await mongo.users.insert_one(bob)
 
         assert await users_data.update(
-            bob["_id"], UpdateUserSchema(password="hello_world")
+            bob["_id"], UpdateUserRequest(password="hello_world")
         ) == snapshot(name="obj")
 
         document = await mongo.users.find_one()
@@ -127,7 +127,7 @@ class TestUpdate:
 
     async def test_does_not_exist(self, users_data: UsersData):
         with pytest.raises(ResourceNotFoundError) as err:
-            await users_data.update("user_id", UpdateUserSchema(administrator=False))
+            await users_data.update("user_id", UpdateUserRequest(administrator=False))
             assert "User does not exist" == str(err)
 
 

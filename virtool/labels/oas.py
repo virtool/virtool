@@ -6,7 +6,7 @@ from virtool_core.models.label import Label
 from virtool_core.models.validators import normalize_hex_color
 
 
-class CreateLabelSchema(BaseModel):
+class CreateLabelRequest(BaseModel):
     """
     Label fields for creating a new label.
     """
@@ -48,7 +48,7 @@ class CreateLabelResponse(Label):
         }
 
 
-class UpdateLabelSchema(BaseModel):
+class UpdateLabelRequest(BaseModel):
     """
     Label fields for editing an existing label.
     """

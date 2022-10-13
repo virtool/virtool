@@ -118,7 +118,7 @@ class GetSampleResponse(Sample):
         }
 
 
-class CreateSampleSchema(BaseModel):
+class CreateSampleRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1)
     host: constr(strip_whitespace=True) = ""
     isolate: constr(strip_whitespace=True) = ""
@@ -215,7 +215,7 @@ class CreateSampleResponse(Sample):
         }
 
 
-class EditSampleSchema(BaseModel):
+class UpdateSampleRequest(BaseModel):
     name: Optional[constr(strip_whitespace=True, min_length=1)]
     host: Optional[constr(strip_whitespace=True)]
     isolate: Optional[constr(strip_whitespace=True)]
@@ -234,7 +234,7 @@ class EditSampleSchema(BaseModel):
         }
 
 
-class EditSampleResponse(Sample):
+class UpdateSampleResponse(Sample):
     class Config:
         schema_extra = {
             "example": {
@@ -318,7 +318,7 @@ class EditSampleResponse(Sample):
         }
 
 
-class EditRightsSchema(BaseModel):
+class UpdateRightsRequest(BaseModel):
     group: Optional[str]
     all_read: Optional[bool]
     all_write: Optional[bool]
@@ -335,7 +335,7 @@ class EditRightsSchema(BaseModel):
         }
 
 
-class EditRightsResponse(Sample):
+class UpdateRightsResponse(Sample):
     class Config:
         schema_extra = {
             "example": {
@@ -444,7 +444,7 @@ class GetSampleAnalysesResponse(AnalysisMinimal):
         }
 
 
-class CreateAnalysisSchema(BaseModel):
+class CreateAnalysisRequest(BaseModel):
     ref_id: str
     subtractions: Optional[list]
     workflow: QuickAnalyzeWorkflow

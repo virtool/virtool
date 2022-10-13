@@ -21,9 +21,9 @@ from virtool.http.routes import Routes
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.oas import (
-    UpdateUserSchema,
-    CreateUserSchema,
-    CreateFirstUserSchema,
+    UpdateUserRequest,
+    CreateUserRequest,
+    CreateFirstUserRequest,
 )
 from virtool.users.sessions import create_session
 
@@ -63,7 +63,7 @@ class UsersView(PydanticView):
         return json_response(data)
 
     @policy(AdministratorRoutePolicy)
-    async def post(self, data: CreateUserSchema) -> Union[r201[User], r400, r403]:
+    async def post(self, data: CreateUserRequest) -> Union[r201[User], r400, r403]:
         """
         Create a user.
 
@@ -98,7 +98,7 @@ class UsersView(PydanticView):
 @routes.view("/users/first")
 class FirstUserView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def put(self, data: CreateFirstUserSchema) -> Union[r201[User], r400, r403]:
+    async def put(self, data: CreateFirstUserRequest) -> Union[r201[User], r400, r403]:
         """
         Create a first user.
 
@@ -169,7 +169,7 @@ class UserView(PydanticView):
 
     @policy(AdministratorRoutePolicy)
     async def patch(
-        self, user_id: str, /, data: UpdateUserSchema
+        self, user_id: str, /, data: UpdateUserRequest
     ) -> Union[r200[User], r400, r403, r404, r409]:
         """
         Update a user.
