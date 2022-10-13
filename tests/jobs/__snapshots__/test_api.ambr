@@ -629,6 +629,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
     'key': 'key',
+    'ping': None,
     'progress': 3,
     'rights': <class 'dict'> {
     },
@@ -703,6 +704,7 @@
     },
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
+    'ping': None,
     'progress': 1,
     'rights': <class 'dict'> {
     },
@@ -768,6 +770,7 @@
     },
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
     },
@@ -1483,6 +1486,7 @@
     },
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
+    'ping': None,
     'progress': 1,
     'rights': <class 'dict'> {
     },

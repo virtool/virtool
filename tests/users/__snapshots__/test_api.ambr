@@ -1,5 +1,6 @@
 # name: TestUpdate.test[uvloop]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -58,6 +59,7 @@
 ---
 # name: TestUpdate.test_with_groups[uvloop]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -93,6 +95,7 @@
 ---
 # name: test_create[uvloop-None]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -121,6 +124,7 @@
 # name: test_create[uvloop-None].2
   <class 'dict'> {
     '_id': 'fb085f7f',
+    'active': True,
     'administrator': False,
     'force_reset': False,
     'groups': <class 'list'> [
@@ -254,6 +258,7 @@
 ---
 # name: test_get[uvloop-200]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
