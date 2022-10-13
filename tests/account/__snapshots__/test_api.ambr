@@ -669,6 +669,34 @@
     },
   ]
 ---
+# name: test_edit[uvloop-none_all][response]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'email',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'old_password',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'password',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+  ]
+---
 # name: test_edit[uvloop-short_password][response]
   <class 'dict'> {
     'id': 'bad_request',
@@ -720,6 +748,18 @@
     'reset': False,
   }
 ---
+# name: test_login[uvloop-remember_is_none]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'remember',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+  ]
+---
 # name: test_login[uvloop-wrong_handle]
   <class 'dict'> {
     'id': 'bad_request',
@@ -730,5 +770,61 @@
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Invalid username or password',
+  }
+---
+# name: test_update_settings[uvloop-invalid_input][response]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'show_ids',
+      ],
+      'msg': 'value could not be parsed to a boolean',
+      'type': 'type_error.bool',
+    },
+  ]
+---
+# name: test_update_settings[uvloop-null_values][response]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'show_ids',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'skip_quick_analyze_dialog',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'quick_analyze_workflow',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'show_versions',
+      ],
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    },
+  ]
+---
+# name: test_update_settings[uvloop-valid_input][response]
+  <class 'dict'> {
+    'quick_analyze_workflow': 'pathoscope_bowtie',
+    'show_ids': False,
+    'show_versions': True,
+    'skip_quick_analyze_dialog': True,
   }
 ---
