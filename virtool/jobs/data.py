@@ -302,7 +302,8 @@ class JobsData:
 
     async def ping(self, job_id: str) -> Job:
         """
-        Update the `ping` field on a job to the current time and return the complete document.
+        Update the `ping` field on a job to the current time and
+        return the complete document.
 
         :param job_id: the ID of the job to start
         :return: the complete job document
