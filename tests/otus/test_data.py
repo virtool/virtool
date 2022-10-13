@@ -61,7 +61,7 @@ async def test_get_fasta(mongo, snapshot, test_otu, test_sequence):
 @pytest.mark.parametrize(
     "data", [UpdateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus")]
 )
-async def test_edit(
+async def test_update(
     data,
     mongo,
     fake2,
@@ -73,9 +73,11 @@ async def test_edit(
 ):
     otu_data = OTUData({"db": mongo})
 
-    user, _ = await asyncio.gather(fake2.users.create(), mongo.otus.insert_one(test_otu))
+    user, _ = await asyncio.gather(
+        fake2.users.create(), mongo.otus.insert_one(test_otu)
+    )
 
-    assert await otu_data.edit("6116cba1", data, user.id) == snapshot
+    assert await otu_data.update("6116cba1", data, user.id) == snapshot
 
     assert await asyncio.gather(
         mongo.otus.find_one(), mongo.history.find_one()
@@ -129,13 +131,13 @@ async def test_add_isolate(
     assert await mongo.history.find_one() == snapshot
 
 
-async def test_edit_isolate(mongo, snapshot, test_otu, static_time, tmp_path):
+async def test_update_isolate(mongo, snapshot, test_otu, static_time, tmp_path):
     await mongo.otus.insert_one(test_otu)
 
     otu_data = OTUData({"db": mongo})
 
     assert (
-        await otu_data.edit_isolate(
+        await otu_data.update_isolate(
             "6116cba1",
             "cab8b360",
             "bob",
@@ -166,7 +168,9 @@ async def test_remove_isolate(
         }
     )
 
-    await gather(mongo.otus.insert_one(test_otu), mongo.sequences.insert_one(test_sequence))
+    await gather(
+        mongo.otus.insert_one(test_otu), mongo.sequences.insert_one(test_sequence)
+    )
 
     otu_data = OTUData({"db": mongo})
 
@@ -298,7 +302,7 @@ async def test_get_sequence(
 
 
 @pytest.mark.parametrize("sequence", ["ATAGAG GAGTA\nAGAGTGA", None])
-async def test_edit_sequence(
+async def test_update_sequence(
     sequence,
     snapshot,
     mongo,
@@ -313,7 +317,9 @@ async def test_edit_sequence(
     in the process.
 
     """
-    await gather(mongo.otus.insert_one(test_otu), mongo.sequences.insert_one(test_sequence))
+    await gather(
+        mongo.otus.insert_one(test_otu), mongo.sequences.insert_one(test_sequence)
+    )
 
     otu_data = OTUData({"db": mongo})
 
@@ -327,7 +333,7 @@ async def test_edit_sequence(
     if sequence:
         update.sequence = sequence
 
-    return_value = await otu_data.edit_sequence(
+    return_value = await otu_data.update_sequence(
         test_otu["_id"], test_isolate["id"], test_sequence["_id"], "bob", update
     )
 

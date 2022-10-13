@@ -296,7 +296,7 @@ class ReferencesData(DataLayerPiece):
         if not await virtool.references.db.check_right(req, ref_id, "modify"):
             raise InsufficientRights()
 
-        await self.data.references.edit_reference(ref_id, data)
+        await self.data.references.update_reference(ref_id, data)
 
         return await self.get(ref_id)
 
@@ -671,7 +671,7 @@ class ReferencesData(DataLayerPiece):
 
         raise HTTPNoContent
 
-    async def edit_reference(self, ref_id: str, data: dict) -> dict:
+    async def update_reference(self, ref_id: str, data: dict) -> dict:
         """
         Edit and existing reference using the passed update data.
         """
