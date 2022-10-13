@@ -206,10 +206,10 @@ async def ping(req):
     endpoint isn't called at least once every five minutes.
     """
     try:
-        ping = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
+        job_ping = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
     except ResourceNotFoundError:
         raise NotFound()
-    return json_response(ping)
+    return json_response(job_ping)
 
 
 @routes.post("/jobs/{job_id}/status")
