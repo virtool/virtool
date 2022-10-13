@@ -190,11 +190,21 @@ class CancelJobView(PydanticView):
         try:
             document = await get_data_from_req(self.request).jobs.cancel(job_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
         except ResourceConflictError:
             raise HTTPConflict(text="Job cannot be cancelled in its current state")
 
         return json_response(document)
+
+
+@routes.jobs_api.put("/jobs/{job_id}/ping")
+async def ping(req):
+
+    try:
+        document = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
+    except ResourceNotFoundError:
+        raise NotFound()
+    return json_response(document)
 
 
 @routes.post("/jobs/{job_id}/status")

@@ -300,6 +300,32 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document)
 
+    async def ping(self, job_id: str) -> Job:
+        """
+        Update the `ping` field on a job to the current time and return the complete document.
+
+        :param job_id: the ID of the job to start
+        :return: the complete job document
+        """
+
+        ping = await get_one_field(self._db.jobs, "ping", job_id)
+
+        if ping is None:
+            ping = {"pinged_at": virtool.utils.timestamp()}
+        else:
+            ping["pinged_at"] = virtool.utils.timestamp()
+
+        document = await self._db.jobs.find_one_and_update(
+            {"_id": job_id},
+            {"$set": {"ping": ping}},
+            projection=PROJECTION,
+        )
+
+        if document is None:
+            raise ResourceNotFoundError("Job not found")
+
+        return await fetch_complete_job(self._db, document)
+
     async def cancel(self, job_id: str) -> Job:
         """
         Add a cancellation status sub-document to the job identified by `job_id`.

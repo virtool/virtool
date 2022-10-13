@@ -149,6 +149,32 @@ async def test_archive(
     assert body == snapshot
 
 
+@pytest.mark.parametrize("error", [None, 404])
+async def test_ping(
+    error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
+):
+
+    user = await fake2.users.create()
+
+    test_job["user"] = {"id": user.id}
+
+    client = await spawn_job_client(authorize=True)
+
+    if error != 404:
+        await mongo.jobs.insert_one(test_job)
+
+    resp = await client.put("/jobs/4c530449/ping")
+
+    if error == 404:
+        await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    body = await resp.json()
+    assert body == snapshot
+
+
 @pytest.mark.parametrize(
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
