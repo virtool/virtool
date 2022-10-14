@@ -23,7 +23,7 @@ from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.oas import ListIndexesResponse, GetIndexResponse
 from virtool.indexes.utils import check_index_file_type, join_index_path
-from virtool.pg.utils import delete_row, get_rows
+from virtool.pg.utils import get_rows
 from virtool.references.db import check_right
 from virtool.uploads.utils import naive_writer
 from virtool.utils import compress_json_with_gzip, run_in_thread
