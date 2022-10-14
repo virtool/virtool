@@ -1,16 +1,20 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
+from virtool.data.layer import DataLayer
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
 from virtool.uploads.tasks import MigrateFilesTask
 
 
 async def test_migrate_files_task(
-    snapshot, mongo, spawn_client, static_time, pg: AsyncEngine,
+    snapshot,
+    mongo,
+    static_time,
+    pg: AsyncEngine,
+    data_layer: "DataLayer",
 ):
-    client = await spawn_client(authorize=True)
-    await client.db.files.insert_one(
+    await mongo.files.insert_one(
         {
             "_id": "07a7zbv6-17NR001b_S23_R1_001.fastq.gz",
             "name": "17NR001b_S23_R1_001.fastq.gz",
@@ -22,7 +26,6 @@ async def test_migrate_files_task(
             "size": 1234567,
         }
     )
-
     task = Task(
         id=1,
         complete=False,
@@ -33,11 +36,13 @@ async def test_migrate_files_task(
         type="migrate_files",
         created_at=static_time.datetime,
     )
+
     async with AsyncSession(pg) as session:
         session.add(task)
         await session.commit()
 
-    files_task = MigrateFilesTask(client.app, 1)
+    files_task = await MigrateFilesTask.from_task_id(data_layer, 1)
+
     await files_task.run()
 
     async with AsyncSession(pg) as session:
