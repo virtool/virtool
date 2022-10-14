@@ -23,7 +23,7 @@ from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.oas import ListIndexesResponse, GetIndexResponse
 from virtool.indexes.utils import check_index_file_type, join_index_path
-from virtool.pg.utils import delete_row, get_rows
+from virtool.pg.utils import get_rows
 from virtool.references.db import check_right
 from virtool.uploads.utils import naive_writer
 from virtool.utils import compress_json_with_gzip, run_in_thread
@@ -257,21 +257,20 @@ async def upload(req):
     reference_id = document["reference"]["id"]
     file_type = check_index_file_type(name)
 
-    try:
-        index_file = await create_index_file(pg, index_id, file_type, name)
-    except IntegrityError:
-        raise HTTPConflict(text="File name already exists")
-
-    upload_id = index_file["id"]
-
     path = join_index_path(req.app["config"].data_path, reference_id, index_id) / name
 
     try:
         size = await naive_writer(await req.multipart(), path)
     except asyncio.CancelledError:
-        logger.debug("Index file upload aborted: %s", upload_id)
-        await delete_row(pg, upload_id, IndexFile)
+        logger.debug("Index file upload aborted")
         return Response(status=499)
+
+    try:
+        index_file = await create_index_file(pg, index_id, file_type, name, size)
+    except IntegrityError:
+        raise HTTPConflict(text="File name already exists")
+
+    upload_id = index_file["id"]
 
     index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
