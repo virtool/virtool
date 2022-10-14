@@ -34,7 +34,7 @@ async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapsh
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("status", [201, 400])
+@pytest.mark.parametrize("status", [201])
 async def test_create(status, fake2, spawn_client, snapshot):
     """
     Test that a group can be added to the database at ``POST /groups/:group_id``.
@@ -44,12 +44,10 @@ async def test_create(status, fake2, spawn_client, snapshot):
         authorize=True, administrator=True, base_url="https://virtool.example.com"
     )
 
-    group = await fake2.groups.create()
-
     resp = await client.post(
         "/groups",
         data={
-            "group_id": group.id if status == 400 else "test",
+            "group_id": "test",
         },
     )
 

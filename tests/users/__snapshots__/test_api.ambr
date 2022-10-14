@@ -10,12 +10,12 @@
     'force_reset': True,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'musicians',
+        'id': 'bf1b993c',
         'name': 'musicians',
       },
     ],
     'handle': 'qtaylor',
-    'id': 'bf1b993c',
+    'id': '7cf872dc',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -28,7 +28,7 @@
       'upload_file': True,
     },
     'primary_group': <class 'dict'> {
-      'id': 'musicians',
+      'id': 'bf1b993c',
       'name': 'musicians',
     },
   }
@@ -69,16 +69,16 @@
     'force_reset': True,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'hydrogeologists',
-        'name': 'hydrogeologists',
+        'id': 'bf1b993c',
+        'name': 'musicians',
       },
       <class 'dict'> {
-        'id': 'musicians',
-        'name': 'musicians',
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
       },
     ],
     'handle': 'qtaylor',
-    'id': 'bf1b993c',
+    'id': '7cf872dc',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -268,16 +268,16 @@
     'force_reset': False,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'hydrogeologists',
-        'name': 'hydrogeologists',
+        'id': 'bf1b993c',
+        'name': 'musicians',
       },
       <class 'dict'> {
-        'id': 'musicians',
-        'name': 'musicians',
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
       },
     ],
     'handle': 'qtaylor',
-    'id': 'bf1b993c',
+    'id': '7cf872dc',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -290,7 +290,7 @@
       'upload_file': False,
     },
     'primary_group': <class 'dict'> {
-      'id': 'musicians',
+      'id': 'bf1b993c',
       'name': 'musicians',
     },
   }

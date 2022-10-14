@@ -1,6 +1,6 @@
 # name: TestUpdate.test[uvloop]
   <class 'dict'> {
-    'id': 'musicians',
+    'id': 'bf1b993c',
     'name': 'Technicians',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -16,17 +16,17 @@
       <class 'dict'> {
         'administrator': False,
         'handle': 'fcarpenter',
-        'id': 'fb085f7f',
+        'id': '3cbb22cc',
       },
       <class 'dict'> {
         'administrator': False,
         'handle': 'chelsea34',
-        'id': '7cf872dc',
+        'id': 'da42dca3',
       },
       <class 'dict'> {
         'administrator': False,
         'handle': 'michelle34',
-        'id': '3cbb22cc',
+        'id': '09d01419',
       },
     ],
   }
@@ -48,7 +48,7 @@
       },
     },
     <class 'dict'> {
-      '_id': 'bf1b993c',
+      '_id': '7cf872dc',
       'handle': 'qtaylor',
       'permissions': <class 'dict'> {
         'cancel_job': False,
@@ -62,7 +62,7 @@
       },
     },
     <class 'dict'> {
-      '_id': 'fb085f7f',
+      '_id': '3cbb22cc',
       'handle': 'fcarpenter',
       'permissions': <class 'dict'> {
         'cancel_job': False,
@@ -76,7 +76,7 @@
       },
     },
     <class 'dict'> {
-      '_id': '7cf872dc',
+      '_id': 'da42dca3',
       'handle': 'chelsea34',
       'permissions': <class 'dict'> {
         'cancel_job': False,
@@ -90,7 +90,7 @@
       },
     },
     <class 'dict'> {
-      '_id': '3cbb22cc',
+      '_id': '09d01419',
       'handle': 'michelle34',
       'permissions': <class 'dict'> {
         'cancel_job': False,
@@ -113,7 +113,7 @@
 ---
 # name: test_create[uvloop-201][json]
   <class 'dict'> {
-    'id': 'test',
+    'id': 'bf1b993c',
     'name': 'test',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -132,30 +132,21 @@
 # name: test_create[uvloop-201][location]
   'https://virtool.example.com/groups/test'
 ---
-# name: test_create[uvloop-400][json]
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': 'Group already exists',
-  }
----
-# name: test_create[uvloop-400][location]
-  None
----
 # name: test_find[uvloop]
   <class 'list'> [
     <class 'dict'> {
-      'id': 'musicians',
+      'id': 'bf1b993c',
       'name': 'musicians',
     },
     <class 'dict'> {
-      'id': 'hydrogeologists',
+      'id': 'fb085f7f',
       'name': 'hydrogeologists',
     },
   ]
 ---
 # name: test_get[uvloop-200]
   <class 'dict'> {
-    'id': 'musicians',
+    'id': 'bf1b993c',
     'name': 'musicians',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -171,7 +162,7 @@
       <class 'dict'> {
         'administrator': False,
         'handle': 'qtaylor',
-        'id': 'bf1b993c',
+        'id': '7cf872dc',
       },
     ],
   }
@@ -201,7 +192,7 @@
       },
     },
     <class 'dict'> {
-      '_id': 'bf1b993c',
+      '_id': '7cf872dc',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,
@@ -214,7 +205,7 @@
       },
     },
     <class 'dict'> {
-      '_id': 'fb085f7f',
+      '_id': '3cbb22cc',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,
@@ -227,7 +218,7 @@
       },
     },
     <class 'dict'> {
-      '_id': '7cf872dc',
+      '_id': 'da42dca3',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,
@@ -263,7 +254,7 @@
       },
     },
     <class 'dict'> {
-      '_id': 'bf1b993c',
+      '_id': '7cf872dc',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,
@@ -276,7 +267,7 @@
       },
     },
     <class 'dict'> {
-      '_id': 'fb085f7f',
+      '_id': '3cbb22cc',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,
@@ -289,7 +280,7 @@
       },
     },
     <class 'dict'> {
-      '_id': '7cf872dc',
+      '_id': 'da42dca3',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,

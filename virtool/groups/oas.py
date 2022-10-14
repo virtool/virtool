@@ -23,8 +23,8 @@ class CreateGroupSchema(BaseModel):
     A schema for requests to create groups.
     """
 
-    group_id: constr(strip_whitespace=True, to_lower=True, min_length=1) = Field(
-        description="a unique id for the group"
+    name: constr(strip_whitespace=True, min_length=1) = Field(
+        description="a name for the group", alias="group_id"
     )
 
     class Config:
