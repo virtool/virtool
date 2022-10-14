@@ -24,7 +24,7 @@ from virtool.analyses.utils import (
     move_nuvs_files,
 )
 from virtool.api.utils import paginate
-from virtool.blast.models import NuVsBlast
+from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
@@ -333,9 +333,9 @@ class AnalysisData(DataLayerPiece):
 
         async with AsyncSession(self._pg) as session:
             await session.execute(
-                delete(NuVsBlast)
-                .where(NuVsBlast.analysis_id == analysis_id)
-                .where(NuVsBlast.sequence_index == sequence_index)
+                delete(SQLNuVsBlast)
+                .where(SQLNuVsBlast.analysis_id == analysis_id)
+                .where(SQLNuVsBlast.sequence_index == sequence_index)
             )
             await session.commit()
 
@@ -346,7 +346,7 @@ class AnalysisData(DataLayerPiece):
 
             await session.flush()
 
-            blast = NuVsBlast(
+            blast = SQLNuVsBlast(
                 analysis_id=analysis_id,
                 created_at=timestamp,
                 last_checked_at=timestamp,

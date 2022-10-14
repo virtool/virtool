@@ -11,7 +11,7 @@ import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.oas import TaskUpdate
-from virtool.tasks.task import Task as TaskClass
+from virtool.tasks.task import Task as TaskClass, BaseTask
 
 
 class TasksData:
@@ -110,7 +110,7 @@ class TasksData:
 
             await session.commit()
 
-    async def create(self, task_class: Type[TaskClass], context: dict = None) -> Task:
+    async def create(self, task_class: Type[BaseTask], context: dict = None) -> Task:
         """
         Register a new task.
 

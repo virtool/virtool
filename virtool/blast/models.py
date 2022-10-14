@@ -14,7 +14,7 @@ from virtool.pg.base import Base
 from virtool.tasks.models import Task
 
 
-class NuVsBlast(Base):
+class SQLNuVsBlast(Base):
     __tablename__ = "nuvs_blast"
 
     id = Column(Integer, primary_key=True)

@@ -1,13 +1,18 @@
 import asyncio
 from logging import getLogger
-from typing import Optional
+from tempfile import TemporaryDirectory
+from typing import Optional, Dict, TYPE_CHECKING
 from zipfile import BadZipFile
 
 import virtool.blast.utils
 import virtool.utils
 from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.data.utils import get_data_from_app
-from virtool.tasks.task import Task
+from virtool.tasks.task import BaseTask
+
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
+
 
 logger = getLogger("blast")
 
@@ -23,47 +28,34 @@ BLAST_PARAMS = {
 }
 
 
-class BLASTTask(Task):
+class BLASTTask(BaseTask):
 
     """Run a BLAST search against NCBI."""
 
-    task_type = "blast"
+    name = "blast"
 
-    def __init__(self, app, task_id: str):
-        super().__init__(app, task_id)
-
-        self.analysis_id = None
-        self.sequence_index = None
-
-        self.error = None
-        self.interval = 3
-        self.ready = False
-        self.result = None
-        self.rid = None
-        self.steps = [self.request, self.wait]
-
-    async def init_db(self):
-        await super().init_db()
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.analysis_id = self.context["analysis_id"]
         self.sequence_index = self.context["sequence_index"]
+        self.interval = 3
+        self.steps = [self.request, self.wait]
 
     async def request(self):
-        analysis = await get_data_from_app(self.app).analyses.get(
-            self.analysis_id, None
-        )
+        analysis = await self.data.analyses.get(self.analysis_id, None)
 
         sequence = find_nuvs_sequence_by_index(
             analysis.dict(by_alias=True), self.sequence_index
         )
 
-        rid, _ = await virtool.blast.utils.initialize_ncbi_blast(
-            self.app["config"], sequence
-        )
-
-        self.rid = rid
-
-        await self._update(False, None, None)
+        await self.data.blast.create_nuvs_blast(analysis.id, self.sequence_index)
 
     async def wait(self):
         try:
@@ -95,7 +87,7 @@ class BLASTTask(Task):
                 await self._update(False, None, None)
 
         except asyncio.CancelledError:
-            await get_data_from_app(self.app).blast.remove_nuvs_blast(
+            await get_data_from_app(self.app).blast.delete_nuvs_blast(
                 self.analysis_id, self.sequence_index
             )
 
@@ -109,33 +101,3 @@ class BLASTTask(Task):
         """
         await asyncio.sleep(self.interval)
         self.interval += 5
-
-    async def _update(self, ready: bool, result: Optional[dict], error: Optional[str]):
-        """
-        Update the BLAST data. Returns the BLAST data and the complete analysis
-        document.
-
-        :param ready: indicates whether the BLAST request is complete
-        :param result: the formatted result of a successful BLAST request
-        :param error: and error message to add to the BLAST record
-        :return: the BLAST data and the complete analysis document
-
-        """
-        self.result = result
-
-        if ready is None:
-            self.ready = await virtool.blast.utils.check_rid(
-                self.app["config"], self.rid
-            )
-        else:
-            self.ready = ready
-
-        await get_data_from_app(self.app).blast.update_nuvs_blast(
-            self.analysis_id,
-            self.sequence_index,
-            self.error,
-            virtool.utils.timestamp(),
-            self.rid,
-            self.ready,
-            self.result,
-        )

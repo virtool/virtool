@@ -5,12 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.blast.data import BLASTData
-from virtool.blast.models import NuVsBlast
+from virtool.blast.models import SQLNuVsBlast
 from virtool.tasks.models import Task
 
 
 @pytest.fixture
-async def blast_data(dbi, pg, static_time, redis):
+async def blast_data(dbi, pg: AsyncEngine, static_time, redis):
 
     blast_data = BLASTData(dbi, pg)
 
@@ -21,7 +21,7 @@ async def blast_data(dbi, pg, static_time, redis):
 
         session.add_all(
             [
-                NuVsBlast(
+                SQLNuVsBlast(
                     analysis_id="analysis",
                     sequence_index=21,
                     task_id=task.id,
@@ -30,7 +30,7 @@ async def blast_data(dbi, pg, static_time, redis):
                     last_checked_at=static_time.datetime,
                     ready=False,
                 ),
-                NuVsBlast(
+                SQLNuVsBlast(
                     analysis_id="analysis_2",
                     sequence_index=13,
                     task_id=task.id,
@@ -39,7 +39,7 @@ async def blast_data(dbi, pg, static_time, redis):
                     last_checked_at=static_time.datetime,
                     ready=False,
                 ),
-                NuVsBlast(
+                SQLNuVsBlast(
                     analysis_id="analysis_2",
                     sequence_index=4,
                     task_id=task.id,
@@ -74,17 +74,17 @@ async def test_update_nuvs_blast(
 
     async with AsyncSession(pg) as session:
         result = await session.execute(
-            select(NuVsBlast).where(NuVsBlast.sequence_index == 21)
+            select(SQLNuVsBlast).where(SQLNuVsBlast.sequence_index == 21)
         )
 
         assert result.one() == snapshot
 
 
 async def test_remove_nuvs_blast(blast_data: BLASTData, pg: AsyncEngine):
-    assert await blast_data.remove_nuvs_blast("analysis", 21) == 1
+    assert await blast_data.delete_nuvs_blast("analysis", 21) == 1
 
     async with AsyncSession(pg) as session:
-        result = await session.execute(select(NuVsBlast))
+        result = await session.execute(select(SQLNuVsBlast))
         assert len(result.scalars().all()) == 2
 
 
