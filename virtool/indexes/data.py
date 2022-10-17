@@ -11,7 +11,6 @@ from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index, In
 from virtool_core.models.reference import ReferenceNested
 
 import virtool.indexes.db
-import virtool.uploads.db
 from virtool.api.custom_json import dumps
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
