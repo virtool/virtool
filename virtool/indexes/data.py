@@ -21,11 +21,10 @@ from virtool.indexes.db import (
     FILES,
     update_last_indexed_versions,
 )
-from virtool.indexes.files import create_index_file
 from virtool.indexes.models import SQLIndexFile, IndexType
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
-from virtool.pg.utils import delete_row, get_rows
+from virtool.pg.utils import get_rows
 from virtool.uploads.utils import naive_writer
 from virtool.utils import run_in_thread, compress_json_with_gzip
 

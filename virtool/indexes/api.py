@@ -1,19 +1,14 @@
-import asyncio
 import logging
 from typing import Optional
 from typing import Union, List
 
-from aiohttp.web import FileResponse, Request, Response
+from aiohttp.web import FileResponse, Request
 from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 from pydantic import Field
-from sqlalchemy.exc import IntegrityError
 from virtool_core.models.index import IndexSearchResult
 
-import virtool.indexes.db
-import virtool.uploads.db
-import virtool.utils
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
@@ -21,8 +16,6 @@ from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
 from virtool.indexes.db import FILES
-from virtool.indexes.files import create_index_file
-from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.oas import (
     ListIndexesResponse,
     GetIndexResponse,
@@ -30,7 +23,6 @@ from virtool.indexes.oas import (
 )
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.references.db import check_right
-from virtool.uploads.utils import naive_writer
 from virtool.utils import run_in_thread
 
 logger = logging.getLogger("indexes")
@@ -99,21 +91,6 @@ async def download_otus_json(req):
         )
     except ResourceNotFoundError:
         raise NotFound()
-
-    """
-    ref_id = index["reference"]["id"]
-
-    json_path = (
-        join_index_path(req.app["config"].data_path, ref_id, index_id) / "otus.json.gz"
-    )
-
-    if not json_path.exists():
-        patched_otus = await virtool.indexes.db.get_patched_otus(
-            db, req.app["config"], index["manifest"]
-        )
-
-        await run_in_thread(compress_json_with_gzip, dumps(patched_otus), json_path)
-    """
 
     return FileResponse(
         json_path,
