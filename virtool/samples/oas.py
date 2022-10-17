@@ -5,6 +5,7 @@ from virtool_core.models.analysis import AnalysisMinimal
 from virtool_core.models.enums import LibraryType
 from virtool_core.models.samples import SampleMinimal, Sample
 from virtool_core.models.enums import QuickAnalyzeWorkflow
+from virtool_core.models.validators import prevent_none
 
 
 class GetSamplesResponse(SampleMinimal):
@@ -224,6 +225,8 @@ class EditSampleSchema(BaseModel):
     labels: Optional[list]
     subtractions: Optional[list]
 
+    _prevent_none = prevent_none("*")
+
     class Config:
         schema_extra = {
             "example": {
@@ -324,6 +327,8 @@ class EditRightsSchema(BaseModel):
     all_write: Optional[bool]
     group_read: Optional[bool]
     group_write: Optional[bool]
+
+    _prevent_none = prevent_none("*")
 
     class Config:
         schema_extra = {
@@ -448,6 +453,8 @@ class CreateAnalysisSchema(BaseModel):
     ref_id: str
     subtractions: Optional[list]
     workflow: QuickAnalyzeWorkflow
+
+    _prevent_none = prevent_none("subtractions")
 
 
 class CreateAnalysisResponse(AnalysisMinimal):

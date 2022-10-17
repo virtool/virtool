@@ -22,6 +22,7 @@ def bob(no_permissions, static_time):
             "show_versions": True,
             "quick_analyze_workflow": "pathoscope_bowtie",
         },
+        "active": True
     }
 
 
@@ -51,6 +52,7 @@ def create_user(static_time):
             },
             "force_reset": False,
             "password": "$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.".encode(),
+            "active": True
         }
 
     return func

@@ -7,6 +7,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'foo',
     'key': 'key',
+    'ping': None,
     'progress': 3,
     'rights': <class 'dict'> {
     },
@@ -66,6 +67,7 @@
     },
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'foo',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
     },
@@ -125,6 +127,7 @@
     },
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'foo',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
     },
@@ -182,6 +185,7 @@
     },
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'bf1b993c',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
       'samples': <class 'dict'> {
@@ -226,6 +230,7 @@
       'sample_id': 'foo',
     },
     'key': None,
+    'ping': None,
     'rights': <class 'dict'> {
       'samples': <class 'dict'> {
         'modify': <class 'list'> [
@@ -266,6 +271,7 @@
     },
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'bar',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
       'samples': <class 'dict'> {
@@ -310,6 +316,7 @@
       'sample_id': 'foo',
     },
     'key': None,
+    'ping': None,
     'rights': <class 'dict'> {
       'samples': <class 'dict'> {
         'modify': <class 'list'> [

@@ -204,7 +204,7 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
     return subdocument
 
 
-async def check_right(req: Request, reference: dict, right: str) -> bool:
+async def check_right(req: Request, reference: Union[Dict, str], right: str) -> bool:
     if req["client"].administrator:
         return True
 

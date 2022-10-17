@@ -8,14 +8,14 @@ class EditPermissionsSchema(BaseModel):
     Possible permissions that will be updated for a user and group.
     """
 
-    cancel_job: Optional[bool] = None
-    create_ref: Optional[bool] = None
-    create_sample: Optional[bool] = None
-    modify_hmm: Optional[bool] = None
-    modify_subtraction: Optional[bool] = None
-    remove_file: Optional[bool] = None
-    remove_job: Optional[bool] = None
-    upload_file: Optional[bool] = None
+    cancel_job: Optional[bool]
+    create_ref: Optional[bool]
+    create_sample: Optional[bool]
+    modify_hmm: Optional[bool]
+    modify_subtraction: Optional[bool]
+    remove_file: Optional[bool]
+    remove_job: Optional[bool]
+    upload_file: Optional[bool]
 
 
 class CreateGroupSchema(BaseModel):
@@ -23,8 +23,8 @@ class CreateGroupSchema(BaseModel):
     A schema for requests to create groups.
     """
 
-    group_id: constr(strip_whitespace=True, to_lower=True, min_length=1) = Field(
-        description="a unique id for the group"
+    name: constr(strip_whitespace=True, min_length=1) = Field(
+        description="a name for the group", alias="group_id"
     )
 
     class Config:

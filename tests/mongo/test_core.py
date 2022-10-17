@@ -6,12 +6,12 @@ import virtool.mongo.core
 
 
 @pytest.fixture
-def create_test_collection(dbi):
+def create_test_collection(mongo):
     def func(
         name="samples", projection=None, silent=False
     ) -> virtool.mongo.core.Collection:
         return virtool.mongo.core.Collection(
-            dbi,
+            mongo,
             name,
             make_mocked_coro(return_value={"id": "foo", "mock": True}),
             projection,

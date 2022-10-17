@@ -96,7 +96,7 @@ def compress_json_with_gzip(json_string: str, target: str):
     target.parent.mkdir(exist_ok=True, parents=True)
 
     with gzip.open(target, "wb") as f:
-        f.write(bytes(json_string, "utf-8"))
+        f.write(json_string)
 
 
 def ensure_data_dir(data_path: Path):

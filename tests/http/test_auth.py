@@ -28,7 +28,7 @@ class TestJobAuthentication:
 
         assert resp.status == 401
 
-    async def test_protected_fails(self, dbi, spawn_client):
+    async def test_protected_fails(self, mongo, spawn_client):
         """
         Check that a request against GET /samples using job authentication fails.
 
@@ -43,7 +43,7 @@ class TestJobAuthentication:
             UpdateSettingsSchema(minimum_password_length=8)
         )
 
-        await dbi.jobs.insert_one({"_id": "foo", "key": hash_key(key)})
+        await mongo.jobs.insert_one({"_id": "foo", "key": hash_key(key)})
 
         resp = await client.get("/samples")
 

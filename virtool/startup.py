@@ -132,7 +132,7 @@ async def startup_data(app: App):
     """
 
     app["data"] = DataLayer(
-        AccountData(app["db"]),
+        AccountData(app["db"], app["redis"]),
         AnalysisData(app["db"], app["config"], app["pg"]),
         BLASTData(app["db"], app["pg"]),
         GroupsData(app["db"]),
@@ -284,7 +284,6 @@ async def startup_databases(app: Application):
     await scheduler.spawn(periodically_ping_redis(redis))
 
     app["redis"] = redis
-
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 

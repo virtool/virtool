@@ -103,7 +103,7 @@ class AccountView(PydanticView):
                 raise HTTPBadRequest(text=error)
 
         try:
-            account = await get_data_from_req(self.request).account.edit(
+            account = await get_data_from_req(self.request).account.update(
                 self.request["client"].user_id, data
             )
         except ResourceError:
@@ -143,7 +143,7 @@ class SettingsView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        settings = await get_data_from_req(self.request).account.edit_settings(
+        settings = await get_data_from_req(self.request).account.update_settings(
             data, "settings", self.request["client"].user_id
         )
 
@@ -219,7 +219,7 @@ class KeysView(PydanticView):
 
 @routes.view("/account/keys/{key_id}")
 class KeyView(PydanticView):
-    async def get(self) -> Union[r200[APIKeyResponse], r404]:
+    async def get(self, key_id: str, /) -> Union[r200[APIKeyResponse], r404]:
         """
         Get an API key.
 
@@ -232,7 +232,7 @@ class KeyView(PydanticView):
         """
         try:
             key = await get_data_from_req(self.request).account.get_key(
-                self.request["client"].user_id, self.request.match_info["key_id"]
+                self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
             raise NotFound()
@@ -240,7 +240,7 @@ class KeyView(PydanticView):
         return json_response(APIKeyResponse.parse_obj(key), status=200)
 
     async def patch(
-        self, data: EditKeySchema
+        self, key_id: str, /, data: EditKeySchema
     ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
         """
         Update an API key.
@@ -255,9 +255,9 @@ class KeyView(PydanticView):
             404: Not found
         """
         try:
-            key = await get_data_from_req(self.request).account.edit_key(
+            key = await get_data_from_req(self.request).account.update_key(
                 self.request["client"].user_id,
-                self.request.match_info.get("key_id"),
+                key_id,
                 data,
             )
         except ResourceNotFoundError:
@@ -265,7 +265,7 @@ class KeyView(PydanticView):
 
         return json_response(APIKeyResponse.parse_obj(key))
 
-    async def delete(self) -> Union[r204, r401, r404]:
+    async def delete(self, key_id: str, /) -> Union[r204, r401, r404]:
         """
         Delete
         Remove an API key by its ID.
@@ -277,7 +277,7 @@ class KeyView(PydanticView):
         """
         try:
             await get_data_from_req(self.request).account.delete_key(
-                self.request["client"].user_id, self.request.match_info["key_id"]
+                self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
             raise NotFound()
@@ -301,17 +301,19 @@ class LoginView(PydanticView):
             201: Successful operation
             400: Invalid input
         """
+
         session_id = self.request.cookies.get("session_id")
 
         try:
-            result = await get_data_from_req(self.request).account.login(
-                session_id, data
-            )
+            user_id = await get_data_from_req(self.request).account.login(data)
         except ResourceError:
             raise HTTPBadRequest(text="Invalid username or password")
 
-        if type(result) is int:
-            reset_code = result
+        reset_code = await get_data_from_req(self.request).account.get_reset_code(
+            user_id, session_id, data
+        )
+
+        if reset_code:
             return json_response(
                 {
                     "reset": True,
@@ -320,10 +322,9 @@ class LoginView(PydanticView):
                 status=200,
             )
 
-        user_id = result
-
-        session, token = await virtool.users.sessions.replace_session(
+        session_id, _, token = await virtool.users.sessions.replace_session(
             self.request.app["db"],
+            self.request.app["redis"],
             session_id,
             virtool.http.auth.get_ip(self.request),
             user_id,
@@ -332,7 +333,7 @@ class LoginView(PydanticView):
 
         resp = json_response({"reset": False}, status=201)
 
-        set_session_id_cookie(resp, session["_id"])
+        set_session_id_cookie(resp, session_id)
         set_session_token_cookie(resp, token)
 
         return resp
@@ -351,14 +352,14 @@ class LogoutView(PydanticView):
         Status Codes:
             204: Successful operation
         """
-        session, _ = await get_data_from_req(self.request).account.logout(
+        session_id, _, _ = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
             virtool.http.auth.get_ip(self.request),
         )
 
         resp = Response(status=200)
 
-        set_session_id_cookie(resp, session["_id"])
+        set_session_id_cookie(resp, session_id)
         resp.del_cookie("session_token")
 
         return resp
@@ -381,35 +382,28 @@ class ResetView(PydanticView):
         """
         if error := await check_password_length(self.request, data.password):
             raise HTTPBadRequest(text=error)
-
-        status, user_id, reset = await get_data_from_req(self.request).account.reset(
-            self.request.cookies.get("session_id"),
-            data,
-            virtool.http.auth.get_ip(self.request),
-        )
-
-        if status == 400:
-            return json_response(
-                {"error": error, "reset_code": reset},
-                status=400,
+        try:
+            result = await get_data_from_req(self.request).account.reset(
+                self.request.cookies.get("session_id"),
+                data,
+                virtool.http.auth.get_ip(self.request),
             )
-
-        new_session = status
-        token = reset
+        except ResourceError:
+            raise HTTPBadRequest(text="Invalid session or reset code")
 
         await get_data_from_req(self.request).users.update(
-            user_id,
+            result["user_id"],
             UpdateUserSchema(force_reset=False, password=data.password),
         )
 
         try:
-            self.request["client"].authorize(new_session, is_api=False)
+            self.request["client"].authorize(result["new_session"], is_api=False)
         except AttributeError:
             pass
 
         resp = json_response({"login": False, "reset": False}, status=200)
 
-        set_session_id_cookie(resp, new_session["_id"])
-        set_session_token_cookie(resp, token)
+        set_session_id_cookie(resp, result["session_id"])
+        set_session_token_cookie(resp, result["token"])
 
         return resp

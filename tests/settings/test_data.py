@@ -5,11 +5,11 @@ from virtool_core.models.settings import Settings
 from virtool.settings.data import SettingsData
 
 @pytest.fixture
-async def settings_data(dbi) -> SettingsData:
-    return SettingsData(dbi)
+async def settings_data(mongo) -> SettingsData:
+    return SettingsData(mongo)
 
 
-async def test_ensure(dbi, settings_data, snapshot, test_settings):
+async def test_ensure(mongo, settings_data, snapshot, test_settings):
     settings = await settings_data.ensure()
 
     assert settings == Settings(
@@ -26,4 +26,4 @@ async def test_ensure(dbi, settings_data, snapshot, test_settings):
         default_source_types=["isolate", "strain"],
     )
 
-    assert await dbi.settings.find_one() == snapshot
+    assert await mongo.settings.find_one() == snapshot

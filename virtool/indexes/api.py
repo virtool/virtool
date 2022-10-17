@@ -1,18 +1,18 @@
 import asyncio
-import json
 import logging
-from typing import Union
+from typing import Union, Optional
 
 from aiohttp.web import FileResponse, Request, Response
 from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
+from pydantic import Field
 from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
 import virtool.uploads.db
 import virtool.utils
-from virtool.api.custom_json import CustomEncoder
+from virtool.api.custom_json import dumps
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.history.db import LIST_PROJECTION
@@ -23,7 +23,7 @@ from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.oas import ListIndexesResponse, GetIndexResponse
 from virtool.indexes.utils import check_index_file_type, join_index_path
-from virtool.pg.utils import delete_row, get_rows
+from virtool.pg.utils import get_rows
 from virtool.references.db import check_right
 from virtool.uploads.utils import naive_writer
 from virtool.utils import compress_json_with_gzip, run_in_thread
@@ -34,7 +34,13 @@ routes = Routes()
 
 @routes.view("/indexes")
 class IndexesView(PydanticView):
-    async def get(self) -> Union[r200[ListIndexesResponse]]:
+    async def get(
+        self,
+        ready: Optional[bool] = Field(
+            default=False,
+            description="Return only indexes that are ready for use in analysis.",
+        ),
+    ) -> Union[r200[ListIndexesResponse]]:
         """
         Find indexes.
 
@@ -45,8 +51,6 @@ class IndexesView(PydanticView):
 
         """
         db = self.request.app["db"]
-
-        ready = self.request.query.get("ready", False)
 
         if not ready:
             data = await virtool.indexes.db.find(db, self.request.query)
@@ -87,7 +91,7 @@ class IndexesView(PydanticView):
 @routes.view("/indexes/{index_id}")
 @routes.jobs_api.get("/indexes/{index_id}")
 class IndexView(PydanticView):
-    async def get(self) -> Union[r200[GetIndexResponse], r404]:
+    async def get(self, index_id: str, /) -> Union[r200[GetIndexResponse], r404]:
         """
         Get an index.
 
@@ -100,8 +104,6 @@ class IndexView(PydanticView):
         """
         db = self.request.app["db"]
         pg = self.request.app["pg"]
-
-        index_id = self.request.match_info["index_id"]
 
         document = await db.indexes.find_one(index_id)
 
@@ -155,9 +157,7 @@ async def download_otus_json(req):
             db, req.app["config"], index["manifest"]
         )
 
-        json_string = json.dumps(patched_otus, cls=CustomEncoder)
-
-        await run_in_thread(compress_json_with_gzip, json_string, json_path)
+        await run_in_thread(compress_json_with_gzip, dumps(patched_otus), json_path)
 
     return FileResponse(
         json_path,
@@ -170,7 +170,7 @@ async def download_otus_json(req):
 
 @routes.view("/indexes/{index_id}/files/{filename}")
 class IndexFileView(PydanticView):
-    async def get(self) -> Union[r200, r404]:
+    async def get(self, index_id: str, filename: str, /) -> Union[r200, r404]:
         """
         Download files relating to a given index.
 
@@ -178,9 +178,6 @@ class IndexFileView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        index_id = self.request.match_info["index_id"]
-        filename = self.request.match_info["filename"]
-
         if filename not in FILES:
             raise NotFound()
 
@@ -189,14 +186,18 @@ class IndexFileView(PydanticView):
         if index_document is None:
             raise NotFound()
 
-        # check the requesting user has read access to the parent reference
-        if not await check_right(self.request, index_document["reference"], "read"):
+        if not await check_right(
+            self.request, index_document["reference"]["id"], "read"
+        ):
             raise InsufficientRights()
 
         reference_id = index_document["reference"]["id"]
 
         path = (
-            join_index_path(self.request.app["config"].data_path, reference_id, index_id) / filename
+            join_index_path(
+                self.request.app["config"].data_path, reference_id, index_id
+            )
+            / filename
         )
 
         if not path.exists():
@@ -256,21 +257,20 @@ async def upload(req):
     reference_id = document["reference"]["id"]
     file_type = check_index_file_type(name)
 
-    try:
-        index_file = await create_index_file(pg, index_id, file_type, name)
-    except IntegrityError:
-        raise HTTPConflict(text="File name already exists")
-
-    upload_id = index_file["id"]
-
     path = join_index_path(req.app["config"].data_path, reference_id, index_id) / name
 
     try:
         size = await naive_writer(await req.multipart(), path)
     except asyncio.CancelledError:
-        logger.debug("Index file upload aborted: %s", upload_id)
-        await delete_row(pg, upload_id, IndexFile)
+        logger.debug("Index file upload aborted")
         return Response(status=499)
+
+    try:
+        index_file = await create_index_file(pg, index_id, file_type, name, size)
+    except IntegrityError:
+        raise HTTPConflict(text="File name already exists")
+
+    upload_id = index_file["id"]
 
     index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
@@ -333,7 +333,7 @@ async def finalize(req):
 
 @routes.view("/indexes/{index_id}/history")
 class IndexHistoryView(PydanticView):
-    async def get(self) -> Union[r200[ListHistoryResponse], r404]:
+    async def get(self, index_id: str, /) -> Union[r200[ListHistoryResponse], r404]:
         """
         List history.
 
@@ -345,8 +345,6 @@ class IndexHistoryView(PydanticView):
 
         """
         db = self.request.app["db"]
-
-        index_id = self.request.match_info["index_id"]
 
         if not await db.indexes.count_documents({"_id": index_id}):
             raise NotFound()

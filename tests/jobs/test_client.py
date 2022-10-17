@@ -4,7 +4,7 @@ from virtool.jobs.client import JOB_REMOVED_FROM_QUEUE, JobsClient
 
 
 @pytest.fixture
-def jobs_client(dbi, redis):
+def jobs_client(mongo, redis):
     return JobsClient(redis)
 
 
@@ -41,7 +41,7 @@ async def test_cancel_waiting(workflow, redis, jobs_client):
         assert await redis.lrange(key, 0, 5, encoding="utf-8") == ["bar", "baz", "boo"]
 
 
-async def test_cancel_running(dbi, redis, jobs_client):
+async def test_cancel_running(mongo, redis, jobs_client):
     """
     Test that cancellation is published to 'channel:cancel' if the job ID is not in a
     list already.

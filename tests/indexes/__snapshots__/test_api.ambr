@@ -39,6 +39,7 @@
       'user_id': 'test',
     },
     'key': None,
+    'ping': None,
     'rights': <class 'dict'> {
       'indexes': <class 'dict'> {
         'modify': <class 'list'> [
@@ -121,7 +122,7 @@
         'id': 1,
         'index': 'test_index',
         'name': 'reference.fa.gz',
-        'size': None,
+        'size': 9000,
         'type': 'fasta',
       },
       <class 'dict'> {
@@ -129,7 +130,7 @@
         'id': 2,
         'index': 'test_index',
         'name': 'reference.json.gz',
-        'size': None,
+        'size': 9000,
         'type': 'json',
       },
       <class 'dict'> {
@@ -137,7 +138,7 @@
         'id': 3,
         'index': 'test_index',
         'name': 'reference.1.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -145,7 +146,7 @@
         'id': 4,
         'index': 'test_index',
         'name': 'reference.2.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -153,7 +154,7 @@
         'id': 5,
         'index': 'test_index',
         'name': 'reference.3.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -161,7 +162,7 @@
         'id': 6,
         'index': 'test_index',
         'name': 'reference.4.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -169,7 +170,7 @@
         'id': 7,
         'index': 'test_index',
         'name': 'reference.rev.1.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -177,7 +178,7 @@
         'id': 8,
         'index': 'test_index',
         'name': 'reference.rev.2.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
     ],

@@ -10,7 +10,7 @@ async def test_add_subtraction_files_task(
     snapshot,
     tmp_path,
     spawn_client,
-    dbi,
+    mongo,
     pg: AsyncEngine,
     static_time,
 ):

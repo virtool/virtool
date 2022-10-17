@@ -13,7 +13,9 @@ from virtool.groups.oas import EditPermissionsSchema
 @pytest.mark.parametrize(
     "has_permission", [True, False], ids=["has permission", "missing permission"]
 )
-async def test_create_api_key(administrator, has_permission, mocker, dbi, static_time):
+async def test_create_api_key(
+    administrator, has_permission, mocker, mongo, redis, static_time
+):
     """
     Test that an API key is created correctly with varying key owner administrator status and
     permissions.
@@ -30,7 +32,7 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
     groups = [{"id": "technicians"}, {"id": "managers"}]
 
     # Vary the key owner's administrator status and permissions.
-    await dbi.users.insert_one(
+    await mongo.users.insert_one(
         {
             "_id": "bob",
             "administrator": administrator,
@@ -42,7 +44,7 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
         }
     )
 
-    account_data = AccountData(dbi)
+    account_data = AccountData(mongo, redis)
     data = CreateKeysSchema(
         name="Foo",
         permissions=EditPermissionsSchema(create_sample=True, modify_subtraction=True),
@@ -70,7 +72,7 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
         expected["permissions"]["modify_subtraction"] = True
 
     # Check that expected functions were called.
-    m_get_alternate_id.assert_called_with(dbi, "Foo")
+    m_get_alternate_id.assert_called_with(mongo, "Foo")
     m_generate_key.assert_called()
 
     # Check returned document matches expected.
@@ -85,4 +87,4 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
 
     expected.update({"_id": "baz", "user": {"id": "bob"}})
 
-    assert await dbi.keys.find_one() == expected
+    assert await mongo.keys.find_one() == expected

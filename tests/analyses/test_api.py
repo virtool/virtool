@@ -8,7 +8,6 @@ from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
 
 
-from tests.fixtures.fake import FakeGenerator
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
 from virtool.pg.utils import get_row_by_id

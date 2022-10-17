@@ -82,6 +82,7 @@ async def create_indexes(db):
     await db.caches.create_index(
         [("key", ASCENDING), ("sample.id", ASCENDING)], unique=True
     )
+    await db.groups.create_index("name", unique=True, sparse=True)
     await db.history.create_index("otu.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")

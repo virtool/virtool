@@ -4,8 +4,7 @@ from typing import Callable, Tuple
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
-from jose import ExpiredSignatureError
-from jose.exceptions import JWTClaimsError, JWTError
+from jose.exceptions import JWTError, JWTClaimsError, ExpiredSignatureError
 
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
@@ -155,6 +154,7 @@ async def middleware(req, handler) -> Response:
     :return: the response
     """
     db = req.app["db"]
+    redis = req.app["redis"]
 
     if isinstance(get_handler_policy(handler, req.method), PublicRoutePolicy):
         req["client"] = UserClient(
@@ -182,15 +182,12 @@ async def middleware(req, handler) -> Response:
     # Get session information from cookies.
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
-
-    session, session_token = await get_session(db, session_id, session_token)
+    session, session_token = await get_session(redis, session_id, session_token)
 
     ip = get_ip(req)
 
     if session is None:
-        session, session_token = await create_session(db, ip)
-
-    session_id = session["_id"]
+        session_id, session, session_token = await create_session(db, redis, ip)
 
     if session_token:
         req["client"] = UserClient(
@@ -218,7 +215,7 @@ async def middleware(req, handler) -> Response:
     resp = await handler(req)
 
     if req.path != "/account/reset":
-        await clear_reset_code(db, session["_id"])
+        await clear_reset_code(redis, session_id)
 
     set_session_id_cookie(resp, session_id)
 

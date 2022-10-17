@@ -1,5 +1,7 @@
+import json
 from typing import Union, Tuple, List
 
+from aioredis import Redis
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 
@@ -36,8 +38,9 @@ PROJECTION = (
 
 
 class AccountData:
-    def __init__(self, db: DB):
+    def __init__(self, db: DB, redis: Redis):
         self._db = db
+        self._redis = redis
 
     async def get(self, user_id: str) -> Account:
         """
@@ -58,9 +61,9 @@ class AccountData:
             }
         )
 
-    async def edit(self, user_id: str, data: EditAccountSchema) -> Account:
+    async def update(self, user_id: str, data: EditAccountSchema) -> Account:
         """
-        Edit the user account.
+        Update the user account.
 
         :param user_id: the user ID
         :param data: the update to the account
@@ -100,11 +103,11 @@ class AccountData:
 
         return AccountSettings(**settings)
 
-    async def edit_settings(
+    async def update_settings(
         self, data: EditSettingsSchema, query_field: str, user_id: str
     ) -> AccountSettings:
         """
-        Edits account settings.
+        Updates account settings.
 
         :param data: the update to the account settings
         :param query_field: the field to edit
@@ -203,7 +206,9 @@ class AccountData:
 
         return APIKey(**document)
 
-    async def edit_key(self, user_id: str, key_id: str, data: EditKeySchema) -> APIKey:
+    async def update_key(
+        self, user_id: str, key_id: str, data: EditKeySchema
+    ) -> APIKey:
         """
         Change the permissions for an existing API key.
 
@@ -254,12 +259,12 @@ class AccountData:
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, session_id: str, data: CreateLoginSchema) -> Union[int, str]:
+    async def login(self, data: CreateLoginSchema) -> Union[str]:
         """
         Create a new session for the user with `username`.
 
-        :param session_id: the login session ID
         :param data: the login data
+        :return: string representation of user_id
         """
         # When `remember` is set, the session will last for 1 month instead of the
         # 1-hour default
@@ -274,22 +279,31 @@ class AccountData:
         ):
             raise ResourceError()
 
-        user_id = document["_id"]
+        return document["_id"]
+
+    async def get_reset_code(self, user_id, session_id, remember) -> Union[str, None]:
+        """
+        Check if user password should be reset and return a reset code if it
+        should be.
+
+        :param user_id: the login session ID
+        :param session_id: the id of the session getting the reset code
+        :param remember: boolean indicating whether the sessions
+        should be remembered
+        """
 
         if await get_one_field(self._db.users, "force_reset", user_id):
-            return await create_reset_code(self._db, session_id, user_id, data.remember)
+            return await create_reset_code(self._redis, session_id, user_id, remember)
 
-        return user_id
-
-    async def logout(self, old_session_id: str, ip: str) -> Tuple[dict, str]:
+    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, dict, str]:
         """
         Invalidates the requesting session, effectively logging out the user.
 
         :param old_session_id: the ID of the old session
         :param ip: the ip
-        :return: the
+        :return: the session_id, session, and session token
         """
-        return await replace_session(self._db, old_session_id, ip)
+        return await replace_session(self._db, self._redis, old_session_id, ip)
 
     async def reset(self, session_id, data: ResetPasswordSchema, ip: str):
         """
@@ -297,32 +311,30 @@ class AccountData:
 
         :param session_id: the ID of the session to reset
         :param data: the data needed to reset session
-        :param ip: the ip
+        :param ip: the ip address of the client
         """
 
         reset_code = data.reset_code
 
-        session = await self._db.sessions.find_one(session_id)
+        session = json.loads(await self._redis.get(session_id))
+
+        if not session.get("reset_code") or reset_code != session.get("reset_code"):
+            raise ResourceError()
 
         user_id = session["reset_user_id"]
 
-        if (
-            not session.get("reset_code")
-            or not session.get("reset_user_id")
-            or reset_code != session.get("reset_code")
-        ):
-            return (
-                400,
-                user_id,
-                await create_reset_code(self._db, session_id, user_id=user_id),
-            )
-
-        new_session, token = await replace_session(
+        session_id, new_session, token = await replace_session(
             self._db,
+            self._redis,
             session_id,
             ip,
             user_id,
             remember=session.get("reset_remember", False),
         )
 
-        return new_session, user_id, token
+        return {
+            "new_session": new_session,
+            "user_id": user_id,
+            "token": token,
+            "session_id": session_id,
+        }

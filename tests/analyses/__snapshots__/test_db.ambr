@@ -16,6 +16,7 @@
       'id': 'test_ref',
       'name': None,
     },
+    'results': None,
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
@@ -48,6 +49,7 @@
       'id': 'test_ref',
       'name': None,
     },
+    'results': None,
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
@@ -80,6 +82,7 @@
       'id': 'test_ref',
       'name': None,
     },
+    'results': None,
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
@@ -112,6 +115,7 @@
       'id': 'test_ref',
       'name': None,
     },
+    'results': None,
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },

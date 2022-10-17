@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Dict, List
 
@@ -6,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.utils import file_stats
 
+from virtool.api.custom_json import dumps
 from virtool.history.db import patch_to_version
 from virtool.indexes.db import FILES
 from virtool.indexes.models import IndexFile, IndexType
@@ -89,7 +89,7 @@ class AddIndexJSONTask(Task):
 
             await run_in_thread(
                 compress_json_with_gzip,
-                json.dumps(
+                dumps(
                     {
                         "data_type": reference["data_type"],
                         "organism": reference["organism"],

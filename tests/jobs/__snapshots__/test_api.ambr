@@ -629,6 +629,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
     'key': 'key',
+    'ping': None,
     'progress': 3,
     'rights': <class 'dict'> {
     },
@@ -703,6 +704,7 @@
     },
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
+    'ping': None,
     'progress': 1,
     'rights': <class 'dict'> {
     },
@@ -768,6 +770,7 @@
     },
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
     },
@@ -808,6 +811,33 @@
       'id': 'bf1b993c',
     },
     'workflow': 'build_index',
+  }
+---
+# name: test_delete[uvloop-None]
+  <class 'dict'> {
+    'removed': <class 'list'> [
+      '4c530449',
+    ],
+  }
+---
+# name: test_delete[uvloop-complete]
+  <class 'dict'> {
+    'removed': <class 'list'> [
+      '4c530449',
+    ],
+  }
+---
+# name: test_delete[uvloop-failed]
+  <class 'dict'> {
+    'removed': <class 'list'> [
+    ],
+  }
+---
+# name: test_delete[uvloop-finished]
+  <class 'dict'> {
+    'removed': <class 'list'> [
+      '4c530449',
+    ],
   }
 ---
 # name: test_find_beta[uvloop-None-False]
@@ -1456,6 +1486,7 @@
     },
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
+    'ping': None,
     'progress': 1,
     'rights': <class 'dict'> {
     },
@@ -1505,5 +1536,10 @@
       'id': 'bf1b993c',
     },
     'workflow': 'build_index',
+  }
+---
+# name: test_ping[uvloop-None]
+  <class 'dict'> {
+    'pinged_at': '2015-10-06T20:00:00Z',
   }
 ---

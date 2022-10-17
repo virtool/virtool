@@ -33,6 +33,7 @@ async def test_get(snapshot, spawn_client, static_time):
         ({"old_password": "hello_world"}, 400),
         ({"password": "foo_bar_1", "old_password": "hello_world"}, 200),
         ({}, 200),
+        ({"email": None, "old_password": None, "password": None}, 400),
     ],
     ids=[
         "all_valid",
@@ -44,6 +45,7 @@ async def test_get(snapshot, spawn_client, static_time):
         "missing_password",
         "missing_email",
         "missing_all",
+        "none_all",
     ],
 )
 async def test_edit(body, status, snapshot, spawn_client, resp_is, static_time):
@@ -78,8 +80,27 @@ async def test_get_settings(spawn_client):
     }
 
 
-@pytest.mark.parametrize("invalid_input", [False, True])
-async def test_update_settings(invalid_input, spawn_client, resp_is):
+@pytest.mark.parametrize(
+    "data,status",
+    [
+        (
+            {"show_ids": False},
+            200,
+        ),
+        ({"foo_bar": True, "show_ids": "foo"}, 400),
+        (
+            {
+                "show_ids": None,
+                "show_versions": None,
+                "skip_quick_analyze_dialog": None,
+                "quick_analyze_workflow": None,
+            },
+            400,
+        ),
+    ],
+    ids=["valid_input", "invalid_input", "null_values"],
+)
+async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
     """
     Test that account settings can be updated at ``POST /account/settings`` and that requests to
     ``POST /account/settings`` return 422 for invalid JSON fields.
@@ -87,32 +108,10 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
     """
     client = await spawn_client(authorize=True)
 
-    data = {"show_ids": False}
-
-    if invalid_input:
-        data = {"foo_bar": True, "show_ids": "foo"}
-
     resp = await client.patch("/account/settings", data)
 
-    if invalid_input:
-        assert resp.status == 400
-        assert await resp.json() == [
-            {
-                "loc": ["show_ids"],
-                "msg": "value could not be parsed to a boolean",
-                "type": "type_error.bool",
-                "in": "body",
-            }
-        ]
-    else:
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "skip_quick_analyze_dialog": True,
-            "show_ids": False,
-            "show_versions": True,
-            "quick_analyze_workflow": "pathoscope_bowtie",
-        }
+    assert resp.status == status
+    assert await resp.json() == snapshot(name="response")
 
 
 async def test_get_api_keys(spawn_client, static_time):
@@ -481,8 +480,9 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         ({"username": "oops", "password": "p@ssword123", "remember": False}, 400),
         ({"username": "foobar", "password": "wr0ngp@ssword", "remember": False}, 400),
         ({"username": "foobar", "password": "p@ssword123"}, 201),
+        ({"username": "foobar", "password": "p@ssword123", "remember": None}, 400),
     ],
-    ids=["all_valid", "wrong_handle", "wrong_password", "missing_remember"],
+    ids=["all_valid", "wrong_handle", "wrong_password", "missing_remember", "remember_is_none"],
 )
 async def test_login(
     spawn_client, create_user, resp_is, body, status, mocker, snapshot
@@ -498,7 +498,8 @@ async def test_login(
     )
 
     mocker.patch(
-        "virtool.users.sessions.replace_session", return_value=[{"_id": None}, None]
+        "virtool.users.sessions.replace_session",
+        return_value=[None, {"_id": None}, None],
     )
 
     resp = await client.post("/account/login", body)

@@ -17,48 +17,48 @@ def trim_parameters():
 
 @pytest.mark.parametrize("paired", [True, False], ids=["paired", "unpaired"])
 async def test_create(
-    paired, snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters
+    paired, snapshot, mongo, static_time, test_random_alphanumeric, trim_parameters
 ):
     """
     Test that the function works with default keyword arguments and when `paired` is either `True` or `False`.
 
     """
-    cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", paired)
+    cache = await virtool.caches.db.create(mongo, "foo", "aodp-abcdefgh", paired)
 
     assert cache == snapshot
-    assert await dbi.caches.find_one() == snapshot
+    assert await mongo.caches.find_one() == snapshot
 
 
 async def test_create_duplicate(
-    snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters
+    snapshot, mongo, static_time, test_random_alphanumeric, trim_parameters
 ):
     """
     Test that the function handles duplicate document ids smoothly. The function should retry with a new id.
 
     """
-    await dbi.caches.insert_one(
+    await mongo.caches.insert_one(
         {"_id": test_random_alphanumeric.next_choice[:8].lower()}
     )
 
-    cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", False)
+    cache = await virtool.caches.db.create(mongo, "foo", "aodp-abcdefgh", False)
 
     assert cache == snapshot
     assert (
-        await dbi.caches.find_one({"_id": test_random_alphanumeric.last_choice})
+        await mongo.caches.find_one({"_id": test_random_alphanumeric.last_choice})
         == snapshot
     )
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_get(exists, dbi):
+async def test_get(exists, mongo):
     """
     Test that the function returns a cache document when it exists and returns `None` when it does not.
 
     """
     if exists:
-        await dbi.caches.insert_one({"_id": "foo"})
+        await mongo.caches.insert_one({"_id": "foo"})
 
-    result = await virtool.caches.db.get(dbi, "foo")
+    result = await virtool.caches.db.get(mongo, "foo")
 
     if exists:
         assert result == {"id": "foo"}
@@ -68,9 +68,9 @@ async def test_get(exists, dbi):
 
 
 @pytest.mark.parametrize("exception", [False, True])
-async def test_remove(exception, dbi, tmp_path, config):
+async def test_remove(exception, mongo, tmp_path, config):
     app = {
-        "db": dbi,
+        "db": mongo,
         "config": config,
     }
 
@@ -79,11 +79,11 @@ async def test_remove(exception, dbi, tmp_path, config):
 
     f1.joinpath("baz")
 
-    await dbi.caches.insert_one({"_id": "baz"})
+    await mongo.caches.insert_one({"_id": "baz"})
 
     await virtool.caches.db.remove(app, "baz")
 
-    assert await dbi.caches.count_documents({}) == 0
+    assert await mongo.caches.count_documents({}) == 0
 
     assert os.listdir(f1) == []
 

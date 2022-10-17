@@ -1,9 +1,10 @@
 from logging import getLogger
-from typing import Union, List
+from typing import Union, List, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
+from pydantic import Field
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -44,7 +45,13 @@ class JobsView(PydanticView):
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_job))
-    async def delete(self) -> r200:
+    async def delete(
+        self,
+        job_filter: Optional[str] = Field(
+            alias="filter",
+            description="Clear jobs that are in a certain state. Acceptable states are finished, complete, failed, terminated",
+        ),
+    ) -> r200:
         """
         Clear jobs.
 
@@ -53,7 +60,6 @@ class JobsView(PydanticView):
         Status Codes:
             200: Successful Operation
         """
-        job_filter = self.request.query.get("filter")
 
         # Remove jobs that completed successfully.
         complete = job_filter in [None, "finished", "complete"]
@@ -70,7 +76,7 @@ class JobsView(PydanticView):
 
 @routes.view("/jobs/{job_id}")
 class JobView(PydanticView):
-    async def get(self) -> Union[r200[JobResponse], r404]:
+    async def get(self, job_id: str, /) -> Union[r200[JobResponse], r404]:
         """
         Get a job.
 
@@ -81,16 +87,14 @@ class JobView(PydanticView):
             404: Not found
         """
         try:
-            document = await get_data_from_req(self.request).jobs.get(
-                self.request.match_info["job_id"]
-            )
+            document = await get_data_from_req(self.request).jobs.get(job_id)
         except ResourceNotFoundError:
             raise NotFound()
 
         return json_response(document)
 
     @policy(PermissionsRoutePolicy(Permission.remove_job))
-    async def delete(self) -> Union[r204, r403, r404, r409]:
+    async def delete(self, job_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete a job.
 
@@ -110,9 +114,7 @@ class JobView(PydanticView):
             409: Job is running or waiting and cannot be removed
         """
         try:
-            await get_data_from_req(self.request).jobs.delete(
-                self.request.match_info["job_id"]
-            )
+            await get_data_from_req(self.request).jobs.delete(job_id)
         except ResourceConflictError:
             raise HTTPConflict(text="Job is running or waiting and cannot be removed")
         except ResourceNotFoundError:
@@ -175,7 +177,7 @@ async def archive(req):
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.cancel_job))
-    async def put(self) -> Union[r200[JobResponse], r403, r404, r409]:
+    async def put(self, job_id: str, /) -> Union[r200[JobResponse], r403, r404, r409]:
         """
         Cancel a job.
 
@@ -186,15 +188,28 @@ class CancelJobView(PydanticView):
             409: Not cancellable
         """
         try:
-            document = await get_data_from_req(self.request).jobs.cancel(
-                self.request.match_info["job_id"]
-            )
+            document = await get_data_from_req(self.request).jobs.cancel(job_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
         except ResourceConflictError:
             raise HTTPConflict(text="Job cannot be cancelled in its current state")
 
         return json_response(document)
+
+
+@routes.jobs_api.put("/jobs/{job_id}/ping")
+async def ping(req):
+    """
+    Ping a job.
+
+    Updates the ping time on the job. The job will time out if this
+    endpoint isn't called at least once every five minutes.
+    """
+    try:
+        job_ping = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
+    except ResourceNotFoundError:
+        raise NotFound()
+    return json_response(job_ping)
 
 
 @routes.post("/jobs/{job_id}/status")

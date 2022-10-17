@@ -7,10 +7,10 @@ from virtool_core.utils import decompress_file
 
 
 @pytest.fixture
-async def fake_hmm_status(dbi, fake2, static_time):
+async def fake_hmm_status(mongo, fake2, static_time):
     user = await fake2.users.create()
 
-    await dbi.status.insert_one(
+    await mongo.status.insert_one(
         {
             "_id": "hmm",
             "updating": False,

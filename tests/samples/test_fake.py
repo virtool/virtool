@@ -8,9 +8,9 @@ from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_s
 
 
 @pytest.fixture
-def app(dbi, pg, tmp_path, config):
+def app(mongo, pg, tmp_path, config):
     return {
-        "db": dbi,
+        "db": mongo,
         "fake": FakerWrapper(),
         "pg": pg,
         "config": config,

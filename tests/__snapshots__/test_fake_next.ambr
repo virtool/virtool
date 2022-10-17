@@ -1,6 +1,6 @@
 # name: test_fake[uvloop]
   <class 'dict'> {
-    'id': 'musicians',
+    'id': 'bf1b993c',
     'name': 'musicians',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -18,6 +18,7 @@
 ---
 # name: test_fake[uvloop].1
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -28,7 +29,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'laura56',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'last_password_change': <class 'datetime'>,
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -45,6 +46,7 @@
 ---
 # name: test_fake[uvloop].2
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -54,12 +56,12 @@
     'force_reset': False,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'musicians',
+        'id': 'bf1b993c',
         'name': 'musicians',
       },
     ],
     'handle': 'sjohnson',
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'last_password_change': <class 'datetime'>,
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -87,7 +89,8 @@
       'white': 'fVyRYryKwpMUVGtYHdeM',
     },
     'created_at': <class 'datetime'>,
-    'id': '7cf872dc',
+    'id': '3cbb22cc',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
     },
@@ -107,7 +110,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'laura56',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'workflow': 'jobs_aodp',
   }

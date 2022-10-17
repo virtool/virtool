@@ -19,18 +19,18 @@ from virtool.subtractions.db import (
         ],
     ],
 )
-async def test_attach_subtractions(documents, dbi, snapshot):
-    await dbi.subtraction.insert_many(
+async def test_attach_subtractions(documents, mongo, snapshot):
+    await mongo.subtraction.insert_many(
         [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
     )
 
-    result = await apply_transforms(documents, [AttachSubtractionTransform(dbi)])
+    result = await apply_transforms(documents, [AttachSubtractionTransform(mongo)])
 
     assert result == snapshot
 
 
-async def test_get_linked_samples(dbi):
-    await dbi.samples.insert_many(
+async def test_get_linked_samples(mongo):
+    await mongo.samples.insert_many(
         [
             {"_id": "foo", "name": "Foo", "subtractions": ["1", "5", "3"]},
             {"_id": "bar", "name": "Bar", "subtractions": ["2", "5", "8"]},
@@ -38,13 +38,13 @@ async def test_get_linked_samples(dbi):
         ]
     )
 
-    samples = await virtool.subtractions.db.get_linked_samples(dbi, "5")
+    samples = await virtool.subtractions.db.get_linked_samples(mongo, "5")
 
     assert samples == [{"id": "foo", "name": "Foo"}, {"id": "bar", "name": "Bar"}]
 
 
-async def test_unlink_default_subtractions(dbi):
-    await dbi.samples.insert_many(
+async def test_unlink_default_subtractions(mongo):
+    await mongo.samples.insert_many(
         [
             {"_id": "foo", "subtractions": ["1", "2", "3"]},
             {"_id": "bar", "subtractions": ["2", "5", "8"]},
@@ -52,10 +52,10 @@ async def test_unlink_default_subtractions(dbi):
         ]
     )
 
-    async with dbi.create_session() as session:
-        await unlink_default_subtractions(dbi, "2", session)
+    async with mongo.create_session() as session:
+        await unlink_default_subtractions(mongo, "2", session)
 
-    assert await dbi.samples.find().to_list(None) == [
+    assert await mongo.samples.find().to_list(None) == [
         {"_id": "foo", "subtractions": ["1", "3"]},
         {"_id": "bar", "subtractions": ["5", "8"]},
         {"_id": "baz", "subtractions": []},

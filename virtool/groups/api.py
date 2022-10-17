@@ -48,10 +48,10 @@ class GroupsView(PydanticView):
             201: Successful operation
             400: Group already exists
         """
-        group_id = data.group_id
+        name = data.name
 
         try:
-            group = await get_data_from_req(self.request).groups.create(group_id)
+            group = await get_data_from_req(self.request).groups.create(name)
         except ResourceConflictError:
             raise HTTPBadRequest(text="Group already exists")
 
@@ -64,7 +64,7 @@ class GroupsView(PydanticView):
 
 @routes.view("/groups/{group_id}")
 class GroupView(PydanticView):
-    async def get(self) -> Union[r200[GroupResponse], r404]:
+    async def get(self, group_id: str, /) -> Union[r200[GroupResponse], r404]:
         """
         Get the complete representation of a single user group.
 
@@ -72,8 +72,6 @@ class GroupView(PydanticView):
             200: Successful operation
             404: Group not found
         """
-        group_id = self.request.match_info["group_id"]
-
         try:
             group = await get_data_from_req(self.request).groups.get(group_id)
         except ResourceNotFoundError:
@@ -82,7 +80,7 @@ class GroupView(PydanticView):
         return json_response(GroupResponse.parse_obj(group))
 
     @policy(AdministratorRoutePolicy)
-    async def patch(self, data: EditGroupSchema) -> Union[r200[GroupResponse], r404]:
+    async def patch(self, group_id: str, /, data: EditGroupSchema) -> Union[r200[GroupResponse], r404]:
         """
         Update the permissions of a group.
 
@@ -93,8 +91,6 @@ class GroupView(PydanticView):
             200: Successful operation
             404: Group not found
         """
-        group_id = self.request.match_info["group_id"]
-
         try:
             group = await get_data_from_req(self.request).groups.update(group_id, data)
         except ResourceNotFoundError:
@@ -103,7 +99,7 @@ class GroupView(PydanticView):
         return json_response(GroupResponse.parse_obj(group))
 
     @policy(AdministratorRoutePolicy)
-    async def delete(self) -> Union[r204, r404]:
+    async def delete(self, group_id: str, /) -> Union[r204, r404]:
         """
         Delete a group.
 
@@ -112,8 +108,6 @@ class GroupView(PydanticView):
             404: Group not found
 
         """
-        group_id = self.request.match_info["group_id"]
-
         try:
             await get_data_from_req(self.request).groups.delete(group_id)
         except ResourceNotFoundError:

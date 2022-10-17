@@ -128,7 +128,7 @@ class OTUView(PydanticView):
         ):
             raise HTTPBadRequest(text=message)
 
-        otu = await get_data_from_req(self.request).otus.edit(
+        otu = await get_data_from_req(self.request).otus.update(
             otu_id, data, self.request["client"].user_id
         )
 
@@ -310,7 +310,7 @@ class IsolateView(PydanticView):
             ):
                 raise HTTPBadRequest(text="Source type is not allowed")
 
-        isolate = await get_data_from_req(self.request).otus.edit_isolate(
+        isolate = await get_data_from_req(self.request).otus.update_isolate(
             otu_id,
             isolate_id,
             self.request["client"].user_id,
@@ -513,7 +513,7 @@ class SequenceView(PydanticView):
         ):
             raise HTTPBadRequest(text=message)
 
-        sequence_document = await get_data_from_req(self.request).otus.edit_sequence(
+        sequence_document = await get_data_from_req(self.request).otus.update_sequence(
             otu_id,
             isolate_id,
             sequence_id,

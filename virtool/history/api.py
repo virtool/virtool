@@ -41,15 +41,13 @@ class ChangesView(PydanticView):
 
 @routes.view("/history/{change_id}")
 class ChangeView(PydanticView):
-    async def get(self) -> Union[r200[HistoryResponse], r404]:
+    async def get(self, change_id: str, /) -> Union[r200[HistoryResponse], r404]:
         """
         Get a specific change document by its ``change_id``.
         Status Codes:
             200: Successful Operation
             404: Not found
         """
-        change_id = self.request.match_info["change_id"]
-
         try:
             document = await get_data_from_req(self.request).history.get(change_id)
         except ResourceNotFoundError:
@@ -57,7 +55,7 @@ class ChangeView(PydanticView):
 
         return json_response(HistoryResponse.parse_obj(document).dict())
 
-    async def delete(self) -> Union[r204, r403, r404, r409]:
+    async def delete(self, change_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Remove the change document with the given ``change_id`` and
         any subsequent changes.
@@ -67,8 +65,6 @@ class ChangeView(PydanticView):
             404: Not found
             409: Not unbuilt
         """
-        change_id = self.request.match_info["change_id"]
-
         reference = await get_one_field(
             self.request.app["db"].history, "reference", change_id
         )

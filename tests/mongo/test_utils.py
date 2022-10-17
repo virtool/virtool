@@ -34,18 +34,18 @@ class TestApplyProjection:
         assert "Invalid type for projection: <class 'str'>" in str(excinfo.value)
 
 
-async def test_delete_unready(dbi):
-    await dbi.analyses.insert_many(
+async def test_delete_unready(mongo):
+    await mongo.analyses.insert_many(
         [{"_id": 1, "ready": True}, {"_id": 2, "ready": False}]
     )
 
-    await virtool.mongo.utils.delete_unready(dbi.analyses)
+    await virtool.mongo.utils.delete_unready(mongo.analyses)
 
-    assert await dbi.analyses.find().to_list(None) == [{"_id": 1, "ready": True}]
+    assert await mongo.analyses.find().to_list(None) == [{"_id": 1, "ready": True}]
 
 
-async def test_check_missing_ids(dbi):
-    await dbi.subtraction.insert_many(
+async def test_check_missing_ids(mongo):
+    await mongo.subtraction.insert_many(
         [
             {
                 "_id": "foo",
@@ -59,7 +59,7 @@ async def test_check_missing_ids(dbi):
     )
 
     non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-        dbi.subtraction, ["foo", "bar", "baz"]
+        mongo.subtraction, ["foo", "bar", "baz"]
     )
 
     assert non_existent_subtractions == {"baz"}
