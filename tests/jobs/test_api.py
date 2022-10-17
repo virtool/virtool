@@ -4,7 +4,8 @@ from virtool_core.models.enums import Permission
 
 @pytest.mark.parametrize("archived", [True, False, None])
 @pytest.mark.parametrize("state", ["running", None])
-async def test_find_beta(archived, state, fake, snapshot, spawn_client):
+@pytest.mark.parametrize("users", [None, "bob", "bob, test"])
+async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
     client = await spawn_client(authorize=True)
 
     for _ in range(15):
@@ -17,6 +18,9 @@ async def test_find_beta(archived, state, fake, snapshot, spawn_client):
 
     if state is not None:
         url += f"&state={state}"
+
+    if users is not None:
+        url += f"&users={users}"
 
     resp = await client.get(url)
 

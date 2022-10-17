@@ -74,7 +74,9 @@ class JobsData:
         }
         """
         states = query.getall("state", None)
-        term = query.get("find")
+        users = query.get("users")
+        if users:
+            users = [user.strip() for user in users.split(",")]
         archived = get_query_bool(query, "archived") if "archived" in query else None
 
         try:
@@ -95,8 +97,8 @@ class JobsData:
         sort = {"created_at": -1}
 
         match_query = {
-            **(compose_regex_query(term, ["user.id"]) if term else {}),
             **({"archived": archived} if archived is not None else {}),
+            **({"user.id": {"$in": users}} if users else {})
         }
 
         match_state = {"state": {"$in": states}} if states else {}
