@@ -1,8 +1,8 @@
 # name: test_get_row[uvloop]
-  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
 ---
 # name: test_get_row[uvloop].1
-  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
 ---
 # name: test_get_rows[uvloop]
   <class 'ScalarResult'> {

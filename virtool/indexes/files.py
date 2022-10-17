@@ -2,7 +2,7 @@ from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 
 
 async def create_index_file(
@@ -19,7 +19,7 @@ async def create_index_file(
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        index_file = IndexFile(name=name, index=index_id, type=file_type, size=size)
+        index_file = SQLIndexFile(name=name, index=index_id, type=file_type, size=size)
 
         session.add(index_file)
 

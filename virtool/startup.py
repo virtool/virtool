@@ -34,6 +34,7 @@ from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmData
 from virtool.hmm.db import refresh
+from virtool.indexes.data import IndexData
 from virtool.indexes.tasks import (
     AddIndexFilesTask,
     AddIndexJSONTask,
@@ -140,6 +141,7 @@ async def startup_data(app: App):
         HistoryData(app["config"].data_path, app["db"]),
         ReferencesData(app["db"], app["pg"], app["config"], app["client"]),
         HmmData(app["client"], app["config"], app["db"], app["pg"]),
+        IndexData(app["db"], app["config"], app["pg"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),

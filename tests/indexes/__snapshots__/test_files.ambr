@@ -8,5 +8,5 @@
   }
 ---
 # name: test_create_index_file[uvloop].1
-  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=9000)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=9000)>
 ---

@@ -21,6 +21,8 @@ from virtool_core.models.reference import (
 )
 from virtool_core.models.task import Task
 
+import virtool.history.db
+import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
 from virtool.api.response import NotFound, InsufficientRights
@@ -334,7 +336,7 @@ class ReferencesData(DataLayerPiece):
 
         return ReferenceRelease(**release)
 
-    async def get_updates(self, ref_id: str) -> ReferenceInstalled:
+    async def get_updates(self, ref_id: str) -> List[ReferenceInstalled]:
 
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
@@ -505,16 +507,21 @@ class ReferencesData(DataLayerPiece):
 
         return IndexMinimal(**document)
 
-    async def list_groups(self, ref_id: str) -> ReferenceGroup:
+    async def list_groups(self, ref_id: str) -> List[ReferenceGroup]:
+        """
+        List all groups that have access to the reference.
 
-        if not await self._mongo.references.count_documents({"_id": ref_id}):
-            raise ResourceNotFoundError()
-
+        :param ref_id: the id of the reference
+        :return: a list of reference users
+        """
         groups = await virtool.mongo.utils.get_one_field(
             self._mongo.references, "groups", ref_id
         )
 
-        return ReferenceGroup(**groups)
+        if groups:
+            return [ReferenceGroup(**group) for group in groups]
+
+        raise ResourceNotFoundError
 
     async def create_group(
         self, ref_id: str, data: CreateReferenceGroupsSchema, req

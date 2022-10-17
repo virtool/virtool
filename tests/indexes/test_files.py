@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
 
 import virtool.indexes.files
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 
 
 async def test_create_index_file(snapshot, pg: AsyncEngine):
@@ -15,5 +15,5 @@ async def test_create_index_file(snapshot, pg: AsyncEngine):
 
     async with AsyncSession(pg) as session:
         assert (
-            await session.execute(select(IndexFile).filter_by(id=1))
+            await session.execute(select(SQLIndexFile).filter_by(id=1))
         ).scalar() == snapshot

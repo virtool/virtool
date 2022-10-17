@@ -6,8 +6,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-import dictdiffer
 import pymongo.errors
+import dictdiffer
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.enums import HistoryMethod
 
@@ -142,7 +142,7 @@ async def add(
     return document
 
 
-async def find(db, req_query, base_query=None):
+async def find(db, req_query, base_query: Optional[Document] = None):
     data = await paginate(
         db.history,
         {},
@@ -200,7 +200,13 @@ async def get_contributors(db, query: dict) -> List[dict]:
         [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}]
     )
 
-    contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
+    contributors = [
+        {
+            "id": c["_id"],
+            "count": c["count"],
+        }
+        async for c in cursor
+    ]
 
     users = await db.users.find(
         {"_id": {"$in": [c["id"] for c in contributors]}}, projection=ATTACH_PROJECTION
