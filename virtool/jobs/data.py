@@ -15,7 +15,6 @@ from virtool_core.models.user import UserNested
 
 import virtool.utils
 from virtool.api.utils import (
-    compose_regex_query,
     get_query_bool,
 )
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
