@@ -1,9 +1,11 @@
 from typing import List
 
+from pymongo.errors import DuplicateKeyError
 from virtool_core.models.group import GroupMinimal, Group
 
 from virtool.data.errors import (
     ResourceNotFoundError,
+    ResourceConflictError,
 )
 from virtool.groups.db import (
     update_member_users,
@@ -54,12 +56,15 @@ class GroupsData:
         :return: the group
         """
 
-        document = await self._db.groups.insert_one(
-            {
-                "name": name,
-                "permissions": generate_base_permissions(),
-            }
-        )
+        try:
+            document = await self._db.groups.insert_one(
+                {
+                    "name": name,
+                    "permissions": generate_base_permissions(),
+                }
+            )
+        except DuplicateKeyError:
+            raise ResourceConflictError("Group already exists")
 
         return Group(**base_processor(document), users=[])
 

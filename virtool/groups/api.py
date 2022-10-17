@@ -58,7 +58,7 @@ class GroupsView(PydanticView):
         return json_response(
             GroupResponse.parse_obj(group),
             status=201,
-            headers={"Location": f"/groups/{group.name}"},
+            headers={"Location": f"/groups/{group.id}"},
         )
 
 
