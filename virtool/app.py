@@ -9,7 +9,6 @@ from aiohttp_pydantic import oas
 import virtool.http.accept
 import virtool.http.auth
 import virtool.http.errors
-import virtool.http.proxy
 import virtool.http.query
 from virtool.config.cls import Config
 from virtool.http.headers import headers_middleware, on_prepare_location
@@ -52,7 +51,6 @@ def create_app_without_startup():
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
-        virtool.http.proxy.middleware,
         virtool.http.query.middleware,
     ]
 
@@ -75,7 +73,6 @@ def create_app(config: Config):
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
-        virtool.http.proxy.middleware,
         virtool.http.query.middleware,
     ]
 

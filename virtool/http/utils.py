@@ -5,7 +5,6 @@ import aiofiles
 from aiohttp.web_response import Response
 
 from virtool.errors import GitHubError
-from virtool.http.proxy import ProxyRequest
 from virtool.types import App
 
 
@@ -24,7 +23,7 @@ async def download_file(
     :param progress_handler: a callable that will be called with the current progress when it changes.
 
     """
-    async with ProxyRequest(app["config"], app["client"].get, url) as resp:
+    async with app["client"].get(url) as resp:
         if resp.status != 200:
             raise GitHubError("Could not download file")
 

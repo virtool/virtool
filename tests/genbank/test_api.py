@@ -19,9 +19,9 @@ async def test_get(error, mocker, resp_is, spawn_client):
         await resp_is.not_found(resp)
         return
 
-    m_fetch.assert_called_with(client.app["config"], mocker.ANY, "NC_016574.1")
+    m_fetch.assert_called_with(mocker.ANY, "NC_016574.1")
 
-    assert isinstance(m_fetch.call_args[0][1], ClientSession)
+    assert isinstance(m_fetch.call_args[0][0], ClientSession)
 
     assert resp.status == 200
     assert await resp.json() == expected
