@@ -101,7 +101,6 @@ async def get_release(
         url,
         headers=headers,
     ) as resp:
-        # async with ProxyRequest(config, session.get, url, headers=headers) as resp:
         rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
         rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
 
