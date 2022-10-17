@@ -160,7 +160,7 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
     jobs = [await fake.jobs.insert(randomize=True) for _ in range(10)]
 
     data = {
-        "jobs": [
+        "updates": [
             {"id": job["_id"], "archived": True}
             for job in jobs
             if job["archived"] is False
@@ -168,14 +168,13 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
     }
 
     if error == "not_found":
-        data["jobs"].append({"id": "foo", "archived": True})
-        data["jobs"].append({"id": "bar", "archived": True})
-        message += f"The following jobs were not found: {['foo', 'bar']}"
+        data["updates"].append({"id": "foo", "archived": True})
+        data["updates"].append({"id": "bar", "archived": True})
+        message += f"Jobs not found: {['foo', 'bar']}"
     elif error == "invalid_archived":
-        data["jobs"][0]["archived"] = False
-        message += "The `archived` field can only be `true`"
+        data["updates"][0]["archived"] = False
     elif error == "none_archived":
-        del data["jobs"][1]["archived"]
+        del data["updates"][1]["archived"]
     else:
         pass
 
@@ -188,14 +187,26 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
         assert await resp.json() == [
             {
                 "in": "body",
-                "loc": ["jobs", 1, "archived"],
+                "loc": ["updates", 1, "archived"],
                 "msg": "field required",
                 "type": "value_error.missing",
             }
         ]
         return
 
-    if error is not None:
+    if error == "invalid_archived":
+        assert resp.status == 400
+        assert await resp.json() == [
+            {
+                "loc": ["updates", 0, "archived"],
+                "msg": "The `archived` field can only be `true`",
+                "type": "value_error",
+                "in": "body",
+            }
+        ]
+        return
+
+    if error == "not_found":
         await resp_is.bad_request(resp, message)
         return
 

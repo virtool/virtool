@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from virtool_core.models.job import JobMinimal, Job
 
 
@@ -355,6 +355,12 @@ class ArchiveJobSchema(BaseModel):
     id: str
     archived: bool
 
+    @validator("archived")
+    def check_archived(cls, archived: bool) -> bool:
+        if archived is False:
+            raise ValueError("The `archived` field can only be `true`")
+        return archived
+
 
 class ArchiveJobsRequest(BaseModel):
-    jobs: List[ArchiveJobSchema]
+    updates: List[ArchiveJobSchema]

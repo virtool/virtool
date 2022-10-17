@@ -1,4 +1,3 @@
-import asyncio
 from logging import getLogger
 from typing import Union, List, Optional
 
@@ -18,7 +17,11 @@ from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.users.utils import Permission
-from virtool.jobs.oas import GetJobResponse, JobResponse, ArchiveJobsRequest
+from virtool.jobs.oas import (
+    GetJobResponse,
+    JobResponse,
+    ArchiveJobsRequest,
+)
 
 logger = getLogger(__name__)
 
@@ -77,7 +80,7 @@ class JobsView(PydanticView):
 
     async def patch(
         self, data: ArchiveJobsRequest
-    ) -> Union[r200[List[JobMinimal]], r400[List[str]], r400]:
+    ) -> Union[r200[List[JobMinimal]], r400]:
         """
         Sets the archived field on job documents.
 
@@ -87,30 +90,14 @@ class JobsView(PydanticView):
             400: Archived field not set
             400: Invalid archived field
         """
-        job_ids = []
+        job_ids = [job.id for job in data.updates]
 
-        for job in data.jobs:
-            if job.archived is False:
-                raise HTTPBadRequest(text="The `archived` field can only be `true`")
-            job_ids.append(job.id)
+        try:
+            jobs = await get_data_from_req(self.request).jobs.bulk_archive(job_ids)
+        except ResourceNotFoundError as err:
+            raise HTTPBadRequest(text=str(err))
 
-        archived_jobs = []
-        jobs_not_found = []
-
-        for job_id in job_ids:
-            try:
-                job = await get_data_from_req(self.request).jobs.archive(job_id, True)
-            except ResourceNotFoundError:
-                jobs_not_found.append(job_id)
-
-            archived_jobs.append(JobMinimal.parse_obj(job.dict()))
-
-        if len(jobs_not_found) == 0:
-            return json_response(archived_jobs)
-
-        raise HTTPBadRequest(
-            text=f"The following jobs were not found: {jobs_not_found}"
-        )
+        return json_response(jobs)
 
 
 @routes.view("/jobs/{job_id}")
@@ -204,9 +191,7 @@ async def archive(req):
     Sets the archived field on the job document.
     """
     try:
-        document = await get_data_from_req(req).jobs.archive(
-            req.match_info["job_id"], False
-        )
+        document = await get_data_from_req(req).jobs.archive(req.match_info["job_id"])
     except ResourceNotFoundError:
         raise NotFound()
     except ResourceConflictError:

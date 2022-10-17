@@ -1,7 +1,7 @@
 import math
 from asyncio import gather
 from collections import defaultdict
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -274,12 +274,11 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document, key=key)
 
-    async def archive(self, job_id: str, bulk_archive: bool) -> Job:
+    async def archive(self, job_id: str) -> Job:
         """
         Set the `archived` field on a job to `True` and return the complete document.
 
         :param job_id: the ID of the job to start
-        :param bulk_archive: the flag to indicate if it is a bulk or single archive operation
         :return: the complete job document
 
         """
@@ -289,9 +288,8 @@ class JobsData:
         if archived is None:
             raise ResourceNotFoundError("Job not found")
 
-        if not bulk_archive:
-            if archived is True:
-                raise ResourceConflictError("Job already archived")
+        if archived is True:
+            raise ResourceConflictError("Job already archived")
 
         document = await self._db.jobs.find_one_and_update(
             {"_id": job_id},
@@ -300,6 +298,67 @@ class JobsData:
         )
 
         return await fetch_complete_job(self._db, document)
+
+    async def bulk_archive(self, job_ids: List[str]) -> List[JobMinimal]:
+        """
+        Archive multiple jobs at the same time.
+
+        :param job_ids: the ids of the jobs to archive
+        :return: the archived jobs
+        """
+
+        existing_jobs = await self._db.jobs.distinct("_id")
+
+        jobs_not_found = [job for job in job_ids if job not in existing_jobs]
+
+        if len(jobs_not_found) != 0:
+            raise ResourceNotFoundError(f"Jobs not found: {jobs_not_found}")
+
+        async with self._db.create_session() as session:
+            await self._db.jobs.update_many(
+                {"_id": {"$in": job_ids}},
+                {"$set": {"archived": True}},
+                session=session,
+            )
+
+        pipeline = [
+            {"$match": {"_id": {"$in": job_ids}}},
+            {
+                "$group": {
+                    "_id": "$_id",
+                    "created_at": {"$first": "$created_at"},
+                    "archived": {"$first": "$archived"},
+                    "progress": {"$first": "$progress"},
+                    "stage": {"$first": "$stage"},
+                    "state": {"$first": "$state"},
+                    "user": {"$first": "$user"},
+                    "workflow": {"$first": "$workflow"},
+                }
+            },
+        ]
+
+        archived_jobs = []
+
+        async for agg in self._db.jobs.aggregate(pipeline):
+            user = await self._db.users.find_one(agg["user"]["id"])
+            archived_jobs.append(
+                {
+                    "id": agg["_id"],
+                    "created_at": agg["created_at"],
+                    "archived": agg["archived"],
+                    "progress": agg["progress"],
+                    "stage": agg["stage"],
+                    "state": agg["state"],
+                    "user": {
+                        "id": user["_id"],
+                        "handle": user["handle"],
+                        "administrator": user["administrator"],
+                    },
+                    "workflow": agg["workflow"],
+                }
+            )
+
+        return [JobMinimal(**document) for document in archived_jobs]
 
     async def cancel(self, job_id: str) -> Job:
         """

@@ -114,7 +114,7 @@ async def test_archive(mongo, fake2, jobs_data: JobsData, pg, snapshot, static_t
         }
     )
 
-    assert await jobs_data.archive("foo", False) == snapshot
+    assert await jobs_data.archive("foo") == snapshot
     assert await mongo.jobs.find_one() == snapshot
 
 
