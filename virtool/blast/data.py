@@ -6,13 +6,15 @@ from zipfile import BadZipFile
 from aiohttp import ClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.blast import NuvsBlast
 
 import virtool.blast.utils
 import virtool.utils
 from virtool.blast.db import get_nuvs_blast, delete_nuvs_blast
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
-from virtool.blast.utils import format_blast_content
+from virtool.blast.utils import format_blast_content, fetch_nuvs_blast_result
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.types import Document
 
@@ -34,7 +36,7 @@ class BLASTData(DataLayerPiece):
 
     async def create_nuvs_blast(
         self, analysis_id: str, sequence_index: int
-    ) -> Document:
+    ) -> NuvsBlast:
         """
         Create a NuVs BLAST record for the sequence associated with a specific analysis
         ID and sequence index.
@@ -53,7 +55,7 @@ class BLASTData(DataLayerPiece):
             await delete_nuvs_blast(session, analysis_id, sequence_index)
             await session.flush()
 
-            blast = SQLNuVsBlast(
+            blast_row = SQLNuVsBlast(
                 analysis_id=analysis_id,
                 created_at=created_at,
                 last_checked_at=created_at,
@@ -62,7 +64,7 @@ class BLASTData(DataLayerPiece):
                 updated_at=created_at,
             )
 
-            session.add(blast)
+            session.add(blast_row)
             await session.flush()
 
             await self.data.tasks.create(
@@ -70,7 +72,7 @@ class BLASTData(DataLayerPiece):
                 {"analysis_id": analysis_id, "sequence_index": sequence_index},
             )
 
-            blast_data = blast.to_dict()
+            blast = NuvsBlast(**blast_row.to_dict())
 
             # Don't commit until the task has been created.
             await session.commit()
@@ -79,9 +81,9 @@ class BLASTData(DataLayerPiece):
             {"_id": analysis_id}, {"$set": {"updated_at": created_at}}
         )
 
-        return blast_data
+        return blast
 
-    async def get_nuvs_blast(self, analysis_id: str, sequence_index: int) -> Document:
+    async def get_nuvs_blast(self, analysis_id: str, sequence_index: int) -> NuvsBlast:
         """
         Get a NuVs BLAST record by its analysis ID and sequence index.
 
@@ -91,7 +93,7 @@ class BLASTData(DataLayerPiece):
         """
         async with AsyncSession(self._pg) as session:
             blast = await get_nuvs_blast(session, analysis_id, sequence_index)
-            return blast.to_dict()  BLAST
+            return NuvsBlast(**blast.to_dict())
 
     async def check_nuvs_blast(
         self,
@@ -115,26 +117,28 @@ class BLASTData(DataLayerPiece):
         updated_at = virtool.utils.timestamp()
 
         async with AsyncSession(self._pg) as session:
-            blast = await get_nuvs_blast(session, analysis_id, sequence_index)
+            blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
 
-            ready = await virtool.blast.utils.check_rid(self._client, blast.rid)
+            if blast_row is None:
+                raise ResourceNotFoundError
 
-            blast.last_checked_at = updated_at
-            blast.updated_at = updated_at
+            ready = await virtool.blast.utils.check_rid(self._client, blast_row.rid)
+
+            blast_row.last_checked_at = updated_at
+            blast_row.updated_at = updated_at
 
             if ready:
                 try:
-                    result_json = await virtool.blast.utils.get_ncbi_blast_result(
-                        self.app["run_in_process"], blast.rid
+                    result_json = await fetch_nuvs_blast_result(
+                        self._client, blast_row.rid
                     )
 
-                    blast.result = format_blast_content(result_json)
-                    blast.ready = True
+                    blast_row.result = format_blast_content(result_json)
+                    blast_row.ready = True
                 except BadZipFile:
-                    blast.error = "Unable to interpret NCBI result"
+                    blast_row.error = "Unable to interpret NCBI result"
 
                 await session.flush()
-                blast_dict = blast.to_dict()
 
             await session.commit()
 
@@ -143,7 +147,7 @@ class BLASTData(DataLayerPiece):
             {"$set": {"updated_at": updated_at}},
         )
 
-        return blast_dict
+        return await self.get_nuvs_blast(analysis_id, sequence_index)
 
     async def delete_nuvs_blast(self, analysis_id: str, sequence_index: int) -> int:
         """

@@ -134,7 +134,7 @@ async def startup_data(app: App):
     app["data"] = DataLayer(
         AccountData(app["db"], app["redis"]),
         AnalysisData(app["db"], app["config"], app["pg"]),
-        BLASTData(app["db"], app["pg"]),
+        BLASTData(app["client"], app["db"], app["pg"]),
         GroupsData(app["db"]),
         SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),

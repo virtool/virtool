@@ -9,7 +9,7 @@ A sample needs a user and upload to exist.
 ```
 
 """
-from typing import List, Optional
+from typing import List, Optional, Type, Dict
 
 from faker import Faker
 from faker.providers import BaseProvider, python, color, lorem
@@ -29,6 +29,7 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
 )
 from virtool.subtractions.tasks import AddSubtractionFilesTask
+from virtool.tasks.task import BaseTask
 from virtool.users.oas import UpdateUserSchema
 
 
@@ -129,6 +130,9 @@ class TasksFakerPiece(DataFakerPiece):
             ),
             {},
         )
+
+    async def create_with_class(self, cls: Type[BaseTask], context: Dict):
+        return await self.layer.tasks.create(cls, context)
 
 
 class UsersFakerPiece(DataFakerPiece):

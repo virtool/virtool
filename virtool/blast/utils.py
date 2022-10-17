@@ -10,6 +10,7 @@ import aiohttp
 from aiohttp import ClientSession
 
 import virtool.errors
+from virtool.utils import run_in_thread
 
 logger = getLogger("blast")
 
@@ -173,14 +174,11 @@ async def initialize_ncbi_blast(
         return extract_blast_info(html)
 
 
-async def get_ncbi_blast_result(
-    client_session: ClientSession, run_in_process: callable, rid: str
-) -> dict:
+async def fetch_nuvs_blast_result(client_session: ClientSession, rid: str) -> dict:
     """
     Retrieve the BLAST result with the given `rid` from NCBI.
 
     :param client_session: the application http session
-    :param run_in_process: the application processing running function
     :param rid: the rid to retrieve a result for
     :return: the BLAST result
 
@@ -195,4 +193,4 @@ async def get_ncbi_blast_result(
     async with client_session.get(BLAST_URL, params=params) as resp:
         data = await resp.read()
 
-    return await run_in_process(extract_blast_zip, data, rid)
+    return await run_in_thread(extract_blast_zip, data, rid)

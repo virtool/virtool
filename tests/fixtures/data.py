@@ -29,7 +29,7 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
     return DataLayer(
         AccountData(dbi, redis),
         AnalysisData(dbi, config, pg),
-        mocker.Mock(spec=BLASTData),
+        BLASTData(mocker.Mock(spec=ClientSession), dbi, pg),
         GroupsData(dbi),
         SettingsData(dbi),
         HistoryData(config.data_path, dbi),
