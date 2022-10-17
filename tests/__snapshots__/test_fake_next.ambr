@@ -18,6 +18,7 @@
 ---
 # name: test_fake[uvloop].1
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -45,6 +46,7 @@
 ---
 # name: test_fake[uvloop].2
   <class 'dict'> {
+    'active': True,
     'administrator': False,
     'b2c': None,
     'b2c_display_name': None,
@@ -88,6 +90,7 @@
     },
     'created_at': <class 'datetime'>,
     'id': '7cf872dc',
+    'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
     },

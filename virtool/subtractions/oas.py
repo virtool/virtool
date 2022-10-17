@@ -6,6 +6,7 @@ from virtool_core.models.subtraction import (
     Subtraction,
     NucleotideComposition,
 )
+from virtool_core.models.validators import prevent_none
 
 
 class EditSubtractionSchema(BaseModel):
@@ -22,6 +23,8 @@ class EditSubtractionSchema(BaseModel):
 
     class Config:
         schema_extra = {"example": {"name": "Arabidopsis", "nickname": "Thale cress"}}
+
+    _prevent_none = prevent_none("*")
 
 
 class CreateSubtractionSchema(BaseModel):

@@ -142,7 +142,7 @@ async def add(
     return document
 
 
-async def find(db, req_query, base_query=None):
+async def find(db, req_query, base_query: Optional[Document] = None):
     data = await paginate(
         db.history,
         {},

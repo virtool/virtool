@@ -4,9 +4,10 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Mapping
 
 import pymongo
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.history.db
@@ -16,7 +17,7 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 
@@ -126,7 +127,7 @@ async def processor(db, document: dict) -> dict:
     )
 
 
-async def find(db, req_query: dict, ref_id: Optional[str] = None) -> dict:
+async def find(db, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
     """
     Find an index document matching the `req_query`
 
@@ -162,29 +163,6 @@ async def find(db, req_query: dict, ref_id: Optional[str] = None) -> dict:
     }
 
 
-async def finalize(
-    db, pg: AsyncEngine, base_url: str, ref_id: str, index_id: str
-) -> dict:
-    """
-    Finalize an index document by setting `ready` to `True`.
-
-    :param db: the application database client
-    :param pg: the PostgreSQL AsyncEngine object
-    :param base_url: the application base URL configuration value
-    :param ref_id: the ID of the reference
-    :param index_id: the ID of the index to be finalized for
-    :return: the index document after finalization
-
-    """
-    await update_last_indexed_versions(db, ref_id)
-
-    document = await db.indexes.find_one_and_update(
-        {"_id": index_id}, {"$set": {"ready": True}}
-    )
-
-    return await attach_files(pg, base_url, document)
-
-
 async def get_current_id_and_version(db, ref_id: str) -> Tuple[Optional[str], int]:
     """
     Return the current index id and version number.
@@ -217,25 +195,23 @@ async def get_otus(db, index_id: str) -> List[dict]:
     :return: a list of otus modified in the index
 
     """
-    cursor = db.history.aggregate(
-        [
-            {"$match": {"index.id": index_id}},
-            {"$sort": {"otu.id": 1, "otu.version": -1}},
-            {
-                "$group": {
-                    "_id": "$otu.id",
-                    "name": {"$first": "$otu.name"},
-                    "count": {"$sum": 1},
-                }
-            },
-            {"$match": {"name": {"$ne": None}}},
-            {"$sort": {"name": 1}},
-        ]
-    )
+    pipeline = [
+        {"$match": {"index.id": index_id}},
+        {"$sort": {"otu.id": 1, "otu.version": -1}},
+        {
+            "$group": {
+                "_id": "$otu.id",
+                "name": {"$first": "$otu.name"},
+                "count": {"$sum": 1},
+            }
+        },
+        {"$match": {"name": {"$ne": None}}},
+        {"$sort": {"name": 1}},
+    ]
 
     return [
-        {"id": v["_id"], "name": v["name"], "change_count": v["count"]}
-        async for v in cursor
+        {"id": otu["_id"], "name": otu["name"], "change_count": otu["count"]}
+        async for otu in db.history.aggregate(pipeline)
     ]
 
 
@@ -303,15 +279,17 @@ async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List
     ]
 
 
-async def update_last_indexed_versions(db, ref_id: str):
+async def update_last_indexed_versions(
+    mongo, ref_id: str, session: AsyncIOMotorClientSession
+):
     """
     Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
-    :param db: Application database client
-    :param ref_id: An ID that corresponds to an entry in the `references` db
+    :param mongo: the application mongo client
+    :param session: the motor session to use
+    :param ref_id: the id of the reference whose otus should be updated
 
     """
-    # Find OTUs with changes.
     pipeline = [
         {
             "$project": {
@@ -326,14 +304,19 @@ async def update_last_indexed_versions(db, ref_id: str):
     ]
 
     id_version_key = {
-        agg["_id"]: agg["id_list"] async for agg in db.otus.aggregate(pipeline)
+        agg["_id"]: agg["id_list"] async for agg in mongo.otus.aggregate(pipeline)
     }
 
-    # For each version number
-    for version, id_list in id_version_key.items():
-        await db.otus.update_many(
-            {"_id": {"$in": id_list}}, {"$set": {"last_indexed_version": version}}
-        )
+    await asyncio.gather(
+        *[
+            mongo.otus.update_many(
+                {"_id": {"$in": id_list}},
+                {"$set": {"last_indexed_version": version}},
+                session=session,
+            )
+            for version, id_list in id_version_key.items()
+        ]
+    )
 
 
 async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
@@ -349,7 +332,7 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     """
     index_id = document["_id"]
 
-    rows = await virtool.pg.utils.get_rows(pg, IndexFile, "index", index_id)
+    rows = await virtool.pg.utils.get_rows(pg, SQLIndexFile, "index", index_id)
 
     files = []
 

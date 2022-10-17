@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Optional
 from typing import Union, List
@@ -7,6 +8,7 @@ from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 from pydantic import Field
+from sqlalchemy.exc import IntegrityError
 from virtool_core.models.index import IndexSearchResult
 
 import virtool.indexes.db
@@ -19,6 +21,8 @@ from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
 from virtool.indexes.db import FILES
+from virtool.indexes.files import create_index_file
+from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.oas import (
     ListIndexesResponse,
     GetIndexResponse,
@@ -26,6 +30,7 @@ from virtool.indexes.oas import (
 )
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.references.db import check_right
+from virtool.uploads.utils import naive_writer
 from virtool.utils import run_in_thread
 
 logger = logging.getLogger("indexes")
@@ -198,7 +203,7 @@ async def upload(req):
     try:
         reference = await get_data_from_req(req).index.get_reference(index_id)
     except ResourceNotFoundError:
-        raise NotFound()
+        raise NotFound
 
     file_type = check_index_file_type(name)
 
@@ -209,11 +214,8 @@ async def upload(req):
     except ResourceConflictError:
         raise HTTPConflict(text="File name already exists")
 
-    if index_file is None:
-        return Response(status=499)
-
     return json_response(
-        {**index_file.to_dict(), "uploaded_at": virtool.utils.timestamp()},
+        index_file,
         headers={"Location": f"/indexes/{index_id}/files/{name}"},
         status=201,
     )

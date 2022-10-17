@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.utils import get_data_from_app
 from virtool.indexes.db import FILES
 from virtool.indexes.files import create_index_file
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
 from virtool.jobs.client import DummyJobsClient
 
@@ -215,7 +215,9 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
 
 
 @pytest.mark.parametrize("file_exists", [True, False])
-async def test_download_otus_json(file_exists, mocker, tmp_path, mongo, spawn_job_client):
+async def test_download_otus_json(
+    file_exists, mocker, tmp_path, mongo, spawn_job_client
+):
     with gzip.open(OTUS_JSON_PATH, "rt") as f:
         expected = json.load(f)
 
@@ -462,7 +464,7 @@ async def test_upload(
 
     if error == "409":
         async with AsyncSession(pg) as session:
-            session.add(IndexFile(name="reference.1.bt2", index="foo"))
+            session.add(SQLIndexFile(name="reference.1.bt2", index="foo"))
             await session.commit()
 
     if not error == "404_index":
@@ -497,7 +499,7 @@ async def test_upload(
 
     async with AsyncSession(pg) as session:
         assert (
-            await session.execute(select(IndexFile).filter_by(id=1))
+            await session.execute(select(SQLIndexFile).filter_by(id=1))
         ).scalar() == snapshot
 
 
@@ -542,7 +544,7 @@ async def test_finalize(
 
     for file_name in files:
         await create_index_file(
-            pg, "test_index", check_index_file_type(file_name), file_name
+            pg, "test_index", check_index_file_type(file_name), file_name, 9000
         )
 
     resp = await client.patch("/indexes/test_index")

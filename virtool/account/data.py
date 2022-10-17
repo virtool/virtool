@@ -61,9 +61,9 @@ class AccountData:
             }
         )
 
-    async def edit(self, user_id: str, data: EditAccountSchema) -> Account:
+    async def update(self, user_id: str, data: EditAccountSchema) -> Account:
         """
-        Edit the user account.
+        Update the user account.
 
         :param user_id: the user ID
         :param data: the update to the account
@@ -103,11 +103,11 @@ class AccountData:
 
         return AccountSettings(**settings)
 
-    async def edit_settings(
+    async def update_settings(
         self, data: EditSettingsSchema, query_field: str, user_id: str
     ) -> AccountSettings:
         """
-        Edits account settings.
+        Updates account settings.
 
         :param data: the update to the account settings
         :param query_field: the field to edit
@@ -206,7 +206,9 @@ class AccountData:
 
         return APIKey(**document)
 
-    async def edit_key(self, user_id: str, key_id: str, data: EditKeySchema) -> APIKey:
+    async def update_key(
+        self, user_id: str, key_id: str, data: EditKeySchema
+    ) -> APIKey:
         """
         Change the permissions for an existing API key.
 
@@ -316,20 +318,10 @@ class AccountData:
 
         session = json.loads(await self._redis.get(session_id))
 
-        user_id = session["reset_user_id"]
+        if not session.get("reset_code") or reset_code != session.get("reset_code"):
+            raise ResourceError()
 
-        if (
-            not session.get("reset_code")
-            or not session.get("reset_user_id")
-            or reset_code != session.get("reset_code")
-        ):
-            return {
-                "status": 400,
-                "user_id": user_id,
-                "reset_code": await create_reset_code(
-                    self._redis, session_id, user_id=user_id
-                ),
-            }
+        user_id = session["reset_user_id"]
 
         session_id, new_session, token = await replace_session(
             self._db,

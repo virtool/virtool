@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from pydantic import BaseModel, constr, Field
+from virtool_core.models.validators import prevent_none
 
 
 class CreateFirstUserSchema(BaseModel):
@@ -38,3 +39,5 @@ class UpdateUserSchema(BaseModel):
     primary_group: Optional[str] = Field(
         description="the users primary group used for sample rights"
     )
+
+    _prevent_none = prevent_none("*")

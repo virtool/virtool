@@ -2494,7 +2494,7 @@
     'target': None,
   }
 ---
-# name: test_edit[uvloop-data0]
+# name: test_update[uvloop-data0]
   <class 'dict'> {
     'abbreviation': 'TMV',
     'id': '6116cba1',
@@ -2539,7 +2539,7 @@
     'version': 1,
   }
 ---
-# name: test_edit[uvloop-data0][db]
+# name: test_update[uvloop-data0][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -2621,7 +2621,7 @@
     },
   ]
 ---
-# name: test_edit_isolate[uvloop]
+# name: test_update_isolate[uvloop]
   <class 'dict'> {
     'default': True,
     'id': 'cab8b360',
@@ -2631,7 +2631,7 @@
     'source_type': 'strain',
   }
 ---
-# name: test_edit_isolate[uvloop].1
+# name: test_update_isolate[uvloop].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -2656,7 +2656,7 @@
     'version': 1,
   }
 ---
-# name: test_edit_isolate[uvloop].2
+# name: test_update_isolate[uvloop].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2713,7 +2713,7 @@
     },
   }
 ---
-# name: test_edit_sequence[uvloop-ATAGAG GAGTA\nAGAGTGA][db]
+# name: test_update_sequence[uvloop-ATAGAG GAGTA\nAGAGTGA][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -2863,7 +2863,7 @@
     },
   ]
 ---
-# name: test_edit_sequence[uvloop-ATAGAG GAGTA\nAGAGTGA][return]
+# name: test_update_sequence[uvloop-ATAGAG GAGTA\nAGAGTGA][return]
   <class 'dict'> {
     'accession': '987xyz',
     'definition': 'Hello world',
@@ -2879,7 +2879,7 @@
     'sequence': 'ATAGAGGAGTAAGAGTGA',
   }
 ---
-# name: test_edit_sequence[uvloop-None][db]
+# name: test_update_sequence[uvloop-None][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -3015,7 +3015,7 @@
     },
   ]
 ---
-# name: test_edit_sequence[uvloop-None][return]
+# name: test_update_sequence[uvloop-None][return]
   <class 'dict'> {
     'accession': '987xyz',
     'definition': 'Hello world',

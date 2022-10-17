@@ -179,7 +179,7 @@
         'id': 1,
         'index': 'test_index',
         'name': 'reference.fa.gz',
-        'size': None,
+        'size': 9000,
         'type': 'fasta',
       },
       <class 'dict'> {
@@ -187,7 +187,7 @@
         'id': 2,
         'index': 'test_index',
         'name': 'reference.json.gz',
-        'size': None,
+        'size': 9000,
         'type': 'json',
       },
       <class 'dict'> {
@@ -195,7 +195,7 @@
         'id': 3,
         'index': 'test_index',
         'name': 'reference.1.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -203,7 +203,7 @@
         'id': 4,
         'index': 'test_index',
         'name': 'reference.2.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -211,7 +211,7 @@
         'id': 5,
         'index': 'test_index',
         'name': 'reference.3.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -219,7 +219,7 @@
         'id': 6,
         'index': 'test_index',
         'name': 'reference.4.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -227,7 +227,7 @@
         'id': 7,
         'index': 'test_index',
         'name': 'reference.rev.1.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
       <class 'dict'> {
@@ -235,7 +235,7 @@
         'id': 8,
         'index': 'test_index',
         'name': 'reference.rev.2.bt2',
-        'size': None,
+        'size': 9000,
         'type': 'bowtie2',
       },
     ],
@@ -445,12 +445,12 @@
 ---
 # name: test_upload[uvloop-None]
   <class 'dict'> {
+    'download_url': '/indexes/foo/files/reference.1.bt2',
     'id': 1,
     'index': 'foo',
     'name': 'reference.1.bt2',
     'size': 7205747,
     'type': 'bowtie2',
-    'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---
 # name: test_upload[uvloop-None].1
@@ -465,5 +465,5 @@
   }
 ---
 # name: test_upload[uvloop-None].2
-  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=7205747)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=7205747)>
 ---

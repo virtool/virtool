@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, constr, Field, validator
 from virtool_core.models.label import Label
 
-from virtool_core.models.validators import normalize_hex_color
+from virtool_core.models.validators import normalize_hex_color, prevent_none
 
 
 class CreateLabelSchema(BaseModel):
@@ -66,6 +66,8 @@ class UpdateLabelSchema(BaseModel):
     _ensure_color_is_normalized: classmethod = validator("color", allow_reuse=True)(
         normalize_hex_color
     )
+
+    _prevent_none = prevent_none("*")
 
     class Config:
         schema_extra = {

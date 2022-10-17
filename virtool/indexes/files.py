@@ -2,11 +2,11 @@ from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 
 
 async def create_index_file(
-    pg: AsyncEngine, index_id: str, file_type: str, name: str
+    pg: AsyncEngine, index_id: str, file_type: str, name: str, size: int
 ) -> Dict[str, any]:
     """
     Create a row in the `index_files` SQL table that represents an index file.
@@ -15,10 +15,11 @@ async def create_index_file(
     :param index_id: ID that corresponds to a parent index
     :param file_type: type of the index file
     :param name: Name of the index file
+    :param size: Size of the index file
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        index_file = IndexFile(name=name, index=index_id, type=file_type)
+        index_file = SQLIndexFile(name=name, index=index_id, type=file_type, size=size)
 
         session.add(index_file)
 

@@ -5,9 +5,9 @@ from typing import List, Union, Optional
 
 from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index
+from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index, IndexFile
 from virtool_core.models.reference import ReferenceNested
 
 import virtool.indexes.db
@@ -19,9 +19,10 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.db import (
     FILES,
+    update_last_indexed_versions,
 )
 from virtool.indexes.files import create_index_file
-from virtool.indexes.models import IndexFile, IndexType
+from virtool.indexes.models import SQLIndexFile, IndexType
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.pg.utils import delete_row, get_rows
@@ -32,13 +33,13 @@ logger = logging.getLogger("indexes")
 
 
 class IndexData:
-    def __init__(self, db: DB, config: Config, pg: AsyncEngine):
-        self._db = db
+    def __init__(self, mongo: DB, config: Config, pg: AsyncEngine):
         self._config = config
+        self._mongo = mongo
         self._pg = pg
 
     async def find(
-        self, ready: bool, query: MultiDictProxy[str]
+        self, ready: bool, query: MultiDictProxy
     ) -> Union[List[IndexMinimal], IndexSearchResult]:
         """
         List all indexes.
@@ -48,7 +49,7 @@ class IndexData:
         :return: a list of all index documents
         """
         if not ready:
-            data = await virtool.indexes.db.find(self._db, query)
+            data = await virtool.indexes.db.find(self._mongo, query)
             return IndexSearchResult(**data)
 
         pipeline = [
@@ -72,8 +73,8 @@ class IndexData:
 
         ready_indexes = []
 
-        async for agg in self._db.indexes.aggregate(pipeline):
-            user = await self._db.users.find_one(agg["user"]["id"])
+        async for agg in self._mongo.indexes.aggregate(pipeline):
+            user = await self._mongo.users.find_one(agg["user"]["id"])
             ready_indexes.append(
                 {
                     "id": agg["index"],
@@ -104,14 +105,14 @@ class IndexData:
         :param index_id: the index ID
         :return: the index
         """
-        document = await self._db.indexes.find_one(index_id)
+        document = await self._mongo.indexes.find_one(index_id)
 
         if not document:
             raise ResourceNotFoundError()
 
         contributors, otus = await asyncio.gather(
-            virtool.history.db.get_contributors(self._db, {"index.id": index_id}),
-            virtool.indexes.db.get_otus(self._db, index_id),
+            virtool.history.db.get_contributors(self._mongo, {"index.id": index_id}),
+            virtool.indexes.db.get_otus(self._mongo, index_id),
         )
 
         document.update(
@@ -126,7 +127,7 @@ class IndexData:
             self._pg, self._config.base_url, document
         )
 
-        document = await virtool.indexes.db.processor(self._db, document)
+        document = await virtool.indexes.db.processor(self._mongo, document)
 
         return Index(**document)
 
@@ -137,14 +138,12 @@ class IndexData:
         :param index_id: the index ID
         :return: the reference
         """
-        index = await self._db.indexes.find_one(index_id)
+        index = await self._mongo.indexes.find_one(index_id)
 
-        if index is None:
-            raise ResourceNotFoundError()
+        if index:
+            return ReferenceNested(**index["reference"])
 
-        reference = index["reference"]
-
-        return ReferenceNested(**reference)
+        raise ResourceNotFoundError()
 
     async def get_json_path(self, index_id: str) -> Path:
         """
@@ -154,7 +153,7 @@ class IndexData:
         :param index_id: the index ID
         :return: the json path
         """
-        index = await self._db.indexes.find_one(index_id)
+        index = await self._mongo.indexes.find_one(index_id)
 
         if index is None:
             raise ResourceNotFoundError()
@@ -167,7 +166,7 @@ class IndexData:
 
         if not json_path.exists():
             patched_otus = await virtool.indexes.db.get_patched_otus(
-                self._db, self._config, index["manifest"]
+                self._mongo, self._config, index["manifest"]
             )
 
             json_string = dumps(patched_otus)
@@ -189,27 +188,33 @@ class IndexData:
         :param multipart: the file reader
         :return: the index file
         """
-        try:
-            index_file = await create_index_file(self._pg, index_id, file_type, name)
-        except IntegrityError:
-            raise ResourceConflictError()
+        async with AsyncSession(self._pg) as session:
+            index_file = SQLIndexFile(name=name, index=index_id, type=file_type)
 
-        upload_id = index_file["id"]
+            session.add(index_file)
 
-        path = join_index_path(self._config.data_path, reference_id, index_id) / name
+            try:
+                await session.flush()
+            except IntegrityError:
+                raise ResourceConflictError()
 
-        try:
+            path = (
+                join_index_path(self._config.data_path, reference_id, index_id) / name
+            )
+
             size = await naive_writer(await multipart(), path)
-        except asyncio.CancelledError:
-            logger.debug("Index file upload aborted: %s", upload_id)
-            await delete_row(self._pg, upload_id, IndexFile)
-            return None
 
-        index_file = await virtool.uploads.db.finalize(
-            self._pg, size, upload_id, IndexFile
+            index_file.size = size
+            index_file.uploaded_at = virtool.utils.timestamp()
+            index_file.ready = True
+
+            index_file_dict = index_file.to_dict()
+
+            await session.commit()
+
+        return IndexFile(
+            **index_file_dict, download_url=f"/indexes/{index_id}/files/{name}"
         )
-
-        return IndexFile(**index_file)
 
     async def finalize(self, ref_id: str, index_id: str) -> Index:
         """
@@ -219,12 +224,12 @@ class IndexData:
         :param index_id: the index ID
         :return: the finalized Index
         """
-        reference = await self._db.references.find_one(ref_id)
+        reference = await self._mongo.references.find_one(ref_id)
 
         if reference is None:
             raise ResourceNotFoundError()
 
-        rows = await get_rows(self._pg, IndexFile, "index", index_id)
+        rows = await get_rows(self._pg, SQLIndexFile, "index", index_id)
 
         results = {f.name: f.type for f in rows}
 
@@ -242,9 +247,12 @@ class IndexData:
                     f"Missing files: {', '.join(missing_files)}"
                 )
 
-        await virtool.indexes.db.finalize(
-            self._db, self._pg, self._config.base_url, ref_id, index_id
-        )
+        async with self._mongo.create_session() as session:
+            await update_last_indexed_versions(self._mongo, ref_id, session)
+
+            await self._mongo.indexes.update_one(
+                {"_id": index_id}, {"$set": {"ready": True}}, session=session
+            )
 
         return await self.get(index_id)
 
@@ -258,18 +266,16 @@ class IndexData:
         :param req_query: the request query object
         :return: the changes
         """
-        if not await self._db.indexes.count_documents({"_id": index_id}):
+        if not await self._mongo.indexes.count_documents({"_id": index_id}):
             raise ResourceNotFoundError()
 
         db_query = {"index.id": index_id}
 
-        term = req_query.get("term")
-
-        if term:
+        if term := req_query.get("term"):
             db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
 
         data = await paginate(
-            self._db.history,
+            self._mongo.history,
             db_query,
             req_query,
             sort=[("otu.name", 1), ("otu.version", -1)],
@@ -285,19 +291,20 @@ class IndexData:
 
         :param index_id: the ID of the index to delete
         """
+        async with self._mongo.create_session() as session:
+            delete_result = await self._mongo.indexes.delete_one(
+                {"_id": index_id}, session=session
+            )
 
-        delete_result = await self._db.indexes.delete_one({"_id": index_id})
+            if delete_result.deleted_count == 0:
+                raise ResourceNotFoundError()
 
-        if delete_result.deleted_count != 1:
-            # Document could not be deleted.
-            raise ResourceNotFoundError()
+            index_change_ids = await self._mongo.history.distinct(
+                "_id", {"index.id": index_id}
+            )
 
-        query = {
-            "_id": {
-                "$in": await self._db.history.distinct("_id", {"index.id": index_id})
-            }
-        }
-
-        await self._db.history.update_many(
-            query, {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}}
-        )
+            await self._mongo.history.update_many(
+                {"_id": {"$in": index_change_ids}},
+                {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
+                session=session,
+            )
