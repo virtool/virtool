@@ -3,7 +3,6 @@ from asyncio import gather
 from collections import defaultdict
 from typing import Optional, Dict
 
-from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.job import (
     JobMinimal,
@@ -16,9 +15,6 @@ from virtool_core.models.user import UserNested
 from typing import List
 
 import virtool.utils
-from virtool.api.utils import (
-    get_query_bool,
-)
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
