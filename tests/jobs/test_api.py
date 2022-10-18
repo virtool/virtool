@@ -213,6 +213,7 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
     assert resp.status == 200
 
     body = await resp.json()
+
     assert body == snapshot
 
 
