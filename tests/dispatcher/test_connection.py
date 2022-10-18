@@ -1,4 +1,4 @@
-from virtool.api.custom_json import dumps
+from virtool.api.custom_json import orjson_serializer
 from virtool.users.utils import Permission
 
 
@@ -28,7 +28,7 @@ async def test_send(ws):
             "operation": "update",
             "data": {"groups": [], "user_id": "john"},
         },
-        dumps=dumps,
+        dumps=orjson_serializer,
     )
 
 

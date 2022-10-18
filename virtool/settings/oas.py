@@ -21,7 +21,7 @@ class GetSettingsResponse(Settings):
         }
 
 
-class UpdateSettingsSchema(BaseModel):
+class UpdateSettingsRequest(BaseModel):
     sample_group: str = "none"
     sample_group_read: bool = True
     sample_group_write: bool = False

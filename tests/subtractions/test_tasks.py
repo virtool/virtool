@@ -23,6 +23,8 @@ async def test_add_subtraction_files_task(
     pg: AsyncEngine,
     snapshot,
     spawn_client,
+    mongo,
+    pg: AsyncEngine,
     static_time,
     tmp_path,
 ):

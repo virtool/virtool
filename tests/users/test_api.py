@@ -8,8 +8,8 @@ from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 
 from virtool.data.utils import get_data_from_app
-from virtool.groups.oas import EditGroupSchema, EditPermissionsSchema
-from virtool.settings.oas import UpdateSettingsSchema
+from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
+from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.utils import check_password
 
 
@@ -24,13 +24,13 @@ async def setup_update_user(fake2, spawn_client):
 
     await groups.update(
         group_1.id,
-        EditGroupSchema(permissions=EditPermissionsSchema(upload_file=True)),
+        UpdateGroupRequest(permissions=UpdatePermissionsRequest(upload_file=True)),
     )
 
     await groups.update(
         group_2.id,
-        EditGroupSchema(
-            permissions=EditPermissionsSchema(create_sample=True, create_ref=True)
+        UpdateGroupRequest(
+            permissions=UpdatePermissionsRequest(create_sample=True, create_ref=True)
         ),
     )
 
@@ -107,7 +107,7 @@ async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     user = await fake2.users.create()
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsSchema(minimum_password_length=8)
+        UpdateSettingsRequest(minimum_password_length=8)
     )
 
     if error == "400_exists":

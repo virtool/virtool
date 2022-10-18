@@ -33,6 +33,7 @@ async def create_user(
         "force_reset": force_reset,
         "last_password_change": virtool.utils.timestamp(),
         "invalidate_sessions": False,
+        "active": True
     }
 
     if password is None:

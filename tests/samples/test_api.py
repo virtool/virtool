@@ -19,7 +19,7 @@ from virtool.jobs.client import DummyJobsClient
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
-from virtool.settings.oas import UpdateSettingsSchema
+from virtool.settings.oas import UpdateSettingsRequest
 from virtool.uploads.models import Upload
 
 
@@ -29,21 +29,21 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_data(dbi, fake2, pg, static_time):
+async def get_sample_data(mongo, fake2, pg, static_time):
     label = await fake2.labels.create()
     await fake2.labels.create()
 
     user = await fake2.users.create()
 
     await asyncio.gather(
-        dbi.subtraction.insert_many(
+        mongo.subtraction.insert_many(
             [
                 {"_id": "apple", "name": "Apple"},
                 {"_id": "pear", "name": "Pear"},
                 {"_id": "peach", "name": "Peach"},
             ]
         ),
-        dbi.samples.insert_one(
+        mongo.samples.insert_one(
             {
                 "_id": "test",
                 "all_read": True,
@@ -295,7 +295,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(
+            UpdateSettingsRequest(
                 sample_group=group_setting,
                 sample_all_write=True,
                 sample_group_write=True,
@@ -350,7 +350,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_unique_names=True)
+            UpdateSettingsRequest(sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -400,7 +400,7 @@ class TestCreate:
                     {"_id": "diagnostics", "name": "Diagnostics"},
                 ),
                 get_data_from_app(client.app).settings.update(
-                    UpdateSettingsSchema(
+                    UpdateSettingsRequest(
                         sample_group="force_choice", sample_unique_names=True
                     )
                 ),
@@ -423,7 +423,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_group="force_choice", sample_unique_names=True)
+            UpdateSettingsRequest(sample_group="force_choice", sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -432,7 +432,7 @@ class TestCreate:
             await asyncio.gather(
                 session.commit(),
                 get_data_from_app(client.app).settings.update(
-                    UpdateSettingsSchema(
+                    UpdateSettingsRequest(
                         sample_group="force_choice", sample_unique_names=True
                     )
                 ),
@@ -480,7 +480,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_unique_names=True)
+            UpdateSettingsRequest(sample_unique_names=True)
         )
 
         await client.db.subtraction.insert_one(
@@ -505,7 +505,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_unique_names=True)
+            UpdateSettingsRequest(sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -1047,7 +1047,7 @@ class TestUploadReads:
         pg,
         test_files_path,
         tmp_path,
-        fake2
+        fake2,
     ):
         """
         Test that new sample reads can be uploaded using the Jobs API.
@@ -1070,7 +1070,9 @@ class TestUploadReads:
 
         user = await fake2.users.create()
 
-        await get_data_from_app(client.app).uploads.create("test", "reads", False, user=user.id)
+        await get_data_from_app(client.app).uploads.create(
+            "test", "reads", False, user=user.id
+        )
 
         if not compressed:
             mocker.patch(
@@ -1250,7 +1252,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 class TestCreateCache:
     @pytest.mark.parametrize("key", ["key", "not_key"])
     async def test(
-        self, key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client
+        self, key, mongo, mocker, resp_is, snapshot, static_time, spawn_job_client
     ):
         """
         Test that a new cache document can be created in the `caches` db using the Jobs API.
@@ -1278,11 +1280,11 @@ class TestCreateCache:
 
             resp_json = await resp.json()
             assert resp_json == snapshot
-            assert await virtool.caches.db.get(dbi, resp_json["id"])
+            assert await virtool.caches.db.get(mongo, resp_json["id"])
         else:
             await resp_is.invalid_input(resp, {"key": ["required field"]})
 
-    async def test_duplicate_cache(self, dbi, spawn_job_client, static_time):
+    async def test_duplicate_cache(self, mongo, spawn_job_client, static_time):
         """
         Test that uniqueness is enforced on `key`-`sample.id` pairs for `caches`
 
@@ -1306,7 +1308,7 @@ class TestCreateCache:
         resp = await client.post("/samples/test/caches", json=data)
 
         assert resp.status == 409
-        assert await dbi.caches.count_documents({}) == 1
+        assert await mongo.caches.count_documents({}) == 1
 
 
 @pytest.mark.parametrize("error", [None, 400, 409])

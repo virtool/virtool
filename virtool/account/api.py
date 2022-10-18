@@ -15,14 +15,14 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 import virtool.http.auth
 import virtool.http.routes
 from virtool.account.oas import (
-    EditAccountSchema,
-    EditSettingsSchema,
-    CreateKeysSchema,
-    EditKeySchema,
-    ResetPasswordSchema,
-    CreateLoginSchema,
+    UpdateAccountRequest,
+    UpdateSettingsRequest,
+    CreateKeysRequest,
+    UpdateKeyRequest,
+    ResetPasswordRequest,
+    CreateLoginRequest,
     AccountResponse,
-    EditAccountResponse,
+    UpdateAccountResponse,
     AccountSettingsResponse,
     CreateAPIKeyResponse,
     APIKeyResponse,
@@ -37,7 +37,7 @@ from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 
 from virtool.users.checks import check_password_length
-from virtool.users.oas import UpdateUserSchema
+from virtool.users.oas import UpdateUserRequest
 
 
 API_KEY_PROJECTION = {
@@ -76,8 +76,8 @@ class AccountView(PydanticView):
         return json_response(account)
 
     async def patch(
-        self, data: EditAccountSchema
-    ) -> Union[r200[EditAccountResponse], r400, r401]:
+        self, data: UpdateAccountRequest
+    ) -> Union[r200[UpdateAccountResponse], r400, r401]:
         """
         Update account.
 
@@ -103,13 +103,13 @@ class AccountView(PydanticView):
                 raise HTTPBadRequest(text=error)
 
         try:
-            account = await get_data_from_req(self.request).account.edit(
+            account = await get_data_from_req(self.request).account.update(
                 self.request["client"].user_id, data
             )
         except ResourceError:
             raise HTTPBadRequest(text="Invalid credentials")
 
-        return json_response(EditAccountResponse.parse_obj(account))
+        return json_response(UpdateAccountResponse.parse_obj(account))
 
 
 @routes.view("/account/settings")
@@ -131,7 +131,7 @@ class SettingsView(PydanticView):
         return json_response(AccountSettingsResponse.parse_obj(account_settings))
 
     async def patch(
-        self, data: EditSettingsSchema
+        self, data: UpdateSettingsRequest
     ) -> Union[r200[AccountSettingsResponse], r400, r401]:
         """
         Update account settings.
@@ -143,7 +143,7 @@ class SettingsView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        settings = await get_data_from_req(self.request).account.edit_settings(
+        settings = await get_data_from_req(self.request).account.update_settings(
             data, "settings", self.request["client"].user_id
         )
 
@@ -171,7 +171,7 @@ class KeysView(PydanticView):
         )
 
     async def post(
-        self, data: CreateKeysSchema
+        self, data: CreateKeysRequest
     ) -> Union[r201[CreateAPIKeyResponse], r400, r401]:
         """
         Create an API key.
@@ -240,7 +240,7 @@ class KeyView(PydanticView):
         return json_response(APIKeyResponse.parse_obj(key), status=200)
 
     async def patch(
-        self, key_id: str, /, data: EditKeySchema
+        self, key_id: str, /, data: UpdateKeyRequest
     ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
         """
         Update an API key.
@@ -255,7 +255,7 @@ class KeyView(PydanticView):
             404: Not found
         """
         try:
-            key = await get_data_from_req(self.request).account.edit_key(
+            key = await get_data_from_req(self.request).account.update_key(
                 self.request["client"].user_id,
                 key_id,
                 data,
@@ -288,7 +288,7 @@ class KeyView(PydanticView):
 @routes.view("/account/login")
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(self, data: CreateLoginSchema) -> Union[r201[LoginResponse], r400]:
+    async def post(self, data: CreateLoginRequest) -> Union[r201[LoginResponse], r400]:
         """
         Login.
 
@@ -369,7 +369,7 @@ class LogoutView(PydanticView):
 class ResetView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(
-        self, data: ResetPasswordSchema
+        self, data: ResetPasswordRequest
     ) -> Union[r200[AccountResetPasswordResponse], r400]:
         """
         Reset password.
@@ -382,22 +382,18 @@ class ResetView(PydanticView):
         """
         if error := await check_password_length(self.request, data.password):
             raise HTTPBadRequest(text=error)
-
-        result = await get_data_from_req(self.request).account.reset(
-            self.request.cookies.get("session_id"),
-            data,
-            virtool.http.auth.get_ip(self.request),
-        )
-
-        if result.get("status") == 400:
-            return json_response(
-                {"error": error, "reset_code": result["reset_code"]},
-                status=400,
+        try:
+            result = await get_data_from_req(self.request).account.reset(
+                self.request.cookies.get("session_id"),
+                data,
+                virtool.http.auth.get_ip(self.request),
             )
+        except ResourceError:
+            raise HTTPBadRequest(text="Invalid session or reset code")
 
         await get_data_from_req(self.request).users.update(
             result["user_id"],
-            UpdateUserSchema(force_reset=False, password=data.password),
+            UpdateUserRequest(force_reset=False, password=data.password),
         )
 
         try:

@@ -1,7 +1,7 @@
 from aiohttp import BasicAuth
 
 from virtool.data.utils import get_data_from_app
-from virtool.settings.oas import UpdateSettingsSchema
+from virtool.settings.oas import UpdateSettingsRequest
 from virtool.utils import hash_key
 
 
@@ -28,7 +28,7 @@ class TestJobAuthentication:
 
         assert resp.status == 401
 
-    async def test_protected_fails(self, dbi, spawn_client):
+    async def test_protected_fails(self, mongo, spawn_client):
         """
         Check that a request against GET /samples using job authentication fails.
 
@@ -40,10 +40,10 @@ class TestJobAuthentication:
         client = await spawn_client(auth=BasicAuth("job-foo", key))
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(minimum_password_length=8)
+            UpdateSettingsRequest(minimum_password_length=8)
         )
 
-        await dbi.jobs.insert_one({"_id": "foo", "key": hash_key(key)})
+        await mongo.jobs.insert_one({"_id": "foo", "key": hash_key(key)})
 
         resp = await client.get("/samples")
 

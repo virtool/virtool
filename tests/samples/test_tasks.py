@@ -112,7 +112,7 @@ async def test_move_sample_files_task(
             }
         )
 
-    await dbi.samples.insert_one(sample)
+    await mongo.samples.insert_one(sample)
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -133,7 +133,7 @@ async def test_move_sample_files_task(
 
     await task.run()
 
-    assert await dbi.samples.find_one({"_id": "foo"}) == snapshot
+    assert await mongo.samples.find_one({"_id": "foo"}) == snapshot
 
     if not legacy or (legacy and compressed):
         async with AsyncSession(pg) as session:

@@ -9,12 +9,12 @@ import virtool.utils
 from virtool.account.api import API_KEY_PROJECTION
 from virtool.account.db import compose_password_update
 from virtool.account.oas import (
-    EditSettingsSchema,
-    CreateKeysSchema,
-    EditKeySchema,
-    ResetPasswordSchema,
-    CreateLoginSchema,
-    EditAccountSchema,
+    UpdateSettingsRequest,
+    CreateKeysRequest,
+    UpdateKeyRequest,
+    ResetPasswordRequest,
+    CreateLoginRequest,
+    UpdateAccountRequest,
 )
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.mongo.core import DB
@@ -61,9 +61,9 @@ class AccountData:
             }
         )
 
-    async def edit(self, user_id: str, data: EditAccountSchema) -> Account:
+    async def update(self, user_id: str, data: UpdateAccountRequest) -> Account:
         """
-        Edit the user account.
+        Update the user account.
 
         :param user_id: the user ID
         :param data: the update to the account
@@ -103,11 +103,11 @@ class AccountData:
 
         return AccountSettings(**settings)
 
-    async def edit_settings(
-        self, data: EditSettingsSchema, query_field: str, user_id: str
+    async def update_settings(
+        self, data: UpdateSettingsRequest, query_field: str, user_id: str
     ) -> AccountSettings:
         """
-        Edits account settings.
+        Updates account settings.
 
         :param data: the update to the account settings
         :param query_field: the field to edit
@@ -136,7 +136,7 @@ class AccountData:
         return [APIKey(**d) async for d in cursor]
 
     async def create_key(
-        self, data: CreateKeysSchema, user_id: str
+        self, data: CreateKeysRequest, user_id: str
     ) -> Tuple[str, APIKey]:
         """
         Create a new API key.
@@ -206,7 +206,9 @@ class AccountData:
 
         return APIKey(**document)
 
-    async def edit_key(self, user_id: str, key_id: str, data: EditKeySchema) -> APIKey:
+    async def update_key(
+        self, user_id: str, key_id: str, data: UpdateKeyRequest
+    ) -> APIKey:
         """
         Change the permissions for an existing API key.
 
@@ -257,7 +259,7 @@ class AccountData:
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, data: CreateLoginSchema) -> Union[str]:
+    async def login(self, data: CreateLoginRequest) -> Union[str]:
         """
         Create a new session for the user with `username`.
 
@@ -303,7 +305,7 @@ class AccountData:
         """
         return await replace_session(self._db, self._redis, old_session_id, ip)
 
-    async def reset(self, session_id, data: ResetPasswordSchema, ip: str):
+    async def reset(self, session_id, data: ResetPasswordRequest, ip: str):
         """
         Resets the password for a session user.
 
@@ -316,20 +318,10 @@ class AccountData:
 
         session = json.loads(await self._redis.get(session_id))
 
-        user_id = session["reset_user_id"]
+        if not session.get("reset_code") or reset_code != session.get("reset_code"):
+            raise ResourceError()
 
-        if (
-            not session.get("reset_code")
-            or not session.get("reset_user_id")
-            or reset_code != session.get("reset_code")
-        ):
-            return {
-                "status": 400,
-                "user_id": user_id,
-                "reset_code": await create_reset_code(
-                    self._redis, session_id, user_id=user_id
-                ),
-            }
+        user_id = session["reset_user_id"]
 
         session_id, new_session, token = await replace_session(
             self._db,

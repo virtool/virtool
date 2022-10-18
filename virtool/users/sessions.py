@@ -9,7 +9,7 @@ from aioredis import Redis
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.utils
-from virtool.api.custom_json import CustomEncoder
+from virtool.api.custom_json import dumps
 from virtool.mongo.core import DB
 from virtool.types import Document
 
@@ -37,7 +37,7 @@ async def create_session(
         "created_at": virtool.utils.timestamp().timestamp(),
         "ip": ip,
     }
-    print(new_session)
+
     token = None
 
     if user_id:
@@ -54,7 +54,7 @@ async def create_session(
             }
         )
 
-    await redis.set(session_id, json.dumps(new_session, cls=CustomEncoder))
+    await redis.set(session_id, dumps(new_session))
     await redis.expireat(session_id, expires_at.timestamp())
 
     return session_id, new_session, token
@@ -147,14 +147,13 @@ async def create_reset_code(
 
     await redis.set(
         session_id,
-        json.dumps(
+        dumps(
             {
                 **session,
                 "reset_code": reset_code,
                 "reset_remember": remember,
                 "reset_user_id": user_id,
-            },
-            cls=CustomEncoder,
+            }
         ),
         expire=session_expiry,
     )
@@ -183,13 +182,12 @@ async def clear_reset_code(redis: Redis, session_id: str):
 
     await redis.set(
         session_id,
-        json.dumps(
+        dumps(
             {
                 key: session[key]
                 for key in session
                 if key not in {"reset_code", "reset_remember", "reset_user_id"}
-            },
-            cls=CustomEncoder,
+            }
         ),
         expire=session_expiry,
     )

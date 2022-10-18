@@ -12,6 +12,7 @@ from aiohttp import ClientSession
 import virtool.errors
 from virtool.utils import run_in_thread
 
+
 logger = getLogger("blast")
 
 #: The URL to send BLAST requests to.
@@ -121,7 +122,7 @@ async def check_rid(client_session: ClientSession, rid: str) -> bool:
 
     :param client_session: the application http session
     :param rid: the RID to check
-    :return:
+    :return: ``True`` if ready, ``False`` otherwise
 
     """
     async with client_session.get(

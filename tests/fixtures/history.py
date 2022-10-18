@@ -101,7 +101,7 @@ def test_otu_edit():
 
 
 @pytest.fixture
-def create_mock_history(dbi):
+def create_mock_history(mongo):
     async def func(remove):
         documents = [
             {
@@ -265,9 +265,9 @@ def create_mock_history(dbi):
                 "schema": [],
             }
 
-            await dbi.otus.insert_one(otu)
+            await mongo.otus.insert_one(otu)
 
-        await dbi.history.insert_many(documents)
+        await mongo.history.insert_many(documents)
 
         return otu
 

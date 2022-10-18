@@ -30,7 +30,7 @@ from virtool.samples.db import (
     ArtifactsAndReadsTransform,
     validate_force_choice_group,
 )
-from virtool.samples.oas import CreateSampleSchema, EditSampleSchema
+from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.tasks.progress import (
@@ -181,7 +181,7 @@ class SamplesData(DataLayerPiece):
 
     async def create(
         self,
-        data: CreateSampleSchema,
+        data: CreateSampleRequest,
         user_id: str,
         _id: Optional[str] = None,
     ) -> Sample:
@@ -279,7 +279,10 @@ class SamplesData(DataLayerPiece):
         return await self.get(sample_id)
 
     async def _update_with_session(
-        self, session: AsyncIOMotorClientSession, sample_id: str, data: EditSampleSchema
+        self,
+        session: AsyncIOMotorClientSession,
+        sample_id: str,
+        data: UpdateSampleRequest,
     ) -> UpdateResult:
         data = data.dict(exclude_unset=True)
 
@@ -314,7 +317,7 @@ class SamplesData(DataLayerPiece):
             {"_id": sample_id}, {"$set": data}, session=session
         )
 
-    async def update(self, sample_id: str, data: EditSampleSchema) -> Sample:
+    async def update(self, sample_id: str, data: UpdateSampleRequest) -> Sample:
         async with self._db.with_session() as session:
             await session.with_transaction(
                 lambda s: self._update_with_session(s, sample_id, data)

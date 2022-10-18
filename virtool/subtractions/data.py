@@ -36,8 +36,8 @@ from virtool.subtractions.db import (
 )
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.oas import (
-    CreateSubtractionSchema,
-    EditSubtractionSchema,
+    CreateSubtractionRequest,
+    UpdateSubtractionRequest,
     FinalizeSubtractionRequest,
 )
 from virtool.subtractions.utils import (
@@ -105,7 +105,7 @@ class SubtractionsData(DataLayerPiece):
 
     async def create(
         self,
-        data: CreateSubtractionSchema,
+        data: CreateSubtractionRequest,
         user_id: str,
         subtraction_id: Optional[str] = None,
     ) -> Subtraction:
@@ -177,7 +177,7 @@ class SubtractionsData(DataLayerPiece):
         raise ResourceNotFoundError
 
     async def update(
-        self, subtraction_id: str, data: EditSubtractionSchema
+        self, subtraction_id: str, data: UpdateSubtractionRequest
     ) -> Subtraction:
         data = data.dict(exclude_unset=True)
 

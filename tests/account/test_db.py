@@ -35,8 +35,8 @@ def test_compose_password_update(mocker, static_time):
     ],
     ids=["no keys", "no matching key ids", "suffix 1", "suffix 2"],
 )
-async def test_get_alternate_id(existing, expected, dbi):
+async def test_get_alternate_id(existing, expected, mongo):
     for key_id in existing:
-        await dbi.keys.insert_one({"id": key_id})
+        await mongo.keys.insert_one({"id": key_id})
 
-    assert await virtool.account.db.get_alternate_id(dbi, "foo") == expected
+    assert await virtool.account.db.get_alternate_id(mongo, "foo") == expected

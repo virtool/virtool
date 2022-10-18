@@ -15,8 +15,8 @@ from virtool.http.policy import PermissionsRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.subtractions.oas import (
-    CreateSubtractionSchema,
-    EditSubtractionSchema,
+    CreateSubtractionRequest,
+    UpdateSubtractionRequest,
     CreateSubtractionResponse,
     SubtractionResponse,
     FinalizeSubtractionRequest,
@@ -54,7 +54,7 @@ class SubtractionsView(PydanticView):
 
     @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def post(
-        self, data: CreateSubtractionSchema
+        self, data: CreateSubtractionRequest
     ) -> Union[r201[CreateSubtractionResponse], r400, r403]:
         """
         Create a subtraction.
@@ -114,7 +114,7 @@ class SubtractionView(PydanticView):
 
     @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def patch(
-        self, subtraction_id: str, /, data: EditSubtractionSchema
+        self, subtraction_id: str, /, data: UpdateSubtractionRequest
     ) -> Union[r200[SubtractionResponse], r400, r403, r404]:
         """
         Update a subtraction.

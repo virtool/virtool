@@ -119,7 +119,7 @@ class HmmData(DataLayerPiece):
         settings = await self.data.settings.get_all()
 
         await virtool.hmm.db.fetch_and_update_release(
-            self._config, self._client, self._mongo, settings.hmm_slug
+            self._client, self._mongo, settings.hmm_slug
         )
 
     async def get_status(self):
@@ -147,7 +147,6 @@ class HmmData(DataLayerPiece):
         settings = await self.data.settings.get_all()
 
         await virtool.hmm.db.fetch_and_update_release(
-            self._config,
             self._client,
             self._mongo,
             settings.hmm_slug,

@@ -2,6 +2,7 @@ from typing import Optional, List
 
 from pydantic import constr, BaseModel, Field
 from virtool_core.models.otu import OTUSegment, OTUSearchResult
+from virtool_core.models.validators import prevent_none
 
 
 class CreateOTURequest(BaseModel):
@@ -15,6 +16,8 @@ class UpdateOTURequest(BaseModel):
     name: Optional[constr(min_length=1, strip_whitespace=True)]
     otu_schema: Optional[List[OTUSegment]] = Field(alias="schema")
 
+    _prevent_none = prevent_none("*")
+
 
 class CreateIsolateRequest(BaseModel):
     default: bool = False
@@ -25,6 +28,8 @@ class CreateIsolateRequest(BaseModel):
 class UpdateIsolateRequest(BaseModel):
     source_name: Optional[constr(strip_whitespace=True)]
     source_type: Optional[constr(strip_whitespace=True)]
+
+    _prevent_none = prevent_none("*")
 
 
 class CreateSequenceRequest(BaseModel):
@@ -43,6 +48,8 @@ class UpdateSequenceRequest(BaseModel):
     segment: Optional[str]
     sequence: Optional[constr(min_length=1, strip_whitespace=True)]
     target: Optional[str]
+
+    _prevent_none = prevent_none("accession", "definition", "host", "sequence")
 
 
 class FindOTUsResponse(OTUSearchResult):

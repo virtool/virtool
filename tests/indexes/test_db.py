@@ -10,16 +10,16 @@ from virtool.indexes.db import (
     get_patched_otus,
     update_last_indexed_versions,
 )
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
 async def test_create(
-    index_id, mocker, snapshot, dbi, test_random_alphanumeric, static_time
+    index_id, mocker, snapshot, mongo, test_random_alphanumeric, static_time
 ):
-    await dbi.references.insert_one({"_id": "foo"})
+    await mongo.references.insert_one({"_id": "foo"})
 
-    await dbi.history.insert_one(
+    await mongo.history.insert_one(
         {
             "_id": "abc",
             "index": {"id": "unbuilt", "version": "unbuilt"},
@@ -30,24 +30,24 @@ async def test_create(
     mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
 
     document = await virtool.indexes.db.create(
-        dbi, "foo", "test", "bar", index_id=index_id
+        mongo, "foo", "test", "bar", index_id=index_id
     )
 
     assert document == snapshot
-    assert await dbi.history.find_one("abc") == snapshot
+    assert await mongo.history.find_one("abc") == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_current_id_and_version(exists, has_ref, test_indexes, dbi):
+async def test_get_current_id_and_version(exists, has_ref, test_indexes, mongo):
     if not exists:
         test_indexes = [dict(i, ready=False, has_files=False) for i in test_indexes]
 
-    await dbi.indexes.insert_many(test_indexes)
+    await mongo.indexes.insert_many(test_indexes)
 
     ref_id = "hxn167" if has_ref else "foobar"
 
-    index_id, index_version = await get_current_id_and_version(dbi, ref_id)
+    index_id, index_version = await get_current_id_and_version(mongo, ref_id)
 
     if has_ref and exists:
         assert index_id == "ptlrcefm"
@@ -60,22 +60,22 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, dbi):
 
 @pytest.mark.parametrize("empty", [False, True])
 @pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_next_version(empty, has_ref, test_indexes, dbi):
+async def test_get_next_version(empty, has_ref, test_indexes, mongo):
     if not empty:
-        await dbi.indexes.insert_many(test_indexes)
+        await mongo.indexes.insert_many(test_indexes)
 
     expected = 4
 
     if empty or not has_ref:
         expected = 0
 
-    assert await get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
+    assert await get_next_version(mongo, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_processor(snapshot, fake2, dbi):
+async def test_processor(snapshot, fake2, mongo):
     user = await fake2.users.create()
 
-    await dbi.history.insert_many(
+    await mongo.history.insert_many(
         [
             {"_id": "foo.0", "index": {"id": "baz"}, "otu": {"id": "foo"}},
             {"_id": "foo.1", "index": {"id": "baz"}, "otu": {"id": "foo"}},
@@ -87,12 +87,14 @@ async def test_processor(snapshot, fake2, dbi):
     )
 
     assert (
-        await virtool.indexes.db.processor(dbi, {"_id": "baz", "user": {"id": user.id}})
+        await virtool.indexes.db.processor(
+            mongo, {"_id": "baz", "user": {"id": user.id}}
+        )
         == snapshot
     )
 
 
-async def test_get_patched_otus(mocker, dbi, config):
+async def test_get_patched_otus(mocker, mongo, config):
     m = mocker.patch(
         "virtool.history.db.patch_to_version",
         make_mocked_coro((None, {"_id": "foo"}, None)),
@@ -100,26 +102,27 @@ async def test_get_patched_otus(mocker, dbi, config):
 
     manifest = {"foo": 2, "bar": 10, "baz": 4}
 
-    patched_otus = await get_patched_otus(dbi, config, manifest)
+    patched_otus = await get_patched_otus(mongo, config, manifest)
 
     assert list(patched_otus) == [{"_id": "foo"}, {"_id": "foo"}, {"_id": "foo"}]
 
     m.assert_has_calls(
         [
-            mocker.call(config.data_path, dbi, "foo", 2),
-            mocker.call(config.data_path, dbi, "bar", 10),
-            mocker.call(config.data_path, dbi, "baz", 4),
+            mocker.call(config.data_path, mongo, "foo", 2),
+            mocker.call(config.data_path, mongo, "bar", 10),
+            mocker.call(config.data_path, mongo, "baz", 4),
         ]
     )
 
 
-async def test_update_last_indexed_versions(dbi, test_otu, spawn_client):
+async def test_update_last_indexed_versions(mongo, test_otu, spawn_client):
     client = await spawn_client(authorize=True)
     test_otu["version"] = 1
 
     await client.db.otus.insert_one(test_otu)
 
-    await update_last_indexed_versions(dbi, "hxn167")
+    async with mongo.create_session() as session:
+        await update_last_indexed_versions(mongo, "hxn167", session)
 
     document = await client.db.otus.find_one({"reference.id": "hxn167"})
 
@@ -127,10 +130,10 @@ async def test_update_last_indexed_versions(dbi, test_otu, spawn_client):
 
 
 async def test_attach_files(snapshot, pg: AsyncEngine):
-    index_1 = IndexFile(
+    index_1 = SQLIndexFile(
         id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567
     )
-    index_2 = IndexFile(
+    index_2 = SQLIndexFile(
         id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567
     )
 
@@ -143,30 +146,3 @@ async def test_attach_files(snapshot, pg: AsyncEngine):
     assert (
         await attach_files(pg, "https://virtool.example.com/api", document) == snapshot
     )
-
-
-async def test_finalize(snapshot, dbi, pg: AsyncEngine):
-    await dbi.indexes.insert_one({"_id": "foo", "reference": {"id": "bar"}})
-
-    index_1 = IndexFile(
-        id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567
-    )
-
-    index_2 = IndexFile(
-        id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add_all([index_1, index_2])
-        await session.commit()
-
-    # Ensure return value is correct.
-    assert (
-        await virtool.indexes.db.finalize(
-            dbi, pg, "https://virtool.example.com/api", "bar", "foo"
-        )
-        == snapshot
-    )
-
-    # Ensure document in database is correct.
-    assert await dbi.indexes.find_one() == snapshot

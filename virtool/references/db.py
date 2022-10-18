@@ -386,7 +386,7 @@ async def fetch_and_update_release(
 
     try:
         updated = await virtool.github.get_release(
-            app["config"], app["client"], document["remotes_from"]["slug"], etag
+            app["client"], document["remotes_from"]["slug"], etag
         )
 
         if updated:

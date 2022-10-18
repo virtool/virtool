@@ -10,6 +10,7 @@ from virtool.blast.data import BLASTData
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmData
+from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
@@ -39,6 +40,7 @@ class DataLayer:
     history: HistoryData
     references: ReferencesData
     hmms: HmmData
+    index: IndexData
     labels: LabelsData
     jobs: JobsData
     otus: OTUData

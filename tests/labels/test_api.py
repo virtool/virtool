@@ -119,7 +119,7 @@ async def test_create(error, fake2, spawn_client, test_random_alphanumeric, resp
     }
 
 
-@pytest.mark.parametrize("error", [None, "404", "400_name", "400_color"])
+@pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
     """
     Test that a label can be updated at ``PATCH /labels/:label_id``.
@@ -150,6 +150,9 @@ async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
         # Name already exists.
         data["name"] = label_2.name
 
+    if error == "400_null":
+        data["name"] = None
+
     resp = await client.patch(
         f"/labels/{5 if error == '404' else label_1.id}", data=data
     )
@@ -164,6 +167,10 @@ async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
 
     if error == "400_name":
         await resp_is.bad_request(resp, "Label name already exists")
+        return
+
+    if error == "400_null":
+        assert resp.status == 400
         return
 
     assert resp.status == 200

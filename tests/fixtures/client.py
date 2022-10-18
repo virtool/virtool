@@ -9,7 +9,7 @@ from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.utils import hash_key
-from virtool.api.custom_json import CustomEncoder
+from virtool.api.custom_json import dumps
 
 
 class VirtoolTestClient:
@@ -60,7 +60,7 @@ class VirtoolTestClient:
 @pytest.fixture
 def create_app(
     create_user,
-    dbi,
+    mongo,
     pg_connection_string,
     redis_connection_string,
     test_db_connection_string,
@@ -89,7 +89,7 @@ def create_app(
 
 @pytest.fixture
 def spawn_client(
-    pg, request, redis, aiohttp_client, test_motor, dbi, create_app, create_user
+    pg, request, redis, aiohttp_client, test_motor, mongo, create_app, create_user
 ):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
@@ -111,7 +111,7 @@ def spawn_client(
             groups=groups,
             permissions=permissions,
         )
-        await dbi.users.insert_one(user_document)
+        await mongo.users.insert_one(user_document)
 
         if addon_route_table:
             app.add_routes(addon_route_table)
@@ -122,7 +122,7 @@ def spawn_client(
 
             await redis.set(
                 session_id,
-                json.dumps(
+                dumps(
                     {
                         "_id": "foobar",
                         "ip": "127.0.0.1",
@@ -133,8 +133,7 @@ def spawn_client(
                         "token": hash_key(session_token),
                         "user_agent": "Python/3.6 aiohttp/3.4.4",
                         "user": {"id": "test"},
-                    },
-                    cls=CustomEncoder,
+                    }
                 ),
                 expire=3600,
             )
@@ -160,7 +159,7 @@ def spawn_client(
 
 @pytest.fixture
 def spawn_job_client(
-    dbi,
+    mongo,
     aiohttp_client,
     test_db_connection_string,
     redis_connection_string,
@@ -178,7 +177,7 @@ def spawn_job_client(
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
-            await dbi.jobs.insert_one(
+            await mongo.jobs.insert_one(
                 {
                     "_id": job_id,
                     "key": hash_key(key),
@@ -206,7 +205,7 @@ def spawn_job_client(
             app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
-        client.db = dbi
+        client.db = mongo
 
         return client
 

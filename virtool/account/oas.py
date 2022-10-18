@@ -2,13 +2,14 @@ from typing import Union, Optional
 from pydantic import BaseModel, constr, Field, root_validator, validator
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
+from virtool_core.models.validators import prevent_none
 
-from virtool.groups.oas import EditPermissionsSchema
+from virtool.groups.oas import UpdatePermissionsRequest
 
 
-class EditAccountSchema(BaseModel):
+class UpdateAccountRequest(BaseModel):
     """
-    Fields for editing a user account.
+    Fields for updating a user account.
     """
 
     email: Optional[constr(strip_whitespace=True)] = Field(
@@ -49,8 +50,10 @@ class EditAccountSchema(BaseModel):
 
     _email_validation = validator("email", allow_reuse=True)(check_email)
 
+    _prevent_none = prevent_none("*")
 
-class EditAccountResponse(Account):
+
+class UpdateAccountResponse(Account):
     class Config:
         schema_extra = {
             "example": {
@@ -81,9 +84,9 @@ class EditAccountResponse(Account):
         }
 
 
-class EditSettingsSchema(BaseModel):
+class UpdateSettingsRequest(BaseModel):
     """
-    Fields for editing a user account's settings.
+    Fields for updating a user account's settings.
     """
 
     show_ids: Optional[bool] = Field(
@@ -106,13 +109,17 @@ class EditSettingsSchema(BaseModel):
             }
         }
 
+    _prevent_none = prevent_none(
+        "*"
+    )
 
-class CreateKeysSchema(BaseModel):
+
+class CreateKeysRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="a non-unique name for the API key"
     )
-    permissions: Optional[EditPermissionsSchema] = Field(
-        default=EditPermissionsSchema(),
+    permissions: Optional[UpdatePermissionsRequest] = Field(
+        default=UpdatePermissionsRequest(),
         description="an object describing the permissions the new key will have. "
         "Any unset permissions will default to false",
     )
@@ -121,6 +128,10 @@ class CreateKeysSchema(BaseModel):
         schema_extra = {
             "example": {"name": "Foobar", "permissions": {"create_sample": True}}
         }
+
+    _prevent_none = prevent_none(
+        "permissions"
+    )
 
 
 class CreateAPIKeyResponse(APIKey):
@@ -148,14 +159,18 @@ class CreateAPIKeyResponse(APIKey):
         }
 
 
-class EditKeySchema(BaseModel):
-    permissions: Optional[EditPermissionsSchema] = Field(
+class UpdateKeyRequest(BaseModel):
+    permissions: Optional[UpdatePermissionsRequest] = Field(
         description="a permission update comprising an object keyed by permissions "
         "with boolean values"
     )
 
     class Config:
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
+
+    _prevent_none = prevent_none(
+        "permissions"
+    )
 
 
 class APIKeyResponse(APIKey):
@@ -180,7 +195,7 @@ class APIKeyResponse(APIKey):
         }
 
 
-class CreateLoginSchema(BaseModel):
+class CreateLoginRequest(BaseModel):
     username: constr(min_length=1) = Field(description="account username")
     password: constr(min_length=1) = Field(description="account password")
     remember: Optional[bool] = Field(
@@ -198,13 +213,17 @@ class CreateLoginSchema(BaseModel):
             }
         }
 
+    _prevent_none = prevent_none(
+        "remember"
+    )
+
 
 class LoginResponse(BaseModel):
     class Config:
         schema_extra = {"example": {"reset": False}}
 
 
-class ResetPasswordSchema(BaseModel):
+class ResetPasswordRequest(BaseModel):
     password: str
     reset_code: str
 
