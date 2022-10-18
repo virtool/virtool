@@ -21,10 +21,9 @@ async def get(req) -> Response:
     """
     accession = req.match_info["accession"]
     session = req.app["client"]
-    config = req.app["config"]
 
     try:
-        data = await virtool.genbank.http.fetch(config, session, accession)
+        data = await virtool.genbank.http.fetch(session, accession)
 
         if data is None:
             raise NotFound()

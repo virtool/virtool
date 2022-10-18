@@ -2,6 +2,7 @@ from typing import Union, Optional
 from pydantic import BaseModel, constr, Field, root_validator, validator
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
+from virtool_core.models.validators import prevent_none
 
 from virtool.groups.oas import UpdatePermissionsRequest
 
@@ -48,6 +49,8 @@ class UpdateAccountRequest(BaseModel):
         return values
 
     _email_validation = validator("email", allow_reuse=True)(check_email)
+
+    _prevent_none = prevent_none("*")
 
 
 class UpdateAccountResponse(Account):
@@ -106,6 +109,10 @@ class UpdateSettingsRequest(BaseModel):
             }
         }
 
+    _prevent_none = prevent_none(
+        "*"
+    )
+
 
 class CreateKeysRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
@@ -121,6 +128,10 @@ class CreateKeysRequest(BaseModel):
         schema_extra = {
             "example": {"name": "Foobar", "permissions": {"create_sample": True}}
         }
+
+    _prevent_none = prevent_none(
+        "permissions"
+    )
 
 
 class CreateAPIKeyResponse(APIKey):
@@ -156,6 +167,10 @@ class UpdateKeyRequest(BaseModel):
 
     class Config:
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
+
+    _prevent_none = prevent_none(
+        "permissions"
+    )
 
 
 class APIKeyResponse(APIKey):
@@ -197,6 +212,10 @@ class CreateLoginRequest(BaseModel):
                 "remember": False,
             }
         }
+
+    _prevent_none = prevent_none(
+        "remember"
+    )
 
 
 class LoginResponse(BaseModel):

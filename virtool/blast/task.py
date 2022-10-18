@@ -57,9 +57,7 @@ class BLASTTask(Task):
             analysis.dict(by_alias=True), self.sequence_index
         )
 
-        rid, _ = await virtool.blast.utils.initialize_ncbi_blast(
-            self.app["config"], sequence
-        )
+        rid, _ = await virtool.blast.utils.initialize_ncbi_blast(sequence)
 
         self.rid = rid
 
@@ -70,16 +68,14 @@ class BLASTTask(Task):
             while not self.ready:
                 await self._sleep()
 
-                self.ready = await virtool.blast.utils.check_rid(
-                    self.app["config"], self.rid
-                )
+                self.ready = await virtool.blast.utils.check_rid(self.rid)
 
                 logger.debug("Checked BLAST %s (%ss)", self.rid, self.interval)
 
                 if self.ready:
                     try:
                         result_json = await virtool.blast.utils.get_ncbi_blast_result(
-                            self.app["config"], self.app["run_in_process"], self.rid
+                            self.app["run_in_process"], self.rid
                         )
                     except BadZipFile:
                         await self._update(
@@ -124,9 +120,7 @@ class BLASTTask(Task):
         self.result = result
 
         if ready is None:
-            self.ready = await virtool.blast.utils.check_rid(
-                self.app["config"], self.rid
-            )
+            self.ready = await virtool.blast.utils.check_rid(self.rid)
         else:
             self.ready = ready
 

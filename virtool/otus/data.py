@@ -136,14 +136,14 @@ class OTUData:
 
         return await self.get(document["_id"])
 
-    async def edit(
+    async def update(
         self,
         otu_id: str,
         data: UpdateOTURequest,
         user_id: str,
     ) -> OTU:
         """
-        Edit an OTU.
+        Update an OTU.
 
         Modifiable fields are `name`, `abbreviation`, and `schema`. Method creates a
         corresponding history record.
@@ -349,7 +349,7 @@ class OTUData:
 
         return {**isolate, "sequences": []}
 
-    async def edit_isolate(
+    async def update_isolate(
         self,
         otu_id: str,
         isolate_id: str,
@@ -606,7 +606,7 @@ class OTUData:
 
         raise ResourceNotFoundError
 
-    async def edit_sequence(
+    async def update_sequence(
         self,
         otu_id: str,
         isolate_id: str,

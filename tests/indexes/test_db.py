@@ -10,7 +10,7 @@ from virtool.indexes.db import (
     get_patched_otus,
     update_last_indexed_versions,
 )
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -87,7 +87,9 @@ async def test_processor(snapshot, fake2, mongo):
     )
 
     assert (
-        await virtool.indexes.db.processor(mongo, {"_id": "baz", "user": {"id": user.id}})
+        await virtool.indexes.db.processor(
+            mongo, {"_id": "baz", "user": {"id": user.id}}
+        )
         == snapshot
     )
 
@@ -119,7 +121,8 @@ async def test_update_last_indexed_versions(mongo, test_otu, spawn_client):
 
     await client.db.otus.insert_one(test_otu)
 
-    await update_last_indexed_versions(mongo, "hxn167")
+    async with mongo.create_session() as session:
+        await update_last_indexed_versions(mongo, "hxn167", session)
 
     document = await client.db.otus.find_one({"reference.id": "hxn167"})
 
@@ -127,10 +130,10 @@ async def test_update_last_indexed_versions(mongo, test_otu, spawn_client):
 
 
 async def test_attach_files(snapshot, pg: AsyncEngine):
-    index_1 = IndexFile(
+    index_1 = SQLIndexFile(
         id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567
     )
-    index_2 = IndexFile(
+    index_2 = SQLIndexFile(
         id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567
     )
 
@@ -143,30 +146,3 @@ async def test_attach_files(snapshot, pg: AsyncEngine):
     assert (
         await attach_files(pg, "https://virtool.example.com/api", document) == snapshot
     )
-
-
-async def test_finalize(snapshot, mongo, pg: AsyncEngine):
-    await mongo.indexes.insert_one({"_id": "foo", "reference": {"id": "bar"}})
-
-    index_1 = IndexFile(
-        id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567
-    )
-
-    index_2 = IndexFile(
-        id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add_all([index_1, index_2])
-        await session.commit()
-
-    # Ensure return value is correct.
-    assert (
-        await virtool.indexes.db.finalize(
-            mongo, pg, "https://virtool.example.com/api", "bar", "foo"
-        )
-        == snapshot
-    )
-
-    # Ensure document in database is correct.
-    assert await mongo.indexes.find_one() == snapshot

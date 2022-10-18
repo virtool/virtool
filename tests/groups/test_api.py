@@ -49,7 +49,7 @@ async def test_create(status, fake2, spawn_client, snapshot):
     resp = await client.post(
         "/groups",
         data={
-            "group_id": group.id if status == 400 else "test",
+            "group_id": group.name if status == 400 else "test",
         },
     )
 

@@ -21,6 +21,8 @@ from virtool_core.models.reference import (
 )
 from virtool_core.models.task import Task
 
+import virtool.history.db
+import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
 from virtool.api.response import NotFound, InsufficientRights
@@ -186,7 +188,6 @@ class ReferencesData(DataLayerPiece):
         elif data.remote_from:
             try:
                 release = await virtool.github.get_release(
-                    self._config,
                     self._client,
                     data.remote_from,
                     release_id=data.release_id,
@@ -296,7 +297,7 @@ class ReferencesData(DataLayerPiece):
         if not await virtool.references.db.check_right(req, ref_id, "modify"):
             raise InsufficientRights()
 
-        await self.data.references.edit_reference(ref_id, data)
+        await self.data.references.update_reference(ref_id, data)
 
         return await self.get(ref_id)
 
@@ -335,7 +336,7 @@ class ReferencesData(DataLayerPiece):
 
         return ReferenceRelease(**release)
 
-    async def get_updates(self, ref_id: str) -> ReferenceInstalled:
+    async def get_updates(self, ref_id: str) -> List[ReferenceInstalled]:
 
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
@@ -506,16 +507,21 @@ class ReferencesData(DataLayerPiece):
 
         return IndexMinimal(**document)
 
-    async def list_groups(self, ref_id: str) -> ReferenceGroup:
+    async def list_groups(self, ref_id: str) -> List[ReferenceGroup]:
+        """
+        List all groups that have access to the reference.
 
-        if not await self._mongo.references.count_documents({"_id": ref_id}):
-            raise ResourceNotFoundError()
-
+        :param ref_id: the id of the reference
+        :return: a list of reference users
+        """
         groups = await virtool.mongo.utils.get_one_field(
             self._mongo.references, "groups", ref_id
         )
 
-        return ReferenceGroup(**groups)
+        if groups:
+            return [ReferenceGroup(**group) for group in groups]
+
+        raise ResourceNotFoundError
 
     async def create_group(
         self, ref_id: str, data: CreateReferenceGroupsSchema, req
@@ -671,7 +677,7 @@ class ReferencesData(DataLayerPiece):
 
         raise HTTPNoContent
 
-    async def edit_reference(self, ref_id: str, data: dict) -> dict:
+    async def update_reference(self, ref_id: str, data: dict) -> dict:
         """
         Edit and existing reference using the passed update data.
         """

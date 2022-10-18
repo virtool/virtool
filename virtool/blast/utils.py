@@ -8,8 +8,7 @@ from zipfile import ZipFile
 import aiohttp
 
 import virtool.errors
-from virtool.config.cls import Config
-from virtool.http.proxy import ProxyRequest
+
 
 logger = getLogger("blast")
 
@@ -114,19 +113,18 @@ def format_blast_hit(hit: dict) -> dict:
     }
 
 
-async def check_rid(config: Config, rid: str) -> bool:
+async def check_rid(rid: str) -> bool:
     """
     Check if the BLAST process identified by the passed RID is ready.
 
     :param rid: the RID to check
-    :param config: the application configuration object
     :return: ``True`` if ready, ``False`` otherwise
 
     """
     params = {"CMD": "Get", "RID": rid, "FORMAT_OBJECT": "SearchInfo"}
 
-    async with aiohttp.ClientSession() as session, ProxyRequest(
-        config, session.get, BLAST_URL, params=params
+    async with aiohttp.ClientSession() as session, session.get(
+        BLAST_URL, params=params
     ) as resp:
         if resp.status != 200:
             raise virtool.errors.NCBIError(
@@ -136,13 +134,12 @@ async def check_rid(config: Config, rid: str) -> bool:
         return "Status=WAITING" not in await resp.text()
 
 
-async def initialize_ncbi_blast(config: Config, sequence: str) -> Tuple[str, int]:
+async def initialize_ncbi_blast(sequence: str) -> Tuple[str, int]:
     """
     Send a request to NCBI to BLAST the passed sequence.
 
     Return the RID and RTOE from the response.
 
-    :param config: the application configuration object
     :param sequence: the nucleotide sequence to BLAST
     :return: the RID and RTOE for the request
     """
@@ -160,8 +157,8 @@ async def initialize_ncbi_blast(config: Config, sequence: str) -> Tuple[str, int
     # Data passed as POST content.
     data = {"QUERY": sequence}
 
-    async with aiohttp.ClientSession() as session, ProxyRequest(
-        config, session.post, BLAST_URL, params=params, data=data
+    async with aiohttp.ClientSession() as session, session.post(
+        BLAST_URL, params=params, data=data
     ) as resp:
         if resp.status != 200:
             raise virtool.errors.NCBIError(
@@ -176,13 +173,10 @@ async def initialize_ncbi_blast(config: Config, sequence: str) -> Tuple[str, int
         return extract_blast_info(html)
 
 
-async def get_ncbi_blast_result(
-    config: Config, run_in_process: callable, rid: str
-) -> dict:
+async def get_ncbi_blast_result(run_in_process: callable, rid: str) -> dict:
     """
     Retrieve the BLAST result with the given `rid` from NCBI.
 
-    :param config: the application configuration
     :param run_in_process: the application processing running function
     :param rid: the rid to retrieve a result for
     :return: the BLAST result
@@ -195,8 +189,8 @@ async def get_ncbi_blast_result(
         "FORMAT_OBJECT": "Alignment",
     }
 
-    async with aiohttp.ClientSession() as session, ProxyRequest(
-        config, session.get, BLAST_URL, params=params
+    async with aiohttp.ClientSession() as session, session.get(
+        BLAST_URL, params=params
     ) as resp:
         data = await resp.read()
         return await run_in_process(extract_blast_zip, data, rid)

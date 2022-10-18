@@ -31,12 +31,7 @@ class ChangesView(PydanticView):
             req_query=self.request.query
         )
 
-        return json_response(
-            [
-                ListHistoryResponse.parse_obj(document).dict()
-                for document in data.documents
-            ]
-        )
+        return json_response(ListHistoryResponse.parse_obj(data))
 
 
 @routes.view("/history/{change_id}")

@@ -95,132 +95,7 @@
 # name: TestCreate.test[True-uvloop][location]
   'https://virtool.example.com/indexes/fb085f7f'
 ---
-# name: test_finalize[uvloop-404_reference]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Reference associated with index does not exist',
-  }
----
-# name: test_finalize[uvloop-409_fasta]
-  <class 'dict'> {
-    'id': 'conflict',
-    'message': 'A FASTA file must be uploaded in order to finalize index',
-  }
----
-# name: test_finalize[uvloop-409_genome]
-  <class 'dict'> {
-    'id': 'conflict',
-    'message': 'Reference requires that all Bowtie2 index files have been uploaded. Missing files: reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2',
-  }
----
-# name: test_finalize[uvloop-None]
-  <class 'dict'> {
-    'change_count': 0,
-    'files': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.fa.gz',
-        'id': 1,
-        'index': 'test_index',
-        'name': 'reference.fa.gz',
-        'size': None,
-        'type': 'fasta',
-      },
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.json.gz',
-        'id': 2,
-        'index': 'test_index',
-        'name': 'reference.json.gz',
-        'size': None,
-        'type': 'json',
-      },
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.1.bt2',
-        'id': 3,
-        'index': 'test_index',
-        'name': 'reference.1.bt2',
-        'size': None,
-        'type': 'bowtie2',
-      },
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.2.bt2',
-        'id': 4,
-        'index': 'test_index',
-        'name': 'reference.2.bt2',
-        'size': None,
-        'type': 'bowtie2',
-      },
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.3.bt2',
-        'id': 5,
-        'index': 'test_index',
-        'name': 'reference.3.bt2',
-        'size': None,
-        'type': 'bowtie2',
-      },
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.4.bt2',
-        'id': 6,
-        'index': 'test_index',
-        'name': 'reference.4.bt2',
-        'size': None,
-        'type': 'bowtie2',
-      },
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.rev.1.bt2',
-        'id': 7,
-        'index': 'test_index',
-        'name': 'reference.rev.1.bt2',
-        'size': None,
-        'type': 'bowtie2',
-      },
-      <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.rev.2.bt2',
-        'id': 8,
-        'index': 'test_index',
-        'name': 'reference.rev.2.bt2',
-        'size': None,
-        'type': 'bowtie2',
-      },
-    ],
-    'id': 'test_index',
-    'modified_otu_count': 0,
-    'ready': True,
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
-    },
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
-# name: test_finalize[uvloop-None].1
-  <class 'dict'> {
-    '_id': '6116cba1',
-    'abbreviation': 'PVF',
-    'isolates': <class 'list'> [
-      <class 'dict'> {
-        'default': True,
-        'id': 'cab8b360',
-        'source_name': '8816-v2',
-        'source_type': 'isolate',
-      },
-    ],
-    'last_indexed_version': 1,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
-    },
-    'remote_id': None,
-    'schema': <class 'list'> [
-    ],
-    'verified': False,
-    'version': 1,
-  }
----
-# name: test_find[uvloop]
+# name: TestFind.test[uvloop]
   <class 'dict'> {
     'change_count': 12,
     'documents': <class 'list'> [
@@ -274,26 +149,173 @@
     'total_otu_count': 123,
   }
 ---
+# name: test_finalize[uvloop-404_reference]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Reference associated with index does not exist',
+  }
+---
+# name: test_finalize[uvloop-409_fasta]
+  <class 'dict'> {
+    'id': 'conflict',
+    'message': 'A FASTA file must be uploaded in order to finalize index',
+  }
+---
+# name: test_finalize[uvloop-409_genome]
+  <class 'dict'> {
+    'id': 'conflict',
+    'message': 'Reference requires that all Bowtie2 index files have been uploaded. Missing files: reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2',
+  }
+---
+# name: test_finalize[uvloop-None]
+  <class 'dict'> {
+    'change_count': 0,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.fa.gz',
+        'id': 1,
+        'index': 'test_index',
+        'name': 'reference.fa.gz',
+        'size': 9000,
+        'type': 'fasta',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.json.gz',
+        'id': 2,
+        'index': 'test_index',
+        'name': 'reference.json.gz',
+        'size': 9000,
+        'type': 'json',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.1.bt2',
+        'id': 3,
+        'index': 'test_index',
+        'name': 'reference.1.bt2',
+        'size': 9000,
+        'type': 'bowtie2',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.2.bt2',
+        'id': 4,
+        'index': 'test_index',
+        'name': 'reference.2.bt2',
+        'size': 9000,
+        'type': 'bowtie2',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.3.bt2',
+        'id': 5,
+        'index': 'test_index',
+        'name': 'reference.3.bt2',
+        'size': 9000,
+        'type': 'bowtie2',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.4.bt2',
+        'id': 6,
+        'index': 'test_index',
+        'name': 'reference.4.bt2',
+        'size': 9000,
+        'type': 'bowtie2',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.rev.1.bt2',
+        'id': 7,
+        'index': 'test_index',
+        'name': 'reference.rev.1.bt2',
+        'size': 9000,
+        'type': 'bowtie2',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.rev.2.bt2',
+        'id': 8,
+        'index': 'test_index',
+        'name': 'reference.rev.2.bt2',
+        'size': 9000,
+        'type': 'bowtie2',
+      },
+    ],
+    'has_files': True,
+    'id': 'test_index',
+    'job': <class 'dict'> {
+      'id': 'sj82la',
+    },
+    'manifest': <class 'dict'> {
+      'foo': 4,
+    },
+    'modified_otu_count': 0,
+    'otus': <class 'list'> [
+    ],
+    'ready': True,
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'version': 2,
+  }
+---
+# name: test_finalize[uvloop-None].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 1,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'remote_id': None,
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
 # name: test_find_history[uvloop-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Edited sequence wrta20tr in Islolate chilli-CR',
         'id': 'kjs8sa99.3',
         'index': <class 'dict'> {
           'id': 'foobar',
           'version': 0,
         },
-        'method_name': 'add_sequence',
+        'method_name': 'edit_sequence',
         'otu': <class 'dict'> {
           'id': 'kjs8sa99',
           'name': 'Foo',
           'version': 3,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'fred',
           'id': 'fred',
         },
       },
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.2',
         'index': <class 'dict'> {
           'id': 'foobar',
@@ -305,11 +327,18 @@
           'name': 'Test',
           'version': 2,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'ian',
           'id': 'igboyes',
         },
       },
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.1',
         'index': <class 'dict'> {
           'id': 'foobar',
@@ -321,22 +350,35 @@
           'name': 'Test',
           'version': 1,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'ian',
           'id': 'igboyes',
         },
       },
       <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.0',
         'index': <class 'dict'> {
           'id': 'foobar',
           'version': 0,
         },
+        'method_name': 'add_isolate',
         'otu': <class 'dict'> {
           'id': 'zxbbvngc',
           'name': 'Test',
           'version': 0,
         },
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
         'user': <class 'dict'> {
+          'administrator': True,
+          'handle': 'ian',
           'id': 'igboyes',
         },
       },
@@ -353,11 +395,15 @@
     'change_count': 2,
     'contributors': <class 'list'> [
       <class 'dict'> {
+        'administrator': True,
         'count': 1,
+        'handle': 'fred',
         'id': 'fred',
       },
       <class 'dict'> {
+        'administrator': True,
         'count': 3,
+        'handle': 'ian',
         'id': 'igboyes',
       },
     ],
@@ -368,6 +414,9 @@
     'id': 'foobar',
     'job': <class 'dict'> {
       'id': 'sj82la',
+    },
+    'manifest': <class 'dict'> {
+      'foo': 2,
     },
     'modified_otu_count': 2,
     'otus': <class 'list'> [
@@ -383,6 +432,9 @@
       },
     ],
     'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'bar',
+    },
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
@@ -393,12 +445,12 @@
 ---
 # name: test_upload[uvloop-None]
   <class 'dict'> {
+    'download_url': '/indexes/foo/files/reference.1.bt2',
     'id': 1,
     'index': 'foo',
     'name': 'reference.1.bt2',
     'size': 7205747,
     'type': 'bowtie2',
-    'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---
 # name: test_upload[uvloop-None].1
@@ -413,5 +465,5 @@
   }
 ---
 # name: test_upload[uvloop-None].2
-  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=7205747)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=7205747)>
 ---

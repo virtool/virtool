@@ -11,6 +11,7 @@ from virtool_core.models.reference import (
     ReferenceRelease,
     ReferenceGroup,
 )
+from virtool_core.models.validators import prevent_none
 
 ALLOWED_REMOTE = ["virtool/ref-plant-viruses"]
 ALLOWED_DATA_TYPE = ["barcode", "genome"]
@@ -47,6 +48,10 @@ class CreateReferenceRequest(BaseModel):
     )
     remote_from: Optional[str] = Field(
         description="a valid GitHub slug to download and update the new reference from"
+    )
+
+    _prevent_none = prevent_none(
+        "release_id", "clone_from", "import_from", "remote_from"
     )
 
     @root_validator
@@ -309,6 +314,8 @@ class ReferenceTargetRequest(BaseModel):
     required: bool = Field(default=False)
     length: Optional[int]
 
+    _prevent_none = prevent_none("length")
+
 
 class UpdateReferenceRequest(BaseModel):
     name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
@@ -330,6 +337,15 @@ class UpdateReferenceRequest(BaseModel):
         description="source types"
     )
     targets: List[ReferenceTargetRequest] = Field(description="targets")
+
+    _prevent_none = prevent_none(
+        "name",
+        "description",
+        "organism",
+        "internal_control",
+        "restrict_source_types",
+        "source_types",
+    )
 
     class Config:
         schema_extra = {
@@ -366,6 +382,8 @@ class ReferenceRightsRequest(BaseModel):
 
     class Config:
         schema_extra = {"example": {"build": True, "modify": True}}
+
+    _prevent_none = prevent_none("*")
 
 
 class CreateReferenceGroupsSchema(ReferenceRightsRequest):

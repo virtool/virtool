@@ -48,10 +48,10 @@ class GroupsView(PydanticView):
             201: Successful operation
             400: Group already exists
         """
-        group_id = data.group_id
+        name = data.name
 
         try:
-            group = await get_data_from_req(self.request).groups.create(group_id)
+            group = await get_data_from_req(self.request).groups.create(name)
         except ResourceConflictError:
             raise HTTPBadRequest(text="Group already exists")
 

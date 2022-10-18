@@ -15,7 +15,7 @@ class IndexType(str, SQLEnum):
     bowtie2 = "bowtie2"
 
 
-class IndexFile(Base):
+class SQLIndexFile(Base):
     """
     SQL model to store new index files
 

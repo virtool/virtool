@@ -24,7 +24,6 @@ class Config:
     no_fetching: bool = False
     no_sentry: bool = False
     port: int = 9950
-    proxy: str = None
     use_b2c: bool = False
     verbose: bool = False
     sentry_dsn: str = "https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532"

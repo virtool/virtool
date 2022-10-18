@@ -61,9 +61,9 @@ class AccountData:
             }
         )
 
-    async def edit(self, user_id: str, data: UpdateAccountRequest) -> Account:
+    async def update(self, user_id: str, data: UpdateAccountRequest) -> Account:
         """
-        Edit the user account.
+        Update the user account.
 
         :param user_id: the user ID
         :param data: the update to the account
@@ -103,11 +103,11 @@ class AccountData:
 
         return AccountSettings(**settings)
 
-    async def edit_settings(
+    async def update_settings(
         self, data: UpdateSettingsRequest, query_field: str, user_id: str
     ) -> AccountSettings:
         """
-        Edits account settings.
+        Updates account settings.
 
         :param data: the update to the account settings
         :param query_field: the field to edit
@@ -206,7 +206,7 @@ class AccountData:
 
         return APIKey(**document)
 
-    async def edit_key(
+    async def update_key(
         self, user_id: str, key_id: str, data: UpdateKeyRequest
     ) -> APIKey:
         """

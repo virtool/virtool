@@ -61,9 +61,6 @@ def entry():
     default="postgresql+asyncpg://virtool:virtool@localhost/virtool",
 )
 @click.option(
-    "--proxy", help="The address for an internet proxy to connect through", type=str
-)
-@click.option(
     "--redis-connection-string",
     help="The Redis connection string",
     type=str,
@@ -87,7 +84,6 @@ def cli(
     dev,
     force_version,
     no_sentry,
-    proxy,
     postgres_connection_string,
     redis_connection_string,
     verbose,
@@ -103,7 +99,6 @@ def cli(
             "dev": dev,
             "force_version": force_version,
             "no_sentry": no_sentry,
-            "proxy": proxy,
             "postgres_connection_string": postgres_connection_string,
             "redis_connection_string": redis_connection_string,
             "verbose": verbose,
