@@ -20,7 +20,8 @@ async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
         url += f"&state={state}"
 
     if users is not None:
-        url += f"&users={users}"
+        for user in users.split(","):
+            url += f"&users={user.strip()}"
 
     resp = await client.get(url)
 
@@ -153,9 +154,7 @@ async def test_archive(
 
 
 @pytest.mark.parametrize("error", [None, 404])
-async def test_ping(
-    error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
-):
+async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is):
 
     user = await fake2.users.create()
 

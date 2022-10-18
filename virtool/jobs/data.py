@@ -9,9 +9,11 @@ from virtool_core.models.job import (
     JobMinimal,
     JobSearchResult,
     JobStatus,
-    Job, JobPing,
+    Job,
+    JobPing,
 )
 from virtool_core.models.user import UserNested
+from typing import List
 
 import virtool.utils
 from virtool.api.utils import (
@@ -61,7 +63,14 @@ class JobsData:
 
         return dict(counts)
 
-    async def find(self, query: MultiDictProxy) -> JobSearchResult:
+    async def find(
+        self,
+        archived: bool,
+        page: int,
+        per_page: int,
+        states: List[str],
+        users: List[str],
+    ) -> JobSearchResult:
         """
         {
           "waiting": {
@@ -72,22 +81,6 @@ class JobsData:
           }
         }
         """
-        states = query.getall("state", None)
-        users = query.get("users")
-        if users:
-            users = [user.strip() for user in users.split(",")]
-        archived = get_query_bool(query, "archived") if "archived" in query else None
-
-        try:
-            page = int(query["page"])
-        except (KeyError, ValueError):
-            page = 1
-
-        try:
-            per_page = int(query["per_page"])
-        except (KeyError, ValueError):
-            per_page = 25
-
         skip_count = 0
 
         if page > 1:
@@ -97,7 +90,7 @@ class JobsData:
 
         match_query = {
             **({"archived": archived} if archived is not None else {}),
-            **({"user.id": {"$in": users}} if users else {})
+            **({"user.id": {"$in": users}} if users else {}),
         }
 
         match_state = {"state": {"$in": states}} if states else {}
@@ -222,7 +215,7 @@ class JobsData:
             "state": "waiting",
             "status": [compose_status("waiting", None)],
             "user": {"id": user_id},
-            "ping": None
+            "ping": None,
         }
 
         if job_id:

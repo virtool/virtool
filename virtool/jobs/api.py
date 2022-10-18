@@ -4,7 +4,7 @@ from typing import Union, List, Optional
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
-from pydantic import Field
+from pydantic import Field, conint
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -25,7 +25,14 @@ routes = Routes()
 
 @routes.view("/jobs")
 class JobsView(PydanticView):
-    async def get(self) -> Union[r200[List[GetJobResponse]], r400]:
+    async def get(
+        self,
+        archived: Optional[bool] = None,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
+        state: List[str] = Field(default_factory=list),
+        users: List[str] = Field(default_factory=list),
+    ) -> Union[r200[List[GetJobResponse]], r400]:
         """
         Find jobs.
 
@@ -41,7 +48,9 @@ class JobsView(PydanticView):
             400: Invalid query
         """
         return json_response(
-            await get_data_from_req(self.request).jobs.find(self.request.query)
+            await get_data_from_req(self.request).jobs.find(
+                archived, page, per_page, state, users
+            )
         )
 
     @policy(PermissionsRoutePolicy(Permission.remove_job))
