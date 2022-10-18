@@ -3,7 +3,6 @@ import os
 import shutil
 from pathlib import Path
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -19,12 +18,10 @@ from virtool.utils import get_temp_dir
 async def test_add_subtraction_files_task(
     config,
     data_layer,
-    dbi,
+    mongo,
     pg: AsyncEngine,
     snapshot,
     spawn_client,
-    mongo,
-    pg: AsyncEngine,
     static_time,
     tmp_path,
 ):
@@ -33,7 +30,7 @@ async def test_add_subtraction_files_task(
     test_dir.joinpath("subtraction.fa.gz").write_text("FASTA file")
     test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
 
-    await dbi.subtraction.insert_one(
+    await mongo.subtraction.insert_one(
         {
             "_id": "foo",
             "name": "Foo",
@@ -76,7 +73,7 @@ async def test_add_subtraction_files_task(
 
 
 async def test_write_subtraction_fasta_file_task(
-    config, data_layer, dbi, pg, snapshot, static_time, test_files_path, tmpdir
+    config, data_layer, mongo, pg, snapshot, static_time, test_files_path, tmpdir
 ):
     subtractions_path = Path(tmpdir.mkdir("subtractions").mkdir("foo"))
 

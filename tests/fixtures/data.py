@@ -25,13 +25,12 @@ from virtool.users.data import UsersData
 
 
 @pytest.fixture
-def data_layer(mongo, config, mocker, pg: AsyncEngine, redis: Redis):
+def data_layer(config, mocker, mongo, pg: AsyncEngine, redis: Redis):
     base_url = "https://virtool.example.com"
     return DataLayer(
         AccountData(mongo, redis),
         AnalysisData(mongo, config, pg),
-        BLASTData(mocker.Mock(spec=ClientSession), dbi, pg),
-        mocker.Mock(spec=BLASTData),
+        BLASTData(mocker.Mock(spec=ClientSession), mongo, pg),
         GroupsData(mongo),
         SettingsData(mongo),
         HistoryData(config.data_path, mongo),

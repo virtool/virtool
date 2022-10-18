@@ -10,13 +10,13 @@ from virtool.utils import get_temp_dir
 
 
 async def test_compress_samples_task(
-    mocker, dbi, pg: AsyncEngine, data_layer: DataLayer, static_time, config
+    mocker, mongo, pg: AsyncEngine, data_layer: DataLayer, static_time, config
 ):
     """
     Ensure `compress_reads` is called correctly given a samples collection.
 
     """
-    await dbi.samples.insert_many(
+    await mongo.samples.insert_many(
         [
             {"_id": "foo", "is_legacy": True},
             {"_id": "fab", "is_legacy": False},
@@ -56,8 +56,8 @@ async def test_compress_samples_task(
 
     assert calls == (
         [
-            (dbi, config, {"_id": "foo", "is_legacy": True}),
-            (dbi, config, {"_id": "bar", "is_legacy": True}),
+            (mongo, config, {"_id": "foo", "is_legacy": True}),
+            (mongo, config, {"_id": "bar", "is_legacy": True}),
         ]
     )
 
@@ -68,10 +68,10 @@ async def test_compress_samples_task(
 async def test_move_sample_files_task(
     legacy,
     compressed,
-    paired,
-    dbi,
-    pg: AsyncEngine,
     data_layer: DataLayer,
+    mongo,
+    paired,
+    pg: AsyncEngine,
     snapshot,
     static_time,
 ):

@@ -13,14 +13,13 @@ from virtool.tasks.models import Task
 
 
 @pytest.fixture
-async def blast_data(dbi, mocker, pg: AsyncEngine, static_time, redis):
-async def blast_data(mongo, pg, static_time, redis):
+async def blast_data(mocker, mongo, pg: AsyncEngine, static_time, redis):
 
-    blast_data = BLASTData(mocker.Mock(spec=ClientSession), dbi, pg)
+    blast_data = BLASTData(mocker.Mock(spec=ClientSession), mongo, pg)
     blast_data.bind_layer(mocker.Mock(spec=DataLayer))
     blast_data.data.tasks = mocker.Mock(spec=TasksData)
 
-    await dbi.analyses.insert_one(
+    await mongo.analyses.insert_one(
         {
             "_id": "analysis",
             "results": {"hits": [{"sequence_index": 12, "sequence": "ATAGAGACACC"}]},
@@ -69,7 +68,7 @@ async def blast_data(mongo, pg, static_time, redis):
     return blast_data
 
 
-async def test_create_nuvs_blast(blast_data: BLASTData, dbi, pg, snapshot):
+async def test_create_nuvs_blast(blast_data: BLASTData, pg, snapshot):
     await blast_data.create_nuvs_blast("analysis", 12)
 
     async with AsyncSession(pg) as session:
@@ -107,7 +106,7 @@ class TestCheckNuvsBlast:
 
         assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot(name="after")
 
-    async def test_result(self, blast_data: BLASTData, dbi, mocker, pg, snapshot):
+    async def test_result(self, blast_data: BLASTData, mocker, pg, snapshot):
         """
         Check that the following occur when the BLAST is complete on NCBI:
 
