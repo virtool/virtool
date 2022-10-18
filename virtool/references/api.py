@@ -25,11 +25,11 @@ from virtool.indexes.oas import ListIndexesResponse
 from virtool.otus.oas import CreateOTURequest
 from virtool.otus.oas import FindOTUsResponse
 from virtool.references.oas import (
-    CreateReferenceSchema,
-    EditReferenceSchema,
+    CreateReferenceRequest,
+    UpdateReferenceRequest,
     CreateReferenceGroupsSchema,
-    ReferenceRightsSchema,
-    CreateReferenceUsersSchema,
+    ReferenceRightsRequest,
+    CreateReferenceUsersRequest,
     CreateReferenceResponse,
     FindReferencesResponse,
     ReferenceResponse,
@@ -40,7 +40,7 @@ from virtool.references.oas import (
     ReferenceGroupsResponse,
     CreateReferenceGroupResponse,
     ReferenceGroupResponse,
-    ReferenceUsersSchema,
+    ReferenceUsersResponse,
     ReferenceHistoryResponse,
 )
 
@@ -75,7 +75,7 @@ class ReferencesView(PydanticView):
 
     @policy(PermissionsRoutePolicy(Permission.create_ref))
     async def post(
-        self, data: CreateReferenceSchema
+        self, data: CreateReferenceRequest
     ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:
         """
         Create a reference.
@@ -140,7 +140,7 @@ class ReferenceView(PydanticView):
         self,
         ref_id: str,
         /,
-        data: EditReferenceSchema,
+        data: UpdateReferenceRequest,
     ) -> Union[r200[ReferenceResponse], r403, r404]:
         """
         Update a reference.
@@ -471,7 +471,7 @@ class ReferenceGroupView(PydanticView):
         ref_id: str,
         group_id: str,
         /,
-        data: ReferenceRightsSchema,
+        data: ReferenceRightsRequest,
     ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
         """
         Update a group.
@@ -516,8 +516,8 @@ class ReferenceGroupView(PydanticView):
 @routes.view("/refs/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
     async def post(
-        self, ref_id: str, /, data: CreateReferenceUsersSchema
-    ) -> Union[r201[List[ReferenceUsersSchema]], r400, r403, r404]:
+        self, ref_id: str, /, data: CreateReferenceUsersRequest
+    ) -> Union[r201[List[ReferenceUsersResponse]], r400, r403, r404]:
         """
         Add a user.
 
@@ -546,7 +546,7 @@ class ReferenceUsersView(PydanticView):
 @routes.view("/refs/{ref_id}/users/{user_id}")
 class ReferenceUserView(PydanticView):
     async def patch(
-        self, ref_id: str, user_id: str, /, data: ReferenceRightsSchema
+        self, ref_id: str, user_id: str, /, data: ReferenceRightsRequest
     ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
         """
         Update a user.

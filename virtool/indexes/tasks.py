@@ -8,7 +8,7 @@ from virtool_core.utils import file_stats
 from virtool.api.custom_json import dumps
 from virtool.history.db import patch_to_version
 from virtool.indexes.db import FILES
-from virtool.indexes.models import IndexFile, IndexType
+from virtool.indexes.models import SQLIndexFile, IndexType
 from virtool.indexes.utils import join_index_path
 from virtool.tasks.task import Task
 from virtool.types import App, Document
@@ -38,7 +38,7 @@ class AddIndexFilesTask(Task):
             async with AsyncSession(self.app["pg"]) as session:
                 first = (
                     await session.execute(
-                        select(IndexFile).where(IndexFile.index == index_id)
+                        select(SQLIndexFile).where(SQLIndexFile.index == index_id)
                     )
                 ).first()
 
@@ -47,7 +47,7 @@ class AddIndexFilesTask(Task):
 
                 session.add_all(
                     [
-                        IndexFile(
+                        SQLIndexFile(
                             name=path.name,
                             index=index_id,
                             type=get_index_file_type_from_name(path.name),
@@ -103,7 +103,7 @@ class AddIndexJSONTask(Task):
             stats = await run_in_thread(file_stats, index_json_path)
 
             session.add(
-                IndexFile(
+                SQLIndexFile(
                     name="reference.json.gz",
                     index=index_id,
                     type="json",

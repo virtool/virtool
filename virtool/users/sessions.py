@@ -37,7 +37,7 @@ async def create_session(
         "created_at": virtool.utils.timestamp().timestamp(),
         "ip": ip,
     }
-    print(new_session)
+
     token = None
 
     if user_id:

@@ -12,7 +12,7 @@ import virtool.utils
 from virtool.data.utils import get_data_from_app
 from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
-from virtool.settings.oas import UpdateSettingsSchema
+from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import Task as SQLTask
 
 
@@ -28,7 +28,7 @@ class TestCreate:
         default_source_type = ["strain", "isolate"]
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(default_source_types=default_source_type)
+            UpdateSettingsRequest(default_source_types=default_source_type)
         )
 
         data = {

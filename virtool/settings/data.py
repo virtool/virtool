@@ -1,7 +1,7 @@
 from virtool_core.models.settings import Settings
 
 from virtool.mongo.core import DB
-from virtool.settings.oas import UpdateSettingsSchema
+from virtool.settings.oas import UpdateSettingsRequest
 
 PROJECTION = {"_id": False}
 
@@ -24,7 +24,7 @@ class SettingsData:
 
         return Settings(**settings)
 
-    async def update(self, data: UpdateSettingsSchema) -> Settings:
+    async def update(self, data: UpdateSettingsRequest) -> Settings:
         """
         Update the settings.
 
@@ -45,10 +45,14 @@ class SettingsData:
         :return: the application settings
         """
 
-        existing = await self._db.settings.find_one({"_id": "settings"}, PROJECTION) or {}
+        existing = (
+            await self._db.settings.find_one({"_id": "settings"}, PROJECTION) or {}
+        )
 
         settings = {**(Settings().dict()), **existing}
 
-        await self._db.settings.update_one({"_id": "settings"}, {"$set": settings}, upsert=True)
+        await self._db.settings.update_one(
+            {"_id": "settings"}, {"$set": settings}, upsert=True
+        )
 
         return Settings(**settings)

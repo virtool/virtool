@@ -216,11 +216,26 @@ class CancelJobView(PydanticView):
         try:
             document = await get_data_from_req(self.request).jobs.cancel(job_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
         except ResourceConflictError:
             raise HTTPConflict(text="Job cannot be cancelled in its current state")
 
         return json_response(document)
+
+
+@routes.jobs_api.put("/jobs/{job_id}/ping")
+async def ping(req):
+    """
+    Ping a job.
+
+    Updates the ping time on the job. The job will time out if this
+    endpoint isn't called at least once every five minutes.
+    """
+    try:
+        job_ping = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
+    except ResourceNotFoundError:
+        raise NotFound()
+    return json_response(job_ping)
 
 
 @routes.post("/jobs/{job_id}/status")

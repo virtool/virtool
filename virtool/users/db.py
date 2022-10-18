@@ -35,10 +35,7 @@ PROJECTION = [
     "primary_group",
 ]
 
-ATTACH_PROJECTION = [
-    "administrator",
-    "handle",
-]
+ATTACH_PROJECTION = ["administrator", "handle"]
 
 
 @dataclass

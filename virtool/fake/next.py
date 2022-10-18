@@ -20,7 +20,7 @@ from virtool_core.models.task import Task
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
-from virtool.groups.oas import EditPermissionsSchema, EditGroupSchema
+from virtool.groups.oas import UpdatePermissionsRequest, UpdateGroupRequest
 from virtool.indexes.tasks import AddIndexFilesTask, AddIndexJSONTask
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
 from virtool.references.tasks import (
@@ -29,7 +29,7 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
 )
 from virtool.subtractions.tasks import AddSubtractionFilesTask
-from virtool.users.oas import UpdateUserSchema
+from virtool.users.oas import UpdateUserRequest
 
 
 class VirtoolProvider(BaseProvider):
@@ -85,7 +85,7 @@ class JobsFakerPiece(DataFakerPiece):
 class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
-    async def create(self, permissions: Optional[EditPermissionsSchema] = None):
+    async def create(self, permissions: Optional[UpdatePermissionsRequest] = None):
         group_id = "contains spaces"
 
         while " " in group_id:
@@ -95,7 +95,7 @@ class GroupsFakerPiece(DataFakerPiece):
 
         if permissions:
             group = await self.layer.groups.update(
-                group.id, EditGroupSchema(permissions=permissions)
+                group.id, UpdateGroupRequest(permissions=permissions)
             )
 
         return group
@@ -146,12 +146,12 @@ class UsersFakerPiece(DataFakerPiece):
         if groups or primary_group:
             if groups:
                 await self.layer.users.update(
-                    user.id, UpdateUserSchema(groups=[group.id for group in groups])
+                    user.id, UpdateUserRequest(groups=[group.id for group in groups])
                 )
 
             if primary_group:
                 await self.layer.users.update(
-                    user.id, UpdateUserSchema(primary_group=primary_group.id)
+                    user.id, UpdateUserRequest(primary_group=primary_group.id)
                 )
 
             return await self.layer.users.get(user.id)

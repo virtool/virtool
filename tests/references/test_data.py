@@ -38,7 +38,9 @@ class TestEdit:
             make_mocked_coro({"id": "baz"} if control_exists else None),
         )
 
-        document = await get_data_from_app(app).references.edit_reference("foo", update)
+        document = await get_data_from_app(app).references.update_reference(
+            "foo", update
+        )
 
         assert document == snapshot
         assert await mongo.references.find_one() == snapshot
@@ -69,7 +71,7 @@ class TestEdit:
             ]
         )
 
-        document = await get_data_from_app(app).references.edit_reference(
+        document = await get_data_from_app(app).references.update_reference(
             "foo", {"name": "Bar"}
         )
 

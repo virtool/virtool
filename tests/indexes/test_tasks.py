@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import AddIndexFilesTask, AddIndexJSONTask
 from virtool.tasks.models import Task
 
@@ -71,7 +71,7 @@ async def test_add_index_files(
     await add_index_files_task.run()
 
     async with AsyncSession(pg) as session:
-        assert (await session.execute(select(IndexFile))).scalars().all() == snapshot
+        assert (await session.execute(select(SQLIndexFile))).scalars().all() == snapshot
 
 
 async def test_add_index_json(
@@ -130,7 +130,7 @@ async def test_add_index_json(
     async with AsyncSession(pg) as session:
         assert (
             await session.execute(
-                select(IndexFile).where(IndexFile.name == "reference.json.gz")
+                select(SQLIndexFile).where(SQLIndexFile.name == "reference.json.gz")
             )
         ).scalars().all() == snapshot
 

@@ -1,19 +1,19 @@
 # name: test_add_index_files[uvloop-DNE]
   <class 'list'> [
-    <IndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
-    <IndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
+    <SQLIndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
+    <SQLIndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
   ]
 ---
 # name: test_add_index_files[uvloop-empty]
   <class 'list'> [
-    <IndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
-    <IndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
+    <SQLIndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
+    <SQLIndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
   ]
 ---
 # name: test_add_index_files[uvloop-full]
   <class 'list'> [
-    <IndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
-    <IndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
+    <SQLIndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
+    <SQLIndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
   ]
 ---
 # name: test_add_index_files[uvloop-not_ready]
@@ -22,7 +22,7 @@
 ---
 # name: test_add_index_json[uvloop]
   <class 'list'> [
-    <IndexFile(id=1, name=reference.json.gz, index=index_1, type=json, size=322)>,
+    <SQLIndexFile(id=1, name=reference.json.gz, index=index_1, type=json, size=322)>,
   ]
 ---
 # name: test_add_index_json[uvloop][json]

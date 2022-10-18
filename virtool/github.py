@@ -6,8 +6,7 @@ import aiohttp
 
 import virtool.errors
 import virtool.utils
-from virtool.config.cls import Config
-from virtool.http.proxy import ProxyRequest
+
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,6 @@ def get_etag(release: Optional[dict]) -> Optional[str]:
 
 
 async def get_release(
-    config: Config,
     session: aiohttp.ClientSession,
     slug: str,
     etag: Optional[str] = None,
@@ -99,7 +97,10 @@ async def get_release(
 
     logger.debug("Making GitHub request to %s", url)
 
-    async with ProxyRequest(config, session.get, url, headers=headers) as resp:
+    async with session.get(
+        url,
+        headers=headers,
+    ) as resp:
         rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
         rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
 

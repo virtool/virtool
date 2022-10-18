@@ -11,7 +11,7 @@ from virtool.groups.db import (
     update_member_users,
     fetch_complete_group,
 )
-from virtool.groups.oas import EditGroupSchema
+from virtool.groups.oas import UpdateGroupRequest
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.utils import generate_base_permissions
@@ -48,17 +48,18 @@ class GroupsData:
 
         raise ResourceNotFoundError()
 
-    async def create(self, group_id: str) -> Group:
+    async def create(self, name: str) -> Group:
         """
         Create new group given a group ID.
 
-        :param group_id: the ID for the new group
+        :param name: the ID for the new group
         :return: the group
         """
+
         try:
             document = await self._db.groups.insert_one(
                 {
-                    "_id": group_id,
+                    "name": name,
                     "permissions": generate_base_permissions(),
                 }
             )
@@ -67,7 +68,7 @@ class GroupsData:
 
         return Group(**base_processor(document), users=[])
 
-    async def update(self, group_id: str, data: EditGroupSchema) -> Group:
+    async def update(self, group_id: str, data: UpdateGroupRequest) -> Group:
         """
         Update the permissions for a group.
 
