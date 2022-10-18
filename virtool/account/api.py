@@ -393,7 +393,7 @@ class ResetView(PydanticView):
 
         await get_data_from_req(self.request).users.update(
             result["user_id"],
-            UpdateUserSchema(force_reset=False, password=data.password),
+            UpdateUserRequest(force_reset=False, password=data.password),
         )
 
         try:
