@@ -1,17 +1,14 @@
 import io
 import json
 import re
-from dataclasses import dataclass
 from logging import getLogger
 from typing import Tuple
 from zipfile import ZipFile
 
-import aiohttp
 from aiohttp import ClientSession
 
 import virtool.errors
 from virtool.utils import run_in_thread
-
 
 logger = getLogger("blast")
 
