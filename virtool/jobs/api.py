@@ -5,6 +5,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from pydantic import Field, conint
+from virtool_core.models.job import JobSearchResult
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -16,7 +17,7 @@ from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.users.utils import Permission
-from virtool.jobs.oas import GetJobResponse, JobResponse
+from virtool.jobs.oas import JobResponse
 
 logger = getLogger(__name__)
 
@@ -31,8 +32,8 @@ class JobsView(PydanticView):
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
         state: List[str] = Field(default_factory=list),
-        users: List[str] = Field(default_factory=list),
-    ) -> Union[r200[List[GetJobResponse]], r400]:
+        user: List[str] = Field(default_factory=list),
+    ) -> Union[r200[JobSearchResult], r400]:
         """
         Find jobs.
 
@@ -49,7 +50,7 @@ class JobsView(PydanticView):
         """
         return json_response(
             await get_data_from_req(self.request).jobs.find(
-                archived, page, per_page, state, users
+                archived, page, per_page, state, user
             )
         )
 

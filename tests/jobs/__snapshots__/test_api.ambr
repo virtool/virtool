@@ -1472,7 +1472,163 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-bob, test-None-False]
+# name: test_find_beta[uvloop-bob-None-False]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-None-None]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-None-True]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-running-False]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-running-None]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-running-True]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-users2-None-False]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -1610,7 +1766,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-bob, test-None-None]
+# name: test_find_beta[uvloop-users2-None-None]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -1846,7 +2002,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-bob, test-None-True]
+# name: test_find_beta[uvloop-users2-None-True]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -1970,7 +2126,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-bob, test-running-False]
+# name: test_find_beta[uvloop-users2-running-False]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -2024,7 +2180,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-bob, test-running-None]
+# name: test_find_beta[uvloop-users2-running-None]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -2078,163 +2234,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-bob, test-running-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 1,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[uvloop-bob-None-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 1,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[uvloop-bob-None-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 1,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[uvloop-bob-None-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 1,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[uvloop-bob-running-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 1,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[uvloop-bob-running-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 1,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[uvloop-bob-running-True]
+# name: test_find_beta[uvloop-users2-running-True]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
