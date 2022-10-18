@@ -3,8 +3,8 @@ from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import Permission
 
 from virtool.account.data import AccountData
-from virtool.account.oas import CreateKeysSchema
-from virtool.groups.oas import EditPermissionsSchema
+from virtool.account.oas import CreateKeysRequest
+from virtool.groups.oas import UpdatePermissionsRequest
 
 
 @pytest.mark.parametrize(
@@ -45,9 +45,11 @@ async def test_create_api_key(
     )
 
     account_data = AccountData(mongo, redis)
-    data = CreateKeysSchema(
+    data = CreateKeysRequest(
         name="Foo",
-        permissions=EditPermissionsSchema(create_sample=True, modify_subtraction=True),
+        permissions=UpdatePermissionsRequest(
+            create_sample=True, modify_subtraction=True
+        ),
     )
 
     _, document = await account_data.create_key(data, "bob")

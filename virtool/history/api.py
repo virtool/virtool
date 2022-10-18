@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union
 
 from aiohttp.web import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView

@@ -9,12 +9,12 @@ import virtool.utils
 from virtool.account.api import API_KEY_PROJECTION
 from virtool.account.db import compose_password_update
 from virtool.account.oas import (
-    EditSettingsSchema,
-    CreateKeysSchema,
-    EditKeySchema,
-    ResetPasswordSchema,
-    CreateLoginSchema,
-    EditAccountSchema,
+    UpdateSettingsRequest,
+    CreateKeysRequest,
+    UpdateKeyRequest,
+    ResetPasswordRequest,
+    CreateLoginRequest,
+    UpdateAccountRequest,
 )
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.mongo.core import DB
@@ -61,7 +61,7 @@ class AccountData:
             }
         )
 
-    async def update(self, user_id: str, data: EditAccountSchema) -> Account:
+    async def update(self, user_id: str, data: UpdateAccountRequest) -> Account:
         """
         Update the user account.
 
@@ -104,7 +104,7 @@ class AccountData:
         return AccountSettings(**settings)
 
     async def update_settings(
-        self, data: EditSettingsSchema, query_field: str, user_id: str
+        self, data: UpdateSettingsRequest, query_field: str, user_id: str
     ) -> AccountSettings:
         """
         Updates account settings.
@@ -136,7 +136,7 @@ class AccountData:
         return [APIKey(**d) async for d in cursor]
 
     async def create_key(
-        self, data: CreateKeysSchema, user_id: str
+        self, data: CreateKeysRequest, user_id: str
     ) -> Tuple[str, APIKey]:
         """
         Create a new API key.
@@ -207,7 +207,7 @@ class AccountData:
         return APIKey(**document)
 
     async def update_key(
-        self, user_id: str, key_id: str, data: EditKeySchema
+        self, user_id: str, key_id: str, data: UpdateKeyRequest
     ) -> APIKey:
         """
         Change the permissions for an existing API key.
@@ -259,7 +259,7 @@ class AccountData:
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, data: CreateLoginSchema) -> Union[str]:
+    async def login(self, data: CreateLoginRequest) -> Union[str]:
         """
         Create a new session for the user with `username`.
 
@@ -305,7 +305,7 @@ class AccountData:
         """
         return await replace_session(self._db, self._redis, old_session_id, ip)
 
-    async def reset(self, session_id, data: ResetPasswordSchema, ip: str):
+    async def reset(self, session_id, data: ResetPasswordRequest, ip: str):
         """
         Resets the password for a session user.
 

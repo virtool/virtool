@@ -10,8 +10,8 @@ from virtool.api.response import EmptyRequest, NotFound, json_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.labels.oas import (
-    CreateLabelSchema,
-    UpdateLabelSchema,
+    CreateLabelRequest,
+    UpdateLabelRequest,
     CreateLabelResponse,
     GetLabelResponse,
     LabelResponse,
@@ -43,7 +43,7 @@ class LabelsView(PydanticView):
         return json_response([label.dict() for label in labels])
 
     async def post(
-        self, data: CreateLabelSchema
+        self, data: CreateLabelRequest
     ) -> Union[r201[CreateLabelResponse], r400]:
         """
         Create a label.
@@ -92,7 +92,7 @@ class LabelView(PydanticView):
         return json_response(label)
 
     async def patch(
-        self, label_id: int, /, data: UpdateLabelSchema
+        self, label_id: int, /, data: UpdateLabelRequest
     ) -> Union[r200[LabelResponse], r400, r404]:
         """
         Update a label.

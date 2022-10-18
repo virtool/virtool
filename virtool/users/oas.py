@@ -4,7 +4,7 @@ from pydantic import BaseModel, constr, Field
 from virtool_core.models.validators import prevent_none
 
 
-class CreateFirstUserSchema(BaseModel):
+class CreateFirstUserRequest(BaseModel):
     """
     User fields for adding the first user to a user database.
     """
@@ -15,7 +15,7 @@ class CreateFirstUserSchema(BaseModel):
     password: constr(min_length=1) = Field(description="a unique password for the user")
 
 
-class CreateUserSchema(CreateFirstUserSchema):
+class CreateUserRequest(CreateFirstUserRequest):
     """
     User fields for creating a new user.
     """
@@ -25,7 +25,7 @@ class CreateUserSchema(CreateFirstUserSchema):
     )
 
 
-class UpdateUserSchema(BaseModel):
+class UpdateUserRequest(BaseModel):
     administrator: Optional[bool] = Field(
         description="set the user’s administrator status"
     )

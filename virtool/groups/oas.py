@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, constr
 from virtool_core.models.group import Group, GroupMinimal
 
 
-class EditPermissionsSchema(BaseModel):
+class UpdatePermissionsRequest(BaseModel):
     """
     Possible permissions that will be updated for a user and group.
     """
@@ -18,7 +18,7 @@ class EditPermissionsSchema(BaseModel):
     upload_file: Optional[bool]
 
 
-class CreateGroupSchema(BaseModel):
+class CreateGroupRequest(BaseModel):
     """
     A schema for requests to create groups.
     """
@@ -68,12 +68,12 @@ class GetGroupResponse(GroupMinimal):
         }
 
 
-class EditGroupSchema(BaseModel):
+class UpdateGroupRequest(BaseModel):
     """
     Used when updating permissions and/or group `name`.
     """
 
-    permissions: EditPermissionsSchema = Field(
+    permissions: UpdatePermissionsRequest = Field(
         description="a permission update comprising an object keyed by permissions "
         "with boolean values",
         default={},

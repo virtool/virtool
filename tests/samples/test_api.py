@@ -19,7 +19,7 @@ from virtool.jobs.client import DummyJobsClient
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
-from virtool.settings.oas import UpdateSettingsSchema
+from virtool.settings.oas import UpdateSettingsRequest
 from virtool.uploads.models import Upload
 
 
@@ -295,7 +295,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(
+            UpdateSettingsRequest(
                 sample_group=group_setting,
                 sample_all_write=True,
                 sample_group_write=True,
@@ -350,7 +350,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_unique_names=True)
+            UpdateSettingsRequest(sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -400,7 +400,7 @@ class TestCreate:
                     {"_id": "diagnostics", "name": "Diagnostics"},
                 ),
                 get_data_from_app(client.app).settings.update(
-                    UpdateSettingsSchema(
+                    UpdateSettingsRequest(
                         sample_group="force_choice", sample_unique_names=True
                     )
                 ),
@@ -423,7 +423,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_group="force_choice", sample_unique_names=True)
+            UpdateSettingsRequest(sample_group="force_choice", sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -432,7 +432,7 @@ class TestCreate:
             await asyncio.gather(
                 session.commit(),
                 get_data_from_app(client.app).settings.update(
-                    UpdateSettingsSchema(
+                    UpdateSettingsRequest(
                         sample_group="force_choice", sample_unique_names=True
                     )
                 ),
@@ -480,7 +480,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_unique_names=True)
+            UpdateSettingsRequest(sample_unique_names=True)
         )
 
         await client.db.subtraction.insert_one(
@@ -505,7 +505,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_unique_names=True)
+            UpdateSettingsRequest(sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -1047,7 +1047,7 @@ class TestUploadReads:
         pg,
         test_files_path,
         tmp_path,
-        fake2
+        fake2,
     ):
         """
         Test that new sample reads can be uploaded using the Jobs API.
@@ -1070,7 +1070,9 @@ class TestUploadReads:
 
         user = await fake2.users.create()
 
-        await get_data_from_app(client.app).uploads.create("test", "reads", False, user=user.id)
+        await get_data_from_app(client.app).uploads.create(
+            "test", "reads", False, user=user.id
+        )
 
         if not compressed:
             mocker.patch(

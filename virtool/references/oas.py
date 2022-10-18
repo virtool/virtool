@@ -28,7 +28,7 @@ def check_data_type(data_type: str) -> str:
     return data_type
 
 
-class CreateReferenceSchema(BaseModel):
+class CreateReferenceRequest(BaseModel):
     name: constr(strip_whitespace=True) = Field(
         default="", description="the virus name"
     )
@@ -308,7 +308,7 @@ class ReferenceReleaseResponse(ReferenceRelease):
         }
 
 
-class ReferenceTargetSchema(BaseModel):
+class ReferenceTargetRequest(BaseModel):
     name: constr(min_length=1)
     description: constr(strip_whitespace=True) = Field(default="")
     required: bool = Field(default=False)
@@ -317,7 +317,7 @@ class ReferenceTargetSchema(BaseModel):
     _prevent_none = prevent_none("length")
 
 
-class EditReferenceSchema(BaseModel):
+class UpdateReferenceRequest(BaseModel):
     name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
         description="the virus name"
     )
@@ -336,7 +336,7 @@ class EditReferenceSchema(BaseModel):
     source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
         description="source types"
     )
-    targets: List[ReferenceTargetSchema] = Field(description="targets")
+    targets: List[ReferenceTargetRequest] = Field(description="targets")
 
     _prevent_none = prevent_none(
         "name",
@@ -368,7 +368,7 @@ class EditReferenceSchema(BaseModel):
         return targets
 
 
-class ReferenceRightsSchema(BaseModel):
+class ReferenceRightsRequest(BaseModel):
     build: Optional[bool] = Field(
         description="allow members to build new indexes for the reference"
     )
@@ -386,7 +386,7 @@ class ReferenceRightsSchema(BaseModel):
     _prevent_none = prevent_none("*")
 
 
-class CreateReferenceGroupsSchema(ReferenceRightsSchema):
+class CreateReferenceGroupsSchema(ReferenceRightsRequest):
     group_id: str = Field(description="the id of the group to add")
 
     class Config:
@@ -439,14 +439,14 @@ class ReferenceGroupResponse(ReferenceGroup):
         }
 
 
-class CreateReferenceUsersSchema(ReferenceRightsSchema):
+class CreateReferenceUsersRequest(ReferenceRightsRequest):
     user_id: str = Field(description="the id of the user to add")
 
     class Config:
         schema_extra = {"example": {"user_id": "sidney", "modify_otu": True}}
 
 
-class ReferenceUsersSchema(ReferenceUser):
+class ReferenceUsersResponse(ReferenceUser):
     class Config:
         schema_extra = {
             "example": {

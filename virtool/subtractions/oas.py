@@ -9,7 +9,7 @@ from virtool_core.models.subtraction import (
 from virtool_core.models.validators import prevent_none
 
 
-class EditSubtractionSchema(BaseModel):
+class UpdateSubtractionRequest(BaseModel):
     """
     Used when modifying a Subtraction
     """
@@ -27,7 +27,7 @@ class EditSubtractionSchema(BaseModel):
     _prevent_none = prevent_none("*")
 
 
-class CreateSubtractionSchema(BaseModel):
+class CreateSubtractionRequest(BaseModel):
     """
     Used for creating a new Subtraction.
     """

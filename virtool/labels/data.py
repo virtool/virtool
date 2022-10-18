@@ -8,7 +8,7 @@ from virtool_core.models.label import Label, LabelMinimal
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import Label as LabelSQL
-from virtool.labels.oas import UpdateLabelSchema
+from virtool.labels.oas import UpdateLabelRequest
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_generic
@@ -85,7 +85,7 @@ class LabelsData:
 
         return Label(**document)
 
-    async def update(self, label_id: int, data: UpdateLabelSchema) -> Label:
+    async def update(self, label_id: int, data: UpdateLabelRequest) -> Label:
         """
         Edit an existing label.
 
