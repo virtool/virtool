@@ -28,92 +28,42 @@ from virtool.references.utils import (
     check_import_data,
     load_reference_file,
 )
-from virtool.tasks.task import Task
+from virtool.tasks.task import Task, BaseTask
 from virtool.utils import chunk_list, get_temp_dir, run_in_thread
 from virtool_core.models.enums import HistoryMethod
 
 logger = getLogger(__name__)
 
 
-class CloneReferenceTask(Task):
+class CloneReferenceTask(BaseTask):
     """
     Clone an existing reference.
 
-    TODO: Remove use of update_context().
-
     """
 
-    task_type = "clone_reference"
+    name = "clone_reference"
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+    def __init__(self, task_id: int, data, context, temp_dir):
+        super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [self.copy_otus, self.create_history]
+        self.steps = [self.clone_reference]
 
-    async def copy_otus(self):
+    async def clone_reference(self):
         manifest = self.context["manifest"]
         created_at = self.context["created_at"]
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
-        tracker = await self.get_tracker(len(manifest))
-
-        inserted_otu_ids = []
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="copy_otus")
-
-        for source_otu_id, version in manifest.items():
-            _, patched, _ = await patch_to_version(
-                self.app["config"].data_path, self.db, source_otu_id, version
-            )
-
-            otu_id = await insert_joined_otu(
-                self.db, patched, created_at, ref_id, user_id
-            )
-
-            inserted_otu_ids.append(otu_id)
-
-            await tracker.add(1)
-
-        await self.update_context({"inserted_otu_ids": inserted_otu_ids})
-
-    async def create_history(self):
-        user_id = self.context["user_id"]
-        inserted_otu_ids = self.context["inserted_otu_ids"]
-
-        tracker = await self.get_tracker(len(inserted_otu_ids))
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="create_history")
-
-        for otu_id in inserted_otu_ids:
-            await insert_change(self.app, otu_id, HistoryMethod.clone, user_id)
-            await tracker.add(1)
-
-    async def cleanup(self):
-        ref_id = self.context["ref_id"]
-
-        query = {"reference.id": ref_id}
-
-        diff_file_change_ids = await self.db.history.distinct(
-            "_id", {**query, "diff": "file"}
-        )
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="cleanup")
-
-        await gather(
-            self.db.references.delete_one({"_id": ref_id}),
-            self.db.history.delete_many(query),
-            self.db.otus.delete_many(query),
-            self.db.sequences.delete_many(query),
-            remove_diff_files(self.app, diff_file_change_ids),
+        await self.data.references.clone_reference(
+            manifest, created_at, ref_id, user_id, self.create_progress_handler()
         )
 
 
-class ImportReferenceTask(Task):
-    task_type = "import_reference"
+class ImportReferenceTask(BaseTask):
+    name = "import_reference"
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+    def __init__(self, task_id: int, data, context, temp_dir):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [
             self.load_file,
@@ -127,37 +77,26 @@ class ImportReferenceTask(Task):
         path = Path(self.context["path"])
 
         try:
-            self.import_data = await self.run_in_thread(load_reference_file, path)
+            self.import_data = await run_in_thread(load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
-            return await self.error(str(err).split("JSONDecodeError: ")[1])
+            return await self._set_error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
             if "Not a gzipped file" in str(err):
-                return await self.error("Not a gzipped file")
+                return await self._set_error("Not a gzipped file")
 
-            return await self.error(str(err))
+            return await self._set_error(str(err))
 
     async def validate(self):
         if errors := check_import_data(self.import_data, strict=False, verify=True):
-            return await self.error(errors)
+            return await self._set_error(errors)
 
     async def import_reference(self):
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
-        try:
-            data_type = self.import_data["data_type"]
-        except (TypeError, KeyError):
-            data_type = "genome"
-
-        try:
-            organism = self.import_data["organism"]
-        except (TypeError, KeyError):
-            organism = ""
-
-        try:
-            targets = self.import_data["targets"]
-        except (TypeError, KeyError):
-            targets = None
+        data_type = self.import_data.get("data_type", "genome")
+        organism = self.import_data.get("organism", "")
+        targets = self.import_data.get("targets", None)
 
         update_dict = {"data_type": data_type, "organism": organism}
 

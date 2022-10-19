@@ -39,7 +39,7 @@ def data_layer(config, mocker, mongo, pg: AsyncEngine, redis: Redis):
         IndexData(mongo, config, pg),
         LabelsData(mongo, pg),
         JobsData(DummyJobsClient(), mongo, pg),
-        OTUData({"db": mongo, "pg": pg}),
+        OTUData({"db": mongo, "pg": pg, "config": config}),
         SamplesData(config, mongo, pg),
         SubtractionsData(base_url, config, mongo, pg),
         UploadsData(config, mongo, pg),
