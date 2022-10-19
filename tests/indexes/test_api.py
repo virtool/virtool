@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.utils import get_data_from_app
-from virtool.indexes.db import FILES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
@@ -520,7 +520,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = FILES
+        files = INDEX_FILE_NAMES
 
     if error != "404_reference":
         await client.db.references.insert_one({"_id": "hxn167", "data_type": "genome"})

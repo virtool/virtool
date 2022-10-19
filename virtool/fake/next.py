@@ -21,7 +21,7 @@ from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.groups.oas import UpdatePermissionsRequest, UpdateGroupRequest
-from virtool.indexes.tasks import AddIndexFilesTask, AddIndexJSONTask
+from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
 from virtool.references.tasks import (
     CloneReferenceTask,
@@ -30,7 +30,7 @@ from virtool.references.tasks import (
 )
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
-from virtool.users.oas import UpdateUserSchema
+from virtool.users.oas import UpdateUserRequest
 
 
 class VirtoolProvider(BaseProvider):
@@ -120,8 +120,7 @@ class TasksFakerPiece(DataFakerPiece):
         return await self.layer.tasks.create(
             self.faker.random_element(
                 [
-                    AddIndexFilesTask,
-                    AddIndexJSONTask,
+                    EnsureIndexFilesTask,
                     AddSubtractionFilesTask,
                     CloneReferenceTask,
                     CleanReferencesTask,

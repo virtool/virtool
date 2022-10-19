@@ -1,14 +1,16 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Dict
 
 from multidict import MultiDictProxy
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index, IndexFile
 from virtool_core.models.reference import ReferenceNested
+from virtool_core.utils import file_stats
 
 import virtool.indexes.db
 from virtool.api.custom_json import dumps
@@ -17,10 +19,11 @@ from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.db import (
-    FILES,
+    INDEX_FILE_NAMES,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import SQLIndexFile, IndexType
+from virtool.indexes.tasks import get_index_file_type_from_name, export_index
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.pg.utils import get_rows
@@ -237,7 +240,7 @@ class IndexData:
             )
 
         if reference["data_type"] == "genome":
-            required_files = [f for f in FILES if f != "reference.json.gz"]
+            required_files = [f for f in INDEX_FILE_NAMES if f != "reference.json.gz"]
 
             if missing_files := [f for f in required_files if f not in results]:
                 raise ResourceConflictError(
@@ -282,6 +285,84 @@ class IndexData:
         )
 
         return HistorySearchResult(**data)
+
+    async def ensure_files(self):
+        """Ensure all data files associated with indexes are tracked."""
+        async for index in self._mongo.indexes.find({"ready": True}):
+            index_id = index["_id"]
+
+            index_path = join_index_path(
+                self._config.data_path, index["reference"]["id"], index_id
+            )
+
+            await self._ensure_json(
+                index_path,
+                index["reference"]["id"],
+                index["manifest"],
+            )
+
+            async with AsyncSession(self._pg) as session:
+                first = (
+                    await session.execute(
+                        select(SQLIndexFile).where(SQLIndexFile.index == index_id)
+                    )
+                ).first()
+
+                if first:
+                    continue
+
+                session.add_all(
+                    [
+                        SQLIndexFile(
+                            name=path.name,
+                            index=index_id,
+                            type=get_index_file_type_from_name(path.name),
+                            size=(await run_in_thread(file_stats, path))["size"],
+                        )
+                        for path in sorted(index_path.iterdir())
+                        if path.name in INDEX_FILE_NAMES
+                    ]
+                )
+
+                await session.commit()
+
+    async def _ensure_json(
+        self,
+        path: Path,
+        ref_id: str,
+        manifest: Dict,
+    ):
+        """
+        Ensure that a there is a compressed JSON representation of the index found at
+        `path`` exists.
+
+        :param path: the path to the index directory
+        :param ref_id: the id of the parent reference
+        :param manifest: the otu id-version manifest for the index
+        """
+        json_path = path / "reference.json.gz"
+
+        if await run_in_thread(json_path.is_file):
+            return
+
+        reference = await self._mongo.references.find_one(
+            ref_id, ["data_type", "organism", "targets"]
+        )
+
+        index_data = await export_index(self._config.data_path, self._mongo, manifest)
+
+        await run_in_thread(
+            compress_json_with_gzip,
+            dumps(
+                {
+                    "data_type": reference["data_type"],
+                    "organism": reference["organism"],
+                    "otus": index_data,
+                    "targets": reference.get("targets"),
+                }
+            ),
+            json_path,
+        )
 
     async def delete(self, index_id: str):
         """

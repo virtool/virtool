@@ -354,7 +354,7 @@ class DB:
         self.hmm = self.bind_collection("hmm", projection=virtool.hmm.db.PROJECTION)
 
         self.indexes = self.bind_collection(
-            "indexes", projection=virtool.indexes.db.PROJECTION
+            "indexes", projection=virtool.indexes.db.INDEXES_PROJECTION
         )
 
         self.jobs = self.bind_collection(

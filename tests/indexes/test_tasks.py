@@ -6,97 +6,35 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
+from virtool.data.layer import DataLayer
 from virtool.indexes.models import SQLIndexFile
-from virtool.indexes.tasks import AddIndexFilesTask, AddIndexJSONTask
+from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.tasks.models import Task
+from virtool.utils import get_temp_dir
 
 
-@pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
-async def test_add_index_files(
-    spawn_client, pg: AsyncEngine, static_time, tmp_path, snapshot, files
-):
-    """
-    Test that ``files`` field is populated for index documents in the following cases:
-
-    - Index document has no existing "files" field
-    - ``files`` field is an empty list
-    - index document is ready to be populated
-
-    """
-    client = await spawn_client(authorize=True, administrator=True)
-    client.app["config"].data_path = tmp_path
-
-    test_dir = tmp_path / "references" / "ref" / "index"
-    test_dir.mkdir(parents=True)
-    test_dir.joinpath("reference.fa.gz").write_text("FASTA file")
-    test_dir.joinpath("reference.1.bt2").write_text("Bowtie2 file")
-
-    index = {
-        "_id": "index",
-        "name": "Foo",
-        "nickname": "Foo Index",
-        "deleted": False,
-        "ready": True,
-        "reference": {"id": "ref"},
-    }
-
-    if files == "empty":
-        index["files"] = []
-
-    if files == "full":
-        index["files"] = ["full"]
-
-    if files == "not_ready":
-        index["ready"] = False
-
-    await client.db.indexes.insert_one(index)
-
-    task = Task(
-        id=1,
-        complete=False,
-        context={},
-        count=0,
-        progress=0,
-        step="rename_index_files",
-        type="add_index_files",
-        created_at=static_time.datetime,
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add(task)
-        await session.commit()
-
-    add_index_files_task = AddIndexFilesTask(client.app, 1)
-
-    await add_index_files_task.run()
-
-    async with AsyncSession(pg) as session:
-        assert (await session.execute(select(SQLIndexFile))).scalars().all() == snapshot
-
-
-async def test_add_index_json(
-    pg,
-    reference,
-    spawn_client,
-    snapshot,
-    static_time,
-    test_otu,
-    test_sequence,
-    tmp_path,
-):
-    client = await spawn_client(authorize=True, administrator=True)
-    client.app["config"].data_path = Path(tmp_path)
-
+@pytest.fixture
+async def task_index(config, mongo, reference, test_otu, test_sequence):
     test_sequence["accession"] = "KX269872"
     ref_id = test_otu["reference"]["id"]
 
+    index = {
+        "_id": "index_1",
+        "name": "Index 1",
+        "deleted": False,
+        "manifest": {test_otu["_id"]: test_otu["version"]},
+        "ready": True,
+        "reference": {"id": ref_id},
+    }
+
     await asyncio.gather(
-        client.db.otus.insert_one(test_otu),
-        client.db.sequences.insert_one(test_sequence),
-        client.db.references.insert_one({**reference, "_id": ref_id}),
-        client.db.indexes.insert_one(
+        mongo.otus.insert_one(test_otu),
+        mongo.sequences.insert_one(test_sequence),
+        mongo.references.insert_one({**reference, "_id": ref_id}),
+        mongo.indexes.insert_one(
             {
                 "_id": "index_1",
+                "name": "Index 1",
                 "deleted": False,
                 "manifest": {test_otu["_id"]: test_otu["version"]},
                 "ready": True,
@@ -105,8 +43,52 @@ async def test_add_index_json(
         ),
     )
 
-    index_dir = tmp_path / "references" / ref_id / "index_1"
+    index_dir = config.data_path / "references" / ref_id / "index_1"
     index_dir.mkdir(parents=True)
+
+    return index
+
+
+@pytest.mark.parametrize("")
+@pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
+async def test_ensure_index_files(
+    config,
+    data_layer: DataLayer,
+    files,
+    mongo,
+    pg: AsyncEngine,
+    spawn_client,
+    static_time,
+    snapshot,
+    task_index,
+    tmp_path,
+):
+    """
+    Test that ``files`` field is populated for index documents in the following cases:
+
+    - Index document has no existing "files" field
+    - ``files`` field is an empty list
+    - index document is ready to be populated
+
+    Also, ensure that a index JSON file is generated if missing.
+
+    """
+    test_dir = tmp_path / "references" / task_index["reference"]["id"] / "index_1"
+    test_dir.joinpath("reference.fa.gz").write_text("FASTA file")
+    test_dir.joinpath("reference.1.bt2").write_text("Bowtie2 file")
+
+    update = {}
+
+    if files == "empty":
+        update["files"] = []
+
+    if files == "full":
+        update["files"] = ["full"]
+
+    if files == "not_ready":
+        update["ready"] = False
+
+    await mongo.indexes.update_one({"_id": "index_1"}, {"$set": {"files": update}})
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -116,23 +98,19 @@ async def test_add_index_json(
                 context={},
                 count=0,
                 progress=0,
-                step="add_index_json_file",
-                type="add_index_json",
+                step="rename_index_files",
+                type="add_index_files",
                 created_at=static_time.datetime,
             )
         )
         await session.commit()
 
-    task = AddIndexJSONTask(client.app, 1)
+    task = EnsureIndexFilesTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 
     async with AsyncSession(pg) as session:
-        assert (
-            await session.execute(
-                select(SQLIndexFile).where(SQLIndexFile.name == "reference.json.gz")
-            )
-        ).scalars().all() == snapshot
+        assert (await session.execute(select(SQLIndexFile))).scalars().all() == snapshot
 
-    with gzip.open(Path(index_dir) / "reference.json.gz", "rt") as f:
+    with gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f:
         assert f.read() == snapshot(name="json")
