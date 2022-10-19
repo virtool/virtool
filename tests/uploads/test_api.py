@@ -95,25 +95,6 @@ class TestFind:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    @pytest.mark.parametrize("ready", [True, False, None])
-    async def test_ready(self, ready, spawn_client, snapshot, test_uploads):
-        """
-        Test `GET /uploads?ready` to assure that it returns the correct `upload` documents
-        with correct 'ready' status.
-
-        """
-        client = await spawn_client(authorize=True, administrator=True)
-
-        url = "/uploads"
-
-        if ready is not None:
-            url += f"?ready={ready}"
-
-        resp = await client.get(url)
-
-        assert resp.status == 200
-        assert await resp.json() == snapshot
-
     @pytest.mark.parametrize(
         "per_page,page",
         [
