@@ -8,6 +8,7 @@ from aiohttp.web_exceptions import (
 )
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexSearchResult, IndexMinimal
 from virtool_core.models.otu import OTUSearchResult, OTU
@@ -37,6 +38,8 @@ from virtool.data.errors import (
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
+from virtool.history.db import patch_to_version
+from virtool.history.utils import remove_diff_files
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id
@@ -46,6 +49,8 @@ from virtool.references.db import (
     compose_base_find_query,
     attach_computed,
     get_manifest,
+    insert_joined_otu,
+    insert_change,
 )
 from virtool.references.oas import (
     CreateReferenceRequest,
@@ -61,6 +66,8 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
     UpdateRemoteReferenceTask,
 )
+from virtool.tasks.progress import TaskProgressHandler, DownloadProgressHandlerWrapper
+from virtool.tasks.task import ProgressTracker
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import (
     AttachUserTransform,
@@ -698,3 +705,48 @@ class ReferencesData(DataLayerPiece):
             )
 
         return document
+
+    async def clone_reference(
+        self,
+        manifest,
+        created_at,
+        ref_id,
+        user_id,
+        progress_handler: TaskProgressHandler,
+    ):
+
+        tracker = DownloadProgressHandlerWrapper(progress_handler, len(manifest))
+        try:
+            async with await self._mongo.create_session() as session:
+                for source_otu_id, version in manifest.items():
+                    _, patched, _ = await patch_to_version(
+                        self._config.data_path, self._mongo, source_otu_id, version
+                    )
+
+                    otu_id = await insert_joined_otu(
+                        self._mongo,
+                        patched,
+                        created_at,
+                        ref_id,
+                        user_id,
+                        session=session,
+                    )
+
+                    await insert_change(
+                        self._config.data_path,
+                        self._mongo,
+                        otu_id,
+                        HistoryMethod.clone,
+                        user_id,
+                        session=session,
+                    )
+
+                    await tracker.add(1)
+        except Exception:
+            query = {"reference.id": ref_id}
+
+            diff_file_change_ids = await self._mongo.history.distinct(
+                "_id", {**query, "diff": "file"}
+            )
+            await remove_diff_files(self._config.data_path, diff_file_change_ids),
+            raise

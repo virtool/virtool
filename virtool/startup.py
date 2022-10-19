@@ -408,7 +408,7 @@ async def startup_task_runner(app: Application):
     """
     scheduler = get_scheduler_from_app(app)
     (channel,) = await app["redis"].subscribe("channel:tasks")
-    await scheduler.spawn(TaskRunner(channel, app).run())
+    await scheduler.spawn(TaskRunner(app["data"], channel, app).run())
 
 
 async def startup_tasks(app: Application):

@@ -1,9 +1,14 @@
 import json
 import logging
-import shutil
+
+from tempfile import TemporaryDirectory
+from typing import Dict, TYPE_CHECKING
 
 import aiofiles
 from virtool_core.utils import decompress_tgz
+
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
 
 from virtool.http.utils import download_file
 from virtool.tasks.progress import DownloadProgressHandlerWrapper
@@ -17,7 +22,7 @@ class HMMInstallTask(BaseTask):
     """
     Runs a background Task that:
         - downloads the official profiles.hmm.gz file
-        - decompresses the vthmm.tar.gz file
+        - decompresses the hmm.tar.gz file
         - moves the file to the correct data path
         - downloads the official annotations.json.gz file
         - imports the annotations into the database
@@ -30,23 +35,28 @@ class HMMInstallTask(BaseTask):
 
     """
 
-    task_type = "install_hmms"
+    name = "install_hmms"
 
-    def __init__(self, task_id, data, context, temp_dir):
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
         super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [
             self.download,
             self.decompress,
-            self.install_profiles,
-            self.install_annotations,
+            self.install,
         ]
 
     async def download(self):
         """
         Download the HMM release archive.
 
-        TODO: Replace or fix usage of download_file()
+        TODO: Replace or fix usage of download_file()/ DONE?
         """
         release = self.context["release"]
 
@@ -56,44 +66,30 @@ class HMMInstallTask(BaseTask):
 
         try:
             await download_file(
-                self.app,
                 release["download_url"],
                 self.temp_path / "hmm.tar.gz",
                 tracker.add,
             )
         except Exception as err:
             logger.warning("Request for HMM release encountered exception: %s", err)
-            await self.error("Could not download HMM data.")
+            await self._set_error("Could not download HMM data.")
 
     async def decompress(self):
         await run_in_thread(
             decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path
         )
 
-    async def install_profiles(self):
-        """
-        Move the HMM profile file to its application data location.
-
-        TODO: Deal with configuration for data_path.
-
-        """
-        await run_in_thread(
-            shutil.move,
-            self.temp_path / "hmm" / "profiles.hmm",
-            self.data.hmms.profiles_path,
-        )
-
-    async def install_annotations(self):
-
+    async def install(self):
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
 
-        await self.data.hmms.install_annotations(
+        await self.data.hmms.install(
             annotations,
             self.context["release"],
             self.context["user_id"],
             self.create_progress_handler(),
+            self.temp_path / "hmm" / "profiles.hmm",
         )
 
     async def cleanup(self):
-        await self.data.hmms.purge()
+        await self.data.hmms.clear_hmm_status()

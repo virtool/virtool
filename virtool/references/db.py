@@ -716,7 +716,7 @@ async def download_and_parse_release(
     with virtool.utils.get_temp_dir() as tempdir:
         download_path = Path(tempdir) / "reference.tar.gz"
 
-        await download_file(app, url, download_path, progress_handler)
+        await download_file(url, download_path, progress_handler)
 
         await get_data_from_app(app).tasks.update(task_id, step="unpack")
 
@@ -724,7 +724,8 @@ async def download_and_parse_release(
 
 
 async def insert_change(
-    app,
+    data_path,
+    db,
     otu_id: str,
     verb: HistoryMethod,
     user_id: str,
@@ -734,7 +735,8 @@ async def insert_change(
     """
     Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
 
-    :param app: the application object
+    :param data_path: system path to the applications datafolder
+    :param db: the application database object
     :param otu_id: the ID of the OTU the change is for
     :param verb: the change verb (eg. remove, insert)
     :param user_id: the ID of the requesting user
@@ -742,7 +744,6 @@ async def insert_change(
     :param session: a Mongo session
 
     """
-    db = app["db"]
 
     joined = await join(db, otu_id, session=session)
 
@@ -756,7 +757,15 @@ async def insert_change(
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
-        app, verb, old, joined, description, user_id, silent=True, session=session
+        data_path,
+        db,
+        verb,
+        old,
+        joined,
+        description,
+        user_id,
+        silent=True,
+        session=session,
     )
 
 
@@ -796,6 +805,97 @@ async def insert_joined_otu(
         silent=True,
         session=session,
     )
+
+    sequences = []
+
+    for isolate in otu["isolates"]:
+        for sequence in isolate.pop("sequences"):
+            try:
+                remote_sequence_id = sequence["remote"]["id"]
+                sequence.pop("_id")
+            except KeyError:
+                remote_sequence_id = sequence.pop("_id")
+
+            sequences.append(
+                {
+                    **sequence,
+                    "accession": sequence["accession"],
+                    "isolate_id": isolate["id"],
+                    "otu_id": document["_id"],
+                    "segment": sequence.get("segment", ""),
+                    "reference": {"id": ref_id},
+                    "remote": {"id": remote_sequence_id},
+                }
+            )
+
+    for sequence in sequences:
+        await db.sequences.insert_one(sequence, session=session)
+
+    return document["_id"]
+
+
+async def bulk_insert_joined_otu(
+    db,
+    otus: List[dict],
+    created_at: datetime.datetime,
+    ref_id: str,
+    user_id: str,
+    session: Optional[AsyncIOMotorClientSession] = None,
+) -> str:
+    issues = verify(otu)
+
+    formatted_otus = [
+        {
+            "abbreviation": otu["abbreviation"],
+            "created_at": created_at,
+            "imported": True,
+            "isolates": [
+                {
+                    key: isolate[key]
+                    for key in ("id", "default", "source_type", "source_name")
+                }
+                for isolate in otu["isolates"]
+            ],
+            "issues": issues,
+            "lower_name": otu["name"].lower(),
+            "last_indexed_version": None,
+            "name": otu["name"],
+            "reference": {"id": ref_id},
+            "remote": {"id": otu["_id"]},
+            "schema": otu.get("schema", []),
+            "user": {"id": user_id},
+            "verified": issues is None,
+            "version": 0,
+        }
+        for otu in otus
+    ]
+    # insert many line function here?
+    # document = await db.otus.insert_one(
+    #     {
+    #         "abbreviation": otu["abbreviation"],
+    #         "created_at": created_at,
+    #         "imported": True,
+    #         "isolates": [
+    #             {
+    #                 key: isolate[key]
+    #                 for key in ("id", "default", "source_type", "source_name")
+    #             }
+    #             for isolate in otu["isolates"]
+    #         ],
+    #         "issues": issues,
+    #         "lower_name": otu["name"].lower(),
+    #         "last_indexed_version": None,
+    #         "name": otu["name"],
+    #         "reference": {"id": ref_id},
+    #         "remote": {"id": otu["_id"]},
+    #         "schema": otu.get("schema", []),
+    #         "user": {"id": user_id},
+    #         "verified": issues is None,
+    #         "version": 0,
+    #     },
+    #     silent=True,
+    #     session=session,
+    # )
 
     sequences = []
 

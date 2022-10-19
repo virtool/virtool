@@ -3,13 +3,12 @@ from typing import Callable, Union, Awaitable
 
 import aiofiles
 from aiohttp.web_response import Response
+import aiohttp
 
 from virtool.errors import GitHubError
-from virtool.types import App
 
 
 async def download_file(
-    app: App,
     url: str,
     target_path: Path,
     progress_handler: Callable[[Union[float, int]], Awaitable[int]] = None,
@@ -23,21 +22,23 @@ async def download_file(
     :param progress_handler: a callable that will be called with the current progress when it changes.
 
     """
-    async with app["client"].get(url) as resp:
-        if resp.status != 200:
-            raise GitHubError("Could not download file")
 
-        async with aiofiles.open(target_path, "wb") as handle:
-            while True:
-                chunk = await resp.content.read(4096)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                raise GitHubError("Could not download file")
 
-                if not chunk:
-                    break
+            async with aiofiles.open(target_path, "wb") as handle:
+                while True:
+                    chunk = await resp.content.read(4096)
 
-                await handle.write(chunk)
+                    if not chunk:
+                        break
 
-                if progress_handler:
-                    await progress_handler(len(chunk))
+                    await handle.write(chunk)
+
+                    if progress_handler:
+                        await progress_handler(len(chunk))
 
 
 def set_session_id_cookie(resp: Response, session_id: str):

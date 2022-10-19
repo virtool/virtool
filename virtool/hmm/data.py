@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 from functools import cached_property
 from pathlib import Path
 from typing import List, Dict
@@ -87,6 +88,14 @@ class HmmData(DataLayerPiece):
 
         raise ResourceNotFoundError()
 
+    async def clear_hmm_status(self):
+        async with self._mongo.create_session() as session:
+            await self._mongo.status.find_one_and_update(
+                {"_id": "hmm"},
+                {"$set": {"installed": None, "task": None, "updates": []}},
+                session=session,
+            )
+
     async def purge(self):
         """
         Remove profiles.hmm and all HMM annotations unreferenced in analyses.
@@ -174,15 +183,16 @@ class HmmData(DataLayerPiece):
 
         return HMMInstalled(**installed)
 
-    async def install_annotations(
+    async def install(
         self,
         annotations: List[Dict],
         release,
         user_id: str,
         progress_handler: AbstractProgressHandler,
+        hmm_temp_profile_path,
     ):
         """
-        Installs annotation given a list of annotation dictionaries.
+        Installs annotation and profiles given a list of annotation dictionaries and path to profile file.
 
         """
         tracker = DownloadProgressHandlerWrapper(progress_handler, len(annotations))
@@ -193,6 +203,7 @@ class HmmData(DataLayerPiece):
             release_id = release["id"]
 
         async with self._mongo.create_session() as session:
+
             for annotation in annotations:
                 await self._mongo.hmm.insert_one(
                     dict(annotation, hidden=False), session=session
@@ -209,6 +220,16 @@ class HmmData(DataLayerPiece):
                 },
                 session=session,
             )
+
+            try:
+                await run_in_thread(
+                    shutil.move,
+                    str(hmm_temp_profile_path),
+                    str(self.profiles_path),
+                )
+            except Exception:
+                await session.abort_transaction()
+                raise
 
     async def get_profiles_path(self) -> Path:
         file_path = self._config.data_path / "hmm" / "profiles.hmm"

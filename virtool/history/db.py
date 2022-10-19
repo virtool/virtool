@@ -82,7 +82,8 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def add(
-    app,
+    db,
+    data_path,
     method_name: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],
@@ -94,7 +95,8 @@ async def add(
     """
     Add a change document to the history collection.
 
-    :param app: the application object
+    :param data_path: system path to the applications datafolder
+    :param db: the application database object
     :param method_name: the name of the handler method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
@@ -104,7 +106,6 @@ async def add(
     :return: the change document
 
     """
-    db = app["db"]
 
     otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
@@ -131,9 +132,7 @@ async def add(
     try:
         await db.history.insert_one(document, silent=silent, session=session)
     except pymongo.errors.DocumentTooLarge:
-        await write_diff_file(
-            app["config"].data_path, otu_id, otu_version, document["diff"]
-        )
+        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
 
         await db.history.insert_one(
             dict(document, diff="file"), silent=silent, session=session
