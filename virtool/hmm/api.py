@@ -9,11 +9,10 @@ from aiohttp.web_exceptions import (
     HTTPBadGateway,
     HTTPBadRequest,
     HTTPConflict,
-    HTTPNoContent,
 )
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r502
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
 
 from virtool.api.response import NotFound, json_response

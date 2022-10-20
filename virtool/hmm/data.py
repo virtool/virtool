@@ -10,7 +10,7 @@ from virtool_core.models.hmm import (
     HMMStatus,
     HMMInstalled,
 )
-from virtool_core.utils import rm, compress_file_with_gzip
+from virtool_core.utils import compress_file_with_gzip
 
 import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate

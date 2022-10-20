@@ -1,6 +1,3 @@
-from aiohttp.test_utils import make_mocked_coro
-
-
 async def test_get_status(config, data_layer, fake2, mongo, snapshot, static_time):
     """
     Test that function works when the HMM data are being updated and when they are not.
