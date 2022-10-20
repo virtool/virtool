@@ -3,10 +3,16 @@ import datetime
 import os
 import shutil
 from pathlib import Path
+import random
+from typing import List
 
 import arrow
 import pytest
+from aiohttp.web_exceptions import HTTPConflict, HTTPBadRequest
 from virtool_core.utils import decompress_tgz
+
+from virtool.data.errors import ResourceConflictError
+from virtool.utils import wait_for_checks
 
 import virtool.utils
 from virtool.utils import run_in_thread
@@ -132,3 +138,39 @@ async def test_run_in_thread():
         return testsum
 
     assert await run_in_thread(func, 1, 3, 5, key1=5, key2=-4) == 10
+
+
+@pytest.mark.parametrize("exception", [None, "ResourceConflictErr", "TypeError"])
+async def test_wait_for_checks(exception):
+    async def check_one():
+        _ = 1
+        await asyncio.sleep(0.5)
+
+    async def check_two():
+        _ = 2
+        await asyncio.sleep(1)
+        raise ResourceConflictError("Exception thrown for test function check_two")
+
+    async def check_three():
+        _ = 3
+        await asyncio.sleep(0.5)
+        raise HTTPBadRequest(text="Exception thrown for test function check_three")
+
+    async def check_four():
+        _ = 4
+        await asyncio.sleep(0.25)
+        return 4
+
+    if exception == "ResourceConflictErr":
+        with pytest.raises(ResourceConflictError) as err:
+            await wait_for_checks(check_one(), check_two(), check_three(), check_four())
+        assert "check_two" in str(err)
+        return
+
+    if exception == "TypeError":
+        with pytest.raises(TypeError) as err:
+            await wait_for_checks(check_one(), check_four(), check_two())
+        assert "Check functions may only return a NoneType object" in str(err)
+        return
+
+    assert await wait_for_checks(check_one()) is None
