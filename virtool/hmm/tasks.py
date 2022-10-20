@@ -124,4 +124,9 @@ class HMMInstallTask(Task):
         )
 
     async def cleanup(self):
-        await get_data_from_app(self.app).hmms.purge()
+        async with self.db.create_session() as session:
+            await self.db.status.find_one_and_update(
+                {"_id": "hmm"},
+                {"$set": {"installed": None, "task": None, "updates": []}},
+                session=session,
+            )

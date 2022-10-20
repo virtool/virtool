@@ -76,41 +76,6 @@ class HmmData(DataLayerPiece):
 
         raise ResourceNotFoundError()
 
-    async def purge(self):
-        """
-        Remove profiles.hmm and all HMM annotations unreferenced in analyses.
-
-        """
-        referenced_ids = await virtool.hmm.db.get_referenced_hmm_ids(
-            self._mongo, self._config.data_path
-        )
-
-        async with self._mongo.create_session() as session:
-            await self._mongo.hmm.delete_many(
-                {"_id": {"$nin": referenced_ids}}, session=session
-            )
-
-            await self._mongo.hmm.update_many(
-                {}, {"$set": {"hidden": True}}, session=session
-            )
-
-            await self._mongo.status.find_one_and_update(
-                {"_id": "hmm"},
-                {"$set": {"installed": None, "task": None, "updates": []}},
-                session=session,
-            )
-
-        try:
-            await run_in_thread(rm, self._config.data_path / "hmm" / "profiles.hmm")
-        except FileNotFoundError:
-            pass
-
-        settings = await self.data.settings.get_all()
-
-        await virtool.hmm.db.fetch_and_update_release(
-            self._client, self._mongo, settings.hmm_slug
-        )
-
     async def get_status(self):
         document = await self._mongo.status.find_one("hmm")
 

@@ -57,24 +57,6 @@ class HmmsView(PydanticView):
 
         return json_response(search_results)
 
-    @policy(PermissionsRoutePolicy(Permission.modify_hmm))
-    async def delete(self) -> Union[r204, r403]:
-        """
-        Purge HMMs.
-
-        Deletes all installed HMM data.
-
-        This is not recommended and is used in experimental instances or development. It
-        won't break analyses that reference the installed HMM data.
-
-        Status Codes:
-            204: Successful operation
-            403: Not permitted
-        """
-        await get_data_from_req(self.request).hmms.purge()
-
-        raise HTTPNoContent
-
 
 @routes.view("/hmms/status")
 class StatusView(PydanticView):
