@@ -4,6 +4,7 @@ from typing import Union, Tuple, List
 from aioredis import Redis
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
+from virtool_core.models.session import Session
 
 import virtool.utils
 from virtool.account.api import API_KEY_PROJECTION
@@ -281,7 +282,9 @@ class AccountData(DataLayerPiece):
 
         return document["_id"]
 
-    async def get_reset_code(self, user_id, session_id, remember) -> Union[str, None]:
+    async def get_reset_code(
+        self, user_id: str, session_id: str, remember: bool
+    ) -> Union[str, None]:
         """
         Check if user password should be reset and return a reset code if it
         should be.
@@ -297,17 +300,19 @@ class AccountData(DataLayerPiece):
                 session_id, user_id, remember
             )
 
-    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, dict, str]:
+    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, Session, str]:
         """
         Invalidates the requesting session, effectively logging out the user.
 
         :param old_session_id: the ID of the old session
-        :param ip: the ip
+        :param ip: the ip address of the client
         :return: the session_id, session, and session token
         """
-        return await self.data.sessions.replace_session(old_session_id, ip)
+        return await self.data.sessions.replace(old_session_id, ip)
 
-    async def reset(self, session_id, data: ResetPasswordRequest, ip: str):
+    async def reset(
+        self, session_id: str, data: ResetPasswordRequest, ip: str
+    ) -> Tuple[str, Session, str]:
         """
         Resets the password for a session user.
 
@@ -316,25 +321,13 @@ class AccountData(DataLayerPiece):
         :param ip: the ip address of the client
         """
 
-        reset_code = data.reset_code
+        user_id, remember = await self.data.sessions.get_reset_data(
+            session_id, data.reset_code
+        )
 
-        session = json.loads(await self._redis.get(session_id))
-
-        if not session.get("reset_code") or reset_code != session.get("reset_code"):
-            raise ResourceError()
-
-        user_id = session["reset_user_id"]
-
-        session_id, new_session, token = await self.data.replace_session(
+        return await self.data.sessions.replace(
             session_id,
             ip,
             user_id,
-            remember=session.get("reset_remember", False),
+            remember=remember,
         )
-
-        return {
-            "new_session": new_session,
-            "user_id": user_id,
-            "token": token,
-            "session_id": session_id,
-        }

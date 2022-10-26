@@ -181,7 +181,7 @@ async def middleware(req, handler) -> Response:
     # Get session information from cookies.
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
-    session, session_token = await get_data_from_req(req).sessions.get_session(
+    session, session_token = await get_data_from_req(req).sessions.get(
         session_id, session_token
     )
 
@@ -190,16 +190,17 @@ async def middleware(req, handler) -> Response:
     if session is None:
         session_id, session, session_token = await get_data_from_req(
             req
-        ).sessions.create_session(ip)
+        ).sessions.create(ip)
 
     if session_token:
+        user = await get_data_from_req(req).users.get(session.authentication.user_id)
         req["client"] = UserClient(
             db,
-            session["administrator"],
-            session["force_reset"],
-            session["groups"],
-            session["permissions"],
-            session["user"]["id"],
+            user.administrator,
+            user.force_reset,
+            [group.id for group in user.groups],
+            user.permissions.dict(),
+            session.authentication.user_id,
             authenticated=True,
             session_id=session_id,
         )

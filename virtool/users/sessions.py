@@ -2,66 +2,59 @@ import asyncio
 import hashlib
 import json
 import secrets
+from datetime import timedelta
 from typing import Optional, Tuple
 
-import arrow
 from aioredis import Redis
-from motor.motor_asyncio import AsyncIOMotorClientSession
+from virtool_core.models.session import (
+    Session,
+    SessionAuthentication,
+)
 
 import virtool.utils
-
-from virtool.api.custom_json import dumps
+from virtool.api.custom_json import dumps, fromisoformat, isoformat
+from virtool.data.errors import ResourceError
 from virtool.data.piece import DataLayerPiece
-from virtool.mongo.core import DB
-from virtool.types import Document
 
 
 class SessionData(DataLayerPiece):
-    def __init__(self, db: DB, redis: Redis):
-        self.db = db
+    def __init__(self, redis: Redis):
         self.redis = redis
 
-    async def create_session(
+    async def create(
         self,
         ip: str,
         user_id: Optional[str] = None,
         remember: Optional[bool] = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> Tuple[str, Document, str]:
+    ) -> Tuple[str, Session, str]:
+        """
+        Creates a new session with the given ip and user_id
+
+        :param ip: the ip address of the client
+        :param user_id: the user id of the client
+        :param remember: Boolean indicating if a session should be saved long term
+        :return: the session id, the session model, and the session token
+        """
         session_id = await self.create_session_id()
 
-        utc = arrow.utcnow()
-
         if user_id and remember:
-            expires_at = utc.shift(days=30)
+            expires_after = timedelta(days=30).total_seconds()
         elif user_id:
-            expires_at = utc.shift(minutes=60)
+            expires_after = timedelta(minutes=60).total_seconds()
         else:
-            expires_at = utc.shift(minutes=10)
+            expires_after = timedelta(minutes=10).total_seconds()
 
-        new_session = {
-            "created_at": virtool.utils.timestamp().timestamp(),
-            "ip": ip,
-        }
+        new_session = Session(created_at=isoformat(virtool.utils.timestamp()), ip=ip)
 
         token = None
 
         if user_id:
             token, hashed = virtool.utils.generate_key()
-            user = await self.data.users.get(user_id, session=session)
-            new_session.update(
-                {
-                    "token": hashed,
-                    "administrator": user.administrator,
-                    "groups": user.groups,
-                    "permissions": user.permissions,
-                    "force_reset": user.force_reset,
-                    "user": {"id": user_id},
-                }
+            new_session.authentication = SessionAuthentication(
+                token=hashed, user_id=user_id
             )
 
-        await redis.set(session_id, dumps(new_session))
-        await redis.expireat(session_id, expires_at.timestamp())
+        await self.redis.set(session_id, dumps(new_session), expire=int(expires_after))
 
         return session_id, new_session, token
 
@@ -69,20 +62,19 @@ class SessionData(DataLayerPiece):
         """
         Create a new unique session id.
 
-        :param redis: the application redis client
         :return: a session id
 
         """
         session_id = "session_" + secrets.token_hex(32)
 
-        if await self.redis.get(session_id):
-            return await self.create_session_id()
+        while await self.redis.get(session_id):
+            session_id = "session_" + secrets.token_hex(32)
 
         return session_id
 
-    async def get_session(
-        self, session_id: str, session_token: str
-    ) -> Tuple[Optional[dict], Optional[str]]:
+    async def get(
+        self, session_id: str, session_token: Optional[str] = None
+    ) -> Tuple[Optional[Session], Optional[str]]:
         """
         Get a session and token by its id and token.
 
@@ -94,35 +86,62 @@ class SessionData(DataLayerPiece):
         go together.
 
         :param session_id: the session id
-        :param session_token: the token for the session
-        :return: a session document
-
+        :param session_token: the secure token for an authenticated session
+        :return: the session object and token
         """
 
-        unparsed_session = None
-
-        if session_id:
-            unparsed_session = await self.redis.get(session_id)
-
-        if not unparsed_session:
+        try:
+            dict_session = json.loads(await self.redis.get(session_id))
+            session = Session(
+                **{
+                    **dict_session,
+                    "created_at": fromisoformat(dict_session["created_at"]),
+                }
+            )
+        except TypeError:
             return None, None
 
-        session = json.loads(unparsed_session)
-
-        try:
-            stored_session_token = session["token"]
-        except KeyError:
+        if session.authentication is None:
             return session, None
 
         if session_token is None:
             return None, None
 
+        stored_session_token = session.authentication.token
         hashed_token = hashlib.sha256(session_token.encode()).hexdigest()
         if stored_session_token == hashed_token:
             return session, session_token
 
+        return None, None
+
+    async def replace(
+        self,
+        session_id: str,
+        ip: str,
+        user_id: Optional[str] = None,
+        remember: Optional[bool] = False,
+    ) -> Tuple[str, Session, str]:
+        """
+        Replace the session associated with `session_id` with a new one. Return the new
+        session document.
+
+        Supplying a `user_id` indicates the session is authenticated. Setting `remember`
+        will make the session last for 30 days instead of the default 30 minutes.
+
+        :param session_id: the id of the session to replace
+        :param ip: the ip address of the client
+        :param user_id: the id of the authenticated user who the session belongs to
+        :param remember: boolean indicating if a session should be saved long term
+        :return: new session id, session object and token
+        """
+        await self.redis.delete(session_id)
+        return await self.create(ip, user_id, remember=remember)
+
     async def create_reset_code(
-        self, session_id: str, user_id: str, remember: Optional[bool] = False
+        self,
+        session_id: str,
+        user_id: str,
+        remember: Optional[bool] = False,
     ) -> str:
         """
         Create a secret code that is used to verify a password reset request. Properties:
@@ -132,87 +151,69 @@ class SessionData(DataLayerPiece):
         - the reset code is dropped from the session for any non-reset request sent after
           the code was generated
 
-        :param redis:
-        :param session_id:
-        :param user_id:
-        :param remember:
-        :return:
+        :param session_id: the session id
+        :param session_token: the token associated with the session_id
+        :param user_id: the id of the authenticated user who the session belongs to
+        :param remember: boolean indicating if a session should be saved long term
+        :return: the reset_code associated with the passed session
 
         """
         reset_code = secrets.token_hex(32)
 
-        unparsed_session, session_expiry = await asyncio.gather(
-            self.redis.get(session_id), self.redis.ttl(session_id)
+        (session, _), session_expiry = await asyncio.gather(
+            self.get(session_id), self.redis.ttl(session_id)
         )
 
-        session = json.loads(unparsed_session)
+        if not session:
+            raise ResourceError()
 
-        await self.redis.set(
-            session_id,
-            dumps(
-                {
-                    **session,
-                    "reset_code": reset_code,
-                    "reset_remember": remember,
-                    "reset_user_id": user_id,
-                }
-            ),
-            expire=session_expiry,
-        )
+        session.reset = {
+            "code": reset_code,
+            "remember": remember,
+            "user_id": user_id,
+        }
+
+        await self.redis.set(session_id, dumps(session), expire=session_expiry)
 
         return reset_code
 
-    async def clear_reset_code(self, session_id: str):
+    async def clear_reset_code(
+        self, session_id: str, session_token: Optional[str] = None
+    ) -> None:
         """
         Clear the reset information attached to the session associated with the passed
         `session_id`.
 
-        :param redis: the application redis client
         :param session_id: the session id
-
+        :param session_token: the token associated with the session_id
         """
 
-        unparsed_session, session_expiry = await asyncio.gather(
-            self.redis.get(session_id), self.redis.ttl(session_id)
+        (session, _), session_expiry = await asyncio.gather(
+            self.get(session_id, session_token), self.redis.ttl(session_id)
         )
 
-        if not unparsed_session:
+        if not session:
             return
 
-        session = json.loads(unparsed_session)
+        session.reset = None
 
-        await self.redis.set(
-            session_id,
-            dumps(
-                {
-                    key: session[key]
-                    for key in session
-                    if key not in {"reset_code", "reset_remember", "reset_user_id"}
-                },
-                cls=CustomEncoder,
-            ),
-            expire=session_expiry,
-        )
+        await self.redis.set(session_id, dumps(session), expire=session_expiry)
 
-    async def replace_session(
-        self,
-        session_id: str,
-        ip: str,
-        user_id: Optional[str] = None,
-        remember: Optional[bool] = False,
-    ) -> Tuple[str, dict, str]:
+    async def get_reset_data(
+        self, session_id: str, reset_code: str
+    ) -> Tuple[str, bool]:
         """
-        Replace the session associated with `session_id` with a new one. Return the new
-        session document.
+        Gets any reset data associated with the passed session if the passed reset code matches the stored reset code.
 
-        Supplying a `user_id` indicates the session is authenticated. Setting `remember`
-        will make the session last for 30 days instead of the default 30 minutes.
-
-        :param session_id: the id of the session to replace
-        :param ip:
-        :param user_id:
-        :param remember:
-        :return: new session document and token
+        :param session_id: the session id
+        :param reset_code: the reset code associated with the current session
+        :return: the associated user_id and remember boolean
         """
-        await self.redis.delete(session_id)
-        return await self.create_session(ip, user_id, remember=remember)
+        session, _ = await self.get(session_id)
+
+        reset = session.reset
+
+        if not reset or reset_code != reset.code:
+            raise ResourceError()
+
+        return reset.user_id, reset.remember

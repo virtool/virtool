@@ -309,9 +309,12 @@ class LoginView(PydanticView):
         except ResourceError:
             raise HTTPBadRequest(text="Invalid username or password")
 
-        reset_code = await get_data_from_req(self.request).account.get_reset_code(
-            user_id, session_id, data
-        )
+        try:
+            reset_code = await get_data_from_req(self.request).account.get_reset_code(
+                user_id, session_id, data.remember
+            )
+        except ResourceError:
+            raise HTTPBadRequest(text="Invalid session")
 
         if reset_code:
             return json_response(
@@ -322,9 +325,7 @@ class LoginView(PydanticView):
                 status=200,
             )
 
-        session_id, _, token = await get_data_from_req(
-            self.request
-        ).sessions.replace_session(
+        session_id, _, token = await get_data_from_req(self.request).sessions.replace(
             session_id,
             virtool.http.auth.get_ip(self.request),
             user_id,
@@ -382,8 +383,11 @@ class ResetView(PydanticView):
         """
         if error := await check_password_length(self.request, data.password):
             raise HTTPBadRequest(text=error)
+
         try:
-            result = await get_data_from_req(self.request).account.reset(
+            session_id, session, token = await get_data_from_req(
+                self.request
+            ).account.reset(
                 self.request.cookies.get("session_id"),
                 data,
                 virtool.http.auth.get_ip(self.request),
@@ -392,18 +396,18 @@ class ResetView(PydanticView):
             raise HTTPBadRequest(text="Invalid session or reset code")
 
         await get_data_from_req(self.request).users.update(
-            result["user_id"],
+            session.authentication.user_id,
             UpdateUserRequest(force_reset=False, password=data.password),
         )
 
         try:
-            self.request["client"].authorize(result["new_session"], is_api=False)
+            self.request["client"].authorize(session, is_api=False)
         except AttributeError:
             pass
 
         resp = json_response({"login": False, "reset": False}, status=200)
 
-        set_session_id_cookie(resp, result["session_id"])
-        set_session_token_cookie(resp, result["token"])
+        set_session_id_cookie(resp, session_id)
+        set_session_token_cookie(resp, token)
 
         return resp

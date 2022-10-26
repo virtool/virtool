@@ -151,7 +151,7 @@ async def startup_data(app: App):
         UploadsData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
         TasksData(app["pg"], app["redis"]),
-        SessionData(app["pg"], app["redis"]),
+        SessionData(app["redis"]),
     )
 
 

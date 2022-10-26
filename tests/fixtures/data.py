@@ -22,6 +22,7 @@ from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
+from virtool.users.sessions import SessionData
 
 
 @pytest.fixture
@@ -45,4 +46,5 @@ def data_layer(mongo, config, mocker, pg: AsyncEngine, redis: Redis):
         UploadsData(config, mongo, pg),
         UsersData(mongo, pg),
         TasksData(pg, redis),
+        SessionData(redis),
     )

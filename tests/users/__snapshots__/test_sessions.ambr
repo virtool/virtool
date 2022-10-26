@@ -1,0 +1,114 @@
+# name: test_clear_reset_code[uvloop]
+  <class 'dict'> {
+    'authentication': None,
+    'created_at': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': <class 'dict'> {
+      'code': 'reset_code',
+      'remember': False,
+      'user_id': 'user_id',
+    },
+  }
+---
+# name: test_clear_reset_code[uvloop].1
+  <class 'dict'> {
+    'authentication': None,
+    'created_at': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: test_create_reset_code[uvloop-False]
+  <class 'dict'> {
+    'authentication': None,
+    'created_at': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': <class 'dict'> {
+      'code': 'reset_code',
+      'remember': False,
+      'user_id': 'user_id',
+    },
+  }
+---
+# name: test_create_reset_code[uvloop-True]
+  <class 'dict'> {
+    'authentication': None,
+    'created_at': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': <class 'dict'> {
+      'code': 'reset_code',
+      'remember': True,
+      'user_id': 'user_id',
+    },
+  }
+---
+# name: test_create_session[uvloop-False-False]
+  <class 'dict'> {
+    'authentication': None,
+    'created_at': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: test_create_session[uvloop-True-False]
+  <class 'dict'> {
+    'authentication': <class 'dict'> {
+      'token': 'test_hashed',
+      'user_id': 'bf1b993c',
+    },
+    'created_at': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: test_create_session[uvloop-True-True]
+  <class 'dict'> {
+    'authentication': <class 'dict'> {
+      'token': 'test_hashed',
+      'user_id': 'bf1b993c',
+    },
+    'created_at': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: test_get_reset_data[uvloop]
+  <class 'tuple'> (
+    'user_id',
+    False,
+  )
+---
+# name: test_get_session[uvloop-False-False]
+  None
+---
+# name: test_get_session[uvloop-True-False]
+  <class 'dict'> {
+    'authentication': None,
+    'created_at': <class 'datetime'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: test_get_session[uvloop-True-True]
+  <class 'dict'> {
+    'authentication': <class 'dict'> {
+      'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
+      'user_id': 'bf1b993c',
+    },
+    'created_at': <class 'datetime'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: test_get_session[uvloop-True-True].1
+  <class 'tuple'> (
+    None,
+    None,
+  )
+---
+# name: test_get_session[uvloop-True-True].2
+  <class 'tuple'> (
+    None,
+    None,
+  )
+---

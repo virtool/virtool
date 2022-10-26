@@ -259,13 +259,15 @@ class TestUpdateAPIKey:
     async def test(self, has_admin, has_perm, snapshot, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
+        modify_subtraction = has_perm if has_perm is not "missing" else False
+
         await client.db.users.update_one(
             {"_id": "test"},
             {
                 "$set": {
                     "administrator": has_admin,
                     "permissions.create_sample": True,
-                    "permissions.modify_subtraction": has_perm,
+                    "permissions.modify_subtraction": modify_subtraction,
                 }
             },
         )
@@ -482,7 +484,13 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         ({"username": "foobar", "password": "p@ssword123"}, 201),
         ({"username": "foobar", "password": "p@ssword123", "remember": None}, 400),
     ],
-    ids=["all_valid", "wrong_handle", "wrong_password", "missing_remember", "remember_is_none"],
+    ids=[
+        "all_valid",
+        "wrong_handle",
+        "wrong_password",
+        "missing_remember",
+        "remember_is_none",
+    ],
 )
 async def test_login(
     spawn_client, create_user, resp_is, body, status, mocker, snapshot
@@ -498,7 +506,7 @@ async def test_login(
     )
 
     mocker.patch(
-        "virtool.users.sessions.replace_session",
+        "virtool.users.sessions.SessionData.replace",
         return_value=[None, {"_id": None}, None],
     )
 

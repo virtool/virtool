@@ -129,7 +129,7 @@ class FirstUserView(PydanticView):
 
         session_id, session, token = await get_data_from_req(
             self.request
-        ).sessions.create_session(virtool.http.auth.get_ip(self.request), user.id)
+        ).sessions.create(virtool.http.auth.get_ip(self.request), user.id)
 
         self.request["client"].authorize(session, is_api=False)
 

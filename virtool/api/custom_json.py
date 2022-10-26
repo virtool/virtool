@@ -25,6 +25,13 @@ def isoformat(obj: datetime.datetime) -> str:
     return obj.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def fromisoformat(time_str: str) -> datetime.datetime:
+    try:
+        return datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+    except ValueError:
+        return datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%SZ")
+
+
 def default(obj):
     """
     Converts Pydantic BaseModel objects into Python dictionaries for serialization.
@@ -49,6 +56,17 @@ def dumps(obj: object) -> bytes:
         default=default,
         option=orjson.OPT_NAIVE_UTC | orjson.OPT_UTC_Z,
     )
+
+
+def loads(serialized_obj: bytes) -> object:
+    """
+    Calls orjson.loads which decodes json created by dumps
+
+    :param serialized_obj: a JSON-serialized object
+    :return: deserialized object
+
+    """
+    return orjson.loads(serialized_obj)
 
 
 def pretty_dumps(obj: object) -> bytes:
