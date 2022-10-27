@@ -149,8 +149,8 @@ class SessionData(DataLayerPiece):
 
         - the reset request must pass a reset code that is associated with the session
           linked to the request
-        - the reset code is dropped from the session for any non-reset request sent after
-          the code was generated
+        - the reset code is dropped from the session for any non-reset request sent
+          after the code was generated
 
         :param session_id: the session id
         :param session_token: the token associated with the session_id

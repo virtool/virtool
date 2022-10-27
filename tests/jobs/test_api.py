@@ -1,15 +1,18 @@
+import asyncio
+
 import pytest
 from virtool_core.models.enums import Permission
+from virtool_core.models.user import User
 
 
 @pytest.mark.parametrize("archived", [True, False, None])
 @pytest.mark.parametrize("state", ["running", None])
-async def test_find_beta(archived, state, fake, snapshot, spawn_client, fake2):
+@pytest.mark.parametrize("users", [None, "bob", ["bob", "test"]])
+async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
     client = await spawn_client(authorize=True)
-    user = await fake2.users.create()
 
     for _ in range(15):
-        await fake2.jobs.create(user)
+        await fake.jobs.insert(randomize=True)
 
     url = "/jobs?"
 
@@ -18,6 +21,10 @@ async def test_find_beta(archived, state, fake, snapshot, spawn_client, fake2):
 
     if state is not None:
         url += f"&state={state}"
+
+    if users is not None:
+        for user in users:
+            url += f"&user={user}"
 
     resp = await client.get(url)
 
