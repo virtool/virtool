@@ -1,8 +1,5 @@
-import asyncio
-
 import pytest
 from virtool_core.models.enums import Permission
-from virtool_core.models.user import User
 
 
 @pytest.mark.parametrize("archived", [True, False, None])
