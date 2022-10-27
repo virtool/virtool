@@ -259,7 +259,7 @@ class TestUpdateAPIKey:
     async def test(self, has_admin, has_perm, snapshot, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
-        modify_subtraction = has_perm if has_perm is not "missing" else False
+        modify_subtraction = has_perm if has_perm != "missing" else False
 
         await client.db.users.update_one(
             {"_id": "test"},

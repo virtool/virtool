@@ -153,7 +153,6 @@ async def middleware(req, handler) -> Response:
     :return: the response
     """
     db = req.app["db"]
-    redis = req.app["redis"]
 
     if isinstance(get_handler_policy(handler, req.method), PublicRoutePolicy):
         req["client"] = UserClient(

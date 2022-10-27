@@ -4,11 +4,12 @@ from virtool_core.models.enums import Permission
 
 @pytest.mark.parametrize("archived", [True, False, None])
 @pytest.mark.parametrize("state", ["running", None])
-async def test_find_beta(archived, state, fake, snapshot, spawn_client):
+async def test_find_beta(archived, state, fake, snapshot, spawn_client, fake2):
     client = await spawn_client(authorize=True)
+    user = await fake2.users.create()
 
     for _ in range(15):
-        await fake.jobs.insert(randomize=True)
+        await fake2.jobs.create(user)
 
     url = "/jobs?"
 
@@ -149,9 +150,7 @@ async def test_archive(
 
 
 @pytest.mark.parametrize("error", [None, 404])
-async def test_ping(
-    error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
-):
+async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is):
 
     user = await fake2.users.create()
 

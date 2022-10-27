@@ -79,11 +79,11 @@ class SessionData(DataLayerPiece):
         Get a session and token by its id and token.
 
         If the passed `session_token` is `None`, an unauthenticated session document
-        matching the `session_id` will be returned. If the matching session is authenticated
-        and token is passed, `None` will be returned.
+        matching the `session_id` will be returned. If the matching session is
+        authenticated and token is passed, `None` will be returned.
 
-        Will return `None` if the session doesn't exist or the session id and token do not
-        go together.
+        Will return `(None, None)` if the session doesn't exist or the session id
+        and token do not go together.
 
         :param session_id: the session id
         :param session_token: the secure token for an authenticated session
@@ -144,7 +144,8 @@ class SessionData(DataLayerPiece):
         remember: Optional[bool] = False,
     ) -> str:
         """
-        Create a secret code that is used to verify a password reset request. Properties:
+        Create a secret code that is used to verify a password reset request.
+        Properties:
 
         - the reset request must pass a reset code that is associated with the session
           linked to the request
@@ -203,7 +204,8 @@ class SessionData(DataLayerPiece):
         self, session_id: str, reset_code: str
     ) -> Tuple[str, bool]:
         """
-        Gets any reset data associated with the passed session if the passed reset code matches the stored reset code.
+        Gets any reset data associated with the passed session if the passed reset code
+        matches the stored reset code.
 
         :param session_id: the session id
         :param reset_code: the reset code associated with the current session

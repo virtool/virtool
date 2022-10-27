@@ -1,4 +1,3 @@
-import json
 from typing import Union, Tuple, List
 
 from aioredis import Redis
