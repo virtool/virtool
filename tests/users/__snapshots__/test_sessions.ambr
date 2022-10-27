@@ -106,9 +106,3 @@
     None,
   )
 ---
-# name: test_get_session[uvloop-True-True].2
-  <class 'tuple'> (
-    None,
-    None,
-  )
----
