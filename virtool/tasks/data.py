@@ -122,11 +122,11 @@ class TasksData:
         task = SQLTask(
             complete=False,
             context=context or {},
-            step=task_class.task_type,
+            step=task_class.name,
             count=0,
             created_at=virtool.utils.timestamp(),
             progress=0,
-            type=task_class.task_type,
+            type=task_class.name,
         )
 
         async with AsyncSession(self._pg) as session:
