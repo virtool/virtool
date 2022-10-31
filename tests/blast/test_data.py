@@ -1,3 +1,5 @@
+from zipfile import BadZipFile
+
 import arrow
 import pytest
 from aiohttp import ClientSession
@@ -86,7 +88,7 @@ class TestCheckNuvsBlast:
         Check that the ``last_checked_at`` field is updated when the BLAST is still
         running on NCBI.
         """
-        mocker.patch("virtool.blast.utils.check_rid", return_value=False)
+        mocker.patch("virtool.blast.data.check_rid", return_value=False)
 
         await blast_data.create_nuvs_blast("analysis", 12)
 
@@ -115,7 +117,7 @@ class TestCheckNuvsBlast:
         3. The ``results`` field is set with the output of ``fetch_nuvs_blast_result``.
 
         """
-        mocker.patch("virtool.blast.utils.check_rid", return_value=True)
+        mocker.patch("virtool.blast.data.check_rid", return_value=True)
 
         mocker.patch(
             "virtool.blast.data.fetch_nuvs_blast_result",
@@ -140,6 +142,22 @@ class TestCheckNuvsBlast:
             )
             await session.commit()
 
+        await blast_data.check_nuvs_blast("analysis", 12)
+
+        assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot
+
+    async def test_bad_zip_file(self, blast_data: BLASTData, mocker, pg, snapshot):
+        """
+        Test that the error field on the BLAST record is set when a BadZipFile error is
+        encountered.
+
+        """
+        mocker.patch("virtool.blast.data.check_rid", return_value=True)
+        mocker.patch(
+            "virtool.blast.data.fetch_nuvs_blast_result", side_effect=BadZipFile()
+        )
+
+        await blast_data.create_nuvs_blast("analysis", 12)
         await blast_data.check_nuvs_blast("analysis", 12)
 
         assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot

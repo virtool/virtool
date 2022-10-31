@@ -1,4 +1,3 @@
-from datetime import datetime
 from logging import getLogger
 from typing import List, TYPE_CHECKING
 from zipfile import BadZipFile
@@ -8,11 +7,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.blast import NuvsBlast
 
-import virtool.blast.utils
 import virtool.utils
+from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.blast.db import get_nuvs_blast, delete_nuvs_blast
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
+from virtool.blast.utils import (
+    extract_blast_info,
+    fetch_ncbi_blast_html,
+    check_rid,
+)
 from virtool.blast.utils import format_blast_content, fetch_nuvs_blast_result
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
@@ -83,6 +87,40 @@ class BLASTData(DataLayerPiece):
 
         return blast
 
+    async def initialize_on_ncbi(self, analysis_id: str, sequence_index: int):
+        """
+        Send a request to NCBI to BLAST the passed sequence.
+
+        Return the RID and RTOE from the response.
+
+        :param analysis_id: the id the nuvs analysis
+        :param sequence_index: the index of the sequence
+        :return: the RID and RTOE for the request
+        """
+        analysis = await self.data.analyses.get(analysis_id, None)
+
+        sequence = find_nuvs_sequence_by_index(
+            analysis.dict(by_alias=True), sequence_index
+        )
+
+        html = await fetch_ncbi_blast_html(self._client, sequence)
+
+        rid, _ = extract_blast_info(html)
+
+        async with AsyncSession(self._pg) as session:
+            blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
+
+            if blast_row is None:
+                raise ResourceNotFoundError
+
+            blast_row.rid = rid
+
+            blast = NuvsBlast(**blast_row.to_dict())
+
+            await session.commit()
+
+        return blast
+
     async def get_nuvs_blast(self, analysis_id: str, sequence_index: int) -> NuvsBlast:
         """
         Get a NuVs BLAST record by its analysis ID and sequence index.
@@ -122,7 +160,7 @@ class BLASTData(DataLayerPiece):
             if blast_row is None:
                 raise ResourceNotFoundError
 
-            ready = await virtool.blast.utils.check_rid(self._client, blast_row.rid)
+            ready = await check_rid(self._client, blast_row.rid)
 
             blast_row.last_checked_at = updated_at
             blast_row.updated_at = updated_at

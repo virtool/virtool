@@ -8,12 +8,35 @@ from zipfile import ZipFile
 from aiohttp import ClientSession
 
 import virtool.errors
+from virtool.errors import NCBIError
 from virtool.utils import run_in_thread
 
 logger = getLogger("blast")
 
 #: The URL to send BLAST requests to.
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
+
+
+async def fetch_ncbi_blast_html(client: ClientSession, sequence: str):
+    params = {
+        "CMD": "Put",
+        "DATABASE": "nr",
+        "PROGRAM": "blastn",
+        "MEGABLAST": "on",
+        "HITLIST_SIZE": 5,
+        "FILTER": "mL",
+        "FORMAT_TYPE": "JSON2",
+    }
+
+    data = {"QUERY": sequence}
+
+    async with client.post(BLAST_URL, params=params, data=data) as resp:
+        body = await resp.text()
+
+        if resp.status != 200:
+            raise NCBIError(f"BLAST request returned {resp.status} with body:\n{body}")
+
+        return await resp.text()
 
 
 def extract_blast_info(html: str) -> Tuple[str, int]:
@@ -28,9 +51,11 @@ def extract_blast_info(html: str) -> Tuple[str, int]:
 
     match = re.search(r"RID = (.+)", string)
     rid = match.group(1)
+    rid = rid.strip(" ")
 
     match = re.search(r"RTOE = (.+)", string)
     rtoe = match.group(1)
+    rtoe = rtoe.strip(" ")
 
     return rid, int(rtoe)
 

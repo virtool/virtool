@@ -47,7 +47,7 @@ class BLASTTask(BaseTask):
 
     async def request(self):
         """Make the initial request to NCBI to start a BLAST search."""
-        blast = await self.data.blast.create_nuvs_blast(
+        blast = await self.data.blast.initialize_on_ncbi(
             self.analysis_id, self.sequence_index
         )
 
