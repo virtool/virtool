@@ -287,9 +287,9 @@ class IndexData:
 
         :param index_id: the ID of the index to delete
         """
-        async with self._mongo.create_session() as session:
+        async with self._mongo.create_session() as mongo_session:
             delete_result = await self._mongo.indexes.delete_one(
-                {"_id": index_id}, session=session
+                {"_id": index_id}, session=mongo_session
             )
 
             if delete_result.deleted_count == 0:
@@ -302,5 +302,5 @@ class IndexData:
             await self._mongo.history.update_many(
                 {"_id": {"$in": index_change_ids}},
                 {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
-                session=session,
+                session=mongo_session,
             )

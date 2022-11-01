@@ -698,9 +698,12 @@ class ReferencesData(DataLayerPiece):
 
         document = await attach_computed(self._mongo, document)
 
-        if "name" in data:
-            await self._mongo.analyses.update_many(
-                {"reference.id": ref_id}, {"$set": {"reference.name": document["name"]}}
-            )
+        async with self._mongo.create_session() as mongo_session:
+            if "name" in data:
+                await self._mongo.analyses.update_many(
+                    {"reference.id": ref_id},
+                    {"$set": {"reference.name": document["name"]}},
+                    session=mongo_session,
+                )
 
         return document
