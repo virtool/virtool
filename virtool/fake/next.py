@@ -26,7 +26,6 @@ from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
 from virtool.references.tasks import (
     CloneReferenceTask,
     CleanReferencesTask,
-    DeleteReferenceTask,
 )
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
@@ -124,7 +123,6 @@ class TasksFakerPiece(DataFakerPiece):
                     AddSubtractionFilesTask,
                     CloneReferenceTask,
                     CleanReferencesTask,
-                    DeleteReferenceTask,
                 ]
             ),
             {},

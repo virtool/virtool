@@ -13,7 +13,7 @@ from virtool_core.models.reference import ReferenceNested
 from virtool_core.utils import file_stats
 
 import virtool.indexes.db
-from virtool.api.custom_json import dumps
+from virtool.api.custom_json import dump_bytes
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
@@ -170,7 +170,7 @@ class IndexData:
                 self._mongo, self._config, index["manifest"]
             )
 
-            json_string = dumps(patched_otus)
+            json_string = dump_bytes(patched_otus)
 
             await run_in_thread(compress_json_with_gzip, json_string, json_path)
 
@@ -353,7 +353,7 @@ class IndexData:
 
         await run_in_thread(
             compress_json_with_gzip,
-            dumps(
+            dump_bytes(
                 {
                     "data_type": reference["data_type"],
                     "organism": reference["organism"],

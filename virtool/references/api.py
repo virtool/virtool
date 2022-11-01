@@ -8,6 +8,7 @@ from aiohttp.web_exceptions import (
 )
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
+from aiohttp.web_response import Response
 from virtool_core.models.enums import Permission
 from virtool_core.models.otu import OTU
 
@@ -43,6 +44,8 @@ from virtool.references.oas import (
     ReferenceUsersResponse,
     ReferenceHistoryResponse,
 )
+from virtool.references.db import check_right
+from virtool.api.response import InsufficientRights
 
 routes = Routes()
 
@@ -153,12 +156,16 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
+
+        if not await check_right(self.request, ref_id, "modify"):
+            raise InsufficientRights
+
         try:
             reference = await get_data_from_req(self.request).references.update(
-                ref_id, data, self.request
+                ref_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -179,15 +186,13 @@ class ReferenceView(PydanticView):
         """
 
         try:
-            task = await get_data_from_req(self.request).references.remove(
+            await get_data_from_req(self.request).references.remove(
                 ref_id, self.request["client"].user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
-        return json_response(
-            task, status=202, headers={"Content-Location": f"/tasks/{task.id}"}
-        )
+        return Response(status=204)
 
 
 @routes.view("/refs/{ref_id}/release")
@@ -210,7 +215,7 @@ class ReferenceReleaseView(PydanticView):
                 ref_id, self.request.app
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
         except ResourceRemoteError as err:
@@ -235,7 +240,7 @@ class ReferenceUpdatesView(PydanticView):
                 ref_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(updates)
 
@@ -259,7 +264,7 @@ class ReferenceUpdatesView(PydanticView):
                 ref_id, self.request["client"].user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -290,7 +295,7 @@ class ReferenceOTUsView(PydanticView):
                 find, verified, names, ref_id, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         return json_response(data)
 
     async def post(
@@ -305,7 +310,7 @@ class ReferenceOTUsView(PydanticView):
                 ref_id, data, self.request, self.request["client"].user_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -331,7 +336,7 @@ class ReferenceHistoryView(PydanticView):
                 ref_id, unbuilt, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(data)
 
@@ -353,7 +358,7 @@ class ReferenceIndexesView(PydanticView):
                 ref_id, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(data)
 
@@ -379,7 +384,7 @@ class ReferenceIndexesView(PydanticView):
                 ref_id, self.request, self.request["client"].user_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPConflict(text=str(err))
         except ResourceError as err:
@@ -409,7 +414,7 @@ class ReferenceGroupsView(PydanticView):
                 ref_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(groups)
 
@@ -432,7 +437,7 @@ class ReferenceGroupsView(PydanticView):
                 ref_id, data, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -462,7 +467,7 @@ class ReferenceGroupView(PydanticView):
                 ref_id, group_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(group)
 
@@ -488,7 +493,7 @@ class ReferenceGroupView(PydanticView):
                 data, ref_id, group_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(group)
 
@@ -508,7 +513,7 @@ class ReferenceGroupView(PydanticView):
                 ref_id, group_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         raise HTTPNoContent
 
@@ -534,7 +539,7 @@ class ReferenceUsersView(PydanticView):
                 data, ref_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -563,7 +568,7 @@ class ReferenceUserView(PydanticView):
                 data, ref_id, user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(user)
 
@@ -583,6 +588,6 @@ class ReferenceUserView(PydanticView):
                 ref_id, user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         raise HTTPNoContent

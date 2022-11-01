@@ -4,7 +4,7 @@ Work with OTU history in the database.
 """
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 import pymongo.errors
 import dictdiffer
@@ -24,6 +24,9 @@ from virtool.history.utils import (
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import DB
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -82,8 +85,8 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def add(
-    db,
-    data_path,
+    db: "DB",
+    data_path: Path,
     method_name: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],

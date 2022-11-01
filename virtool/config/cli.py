@@ -11,7 +11,6 @@ from virtool_core.logging import configure_logs
 import virtool.jobs.main
 from virtool.app import run_app
 from virtool.config.cls import Config
-from virtool.tasks.runner import TaskRunner
 
 logger = getLogger("config")
 

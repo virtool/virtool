@@ -14,7 +14,7 @@ import orjson
 from pydantic import BaseModel
 
 
-def isoformat(obj: datetime.datetime) -> str:
+def datetime_to_isoformat(obj: datetime.datetime) -> str:
     """
     Convert the passed datetime object to a ISO formatted date and time.
 
@@ -25,20 +25,19 @@ def isoformat(obj: datetime.datetime) -> str:
     return obj.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def default(obj):
+def default_serializer(obj):
     """
     Converts Pydantic BaseModel objects into Python dictionaries for serialization.
     """
     if issubclass(type(obj), BaseModel):
         return obj.dict(by_alias=True)
+
     raise TypeError
 
 
-def dumps(obj: object) -> bytes:
+def dump_bytes(obj: object) -> bytes:
     """
-    Calls orjson.dumps that encodes datetime objects in input.
-
-    Used as `dumps` argument for :func:`.json_response`.
+    Dump the passed JSON-serializable object to ``bytes``.
 
     :param obj: a JSON-serializable object
     :return: a JSON bytestring
@@ -46,17 +45,28 @@ def dumps(obj: object) -> bytes:
     """
     return orjson.dumps(
         obj,
-        default=default,
+        default=default_serializer,
         option=orjson.OPT_NAIVE_UTC | orjson.OPT_UTC_Z,
     )
 
 
-def pretty_dumps(obj: object) -> bytes:
+def dump_string(obj: object) -> str:
     """
-    Calls orjson.dumps that applies pretty formatting to the output.
+    Dump the passed JSON-serializable object to a ``str``.
 
-    Sorts keys, adds indentation and converts datetime objects to ISO format.
-    Used as ``dumps`` argument for :func:`.json_response`.
+    :param obj: a JSON-serializable object.
+    :return: a JSON string
+    """
+    return dump_bytes(obj).decode(encoding="UTF-8")
+
+
+def dump_pretty_bytes(obj: object) -> bytes:
+    """
+    Dump the passed JSON-serializable object to a ``bytes`` with the following niceties:
+
+    * Sorted keys
+    * Indentation
+    * Convert datetime objects to UTC isoformat times.
 
     :param obj: a JSON-serializable object
     :return: a JSON bytestring
@@ -64,16 +74,9 @@ def pretty_dumps(obj: object) -> bytes:
     """
     return orjson.dumps(
         obj,
-        default=default,
+        default=default_serializer,
         option=orjson.OPT_INDENT_2
         | orjson.OPT_SORT_KEYS
         | orjson.OPT_NAIVE_UTC
         | orjson.OPT_UTC_Z,
     )
-
-
-def orjson_serializer(obj) -> str:
-    """
-    Used by SQLAlchemy and aiohttp as they expect strings.
-    """
-    return dumps(obj).decode()

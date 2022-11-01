@@ -2,7 +2,7 @@ from typing import Union
 
 from aiohttp.web_ws import WebSocketResponse
 
-from virtool.api.custom_json import orjson_serializer
+from virtool.api.custom_json import dump_string
 
 
 class Connection:
@@ -23,7 +23,7 @@ class Connection:
         :param message: the message to send
         """
         try:
-            await self._ws.send_json(message, dumps=orjson_serializer)
+            await self._ws.send_json(message, dumps=dump_string)
         except ConnectionResetError as err:
             if "Cannot write to closing transport" not in str(err):
                 raise
