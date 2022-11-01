@@ -51,7 +51,6 @@ from virtool.references.data import ReferencesData
 from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
-    DeleteReferenceTask,
 )
 from virtool.routes import setup_routes
 from virtool.samples.data import SamplesData
@@ -430,7 +429,6 @@ async def startup_tasks(app: Application):
         )
 
     await tasks_data.create(EnsureIndexFilesTask)
-    await tasks_data.create(DeleteReferenceTask, context={"user_id": "virtool"})
     await tasks_data.create(AddSubtractionFilesTask)
     await tasks_data.create(StoreNuvsFilesTask)
     await tasks_data.create(CompressSamplesTask)

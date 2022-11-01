@@ -135,8 +135,8 @@ class BaseTask:
             try:
                 await func()
             except Exception as err:
-                logger.exception("Encountered error in %s", self)
-                await self._set_error(str(err))
+                logger.exception(f"Encountered error in task {self.task_id}")
+                await self._set_error(f"{type(err)}: {str(err)}")
 
         if not self.errored:
             await self.data.tasks.complete(self.task_id)
@@ -286,7 +286,7 @@ class Task:
 
         await self.cleanup()
 
-        logger.info("Task %s encountered error '%s'", self.id, error)
+        logger.info(f"Task {self.id} encountered error {error}")
 
 
 class ProgressTracker:
