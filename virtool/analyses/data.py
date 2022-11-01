@@ -12,6 +12,13 @@ from virtool_core.utils import rm
 import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
+from virtool.analyses.checks import (
+    check_analysis_workflow,
+    check_analysis_nuvs_sequence,
+    check_if_analysis_running,
+    check_if_analysis_ready,
+    check_if_analysis_modified,
+)
 from virtool.analyses.db import PROJECTION, processor
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
@@ -36,7 +43,7 @@ from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread
+from virtool.utils import run_in_thread, wait_for_checks
 
 logger = getLogger("analyses")
 
@@ -107,14 +114,11 @@ class AnalysisData(DataLayerPiece):
         if document is None:
             raise ResourceNotFoundError()
 
-        if if_modified_since is not None:
-            try:
-                updated_at = document["updated_at"]
-            except KeyError:
-                updated_at = document["created_at"]
+        aws = []
 
-            if if_modified_since == updated_at:
-                raise ResourceNotModifiedError()
+        aws.append(check_if_analysis_modified(if_modified_since, document))
+
+        await wait_for_checks(*aws)
 
         document = await attach_analysis_files(self._pg, analysis_id, document)
 
@@ -192,12 +196,11 @@ class AnalysisData(DataLayerPiece):
 
         sample_id = document["sample"]["id"]
 
-        if jobs_api_flag:
-            if document["ready"]:
-                raise ResourceConflictError()
-        else:
-            if not document["ready"]:
-                raise ResourceConflictError()
+        aws = []
+
+        aws.append(check_if_analysis_ready(jobs_api_flag, document["ready"]))
+
+        await wait_for_checks(*aws)
 
         await self._db.analyses.delete_one({"_id": analysis_id})
 
@@ -307,16 +310,15 @@ class AnalysisData(DataLayerPiece):
             {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
         )
 
-        if document["workflow"] != "nuvs":
-            raise ResourceConflictError("Not a NuVs analysis")
+        aws = []
 
-        if not document["ready"]:
-            raise ResourceConflictError("Analysis is still running")
+        aws.append(check_analysis_workflow(document["workflow"]))
 
-        sequence = find_nuvs_sequence_by_index(document, sequence_index)
+        aws.append(check_if_analysis_running(document["ready"]))
 
-        if sequence is None:
-            raise ResourceNotFoundError()
+        aws.append(check_analysis_nuvs_sequence(document, sequence_index))
+
+        await wait_for_checks(*aws)
 
         timestamp = virtool.utils.timestamp()
 
@@ -374,7 +376,7 @@ class AnalysisData(DataLayerPiece):
             raise ResourceNotFoundError()
 
         if "ready" in analysis_document and analysis_document["ready"]:
-            raise ResourceConflictError
+            raise ResourceConflictError()
 
         document = await self._db.analyses.find_one_and_update(
             {"_id": analysis_id}, {"$set": {"results": results, "ready": True}}
