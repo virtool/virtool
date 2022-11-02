@@ -255,7 +255,8 @@ class UploadsData(DataLayerPiece):
 
     async def migrate_to_postgres(self):
         """
-        Transforms documents in the `files` collection into rows in the `uploads` SQL table.
+        Transforms documents in the `files` collection into rows in the `uploads` SQL
+        table.
 
         """
         async for document in self._db.files.find():

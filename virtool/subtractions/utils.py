@@ -1,5 +1,4 @@
 import logging
-import aiofiles.os
 import os
 from pathlib import Path
 from typing import List

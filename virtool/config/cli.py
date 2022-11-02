@@ -11,6 +11,7 @@ from virtool_core.logging import configure_logs
 import virtool.jobs.main
 from virtool.app import run_app
 from virtool.config.cls import Config
+from virtool.tasks.runner import TaskRunner
 
 logger = getLogger("config")
 
@@ -203,5 +204,5 @@ def start_tasks_service(ctx: Dict):
 
     logger.info("Starting jobs API process")
 
-    # task_runner = TaskRunner()
-    # asyncio.get_event_loop().run_until_complete(task_runner.run())
+    task_runner = TaskRunner()
+    asyncio.get_event_loop().run_until_complete(task_runner.run())

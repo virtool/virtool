@@ -6,12 +6,13 @@ from aiohttp.web_exceptions import (
     HTTPConflict,
     HTTPNoContent,
 )
+from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
-from aiohttp.web_response import Response
 from virtool_core.models.enums import Permission
 from virtool_core.models.otu import OTU
 
+from virtool.api.response import InsufficientRights
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -25,6 +26,7 @@ from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
 from virtool.otus.oas import CreateOTURequest
 from virtool.otus.oas import FindOTUsResponse
+from virtool.references.db import check_right
 from virtool.references.oas import (
     CreateReferenceRequest,
     UpdateReferenceRequest,
@@ -44,8 +46,6 @@ from virtool.references.oas import (
     ReferenceUsersResponse,
     ReferenceHistoryResponse,
 )
-from virtool.references.db import check_right
-from virtool.api.response import InsufficientRights
 
 routes = Routes()
 

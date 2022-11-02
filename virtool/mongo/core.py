@@ -198,32 +198,6 @@ class Collection:
 
         return document
 
-    async def insert_many(
-        self,
-        documents: List[Document],
-        silent: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> List[Document]:
-        if "_id" in document:
-            await self._collection.insert_one(document, session=session)
-            inserted = document
-        else:
-            try:
-                inserted = {**document, "_id": self.mongo.id_provider.get()}
-                await self._collection.insert_one(inserted, session=session)
-            except DuplicateKeyError as err:
-                keys = list(err.details["keyPattern"].keys())
-
-                if len(keys) == 1 and keys[0] == "_id":
-                    return await self.insert_one(document, session=session)
-
-                raise
-
-        if not silent:
-            self.enqueue_change(INSERT, inserted["_id"])
-
-        return inserted
-
     async def insert_one(
         self,
         document: Document,

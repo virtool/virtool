@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import logging
 import shutil
 from pathlib import Path
 from typing import Optional, Dict

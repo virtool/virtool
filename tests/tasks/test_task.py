@@ -7,7 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.pg.utils import get_row_by_id
-from virtool.tasks.models import Task
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.task import BaseTask
 from virtool.utils import get_temp_dir, run_in_thread
@@ -56,7 +55,7 @@ class DummyTask(BaseTask):
 @pytest.fixture()
 async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
 
-    task = Task(
+    task = SQLTask(
         id=1,
         complete=False,
         context={"user_id": "test"},
@@ -75,7 +74,7 @@ async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
 
 
 async def test_base_task(data_layer, pg, static_time):
-    task = Task(
+    task = SQLTask(
         id=1,
         complete=False,
         context={"user_id": "test"},
@@ -109,7 +108,7 @@ async def test_run(error, task, pg: AsyncEngine):
 
     async with AsyncSession(pg) as session:
         result = (
-            (await session.execute(select(Task).filter_by(id=task.task_id)))
+            (await session.execute(select(SQLTask).filter_by(id=task.task_id)))
             .scalar()
             .to_dict()
         )
@@ -126,16 +125,16 @@ async def test_progress_handler_set_progress(task, pg: AsyncEngine):
     tracker_1 = task.create_progress_handler()
 
     await tracker_1.set_progress(50)
-    assert (await get_row_by_id(pg, Task, 1)).progress == 25
+    assert (await get_row_by_id(pg, SQLTask, 1)).progress == 25
 
     await tracker_1.set_progress(100)
-    assert (await get_row_by_id(pg, Task, 1)).progress == 50
+    assert (await get_row_by_id(pg, SQLTask, 1)).progress == 50
 
     task.step = task.steps[1]
     tracker_2 = task.create_progress_handler()
 
     await tracker_2.set_progress(100)
-    assert (await get_row_by_id(pg, Task, 1)).progress == 100
+    assert (await get_row_by_id(pg, SQLTask, 1)).progress == 100
 
 
 async def test_progress_handler_set_error(task, pg: AsyncEngine):
@@ -143,4 +142,4 @@ async def test_progress_handler_set_error(task, pg: AsyncEngine):
     tracker = task.create_progress_handler()
 
     await tracker.set_error("GenericError")
-    assert (await get_row_by_id(pg, Task, 1)).error == "GenericError"
+    assert (await get_row_by_id(pg, SQLTask, 1)).error == "GenericError"

@@ -1,6 +1,5 @@
 import logging
 
-from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.task import BaseTask
 
 logger = logging.getLogger(__name__)

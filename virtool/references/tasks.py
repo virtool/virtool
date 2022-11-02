@@ -6,7 +6,7 @@ from typing import Dict, Optional, TYPE_CHECKING
 from aiohttp import ClientConnectorError
 from humanfriendly.testing import TemporaryDirectory
 
-from virtool.api.custom_json import dump_bytes, dump_string
+from virtool.api.custom_json import dump_string
 from virtool.errors import WebError
 from virtool.http.utils import download_file
 from virtool.references.utils import (
@@ -144,7 +144,7 @@ class RemoteReferenceTask(BaseTask):
 
 
 class UpdateRemoteReferenceTask(BaseTask):
-    task_type = "update_remote_reference"
+    name = "update_remote_reference"
 
     def __init__(self, *args):
         super().__init__(*args)

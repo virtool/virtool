@@ -43,8 +43,8 @@ class BaseTask:
 
         self.temp_path = Path(self.temp_dir.name)
         """
-        The ``Path`` to a temporary directory to be used as a scratch space for the 
-        task.        
+        The ``Path`` to a temporary directory to be used as a scratch space for the
+        task.
         """
 
         self.errored: bool = False
@@ -53,7 +53,7 @@ class BaseTask:
         self.step: Optional[Callable] = None
         """
         The name of the step the task is current executing.
-        
+
         The value will be ``None`` if the task's ``run`` method has not been called yet.
         """
 

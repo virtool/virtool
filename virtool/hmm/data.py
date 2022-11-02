@@ -184,7 +184,8 @@ class HmmData(DataLayerPiece):
         hmm_temp_profile_path,
     ):
         """
-        Installs annotation and profiles given a list of annotation dictionaries and path to profile file.
+        Installs annotation and profiles given a list of annotation dictionaries and
+        path to profile file.
 
         """
         tracker = DownloadProgressHandlerWrapper(progress_handler, len(annotations))

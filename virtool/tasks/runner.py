@@ -1,7 +1,6 @@
 import asyncio
 import logging
 
-import virtool.tasks.task
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask

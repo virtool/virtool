@@ -22,22 +22,21 @@ async def download_file(
 
     """
 
-    async with ClientSession() as session:
-        async with session.get(url) as resp:
-            if resp.status != 200:
-                raise WebError
+    async with ClientSession() as session, session.get(url) as resp:
+        if resp.status != 200:
+            raise WebError
 
-            async with aiofiles.open(target_path, "wb") as handle:
-                while True:
-                    chunk = await resp.content.read(4096)
+        async with aiofiles.open(target_path, "wb") as handle:
+            while True:
+                chunk = await resp.content.read(4096)
 
-                    if not chunk:
-                        break
+                if not chunk:
+                    break
 
-                    await handle.write(chunk)
+                await handle.write(chunk)
 
-                    if progress_handler:
-                        await progress_handler(len(chunk))
+                if progress_handler:
+                    await progress_handler(len(chunk))
 
 
 def set_session_id_cookie(resp: Response, session_id: str):
