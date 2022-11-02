@@ -6,8 +6,7 @@ from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 
 import virtool.utils
-from virtool.account.api import API_KEY_PROJECTION
-from virtool.account.db import compose_password_update
+from virtool.account.db import compose_password_update, API_KEY_PROJECTION
 from virtool.account.oas import (
     UpdateSettingsRequest,
     CreateKeysRequest,

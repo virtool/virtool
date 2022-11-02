@@ -4,7 +4,7 @@ Work with OTU history in the database.
 """
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 import pymongo.errors
 import dictdiffer
@@ -16,6 +16,7 @@ import virtool.otus.db
 
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.config import Config
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
@@ -24,6 +25,9 @@ from virtool.history.utils import (
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import DB
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -82,7 +86,8 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def add(
-    app,
+    db: "DB",
+    config: Config,
     method_name: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],
@@ -94,7 +99,8 @@ async def add(
     """
     Add a change document to the history collection.
 
-    :param app: the application object
+    :param db: the mongo database object
+    :param config: the app config object
     :param method_name: the name of the handler method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
@@ -104,8 +110,6 @@ async def add(
     :return: the change document
 
     """
-    db = app["db"]
-
     otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
     document = {
@@ -131,9 +135,7 @@ async def add(
     try:
         await db.history.insert_one(document, silent=silent, session=session)
     except pymongo.errors.DocumentTooLarge:
-        await write_diff_file(
-            app["config"].data_path, otu_id, otu_version, document["diff"]
-        )
+        await write_diff_file(config.data_path, otu_id, otu_version, document["diff"])
 
         await db.history.insert_one(
             dict(document, diff="file"), silent=silent, session=session
