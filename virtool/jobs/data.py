@@ -3,21 +3,18 @@ from asyncio import gather
 from collections import defaultdict
 from typing import Optional, Dict, List
 
-from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.job import (
     JobMinimal,
     JobSearchResult,
     JobStatus,
-    Job, JobPing,
+    Job,
+    JobPing,
 )
 from virtool_core.models.user import UserNested
+from typing import List
 
 import virtool.utils
-from virtool.api.utils import (
-    compose_regex_query,
-    get_query_bool,
-)
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
@@ -62,7 +59,14 @@ class JobsData:
 
         return dict(counts)
 
-    async def find(self, query: MultiDictProxy) -> JobSearchResult:
+    async def find(
+        self,
+        archived: bool,
+        page: int,
+        per_page: int,
+        states: List[str],
+        users: List[str],
+    ) -> JobSearchResult:
         """
         {
           "waiting": {
@@ -73,20 +77,6 @@ class JobsData:
           }
         }
         """
-        states = query.getall("state", None)
-        term = query.get("find")
-        archived = get_query_bool(query, "archived") if "archived" in query else None
-
-        try:
-            page = int(query["page"])
-        except (KeyError, ValueError):
-            page = 1
-
-        try:
-            per_page = int(query["per_page"])
-        except (KeyError, ValueError):
-            per_page = 25
-
         skip_count = 0
 
         if page > 1:
@@ -95,8 +85,8 @@ class JobsData:
         sort = {"created_at": -1}
 
         match_query = {
-            **(compose_regex_query(term, ["user.id"]) if term else {}),
             **({"archived": archived} if archived is not None else {}),
+            **({"user.id": {"$in": users}} if users else {}),
         }
 
         match_state = {"state": {"$in": states}} if states else {}
@@ -221,7 +211,7 @@ class JobsData:
             "state": "waiting",
             "status": [compose_status("waiting", None)],
             "user": {"id": user_id},
-            "ping": None
+            "ping": None,
         }
 
         if job_id:
