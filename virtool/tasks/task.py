@@ -4,12 +4,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.task import Task as TaskModel
-
-import virtool.tasks.models
-from virtool.data.utils import get_data_from_app
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.progress import TaskProgressHandler
 from virtool.utils import get_temp_dir, run_in_thread

@@ -383,7 +383,7 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
 
     await mongo.samples.insert_one(sample)
 
-    await compress_sample_reads(app_dict, sample)
+    await compress_sample_reads(mongo, config, sample)
 
     assert set(os.listdir(sample_dir)) == snapshot
 
@@ -402,7 +402,9 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(spawn_client, snapshot, tmp_path, mongo, fake2, pg: AsyncEngine):
+async def test_finalize(
+    spawn_client, snapshot, tmp_path, mongo, fake2, pg: AsyncEngine
+):
     client = await spawn_client(authorize=True)
     quality = {"count": 10000000, "gc": 43}
 

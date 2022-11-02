@@ -1,16 +1,12 @@
 import os
-from pathlib import Path
 from typing import TYPE_CHECKING, Dict
 
 import pytest
-from aioredis import Redis
 from humanfriendly.testing import TemporaryDirectory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.utils import get_data_from_app
 from virtool.pg.utils import get_row_by_id
-from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.task import BaseTask
@@ -36,6 +32,8 @@ class DummyBaseTask(BaseTask):
 
 
 class DummyTask(BaseTask):
+    name = "dummy_task"
+
     def __init__(
         self,
         task_id: int,
@@ -56,7 +54,7 @@ class DummyTask(BaseTask):
 
 
 @pytest.fixture()
-async def task(data_layer, pg: AsyncEngine, static_time):
+async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
 
     task = Task(
         id=1,
@@ -104,13 +102,6 @@ async def test_base_task(data_layer, pg, static_time):
     assert row.step == "step_two"
 
 
-async def test_init_db(snapshot, task, static_time):
-    await task.init_db()
-
-    assert task.document == snapshot
-    assert task.context == snapshot
-
-
 @pytest.mark.parametrize("error", [None, "error"])
 async def test_run(error, task, pg: AsyncEngine):
     task.errored = error
@@ -118,7 +109,7 @@ async def test_run(error, task, pg: AsyncEngine):
 
     async with AsyncSession(pg) as session:
         result = (
-            (await session.execute(select(Task).filter_by(id=task.id)))
+            (await session.execute(select(Task).filter_by(id=task.task_id)))
             .scalar()
             .to_dict()
         )
@@ -130,24 +121,26 @@ async def test_run(error, task, pg: AsyncEngine):
         assert not os.path.exists(task.temp_path)
 
 
-async def test_update_context(task):
-    context = await task.update_context({"ref_id": "askfllfk"})
-
-    assert context == {"user_id": "test", "ref_id": "askfllfk"}
-
-
-async def test_get_tracker(task, pg: AsyncEngine, redis: Redis):
+async def test_progress_handler_set_progress(task, pg: AsyncEngine):
     task.step = task.steps[0]
-    tracker_1 = await task.get_tracker()
-    assert tracker_1.initial == 0
-    assert tracker_1.step_completed == 50
+    tracker_1 = task.create_progress_handler()
 
-    await TasksData(pg, redis).update(
-        task.id,
-        progress=50,
-    )
+    await tracker_1.set_progress(50)
+    assert (await get_row_by_id(pg, Task, 1)).progress == 25
+
+    await tracker_1.set_progress(100)
+    assert (await get_row_by_id(pg, Task, 1)).progress == 50
 
     task.step = task.steps[1]
-    tracker_2 = await task.get_tracker()
-    assert tracker_2.initial == 50
-    assert tracker_2.step_completed == 100
+    tracker_2 = task.create_progress_handler()
+
+    await tracker_2.set_progress(100)
+    assert (await get_row_by_id(pg, Task, 1)).progress == 100
+
+
+async def test_progress_handler_set_error(task, pg: AsyncEngine):
+    task.step = task.steps[0]
+    tracker = task.create_progress_handler()
+
+    await tracker.set_error("GenericError")
+    assert (await get_row_by_id(pg, Task, 1)).error == "GenericError"

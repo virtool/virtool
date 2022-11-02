@@ -56,7 +56,6 @@ class HMMInstallTask(BaseTask):
         """
         Download the HMM release archive.
 
-        TODO: Replace or fix usage of download_file()/ DONE?
         """
         release = self.context["release"]
 
@@ -90,6 +89,3 @@ class HMMInstallTask(BaseTask):
             self.create_progress_handler(),
             self.temp_path / "hmm" / "profiles.hmm",
         )
-
-    async def cleanup(self):
-        await self.data.hmms.clear_hmm_status()

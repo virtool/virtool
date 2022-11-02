@@ -17,7 +17,6 @@ async def test_create_subtraction_files(snapshot, tmp_path, pg: AsyncEngine):
         pg, "foo", subtraction_files, test_dir
     )
 
-    rows = []
     async with AsyncSession(pg) as session:
         assert (
             await session.execute(select(SQLSubtractionFile))

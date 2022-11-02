@@ -88,14 +88,6 @@ class HmmData(DataLayerPiece):
 
         raise ResourceNotFoundError()
 
-    async def clear_hmm_status(self):
-        async with self._mongo.create_session() as session:
-            await self._mongo.status.find_one_and_update(
-                {"_id": "hmm"},
-                {"$set": {"installed": None, "task": None, "updates": []}},
-                session=session,
-            )
-
     async def purge(self):
         """
         Remove profiles.hmm and all HMM annotations unreferenced in analyses.

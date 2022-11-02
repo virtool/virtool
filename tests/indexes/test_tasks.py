@@ -49,7 +49,6 @@ async def task_index(config, mongo, reference, test_otu, test_sequence):
     return index
 
 
-@pytest.mark.parametrize("")
 @pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
 async def test_ensure_index_files(
     config,
@@ -57,7 +56,6 @@ async def test_ensure_index_files(
     files,
     mongo,
     pg: AsyncEngine,
-    spawn_client,
     static_time,
     snapshot,
     task_index,
