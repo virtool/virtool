@@ -40,16 +40,6 @@ from virtool.users.checks import check_password_length
 from virtool.users.oas import UpdateUserRequest
 
 
-API_KEY_PROJECTION = {
-    "_id": False,
-    "user": False,
-}
-"""
-A MongoDB projection to use when returning API key documents to clients.
-
-The key should never be sent to client after its creation.
-"""
-
 routes = virtool.http.routes.Routes()
 """
 A :class:`aiohttp.web.RouteTableDef` for account API routes.

@@ -44,7 +44,7 @@ class FakeSequence:
 class FakeOTU:
     def __init__(self, app: App, ref_id: str, user_id: str, document: OTU):
         self._app = app
-        self._data = OTUData(app)
+        self._data = OTUData(app["db"], app["config"])
         self._ref_id = ref_id
         self._user_id = user_id
         self._document = document
@@ -85,7 +85,7 @@ class FakeOTUCreator:
         self._user_id = user_id
 
     async def create(self, name: str, abbreviation: str):
-        otu_data = OTUData(self._app)
+        otu_data = OTUData(self._app["db"], self._app["config"])
 
         document = await otu_data.create(
             self._ref_id,

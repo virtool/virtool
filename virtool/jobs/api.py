@@ -6,6 +6,7 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from pydantic import Field, conint
 from virtool_core.models.job import JobMinimal, JobSearchResult
+
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
     ResourceConflictError,
@@ -15,12 +16,11 @@ from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.users.utils import Permission
 from virtool.jobs.oas import (
-    GetJobResponse,
     JobResponse,
     ArchiveJobsRequest,
 )
+from virtool.users.utils import Permission
 
 logger = getLogger(__name__)
 

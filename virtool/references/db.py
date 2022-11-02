@@ -756,7 +756,15 @@ async def insert_change(
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
-        app, verb, old, joined, description, user_id, silent=True, session=session
+        app["db"],
+        app["config"],
+        verb,
+        old,
+        joined,
+        description,
+        user_id,
+        silent=True,
+        session=session,
     )
 
 

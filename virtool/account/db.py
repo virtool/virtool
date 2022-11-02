@@ -61,3 +61,14 @@ async def get_alternate_id(db, name: str) -> str:
             return candidate
 
         suffix += 1
+
+
+API_KEY_PROJECTION = {
+    "_id": False,
+    "user": False,
+}
+"""
+A MongoDB projection to use when returning API key documents to clients.
+
+The key should never be sent to client after its creation.
+"""

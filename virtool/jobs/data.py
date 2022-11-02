@@ -1,7 +1,8 @@
 import math
 from asyncio import gather
 from collections import defaultdict
-from typing import Optional, Dict, List
+from typing import List
+from typing import Optional, Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.job import (
@@ -12,17 +13,16 @@ from virtool_core.models.job import (
     JobPing,
 )
 from virtool_core.models.user import UserNested
-from typing import List
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.mongo.core import DB
-from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_one_field
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import OR_COMPLETE, OR_FAILED, PROJECTION, fetch_complete_job
 from virtool.jobs.utils import JobRights, compose_status
+from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 
