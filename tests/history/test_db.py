@@ -11,13 +11,16 @@ class TestAdd:
     async def test(
         self, snapshot, mongo, static_time, test_otu_edit, test_change, tmp_path, config
     ):
-
-        app = {"db": mongo, "config": config}
-
         old, new = test_otu_edit
 
         change = await virtool.history.db.add(
-            app, HistoryMethod.edit, old, new, f"Edited {new['name']}", "test"
+            mongo,
+            config,
+            HistoryMethod.edit,
+            old,
+            new,
+            f"Edited {new['name']}",
+            "test",
         )
 
         assert change == snapshot
@@ -26,8 +29,6 @@ class TestAdd:
     async def test_create(
         self, snapshot, mongo, static_time, test_otu_edit, test_change, tmp_path, config
     ):
-        app = {"db": mongo, "config": config}
-
         # There is no old document because this is a change document for a otu creation operation.
         old = None
 
@@ -36,7 +37,7 @@ class TestAdd:
         description = f"Created {new['name']}"
 
         change = await virtool.history.db.add(
-            app, HistoryMethod.create, old, new, description, "test"
+            mongo, config, HistoryMethod.create, old, new, description, "test"
         )
 
         assert change == snapshot
@@ -49,8 +50,6 @@ class TestAdd:
         Test that the addition of a change due to otu removal inserts the expected change document.
 
         """
-        app = {"db": mongo, "config": config}
-
         # There is no new document because this is a change document for a otu removal operation.
         new = None
 
@@ -59,7 +58,7 @@ class TestAdd:
         description = f"Removed {old['name']}"
 
         change = await virtool.history.db.add(
-            app, HistoryMethod.remove, old, new, description, "test"
+            mongo, config, HistoryMethod.remove, old, new, description, "test"
         )
 
         assert change == snapshot
@@ -82,9 +81,7 @@ async def test_get(file, mocker, snapshot, mongo, fake2, tmp_path, config):
         "virtool.history.utils.read_diff_file", make_mocked_coro(return_value="loaded")
     )
 
-    app = {"db": mongo, "config": config}
-
-    history = HistoryData(app["config"].data_path, mongo)
+    history = HistoryData(config.data_path, mongo)
 
     assert await history.get("baz.2") == snapshot
 

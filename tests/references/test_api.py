@@ -227,7 +227,7 @@ async def test_edit(
     can_modify = error != "403"
 
     mocker.patch(
-        "virtool.references.db.check_right", make_mocked_coro(return_value=can_modify)
+        "virtool.references.api.check_right", make_mocked_coro(return_value=can_modify)
     )
 
     resp = await client.patch("/refs/foo", data)
@@ -298,8 +298,8 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
     resp = await client.delete("/refs/foo")
 
     assert await client.db.references.count_documents({}) == 0
-    assert await resp.json() == snapshot
-    assert resp.status == 202
+    assert await resp.text() == ""
+    assert resp.status == 204
 
 
 @pytest.mark.parametrize("error", [None, "400", "404"])

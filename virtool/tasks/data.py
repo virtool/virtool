@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import CancelledError
 from typing import List, Type, Optional, Dict
 
 from aioredis import Redis
@@ -11,7 +10,7 @@ import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.oas import TaskUpdate
-from virtool.tasks.task import Task as TaskClass, BaseTask
+from virtool.tasks.task import BaseTask
 
 
 class TasksData:
@@ -132,10 +131,8 @@ class TasksData:
         async with AsyncSession(self._pg) as session:
             session.add(task)
             await session.flush()
-            document = task.to_dict()
+            task = Task(**task.to_dict())
             await session.commit()
-
-        task = Task(**document)
 
         await self._redis.publish("channel:tasks", task.id)
 
@@ -143,22 +140,22 @@ class TasksData:
 
     async def create_periodically(
         self,
-        task_class: Type[TaskClass],
+        cls: Type[BaseTask],
         interval: int = None,
         context: Optional[Dict] = None,
     ):
         """
         Register a new task that will be run regularly at the given interval.
 
-        :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
+        :param cls: a task class
         :param interval: a time interval
-        :param context:A dict containing data used by the task
+        :param context: a dict containing data used by the task
         :return: the task record
 
         """
         try:
             while True:
-                await self.create(task_class, context=context)
+                await self.create(cls, context=context)
                 await asyncio.sleep(interval)
         except asyncio.CancelledError:
             pass

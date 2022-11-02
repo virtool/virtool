@@ -6,7 +6,7 @@ import asyncio
 import datetime
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, TYPE_CHECKING
 
 import pymongo
 from aiohttp import ClientConnectorError
@@ -439,7 +439,7 @@ async def get_contributors(mongo: "DB", ref_id: str) -> Optional[List[Document]]
     :return: a list of contributors to the ref
 
     """
-    return await virtool.history.mongo.get_contributors(mongo, {"reference.id": ref_id})
+    return await virtool.history.db.get_contributors(mongo, {"reference.id": ref_id})
 
 
 async def get_internal_control(
@@ -766,7 +766,7 @@ async def insert_change(
     if abbreviation := joined.get("abbreviation"):
         description = f"{description} ({abbreviation})"
 
-    await virtool.history.mongo.add(
+    await virtool.history.db.add(
         mongo,
         data_path,
         verb,

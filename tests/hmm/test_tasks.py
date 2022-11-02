@@ -30,7 +30,7 @@ annotations = [
 
 
 async def test_hmm_install_task(
-    data_layer, tmp_path, pg, dbi, static_time, mocker, snapshot
+    data_layer, tmp_path, pg, mongo, static_time, mocker, snapshot
 ):
     async with AsyncSession(pg) as session:
         session.add(
@@ -76,5 +76,5 @@ async def test_hmm_install_task(
     async with AsyncSession(pg) as session:
         assert (await session.execute(select(SQLTask))).scalars().all() == snapshot
 
-    assert await dbi.hmm.find().to_list(1) == snapshot
+    assert await mongo.hmm.find().to_list(1) == snapshot
     assert os.listdir(tmp_path / "hmm") == ["profiles.hmm"]

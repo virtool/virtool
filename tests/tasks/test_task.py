@@ -1,19 +1,23 @@
 import os
-from virtool.tasks.models import Task as SQLTask
 from pathlib import Path
+from typing import TYPE_CHECKING, Dict
 
 import pytest
 from aioredis import Redis
+from humanfriendly.testing import TemporaryDirectory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.tasks.task
+from virtool.data.utils import get_data_from_app
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task
-from virtool.data.utils import get_data_from_app
+from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.task import BaseTask
-from virtool.utils import get_temp_dir
+from virtool.utils import get_temp_dir, run_in_thread
+
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
 
 
 class DummyBaseTask(BaseTask):
@@ -31,30 +35,29 @@ class DummyBaseTask(BaseTask):
         ...
 
 
-class DummyTask(virtool.tasks.task.Task):
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+class DummyTask(BaseTask):
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [self.create_file, self.remove_file]
-        self.temp_path = Path(self.temp_dir.name)
 
     async def create_file(self):
         with open(self.temp_path / "test.txt", "w") as f:
             f.write("This is a test file.")
 
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=50, step="create_file"
-        )
-
     async def remove_file(self):
-        os.remove(self.temp_path / "test.txt")
-
-        await self.tasks_data.update(self.id, progress=100, step="remove_file")
+        await run_in_thread(os.remove, self.temp_path / "test.txt")
 
 
 @pytest.fixture()
-async def task(spawn_client, pg: AsyncEngine, static_time):
-    client = await spawn_client(authorize=True)
+async def task(data_layer, pg: AsyncEngine, static_time):
+
     task = Task(
         id=1,
         complete=False,
@@ -65,11 +68,12 @@ async def task(spawn_client, pg: AsyncEngine, static_time):
         step="create_file",
         type="test_task",
     )
+
     async with AsyncSession(pg) as session:
         session.add(task)
         await session.commit()
 
-    return DummyTask(client.app, 1)
+    return await DummyTask.from_task_id(data_layer, 1)
 
 
 async def test_base_task(data_layer, pg, static_time):
