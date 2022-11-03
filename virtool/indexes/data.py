@@ -18,17 +18,20 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.history.db import LIST_PROJECTION
-from virtool.indexes.db import (
-    INDEX_FILE_NAMES,
-    update_last_indexed_versions,
+from virtool.indexes.checks import (
+    check_fasta_file_uploaded,
+    check_index_files_uploaded,
 )
+from virtool.indexes.db import INDEX_FILE_NAMES, update_last_indexed_versions
+
 from virtool.indexes.models import SQLIndexFile, IndexType
 from virtool.indexes.tasks import get_index_file_type_from_name, export_index
+
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.pg.utils import get_rows
 from virtool.uploads.utils import naive_writer
-from virtool.utils import run_in_thread, compress_json_with_gzip
+from virtool.utils import run_in_thread, compress_json_with_gzip, wait_for_checks
 
 logger = logging.getLogger("indexes")
 
@@ -234,19 +237,14 @@ class IndexData:
 
         results = {f.name: f.type for f in rows}
 
-        if IndexType.fasta not in results.values():
-            raise ResourceConflictError(
-                "A FASTA file must be uploaded in order to finalize index"
-            )
+        aws = []
+
+        aws.append(check_fasta_file_uploaded(results))
 
         if reference["data_type"] == "genome":
-            required_files = [f for f in INDEX_FILE_NAMES if f != "reference.json.gz"]
+            aws.append(check_index_files_uploaded(results))
 
-            if missing_files := [f for f in required_files if f not in results]:
-                raise ResourceConflictError(
-                    f"Reference requires that all Bowtie2 index files have been uploaded. "
-                    f"Missing files: {', '.join(missing_files)}"
-                )
+        await wait_for_checks(*aws)
 
         async with self._mongo.create_session() as session:
             await update_last_indexed_versions(self._mongo, ref_id, session)

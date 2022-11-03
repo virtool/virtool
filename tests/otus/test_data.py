@@ -24,6 +24,7 @@ async def test_create(
     tmp_path,
     data_layer,
 ):
+
     user = await fake2.users.create()
 
     assert await data_layer.otus.create("foo", data, user.id) == snapshot(name="return")
@@ -34,6 +35,7 @@ async def test_create(
 
 
 async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
+
     await gather(
         mongo.otus.insert_one(
             {
@@ -195,6 +197,7 @@ async def test_remove_isolate(
 async def test_set_default(
     mongo, snapshot, test_otu, static_time, tmp_path, data_layer
 ):
+
     test_otu["isolates"].append(
         {"default": False, "id": "bar", "source_type": "isolate", "source_name": "A"}
     )
@@ -205,6 +208,7 @@ async def test_set_default(
         await data_layer.otus.set_isolate_as_default("6116cba1", "bar", "bob")
         == snapshot
     )
+
     assert await mongo.otus.find_one() == snapshot
     assert await mongo.history.find_one() == snapshot
 

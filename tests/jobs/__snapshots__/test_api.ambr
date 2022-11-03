@@ -840,7 +840,7 @@
     ],
   }
 ---
-# name: test_find_beta[uvloop-None-False]
+# name: test_find_beta[uvloop-None-None-False]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -978,7 +978,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-None-None]
+# name: test_find_beta[uvloop-None-None-None]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -1214,7 +1214,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-None-True]
+# name: test_find_beta[uvloop-None-None-True]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -1338,7 +1338,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-running-False]
+# name: test_find_beta[uvloop-None-running-False]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -1392,7 +1392,7 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-running-None]
+# name: test_find_beta[uvloop-None-running-None]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
@@ -1446,7 +1446,795 @@
     'total_count': 15,
   }
 ---
-# name: test_find_beta[uvloop-running-True]
+# name: test_find_beta[uvloop-None-running-True]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-None-False]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-None-None]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-None-True]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-running-False]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-running-None]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-bob-running-True]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-users2-None-False]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2022-06-13T09:43:07Z',
+        'id': 'sk1wj693',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-09-24T20:51:45Z',
+        'id': 'fczq56va',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2020-04-27T15:20:30Z',
+        'id': '8vvqvnuk',
+        'progress': 90,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'nuvs',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2020-03-17T03:17:57Z',
+        'id': 't894ea8p',
+        'progress': 94,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2018-10-30T16:14:06Z',
+        'id': 'awvuon9b',
+        'progress': 66,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-10-25T22:05:44Z',
+        'id': '5k9d4ocj',
+        'progress': 97,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-08-03T16:06:20Z',
+        'id': '7467tozj',
+        'progress': 95,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2016-11-10T01:46:32Z',
+        'id': '8cy4mjvp',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+    ],
+    'found_count': 8,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-users2-None-None]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2022-10-21T11:47:02Z',
+        'id': 'ef4bhjln',
+        'progress': 87,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2022-06-26T11:48:26Z',
+        'id': '03cvzfiq',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2022-06-13T09:43:07Z',
+        'id': 'sk1wj693',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-09-24T20:51:45Z',
+        'id': 'fczq56va',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2020-04-27T15:20:30Z',
+        'id': '8vvqvnuk',
+        'progress': 90,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'nuvs',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2020-03-17T03:17:57Z',
+        'id': 't894ea8p',
+        'progress': 94,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2018-10-30T16:14:06Z',
+        'id': 'awvuon9b',
+        'progress': 66,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2018-08-22T02:49:18Z',
+        'id': 'v68r5j2t',
+        'progress': 81,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2017-10-31T03:06:49Z',
+        'id': 'wrw4i0eh',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'aodp',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-10-25T22:05:44Z',
+        'id': '5k9d4ocj',
+        'progress': 97,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2017-08-28T02:17:43Z',
+        'id': 'w4cckpcq',
+        'progress': 51,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'nuvs',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-08-03T16:06:20Z',
+        'id': '7467tozj',
+        'progress': 95,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2016-11-10T01:46:32Z',
+        'id': '8cy4mjvp',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2016-10-17T07:23:48Z',
+        'id': 'zc7h2ftd',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2016-02-11T13:05:09Z',
+        'id': '4jua0mbk',
+        'progress': 99,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+    ],
+    'found_count': 15,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-users2-None-True]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2022-10-21T11:47:02Z',
+        'id': 'ef4bhjln',
+        'progress': 87,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2022-06-26T11:48:26Z',
+        'id': '03cvzfiq',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2018-08-22T02:49:18Z',
+        'id': 'v68r5j2t',
+        'progress': 81,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2017-10-31T03:06:49Z',
+        'id': 'wrw4i0eh',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'aodp',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2017-08-28T02:17:43Z',
+        'id': 'w4cckpcq',
+        'progress': 51,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'nuvs',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2016-10-17T07:23:48Z',
+        'id': 'zc7h2ftd',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': '2016-02-11T13:05:09Z',
+        'id': '4jua0mbk',
+        'progress': 99,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+    ],
+    'found_count': 7,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-users2-running-False]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-09-24T20:51:45Z',
+        'id': 'fczq56va',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2016-11-10T01:46:32Z',
+        'id': '8cy4mjvp',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-users2-running-None]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'build_index': 1,
+        'create_subtraction': 1,
+        'pathoscope': 2,
+      },
+      'complete': <class 'dict'> {
+        'create_sample': 1,
+        'nuvs': 1,
+      },
+      'running': <class 'dict'> {
+        'build_index': 1,
+        'pathoscope': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-09-24T20:51:45Z',
+        'id': 'fczq56va',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2016-11-10T01:46:32Z',
+        'id': '8cy4mjvp',
+        'progress': 97,
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 15,
+  }
+---
+# name: test_find_beta[uvloop-users2-running-True]
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {

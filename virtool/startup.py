@@ -18,11 +18,8 @@ from virtool_core.redis import connect, periodically_ping_redis
 
 import virtool.mongo.connect
 import virtool.pg.utils
-from virtool.account.data import AccountData
-from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
-from virtool.blast.data import BLASTData
-from virtool.data.layer import DataLayer
+from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
 from virtool.dev.fake import create_fake_data_path
 from virtool.dispatcher.client import DispatcherClient
@@ -30,45 +27,30 @@ from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
-from virtool.groups.data import GroupsData
-from virtool.history.data import HistoryData
-from virtool.hmm.data import HmmData
 from virtool.hmm.db import refresh
-from virtool.indexes.data import IndexData
 from virtool.indexes.tasks import (
     EnsureIndexFilesTask,
 )
-from virtool.jobs.client import JobsClient
-from virtool.jobs.data import JobsData
-from virtool.labels.data import LabelsData
 from virtool.mongo.core import DB
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
-from virtool.otus.data import OTUData
 from virtool.pg.testing import create_test_database
-from virtool.references.data import ReferencesData
 from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
 )
 from virtool.routes import setup_routes
-from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
-from virtool.settings.data import SettingsData
-from virtool.subtractions.data import SubtractionsData
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
     WriteSubtractionFASTATask,
 )
-from virtool.tasks.data import TasksData
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
-from virtool.uploads.data import UploadsData
 from virtool.uploads.tasks import MigrateFilesTask
-from virtool.users.data import UsersData
 from virtool.utils import ensure_data_dir, random_alphanumeric
 from virtool.version import determine_server_version
 
@@ -130,24 +112,8 @@ async def startup_data(app: App):
     :param app: the application object
     """
 
-    app["data"] = DataLayer(
-        AccountData(app["db"], app["redis"]),
-        AnalysisData(app["db"], app["config"], app["pg"]),
-        BLASTData(app["client"], app["db"], app["pg"]),
-        GroupsData(app["db"]),
-        SettingsData(app["db"]),
-        HistoryData(app["config"].data_path, app["db"]),
-        ReferencesData(app["db"], app["pg"], app["config"], app["client"]),
-        HmmData(app["client"], app["config"], app["db"], app["pg"]),
-        IndexData(app["db"], app["config"], app["pg"]),
-        LabelsData(app["db"], app["pg"]),
-        JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
-        OTUData(app),
-        SamplesData(app["config"], app["db"], app["pg"]),
-        SubtractionsData(app["config"].base_url, app["config"], app["db"], app["pg"]),
-        UploadsData(app["config"], app["db"], app["pg"]),
-        UsersData(app["db"], app["pg"]),
-        TasksData(app["pg"], app["redis"]),
+    app["data"] = create_data_layer(
+        app["db"], app["pg"], app["config"], app["client"], app["redis"]
     )
 
 

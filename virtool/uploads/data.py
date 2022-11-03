@@ -28,13 +28,13 @@ class UploadsData(DataLayerPiece):
         self._pg: AsyncEngine = pg
 
     async def find(
-        self, user, page: int, per_page: int, upload_type, ready, paginate
+        self, user, page: int, per_page: int, upload_type, paginate
     ) -> Union[List[UploadMinimal], UploadSearchResult]:
         """
         Find and filter uploads.
         """
 
-        filters = [SQLUpload.removed == False]
+        filters = [SQLUpload.removed == False, SQLUpload.ready == True]
         uploads = []
 
         async with AsyncSession(self._pg) as session:
@@ -43,9 +43,6 @@ class UploadsData(DataLayerPiece):
 
             if upload_type:
                 filters.append(SQLUpload.type == upload_type)
-
-            if ready is not None:
-                filters.append(SQLUpload.ready == ready)
 
             if not paginate:
                 results = await session.execute(select(SQLUpload).filter(*filters))
@@ -83,6 +80,9 @@ class UploadsData(DataLayerPiece):
                 session.execute(select(total_query, found_query)),
                 session.execute(query),
             )
+
+        total_count = 0
+        found_count = 0
 
         count = count.unique().all()
 

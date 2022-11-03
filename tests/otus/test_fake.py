@@ -2,8 +2,8 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.otus.fake import create_fake_otus
 
 
-async def test_create_fake_otus(config, mongo, fake2, snapshot):
-    app = {"db": mongo, "config": config, "fake": FakerWrapper()}
+async def test_create_fake_otus(mongo, config, fake2, snapshot, tmp_path):
+    app = {"db": mongo, "data_path": tmp_path, "fake": FakerWrapper(), "config": config}
 
     user = await fake2.users.create()
 

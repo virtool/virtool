@@ -16,6 +16,7 @@ import virtool.otus.db
 
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.config import Config
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
@@ -135,6 +136,7 @@ async def add(
     try:
         await db.history.insert_one(document, silent=silent, session=session)
     except pymongo.errors.DocumentTooLarge:
+
         await write_diff_file(data_path, otu_id, otu_version, document["diff"])
 
         await db.history.insert_one(

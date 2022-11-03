@@ -1,10 +1,11 @@
 import datetime
 
 import pytest
-import virtool.history.db
-from virtool.history.data import HistoryData
 from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import HistoryMethod
+
+import virtool.history.db
+from virtool.history.data import HistoryData
 
 
 class TestAdd:
@@ -15,7 +16,7 @@ class TestAdd:
 
         change = await virtool.history.db.add(
             mongo,
-            config,
+            config.data_path,
             HistoryMethod.edit,
             old,
             new,
