@@ -21,7 +21,6 @@ from virtool.indexes.checks import (
     check_index_files_uploaded,
 )
 from virtool.indexes.db import (
-    FILES,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import SQLIndexFile

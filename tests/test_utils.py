@@ -3,19 +3,16 @@ import datetime
 import os
 import shutil
 from pathlib import Path
-import random
-from typing import List
 
 import arrow
 import pytest
-from aiohttp.web_exceptions import HTTPConflict, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPBadRequest
 from virtool_core.utils import decompress_tgz
 
-from virtool.data.errors import ResourceConflictError
-from virtool.utils import wait_for_checks
-
 import virtool.utils
+from virtool.data.errors import ResourceConflictError
 from virtool.utils import run_in_thread
+from virtool.utils import wait_for_checks
 
 
 @pytest.fixture(scope="session")
