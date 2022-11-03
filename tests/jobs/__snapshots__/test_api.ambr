@@ -756,6 +756,80 @@
     'workflow': 'build_index',
   }
 ---
+# name: test_bulk_archive[uvloop-None]
+  <class 'list'> [
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2017-08-04T19:46:43Z',
+      'id': '7467tozj',
+      'progress': 95,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'build_index',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2016-11-11T13:46:08Z',
+      'id': '8cy4mjvp',
+      'progress': 97,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'build_index',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2020-04-28T17:39:18Z',
+      'id': '8vvqvnuk',
+      'progress': 90,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'nuvs',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2018-11-01T00:50:53Z',
+      'id': 'awvuon9b',
+      'progress': 66,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'pathoscope',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2022-06-14T13:10:43Z',
+      'id': 'sk1wj693',
+      'progress': 100,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'create_sample',
+    },
+  ]
+---
 # name: test_cancel[uvloop-None]
   <class 'dict'> {
     'acquired': False,

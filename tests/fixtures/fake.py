@@ -69,6 +69,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
 
         return {
             "_id": self._faker.fake.mongo_id(),
+            "created_at": status[-1]["timestamp"],
             "acquired": False,
             "archived": archived,
             "workflow": workflow,
@@ -76,6 +77,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
             "key": None,
             "rights": {},
             "state": "waiting",
+            "progress": status[-1]["progress"],
             "status": status,
             "user": {"id": await self.generator.users.get_id()},
         }
@@ -247,7 +249,7 @@ def app(mongo, pg, tmp_path, config, data_layer):
         "fake": FakerWrapper(),
         "pg": pg,
         "config": config,
-        "data": data_layer
+        "data": data_layer,
     }
 
 
