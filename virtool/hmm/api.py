@@ -9,11 +9,10 @@ from aiohttp.web_exceptions import (
     HTTPBadGateway,
     HTTPBadRequest,
     HTTPConflict,
-    HTTPNoContent,
 )
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r502
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
 
 from virtool.api.response import NotFound, json_response
@@ -56,24 +55,6 @@ class HmmsView(PydanticView):
         )
 
         return json_response(search_results)
-
-    @policy(PermissionsRoutePolicy(Permission.modify_hmm))
-    async def delete(self) -> Union[r204, r403]:
-        """
-        Purge HMMs.
-
-        Deletes all installed HMM data.
-
-        This is not recommended and is used in experimental instances or development. It
-        won't break analyses that reference the installed HMM data.
-
-        Status Codes:
-            204: Successful operation
-            403: Not permitted
-        """
-        await get_data_from_req(self.request).hmms.purge()
-
-        raise HTTPNoContent
 
 
 @routes.view("/hmms/status")

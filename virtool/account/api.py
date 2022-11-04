@@ -35,20 +35,7 @@ from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
-
 from virtool.users.checks import check_password_length
-from virtool.users.oas import UpdateUserRequest
-
-
-API_KEY_PROJECTION = {
-    "_id": False,
-    "user": False,
-}
-"""
-A MongoDB projection to use when returning API key documents to clients.
-
-The key should never be sent to client after its creation.
-"""
 
 routes = virtool.http.routes.Routes()
 """

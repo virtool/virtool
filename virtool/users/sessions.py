@@ -1,6 +1,4 @@
 import secrets
-import sys
-import traceback
 from datetime import timedelta
 from typing import Tuple
 

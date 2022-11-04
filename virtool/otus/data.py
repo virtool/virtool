@@ -9,6 +9,7 @@ from virtool_core.models.otu import OTU, OTUSequence
 import virtool.history.db
 import virtool.otus.db
 import virtool.utils
+from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError
 from virtool.downloads.utils import format_fasta_entry, format_fasta_filename
 from virtool.history.utils import (
@@ -22,15 +23,15 @@ from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
 from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
 from virtool.otus.utils import find_isolate, format_isolate_name
-from virtool.types import App, Document
+from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 
 class OTUData:
-    def __init__(self, app: App):
-        self._app = app
-        self._db: DB = app["db"]
+    def __init__(self, db: DB, config: Config):
+        self._db = db
+        self._config = config
         self._mongo = self._db
 
     async def find(
@@ -125,7 +126,8 @@ class OTUData:
             )
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.create,
                 None,
                 document,
@@ -191,7 +193,8 @@ class OTUData:
             await update_otu_verification(self._db, new, session=session)
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.edit,
                 old,
                 new,
@@ -245,7 +248,8 @@ class OTUData:
             description = compose_remove_description(joined)
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.remove,
                 joined,
                 None,
@@ -338,7 +342,8 @@ class OTUData:
                 description += " as default"
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.add_isolate,
                 old,
                 new,
@@ -394,7 +399,8 @@ class OTUData:
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.edit_isolate,
                 old,
                 new,
@@ -461,7 +467,8 @@ class OTUData:
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.set_as_default,
                 old,
                 new,
@@ -521,7 +528,8 @@ class OTUData:
                 description += f" and set {format_isolate_name(new_default)} as default"
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.remove_isolate,
                 old,
                 new,
@@ -581,7 +589,8 @@ class OTUData:
             )
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.create_sequence,
                 old,
                 new,
@@ -649,7 +658,8 @@ class OTUData:
             )
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.edit_sequence,
                 old,
                 new,
@@ -692,7 +702,8 @@ class OTUData:
             )
 
             await virtool.history.db.add(
-                self._app,
+                self._db,
+                self._config,
                 HistoryMethod.remove_sequence,
                 old,
                 new,

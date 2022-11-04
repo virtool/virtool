@@ -187,9 +187,10 @@ async def wait_for_checks(*aws):
     :param aws:
     :return:
     """
-    done, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_EXCEPTION)
+    results = await asyncio.gather(*aws, return_exceptions=True)
 
-    for task in pending:
-        task.cancel()
-
-    await asyncio.gather(*(done | pending))
+    for result in results:
+        if isinstance(result, BaseException):
+            raise result
+        if result is not None:
+            raise TypeError("Check functions may only return a NoneType object.")
