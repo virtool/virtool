@@ -44,10 +44,11 @@ def session_manager(mocker, data_layer, session_id, redis):
                 return await data_layer.sessions.create_reset_session(
                     ip, user_id, remember
                 )
-            elif user_id:
+
+            if user_id:
                 return await data_layer.sessions.create(ip, user_id, remember)
-            else:
-                return await data_layer.sessions.create_anonymous(ip)
+
+            return await data_layer.sessions.create_anonymous(ip)
 
         async def test_ttl(self, starting_ttl, session_id=session_id):
             time_elapsed = (arrow.utcnow() - self.start_time).total_seconds()
@@ -132,7 +133,7 @@ async def test_get_authenticated(
 ):
 
     user = await fake2.users.create()
-    session_id, session, token = await session_manager.create(ip, user.id)
+    session_id, _, token = await session_manager.create(ip, user.id)
 
     assert (await data_layer.sessions.get_authenticated(session_id, token)) == snapshot(
         matcher=path_type({"created_at": (datetime,)})
@@ -151,7 +152,7 @@ async def test_get_anonymous(
     session_manager,
 ):
 
-    session_id, session = await session_manager.create(ip)
+    session_id, _ = await session_manager.create(ip)
 
     assert (await data_layer.sessions.get_anonymous(session_id)) == snapshot(
         matcher=path_type({"created_at": (datetime,)})
@@ -170,7 +171,7 @@ async def test_delete(
     session_manager,
 ):
 
-    session_id, session = await session_manager.create(ip)
+    session_id, _ = await session_manager.create(ip)
 
     # Check that the session exists
     assert (await data_layer.sessions.get_anonymous(session_id)) == snapshot(

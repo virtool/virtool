@@ -346,7 +346,7 @@ class LogoutView(PydanticView):
         Status Codes:
             204: Successful operation
         """
-        session_id, session = await get_data_from_req(self.request).account.logout(
+        session_id, _ = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
             virtool.http.auth.get_ip(self.request),
         )

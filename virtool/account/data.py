@@ -1,9 +1,9 @@
-from typing import Union, Tuple, List, Optional
+from typing import Union, Tuple, List
 
 from aioredis import Redis
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
-from virtool_core.models.session import Session, SessionPasswordReset
+from virtool_core.models.session import Session
 
 import virtool.utils
 from virtool.account.db import compose_password_update, API_KEY_PROJECTION
@@ -298,8 +298,8 @@ class AccountData(DataLayerPiece):
         if await get_one_field(self._db.users, "force_reset", user_id):
             await self.data.sessions.delete(session_id)
             return await self.data.sessions.create_reset_session(ip, user_id, remember)
-        else:
-            raise ResourceError
+
+        raise ResourceError
 
     async def logout(self, old_session_id: str, ip: str) -> Tuple[str, Session]:
         """
