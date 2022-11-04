@@ -6,6 +6,7 @@ from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
 from jose.exceptions import JWTError, JWTClaimsError, ExpiredSignatureError
 
+from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.http.client import UserClient
@@ -180,18 +181,24 @@ async def middleware(req, handler) -> Response:
     # Get session information from cookies.
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
-    session, session_token = await get_data_from_req(req).sessions.get(
-        session_id, session_token
-    )
 
-    ip = get_ip(req)
+    if session_id:
+        try:
+            session = await get_data_from_req(req).sessions.get_authenticated(
+                session_id, session_token
+            )
+        except ResourceError:
+            session = await get_data_from_req(req).sessions.get_anonymous(session_id)
+        except ResourceNotFoundError:
+            session_id, session = await get_data_from_req(
+                req
+            ).sessions.create_anonymous(get_ip(req))
+    else:
+        session_id, session = await get_data_from_req(req).sessions.create_anonymous(
+            get_ip(req)
+        )
 
-    if session is None:
-        session_id, session, session_token = await get_data_from_req(
-            req
-        ).sessions.create(ip)
-
-    if session_token:
+    if session.authentication:
         user = await get_data_from_req(req).users.get(session.authentication.user_id)
         req["client"] = UserClient(
             db,
@@ -216,9 +223,10 @@ async def middleware(req, handler) -> Response:
         )
 
     resp = await handler(req)
-
     if req.path != "/account/reset":
-        await get_data_from_req(req).sessions.clear_reset_code(session_id)
+        session_id = await get_data_from_req(req).sessions.clear_reset_session(
+            session_id
+        )
 
     set_session_id_cookie(resp, session_id)
 

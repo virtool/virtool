@@ -10,6 +10,7 @@ into JSON. The pretty dumper is used for formatting JSON for viewing in the brow
 """
 import datetime
 import orjson
+import arrow
 
 from pydantic import BaseModel
 
@@ -25,11 +26,8 @@ def isoformat(obj: datetime.datetime) -> str:
     return obj.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def fromisoformat(time_str: str) -> datetime.datetime:
-    try:
-        return datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-    except ValueError:
-        return datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%SZ")
+def isoformat_to_datetime(time_str: str) -> datetime.datetime:
+    return arrow.get(time_str).naive
 
 
 def default(obj):
@@ -58,15 +56,7 @@ def dumps(obj: object) -> bytes:
     )
 
 
-def loads(serialized_obj: bytes) -> object:
-    """
-    Calls orjson.loads which decodes json created by dumps
-
-    :param serialized_obj: a JSON-serialized object
-    :return: deserialized object
-
-    """
-    return orjson.loads(serialized_obj)
+loads = orjson.loads
 
 
 def pretty_dumps(obj: object) -> bytes:

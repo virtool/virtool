@@ -1,9 +1,9 @@
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Optional
 
 from aioredis import Redis
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
-from virtool_core.models.session import Session
+from virtool_core.models.session import Session, SessionPasswordReset
 
 import virtool.utils
 from virtool.account.api import API_KEY_PROJECTION
@@ -21,6 +21,7 @@ from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
+from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import limit_permissions
 
 PROJECTION = (
@@ -281,13 +282,14 @@ class AccountData(DataLayerPiece):
 
         return document["_id"]
 
-    async def get_reset_code(
-        self, user_id: str, session_id: str, remember: bool
-    ) -> Union[str, None]:
+    async def get_reset_session(
+        self, ip: str, user_id: str, session_id: str, remember: bool
+    ) -> Tuple[str, Session]:
         """
         Check if user password should be reset and return a reset code if it
         should be.
 
+        :param ip: the ip address of the requesiton client
         :param user_id: the login session ID
         :param session_id: the id of the session getting the reset code
         :param remember: boolean indicating whether the sessions
@@ -295,11 +297,12 @@ class AccountData(DataLayerPiece):
         """
 
         if await get_one_field(self._db.users, "force_reset", user_id):
-            return await self.data.sessions.create_reset_code(
-                session_id, user_id, remember
-            )
+            await self.data.sessions.delete(session_id)
+            return await self.data.sessions.create_reset_session(ip, user_id, remember)
+        else:
+            raise ResourceError
 
-    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, Session, str]:
+    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, Session]:
         """
         Invalidates the requesting session, effectively logging out the user.
 
@@ -307,7 +310,8 @@ class AccountData(DataLayerPiece):
         :param ip: the ip address of the client
         :return: the session_id, session, and session token
         """
-        return await self.data.sessions.replace(old_session_id, ip)
+        await self.data.sessions.delete(old_session_id)
+        return await self.data.sessions.create_anonymous(ip)
 
     async def reset(
         self, session_id: str, data: ResetPasswordRequest, ip: str
@@ -320,13 +324,20 @@ class AccountData(DataLayerPiece):
         :param ip: the ip address of the client
         """
 
-        user_id, remember = await self.data.sessions.get_reset_data(
-            session_id, data.reset_code
+        reset = await self.data.sessions.get_reset_data(session_id)
+
+        if reset is None or data.reset_code != reset.code:
+            raise ResourceError()
+
+        await self.data.sessions.delete(session_id)
+
+        await self.data.users.update(
+            reset.user_id,
+            UpdateUserRequest(force_reset=False, password=data.password),
         )
 
-        return await self.data.sessions.replace(
-            session_id,
+        return await self.data.sessions.create(
             ip,
-            user_id,
-            remember=remember,
+            reset.user_id,
+            remember=reset.remember,
         )

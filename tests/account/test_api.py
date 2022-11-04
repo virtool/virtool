@@ -505,11 +505,6 @@ async def test_login(
         }
     )
 
-    mocker.patch(
-        "virtool.users.sessions.SessionData.replace",
-        return_value=[None, {"_id": None}, None],
-    )
-
     resp = await client.post("/account/login", body)
 
     assert resp.status == status

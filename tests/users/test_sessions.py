@@ -6,6 +6,7 @@ import pytest
 from syrupy.matchers import path_type
 
 from virtool.api.custom_json import loads
+from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.utils import hash_key
 
 
@@ -16,164 +17,215 @@ def ip():
 
 @pytest.fixture
 def session_id():
-    return "session_id_foo"
+    return "session_id"
 
 
-@pytest.mark.parametrize(
-    "use_user_id, remember", [(False, False), (True, False), (True, True)]
-)
-async def test_create_session(
-    mocker,
-    snapshot,
-    redis,
-    data_layer,
-    use_user_id,
-    remember,
-    session_id,
-    fake2,
-    ip,
-):
-    start_time = arrow.utcnow()
-
+@pytest.fixture
+def session_manager(mocker, data_layer, session_id, redis):
     mocker.patch(
         "virtool.users.sessions.SessionData.create_session_id",
         return_value=session_id,
     )
-    mocker.patch(
-        "virtool.utils.generate_key", return_value=("test_token", "test_hashed")
-    )
 
-    user_id = None
-    if use_user_id:
-        user = await fake2.users.create()
-        user_id = user.id
-
-    await data_layer.sessions.create(ip, user_id, remember)
-    assert loads(await redis.get(session_id)) == snapshot(
-        matcher=path_type({"created_at": (str,)})
-    )
-
-    time_elapsed = (arrow.utcnow() - start_time).total_seconds()
-
-    if use_user_id and remember:
-        starting_ttl = 2592000
-    elif use_user_id:
-        starting_ttl = 3600
-    else:
-        starting_ttl = 600
-
-    expected_ttl = starting_ttl - time_elapsed
-
-    assert isclose(await redis.ttl(session_id), expected_ttl, abs_tol=1)
-
-
-@pytest.mark.parametrize(
-    "use_valid_session, authenticated",
-    [(False, False), (True, False), (True, True)],
-)
-async def test_get_session(
-    data_layer, use_valid_session, ip, fake2, authenticated, snapshot, mocker
-):
     token = "token"
     mocker.patch("virtool.utils.generate_key", return_value=(token, hash_key(token)))
 
-    session_id = "invalid_session"
-    if use_valid_session:
-        user = await fake2.users.create()
-        session_id, _, _ = await data_layer.sessions.create(
-            ip, user.id if authenticated else None
-        )
+    reset_code = "reset_code"
+    mocker.patch("virtool.users.sessions.secrets.token_hex", return_value=reset_code)
 
-    assert (await data_layer.sessions.get(session_id, token))[0] == snapshot(
-        matcher=path_type({"created_at": (datetime,)})
-    )
+    class SessionManager:
+        def __init__(self):
+            self.start_time = None
 
-    if authenticated:
-        assert (
-            await data_layer.sessions.get(session_id, "invalid_token")
-        ) == snapshot()
+        async def create(self, ip, user_id=None, remember=False, reset=False):
+            if self.start_time is None:
+                self.start_time = arrow.utcnow()
+            if reset:
+                return await data_layer.sessions.create_reset_session(
+                    ip, user_id, remember
+                )
+            elif user_id:
+                return await data_layer.sessions.create(ip, user_id, remember)
+            else:
+                return await data_layer.sessions.create_anonymous(ip)
+
+        async def test_ttl(self, starting_ttl, session_id=session_id):
+            time_elapsed = (arrow.utcnow() - self.start_time).total_seconds()
+            expected_ttl = starting_ttl - time_elapsed
+            assert isclose(await redis.ttl(session_id), expected_ttl, abs_tol=1)
+
+    return SessionManager()
 
 
 @pytest.mark.parametrize("remember", [False, True])
-async def test_create_reset_code(
-    mocker,
+async def test_create_session(
     snapshot,
     redis,
     data_layer,
-    session_id,
     remember,
+    session_id,
+    fake2,
     ip,
+    session_manager,
 ):
-    start_time = arrow.utcnow()
 
-    reset_code = "reset_code"
-    mocker.patch("virtool.users.sessions.secrets.token_hex", return_value=reset_code)
+    user = await fake2.users.create()
 
-    session_id, _, _ = await data_layer.sessions.create(ip)
-
-    returned_reset_code = await data_layer.sessions.create_reset_code(
-        session_id, "user_id", remember
-    )
-
-    assert reset_code == returned_reset_code
+    await session_manager.create(ip, user.id, remember=remember)
 
     assert loads(await redis.get(session_id)) == snapshot(
         matcher=path_type({"created_at": (str,)})
     )
 
-    ttl = await redis.ttl(session_id)
-    expected_ttl = 600 - (arrow.utcnow() - start_time).total_seconds()
-    assert isclose(ttl, expected_ttl, abs_tol=1)
+    if remember:
+        starting_ttl = 2592000
+    else:
+        starting_ttl = 3600
+
+    await session_manager.test_ttl(starting_ttl)
 
 
-async def test_clear_reset_code(
-    mocker,
+async def test_create_anonymous_session(
     snapshot,
     redis,
     data_layer,
     session_id,
     ip,
+    session_manager,
 ):
-    start_time = arrow.utcnow()
 
-    reset_code = "reset_code"
-    mocker.patch("virtool.users.sessions.secrets.token_hex", return_value=reset_code)
-
-    session_id, _, _ = await data_layer.sessions.create(ip)
-
-    await data_layer.sessions.create_reset_code(session_id, "user_id", False)
+    await session_manager.create(ip)
 
     assert loads(await redis.get(session_id)) == snapshot(
         matcher=path_type({"created_at": (str,)})
     )
 
-    await data_layer.sessions.clear_reset_code(session_id)
+    await session_manager.test_ttl(600)
+
+
+async def test_create_reset_session(
+    snapshot,
+    redis,
+    data_layer,
+    session_id,
+    fake2,
+    ip,
+    session_manager,
+):
+    user = await fake2.users.create()
+
+    await session_manager.create(ip, user_id=user.id, reset=True)
 
     assert loads(await redis.get(session_id)) == snapshot(
         matcher=path_type({"created_at": (str,)})
     )
 
-    ttl = await redis.ttl(session_id)
-    expected_ttl = 600 - (arrow.utcnow() - start_time).total_seconds()
-    assert isclose(ttl, expected_ttl, abs_tol=1)
+    await session_manager.test_ttl(600)
+
+
+async def test_get_authenticated(
+    data_layer,
+    ip,
+    fake2,
+    snapshot,
+    session_manager,
+):
+
+    user = await fake2.users.create()
+    session_id, session, token = await session_manager.create(ip, user.id)
+
+    assert (await data_layer.sessions.get_authenticated(session_id, token)) == snapshot(
+        matcher=path_type({"created_at": (datetime,)})
+    )
+
+    try:
+        await data_layer.sessions.get_authenticated(session_id, "invalid_token")
+    except ResourceError as err:
+        assert err == snapshot()
+
+
+async def test_get_anonymous(
+    data_layer,
+    ip,
+    snapshot,
+    session_manager,
+):
+
+    session_id, session = await session_manager.create(ip)
+
+    assert (await data_layer.sessions.get_anonymous(session_id)) == snapshot(
+        matcher=path_type({"created_at": (datetime,)})
+    )
+
+    try:
+        await data_layer.sessions.get_anonymous("invalid_session")
+    except ResourceNotFoundError as err:
+        assert err == snapshot()
+
+
+async def test_delete(
+    data_layer,
+    ip,
+    snapshot,
+    session_manager,
+):
+
+    session_id, session = await session_manager.create(ip)
+
+    # Check that the session exists
+    assert (await data_layer.sessions.get_anonymous(session_id)) == snapshot(
+        matcher=path_type({"created_at": (datetime,)})
+    )
+
+    await data_layer.sessions.delete(session_id)
+
+    # Check that the session has been removed
+    try:
+        await data_layer.sessions.get_anonymous(session_id)
+    except ResourceNotFoundError as err:
+        assert err == snapshot()
+
+
+@pytest.mark.parametrize("reset", [False, True])
+async def test_clear_reset_session(
+    data_layer, ip, fake2, snapshot, session_manager, reset, mocker
+):
+    user = await fake2.users.create()
+    result = await session_manager.create(ip, user.id, reset=reset)
+
+    assert await data_layer.sessions._get(result[0]) == snapshot(
+        matcher=path_type({"created_at": (datetime,)})
+    )
+    mocker.patch(
+        "virtool.users.sessions.SessionData.create_session_id",
+        return_value="new_session_id",
+    )
+    new_session_id = await data_layer.sessions.clear_reset_session(result[0])
+
+    assert (await data_layer.sessions._get(new_session_id)) == snapshot(
+        matcher=path_type({"created_at": (datetime,)})
+    )
+
+    if reset:
+        try:
+            await data_layer.sessions._get(result[0])
+            assert 0
+        except ResourceNotFoundError as err:
+            assert err == snapshot()
+
+    if reset:
+        expected_ttl = 600
+    else:
+        expected_ttl = 3600
+
+    await session_manager.test_ttl(expected_ttl, new_session_id)
 
 
 async def test_get_reset_data(
-    mocker,
-    snapshot,
-    redis,
-    data_layer,
-    session_id,
-    ip,
+    snapshot, redis, data_layer, session_id, ip, session_manager, fake2
 ):
 
-    reset_code = "reset_code"
-    mocker.patch("virtool.users.sessions.secrets.token_hex", return_value=reset_code)
+    user = await fake2.users.create()
+    session_id, _ = await session_manager.create(ip, user.id, reset=True)
 
-    session_id, _, _ = await data_layer.sessions.create(ip)
-
-    reset_code = await data_layer.sessions.create_reset_code(
-        session_id, "user_id", False
-    )
-
-    assert await data_layer.sessions.get_reset_data(session_id, reset_code) == snapshot
+    assert await data_layer.sessions.get_reset_data(session_id) == snapshot
