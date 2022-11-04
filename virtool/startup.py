@@ -19,8 +19,8 @@ from virtool_core.redis import connect, periodically_ping_redis
 import virtool.mongo.connect
 import virtool.pg.utils
 from virtool.analyses.tasks import StoreNuvsFilesTask
-from virtool.data.utils import get_data_from_app
 from virtool.data.factory import create_data_layer
+from virtool.data.utils import get_data_from_app
 from virtool.dev.fake import create_fake_data_path
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher

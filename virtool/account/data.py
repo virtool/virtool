@@ -1,9 +1,9 @@
-import json
 from typing import Union, Tuple, List
 
 from aioredis import Redis
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
+from virtool_core.models.session import Session
 
 import virtool.utils
 from virtool.account.db import compose_password_update, API_KEY_PROJECTION
@@ -16,10 +16,11 @@ from virtool.account.oas import (
     UpdateAccountRequest,
 )
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
-from virtool.users.sessions import create_reset_code, replace_session
+from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import limit_permissions
 
 PROJECTION = (
@@ -36,7 +37,7 @@ PROJECTION = (
 )
 
 
-class AccountData:
+class AccountData(DataLayerPiece):
     def __init__(self, db: DB, redis: Redis):
         self._db = db
         self._redis = redis
@@ -280,11 +281,14 @@ class AccountData:
 
         return document["_id"]
 
-    async def get_reset_code(self, user_id, session_id, remember) -> Union[str, None]:
+    async def get_reset_session(
+        self, ip: str, user_id: str, session_id: str, remember: bool
+    ) -> Tuple[str, Session]:
         """
         Check if user password should be reset and return a reset code if it
         should be.
 
+        :param ip: the ip address of the requesiton client
         :param user_id: the login session ID
         :param session_id: the id of the session getting the reset code
         :param remember: boolean indicating whether the sessions
@@ -292,19 +296,25 @@ class AccountData:
         """
 
         if await get_one_field(self._db.users, "force_reset", user_id):
-            return await create_reset_code(self._redis, session_id, user_id, remember)
+            await self.data.sessions.delete(session_id)
+            return await self.data.sessions.create_reset_session(ip, user_id, remember)
 
-    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, dict, str]:
+        raise ResourceError
+
+    async def logout(self, old_session_id: str, ip: str) -> Tuple[str, Session]:
         """
         Invalidates the requesting session, effectively logging out the user.
 
         :param old_session_id: the ID of the old session
-        :param ip: the ip
+        :param ip: the ip address of the client
         :return: the session_id, session, and session token
         """
-        return await replace_session(self._db, self._redis, old_session_id, ip)
+        await self.data.sessions.delete(old_session_id)
+        return await self.data.sessions.create_anonymous(ip)
 
-    async def reset(self, session_id, data: ResetPasswordRequest, ip: str):
+    async def reset(
+        self, session_id: str, data: ResetPasswordRequest, ip: str
+    ) -> Tuple[str, Session, str]:
         """
         Resets the password for a session user.
 
@@ -313,27 +323,20 @@ class AccountData:
         :param ip: the ip address of the client
         """
 
-        reset_code = data.reset_code
+        reset = await self.data.sessions.get_reset_data(session_id)
 
-        session = json.loads(await self._redis.get(session_id))
-
-        if not session.get("reset_code") or reset_code != session.get("reset_code"):
+        if reset is None or data.reset_code != reset.code:
             raise ResourceError()
 
-        user_id = session["reset_user_id"]
+        await self.data.sessions.delete(session_id)
 
-        session_id, new_session, token = await replace_session(
-            self._db,
-            self._redis,
-            session_id,
-            ip,
-            user_id,
-            remember=session.get("reset_remember", False),
+        await self.data.users.update(
+            reset.user_id,
+            UpdateUserRequest(force_reset=False, password=data.password),
         )
 
-        return {
-            "new_session": new_session,
-            "user_id": user_id,
-            "token": token,
-            "session_id": session_id,
-        }
+        return await self.data.sessions.create(
+            ip,
+            reset.user_id,
+            remember=reset.remember,
+        )

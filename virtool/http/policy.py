@@ -56,9 +56,8 @@ class PermissionsRoutePolicy(DefaultRoutePolicy):
         if client.administrator:
             # Administrators bypass permission checks.
             return
-
         for permission in self.permissions:
-            if not client.permissions[permission.name]:
+            if not client.permissions.get(permission.name, False):
                 raise HTTPForbidden(text="Not permitted")
 
 
@@ -70,6 +69,7 @@ class PublicRoutePolicy(DefaultRoutePolicy):
 
 class WebSocketRoutePolicy(DefaultRoutePolicy):
     """Only for use with websocket, accessible by any client"""
+
     allow_unauthenticated = True
 
 

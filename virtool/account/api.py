@@ -35,10 +35,7 @@ from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
-
 from virtool.users.checks import check_password_length
-from virtool.users.oas import UpdateUserRequest
-
 
 routes = virtool.http.routes.Routes()
 """
@@ -293,36 +290,43 @@ class LoginView(PydanticView):
         """
 
         session_id = self.request.cookies.get("session_id")
+        ip = virtool.http.auth.get_ip(self.request)
 
         try:
             user_id = await get_data_from_req(self.request).account.login(data)
         except ResourceError:
             raise HTTPBadRequest(text="Invalid username or password")
 
-        reset_code = await get_data_from_req(self.request).account.get_reset_code(
-            user_id, session_id, data
-        )
+        reset_session_id = None
+        try:
+            reset_session_id, session = await get_data_from_req(
+                self.request
+            ).account.get_reset_session(ip, user_id, session_id, data.remember)
+        except ResourceError:
+            pass
 
-        if reset_code:
-            return json_response(
+        if reset_session_id:
+            resp = json_response(
                 {
                     "reset": True,
-                    "reset_code": reset_code,
+                    "reset_code": session.reset.code,
                 },
                 status=200,
             )
+            set_session_id_cookie(resp, reset_session_id)
+            return resp
 
-        session_id, _, token = await virtool.users.sessions.replace_session(
-            self.request.app["db"],
-            self.request.app["redis"],
-            session_id,
-            virtool.http.auth.get_ip(self.request),
+        await get_data_from_req(self.request).sessions.delete(session_id)
+
+        session_id, session, token = await get_data_from_req(
+            self.request
+        ).sessions.create(
+            ip,
             user_id,
             data.remember,
         )
 
         resp = json_response({"reset": False}, status=201)
-
         set_session_id_cookie(resp, session_id)
         set_session_token_cookie(resp, token)
 
@@ -342,7 +346,7 @@ class LogoutView(PydanticView):
         Status Codes:
             204: Successful operation
         """
-        session_id, _, _ = await get_data_from_req(self.request).account.logout(
+        session_id, _ = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
             virtool.http.auth.get_ip(self.request),
         )
@@ -372,28 +376,26 @@ class ResetView(PydanticView):
         """
         if error := await check_password_length(self.request, data.password):
             raise HTTPBadRequest(text=error)
+
         try:
-            result = await get_data_from_req(self.request).account.reset(
+            session_id, session, token = await get_data_from_req(
+                self.request
+            ).account.reset(
                 self.request.cookies.get("session_id"),
                 data,
                 virtool.http.auth.get_ip(self.request),
             )
-        except ResourceError:
-            raise HTTPBadRequest(text="Invalid session or reset code")
-
-        await get_data_from_req(self.request).users.update(
-            result["user_id"],
-            UpdateUserRequest(force_reset=False, password=data.password),
-        )
+        except (ResourceError, ResourceNotFoundError):
+            raise HTTPBadRequest(text="Invalid session")
 
         try:
-            self.request["client"].authorize(result["new_session"], is_api=False)
+            self.request["client"].authorize(session, is_api=False)
         except AttributeError:
             pass
 
         resp = json_response({"login": False, "reset": False}, status=200)
 
-        set_session_id_cookie(resp, result["session_id"])
-        set_session_token_cookie(resp, result["token"])
+        set_session_id_cookie(resp, session_id)
+        set_session_token_cookie(resp, token)
 
         return resp

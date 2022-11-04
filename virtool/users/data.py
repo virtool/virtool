@@ -31,6 +31,7 @@ class UsersData:
         :param user_id: the user's ID
         :return: the user
         """
+
         if document := await fetch_complete_user(self._mongo, user_id):
             return User(**base_processor(document))
 

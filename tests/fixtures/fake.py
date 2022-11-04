@@ -36,7 +36,8 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
 
             timestamp = arrow.get(
                 self._faker.fake.date_time_between(
-                    start_date=datetime.datetime(2016, 1, 1, 12, 32, 33)
+                    start_date=datetime.datetime(2016, 1, 1, 12, 32, 33),
+                    end_date=datetime.datetime(2025, 12, 31, 23, 59, 59),
                 )
             ).naive
 

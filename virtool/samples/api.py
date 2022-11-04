@@ -41,8 +41,8 @@ from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_one_field
 from virtool.mongo.utils import get_new_id
+from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     RIGHTS_PROJECTION,

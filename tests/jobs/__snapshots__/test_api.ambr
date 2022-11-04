@@ -760,7 +760,7 @@
   <class 'list'> [
     <class 'dict'> {
       'archived': True,
-      'created_at': '2017-08-04T19:46:43Z',
+      'created_at': '2019-03-07T23:20:30Z',
       'id': '7467tozj',
       'progress': 95,
       'stage': None,
@@ -774,7 +774,7 @@
     },
     <class 'dict'> {
       'archived': True,
-      'created_at': '2016-11-11T13:46:08Z',
+      'created_at': '2017-09-21T03:00:07Z',
       'id': '8cy4mjvp',
       'progress': 97,
       'stage': None,
@@ -788,7 +788,7 @@
     },
     <class 'dict'> {
       'archived': True,
-      'created_at': '2020-04-28T17:39:18Z',
+      'created_at': '2024-08-23T20:27:15Z',
       'id': '8vvqvnuk',
       'progress': 90,
       'stage': None,
@@ -802,7 +802,7 @@
     },
     <class 'dict'> {
       'archived': True,
-      'created_at': '2018-11-01T00:50:53Z',
+      'created_at': '2021-08-30T04:32:27Z',
       'id': 'awvuon9b',
       'progress': 66,
       'stage': None,
@@ -816,9 +816,9 @@
     },
     <class 'dict'> {
       'archived': True,
-      'created_at': '2022-06-14T13:10:43Z',
+      'created_at': '2023-02-28T08:11:58Z',
       'id': 'sk1wj693',
-      'progress': 100,
+      'progress': 82,
       'stage': None,
       'state': 'waiting',
       'user': <class 'dict'> {
@@ -923,7 +923,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -934,23 +934,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2022-06-13T09:43:07Z',
-        'id': 'sk1wj693',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -962,7 +948,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-04-27T15:20:30Z',
+        'created_at': '2024-08-22T18:08:27Z',
         'id': '8vvqvnuk',
         'progress': 90,
         'stage': 'first',
@@ -976,7 +962,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-03-17T03:17:57Z',
+        'created_at': '2024-05-31T18:03:22Z',
         'id': 't894ea8p',
         'progress': 94,
         'stage': 'first',
@@ -990,7 +976,21 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2018-10-30T16:14:06Z',
+        'created_at': '2023-02-26T20:43:23Z',
+        'id': 'sk1wj693',
+        'progress': 82,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-08-28T19:55:40Z',
         'id': 'awvuon9b',
         'progress': 66,
         'stage': 'first',
@@ -1004,7 +1004,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-10-25T22:05:44Z',
+        'created_at': '2019-08-20T07:38:55Z',
         'id': '5k9d4ocj',
         'progress': 97,
         'stage': 'first',
@@ -1018,7 +1018,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-08-03T16:06:20Z',
+        'created_at': '2019-03-06T19:40:07Z',
         'id': '7467tozj',
         'progress': 95,
         'stage': 'first',
@@ -1032,7 +1032,21 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-12-20T22:49:01Z',
+        'id': 'bhjlnu44',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -1045,7 +1059,7 @@
         'workflow': 'build_index',
       },
     ],
-    'found_count': 8,
+    'found_count': 9,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1061,7 +1075,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1071,52 +1085,10 @@
     },
     'documents': <class 'list'> [
       <class 'dict'> {
-        'archived': True,
-        'created_at': '2022-10-21T11:47:02Z',
-        'id': 'ef4bhjln',
-        'progress': 87,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2022-06-26T11:48:26Z',
-        'id': '03cvzfiq',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
         'archived': False,
-        'created_at': '2022-06-13T09:43:07Z',
-        'id': 'sk1wj693',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1128,7 +1100,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-04-27T15:20:30Z',
+        'created_at': '2024-08-22T18:08:27Z',
         'id': '8vvqvnuk',
         'progress': 90,
         'stage': 'first',
@@ -1142,7 +1114,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-03-17T03:17:57Z',
+        'created_at': '2024-05-31T18:03:22Z',
         'id': 't894ea8p',
         'progress': 94,
         'stage': 'first',
@@ -1155,8 +1127,36 @@
         'workflow': 'create_subtraction',
       },
       <class 'dict'> {
+        'archived': True,
+        'created_at': '2024-03-13T11:48:20Z',
+        'id': '3cvzfiqz',
+        'progress': 85,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
         'archived': False,
-        'created_at': '2018-10-30T16:14:06Z',
+        'created_at': '2023-02-26T20:43:23Z',
+        'id': 'sk1wj693',
+        'progress': 82,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-08-28T19:55:40Z',
         'id': 'awvuon9b',
         'progress': 66,
         'stage': 'first',
@@ -1170,7 +1170,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2018-08-22T02:49:18Z',
+        'created_at': '2021-04-11T17:06:04Z',
         'id': 'v68r5j2t',
         'progress': 81,
         'stage': 'first',
@@ -1184,7 +1184,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-10-31T03:06:49Z',
+        'created_at': '2019-08-30T17:41:05Z',
         'id': 'wrw4i0eh',
         'progress': 100,
         'stage': 'first',
@@ -1198,7 +1198,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-10-25T22:05:44Z',
+        'created_at': '2019-08-20T07:38:55Z',
         'id': '5k9d4ocj',
         'progress': 97,
         'stage': 'first',
@@ -1212,7 +1212,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-08-28T02:17:43Z',
+        'created_at': '2019-04-24T16:02:53Z',
         'id': 'w4cckpcq',
         'progress': 51,
         'stage': 'first',
@@ -1226,7 +1226,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-08-03T16:06:20Z',
+        'created_at': '2019-03-06T19:40:07Z',
         'id': '7467tozj',
         'progress': 95,
         'stage': 'first',
@@ -1240,7 +1240,21 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-12-20T22:49:01Z',
+        'id': 'bhjlnu44',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -1254,7 +1268,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-10-17T07:23:48Z',
+        'created_at': '2017-08-03T02:15:04Z',
         'id': 'zc7h2ftd',
         'progress': 100,
         'stage': 'first',
@@ -1268,7 +1282,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-02-11T13:05:09Z',
+        'created_at': '2016-03-23T13:37:46Z',
         'id': '4jua0mbk',
         'progress': 99,
         'stage': 'first',
@@ -1297,7 +1311,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1308,23 +1322,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': True,
-        'created_at': '2022-10-21T11:47:02Z',
-        'id': 'ef4bhjln',
-        'progress': 87,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2022-06-26T11:48:26Z',
-        'id': '03cvzfiq',
-        'progress': 100,
+        'created_at': '2024-03-13T11:48:20Z',
+        'id': '3cvzfiqz',
+        'progress': 85,
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -1332,11 +1332,11 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'create_sample',
+        'workflow': 'create_subtraction',
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2018-08-22T02:49:18Z',
+        'created_at': '2021-04-11T17:06:04Z',
         'id': 'v68r5j2t',
         'progress': 81,
         'stage': 'first',
@@ -1350,7 +1350,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-10-31T03:06:49Z',
+        'created_at': '2019-08-30T17:41:05Z',
         'id': 'wrw4i0eh',
         'progress': 100,
         'stage': 'first',
@@ -1364,7 +1364,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-08-28T02:17:43Z',
+        'created_at': '2019-04-24T16:02:53Z',
         'id': 'w4cckpcq',
         'progress': 51,
         'stage': 'first',
@@ -1378,7 +1378,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-10-17T07:23:48Z',
+        'created_at': '2017-08-03T02:15:04Z',
         'id': 'zc7h2ftd',
         'progress': 100,
         'stage': 'first',
@@ -1392,7 +1392,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-02-11T13:05:09Z',
+        'created_at': '2016-03-23T13:37:46Z',
         'id': '4jua0mbk',
         'progress': 99,
         'stage': 'first',
@@ -1405,7 +1405,7 @@
         'workflow': 'create_sample',
       },
     ],
-    'found_count': 7,
+    'found_count': 6,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1421,7 +1421,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1432,9 +1432,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1446,7 +1446,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -1475,7 +1475,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1486,9 +1486,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1500,7 +1500,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -1529,7 +1529,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1555,7 +1555,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1581,7 +1581,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1607,7 +1607,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1633,7 +1633,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1659,7 +1659,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1685,7 +1685,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1711,7 +1711,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1722,23 +1722,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2022-06-13T09:43:07Z',
-        'id': 'sk1wj693',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1750,7 +1736,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-04-27T15:20:30Z',
+        'created_at': '2024-08-22T18:08:27Z',
         'id': '8vvqvnuk',
         'progress': 90,
         'stage': 'first',
@@ -1764,7 +1750,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-03-17T03:17:57Z',
+        'created_at': '2024-05-31T18:03:22Z',
         'id': 't894ea8p',
         'progress': 94,
         'stage': 'first',
@@ -1778,7 +1764,21 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2018-10-30T16:14:06Z',
+        'created_at': '2023-02-26T20:43:23Z',
+        'id': 'sk1wj693',
+        'progress': 82,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-08-28T19:55:40Z',
         'id': 'awvuon9b',
         'progress': 66,
         'stage': 'first',
@@ -1792,7 +1792,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-10-25T22:05:44Z',
+        'created_at': '2019-08-20T07:38:55Z',
         'id': '5k9d4ocj',
         'progress': 97,
         'stage': 'first',
@@ -1806,7 +1806,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-08-03T16:06:20Z',
+        'created_at': '2019-03-06T19:40:07Z',
         'id': '7467tozj',
         'progress': 95,
         'stage': 'first',
@@ -1820,7 +1820,21 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-12-20T22:49:01Z',
+        'id': 'bhjlnu44',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -1833,7 +1847,7 @@
         'workflow': 'build_index',
       },
     ],
-    'found_count': 8,
+    'found_count': 9,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1849,7 +1863,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -1859,52 +1873,10 @@
     },
     'documents': <class 'list'> [
       <class 'dict'> {
-        'archived': True,
-        'created_at': '2022-10-21T11:47:02Z',
-        'id': 'ef4bhjln',
-        'progress': 87,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2022-06-26T11:48:26Z',
-        'id': '03cvzfiq',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
         'archived': False,
-        'created_at': '2022-06-13T09:43:07Z',
-        'id': 'sk1wj693',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1916,7 +1888,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-04-27T15:20:30Z',
+        'created_at': '2024-08-22T18:08:27Z',
         'id': '8vvqvnuk',
         'progress': 90,
         'stage': 'first',
@@ -1930,7 +1902,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-03-17T03:17:57Z',
+        'created_at': '2024-05-31T18:03:22Z',
         'id': 't894ea8p',
         'progress': 94,
         'stage': 'first',
@@ -1943,8 +1915,36 @@
         'workflow': 'create_subtraction',
       },
       <class 'dict'> {
+        'archived': True,
+        'created_at': '2024-03-13T11:48:20Z',
+        'id': '3cvzfiqz',
+        'progress': 85,
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
         'archived': False,
-        'created_at': '2018-10-30T16:14:06Z',
+        'created_at': '2023-02-26T20:43:23Z',
+        'id': 'sk1wj693',
+        'progress': 82,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2021-08-28T19:55:40Z',
         'id': 'awvuon9b',
         'progress': 66,
         'stage': 'first',
@@ -1958,7 +1958,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2018-08-22T02:49:18Z',
+        'created_at': '2021-04-11T17:06:04Z',
         'id': 'v68r5j2t',
         'progress': 81,
         'stage': 'first',
@@ -1972,7 +1972,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-10-31T03:06:49Z',
+        'created_at': '2019-08-30T17:41:05Z',
         'id': 'wrw4i0eh',
         'progress': 100,
         'stage': 'first',
@@ -1986,7 +1986,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-10-25T22:05:44Z',
+        'created_at': '2019-08-20T07:38:55Z',
         'id': '5k9d4ocj',
         'progress': 97,
         'stage': 'first',
@@ -2000,7 +2000,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-08-28T02:17:43Z',
+        'created_at': '2019-04-24T16:02:53Z',
         'id': 'w4cckpcq',
         'progress': 51,
         'stage': 'first',
@@ -2014,7 +2014,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2017-08-03T16:06:20Z',
+        'created_at': '2019-03-06T19:40:07Z',
         'id': '7467tozj',
         'progress': 95,
         'stage': 'first',
@@ -2028,7 +2028,21 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-12-20T22:49:01Z',
+        'id': 'bhjlnu44',
+        'progress': 100,
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -2042,7 +2056,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-10-17T07:23:48Z',
+        'created_at': '2017-08-03T02:15:04Z',
         'id': 'zc7h2ftd',
         'progress': 100,
         'stage': 'first',
@@ -2056,7 +2070,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-02-11T13:05:09Z',
+        'created_at': '2016-03-23T13:37:46Z',
         'id': '4jua0mbk',
         'progress': 99,
         'stage': 'first',
@@ -2085,7 +2099,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -2096,23 +2110,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': True,
-        'created_at': '2022-10-21T11:47:02Z',
-        'id': 'ef4bhjln',
-        'progress': 87,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2022-06-26T11:48:26Z',
-        'id': '03cvzfiq',
-        'progress': 100,
+        'created_at': '2024-03-13T11:48:20Z',
+        'id': '3cvzfiqz',
+        'progress': 85,
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -2120,11 +2120,11 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'create_sample',
+        'workflow': 'create_subtraction',
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2018-08-22T02:49:18Z',
+        'created_at': '2021-04-11T17:06:04Z',
         'id': 'v68r5j2t',
         'progress': 81,
         'stage': 'first',
@@ -2138,7 +2138,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-10-31T03:06:49Z',
+        'created_at': '2019-08-30T17:41:05Z',
         'id': 'wrw4i0eh',
         'progress': 100,
         'stage': 'first',
@@ -2152,7 +2152,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2017-08-28T02:17:43Z',
+        'created_at': '2019-04-24T16:02:53Z',
         'id': 'w4cckpcq',
         'progress': 51,
         'stage': 'first',
@@ -2166,7 +2166,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-10-17T07:23:48Z',
+        'created_at': '2017-08-03T02:15:04Z',
         'id': 'zc7h2ftd',
         'progress': 100,
         'stage': 'first',
@@ -2180,7 +2180,7 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2016-02-11T13:05:09Z',
+        'created_at': '2016-03-23T13:37:46Z',
         'id': '4jua0mbk',
         'progress': 99,
         'stage': 'first',
@@ -2193,7 +2193,7 @@
         'workflow': 'create_sample',
       },
     ],
-    'found_count': 7,
+    'found_count': 6,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -2209,7 +2209,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -2220,9 +2220,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -2234,7 +2234,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -2263,7 +2263,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {
@@ -2274,9 +2274,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2021-09-24T20:51:45Z',
+        'created_at': '2025-08-31T21:25:22Z',
         'id': 'fczq56va',
-        'progress': 97,
+        'progress': 100,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -2288,7 +2288,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2016-11-10T01:46:32Z',
+        'created_at': '2017-09-19T15:00:31Z',
         'id': '8cy4mjvp',
         'progress': 97,
         'stage': 'second',
@@ -2317,7 +2317,7 @@
         'pathoscope': 2,
       },
       'complete': <class 'dict'> {
-        'create_sample': 1,
+        'create_sample': 2,
         'nuvs': 1,
       },
       'running': <class 'dict'> {

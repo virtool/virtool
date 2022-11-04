@@ -25,7 +25,7 @@ from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
-
+from virtool.users.sessions import SessionData
 
 if TYPE_CHECKING:
     from virtool.mongo.core import DB
@@ -62,6 +62,7 @@ def create_data_layer(
         UploadsData(config, db, pg),
         UsersData(db, pg),
         TasksData(pg, redis),
+        SessionData(redis),
     )
 
     return data_layer
