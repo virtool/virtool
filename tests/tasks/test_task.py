@@ -52,7 +52,7 @@ class DummyTask(BaseTask):
         await run_in_thread(os.remove, self.temp_path / "test.txt")
 
 
-@pytest.fixture()
+@pytest.fixture
 async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
 
     task = SQLTask(
@@ -120,7 +120,7 @@ async def test_run(error, task, pg: AsyncEngine):
         assert not os.path.exists(task.temp_path)
 
 
-async def test_progress_handler_set_progress(task, pg: AsyncEngine):
+async def test_progress_handler_set_progress(task: BaseTask, pg: AsyncEngine):
     task.step = task.steps[0]
     tracker_1 = task.create_progress_handler()
 
@@ -137,7 +137,7 @@ async def test_progress_handler_set_progress(task, pg: AsyncEngine):
     assert (await get_row_by_id(pg, SQLTask, 1)).progress == 100
 
 
-async def test_progress_handler_set_error(task, pg: AsyncEngine):
+async def test_progress_handler_set_error(task: BaseTask, pg: AsyncEngine):
     task.step = task.steps[0]
     tracker = task.create_progress_handler()
 
