@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
 from virtool.http.utils import download_file
-from virtool.tasks.progress import DownloadProgressHandlerWrapper
+from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
 from virtool.utils import run_in_thread
 
@@ -59,7 +59,7 @@ class HMMInstallTask(BaseTask):
         """
         release = self.context["release"]
 
-        tracker = DownloadProgressHandlerWrapper(
+        tracker = AccumulatingProgressHandlerWrapper(
             self.create_progress_handler(), release["size"]
         )
 

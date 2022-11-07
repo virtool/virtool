@@ -48,7 +48,7 @@ from virtool.subtractions.utils import (
 )
 from virtool.tasks.progress import (
     AbstractProgressHandler,
-    DownloadProgressHandlerWrapper,
+    AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
@@ -378,7 +378,7 @@ class SubtractionsData(DataLayerPiece):
         """
         count = await self._mongo.subtraction.count_documents({"deleted": False})
 
-        tracker = DownloadProgressHandlerWrapper(progress_handler, count)
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
 
         async for subtraction in self._mongo.subtraction.find({"deleted": False}):
             subtraction_id = subtraction["_id"]

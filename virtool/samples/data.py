@@ -35,7 +35,7 @@ from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.tasks.progress import (
     AbstractProgressHandler,
-    DownloadProgressHandlerWrapper,
+    AccumulatingProgressHandlerWrapper,
 )
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor, run_in_thread, wait_for_checks
@@ -385,7 +385,7 @@ class SamplesData(DataLayerPiece):
 
         count = await self._db.samples.count_documents(query)
 
-        tracker = DownloadProgressHandlerWrapper(progress_handler, count)
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
 
         while True:
             sample = await self._db.samples.find_one(query)
@@ -406,7 +406,7 @@ class SamplesData(DataLayerPiece):
 
         count = await self._db.samples.count_documents(query)
 
-        tracker = DownloadProgressHandlerWrapper(progress_handler, count)
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
 
         while True:
             sample = await self._db.samples.find_one(query)

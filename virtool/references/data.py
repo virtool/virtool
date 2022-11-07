@@ -68,7 +68,10 @@ from virtool.references.tasks import (
     UpdateRemoteReferenceTask,
 )
 from virtool.references.utils import ReferenceSourceData
-from virtool.tasks.progress import TaskProgressHandler, DownloadProgressHandlerWrapper
+from virtool.tasks.progress import (
+    TaskProgressHandler,
+    AccumulatingProgressHandlerWrapper,
+)
 from virtool.types import Document
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import (
@@ -716,7 +719,8 @@ class ReferencesData(DataLayerPiece):
         :param progress_handler:
         :return:
         """
-        tracker = DownloadProgressHandlerWrapper(progress_handler, len(manifest))
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(manifest))
+
         cloned_reference = await self._mongo.references.find_one(ref_id)
 
         async with self._mongo.create_session() as session:
@@ -754,7 +758,9 @@ class ReferencesData(DataLayerPiece):
     ):
         created_at = await get_one_field(self._mongo.references, "created_at", ref_id)
 
-        tracker = DownloadProgressHandlerWrapper(progress_handler, (len(data.otus) * 2))
+        tracker = AccumulatingProgressHandlerWrapper(
+            progress_handler, (len(data.otus) * 2)
+        )
 
         inserted_otu_ids = []
 
@@ -806,7 +812,7 @@ class ReferencesData(DataLayerPiece):
         release: Document,
         progress_handler: TaskProgressHandler,
     ):
-        tracker = DownloadProgressHandlerWrapper(progress_handler, len(data.otus))
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(data.otus))
 
         created_at: datetime = await get_one_field(
             self._mongo.references, "created_at", ref_id
@@ -886,7 +892,7 @@ class ReferencesData(DataLayerPiece):
             },
         )
 
-        tracker = DownloadProgressHandlerWrapper(
+        tracker = AccumulatingProgressHandlerWrapper(
             progress_handler, len(data.otus) + len(to_delete)
         )
 

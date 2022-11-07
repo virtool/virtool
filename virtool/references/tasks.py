@@ -14,7 +14,7 @@ from virtool.references.utils import (
     load_reference_file,
     ReferenceSourceData,
 )
-from virtool.tasks.progress import DownloadProgressHandlerWrapper
+from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
 from virtool.utils import run_in_thread
 
@@ -113,7 +113,7 @@ class RemoteReferenceTask(BaseTask):
         self.import_data: Optional[ReferenceSourceData] = None
 
     async def download(self):
-        tracker = DownloadProgressHandlerWrapper(
+        tracker = AccumulatingProgressHandlerWrapper(
             self.create_progress_handler(), self.context["release"]["size"]
         )
 
@@ -159,7 +159,7 @@ class UpdateRemoteReferenceTask(BaseTask):
         self.source_data = Optional[ReferenceSourceData] = None
 
     async def download(self):
-        tracker = DownloadProgressHandlerWrapper(
+        tracker = AccumulatingProgressHandlerWrapper(
             self.create_progress_handler(), self.download_size
         )
 

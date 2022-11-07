@@ -35,7 +35,7 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.progress import (
     AbstractProgressHandler,
-    DownloadProgressHandlerWrapper,
+    AccumulatingProgressHandlerWrapper,
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.db import AttachUserTransform
@@ -153,7 +153,7 @@ class HmmData(DataLayerPiece):
         path to profile file.
 
         """
-        tracker = DownloadProgressHandlerWrapper(progress_handler, len(annotations))
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(annotations))
 
         try:
             release_id = int(release["id"])

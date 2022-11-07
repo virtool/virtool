@@ -35,14 +35,17 @@ class TaskProgressHandler(AbstractProgressHandler):
         """
         Update the tasks progress with the progress of the current subtask
         """
+
         if progress < self._progress:
             raise ValueError("Progress cannot decrease")
 
         if progress > self._progress:
             await self._set_progress(progress)
 
+        self._progress = progress
 
-class DownloadProgressHandlerWrapper:
+
+class AccumulatingProgressHandlerWrapper:
     """
     Reports progress in a file download to a ``AbstractProgressHandler``.
 

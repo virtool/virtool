@@ -42,7 +42,7 @@ from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.tasks.progress import (
-    DownloadProgressHandlerWrapper,
+    AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
 from virtool.uploads.utils import naive_writer
@@ -403,7 +403,7 @@ class AnalysisData(DataLayerPiece):
 
         count = await self._db.analyses.count_documents({"workflow": "nuvs"})
 
-        tracker = DownloadProgressHandlerWrapper(progress_handler, count)
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
 
         async for analysis in self._db.analyses.find({"workflow": "nuvs"}):
             analysis_id = analysis["_id"]
