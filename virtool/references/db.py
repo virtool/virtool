@@ -839,7 +839,7 @@ async def insert_joined_otu(
             )
 
     for sequence in sequences:
-        await mongo.sequences.insert_one(sequence, session=session)
+        await mongo.sequences.insert_one(sequence, session=session, silent=True)
 
     return document["_id"]
 
