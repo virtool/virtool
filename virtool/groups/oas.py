@@ -82,14 +82,10 @@ class UpdateGroupRequest(BaseModel):
     Used when updating permissions and/or group `name`.
     """
 
-    permissions: UpdatePermissionsRequest = Field(
-        description="a permission update comprising an object keyed by permissions "
-        "with boolean values",
-        default={},
-    )
+    name: Optional[constr(min_length=1)] = Field(description="a name for the group")
 
-    name: Optional[constr(min_length=1)] = Field(
-        description="a name for the group", default=None
+    permissions: Optional[UpdatePermissionsRequest] = Field(
+        description="a permission update comprising an object keyed by permissions with boolean values"
     )
 
     class Config:
