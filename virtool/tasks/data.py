@@ -64,9 +64,14 @@ class TasksData:
 
             data = task_update.dict(exclude_unset=True)
 
-            await session.execute(
-                update(SQLTask).where(SQLTask.id == task_id).values(**data)
-            )
+            if "progress" in data:
+                task.progress = data["progress"]
+
+            if "error" in data:
+                task.error = data["error"]
+
+            if "step" in data:
+                task.step = data["step"]
 
             task = Task(**task.to_dict())
 
