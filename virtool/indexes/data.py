@@ -13,6 +13,7 @@ from virtool_core.models.reference import ReferenceNested
 from virtool_core.utils import file_stats
 
 import virtool.indexes.db
+import virtool.history.db
 from virtool.api.custom_json import dump_bytes
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
@@ -22,16 +23,40 @@ from virtool.indexes.checks import (
     check_fasta_file_uploaded,
     check_index_files_uploaded,
 )
-from virtool.indexes.db import INDEX_FILE_NAMES, update_last_indexed_versions
+from virtool.indexes.db import (
+    INDEX_FILE_NAMES,
+    update_last_indexed_versions,
+    IndexCountsTransform,
+)
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import get_index_file_type_from_name, export_index
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import id_exists
 from virtool.pg.utils import get_rows
 from virtool.uploads.utils import naive_writer
+from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread, compress_json_with_gzip, wait_for_checks
 
 logger = logging.getLogger("indexes")
+
+FIND_PIPELINE = [
+    {"$match": {"ready": True}},
+    {"$sort": {"version": -1}},
+    {
+        "$group": {
+            "_id": "$reference.id",
+            "index_id": {"$first": "$_id"},
+            "version": {"$first": "$version"},
+            "created_at": {"$first": "$created_at"},
+            "has_files": {"$first": "$has_files"},
+            "user": {"$first": "$user"},
+            "ready": {"$first": "$ready"},
+            "job": {"$first": "$job"},
+        }
+    },
+]
 
 
 class IndexData:
@@ -54,51 +79,28 @@ class IndexData:
             data = await virtool.indexes.db.find(self._mongo, query)
             return IndexSearchResult(**data)
 
-        pipeline = [
-            {"$match": {"ready": True}},
-            {"$sort": {"version": -1}},
+        indexes = [
             {
-                "$group": {
-                    "_id": "$reference.id",
-                    "index": {"$first": "$_id"},
-                    "version": {"$first": "$version"},
-                    "change_count": {"$first": "$change_count"},
-                    "created_at": {"$first": "$created_at"},
-                    "has_files": {"$first": "$has_files"},
-                    "modified_otu_count": {"$first": "$modified_otu_count"},
-                    "user": {"$first": "$user"},
-                    "ready": {"$first": "$ready"},
-                    "job": {"$first": "$job"},
-                }
-            },
+                "id": agg["index_id"],
+                "created_at": agg["created_at"],
+                "has_files": agg["has_files"],
+                "job": agg["job"],
+                "ready": agg["ready"],
+                "reference": {
+                    "id": agg["_id"],
+                },
+                "user": agg["user"],
+                "version": agg["version"],
+            }
+            async for agg in self._mongo.indexes.aggregate(FIND_PIPELINE)
         ]
 
-        ready_indexes = []
+        indexes = await apply_transforms(
+            indexes,
+            [AttachUserTransform(self._mongo), IndexCountsTransform(self._mongo)],
+        )
 
-        async for agg in self._mongo.indexes.aggregate(pipeline):
-            user = await self._mongo.users.find_one(agg["user"]["id"])
-            ready_indexes.append(
-                {
-                    "id": agg["index"],
-                    "version": agg["version"],
-                    "reference": {
-                        "id": agg["_id"],
-                    },
-                    "change_count": agg["change_count"],
-                    "created_at": agg["created_at"],
-                    "has_files": agg["has_files"],
-                    "modified_otu_count": agg["modified_otu_count"],
-                    "user": {
-                        "id": user["_id"],
-                        "handle": user["handle"],
-                        "administrator": user["administrator"],
-                    },
-                    "ready": agg["ready"],
-                    "job": agg["job"],
-                }
-            )
-
-        return [IndexMinimal(**index) for index in ready_indexes]
+        return [IndexMinimal(**index) for index in indexes]
 
     async def get(self, index_id: str) -> Index:
         """
@@ -261,24 +263,12 @@ class IndexData:
         :param req_query: the request query object
         :return: the changes
         """
-        if not await self._mongo.indexes.count_documents({"_id": index_id}):
+        if not await id_exists(self._mongo.indexes, index_id):
             raise ResourceNotFoundError()
 
-        db_query = {"index.id": index_id}
-
-        if term := req_query.get("term"):
-            db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
-
-        data = await paginate(
-            self._mongo.history,
-            db_query,
-            req_query,
-            sort=[("otu.name", 1), ("otu.version", -1)],
-            projection=LIST_PROJECTION,
-            reverse=True,
+        return await virtool.history.db.find(
+            self._mongo, req_query, base_query={"index.id": index_id}
         )
-
-        return HistorySearchResult(**data)
 
     async def ensure_files(self):
         """Ensure all data files associated with indexes are tracked."""
