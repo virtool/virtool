@@ -79,9 +79,11 @@ class BaseTask:
         return cls(task_id, data, task.context, temp_dir)
 
     @property
-    def step_name(self) -> str:
+    def step_name(self) -> Optional[str]:
         if self.step:
             return self.step.__name__
+
+        return None
 
     @property
     def step_number(self) -> int:

@@ -2,16 +2,14 @@ import asyncio
 import json
 from logging import getLogger
 from pathlib import Path
-from typing import Dict
 
 import click
 import uvloop
-
 from virtool_core.logging import configure_logs
+
 import virtool.jobs.main
 from virtool.app import run_app
 from virtool.config.cls import Config
-from virtool.tasks.runner import TaskRunner
 
 logger = getLogger("config")
 
@@ -193,16 +191,3 @@ def start_jobs_api(ctx, port, host):
     )
 
     asyncio.get_event_loop().run_until_complete(virtool.jobs.main.run(config))
-
-
-@cli.command("tasks")
-@click.pass_context
-def start_tasks_service(ctx: Dict):
-
-    debug = ctx.obj["dev"] or ctx.obj["verbose"]
-    configure_logs(debug)
-
-    logger.info("Starting jobs API process")
-
-    task_runner = TaskRunner()
-    asyncio.get_event_loop().run_until_complete(task_runner.run())

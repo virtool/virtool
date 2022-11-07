@@ -23,10 +23,8 @@ from virtool.indexes.checks import (
     check_index_files_uploaded,
 )
 from virtool.indexes.db import INDEX_FILE_NAMES, update_last_indexed_versions
-
-from virtool.indexes.models import SQLIndexFile, IndexType
+from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import get_index_file_type_from_name, export_index
-
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.pg.utils import get_rows
@@ -237,9 +235,7 @@ class IndexData:
 
         results = {f.name: f.type for f in rows}
 
-        aws = []
-
-        aws.append(check_fasta_file_uploaded(results))
+        aws = [check_fasta_file_uploaded(results)]
 
         if reference["data_type"] == "genome":
             aws.append(check_index_files_uploaded(results))
