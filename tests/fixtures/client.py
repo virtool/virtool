@@ -3,13 +3,16 @@ from typing import Optional
 
 import aiohttp
 import pytest
+from aiohttp.web_routedef import RouteTableDef
+from virtool_core.models.session import Session
+
 import virtool.app
 import virtool.jobs.main
-from aiohttp.web_routedef import RouteTableDef
+from virtool.api.custom_json import dump_bytes
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
+from virtool.users.utils import generate_base_permissions
 from virtool.utils import hash_key
-from virtool.api.custom_json import dump_bytes
 
 
 class VirtoolTestClient:
@@ -89,7 +92,14 @@ def create_app(
 
 @pytest.fixture
 def spawn_client(
-    pg, request, redis, aiohttp_client, test_motor, mongo, create_app, create_user
+    pg,
+    redis,
+    aiohttp_client,
+    test_motor,
+    mongo,
+    create_app,
+    create_user,
+    data_layer,
 ):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
@@ -105,6 +115,18 @@ def spawn_client(
     ):
         app = create_app(dev, base_url)
 
+        if groups is not None:
+            complete_groups = [
+                {
+                    "_id": group,
+                    "name": group,
+                    "permissions": generate_base_permissions(),
+                }
+                for group in groups
+            ]
+
+            await mongo.groups.insert_many(complete_groups)
+
         user_document = create_user(
             user_id="test",
             administrator=administrator,
@@ -119,21 +141,19 @@ def spawn_client(
         if authorize:
             session_token = "bar"
             session_id = "foobar"
-
             await redis.set(
                 session_id,
                 dump_bytes(
-                    {
-                        "_id": "foobar",
-                        "ip": "127.0.0.1",
-                        "administrator": administrator,
-                        "force_reset": False,
-                        "groups": user_document["groups"],
-                        "permissions": user_document["permissions"],
-                        "token": hash_key(session_token),
-                        "user_agent": "Python/3.6 aiohttp/3.4.4",
-                        "user": {"id": "test"},
-                    }
+                    Session(
+                        **{
+                            "created_at": virtool.utils.timestamp(),
+                            "ip": "127.0.0.1",
+                            "authentication": {
+                                "token": hash_key(session_token),
+                                "user_id": "test",
+                            },
+                        }
+                    )
                 ),
                 expire=3600,
             )

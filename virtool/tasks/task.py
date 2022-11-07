@@ -132,7 +132,9 @@ class BaseTask:
                 logger.exception(f"Encountered error in task {self.task_id}")
                 await self._set_error(f"{type(err)}: {str(err)}")
 
-        if not self.errored:
+        if self.errored:
+            await self.cleanup()
+        else:
             await self.data.tasks.complete(self.task_id)
 
         await run_in_thread(self.temp_dir.cleanup)

@@ -21,6 +21,7 @@ from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
+from virtool.users.sessions import SessionData
 
 
 @dataclass
@@ -49,6 +50,7 @@ class DataLayer:
     uploads: UploadsData
     users: UsersData
     tasks: TasksData
+    sessions: SessionData
 
     def __post_init__(self):
         self.hmms.bind_layer(self)
@@ -57,3 +59,5 @@ class DataLayer:
         self.blast.bind_layer(self)
         self.analyses.bind_layer(self)
         self.references.bind_layer(self)
+        self.sessions.bind_layer(self)
+        self.account.bind_layer(self)

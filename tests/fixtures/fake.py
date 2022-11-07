@@ -36,7 +36,8 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
 
             timestamp = arrow.get(
                 self._faker.fake.date_time_between(
-                    start_date=datetime.datetime(2016, 1, 1, 12, 32, 33)
+                    start_date=datetime.datetime(2016, 1, 1, 12, 32, 33),
+                    end_date=datetime.datetime(2025, 12, 31, 23, 59, 59),
                 )
             ).naive
 
@@ -69,6 +70,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
 
         return {
             "_id": self._faker.fake.mongo_id(),
+            "created_at": status[-1]["timestamp"],
             "acquired": False,
             "archived": archived,
             "workflow": workflow,
@@ -76,6 +78,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
             "key": None,
             "rights": {},
             "state": "waiting",
+            "progress": status[-1]["progress"],
             "status": status,
             "user": {"id": await self.generator.users.get_id()},
         }

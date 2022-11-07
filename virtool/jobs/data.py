@@ -1,6 +1,7 @@
 import math
 from asyncio import gather
 from collections import defaultdict
+from typing import List
 from typing import Optional, Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -12,17 +13,16 @@ from virtool_core.models.job import (
     JobPing,
 )
 from virtool_core.models.user import UserNested
-from typing import List
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.mongo.core import DB
-from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_one_field
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import OR_COMPLETE, OR_FAILED, PROJECTION, fetch_complete_job
 from virtool.jobs.utils import JobRights, compose_status
+from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 
@@ -289,6 +289,67 @@ class JobsData:
         )
 
         return await fetch_complete_job(self._db, document)
+
+    async def bulk_archive(self, job_ids: List[str]) -> List[JobMinimal]:
+        """
+        Archive multiple jobs at the same time.
+
+        :param job_ids: the ids of the jobs to archive
+        :return: the archived jobs
+        """
+
+        existing_jobs = await self._db.jobs.distinct("_id")
+
+        jobs_not_found = [job for job in job_ids if job not in existing_jobs]
+
+        if len(jobs_not_found) != 0:
+            raise ResourceNotFoundError(f"Jobs not found: {jobs_not_found}")
+
+        async with self._db.create_session() as session:
+            await self._db.jobs.update_many(
+                {"_id": {"$in": job_ids}},
+                {"$set": {"archived": True}},
+                session=session,
+            )
+
+        pipeline = [
+            {"$match": {"_id": {"$in": job_ids}}},
+            {
+                "$group": {
+                    "_id": "$_id",
+                    "created_at": {"$first": "$created_at"},
+                    "archived": {"$first": "$archived"},
+                    "progress": {"$first": "$progress"},
+                    "stage": {"$first": "$stage"},
+                    "state": {"$first": "$state"},
+                    "user": {"$first": "$user"},
+                    "workflow": {"$first": "$workflow"},
+                }
+            },
+        ]
+
+        archived_jobs = []
+
+        async for agg in self._db.jobs.aggregate(pipeline):
+            user = await self._db.users.find_one(agg["user"]["id"])
+            archived_jobs.append(
+                {
+                    "id": agg["_id"],
+                    "created_at": agg["created_at"],
+                    "archived": agg["archived"],
+                    "progress": agg["progress"],
+                    "stage": agg["stage"],
+                    "state": agg["state"],
+                    "user": {
+                        "id": user["_id"],
+                        "handle": user["handle"],
+                        "administrator": user["administrator"],
+                    },
+                    "workflow": agg["workflow"],
+                }
+            )
+
+        return [JobMinimal(**document) for document in archived_jobs]
 
     async def ping(self, job_id: str) -> JobPing:
         """

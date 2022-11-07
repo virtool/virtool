@@ -35,22 +35,6 @@
     'type': 'clone_reference',
   }
 ---
-# name: test_update[uvloop-error]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'user_id': 'test_1',
-    },
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': 'failed_task',
-    'file_size': None,
-    'id': 1,
-    'progress': 22,
-    'step': 'one',
-    'type': 'dummy_task',
-  }
----
 # name: test_update[uvloop-error][pg]
   <class 'dict'> {
     'complete': False,
@@ -79,22 +63,6 @@
     'file_size': None,
     'id': 1,
     'progress': 22,
-    'step': 'one',
-    'type': 'dummy_task',
-  }
----
-# name: test_update[uvloop-progress]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'user_id': 'test_1',
-    },
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'file_size': None,
-    'id': 1,
-    'progress': 55,
     'step': 'one',
     'type': 'dummy_task',
   }
@@ -131,22 +99,6 @@
     'type': 'dummy_task',
   }
 ---
-# name: test_update[uvloop-step]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'user_id': 'test_1',
-    },
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'file_size': None,
-    'id': 1,
-    'progress': 22,
-    'step': 'two',
-    'type': 'dummy_task',
-  }
----
 # name: test_update[uvloop-step][pg]
   <class 'dict'> {
     'complete': False,
@@ -179,22 +131,6 @@
     'type': 'dummy_task',
   }
 ---
-# name: test_update[uvloop-step_progress]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'user_id': 'test_1',
-    },
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'file_size': None,
-    'id': 1,
-    'progress': 55,
-    'step': 'three',
-    'type': 'dummy_task',
-  }
----
 # name: test_update[uvloop-step_progress][pg]
   <class 'dict'> {
     'complete': False,
@@ -224,54 +160,6 @@
     'id': 1,
     'progress': 55,
     'step': 'three',
-    'type': 'dummy_task',
-  }
----
-# name: test_update[uvloop-update0]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'user_id': 'test_1',
-    },
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'file_size': None,
-    'id': 1,
-    'progress': 22,
-    'step': 'two',
-    'type': 'dummy_task',
-  }
----
-# name: test_update[uvloop-update1]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'user_id': 'test_1',
-    },
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'file_size': None,
-    'id': 1,
-    'progress': 55,
-    'step': 'one',
-    'type': 'dummy_task',
-  }
----
-# name: test_update[uvloop-update2]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'user_id': 'test_1',
-    },
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': 'failed_task',
-    'file_size': None,
-    'id': 1,
-    'progress': 22,
-    'step': 'one',
     'type': 'dummy_task',
   }
 ---

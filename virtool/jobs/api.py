@@ -5,7 +5,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from pydantic import Field, conint
-from virtool_core.models.job import JobSearchResult
+from virtool_core.models.job import JobMinimal, JobSearchResult
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -16,8 +16,11 @@ from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
+from virtool.jobs.oas import (
+    JobResponse,
+    ArchiveJobsRequest,
+)
 from virtool.users.utils import Permission
-from virtool.jobs.oas import JobResponse
 
 logger = getLogger(__name__)
 
@@ -82,6 +85,27 @@ class JobsView(PydanticView):
         )
 
         return json_response({"removed": removed_job_ids})
+
+    async def patch(
+        self, data: ArchiveJobsRequest
+    ) -> Union[r200[List[JobMinimal]], r400]:
+        """
+        Sets the archived field on job documents.
+
+        Status Codes:
+            200: Successful operation
+            400: Jobs not found
+            400: Archived field not set
+            400: Invalid archived field
+        """
+        job_ids = [job.id for job in data.updates]
+
+        try:
+            jobs = await get_data_from_req(self.request).jobs.bulk_archive(job_ids)
+        except ResourceNotFoundError as err:
+            raise HTTPBadRequest(text=str(err))
+
+        return json_response(jobs)
 
 
 @routes.view("/jobs/{job_id}")

@@ -114,7 +114,7 @@ async def test_edit(data, fake2, has_user, mocker, snapshot, spawn_client, stati
 @pytest.mark.parametrize("exists", [True, False])
 async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
     client = await spawn_client(
-        authorize=True, permissions=Permission.modify_subtraction
+        authorize=True, permissions=[Permission.modify_subtraction]
     )
     client.app["config"].data_path = tmp_path
 

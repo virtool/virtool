@@ -89,3 +89,6 @@ class HMMInstallTask(BaseTask):
             self.create_progress_handler(),
             self.temp_path / "hmm" / "profiles.hmm",
         )
+
+    async def cleanup(self):
+        await self.data.hmms.clean_status()
