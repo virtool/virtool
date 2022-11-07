@@ -67,6 +67,7 @@ from virtool.references.tasks import (
     RemoteReferenceTask,
     UpdateRemoteReferenceTask,
 )
+from virtool.references.transforms import ImportedFromTransform
 from virtool.references.utils import ReferenceSourceData
 from virtool.tasks.progress import (
     TaskProgressHandler,
@@ -122,7 +123,13 @@ class ReferencesData(DataLayerPiece):
         )
 
         documents, remote_slug_count = await asyncio.gather(
-            apply_transforms(data["documents"], [AttachUserTransform(self._mongo)]),
+            apply_transforms(
+                data["documents"],
+                [
+                    AttachUserTransform(self._mongo),
+                    ImportedFromTransform(self._mongo, self._pg),
+                ],
+            ),
             self._mongo.references.count_documents(
                 {"remotes_from.slug": "virtool/ref-plant-viruses"}
             ),

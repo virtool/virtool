@@ -746,7 +746,7 @@ async def insert_change(
     Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
 
     :param data_path: system path to the applications datafolder
-    :param db: the application database object
+    :param mongo: the application database object
     :param otu_id: the ID of the OTU the change is for
     :param verb: the change verb (eg. remove, insert)
     :param user_id: the ID of the requesting user
