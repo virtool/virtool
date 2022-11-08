@@ -61,6 +61,7 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
     UpdateRemoteReferenceTask,
 )
+from virtool.tasks.transforms import AttachTaskTransform
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import (
     AttachUserTransform,
@@ -109,7 +110,10 @@ class ReferencesData(DataLayerPiece):
         )
 
         documents, remote_slug_count = await asyncio.gather(
-            apply_transforms(data["documents"], [AttachUserTransform(self._mongo)]),
+            apply_transforms(
+                data["documents"],
+                [AttachUserTransform(self._mongo), AttachTaskTransform(self._pg)],
+            ),
             self._mongo.references.count_documents(
                 {"remotes_from.slug": "virtool/ref-plant-viruses"}
             ),
@@ -254,7 +258,9 @@ class ReferencesData(DataLayerPiece):
             raise ResourceNotFoundError()
 
         document = await attach_computed(self._mongo, document)
-        document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
+        document = await apply_transforms(
+            document, [AttachUserTransform(self._mongo), AttachTaskTransform(self._pg)]
+        )
 
         try:
             installed = document.pop("updates")[-1]
