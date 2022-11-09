@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 from logging import getLogger
 from pathlib import Path
@@ -146,8 +147,10 @@ class RemoteReferenceTask(BaseTask):
 class UpdateRemoteReferenceTask(BaseTask):
     name = "update_remote_reference"
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(
+        self, task_id: int, data: DataLayer, context: Dict, temp_dir: TemporaryDirectory
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [
             self.download,
@@ -156,7 +159,7 @@ class UpdateRemoteReferenceTask(BaseTask):
 
         self.download_url = self.context["release"]["download_url"]
         self.download_size = self.context["release"]["size"]
-        self.source_data = Optional[ReferenceSourceData] = None
+        self.source_data: Optional[ReferenceSourceData] = None
 
     async def download(self):
         tracker = AccumulatingProgressHandlerWrapper(
