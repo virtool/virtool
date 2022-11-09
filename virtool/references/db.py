@@ -941,6 +941,7 @@ async def upsert_joined_otu(
             },
         },
         session=session,
+        silent=True,
     )
 
     for sequence_update in sequence_updates:
@@ -950,6 +951,7 @@ async def upsert_joined_otu(
             {"reference.id": ref_id, "remote.id": remote_sequence_id},
             {"$set": sequence_update},
             session=session,
+            silent=True,
         )
 
         if not update_result.matched_count:
