@@ -13,7 +13,7 @@ from virtool.groups.db import (
 )
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.mongo.core import DB
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
@@ -76,25 +76,25 @@ class GroupsData:
         :param data: updates to the current permissions and/or to the group name
         :return: the group
         """
-        permissions = await get_one_field(
-            self._db.groups, "permissions", {"_id": group_id}
-        )
-
-        if not permissions:
+        if not await id_exists(self._db.groups, group_id):
             raise ResourceNotFoundError
 
         data = data.dict(exclude_unset=True)
 
         update = {}
 
-        if "name" in data:
-            update["name"] = data["name"]
-
         if "permissions" in data:
+            permissions = await get_one_field(
+                self._db.groups, "permissions", {"_id": group_id}
+            )
+
             update["permissions"] = {
                 **permissions,
                 **data["permissions"],
             }
+
+        if "name" in data:
+            update["name"] = data["name"]
 
         if update:
             async with self._db.create_session() as session:
