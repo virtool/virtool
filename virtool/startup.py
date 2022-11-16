@@ -15,6 +15,7 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
+from virtool.auth.utils import connect_openfga
 
 import virtool.mongo.connect
 import virtool.pg.utils
@@ -242,10 +243,11 @@ async def startup_databases(app: Application):
     postgres_connection_string = app["config"].postgres_connection_string
     redis_connection_string = app["config"].redis_connection_string
 
-    mongo, pg, redis = await asyncio.gather(
+    mongo, pg, redis, auth = await asyncio.gather(
         virtool.mongo.connect.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
+        connect_openfga()
     )
 
     scheduler = get_scheduler_from_app(app)
@@ -260,6 +262,8 @@ async def startup_databases(app: Application):
     app["dispatcher_interface"] = dispatcher_interface
 
     app["pg"] = pg
+
+    app["auth"] = auth
 
 
 async def startup_refresh(app: Application):
