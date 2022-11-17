@@ -380,4 +380,8 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
 
     resp = await client.post("/subtractions", data)
 
+    assert resp.status == 201
+
     assert await resp.json() == snapshot
+
+    assert await client.db.jobs.find_one() == snapshot(name="job")

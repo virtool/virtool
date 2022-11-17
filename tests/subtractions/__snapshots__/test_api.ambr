@@ -22,6 +22,42 @@
     },
   }
 ---
+# name: test_create[uvloop][job]
+  <class 'dict'> {
+    '_id': 'bf1b993c',
+    'acquired': False,
+    'archived': False,
+    'args': <class 'dict'> {
+      'files': <class 'list'> [
+        <class 'dict'> {
+          'id': 1,
+          'name': 'palm.fa.gz',
+        },
+      ],
+      'subtraction_id': 'abc123',
+    },
+    'key': None,
+    'ping': None,
+    'rights': <class 'dict'> {
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+    'workflow': 'create_subtraction',
+  }
+---
 # name: test_edit[uvloop-False-data0]
   <class 'dict'> {
     'count': 11,
