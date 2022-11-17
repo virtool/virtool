@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.task import Task
@@ -14,6 +15,136 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import Task as SQLTask
+
+
+async def test_find(spawn_client, pg, snapshot, fake2, static_time):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    user_1 = await fake2.users.create()
+
+    await client.db.references.insert_many(
+        [
+            {
+                "_id": "foo",
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "name": "Foo",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": False,
+                "task": {"id": 1},
+                "user": {"id": user_1.id},
+                "groups": [],
+            },
+            {
+                "_id": "baz",
+                "created_at": static_time.datetime,
+                "data_type": "barcode",
+                "name": "Baz",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": True,
+                "task": {"id": 2},
+                "user": {"id": user_1.id},
+                "groups": [],
+            },
+        ]
+    )
+
+    task_1 = SQLTask(
+        id=1,
+        complete=True,
+        context={"user_id": "test_1"},
+        count=40,
+        created_at=static_time.datetime,
+        file_size=1024,
+        progress=100,
+        step="download",
+        type="clone_reference",
+    )
+
+    task_2 = SQLTask(
+        id=2,
+        complete=False,
+        context={"user_id": "test_2"},
+        count=30,
+        created_at=static_time.datetime,
+        file_size=14754,
+        progress=80,
+        step="download",
+        type="import_reference",
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add_all([task_1, task_2])
+        await session.commit()
+
+    resp = await client.get("/refs")
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
+@pytest.mark.parametrize("error", [404, None])
+async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    user_1 = await fake2.users.create()
+
+    user_2 = await fake2.users.create()
+
+    if error is None:
+        await client.db.references.insert_one(
+            {
+                "_id": "bar",
+                "created_at": virtool.utils.timestamp(),
+                "data_type": "genome",
+                "description": "plant pathogen",
+                "name": "Bar",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": False,
+                "source_types": ["isolate", "strain"],
+                "task": {"id": 1},
+                "user": {"id": user_1.id},
+                "groups": [],
+                "users": [
+                    {
+                        "id": user_2.id,
+                        "build": True,
+                        "created_at": static_time.datetime,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                ],
+            }
+        )
+
+    task_1 = SQLTask(
+        id=1,
+        complete=True,
+        context={"user_id": "test_1"},
+        count=40,
+        created_at=static_time.datetime,
+        file_size=1024,
+        progress=100,
+        step="download",
+        type="clone_reference",
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add_all([task_1])
+        await session.commit()
+
+    resp = await client.get("/refs/bar")
+
+    if error:
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
 
 
 class TestCreate:
