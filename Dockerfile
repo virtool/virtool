@@ -1,4 +1,4 @@
-FROM library/python:3.8-buster as server
+FROM library/python:3.10-buster as server
 WORKDIR /build
 RUN pip install --user poetry==1.1.14
 COPY pyproject.toml ./pyproject.toml
