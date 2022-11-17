@@ -83,7 +83,6 @@ class Collection:
         self.drop_indexes = self._collection.drop_indexes
         self.find_one = self._collection.find_one
         self.find = self._collection.find
-        self.insert_many = self._collection.insert_many
         self.rename = self._collection.rename
 
     async def apply_processor(self, document):
@@ -233,6 +232,34 @@ class Collection:
 
         if not silent:
             self.enqueue_change(INSERT, inserted["_id"])
+
+        return inserted
+
+    async def insert_many(
+        self,
+        documents: List[Document],
+        session: AsyncIOMotorClientSession,
+        silent: bool = False,
+    ):
+
+        contains_id = any("_id" in document for document in documents)
+        inserted = [
+            {**document, "_id": document["_id"] or self.mongo.id_provider.get()}
+            for document in documents
+        ]
+
+        try:
+            await self._collection.insert_many(inserted, session=session)
+        except DuplicateKeyError as err:
+            keys = list(err.details["keyPattern"].keys())
+
+            if all(key == "_id" for key in keys) and not contains_id:
+                return await self.insert_many(documents, session=session, silent=silent)
+
+            raise
+
+        if not silent:
+            self.enqueue_change(INSERT, *[insert["_id"] for insert in inserted])
 
         return inserted
 

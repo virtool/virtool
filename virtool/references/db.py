@@ -6,12 +6,13 @@ import asyncio
 import datetime
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Union, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, TYPE_CHECKING, Tuple
 
 import pymongo
 from aiohttp import ClientConnectorError
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from pymongo import UpdateOne, InsertOne
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
@@ -958,3 +959,120 @@ async def upsert_joined_otu(
             await mongo.sequences.insert_one(sequence_update, session=session)
 
     return old
+
+
+async def prepare_update_joined_otu(
+    mongo: "DB",
+    old,
+    otu: Document,
+    ref_id: str,
+) -> Optional[Tuple[UpdateOne, List[UpdateOne], List[Dict]]]:
+
+    if not check_will_change(old, otu):
+        return None
+
+    otu_update = UpdateOne(
+        {"_id": old["_id"]},
+        {
+            "$inc": {"version": 1},
+            "$set": {
+                "abbreviation": otu["abbreviation"],
+                "name": otu["name"],
+                "lower_name": otu["name"].lower(),
+                "isolates": otu["isolates"],
+                "schema": otu.get("schema", []),
+            },
+        },
+    )
+
+    sequence_changes = []
+
+    for isolate in otu["isolates"]:
+        for sequence in isolate.pop("sequences"):
+            sequence_changes.append(
+                {
+                    "accession": sequence["accession"],
+                    "definition": sequence["definition"],
+                    "host": sequence["host"],
+                    "segment": sequence.get("segment", ""),
+                    "sequence": sequence["sequence"],
+                    "otu_id": old["_id"],
+                    "isolate_id": isolate["id"],
+                    "reference": {"id": ref_id},
+                    "remote": {"id": sequence["_id"]},
+                }
+            )
+
+    sequence_inserts = []
+    sequence_updates = []
+    for sequence_update in sequence_changes:
+        remote_sequence_id = sequence_update["remote"]["id"]
+        if await mongo.sequences.find_one(
+            {"reference.id": ref_id, "remote.id": remote_sequence_id}
+        ):
+            sequence_updates.append(
+                UpdateOne(
+                    {"reference.id": ref_id, "remote.id": remote_sequence_id},
+                    {"$set": sequence_update},
+                )
+            )
+        else:
+            sequence_inserts.append(sequence_update)
+
+    return otu_update, sequence_updates, sequence_inserts
+
+
+async def prepare_insert_otu(
+    otu: dict,
+    created_at: datetime.datetime,
+    ref_id: str,
+    user_id: str,
+) -> Tuple[Dict, List]:
+    issues = verify(otu)
+
+    otu = {
+        "abbreviation": otu["abbreviation"],
+        "created_at": created_at,
+        "imported": True,
+        "isolates": [
+            {
+                key: isolate[key]
+                for key in ("id", "default", "source_type", "source_name")
+            }
+            for isolate in otu["isolates"]
+        ],
+        "issues": issues,
+        "lower_name": otu["name"].lower(),
+        "last_indexed_version": None,
+        "name": otu["name"],
+        "reference": {"id": ref_id},
+        "remote": {"id": otu["_id"]},
+        "schema": otu.get("schema", []),
+        "user": {"id": user_id},
+        "verified": issues is None,
+        "version": 0,
+    }
+
+    sequences = []
+
+    for isolate in otu["isolates"]:
+        for sequence in isolate.pop("sequences"):
+            try:
+                remote_sequence_id = sequence["remote"]["id"]
+                sequence.pop("_id")
+            except KeyError:
+                remote_sequence_id = sequence.pop("_id")
+
+            sequences.append(
+                {
+                    **sequence,
+                    "accession": sequence["accession"],
+                    "isolate_id": isolate["id"],
+                    "otu_id": otu["_id"],
+                    "segment": sequence.get("segment", ""),
+                    "reference": {"id": ref_id},
+                    "remote": {"id": remote_sequence_id},
+                }
+            )
+
+    return otu, sequences
