@@ -117,7 +117,7 @@ class SubtractionsData(DataLayerPiece):
         if upload is None:
             raise ResourceNotFoundError("Upload does not exist")
 
-        await self._mongo.subtraction.insert_one(
+        document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
                 or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
@@ -137,17 +137,19 @@ class SubtractionsData(DataLayerPiece):
             }
         )
 
+        subtraction = await self.get(document["_id"])
+
         await self.data.jobs.create(
             "create_subtraction",
             {
-                "subtraction_id": subtraction_id,
+                "subtraction_id": subtraction.id,
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
             JobRights(),
         )
 
-        return await self.get(subtraction_id)
+        return subtraction
 
     async def get(self, subtraction_id: str) -> Subtraction:
         document = await self._mongo.subtraction.find_one(subtraction_id)
