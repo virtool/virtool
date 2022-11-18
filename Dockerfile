@@ -8,7 +8,7 @@ RUN pip install --user -r requirements.txt
 COPY . . 
 RUN pip install --user .
 
-FROM virtool/external-tools:0.2.0
+FROM virtool/workflow-tools:2.0.1
 WORKDIR /virtool
 COPY --from=server /root/.local /root/.local
 COPY run.py pyproject.toml VERSION* /virtool/
