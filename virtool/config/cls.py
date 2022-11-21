@@ -4,6 +4,8 @@ from pathlib import Path
 
 @dataclass
 class Config:
+    fga_api_scheme: str
+    fga_api_host: str
     db_connection_string: str
     db_name: str
     dev: bool

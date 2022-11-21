@@ -83,6 +83,8 @@ def create_app(
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
             fake=False,
+            fga_api_scheme="http",
+            fga_api_host="localhost:8080",
         )
 
         return virtool.app.create_app(config)

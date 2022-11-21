@@ -242,12 +242,14 @@ async def startup_databases(app: Application):
     db_name = app["config"].db_name
     postgres_connection_string = app["config"].postgres_connection_string
     redis_connection_string = app["config"].redis_connection_string
+    fga_api_scheme = app["config"].fga_api_scheme
+    fga_api_host = app["config"].fga_api_host
 
     mongo, pg, redis, auth = await asyncio.gather(
         virtool.mongo.connect.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
-        connect_openfga()
+        connect_openfga(fga_api_scheme, fga_api_host)
     )
 
     scheduler = get_scheduler_from_app(app)
@@ -257,13 +259,12 @@ async def startup_databases(app: Application):
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-    app["db"] = DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider())
-
-    app["dispatcher_interface"] = dispatcher_interface
-
-    app["pg"] = pg
-
-    app["auth"] = auth
+    app.update({
+        "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
+        "dispatcher_interface": dispatcher_interface,
+        "pg": pg,
+        "auth": auth
+    })
 
 
 async def startup_refresh(app: Application):

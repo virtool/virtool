@@ -1,3 +1,4 @@
+import sys
 from logging import getLogger
 
 import openfga_sdk
@@ -7,33 +8,53 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
+    ApiClient,
 )
 from openfga_sdk.api import open_fga_api
 
-logger = getLogger("OpenFGA")
+logger = getLogger("openfga")
 
 
-async def connect_openfga():
+async def connect_openfga(fga_api_scheme: str, fga_api_host: str):
+    """
+    Connects to an OpenFGA server and configures the store id.
+    Returns the application client object.
+
+    :return: the client object
+
+    """
     configuration = openfga_sdk.Configuration(
-        api_scheme="http", api_host="localhost:8080"
+        api_scheme=fga_api_scheme, api_host=fga_api_host
     )
 
     logger.info("Connecting to OpenFGA")
 
     try:
         api_client = openfga_sdk.ApiClient(configuration)
+
+        await check_openfga_version(api_client)
+
         api_instance = open_fga_api.OpenFgaApi(api_client)
 
-        await create_store(api_instance, configuration)
+        store_id = await get_or_create_store(api_instance)
+
+        configuration.store_id = store_id
+
         await write_auth_model(api_instance)
 
     except ClientConnectorError:
         logger.fatal("Could not connect")
+        sys.exit(1)
 
     return api_client
 
 
-async def create_store(api_instance, configuration):
+async def get_or_create_store(api_instance):
+    """
+    Get the OpenFGA Store or create one if it does not exist.
+
+    :return: the store id
+    """
 
     response = await api_instance.list_stores()
 
@@ -43,18 +64,20 @@ async def create_store(api_instance, configuration):
         )
         response = await api_instance.create_store(body)
         logger.info("Creating store")
-        configuration.store_id = response.id
+        store_id = response.id
     else:
-        configuration.store_id = response.stores[0].id
+        store_id = response.stores[0].id
 
-    logger.info("Configuring store id")
+    return store_id
 
 
 async def write_auth_model(api_instance):
+    """
+    Write the authorization model for the OpenFGA Store if it does not exist.
+    """
     response = await api_instance.read_authorization_models()
 
     if not response.authorization_models:
-
         type_definitions = WriteAuthorizationModelRequest(
             type_definitions=[
                 TypeDefinition(
@@ -90,4 +113,15 @@ async def write_auth_model(api_instance):
         )
 
         await api_instance.write_authorization_model(type_definitions)
-        logger.info("Writing authorization model")
+
+
+async def check_openfga_version(client: ApiClient):
+    """
+    Check the OpenFGA version.
+
+    :param client: the application client object
+    """
+
+    version = client.user_agent
+
+    logger.info("Found OpenFGA %s", version)
