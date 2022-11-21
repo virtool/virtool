@@ -104,10 +104,12 @@ async def create(
 
     document = await mongo.indexes.insert_one(document)
 
-    await mongo.history.update_many(
-        {"index.id": "unbuilt", "reference.id": ref_id},
-        {"$set": {"index": {"id": document["_id"], "version": index_version}}},
-    )
+    async with mongo.create_session() as mongo_session:
+        await mongo.history.update_many(
+            {"index.id": "unbuilt", "reference.id": ref_id},
+            {"$set": {"index": {"id": document["_id"], "version": index_version}}},
+            session=mongo_session,
+        )
 
     return document
 
