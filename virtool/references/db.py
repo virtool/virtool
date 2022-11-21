@@ -6,13 +6,21 @@ import asyncio
 import datetime
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Union, TYPE_CHECKING, Tuple
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Union,
+    TYPE_CHECKING,
+    Coroutine,
+    Callable,
+)
 
 import pymongo
 from aiohttp import ClientConnectorError
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo import UpdateOne, InsertOne
+from pymongo import UpdateOne, DeleteMany, DeleteOne
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
@@ -29,6 +37,7 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
+from virtool.references.bulk import OTUUpdate, OTUInsert, OTUDelete, HistoryChange
 from virtool.references.utils import (
     RIGHTS,
     check_will_change,
@@ -889,84 +898,9 @@ async def update(
     return release, update_subdocument
 
 
-async def upsert_joined_otu(
-    mongo: "DB",
-    otu: Document,
-    created_at: datetime.datetime,
-    ref_id: str,
-    user_id: str,
-    session: AsyncIOMotorClientSession,
-) -> Optional[Union[dict, str]]:
-    remote_id = otu["_id"]
-
-    old = await join(
-        mongo, {"reference.id": ref_id, "remote.id": remote_id}, session=session
-    )
-
-    if old is None:
-        return await insert_joined_otu(
-            mongo, otu, created_at, ref_id, user_id, session=session
-        )
-
-    if not check_will_change(old, otu):
-        return None
-
-    sequence_updates = []
-
-    for isolate in otu["isolates"]:
-        for sequence in isolate.pop("sequences"):
-            sequence_updates.append(
-                {
-                    "accession": sequence["accession"],
-                    "definition": sequence["definition"],
-                    "host": sequence["host"],
-                    "segment": sequence.get("segment", ""),
-                    "sequence": sequence["sequence"],
-                    "otu_id": old["_id"],
-                    "isolate_id": isolate["id"],
-                    "reference": {"id": ref_id},
-                    "remote": {"id": sequence["_id"]},
-                }
-            )
-
-    await mongo.otus.update_one(
-        {"_id": old["_id"]},
-        {
-            "$inc": {"version": 1},
-            "$set": {
-                "abbreviation": otu["abbreviation"],
-                "name": otu["name"],
-                "lower_name": otu["name"].lower(),
-                "isolates": otu["isolates"],
-                "schema": otu.get("schema", []),
-            },
-        },
-        session=session,
-        silent=True,
-    )
-
-    for sequence_update in sequence_updates:
-        remote_sequence_id = sequence_update["remote"]["id"]
-
-        update_result = await mongo.sequences.update_one(
-            {"reference.id": ref_id, "remote.id": remote_sequence_id},
-            {"$set": sequence_update},
-            session=session,
-            silent=True,
-        )
-
-        if not update_result.matched_count:
-            await mongo.sequences.insert_one(sequence_update, session=session)
-
-    return old
-
-
 async def prepare_update_joined_otu(
-    mongo: "DB",
-    old,
-    otu: Document,
-    ref_id: str,
-) -> Optional[Tuple[UpdateOne, List[UpdateOne], List[Dict]]]:
+    mongo: "DB", old, otu: Document, ref_id: str, history_updater
+) -> Optional[OTUUpdate]:
 
     if not check_will_change(old, otu):
         return None
@@ -1019,18 +953,15 @@ async def prepare_update_joined_otu(
         else:
             sequence_inserts.append(sequence_update)
 
-    return otu_update, sequence_updates, sequence_inserts
+    OTUUpdate(old, otu_update, sequence_updates, sequence_inserts, history_updater)
 
 
 async def prepare_insert_otu(
-    otu: dict,
-    created_at: datetime.datetime,
-    ref_id: str,
-    user_id: str,
-) -> Tuple[Dict, List]:
+    otu: dict, created_at: datetime.datetime, ref_id: str, user_id: str, history_updater
+) -> OTUInsert:
     issues = verify(otu)
 
-    otu = {
+    new_otu = {
         "abbreviation": otu["abbreviation"],
         "created_at": created_at,
         "imported": True,
@@ -1054,7 +985,6 @@ async def prepare_insert_otu(
     }
 
     sequences = []
-
     for isolate in otu["isolates"]:
         for sequence in isolate.pop("sequences"):
             try:
@@ -1075,4 +1005,39 @@ async def prepare_insert_otu(
                 }
             )
 
-    return otu, sequences
+    return OTUInsert(new_otu, sequences, history_updater)
+
+
+async def prepare_remove_otu(
+    mongo: "DB", otu_id: str, update_history: Callable[[HistoryChange], Coroutine]
+) -> Optional[OTUDelete]:
+    """
+    Remove an OTU.
+
+    Create a history document to record the change.
+
+    :param otu_id: the ID of the OTU
+    :param user_id: the ID of the requesting user
+    :param silent: prevents dispatch of the change
+    :return: `True` if the removal was successful
+
+    """
+    joined = await virtool.otus.db.join(mongo, otu_id)
+
+    if not joined:
+        return None
+
+    otu_delete = DeleteOne({"_id": otu_id})
+    sequences_delete = DeleteMany({"otu_id": otu_id})
+
+    reference_update = UpdateOne(
+        {
+            "_id": joined["reference"]["id"],
+            "internal_control.id": joined["_id"],
+        },
+        {"$set": {"internal_control": None}},
+    )
+
+    return OTUDelete(
+        otu_delete, sequences_delete, reference_update, joined, update_history
+    )

@@ -47,15 +47,16 @@ from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.otus.db import join
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
+from virtool.references.bulk import BulkUpdater, HistoryUpdater, BulkDeleter
 from virtool.references.db import (
     compose_base_find_query,
     attach_computed,
     get_manifest,
     insert_joined_otu,
     insert_change,
-    upsert_joined_otu,
     prepare_update_joined_otu,
     prepare_insert_otu,
+    prepare_remove_otu,
 )
 from virtool.references.oas import (
     CreateReferenceRequest,
@@ -906,15 +907,6 @@ class ReferencesData(DataLayerPiece):
             progress_handler, len(data.otus) + len(to_delete)
         )
 
-        # Update otus
-        # update sequences
-        # update history
-
-        # pre-session compile a list of changes that need to be deployed. Two arrays, one for otus and one for seqs, third one for old otus?
-        # what to do about otus that did not exist before?
-        # Want to use with_transaction, so need to pass function to with_transaction does all listed insertions and handles history.
-        # Possibly get snapshot of old otus while compiling list of changes
-
         async with self._mongo.create_session() as session:
             await self._mongo.references.update_one(
                 {"_id": ref_id},
@@ -924,39 +916,44 @@ class ReferencesData(DataLayerPiece):
                         "targets": data.targets,
                     }
                 },
+                session=session,
+            )
+
+            bulk_updater = BulkUpdater(self._mongo, session)
+            history_updater = HistoryUpdater(
+                self._config.data_path, self._mongo, user_id, session, tracker
             )
 
             for otu in data.otus:
-                old_or_id = await upsert_joined_otu(
-                    self._mongo, otu, created_at, ref_id, user_id, session
+                old = await join(
+                    self._mongo, {"reference.id": ref_id, "remote.id": otu["_id"]}
                 )
 
-                if old_or_id is None:
-                    # The OTU was not updated.
-                    continue
+                if old:
+                    otu_update = await prepare_update_joined_otu(
+                        self._mongo, old, otu, ref_id, history_updater.add
+                    )
+                    if otu_update is not None:
+                        await bulk_updater.update(otu_update)
 
-                try:
-                    otu_id = old_or_id["_id"]
-                    old = old_or_id
-                except TypeError:
-                    otu_id = old_or_id
-                    old = None
+                else:
+                    otu_insert = await prepare_insert_otu(
+                        otu, created_at, ref_id, user_id, history_updater.add
+                    )
+                    await bulk_updater.insert(otu_insert)
 
-                await insert_change(
-                    self._config.data_path,
-                    self._mongo,
-                    otu_id,
-                    HistoryMethod.update if old else HistoryMethod.remote,
-                    user_id,
-                    session,
-                    old=old,
-                )
+            await bulk_updater.flush()
 
-                await tracker.add(1)
+            bulk_deleter = BulkDeleter(self._mongo, session)
 
             for otu_id in to_delete:
-                await self.data.otus.remove(otu_id, user_id, True)
-                await tracker.add(1)
+                delete_otu = await prepare_remove_otu(
+                    self._mongo, otu_id, history_updater.delete
+                )
+                if delete_otu:
+                    await bulk_deleter.add(delete_otu)
+
+            await bulk_deleter.flush()
 
             await self._mongo.references.update_one(
                 {"_id": ref_id},
@@ -970,126 +967,7 @@ class ReferencesData(DataLayerPiece):
                 session=session,
             )
 
-    async def beta_update_remote_reference(
-        self,
-        ref_id: str,
-        data: ReferenceSourceData,
-        release: Document,
-        user_id: str,
-        progress_handler,
-    ):
-        """
-        Update a remote reference to a newer version.
-
-        * Update reference metadata.
-        * Insert new OTUs.
-        * Update existing OTUs that have changed.
-        * Delete OTUs in the database that don't exist in the update.
-        * Create history.
-
-        """
-        created_at: datetime = await get_one_field(
-            self._mongo.references, "created_at", ref_id
-        )
-
-        otu_updates = []
-        otu_inserts = []
-        sequence_updates = []
-        sequence_inserts = []
-        history_changes = []
-
-        for otu in data.otus:
-            old = join(self._mongo, {"reference.id": ref_id, "remote.id": otu["_id"]})
-
-            if old:
-                (
-                    otu_update,
-                    sequence_update,
-                    sequence_insert,
-                ) = await prepare_update_joined_otu(self._mongo, old, otu, ref_id)
-                history_changes.append(
-                    {
-                        "otu_id": otu_update["_id"],
-                        "history_method": HistoryMethod.update,
-                        "old": old,
-                    }
-                )
-                otu_updates.append(otu_update)
-                sequence_updates.extend(sequence_updates)
-                sequence_inserts.extend(sequence_inserts)
-            else:
-                otu_insert, sequence_insert = prepare_insert_otu(
-                    otu, created_at, ref_id, user_id
-                )
-                otu_inserts.extend(otu_insert)
-                sequence_inserts.extend(sequence_insert)
-
-        to_delete = await self._mongo.otus.distinct(
-            "_id",
-            {
-                "reference.id": ref_id,
-                "remote.id": {"$nin": list({otu["_id"] for otu in data.otus})},
-            },
-        )
-
-        tracker = AccumulatingProgressHandlerWrapper(
-            progress_handler, len(data.otus) + len(to_delete)
-        )
-
-        async with self._mongo.create_session() as session:
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {
-                    "$set": {
-                        "organism": data.organism,
-                        "targets": data.targets,
-                    }
-                },
-            )
-
-            for otu in data.otus:
-                old_or_id = await upsert_joined_otu(
-                    self._mongo, otu, created_at, ref_id, user_id, session
-                )
-
-                if old_or_id is None:
-                    # The OTU was not updated.
-                    continue
-
-                try:
-                    otu_id = old_or_id["_id"]
-                    old = old_or_id
-                except TypeError:
-                    otu_id = old_or_id
-                    old = None
-
-                await insert_change(
-                    self._config.data_path,
-                    self._mongo,
-                    otu_id,
-                    HistoryMethod.update if old else HistoryMethod.remote,
-                    user_id,
-                    session,
-                    old=old,
-                )
-
-                await tracker.add(1)
-
-            for otu_id in to_delete:
-                await self.data.otus.remove(otu_id, user_id, True)
-                await tracker.add(1)
-
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {
-                    "$set": {
-                        "installed": create_update_subdocument(release, True, user_id),
-                        "updates.$.ready": True,
-                        "updating": False,
-                    }
-                },
-                session=session,
-            )
+        print("Done!!!!!!!!!!!!")
 
     async def clean_all(self):
         """

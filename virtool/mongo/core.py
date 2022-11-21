@@ -242,26 +242,34 @@ class Collection:
         silent: bool = False,
     ):
 
-        contains_id = any("_id" in document for document in documents)
-        inserted = [
-            {**document, "_id": document["_id"] or self.mongo.id_provider.get()}
-            for document in documents
-        ]
+        inserted = await self.populate_bulk_ids(documents, session=session)
 
-        try:
-            await self._collection.insert_many(inserted, session=session)
-        except DuplicateKeyError as err:
-            keys = list(err.details["keyPattern"].keys())
-
-            if all(key == "_id" for key in keys) and not contains_id:
-                return await self.insert_many(documents, session=session, silent=silent)
-
-            raise
+        await self._collection.insert_many(inserted, session=session)
 
         if not silent:
             self.enqueue_change(INSERT, *[insert["_id"] for insert in inserted])
 
         return inserted
+
+    async def populate_bulk_ids(
+        self, documents: List[Document], session: AsyncIOMotorClientSession = None
+    ):
+        is_id_populated = any("_id" in document for document in documents)
+
+        id_documents = [
+            {**document, "_id": document["_id"] or self.mongo.id_provider.get()}
+            for document in documents
+        ]
+
+        if await self.find_one(
+            {"_id": {"in": [document["_id"] for document in id_documents]}},
+            session=session,
+        ):
+            if is_id_populated:
+                raise DuplicateKeyError
+            await self.populate_bulk_ids(documents)
+
+        return id_documents
 
     async def replace_one(
         self,
