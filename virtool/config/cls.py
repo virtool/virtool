@@ -4,11 +4,11 @@ from pathlib import Path
 
 @dataclass
 class Config:
-    fga_api_scheme: str
-    fga_api_host: str
     db_connection_string: str
     db_name: str
     dev: bool
+    openfga_host: str
+    openfga_scheme: str
     postgres_connection_string: str
     redis_connection_string: str
     b2c_client_id: str = None

@@ -15,16 +15,16 @@ from openfga_sdk.api import open_fga_api
 logger = getLogger("openfga")
 
 
-async def connect_openfga(fga_api_scheme: str, fga_api_host: str):
+async def connect_openfga(openfga_host: str, openfga_scheme: str):
     """
     Connects to an OpenFGA server and configures the store id.
     Returns the application client object.
 
-    :return: the client object
+    :return: the application OpenFGA client
 
     """
     configuration = openfga_sdk.Configuration(
-        api_scheme=fga_api_scheme, api_host=fga_api_host
+        api_scheme=openfga_scheme, api_host=openfga_host
     )
 
     logger.info("Connecting to OpenFGA")
@@ -36,9 +36,7 @@ async def connect_openfga(fga_api_scheme: str, fga_api_host: str):
 
         api_instance = open_fga_api.OpenFgaApi(api_client)
 
-        store_id = await get_or_create_store(api_instance)
-
-        configuration.store_id = store_id
+        configuration.store_id = await get_or_create_store(api_instance)
 
         await write_auth_model(api_instance)
 
@@ -58,17 +56,15 @@ async def get_or_create_store(api_instance):
 
     response = await api_instance.list_stores()
 
-    if not response.stores:
-        body = CreateStoreRequest(
-            name="Virtool",
-        )
-        response = await api_instance.create_store(body)
-        logger.info("Creating store")
-        store_id = response.id
-    else:
-        store_id = response.stores[0].id
+    if response.stores:
+        return response.stores[0].id
 
-    return store_id
+    body = CreateStoreRequest(
+        name="Virtool",
+    )
+    logger.info("Creating store")
+    response = await api_instance.create_store(body)
+    return response.id
 
 
 async def write_auth_model(api_instance):
@@ -119,9 +115,7 @@ async def check_openfga_version(client: ApiClient):
     """
     Check the OpenFGA version.
 
-    :param client: the application client object
+    :param client: the application OpenFGA client
     """
 
-    version = client.user_agent
-
-    logger.info("Found OpenFGA %s", version)
+    logger.info("Found OpenFGA %s", client.user_agent)

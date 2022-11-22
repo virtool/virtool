@@ -55,6 +55,18 @@ def entry():
 )
 @click.option("--no-sentry", help="Disable Sentry error reporting", is_flag=True)
 @click.option(
+    "--openfga-host",
+    help="The OpenFGA API host",
+    type=str,
+    default="localhost:8080",
+)
+@click.option(
+    "--openfga-scheme",
+    help="The OpenFGA API scheme",
+    type=str,
+    default="https",
+)
+@click.option(
     "--postgres-connection-string",
     help="The PostgreSQL connection string (must begin with 'postgresql+asyncpg://')",
     type=str,
@@ -74,18 +86,6 @@ def entry():
     type=str,
     default="https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532",
 )
-@click.option(
-    "--fga-api-scheme",
-    help="The OpenFGA API scheme",
-    type=str,
-    default="http",
-)
-@click.option(
-    "--fga-api-host",
-    help="The OpenFGA API host",
-    type=str,
-    default="localhost:8080",
-)
 @click.pass_context
 def cli(
     ctx,
@@ -96,18 +96,16 @@ def cli(
     dev,
     force_version,
     no_sentry,
+    openfga_host,
+    openfga_scheme,
     postgres_connection_string,
     redis_connection_string,
     verbose,
     sentry_dsn,
-    fga_api_scheme,
-    fga_api_host,
 ):
     ctx.ensure_object(dict)
     ctx.obj.update(
         {
-            "fga_api_scheme": fga_api_scheme,
-            "fga_api_host": fga_api_host,
             "base_url": base_url,
             "data_path": Path(data_path),
             "db_connection_string": db_connection_string,
@@ -115,6 +113,8 @@ def cli(
             "dev": dev,
             "force_version": force_version,
             "no_sentry": no_sentry,
+            "openfga_host": openfga_host,
+            "openfga_scheme": openfga_scheme,
             "postgres_connection_string": postgres_connection_string,
             "redis_connection_string": redis_connection_string,
             "verbose": verbose,
