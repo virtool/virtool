@@ -47,6 +47,23 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      postgres-openfga:
+        image: postgres:14.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: openfga
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      openfga:
+        image: openfga/openfga:v0.2.5
+        env:
+          OPENFGA_DATASTORE_ENGINE: postgres
+          OPENFGA_DATASTORE_URI: postgres://postgres:password@postgres-openfga:5432/openfga
+          OPENFGA_LOG_FORMAT: json
     steps:
       - name: Checkout
         uses: actions/checkout@v2
