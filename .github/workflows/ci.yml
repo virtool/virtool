@@ -40,6 +40,7 @@ jobs:
         env:
           POSTGRES_USER: virtool
           POSTGRES_PASSWORD: virtool
+          POSTGRES_DB: virtool
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -47,33 +48,17 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      postgres-openfga:
-        image: postgres:14.5
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: openfga
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      migrate:
-        image: openfga/openfga:v0.2.5
-        env:
-          OPENFGA_DATASTORE_ENGINE: postgres
-          OPENFGA_DATASTORE_URI: postgres://postgres:password@postgres-openfga:5432/openfga
-      openfga:
-        image: openfga/openfga:v0.2.5
-        env:
-          OPENFGA_DATASTORE_ENGINE: postgres
-          OPENFGA_DATASTORE_URI: postgres://postgres:password@postgres-openfga:5432/openfga
-          OPENFGA_LOG_FORMAT: json
-        ports:
-          - 8080:8080
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Create OpenFGA Network
+        run: docker network create openfga
+      - name: Start OpenFGA Postgres
+        run: docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+      - name: Migrate OpenFGA
+        run: docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+      - name: Start OpenFGA
+        run: docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.7.0
         with:
