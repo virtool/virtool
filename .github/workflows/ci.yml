@@ -58,12 +58,23 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      migrate:
+        image: openfga/openfga:v0.2.5
+        depends_on:
+          - postgres-openfga
+        command: |
+          migrate
+        env:
+          OPENFGA_DATASTORE_ENGINE: postgres
+          OPENFGA_DATASTORE_URI: postgres://postgres:password@postgres-openfga:5432/openfga
       openfga:
         image: openfga/openfga:v0.2.5
         env:
           OPENFGA_DATASTORE_ENGINE: postgres
           OPENFGA_DATASTORE_URI: postgres://postgres:password@postgres-openfga:5432/openfga
           OPENFGA_LOG_FORMAT: json
+        ports:
+          - 8080:8080
     steps:
       - name: Checkout
         uses: actions/checkout@v2

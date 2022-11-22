@@ -8,7 +8,7 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
-    ApiClient,
+    ApiClient, OpenFgaApi,
 )
 from openfga_sdk.api import open_fga_api
 
@@ -47,7 +47,7 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
     return api_client
 
 
-async def get_or_create_store(api_instance):
+async def get_or_create_store(api_instance: OpenFgaApi):
     """
     Get the OpenFGA Store or create one if it does not exist.
 
@@ -57,6 +57,7 @@ async def get_or_create_store(api_instance):
     response = await api_instance.list_stores()
 
     if response.stores:
+        logger.info("Found existing store")
         return response.stores[0].id
 
     body = CreateStoreRequest(
@@ -67,7 +68,7 @@ async def get_or_create_store(api_instance):
     return response.id
 
 
-async def write_auth_model(api_instance):
+async def write_auth_model(api_instance: OpenFgaApi):
     """
     Write the authorization model for the OpenFGA Store if it does not exist.
     """
