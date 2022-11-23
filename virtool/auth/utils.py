@@ -81,28 +81,28 @@ async def write_auth_model(api_instance: OpenFgaApi):
                     type="instance",
                     relations=dict(
                         cancel_job=Userset(
-                            this=dict(),
+                            this={},
                         ),
                         create_ref=Userset(
-                            this=dict(),
+                            this={},
                         ),
                         create_sample=Userset(
-                            this=dict(),
+                            this={},
                         ),
                         modify_hmm=Userset(
-                            this=dict(),
+                            this={},
                         ),
                         modify_subtraction=Userset(
-                            this=dict(),
+                            this={},
                         ),
                         remove_file=Userset(
-                            this=dict(),
+                            this={},
                         ),
                         remove_job=Userset(
-                            this=dict(),
+                            this={},
                         ),
                         upload_file=Userset(
-                            this=dict(),
+                            this={},
                         ),
                     ),
                 ),
