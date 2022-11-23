@@ -22,14 +22,13 @@ from virtool.analyses.checks import (
 from virtool.analyses.db import PROJECTION, processor
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
-from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
+from virtool.analyses.utils import attach_analysis_files
 from virtool.api.utils import paginate
 from virtool.blast.models import NuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceNotModifiedError,
     ResourceError,
     ResourceConflictError,
 )
@@ -114,11 +113,7 @@ class AnalysisData(DataLayerPiece):
         if document is None:
             raise ResourceNotFoundError()
 
-        aws = []
-
-        aws.append(check_if_analysis_modified(if_modified_since, document))
-
-        await wait_for_checks(*aws)
+        await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
         document = await attach_analysis_files(self._pg, analysis_id, document)
 
@@ -196,11 +191,7 @@ class AnalysisData(DataLayerPiece):
 
         sample_id = document["sample"]["id"]
 
-        aws = []
-
-        aws.append(check_if_analysis_ready(jobs_api_flag, document["ready"]))
-
-        await wait_for_checks(*aws)
+        await wait_for_checks(check_if_analysis_ready(jobs_api_flag, document["ready"]))
 
         await self._db.analyses.delete_one({"_id": analysis_id})
 
@@ -310,15 +301,11 @@ class AnalysisData(DataLayerPiece):
             {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
         )
 
-        aws = []
-
-        aws.append(check_analysis_workflow(document["workflow"]))
-
-        aws.append(check_if_analysis_running(document["ready"]))
-
-        aws.append(check_analysis_nuvs_sequence(document, sequence_index))
-
-        await wait_for_checks(*aws)
+        await wait_for_checks(
+            check_analysis_workflow(document["workflow"]),
+            check_if_analysis_running(document["ready"]),
+            check_analysis_nuvs_sequence(document, sequence_index),
+        )
 
         timestamp = virtool.utils.timestamp()
 

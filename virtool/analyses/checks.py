@@ -25,9 +25,9 @@ async def check_if_analysis_modified(
 async def check_if_analysis_ready(jobs_api_flag: bool, ready: bool):
     if jobs_api_flag and ready:
         raise ResourceConflictError()
-    else:
-        if not ready:
-            raise ResourceConflictError()
+
+    if not ready:
+        raise ResourceConflictError()
 
 
 async def check_analysis_workflow(workflow: str):
