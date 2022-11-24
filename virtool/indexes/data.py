@@ -26,8 +26,10 @@ from virtool.indexes.db import (
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_rows
 from virtool.uploads.utils import naive_writer
+from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread, compress_json_with_gzip, wait_for_checks
 
 logger = logging.getLogger("indexes")
@@ -234,9 +236,7 @@ class IndexData:
 
         results = {f.name: f.type for f in rows}
 
-        aws = []
-
-        aws.append(check_fasta_file_uploaded(results))
+        aws = [check_fasta_file_uploaded(results)]
 
         if reference["data_type"] == "genome":
             aws.append(check_index_files_uploaded(results))
@@ -277,6 +277,10 @@ class IndexData:
             sort=[("otu.name", 1), ("otu.version", -1)],
             projection=LIST_PROJECTION,
             reverse=True,
+        )
+
+        data["documents"] = await apply_transforms(
+            data["documents"], [AttachUserTransform(self._mongo)]
         )
 
         return HistorySearchResult(**data)

@@ -308,9 +308,9 @@
           'id': 'foo',
         },
         'user': <class 'dict'> {
-          'administrator': True,
-          'handle': 'fred',
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
         },
       },
       <class 'dict'> {
@@ -331,9 +331,9 @@
           'id': 'foo',
         },
         'user': <class 'dict'> {
-          'administrator': True,
-          'handle': 'ian',
-          'id': 'igboyes',
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -354,9 +354,9 @@
           'id': 'foo',
         },
         'user': <class 'dict'> {
-          'administrator': True,
-          'handle': 'ian',
-          'id': 'igboyes',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
         },
       },
       <class 'dict'> {
@@ -377,9 +377,9 @@
           'id': 'foo',
         },
         'user': <class 'dict'> {
-          'administrator': True,
-          'handle': 'ian',
-          'id': 'igboyes',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
         },
       },
     ],
@@ -387,7 +387,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 6,
+    'total_count': 4,
   }
 ---
 # name: test_get[uvloop-None]
