@@ -346,11 +346,14 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_find_history(error, static_time, snapshot, spawn_client, resp_is):
+async def test_find_history(error, fake2, static_time, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     if not error:
         await client.db.indexes.insert_one({"_id": "foobar", "version": 0})
+
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
     await client.db.history.insert_many(
         [
@@ -359,7 +362,7 @@ async def test_find_history(error, static_time, snapshot, spawn_client, resp_is)
                 "created_at": static_time.datetime,
                 "reference": {"id": "foo"},
                 "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
-                "user": {"id": "igboyes", "administrator": True, "handle": "ian"},
+                "user": {"id": user_1.id},
                 "description": "Added Unnamed Isolate as default",
                 "method_name": "add_isolate",
                 "index": {"version": 0, "id": "foobar"},
@@ -369,7 +372,7 @@ async def test_find_history(error, static_time, snapshot, spawn_client, resp_is)
                 "created_at": static_time.datetime,
                 "reference": {"id": "foo"},
                 "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
-                "user": {"id": "igboyes", "administrator": True, "handle": "ian"},
+                "user": {"id": user_1.id},
                 "description": "Added Unnamed Isolate as default",
                 "method_name": "add_isolate",
                 "index": {"version": 0, "id": "foobar"},
@@ -379,7 +382,7 @@ async def test_find_history(error, static_time, snapshot, spawn_client, resp_is)
                 "created_at": static_time.datetime,
                 "reference": {"id": "foo"},
                 "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
-                "user": {"id": "igboyes", "administrator": True, "handle": "ian"},
+                "user": {"id": user_2.id},
                 "description": "Added Unnamed Isolate as default",
                 "method_name": "add_isolate",
                 "index": {"version": 0, "id": "foobar"},
@@ -389,13 +392,11 @@ async def test_find_history(error, static_time, snapshot, spawn_client, resp_is)
                 "created_at": static_time.datetime,
                 "reference": {"id": "foo"},
                 "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
-                "user": {"id": "fred", "administrator": True, "handle": "fred"},
+                "user": {"id": user_1.id},
                 "description": "Edited sequence wrta20tr in Islolate chilli-CR",
                 "method_name": "edit_sequence",
                 "index": {"version": 0, "id": "foobar"},
             },
-            {"_id": "test_1", "index": {"id": "baz"}},
-            {"_id": "test_2", "index": {"id": "baz"}},
         ]
     )
 
