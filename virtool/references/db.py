@@ -953,7 +953,9 @@ async def prepare_update_joined_otu(
         else:
             sequence_inserts.append(sequence_update)
 
-    OTUUpdate(old, otu_update, sequence_updates, sequence_inserts, history_updater)
+    return OTUUpdate(
+        old, otu_update, sequence_updates, sequence_inserts, history_updater
+    )
 
 
 async def prepare_insert_otu(

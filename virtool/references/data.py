@@ -47,7 +47,7 @@ from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.otus.db import join
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
-from virtool.references.bulk import BulkUpdater, HistoryUpdater, BulkDeleter
+from virtool.references.bulk import BulkUpdater, HistoryUpdater
 from virtool.references.db import (
     compose_base_find_query,
     attach_computed,
@@ -906,7 +906,9 @@ class ReferencesData(DataLayerPiece):
         tracker = AccumulatingProgressHandlerWrapper(
             progress_handler, len(data.otus) + len(to_delete)
         )
-
+        print(len(data.otus) + len(to_delete))
+        total_changes = 0
+        iterat = 0
         async with self._mongo.create_session() as session:
             await self._mongo.references.update_one(
                 {"_id": ref_id},
@@ -925,6 +927,7 @@ class ReferencesData(DataLayerPiece):
             )
 
             for otu in data.otus:
+                iterat += 1
                 old = await join(
                     self._mongo, {"reference.id": ref_id, "remote.id": otu["_id"]}
                 )
@@ -934,38 +937,41 @@ class ReferencesData(DataLayerPiece):
                         self._mongo, old, otu, ref_id, history_updater.add
                     )
                     if otu_update is not None:
+                        total_changes += 1
                         await bulk_updater.update(otu_update)
 
                 else:
                     otu_insert = await prepare_insert_otu(
                         otu, created_at, ref_id, user_id, history_updater.add
                     )
+                    total_changes += 1
                     await bulk_updater.insert(otu_insert)
 
-            await bulk_updater.flush()
-
-            bulk_deleter = BulkDeleter(self._mongo, session)
-
             for otu_id in to_delete:
+                iterat += 1
                 delete_otu = await prepare_remove_otu(
                     self._mongo, otu_id, history_updater.delete
                 )
                 if delete_otu:
-                    await bulk_deleter.add(delete_otu)
+                    total_changes += 1
+                    await bulk_updater.delete(delete_otu)
 
-            await bulk_deleter.flush()
-
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {
-                    "$set": {
-                        "installed": create_update_subdocument(release, True, user_id),
-                        "updates.$.ready": True,
-                        "updating": False,
-                    }
-                },
-                session=session,
+            await bulk_updater.finish()
+            print(
+                f"predicting {len(data.otus) + len(to_delete)} got {iterat} iterations. predicting {total_changes} history updates"
             )
+
+            # await self._mongo.references.update_one(
+            #     {"_id": ref_id},
+            #     {
+            #         "$set": {
+            #             "installed": create_update_subdocument(release, True, user_id),
+            #             "updates.$.ready": True,
+            #             "updating": False,
+            #         }
+            #     },
+            #     session=session,
+            # )
 
         print("Done!!!!!!!!!!!!")
 

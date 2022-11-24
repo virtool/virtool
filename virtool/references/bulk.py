@@ -1,10 +1,12 @@
 import asyncio
+from asyncio import Queue
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Union, Coroutine, Callable, Any, Optional, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo import UpdateOne, DeleteOne, DeleteMany
+from pymongo.errors import BulkWriteError
 from virtool_core.models.enums import HistoryMethod
 
 import virtool.history.db
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
 @dataclass
 class HistoryChange:
     verb: HistoryMethod
+    description: str
     otu_id: str
     old: Optional[dict] = None
 
@@ -44,7 +47,7 @@ class OTUUpdate:
         self.is_otu_updated = True
         await self.update_history()
 
-    async def sequence_updated(self):
+    async def sequence_updated(self, *args):
         self.sequences_updated += 1
         await self.update_history()
 
@@ -148,24 +151,43 @@ class DBUpdate:
     post_update: Callable[[Any], Coroutine]
 
 
-class DBUpdateBuffer:
-    def __init__(self, buffer_function, session: AsyncIOMotorClientSession):
-        self.update_buffer = []
-        self.buffer_function = buffer_function
+@dataclass
+class DBUpdateChunk:
+    updates: List[DBUpdate]
+    update_function: Callable[[Any], Coroutine]
+
+
+class DBUpdateWorker:
+    def __init__(self, task_queue: Queue, session):
+        self.task_queue = task_queue
         self.session = session
 
-    async def add(self, update: DBUpdate):
+    async def run(self):
+        while True:
+            update_chunk = await self.task_queue.get()
+            await update_chunk.update_function(
+                update_chunk.updates, session=self.session
+            )
+            self.task_queue.task_done()
+
+
+class DBUpdateBuffer:
+    def __init__(self, update_function, task_queue: Queue):
+        self.update_buffer = []
+        self.update_function = update_function
+        self.task_queue = task_queue
+
+    def add(self, update: DBUpdate):
         self.update_buffer.append(update)
+        if len(self.update_buffer) >= 25:
+            self.flush()
 
-        if len(self.update_buffer) >= 5:
-            update_test = self.update_buffer
+    def flush(self):
+        if self.update_buffer:
+            self.task_queue.put_nowait(
+                DBUpdateChunk(self.update_buffer, self.update_function)
+            )
             self.update_buffer = []
-            await self.flush(update_test)
-
-    async def flush(self, buffer):
-        await self.buffer_function(buffer, session=self.session)
-        print("flush complete!")
-        # self.update_buffer.clear()
 
     @staticmethod
     def insert_buffer(collection: "Collection", id_provider: AbstractIdProvider):
@@ -195,16 +217,14 @@ class DBUpdateBuffer:
             )
             for update in change_buffer
         ]
-        print("before find_one", len(change_buffer))
         if await collection.find_one(
             {"_id": {"$in": [update.update["_id"] for update in id_update_buffer]}},
             session=session,
         ):
-            print("recursion time")
+            print("Recursion time uh oh")
             return await DBUpdateBuffer.generate_id_buffer(
                 collection, change_buffer, id_provider, session
             )
-        print("after find_one")
         return id_update_buffer
 
     @staticmethod
@@ -226,6 +246,25 @@ class DBUpdateBuffer:
             )
             for update in change_buffer:
                 await update.post_update()
+
+        return func
+
+    @staticmethod
+    def history_insert_buffer(collection: "Collection", id_provider):
+        async def func(change_buffer: List[DBUpdate], session):
+            updates = await DBUpdateBuffer.generate_id_buffer(
+                collection, change_buffer, id_provider, session
+            )
+            try:
+                await collection.insert_many(
+                    [item.update for item in updates], session=session
+                )
+            except BulkWriteError as e:
+                for writeError in e["writeErrors"]:
+                    print(writeError)
+                    # await write_diff_file(data_path, otu_id, otu_version, document["diff"])
+            for update in updates:
+                await update.post_update(update.update["_id"])
 
         return func
 
@@ -270,78 +309,86 @@ class OTUDelete:
             )
 
 
-class BulkDeleter:
-    def __init__(self, mongo: "DB", session: AsyncIOMotorClientSession):
-        self.delete_sequence_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.delete_buffer(mongo.sequences), session
-        )
-        self.delete_otus_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.delete_buffer(mongo.otus), session
-        )
-        self.update_references_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.update_buffer(mongo.references), session
-        )
-
-    async def add(self, otu_delete: OTUDelete):
-        await self.delete_sequence_buffer.add(
-            DBUpdate(otu_delete.sequences_delete, otu_delete.sequences_deleted)
-        )
-        await self.delete_otus_buffer.add(
-            DBUpdate(otu_delete.otu_delete, otu_delete.otu_deleted)
-        )
-        await self.update_references_buffer.add(
-            DBUpdate(otu_delete.reference_update, otu_delete.reference_updated)
-        )
-
-    async def flush(self):
-        await asyncio.gather(
-            self.delete_sequence_buffer.flush(),
-            self.delete_otus_buffer.flush(),
-            self.update_references_buffer.flush(),
-        )
-
-
 class BulkUpdater:
     def __init__(self, mongo: "DB", session: AsyncIOMotorClientSession):
+        self.task_queue = asyncio.Queue()
         self.update_sequence_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.update_buffer(mongo.sequences), session
+            DBUpdateBuffer.update_buffer(mongo.sequences), self.task_queue
         )
         self.insert_sequence_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.insert_buffer(mongo.sequences, mongo.id_provider), session
+            DBUpdateBuffer.insert_buffer(mongo.sequences, mongo.id_provider),
+            self.task_queue,
         )
         self.update_otu_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.update_buffer(mongo.otus), session
+            DBUpdateBuffer.update_buffer(mongo.otus), self.task_queue
         )
         self.insert_otu_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.insert_buffer(mongo.otus, mongo.id_provider), session
+            DBUpdateBuffer.insert_buffer(mongo.otus, mongo.id_provider), self.task_queue
         )
+        self.delete_sequence_buffer = DBUpdateBuffer(
+            DBUpdateBuffer.delete_buffer(mongo.sequences), self.task_queue
+        )
+        self.delete_otus_buffer = DBUpdateBuffer(
+            DBUpdateBuffer.delete_buffer(mongo.otus), self.task_queue
+        )
+        self.update_references_buffer = DBUpdateBuffer(
+            DBUpdateBuffer.update_buffer(mongo.references), self.task_queue
+        )
+
+        self.workers = [
+            asyncio.create_task(DBUpdateWorker(self.task_queue, session).run())
+            for _ in range(5)
+        ]
 
     async def update(self, update: OTUUpdate):
         for sequence_update in update.sequence_updates:
-            await self.update_sequence_buffer.add(
+            self.update_sequence_buffer.add(
                 DBUpdate(sequence_update, update.sequence_updated)
             )
         for sequence_insert in update.sequence_inserts:
-            await self.insert_sequence_buffer.add(
+            self.insert_sequence_buffer.add(
                 DBUpdate(sequence_insert, update.sequence_updated)
             )
-        await self.update_otu_buffer.add(
-            DBUpdate(update.otu_update, update.otu_updated)
-        )
+        self.update_otu_buffer.add(DBUpdate(update.otu_update, update.otu_updated))
 
     async def insert(self, update: OTUInsert):
         for sequence_insert in update.sequence_inserts:
-            await self.insert_sequence_buffer.add(
+            self.insert_sequence_buffer.add(
                 DBUpdate(sequence_insert, update.sequence_inserted)
             )
-        await self.insert_otu_buffer.add(
-            DBUpdate(update.otu_insert, update.otu_inserted)
+        self.insert_otu_buffer.add(DBUpdate(update.otu_insert, update.otu_inserted))
+
+    async def delete(self, otu_delete: OTUDelete):
+        self.delete_sequence_buffer.add(
+            DBUpdate(otu_delete.sequences_delete, otu_delete.sequences_deleted)
+        )
+        self.delete_otus_buffer.add(
+            DBUpdate(otu_delete.otu_delete, otu_delete.otu_deleted)
+        )
+        self.update_references_buffer.add(
+            DBUpdate(otu_delete.reference_update, otu_delete.reference_updated)
         )
 
-    async def flush(self):
-        await asyncio.gather(
-            self.update_sequence_buffer.flush(),
-            self.update_otu_buffer.flush(),
-            self.insert_sequence_buffer.flush(),
-            self.insert_otu_buffer.flush(),
-        )
+    async def update_history(self, history_update):
+
+        self.update_history_buffer.add()
+
+    def increment_sequence(self, otu_change):
+        ...
+
+    def otu_updated(self, otu_change):
+        ...
+
+    async def finish(self):
+        self.update_sequence_buffer.flush()
+        self.update_otu_buffer.flush()
+        self.insert_sequence_buffer.flush()
+        self.insert_otu_buffer.flush()
+        self.delete_sequence_buffer.flush()
+        self.delete_otus_buffer.flush()
+        self.update_references_buffer.flush()
+
+        await self.task_queue.join()
+
+        for worker in self.workers:
+            worker.cancel()

@@ -23,6 +23,8 @@ from virtool.history.utils import (
     write_diff_file,
 )
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.otus.db import join
+from virtool.references.bulk import HistoryChange
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
 
@@ -142,6 +144,50 @@ async def add(
         await db.history.insert_one(
             dict(document, diff="file"), silent=silent, session=session
         )
+
+    return document
+
+
+async def prepare_add(
+    method_name: HistoryMethod,
+    old: Optional[dict],
+    new: Optional[dict],
+    description: str,
+    user_id: str,
+) -> dict:
+    """
+    Add a change document to the history collection.
+    :param mongo: the application database object
+    :param method_name: the name of the handler method that executed the change
+    :param old: the otu document prior to the change
+    :param new: the otu document after the change
+    :param description: a human readable description of the change
+    :param user_id: the id of the requesting user
+    :param silent: don't dispatch a message
+    :return: the change document
+
+    """
+    otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
+
+    document = {
+        "_id": ".".join([str(otu_id), str(otu_version)]),
+        "method_name": method_name.value,
+        "description": description,
+        "created_at": virtool.utils.timestamp(),
+        "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
+        "reference": {"id": ref_id},
+        "index": {"id": "unbuilt", "version": "unbuilt"},
+        "user": {"id": user_id},
+    }
+
+    if method_name.value == "create":
+        document["diff"] = new
+
+    elif method_name.value == "remove":
+        document["diff"] = old
+
+    else:
+        document["diff"] = calculate_diff(old, new)
 
     return document
 
