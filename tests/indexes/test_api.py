@@ -3,6 +3,7 @@ import gzip
 import json
 import os
 import shutil
+from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 
@@ -79,7 +80,7 @@ class TestFind:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_ready(self, snapshot, fake2, spawn_client, static_time):
+    async def test_ready(self, fake2, snapshot, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
         user = await fake2.users.create()
@@ -88,10 +89,8 @@ class TestFind:
             [
                 {
                     "_id": "bot",
-                    "change_count": 2,
-                    "modified_otu_count": 4,
                     "version": 1,
-                    "created_at": static_time.datetime,
+                    "created_at": static_time.datetime + timedelta(hours=2),
                     "manifest": {"foo": 2},
                     "ready": True,
                     "has_files": True,
@@ -101,8 +100,6 @@ class TestFind:
                 },
                 {
                     "_id": "daz",
-                    "change_count": 3,
-                    "modified_otu_count": 5,
                     "version": 0,
                     "created_at": static_time.datetime,
                     "manifest": {"foo": 2},
@@ -118,41 +115,7 @@ class TestFind:
         resp = await client.get("/indexes?ready=True")
 
         assert resp.status == 200
-        resp_json = sorted(await resp.json(), key=lambda d: d["change_count"])
-        assert resp_json == [
-            {
-                "change_count": 2,
-                "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
-                "id": "bot",
-                "job": {"id": "bar"},
-                "modified_otu_count": 4,
-                "ready": True,
-                "reference": {"id": "bar"},
-                "user": {
-                    "administrator": False,
-                    "handle": "leeashley",
-                    "id": "bf1b993c",
-                },
-                "version": 1,
-            },
-            {
-                "change_count": 3,
-                "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
-                "id": "daz",
-                "job": {"id": "foo"},
-                "modified_otu_count": 5,
-                "ready": True,
-                "reference": {"id": "foo"},
-                "user": {
-                    "administrator": False,
-                    "handle": "leeashley",
-                    "id": "bf1b993c",
-                },
-                "version": 0,
-            },
-        ]
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])

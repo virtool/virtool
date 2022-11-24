@@ -22,6 +22,7 @@ from virtool.indexes.checks import (
 )
 from virtool.indexes.db import (
     update_last_indexed_versions,
+    IndexCountsTransform,
 )
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import join_index_path
@@ -57,11 +58,10 @@ class IndexData:
 
         pipeline = [
             {"$match": {"ready": True}},
-            {"$sort": {"version": -1}},
             {
                 "$group": {
                     "_id": "$reference.id",
-                    "index": {"$first": "$_id"},
+                    "index_id": {"$first": "$_id"},
                     "version": {"$first": "$version"},
                     "change_count": {"$first": "$change_count"},
                     "created_at": {"$first": "$created_at"},
@@ -72,34 +72,33 @@ class IndexData:
                     "job": {"$first": "$job"},
                 }
             },
+            {"$sort": {"created_at": 1}},
         ]
 
-        ready_indexes = []
+        items = [
+            {
+                "id": agg["index_id"],
+                "version": agg["version"],
+                "reference": {
+                    "id": agg["_id"],
+                },
+                "change_count": agg["change_count"],
+                "created_at": agg["created_at"],
+                "has_files": agg["has_files"],
+                "modified_otu_count": agg["modified_otu_count"],
+                "user": agg["user"],
+                "ready": agg["ready"],
+                "job": agg["job"],
+            }
+            async for agg in self._mongo.indexes.aggregate(pipeline)
+        ]
 
-        async for agg in self._mongo.indexes.aggregate(pipeline):
-            user = await self._mongo.users.find_one(agg["user"]["id"])
-            ready_indexes.append(
-                {
-                    "id": agg["index"],
-                    "version": agg["version"],
-                    "reference": {
-                        "id": agg["_id"],
-                    },
-                    "change_count": agg["change_count"],
-                    "created_at": agg["created_at"],
-                    "has_files": agg["has_files"],
-                    "modified_otu_count": agg["modified_otu_count"],
-                    "user": {
-                        "id": user["_id"],
-                        "handle": user["handle"],
-                        "administrator": user["administrator"],
-                    },
-                    "ready": agg["ready"],
-                    "job": agg["job"],
-                }
-            )
+        items = await apply_transforms(
+            items,
+            [AttachUserTransform(self._mongo), IndexCountsTransform(self._mongo)],
+        )
 
-        return [IndexMinimal(**index) for index in ready_indexes]
+        return [IndexMinimal(**index) for index in items]
 
     async def get(self, index_id: str) -> Index:
         """
