@@ -19,9 +19,6 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
     """
     Connects to an OpenFGA server and configures the store id.
     Returns the application client object.
-
-    :return: the application OpenFGA client
-
     """
     configuration = openfga_sdk.Configuration(
         api_scheme=openfga_scheme, api_host=openfga_host
