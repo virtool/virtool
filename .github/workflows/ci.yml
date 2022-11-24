@@ -40,6 +40,7 @@ jobs:
         env:
           POSTGRES_USER: virtool
           POSTGRES_PASSWORD: virtool
+          POSTGRES_DB: virtool
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -50,6 +51,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Create OpenFGA Network
+        run: docker network create openfga
+      - name: Start OpenFGA Postgres
+        run: docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+      - name: Migrate OpenFGA
+        run: docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+      - name: Start OpenFGA
+        run: docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.7.0
         with:

@@ -7,6 +7,8 @@ class Config:
     db_connection_string: str
     db_name: str
     dev: bool
+    openfga_host: str
+    openfga_scheme: str
     postgres_connection_string: str
     redis_connection_string: str
     b2c_client_id: str = None

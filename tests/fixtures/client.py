@@ -80,6 +80,8 @@ def create_app(
             no_check_files=True,
             no_fetching=True,
             no_sentry=True,
+            openfga_host="localhost:8080",
+            openfga_scheme="http",
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
             fake=False,
@@ -218,6 +220,9 @@ def spawn_job_client(
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
                 no_sentry=True,
+                openfga_host="localhost:8080",
+                openfga_scheme="http",
+
             )
         )
 
