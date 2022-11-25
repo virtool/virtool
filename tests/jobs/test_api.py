@@ -1,5 +1,9 @@
 import pytest
+from openfga_sdk import WriteRequest, TupleKeys, TupleKey, ApiException
+from openfga_sdk.api import open_fga_api
 from virtool_core.models.enums import Permission
+
+from virtool.auth.utils import write_tuple
 
 
 @pytest.mark.parametrize("archived", [True, False, None])
@@ -41,6 +45,8 @@ async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
 @pytest.mark.parametrize("job_filter", [None, "finished", "complete", "failed"])
 async def test_delete(job_filter, fake2, spawn_client, test_job, resp_is, snapshot):
     client = await spawn_client(authorize=True, permissions=[Permission.remove_job])
+
+    await write_tuple(client.app["auth"], "test", Permission.remove_job.name, "instance", "Virtool")
 
     user = await fake2.users.create()
 
@@ -249,6 +255,8 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
 )
 async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test_job):
     client = await spawn_client(authorize=True, permissions=[Permission.cancel_job])
+
+    await write_tuple(client.app["auth"], "test", Permission.cancel_job.name, "instance", "Virtool")
 
     user = await fake2.users.create()
 

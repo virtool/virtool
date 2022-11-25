@@ -4,12 +4,14 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from openfga_sdk.api import open_fga_api
 from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.task import Task
 
 import virtool.utils
+from virtool.auth.utils import write_tuple
 from virtool.data.utils import get_data_from_app
 from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
@@ -156,6 +158,8 @@ class TestCreate:
             permissions=[Permission.create_ref],
         )
 
+        await write_tuple(client.app["auth"], "test", Permission.create_ref.name, "instance", "Virtool")
+
         default_source_type = ["strain", "isolate"]
 
         await get_data_from_app(client.app).settings.update(
@@ -183,6 +187,7 @@ class TestCreate:
             authorize=True,
             permissions=[Permission.create_ref, Permission.upload_file],
         )
+        await write_tuple(client.app["auth"], "test", Permission.create_ref.name, "instance", "Virtool")
 
         tmpdir.mkdir("files")
 
@@ -227,6 +232,8 @@ class TestCreate:
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
     ):
         client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+
+        await write_tuple(client.app["auth"], "test", Permission.create_ref.name, "instance", "Virtool")
 
         user_1 = await fake2.users.create()
         user_2 = await fake2.users.create()
@@ -273,6 +280,8 @@ class TestCreate:
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
     ):
         client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+
+        await write_tuple(client.app["auth"], "test", Permission.create_ref.name, "instance", "Virtool")
 
         data = {
             "name": "Test Remote",

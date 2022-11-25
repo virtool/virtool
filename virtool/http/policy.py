@@ -6,6 +6,8 @@ from aiohttp import web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
+from openfga_sdk import CheckRequest, TupleKey
+from openfga_sdk.api import open_fga_api
 from virtool_core.models.enums import Permission
 
 from virtool.errors import PolicyError
@@ -31,11 +33,16 @@ class DefaultRoutePolicy:
         """
         ...
 
-    def run_checks(self, req, handler, client):
+    async def check2(self, req, handler, client):
+        ...
+
+    async def run_checks(self, req, handler, client):
         if not self.allow_unauthenticated and not client.authenticated:
             raise HTTPUnauthorized(text="Requires authorization")
 
         self.check(req, handler, client)
+        await self.check2(req, handler, client)
+
 
 
 class AdministratorRoutePolicy(DefaultRoutePolicy):
@@ -59,6 +66,15 @@ class PermissionsRoutePolicy(DefaultRoutePolicy):
         for permission in self.permissions:
             if not client.permissions.get(permission.name, False):
                 raise HTTPForbidden(text="Not permitted")
+
+
+class PermissionsTestRoute(DefaultRoutePolicy):
+    def __init__(self, *permissions: Permission):
+        self.permissions = permissions
+
+    async def check2(self, req, handler, client):
+        for permission in self.permissions:
+            await auth_check(req.app["auth"], client.user_id, permission.name, "instance", "Virtool")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):
@@ -142,6 +158,24 @@ async def route_policy_middleware(req: Request, handler: Callable):
 
     """
     route_policy = get_handler_policy(handler, req.method)
-    route_policy.run_checks(req, handler, req["client"])
+    await route_policy.run_checks(req, handler, req["client"])
 
     return await handler(req)
+
+
+async def auth_check(api_client, user_id, relation, object_type, object_name):
+
+    api_instance = open_fga_api.OpenFgaApi(api_client)
+
+    body = CheckRequest(
+        tuple_key=TupleKey(
+            user=f"user:{user_id}",
+            relation=relation,
+            object=f"{object_type}:{object_name}",
+        ),
+    )
+
+    response = await api_instance.check(body)
+
+    if not response.allowed:
+        raise HTTPForbidden(text="Not permitted")

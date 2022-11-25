@@ -10,6 +10,7 @@ from virtool_core.models.enums import Permission, LibraryType
 
 import virtool.caches.db
 import virtool.pg.utils
+from virtool.auth.utils import write_tuple
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.config.cls import Config
@@ -294,6 +295,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
+        await write_tuple(client.app["auth"], "test", Permission.create_sample.name, "instance", "Virtool")
+
         await get_data_from_app(client.app).settings.update(
             UpdateSettingsRequest(
                 sample_group=group_setting,
@@ -349,6 +352,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
+        await write_tuple(client.app["auth"], "test", Permission.create_sample.name, "instance", "Virtool")
+
         await get_data_from_app(client.app).settings.update(
             UpdateSettingsRequest(sample_unique_names=True)
         )
@@ -391,6 +396,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
+        await write_tuple(client.app["auth"], "test", Permission.create_sample.name, "instance", "Virtool")
+
         async with AsyncSession(pg) as session:
             session.add(test_upload)
 
@@ -421,6 +428,8 @@ class TestCreate:
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
+
+        await write_tuple(client.app["auth"], "test", Permission.create_sample.name, "instance", "Virtool")
 
         await get_data_from_app(client.app).settings.update(
             UpdateSettingsRequest(sample_group="force_choice", sample_unique_names=True)
@@ -457,6 +466,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
+        await write_tuple(client.app["auth"], "test", Permission.create_sample.name, "instance", "Virtool")
+
         async with AsyncSession(pg) as session:
             session.add(test_upload)
             await session.commit()
@@ -478,6 +489,8 @@ class TestCreate:
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
+
+        await write_tuple(client.app["auth"], "test", Permission.create_sample.name, "instance", "Virtool")
 
         await get_data_from_app(client.app).settings.update(
             UpdateSettingsRequest(sample_unique_names=True)
@@ -503,6 +516,8 @@ class TestCreate:
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
+
+        await write_tuple(client.app["auth"], "test", Permission.create_sample.name, "instance", "Virtool")
 
         await get_data_from_app(client.app).settings.update(
             UpdateSettingsRequest(sample_unique_names=True)

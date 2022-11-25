@@ -19,8 +19,7 @@ from virtool.http.policy import (
     policy,
     PublicRoutePolicy,
     DefaultRoutePolicy,
-    AdministratorRoutePolicy,
-    PermissionsRoutePolicy,
+    AdministratorRoutePolicy, PermissionsRoutePolicy,
 )
 from virtool.http.routes import Routes
 

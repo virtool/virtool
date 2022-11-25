@@ -8,7 +8,7 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
-    ApiClient, OpenFgaApi,
+    ApiClient, OpenFgaApi, WriteRequest, TupleKey, ApiException, TupleKeys,
 )
 from openfga_sdk.api import open_fga_api
 
@@ -117,3 +117,23 @@ async def check_openfga_version(client: ApiClient):
     """
 
     logger.info("Found OpenFGA %s", client.user_agent)
+
+
+async def write_tuple(api_client, user_id, relation, object_type, object_name):
+    api_instance = open_fga_api.OpenFgaApi(api_client)
+
+    body = WriteRequest(
+        writes=TupleKeys(
+            tuple_keys=[TupleKey(
+                user=f"user:{user_id}",
+                relation=relation,
+                object=f"{object_type}:{object_name}",
+            ),
+            ]
+        )
+    )
+
+    try:
+        await api_instance.write(body)
+    except ApiException:
+        pass

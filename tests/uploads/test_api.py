@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
+from virtool.auth.utils import write_tuple
 from virtool.uploads.models import Upload, UploadType
 from virtool_core.models.enums import Permission
 
@@ -33,6 +34,8 @@ class TestUpload:
             authorize=True, permissions=[Permission.upload_file]
         )
 
+        await write_tuple(client.app["auth"], "test", Permission.upload_file.name, "instance", "Virtool")
+
         client.app["config"].data_path = tmp_path
 
         if upload_type:
@@ -56,6 +59,8 @@ class TestUpload:
             authorize=True, permissions=[Permission.upload_file]
         )
 
+        await write_tuple(client.app["auth"], "test", Permission.upload_file.name, "instance", "Virtool")
+
         resp = await client.post_form("/uploads", data=files)
 
         assert resp.status == 400
@@ -68,6 +73,8 @@ class TestUpload:
         client = await spawn_client(
             authorize=True, permissions=[Permission.upload_file]
         )
+
+        await write_tuple(client.app["auth"], "test", Permission.upload_file.name, "instance", "Virtool")
 
         resp = await client.post_form(
             "/uploads?name=Test.fq.gz&type=foobar", data=files
@@ -185,6 +192,8 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
+        await write_tuple(client.app["auth"], "test", Permission.remove_file.name, "instance", "Virtool")
+
         client.app["config"].data_path = tmp_path
         await client.post_form("/uploads?name=test.fq.gz&type=hmm", data=files)
 
@@ -203,6 +212,8 @@ class TestDelete:
 
         """
         client = await spawn_client(authorize=True, administrator=True)
+
+        await write_tuple(client.app["auth"], "test", Permission.modify_subtraction.name, "instance", "Virtool")
 
         client.app["config"].data_path = tmp_path
 
@@ -243,6 +254,8 @@ class TestDelete:
 
         """
         client = await spawn_client(authorize=True, administrator=True)
+
+        await write_tuple(client.app["auth"], "test", Permission.modify_subtraction.name, "instance", "Virtool")
 
         client.app["config"].data_path = tmp_path
 

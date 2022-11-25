@@ -6,6 +6,7 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import Permission
 
+from virtool.auth.utils import write_tuple
 from virtool.subtractions.models import SubtractionFile
 from virtool.uploads.models import Upload
 
@@ -102,6 +103,8 @@ async def test_edit(data, fake2, has_user, mocker, snapshot, spawn_client, stati
         authorize=True, permissions=[Permission.modify_subtraction]
     )
 
+    await write_tuple(client.app["auth"], "test", Permission.modify_subtraction.name, "instance", "Virtool")
+
     await client.db.subtraction.insert_one(document)
 
     resp = await client.patch("/subtractions/apple", data)
@@ -117,6 +120,8 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
         authorize=True, permissions=[Permission.modify_subtraction]
     )
     client.app["config"].data_path = tmp_path
+
+    await write_tuple(client.app["auth"], "test", Permission.modify_subtraction.name, "instance", "Virtool")
 
     if exists:
         user = await fake2.users.create()
@@ -375,6 +380,8 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
         base_url="https://virtool.example.com",
         permissions=Permission.modify_subtraction.value,
     )
+
+    await write_tuple(client.app["auth"], "test", Permission.modify_subtraction.name, "instance", "Virtool")
 
     data = {"name": "Calamus", "nickname": "Rim Palm", "upload_id": upload_id}
 
