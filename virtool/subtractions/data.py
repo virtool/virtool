@@ -44,7 +44,7 @@ from virtool.subtractions.utils import (
     check_subtraction_file_type,
 )
 from virtool.uploads.models import Upload
-from virtool.uploads.utils import naive_writer
+from virtool.uploads.utils import naive_writer, file_chunks
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -283,7 +283,7 @@ class SubtractionsData(DataLayerPiece):
                 except IntegrityError:
                     raise ResourceConflictError("File name already exists")
 
-                size = await naive_writer(reader, path)
+                size = await naive_writer(file_chunks(reader), path)
 
                 subtraction_file.size = size
                 subtraction_file.uploaded_at = virtool.utils.timestamp()

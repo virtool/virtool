@@ -17,7 +17,7 @@ from virtool.http.policy import PermissionsRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
-from virtool.uploads.utils import naive_validator, naive_writer, get_upload_path
+from virtool.uploads.utils import naive_validator, naive_writer, get_upload_path, file_chunks
 from virtool.users.utils import Permission
 
 
@@ -91,7 +91,7 @@ class UploadsView(PydanticView):
         file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
 
         try:
-            size = await naive_writer(await self.request.multipart(), file_path)
+            size = await naive_writer(file_chunks(await self.request.multipart()), file_path)
 
             upload = await get_data_from_req(self.request).uploads.finalize(
                 size, upload.id

@@ -31,3 +31,17 @@ async def test_fake(fake2, snapshot):
             regex=True,
         ),
     )
+
+    upload = await fake2.uploads.create(user_1)
+
+    assert upload == snapshot(
+        name="upload",
+        matcher=path_type(
+            {
+                "created_at": (datetime,),
+                "uploaded_at": (datetime,),
+                ".*timestamp": (datetime,),
+            },
+            regex=True,
+        ),
+    )

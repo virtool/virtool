@@ -36,7 +36,7 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.uploads.utils import naive_writer
+from virtool.uploads.utils import naive_writer, file_chunks
 from virtool.users.db import AttachUserTransform
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
@@ -225,7 +225,7 @@ class IndexData:
                 join_index_path(self._config.data_path, reference_id, index_id) / name
             )
 
-            size = await naive_writer(await multipart(), path)
+            size = await naive_writer(file_chunks(await multipart()), path)
 
             index_file.size = size
             index_file.uploaded_at = virtool.utils.timestamp()

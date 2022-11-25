@@ -41,7 +41,7 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.uploads.utils import naive_writer
+from virtool.uploads.utils import naive_writer, file_chunks
 from virtool.users.db import AttachUserTransform
 from virtool.utils import wait_for_checks
 
@@ -242,7 +242,7 @@ class AnalysisData(DataLayerPiece):
         )
 
         try:
-            size = await naive_writer(reader, analysis_file_path)
+            size = await naive_writer(file_chunks(reader), analysis_file_path)
         except CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
             await delete_row(self._pg, upload_id, AnalysisFile)

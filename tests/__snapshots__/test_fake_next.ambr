@@ -115,3 +115,23 @@
     'workflow': 'jobs_aodp',
   }
 ---
+# name: test_fake[uvloop][upload]
+  <class 'dict'> {
+    'created_at': <class 'datetime'>,
+    'id': 1,
+    'name': 'test.fq.gz',
+    'name_on_disk': '1-test.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': False,
+    'size': 1,
+    'type': 'reads',
+    'uploaded_at': <class 'datetime'>,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'laura56',
+      'id': 'fb085f7f',
+    },
+  }
+---

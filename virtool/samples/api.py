@@ -71,7 +71,7 @@ from virtool.samples.oas import (
 )
 from virtool.samples.utils import SampleRight
 from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.uploads.utils import is_gzip_compressed
+from virtool.uploads.utils import is_gzip_compressed, file_chunks
 from virtool.users.db import AttachUserTransform
 from virtool.users.utils import Permission
 from virtool.utils import base_processor
@@ -564,7 +564,7 @@ async def upload_artifact(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), artifact_file_path
+            file_chunks(await req.multipart()), artifact_file_path
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file upload aborted for sample: %s", sample_id)
@@ -608,7 +608,7 @@ async def upload_reads(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), reads_path, is_gzip_compressed
+            file_chunks(await req.multipart()), reads_path, is_gzip_compressed
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -679,7 +679,7 @@ async def upload_cache_reads(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_path, is_gzip_compressed
+            file_chunks(await req.multipart()), cache_path, is_gzip_compressed
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -739,7 +739,7 @@ async def upload_cache_artifact(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_path
+            file_chunks(await req.multipart()), cache_path
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)

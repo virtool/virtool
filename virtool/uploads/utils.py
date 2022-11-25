@@ -42,21 +42,31 @@ def naive_validator(req) -> Validator.errors:
         return v.errors
 
 
+async def file_chunks(reader):
+    """
+    Read a chunk of size `CHUNK_SIZE` from a file.
+    """
+    file = await reader.next()
+
+    while True:
+        chunk = await file.read_chunk(CHUNK_SIZE)
+
+        yield chunk
+
+
 async def naive_writer(
-    reader,
+    chunker,
     path: pathlib.Path,
     on_first_chunk: Optional[Callable[[bytes], Any]] = None,
 ) -> Optional[int]:
     """
     Write a new file from a HTTP multipart request.
 
-    :param reader: the file reader
+    :param chunker: yields chunks of a file acquired from a multipart request
     :param path: the file path to write the data to
     :param on_first_chunk: a function to call with the first chunk of the file stream
     :return: size of the new file in bytes
     """
-    file = await reader.next()
-
     size = 0
 
     try:
@@ -65,9 +75,7 @@ async def naive_writer(
         pass
 
     async with aiofiles.open(path, "wb") as f:
-        while True:
-            chunk = await file.read_chunk(CHUNK_SIZE)
-
+        async for chunk in chunker:
             if not chunk:
                 break
 

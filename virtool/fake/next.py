@@ -11,12 +11,14 @@ A sample needs a user and upload to exist.
 """
 from typing import List, Optional
 
+import aiofiles
 from faker import Faker
-from faker.providers import BaseProvider, python, color, lorem
+from faker.providers import BaseProvider, python, color, lorem, file
 from virtool_core.models.group import Group
 from virtool_core.models.job import Job
 from virtool_core.models.label import Label
 from virtool_core.models.task import Task
+from virtool_core.models.upload import Upload
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
@@ -29,7 +31,17 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
 )
 from virtool.subtractions.tasks import AddSubtractionFilesTask
+from virtool.uploads.models import UploadType
+from virtool.uploads.utils import CHUNK_SIZE, naive_writer
 from virtool.users.oas import UpdateUserRequest
+
+
+async def fake_file_chunks(path):
+    async with aiofiles.open(path, "r") as f:
+        while True:
+            chunk = await f.read(CHUNK_SIZE)
+
+            yield chunk
 
 
 class VirtoolProvider(BaseProvider):
@@ -55,12 +67,14 @@ class DataFaker:
         self.faker.add_provider(color)
         self.faker.add_provider(lorem)
         self.faker.add_provider(python)
+        self.faker.add_provider(file)
 
         self.groups = GroupsFakerPiece(self)
         self.labels = LabelsFakerPiece(self)
         self.jobs = JobsFakerPiece(self)
         self.tasks = TasksFakerPiece(self)
         self.users = UsersFakerPiece(self)
+        self.uploads = UploadsFakerPiece(self)
 
 
 class DataFakerPiece:
@@ -157,3 +171,33 @@ class UsersFakerPiece(DataFakerPiece):
             return await self.layer.users.get(user.id)
 
         return user
+
+
+class UploadsFakerPiece(DataFakerPiece):
+    model = Upload
+
+    async def create(
+        self,
+        user: User,
+        with_file: bool = False,
+        upload_type: str = "reads",
+        name: str = "test.fq.gz",
+        reserved: bool = False,
+    ):
+
+        if upload_type not in UploadType.to_list():
+            upload_type = "reads"
+
+        upload = await self.layer.uploads.create(name, upload_type, reserved, user.id)
+
+        if with_file:
+            config = getattr(self.layer.uploads, "_config")
+            file_path = config.data_path / "files" / upload.name_on_disk
+            size = await naive_writer(fake_file_chunks(file_path), file_path)
+
+        if not with_file:
+            size = 1
+
+        upload = await self.layer.uploads.finalize(size, upload.id)
+
+        return upload
