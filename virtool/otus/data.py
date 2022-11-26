@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Mapping
 
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
-from virtool_core.models.otu import OTU, OTUSequence
+from virtool_core.models.otu import OTU, Sequence
 
 import virtool.history.db
 import virtool.otus.db
@@ -23,16 +23,16 @@ from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
 from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
 from virtool.otus.utils import find_isolate, format_isolate_name
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 
 class OTUData:
-    def __init__(self, db: DB, config: Config):
-        self._db = db
+    def __init__(self, mongo: DB, config: Config):
         self._config = config
-        self._mongo = self._db
+        self._mongo = mongo
 
     async def find(
         self, names: bool, query: Mapping, term: Optional[str], verified: Optional[bool]
@@ -46,10 +46,14 @@ class OTUData:
         :param otu_id: the ID of the OTU to get
         :return: the OTU
         """
-        document = await virtool.otus.db.join_and_format(self._db, otu_id)
+        document = await virtool.otus.db.join_and_format(self._mongo, otu_id)
 
         if document is None:
             raise ResourceNotFoundError
+
+        document = await apply_transforms(
+            document, [AttachReferenceTransform(self._mongo)]
+        )
 
         return OTU(
             **{
@@ -68,7 +72,7 @@ class OTUData:
         :return: a FASTA filename and body
 
         """
-        otu = await self._db.otus.find_one(otu_id, ["name", "isolates"])
+        otu = await self._mongo.otus.find_one(otu_id, ["name", "isolates"])
 
         if otu is None:
             raise ResourceNotFoundError
@@ -86,7 +90,7 @@ class OTUData:
                         sequence["_id"],
                         sequence["sequence"],
                     )
-                    async for sequence in self._db.sequences.find(
+                    async for sequence in self._mongo.sequences.find(
                         {"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]
                     )
                 ]
@@ -108,9 +112,9 @@ class OTUData:
         :param user_id: the ID of the creating user
         :return: the OTU
         """
-        async with self._db.create_session() as session:
+        async with self._mongo.create_session() as session:
 
-            document = await self._db.otus.insert_one(
+            document = await self._mongo.otus.insert_one(
                 {
                     "name": data.name,
                     "abbreviation": data.abbreviation,
@@ -126,7 +130,7 @@ class OTUData:
             )
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.create,
                 None,
@@ -173,27 +177,27 @@ class OTUData:
         if "schema" in data:
             update["schema"] = data["schema"]
 
-        old = await virtool.otus.db.join(self._db, otu_id)
+        old = await virtool.otus.db.join(self._mongo, otu_id)
 
-        async with self._db.create_session() as session:
-            document = await self._db.otus.find_one_and_update(
+        async with self._mongo.create_session() as session:
+            document = await self._mongo.otus.find_one_and_update(
                 {"_id": otu_id},
                 {"$set": update, "$inc": {"version": 1}},
                 session=session,
             )
 
             await virtool.otus.db.update_sequence_segments(
-                self._db, old, document, session=session
+                self._mongo, old, document, session=session
             )
 
             new = await virtool.otus.db.join(
-                self._db, otu_id, document, session=session
+                self._mongo, otu_id, document, session=session
             )
 
-            await update_otu_verification(self._db, new, session=session)
+            await update_otu_verification(self._mongo, new, session=session)
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.edit,
                 old,
@@ -221,21 +225,21 @@ class OTUData:
         :return: `True` if the removal was successful
 
         """
-        joined = await virtool.otus.db.join(self._db, otu_id)
+        joined = await virtool.otus.db.join(self._mongo, otu_id)
 
         if not joined:
             return None
 
-        async with self._db.create_session() as session:
+        async with self._mongo.create_session() as session:
             _, delete_result, _ = await asyncio.gather(
-                self._db.sequences.delete_many(
+                self._mongo.sequences.delete_many(
                     {"otu_id": otu_id}, silent=True, session=session
                 ),
-                self._db.otus.delete_one(
+                self._mongo.otus.delete_one(
                     {"_id": otu_id}, silent=silent, session=session
                 ),
                 # Unset the reference internal_control if it is the OTU being removed.
-                self._db.references.update_one(
+                self._mongo.references.update_one(
                     {
                         "_id": joined["reference"]["id"],
                         "internal_control.id": joined["_id"],
@@ -248,7 +252,7 @@ class OTUData:
             description = compose_remove_description(joined)
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.remove,
                 joined,
@@ -270,7 +274,7 @@ class OTUData:
         default: bool = False,
         isolate_id: Optional[str] = None,
     ):
-        document = await self._db.otus.find_one(otu_id)
+        document = await self._mongo.otus.find_one(otu_id)
 
         isolates = deepcopy(document["isolates"])
 
@@ -284,8 +288,8 @@ class OTUData:
             for isolate in isolates:
                 isolate["default"] = False
 
-        async with self._db.create_session() as session:
-            document = await self._db.otus.find_one(otu_id, session=session)
+        async with self._mongo.create_session() as session:
+            document = await self._mongo.otus.find_one(otu_id, session=session)
 
             isolates = deepcopy(document["isolates"])
 
@@ -301,7 +305,7 @@ class OTUData:
 
             # Get the complete, joined entry before the update.
             old = await virtool.otus.db.join(
-                self._db, otu_id, document, session=session
+                self._mongo, otu_id, document, session=session
             )
 
             existing_ids = [isolate["id"] for isolate in isolates]
@@ -322,7 +326,7 @@ class OTUData:
             }
 
             # Push the new isolate to the database.
-            await self._db.otus.update_one(
+            await self._mongo.otus.update_one(
                 {"_id": otu_id},
                 {
                     "$set": {"isolates": [*isolates, isolate], "verified": False},
@@ -332,9 +336,9 @@ class OTUData:
             )
 
             # Get the joined entry now that it has been updated.
-            new = await virtool.otus.db.join(self._db, otu_id, session=session)
+            new = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
-            await update_otu_verification(self._db, new, session=session)
+            await update_otu_verification(self._mongo, new, session=session)
 
             description = f"Added {format_isolate_name(isolate)}"
 
@@ -342,7 +346,7 @@ class OTUData:
                 description += " as default"
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.add_isolate,
                 old,
@@ -362,7 +366,7 @@ class OTUData:
         source_type: Optional[str] = None,
         source_name: Optional[str] = None,
     ):
-        isolates = await get_one_field(self._db.otus, "isolates", otu_id)
+        isolates = await get_one_field(self._mongo.otus, "isolates", otu_id)
 
         isolate = find_isolate(isolates, isolate_id)
         old_isolate_name = format_isolate_name(isolate)
@@ -375,11 +379,11 @@ class OTUData:
 
         new_isolate_name = format_isolate_name(isolate)
 
-        async with self._db.create_session() as session:
-            old = await virtool.otus.db.join(self._db, otu_id, session=session)
+        async with self._mongo.create_session() as session:
+            old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
             # Replace the isolates list with the update one.
-            document = await self._db.otus.find_one_and_update(
+            document = await self._mongo.otus.find_one_and_update(
                 {"_id": otu_id},
                 {
                     "$set": {"isolates": isolates, "verified": False},
@@ -390,16 +394,16 @@ class OTUData:
 
             # Get the joined entry now that it has been updated.
             new = await virtool.otus.db.join(
-                self._db, otu_id, document, session=session
+                self._mongo, otu_id, document, session=session
             )
 
             await virtool.otus.db.update_otu_verification(
-                self._db, new, session=session
+                self._mongo, new, session=session
             )
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.edit_isolate,
                 old,
@@ -409,7 +413,9 @@ class OTUData:
                 session=session,
             )
 
-        complete = await virtool.otus.db.join_and_format(self._db, otu_id, joined=new)
+        complete = await virtool.otus.db.join_and_format(
+            self._mongo, otu_id, joined=new
+        )
 
         return find_isolate(complete["isolates"], isolate_id)
 
@@ -425,13 +431,13 @@ class OTUData:
         :return: the updated isolate
 
         """
-        async with self._db.create_session() as session:
-            document = await self._db.otus.find_one(otu_id, session=session)
+        async with self._mongo.create_session() as session:
+            document = await self._mongo.otus.find_one(otu_id, session=session)
 
             isolate = find_isolate(document["isolates"], isolate_id)
 
             old = await virtool.otus.db.join(
-                self._db, otu_id, document, session=session
+                self._mongo, otu_id, document, session=session
             )
 
             # If the default isolate will be unchanged, immediately return the existing
@@ -447,7 +453,7 @@ class OTUData:
             ]
 
             # Replace the isolates list with the updated one.
-            document = await self._db.otus.find_one_and_update(
+            document = await self._mongo.otus.find_one_and_update(
                 {"_id": otu_id},
                 {
                     "$set": {"isolates": isolates, "verified": False},
@@ -458,16 +464,16 @@ class OTUData:
 
             # Get the joined entry now that it has been updated.
             new = await virtool.otus.db.join(
-                self._db, otu_id, document, session=session
+                self._mongo, otu_id, document, session=session
             )
 
-            await virtool.otus.db.update_otu_verification(self._db, new)
+            await virtool.otus.db.update_otu_verification(self._mongo, new)
 
             isolate_name = format_isolate_name(isolate)
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.set_as_default,
                 old,
@@ -480,8 +486,8 @@ class OTUData:
         return find_isolate(new["isolates"], isolate_id)
 
     async def remove_isolate(self, otu_id: str, isolate_id: str, user_id: str):
-        async with self._db.create_session() as session:
-            document = await self._db.otus.find_one(otu_id)
+        async with self._mongo.create_session() as session:
+            document = await self._mongo.otus.find_one(otu_id)
 
             isolates = deepcopy(document["isolates"])
 
@@ -499,10 +505,10 @@ class OTUData:
                 new_default["default"] = True
 
             old = await virtool.otus.db.join(
-                self._db, otu_id, document, session=session
+                self._mongo, otu_id, document, session=session
             )
 
-            document = await self._db.otus.find_one_and_update(
+            document = await self._mongo.otus.find_one_and_update(
                 {"_id": otu_id},
                 {
                     "$set": {"isolates": isolates, "verified": False},
@@ -512,12 +518,14 @@ class OTUData:
             )
 
             new = await virtool.otus.db.join(
-                self._db, otu_id, document, session=session
+                self._mongo, otu_id, document, session=session
             )
 
             await asyncio.gather(
-                virtool.otus.db.update_otu_verification(self._db, new, session=session),
-                self._db.sequences.delete_many(
+                virtool.otus.db.update_otu_verification(
+                    self._mongo, new, session=session
+                ),
+                self._mongo.sequences.delete_many(
                     {"otu_id": otu_id, "isolate_id": isolate_id}, session=session
                 ),
             )
@@ -528,7 +536,7 @@ class OTUData:
                 description += f" and set {format_isolate_name(new_default)} as default"
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.remove_isolate,
                 old,
@@ -551,8 +559,8 @@ class OTUData:
         sequence_id: Optional[str] = None,
         target: Optional[str] = None,
     ):
-        async with self._db.create_session() as session:
-            old = await virtool.otus.db.join(self._db, otu_id, session=session)
+        async with self._mongo.create_session() as session:
+            old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
             to_insert = {
                 "accession": accession,
@@ -569,19 +577,21 @@ class OTUData:
             if sequence_id:
                 to_insert["_id"] = sequence_id
 
-            sequence_document = await self._db.sequences.insert_one(
+            sequence_document = await self._mongo.sequences.insert_one(
                 to_insert, session=session
             )
 
             new = await virtool.otus.db.join(
-                self._db,
+                self._mongo,
                 otu_id,
-                document=await increment_otu_version(self._db, otu_id, session=session),
+                document=await increment_otu_version(
+                    self._mongo, otu_id, session=session
+                ),
                 session=session,
             )
 
             await virtool.otus.db.update_otu_verification(
-                self._db, new, session=session
+                self._mongo, new, session=session
             )
 
             isolate_name = format_isolate_name(
@@ -589,7 +599,7 @@ class OTUData:
             )
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.create_sequence,
                 old,
@@ -603,15 +613,19 @@ class OTUData:
 
     async def get_sequence(
         self, otu_id: str, isolate_id: str, sequence_id: str
-    ) -> OTUSequence:
-        if await self._db.otus.count_documents(
+    ) -> Sequence:
+        if await self._mongo.otus.count_documents(
             {"_id": otu_id, "isolates.id": isolate_id}, limit=1
-        ):
-            if document := await self._db.sequences.find_one(
+        ) and (
+            document := await self._mongo.sequences.find_one(
                 {"_id": sequence_id, "otu_id": otu_id, "isolate_id": isolate_id},
                 virtool.otus.db.SEQUENCE_PROJECTION,
-            ):
-                return OTUSequence(**document)
+            )
+        ):
+            document = await apply_transforms(
+                document, [AttachReferenceTransform(self._mongo)]
+            )
+            return Sequence(**document)
 
         raise ResourceNotFoundError
 
@@ -634,31 +648,31 @@ class OTUData:
         if "sequence" in data:
             update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
-        old = await virtool.otus.db.join(self._db, otu_id)
+        old = await virtool.otus.db.join(self._mongo, otu_id)
 
-        async with self._db.create_session() as session:
-            sequence_document = await self._db.sequences.find_one_and_update(
+        async with self._mongo.create_session() as session:
+            sequence_document = await self._mongo.sequences.find_one_and_update(
                 {"_id": sequence_id},
                 {"$set": update},
                 session=session,
             )
 
-            await increment_otu_version(self._db, otu_id, session=session)
+            await increment_otu_version(self._mongo, otu_id, session=session)
 
             new = await virtool.otus.db.join(
-                self._db,
+                self._mongo,
                 otu_id,
                 session=session,
             )
 
-            await update_otu_verification(self._db, new, session=session)
+            await update_otu_verification(self._mongo, new, session=session)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id)
             )
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.edit_sequence,
                 old,
@@ -682,27 +696,31 @@ class OTUData:
         :param user_id: the ID of the requesting user
 
         """
-        old = await virtool.otus.db.join(self._db, otu_id)
+        old = await virtool.otus.db.join(self._mongo, otu_id)
 
-        async with self._db.create_session() as session:
+        async with self._mongo.create_session() as session:
 
-            await self._db.sequences.delete_one({"_id": sequence_id}, session=session)
+            await self._mongo.sequences.delete_one(
+                {"_id": sequence_id}, session=session
+            )
 
             new = await virtool.otus.db.join(
-                self._db,
+                self._mongo,
                 otu_id,
-                document=await increment_otu_version(self._db, otu_id, session=session),
+                document=await increment_otu_version(
+                    self._mongo, otu_id, session=session
+                ),
                 session=session,
             )
 
-            await update_otu_verification(self._db, new, session=session)
+            await update_otu_verification(self._mongo, new, session=session)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id)
             )
 
             await virtool.history.db.add(
-                self._db,
+                self._mongo,
                 self._config,
                 HistoryMethod.remove_sequence,
                 old,

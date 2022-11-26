@@ -10,6 +10,7 @@ from virtool.errors import DatabaseError
 from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 
@@ -40,7 +41,11 @@ class HistoryData:
         if document:
             return await apply_transforms(
                 virtool.utils.base_processor(document),
-                [AttachUserTransform(self._db), DiffTransform(self.data_path)],
+                [
+                    AttachReferenceTransform(self._db),
+                    AttachUserTransform(self._db),
+                    DiffTransform(self.data_path),
+                ],
             )
 
         raise ResourceNotFoundError()

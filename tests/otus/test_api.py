@@ -40,7 +40,15 @@ async def test_find(find, verified, names, mocker, snapshot, spawn_client, test_
 
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-    error, fake2, snapshot, spawn_client, resp_is, test_change, test_otu, test_sequence
+    error,
+    fake2,
+    snapshot,
+    spawn_client,
+    resp_is,
+    test_change,
+    test_otu,
+    test_ref,
+    test_sequence,
 ):
     """
     Test that a valid request returns a complete otu document.
@@ -55,6 +63,7 @@ async def test_get(
             client.db.otus.insert_one({**test_otu, "user": {"id": user.id}}),
             client.db.history.insert_one({**test_change, "user": {"id": user.id}}),
             client.db.sequences.insert_one(test_sequence),
+            client.db.references.insert_one(test_ref),
         )
 
     resp = await client.get("/otus/6116cba1")
@@ -131,6 +140,7 @@ class TestEdit:
         check_ref_right,
         resp_is,
         test_otu,
+        test_ref,
     ):
         """
         Test that changing the name and abbreviation results:
@@ -143,7 +153,10 @@ class TestEdit:
 
         test_otu["abbreviation"] = existing_abbreviation
 
-        await client.db.otus.insert_one(test_otu)
+        await asyncio.gather(
+            client.db.otus.insert_one(test_otu),
+            client.db.references.insert_one(test_ref),
+        )
 
         resp = await client.patch("/otus/6116cba1", data)
 
@@ -231,6 +244,7 @@ class TestEdit:
         resp_is,
         test_change,
         test_otu,
+        test_ref,
         test_sequence,
     ):
         client = await spawn_client(
@@ -242,6 +256,7 @@ class TestEdit:
 
         await asyncio.gather(
             client.db.otus.insert_one(test_otu),
+            client.db.references.insert_one(test_ref),
             client.db.sequences.insert_one(test_sequence),
             client.db.history.insert_one(test_change),
         )
@@ -840,9 +855,11 @@ async def test_list_sequences(
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
 async def test_get_sequence(
-    error, snapshot, spawn_client, resp_is, test_otu, test_sequence
+    error, snapshot, spawn_client, resp_is, test_otu, test_ref, test_sequence
 ):
     client = await spawn_client(authorize=True)
+
+    await client.db.references.insert_one({**test_ref, "_id": "ref"})
 
     if error == "404_isolate":
         test_otu["isolates"] = []
@@ -877,6 +894,7 @@ async def test_create_sequence(
     resp_is,
     test_otu,
     test_random_alphanumeric,
+    test_ref,
     segment,
 ):
     client = await spawn_client(
@@ -891,7 +909,7 @@ async def test_create_sequence(
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
 
-    await client.db.references.insert_one({"_id": "hxn167", "data_type": "genome"})
+    await client.db.references.insert_one(test_ref)
 
     data = {
         "accession": "foobar",

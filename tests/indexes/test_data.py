@@ -18,7 +18,9 @@ async def test_finalize(
     user = await fake2.users.create()
 
     await asyncio.gather(
-        mongo.references.insert_one({"_id": "bar", "data_type": "genome"}),
+        mongo.references.insert_one(
+            {"_id": "bar", "name": "Bar", "data_type": "genome"}
+        ),
         mongo.indexes.insert_one(
             {
                 "_id": "foo",
@@ -90,7 +92,7 @@ async def test_finalize(
         await session.commit()
 
     # Ensure return value is correct.
-    assert await indexes_data.finalize("bar", "foo") == snapshot
+    assert await indexes_data.finalize("foo") == snapshot
 
     # Ensure document in database is correct.
     assert await mongo.indexes.find_one() == snapshot

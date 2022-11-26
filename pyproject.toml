@@ -55,7 +55,7 @@ aiojobs = "^1.0.0"
 aiohttp-pydantic = "^1.12.1"
 orjson = "^3.8.0"
 openfga-sdk = "^0.0.1"
-virtool-core = "^2.39.0"
+virtool-core = "^3.0.0"
 
 
 [tool.poetry.dev-dependencies]

@@ -18,6 +18,7 @@ from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.indexes.models import SQLIndexFile
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 
@@ -45,6 +46,36 @@ FILES = (
     "reference.rev.1.bt2",
     "reference.rev.2.bt2",
 )
+
+
+class IndexFilesTransform(AbstractTransform):
+    def __init__(self, base_url: str, pg: AsyncEngine):
+        self._base_url = base_url
+        self._pg = pg
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, "files": prepared}
+
+    async def prepare_one(self, document: Document) -> Any:
+        index_id = document["id"]
+
+        rows = await virtool.pg.utils.get_rows(
+            self._pg, SQLIndexFile, "index", index_id
+        )
+
+        files = []
+
+        for index_file in [row.to_dict() for row in rows]:
+            location = f"/indexes/{index_id}/files/{index_file['name']}"
+
+            files.append(
+                {
+                    **index_file,
+                    "download_url": str(self._base_url) + location,
+                }
+            )
+
+        return files
 
 
 class IndexCountsTransform(AbstractTransform):
@@ -102,9 +133,9 @@ async def create(
     if index_id:
         document["_id"] = index_id
 
-    document = await mongo.indexes.insert_one(document)
-
     async with mongo.create_session() as mongo_session:
+        document = await mongo.indexes.insert_one(document, session=mongo_session)
+
         await mongo.history.update_many(
             {"index.id": "unbuilt", "reference.id": ref_id},
             {"$set": {"index": {"id": document["_id"], "version": index_version}}},
@@ -129,11 +160,11 @@ async def processor(db, document: dict) -> dict:
     )
 
 
-async def find(db, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
+async def find(mongo, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
     """
     Find an index document matching the `req_query`
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param req_query: the request object
     :param ref_id: the id of the reference
     :return: the index document
@@ -145,7 +176,7 @@ async def find(db, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
         base_query = {"reference.id": ref_id}
 
     data = await paginate(
-        db.indexes,
+        mongo.indexes,
         {},
         req_query,
         base_query=base_query,
@@ -154,13 +185,18 @@ async def find(db, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
         sort="version",
     )
 
-    unbuilt_stats = await get_unbuilt_stats(db, ref_id)
+    unbuilt_stats = await get_unbuilt_stats(mongo, ref_id)
 
     return {
         **data,
         **unbuilt_stats,
         "documents": await apply_transforms(
-            data["documents"], [AttachUserTransform(db), IndexCountsTransform(db)]
+            data["documents"],
+            [
+                AttachReferenceTransform(mongo),
+                AttachUserTransform(mongo),
+                IndexCountsTransform(mongo),
+            ],
         ),
     }
 

@@ -15,7 +15,10 @@
     'job': <class 'dict'> {
       'id': 'bf1b993c',
     },
-    'manifest': 'manifest',
+    'manifest': <class 'dict'> {
+      'bar': 2,
+      'foo': 1,
+    },
     'ready': False,
     'reference': <class 'dict'> {
       'id': 'foo',
@@ -23,7 +26,7 @@
     'user': <class 'dict'> {
       'id': 'test',
     },
-    'version': 9,
+    'version': 0,
   }
 ---
 # name: TestCreate.test[True-uvloop][job]
@@ -33,8 +36,11 @@
     'archived': False,
     'args': <class 'dict'> {
       'index_id': 'fb085f7f',
-      'index_version': 9,
-      'manifest': 'manifest',
+      'index_version': 0,
+      'manifest': <class 'dict'> {
+        'bar': 2,
+        'foo': 1,
+      },
       'ref_id': 'foo',
       'user_id': 'test',
     },
@@ -73,23 +79,41 @@
 # name: TestCreate.test[True-uvloop][json]
   <class 'dict'> {
     'change_count': 1,
+    'contributors': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'count': 1,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    ],
     'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+    ],
     'has_files': True,
     'id': 'fb085f7f',
     'job': <class 'dict'> {
       'id': 'bf1b993c',
     },
+    'manifest': <class 'dict'> {
+      'bar': 2,
+      'foo': 1,
+    },
     'modified_otu_count': 0,
+    'otus': <class 'list'> [
+    ],
     'ready': False,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'foo',
+      'name': 'Foo',
     },
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
       'id': 'test',
     },
-    'version': 9,
+    'version': 0,
   }
 ---
 # name: TestCreate.test[True-uvloop][location]
@@ -110,7 +134,9 @@
         'modified_otu_count': 3,
         'ready': False,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'bar',
+          'name': 'Bar',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -130,7 +156,9 @@
         'modified_otu_count': 2,
         'ready': False,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'foo',
+          'name': 'Foo',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -162,7 +190,9 @@
       'modified_otu_count': 0,
       'ready': True,
       'reference': <class 'dict'> {
+        'data_type': 'genome',
         'id': 'foo',
+        'name': 'Foo',
       },
       'user': <class 'dict'> {
         'administrator': False,
@@ -182,7 +212,9 @@
       'modified_otu_count': 0,
       'ready': True,
       'reference': <class 'dict'> {
+        'data_type': 'genome',
         'id': 'bar',
+        'name': 'Bar',
       },
       'user': <class 'dict'> {
         'administrator': False,
@@ -196,7 +228,7 @@
 # name: test_finalize[uvloop-404_reference]
   <class 'dict'> {
     'id': 'not_found',
-    'message': 'Reference associated with index does not exist',
+    'message': 'Not found',
   }
 ---
 # name: test_finalize[uvloop-409_fasta]
@@ -296,7 +328,9 @@
     ],
     'ready': True,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Test A',
     },
     'user': <class 'dict'> {
       'administrator': False,
@@ -349,7 +383,9 @@
           'version': 3,
         },
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'foo',
+          'name': 'Foo',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -372,7 +408,9 @@
           'version': 2,
         },
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'foo',
+          'name': 'Foo',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -395,7 +433,9 @@
           'version': 1,
         },
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'foo',
+          'name': 'Foo',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -418,7 +458,9 @@
           'version': 0,
         },
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'foo',
+          'name': 'Foo',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -477,7 +519,9 @@
     ],
     'ready': False,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'bar',
+      'name': 'Bar',
     },
     'user': <class 'dict'> {
       'administrator': False,
