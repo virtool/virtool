@@ -6,11 +6,10 @@ from aiohttp import ClientSession
 from aiohttp.web_exceptions import (
     HTTPNoContent,
 )
-from cffi.model import attach_exception_info
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import IndexSearchResult, IndexMinimal, Index
+from virtool_core.models.index import IndexSearchResult, IndexMinimal
 from virtool_core.models.otu import OTUSearchResult, OTU
 from virtool_core.models.reference import (
     ReferenceSearchResult,
@@ -38,7 +37,6 @@ from virtool.data.errors import (
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
-from virtool.indexes.db import IndexCountsTransform, IndexFilesTransform
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id
@@ -63,14 +61,12 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
     UpdateRemoteReferenceTask,
 )
-from virtool.references.transforms import AttachReferenceTransform
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import (
     AttachUserTransform,
     extend_user,
 )
-from virtool.utils import base_processor
 
 
 class ReferencesData(DataLayerPiece):
