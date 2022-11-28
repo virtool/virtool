@@ -6,25 +6,23 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
-import pymongo.errors
 import dictdiffer
+import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from pymongo import InsertOne
 from virtool_core.models.enums import HistoryMethod
 
 import virtool.history.utils
 import virtool.otus.db
-
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.config import Config
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
     write_diff_file,
+    compose_history_description,
 )
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
-from virtool.otus.db import join
-from virtool.references.bulk import HistoryChange
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
 
@@ -149,29 +147,32 @@ async def add(
 
 
 async def prepare_add(
-    method_name: HistoryMethod,
+    history_method: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],
-    description: str,
     user_id: str,
-) -> dict:
+) -> Document:
     """
     Add a change document to the history collection.
-    :param mongo: the application database object
-    :param method_name: the name of the handler method that executed the change
+    :param history_method: the name of the method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
-    :param description: a human readable description of the change
     :param user_id: the id of the requesting user
-    :param silent: don't dispatch a message
     :return: the change document
 
     """
     otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
+    try:
+        abbreviation = new["abbreviation"]
+    except (TypeError, KeyError):
+        abbreviation = old["abbreviation"]
+
+    description = compose_history_description(history_method, otu_name, abbreviation)
+
     document = {
         "_id": ".".join([str(otu_id), str(otu_version)]),
-        "method_name": method_name.value,
+        "method_name": history_method.value,
         "description": description,
         "created_at": virtool.utils.timestamp(),
         "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
@@ -180,10 +181,10 @@ async def prepare_add(
         "user": {"id": user_id},
     }
 
-    if method_name.value == "create":
+    if history_method.value == "create":
         document["diff"] = new
 
-    elif method_name.value == "remove":
+    elif history_method.value == "remove":
         document["diff"] = old
 
     else:

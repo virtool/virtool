@@ -37,7 +37,13 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
-from virtool.references.bulk import OTUUpdate, OTUInsert, OTUDelete, HistoryChange
+from virtool.references.bulk import (
+    OTUUpdate,
+    OTUInsert,
+    OTUDelete,
+    HistoryChange,
+    SequenceChanges,
+)
 from virtool.references.utils import (
     RIGHTS,
     check_will_change,
@@ -899,7 +905,7 @@ async def update(
 
 
 async def prepare_update_joined_otu(
-    mongo: "DB", old, otu: Document, ref_id: str, history_updater
+    mongo: "DB", old, otu: Document, ref_id: str
 ) -> Optional[OTUUpdate]:
 
     if not check_will_change(old, otu):
@@ -954,12 +960,15 @@ async def prepare_update_joined_otu(
             sequence_inserts.append(sequence_update)
 
     return OTUUpdate(
-        old, otu_update, sequence_updates, sequence_inserts, history_updater
+        otu_update,
+        SequenceChanges(updates=sequence_updates, inserts=sequence_inserts),
+        old,
+        otu_id=old["_id"],
     )
 
 
 async def prepare_insert_otu(
-    otu: dict, created_at: datetime.datetime, ref_id: str, user_id: str, history_updater
+    otu: dict, created_at: datetime.datetime, ref_id: str, user_id: str
 ) -> OTUInsert:
     issues = verify(otu)
 
@@ -1007,12 +1016,13 @@ async def prepare_insert_otu(
                 }
             )
 
-    return OTUInsert(new_otu, sequences, history_updater)
+    return OTUInsert(
+        new_otu,
+        SequenceChanges(inserts=sequences),
+    )
 
 
-async def prepare_remove_otu(
-    mongo: "DB", otu_id: str, update_history: Callable[[HistoryChange], Coroutine]
-) -> Optional[OTUDelete]:
+async def prepare_remove_otu(mongo: "DB", otu_id: str) -> Optional[OTUDelete]:
     """
     Remove an OTU.
 
@@ -1041,5 +1051,9 @@ async def prepare_remove_otu(
     )
 
     return OTUDelete(
-        otu_delete, sequences_delete, reference_update, joined, update_history
+        otu_delete,
+        SequenceChanges(deletes=[sequences_delete]),
+        joined,
+        reference_update,
+        otu_id=otu_id,
     )
