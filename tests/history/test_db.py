@@ -61,12 +61,17 @@ class TestAdd:
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, mongo, fake2, tmp_path, config):
+async def test_get(file, static_time, mocker, snapshot, mongo, fake2, tmp_path, config):
     user = await fake2.users.create()
 
     await mongo.history.insert_one(
         {
             "_id": "baz.2",
+            "created_at": static_time.datetime,
+            "description": "test history",
+            "method_name": "create",
+            "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
+            "reference": {"id": "test_ref"},
             "diff": "file" if file else {"foo": "bar"},
             "user": {"id": user.id},
         }
