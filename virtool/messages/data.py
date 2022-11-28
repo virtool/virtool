@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.instancemessage import InstanceMessage
 
-import virtool.utils
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+import virtool.utils
 from virtool.messages.models import SQLInstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
 from virtool.mongo.core import DB
