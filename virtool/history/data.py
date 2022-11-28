@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any
 
-from virtool_core.models.history import HistorySearchResult
+from virtool_core.models.history import HistorySearchResult, History
 
 import virtool.utils
 import virtool.otus.utils
@@ -10,7 +10,6 @@ from virtool.errors import DatabaseError
 from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
-from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 
 
@@ -30,18 +29,19 @@ class HistoryData:
 
         return HistorySearchResult(**documents)
 
-    async def get(self, change_id: str) -> Document:
+    async def get(self, change_id: str) -> History:
         """
         Get a document given its ID.
-        :param change_id: the ID of the document to delete
+        :param change_id: the ID of the document to get
         """
         document = await self._db.history.find_one(change_id, PROJECTION)
 
         if document:
-            return await apply_transforms(
+            document = await apply_transforms(
                 virtool.utils.base_processor(document),
                 [AttachUserTransform(self._db), DiffTransform(self.data_path)],
             )
+            return History(**document)
 
         raise ResourceNotFoundError()
 
