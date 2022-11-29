@@ -7,7 +7,16 @@ from virtool.history.data import HistoryData
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, mongo, fake2, tmp_path, config):
+async def test_get(
+    file,
+    config,
+    fake2,
+    mocker,
+    mongo,
+    snapshot,
+    static_time,
+    tmp_path,
+):
     user = await fake2.users.create()
 
     await asyncio.gather(
@@ -20,6 +29,10 @@ async def test_get(file, mocker, snapshot, mongo, fake2, tmp_path, config):
                 "diff": "file" if file else {"foo": "bar"},
                 "user": {"id": user.id},
                 "reference": {"id": "hxn167"},
+                "created_at": static_time.datetime,
+                "description": "test history",
+                "method_name": "create",
+                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
             }
         ),
     )
