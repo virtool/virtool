@@ -19,13 +19,13 @@ async def test_get(snapshot, spawn_client, static_time):
     [
         (
             {
-                "email": "dev@virtool.ca",
+                "email": "virtool.devs@gmail.com",
                 "password": "foo_bar_1",
                 "old_password": "hello_world",
             },
             200,
         ),
-        ({"email": "dev@virtool.ca"}, 200),
+        ({"email": "virtool.devs@gmail.com"}, 200),
         ({"email": "invalid_email@"}, 400),
         ({"password": "foo", "old_password": "hello_world"}, 400),
         ({"password": "foo_bar_1"}, 400),
