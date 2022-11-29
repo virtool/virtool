@@ -516,7 +516,7 @@ async def test_finalize(
             }
         )
 
-    resp = await client.patch(f"/analyses/analysis1", json=patch_json)
+    resp = await client.patch("/analyses/analysis1", json=patch_json)
 
     if error:
         assert resp.status == error
