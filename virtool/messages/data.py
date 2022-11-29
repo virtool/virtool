@@ -32,7 +32,7 @@ class MessagesData:
             document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
             return InstanceMessage(**document)
 
-        raise ResourceNotFoundError()
+        raise ResourceNotFoundError
 
     async def create(self, data: CreateMessageRequest, user_id: str) -> InstanceMessage:
         """
@@ -62,26 +62,28 @@ class MessagesData:
         Update the active administrative instance message.
         """
 
+        data = data.dict(exclude_unset=True)
+
         async with AsyncSession(self._pg) as session:
             instance_message = (
                 await session.execute(select(SQLInstanceMessage).order_by(SQLInstanceMessage.id.desc()))
             ).first()[0]
 
             if not instance_message:
-                raise ResourceNotFoundError()
+                raise ResourceNotFoundError
 
             if not instance_message.active:
                 raise ResourceConflictError("The message is inactive")
 
-            if data.color is not None:
-                instance_message.color = data.color
+            if "color" in data:
+                instance_message.color = data["color"]
 
-            if data.message is not None:
-                instance_message.message = data.message
+            if "message" in data:
+                instance_message.message = data["message"]
                 instance_message.updated_at = virtool.utils.timestamp()
 
-            if data.active is not None:
-                instance_message.active = False
+            if "active" in data:
+                instance_message.active = data["active"]
 
             document = instance_message.to_dict()
 

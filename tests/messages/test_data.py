@@ -18,26 +18,27 @@ class TestGet:
 
         user = await fake2.users.create()
 
-        message_1 = SQLInstanceMessage(
-            id=1,
-            color="blue",
-            message="This is test message 1",
-            created_at=static_time.datetime,
-            updated_at=static_time.datetime,
-            user=user.id,
-        )
-
-        message_2 = SQLInstanceMessage(
-            id=2,
-            color="yellow",
-            message="This is test message 2",
-            created_at=static_time.datetime,
-            updated_at=static_time.datetime,
-            user=user.id
-        )
-
         async with AsyncSession(pg) as session:
-            session.add_all([message_1, message_2])
+            session.add_all(
+                [
+                    SQLInstanceMessage(
+                        id=1,
+                        color="blue",
+                        message="This is test message 1",
+                        created_at=static_time.datetime,
+                        updated_at=static_time.datetime,
+                        user=user.id,
+                    ),
+                    SQLInstanceMessage(
+                        id=2,
+                        color="yellow",
+                        message="This is test message 2",
+                        created_at=static_time.datetime,
+                        updated_at=static_time.datetime,
+                        user=user.id
+                    )
+                ]
+            )
             await session.commit()
 
         assert await messages_data.get() == snapshot

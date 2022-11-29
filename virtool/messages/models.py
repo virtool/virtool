@@ -1,16 +1,7 @@
 from sqlalchemy import Column, Integer, Boolean, Enum, String, DateTime
+from virtool_core.models.enums import MessageColor
 
 from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
-
-
-class Color(str, SQLEnum):
-    red = "red"
-    yellow = "yellow"
-    blue = "blue"
-    purple = "purple"
-    orange = "orange"
-    grey = "grey"
 
 
 class SQLInstanceMessage(Base):
@@ -18,7 +9,7 @@ class SQLInstanceMessage(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     active = Column(Boolean, default=True)
-    color = Column(Enum(Color), nullable=False)
+    color = Column(Enum(MessageColor), nullable=False)
     message = Column(String)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
