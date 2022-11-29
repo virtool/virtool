@@ -14,7 +14,11 @@ import virtool.indexes.db
 from virtool.api.custom_json import dumps
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.errors import (
+    ResourceNotFoundError,
+    ResourceConflictError,
+    ResourceError,
+)
 from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.checks import (
     check_fasta_file_uploaded,
@@ -28,7 +32,9 @@ from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
 from virtool.utils import run_in_thread, compress_json_with_gzip, wait_for_checks
@@ -95,7 +101,11 @@ class IndexData:
 
         items = await apply_transforms(
             items,
-            [AttachUserTransform(self._mongo), IndexCountsTransform(self._mongo)],
+            [
+                AttachReferenceTransform(self._mongo),
+                AttachUserTransform(self._mongo),
+                IndexCountsTransform(self._mongo),
+            ],
         )
 
         return [IndexMinimal(**index) for index in items]
@@ -129,6 +139,10 @@ class IndexData:
             self._pg, self._config.base_url, document
         )
 
+        document = await apply_transforms(
+            document, [AttachReferenceTransform(self._mongo)]
+        )
+
         document = await virtool.indexes.db.processor(self._mongo, document)
 
         return Index(**document)
@@ -140,12 +154,18 @@ class IndexData:
         :param index_id: the index ID
         :return: the reference
         """
-        index = await self._mongo.indexes.find_one(index_id)
+        reference_field = await get_one_field(
+            self._mongo.indexes, "reference", index_id
+        )
 
-        if index:
-            return ReferenceNested(**index["reference"])
+        if reference_field and (
+            reference := await self._mongo.references.find_one(
+                {"_id": reference_field["id"]}, ["data_type", "name"]
+            )
+        ):
+            return ReferenceNested(**reference)
 
-        raise ResourceNotFoundError()
+        raise ResourceNotFoundError
 
     async def get_json_path(self, index_id: str) -> Path:
         """
@@ -218,26 +238,33 @@ class IndexData:
             **index_file_dict, download_url=f"/indexes/{index_id}/files/{name}"
         )
 
-    async def finalize(self, ref_id: str, index_id: str) -> Index:
+    async def finalize(self, index_id: str) -> Index:
         """
         Finalize an index document.
 
-        :param ref_id: the reference ID
         :param index_id: the index ID
         :return: the finalized Index
         """
-        reference = await self._mongo.references.find_one(ref_id)
+        try:
+            ref_id = (await get_one_field(self._mongo.indexes, "reference", index_id))[
+                "id"
+            ]
+        except KeyError:
+            raise ResourceError("Could not find index reference id")
 
-        if reference is None:
-            raise ResourceNotFoundError()
+        data_type = await get_one_field(self._mongo.references, "data_type", ref_id)
 
-        rows = await get_rows(self._pg, SQLIndexFile, "index", index_id)
+        if data_type is None:
+            raise ResourceNotFoundError
 
-        results = {f.name: f.type for f in rows}
+        results = {
+            f.name: f.type
+            for f in await get_rows(self._pg, SQLIndexFile, "index", index_id)
+        }
 
         aws = [check_fasta_file_uploaded(results)]
 
-        if reference["data_type"] == "genome":
+        if data_type == "genome":
             aws.append(check_index_files_uploaded(results))
 
         await wait_for_checks(*aws)
@@ -279,7 +306,8 @@ class IndexData:
         )
 
         data["documents"] = await apply_transforms(
-            data["documents"], [AttachUserTransform(self._mongo)]
+            data["documents"],
+            [AttachReferenceTransform(self._mongo), AttachUserTransform(self._mongo)],
         )
 
         return HistorySearchResult(**data)

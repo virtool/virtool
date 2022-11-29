@@ -209,14 +209,9 @@ async def finalize(req):
     index_id = req.match_info["index_id"]
 
     try:
-        reference = await get_data_from_req(req).index.get_reference(index_id)
+        document = await get_data_from_req(req).index.finalize(index_id)
     except ResourceNotFoundError:
-        raise NotFound("Index does not exist")
-
-    try:
-        document = await get_data_from_req(req).index.finalize(reference.id, index_id)
-    except ResourceNotFoundError:
-        raise NotFound("Reference associated with index does not exist")
+        raise NotFound
     except ResourceConflictError as err:
         raise HTTPConflict(text=str(err))
 

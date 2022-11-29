@@ -74,7 +74,9 @@
     ],
     'ready': True,
     'reference': <class 'dict'> {
+      'data_type': <ReferenceDataType.genome: 'genome'>,
       'id': 'bar',
+      'name': 'Bar',
     },
     'user': <class 'dict'> {
       'administrator': False,

@@ -1,0 +1,52 @@
+# name: test_get[uvloop-False]
+  <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'test history',
+    'diff': <class 'dict'> {
+      'foo': 'bar',
+    },
+    'id': 'baz.2',
+    'index': None,
+    'method_name': <HistoryMethod.create: 'create'>,
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'hxn167',
+      'name': 'Reference A',
+    },
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_get[uvloop-True]
+  <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'test history',
+    'diff': 'loaded',
+    'id': 'baz.2',
+    'index': None,
+    'method_name': <HistoryMethod.create: 'create'>,
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'hxn167',
+      'name': 'Reference A',
+    },
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---

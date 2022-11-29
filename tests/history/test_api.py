@@ -1,3 +1,4 @@
+import asyncio
 from operator import itemgetter
 
 import pytest
@@ -10,7 +11,12 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
     """
     client = await spawn_client(authorize=True)
 
-    await client.db.history.insert_many(test_changes)
+    await asyncio.gather(
+        client.db.references.insert_one(
+            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
+        ),
+        client.db.history.insert_many(test_changes),
+    )
 
     resp = await client.get("/history")
 
@@ -26,7 +32,12 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
     """
     client = await spawn_client(authorize=True)
 
-    await client.db.history.insert_many(test_changes)
+    await asyncio.gather(
+        client.db.history.insert_many(test_changes),
+        client.db.references.insert_one(
+            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
+        ),
+    )
 
     change_id = "baz.1" if error else "6116cba1.1"
 

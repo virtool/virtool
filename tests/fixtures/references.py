@@ -17,6 +17,15 @@ def check_ref_right(mocker, request):
 
 
 @pytest.fixture
+def test_ref():
+    return {
+        "_id": "hxn167",
+        "data_type": "genome",
+        "name": "Reference A",
+    }
+
+
+@pytest.fixture
 def reference(static_time):
     return {
         "_id": "3tt0w336",

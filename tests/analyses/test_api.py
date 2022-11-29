@@ -30,6 +30,12 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
     user = await fake2.users.create()
 
     await asyncio.gather(
+        client.db.references.insert_many(
+            [
+                {"_id": "foo", "data_type": "genome", "name": "Foo"},
+                {"_id": "baz", "data_type": "genome", "name": "Baz"},
+            ]
+        ),
         client.db.samples.insert_one(
             {
                 "_id": "test",
@@ -82,7 +88,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "index": {"version": 2, "id": "foo"},
                     "user": {"id": user.id},
                     "sample": {"id": "test"},
-                    "reference": {"id": "foo", "name": "Foo"},
+                    "reference": {"id": "foo"},
                     "results": {"hits": []},
                     "subtractions": [],
                     "foobar": False,
@@ -123,13 +129,18 @@ async def test_get(
         "workflow": "pathoscope_bowtie",
         "results": {"hits": []},
         "sample": {"id": "baz"},
-        "reference": {"id": "baz", "name": "Baz"},
+        "reference": {"id": "baz"},
         "subtractions": ["plum", "apple"],
         "user": {"id": user.id},
     }
 
-    await client.db.subtraction.insert_many(
-        [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}]
+    await asyncio.gather(
+        client.db.subtraction.insert_many(
+            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}]
+        ),
+        client.db.references.insert_one(
+            {"_id": "baz", "data_type": "genome", "name": "Baz"}
+        ),
     )
 
     if error != "400":
@@ -379,9 +390,7 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
     "error",
     [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"],
 )
-async def test_blast(
-    error,  spawn_client, resp_is, snapshot, static_time
-):
+async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
     """
     Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
     correctly.
@@ -472,32 +481,42 @@ async def test_finalize(
 ):
     user = await fake2.users.create()
 
-    analysis_document = {
-        "_id": "analysis1",
-        "sample": {"id": "sample1"},
-        "created_at": static_time.datetime,
-        "job": {"id": "test"},
-        "index": {"version": 2, "id": "foo"},
-        "workflow": "test_workflow",
-        "reference": {"id": "baz", "name": "Baz"},
-        "files": [],
-        "user": {"id": user.id},
-        "ready": error == 409,
-        "subtractions": [],
-    }
-
-    patch_json = {"results": {"result": "TEST_RESULT"}}
+    patch_json = {"results": {"result": "TEST_RESULT", "hits": []}}
 
     if error == 422:
         del patch_json["results"]
 
     client = await spawn_job_client(authorize=True)
 
-    if error != 404:
-        insert_result = await client.db.analyses.insert_one(analysis_document)
-        assert insert_result["_id"] == analysis_document["_id"]
+    await asyncio.gather(
+        client.db.samples.insert_one(
+            {
+                "_id": "sample1",
+            }
+        ),
+        client.db.references.insert_one(
+            {"_id": "baz", "name": "Baz", "data_type": "genome"}
+        ),
+    )
 
-    resp = await client.patch(f"/analyses/{analysis_document['_id']}", json=patch_json)
+    if error != 404:
+        await client.db.analyses.insert_one(
+            {
+                "_id": "analysis1",
+                "sample": {"id": "sample1"},
+                "created_at": static_time.datetime,
+                "job": {"id": "test"},
+                "index": {"version": 2, "id": "foo"},
+                "workflow": "nuvs",
+                "reference": {"id": "baz"},
+                "files": [],
+                "user": {"id": user.id},
+                "ready": error == 409,
+                "subtractions": [],
+            }
+        )
+
+    resp = await client.patch("/analyses/analysis1", json=patch_json)
 
     if error:
         assert resp.status == error
@@ -532,12 +551,23 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
         for _ in range(100)
     ]
 
-    patch_json = {"results": {"result": profiles * 500}}
+    patch_json = {"results": {"hits": [], "result": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
     assert len(json.dumps(patch_json)) > 1024**2
 
     client = await spawn_job_client(authorize=True)
+
+    await asyncio.gather(
+        client.db.samples.insert_one(
+            {
+                "_id": "sample1",
+            }
+        ),
+        client.db.references.insert_one(
+            {"_id": "baz", "name": "Baz", "data_type": "genome"}
+        ),
+    )
 
     await client.db.analyses.insert_one(
         {
@@ -546,7 +576,7 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
             "sample": {"id": "sample1"},
             "job": {"id": "test"},
             "index": {"version": 2, "id": "foo"},
-            "workflow": "test_workflow",
+            "workflow": "nuvs",
             "reference": {"id": "baz", "name": "Baz"},
             "files": [],
             "user": {"id": user.id},

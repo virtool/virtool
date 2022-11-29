@@ -1,11 +1,9 @@
 import datetime
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import HistoryMethod
 
 import virtool.history.db
-from virtool.history.data import HistoryData
 
 
 class TestAdd:
@@ -24,7 +22,8 @@ class TestAdd:
     async def test_create(
         self, snapshot, mongo, static_time, test_otu_edit, test_change, tmp_path, config
     ):
-        # There is no old document because this is a change document for a otu creation operation.
+        # There is no old document because this is a change document for a otu creation
+        # operation.
         old = None
 
         new, _ = test_otu_edit
@@ -58,32 +57,6 @@ class TestAdd:
 
         assert change == snapshot
         assert await mongo.history.find_one() == snapshot
-
-
-@pytest.mark.parametrize("file", [True, False])
-async def test_get(file, static_time, mocker, snapshot, mongo, fake2, tmp_path, config):
-    user = await fake2.users.create()
-
-    await mongo.history.insert_one(
-        {
-            "_id": "baz.2",
-            "created_at": static_time.datetime,
-            "description": "test history",
-            "method_name": "create",
-            "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
-            "reference": {"id": "test_ref"},
-            "diff": "file" if file else {"foo": "bar"},
-            "user": {"id": user.id},
-        }
-    )
-
-    mocker.patch(
-        "virtool.history.utils.read_diff_file", make_mocked_coro(return_value="loaded")
-    )
-
-    history = HistoryData(config.data_path, mongo)
-
-    assert await history.get("baz.2") == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])
