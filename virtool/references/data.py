@@ -112,7 +112,10 @@ class ReferencesData(DataLayerPiece):
         documents, remote_slug_count = await asyncio.gather(
             apply_transforms(
                 data["documents"],
-                [AttachUserTransform(self._mongo), AttachTaskTransform(self._pg)],
+                [
+                    AttachUserTransform(self._mongo),
+                    AttachTaskTransform(self._pg),
+                ],
             ),
             self._mongo.references.count_documents(
                 {"remotes_from.slug": "virtool/ref-plant-viruses"}
@@ -509,9 +512,7 @@ class ReferencesData(DataLayerPiece):
             job_id=job_id,
         )
 
-        document = await virtool.indexes.db.processor(self._mongo, document)
-
-        return IndexMinimal(**document)
+        return await self.data.index.get(document["_id"])
 
     async def list_groups(self, ref_id: str) -> List[ReferenceGroup]:
         """

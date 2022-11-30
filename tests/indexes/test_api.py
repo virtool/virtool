@@ -1,8 +1,10 @@
+import asyncio
 import filecmp
 import gzip
 import json
 import os
 import shutil
+from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 
@@ -27,44 +29,51 @@ class TestFind:
 
         user = await fake2.users.create()
 
-        await client.db.indexes.insert_many(
-            [
-                {
-                    "_id": "bar",
-                    "version": 1,
-                    "created_at": static_time.datetime,
-                    "manifest": {"foo": 2},
-                    "ready": False,
-                    "has_files": True,
-                    "job": {"id": "bar"},
-                    "reference": {"id": "bar"},
-                    "user": {"id": user.id},
-                    "sequence_otu_map": {"foo": "bar_otu"},
-                },
-                {
-                    "_id": "foo",
-                    "version": 0,
-                    "created_at": static_time.datetime,
-                    "manifest": {"foo": 2},
-                    "ready": False,
-                    "has_files": True,
-                    "job": {"id": "foo"},
-                    "reference": {"id": "foo"},
-                    "user": {"id": user.id},
-                    "sequence_otu_map": {"foo": "foo_otu"},
-                },
-            ]
-        )
-
-        await client.db.history.insert_many(
-            [
-                {"_id": "0", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                {"_id": "1", "index": {"id": "foo"}, "otu": {"id": "baz"}},
-                {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-                {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
-                {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
-            ]
+        await asyncio.gather(
+            client.db.references.insert_many(
+                [
+                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
+                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                ]
+            ),
+            client.db.indexes.insert_many(
+                [
+                    {
+                        "_id": "bar",
+                        "version": 1,
+                        "created_at": static_time.datetime,
+                        "manifest": {"foo": 2},
+                        "ready": False,
+                        "has_files": True,
+                        "job": {"id": "bar"},
+                        "reference": {"id": "bar"},
+                        "user": {"id": user.id},
+                        "sequence_otu_map": {"foo": "bar_otu"},
+                    },
+                    {
+                        "_id": "foo",
+                        "version": 0,
+                        "created_at": static_time.datetime,
+                        "manifest": {"foo": 2},
+                        "ready": False,
+                        "has_files": True,
+                        "job": {"id": "foo"},
+                        "reference": {"id": "foo"},
+                        "user": {"id": user.id},
+                        "sequence_otu_map": {"foo": "foo_otu"},
+                    },
+                ]
+            ),
+            client.db.history.insert_many(
+                [
+                    {"_id": "0", "index": {"id": "bar"}, "otu": {"id": "baz"}},
+                    {"_id": "1", "index": {"id": "foo"}, "otu": {"id": "baz"}},
+                    {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
+                    {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
+                    {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
+                    {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
+                ]
+            ),
         )
 
         mocker.patch(
@@ -79,87 +88,71 @@ class TestFind:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_ready(self, snapshot, fake2, spawn_client, static_time):
+    async def test_ready(self, fake2, snapshot, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
         user = await fake2.users.create()
 
-        await client.db.indexes.insert_many(
-            [
-                {
-                    "_id": "bot",
-                    "change_count": 2,
-                    "modified_otu_count": 4,
-                    "version": 1,
-                    "created_at": static_time.datetime,
-                    "manifest": {"foo": 2},
-                    "ready": True,
-                    "has_files": True,
-                    "job": {"id": "bar"},
-                    "reference": {"id": "bar"},
-                    "user": {"id": user.id},
-                },
-                {
-                    "_id": "daz",
-                    "change_count": 3,
-                    "modified_otu_count": 5,
-                    "version": 0,
-                    "created_at": static_time.datetime,
-                    "manifest": {"foo": 2},
-                    "ready": True,
-                    "has_files": True,
-                    "job": {"id": "foo"},
-                    "reference": {"id": "foo"},
-                    "user": {"id": user.id},
-                },
-            ]
+        await asyncio.gather(
+            client.db.indexes.insert_many(
+                [
+                    {
+                        "_id": "bot",
+                        "version": 1,
+                        "created_at": static_time.datetime + timedelta(hours=2),
+                        "manifest": {"foo": 2},
+                        "ready": True,
+                        "has_files": True,
+                        "job": {"id": "bar"},
+                        "reference": {"id": "bar"},
+                        "user": {"id": user.id},
+                    },
+                    {
+                        "_id": "daz",
+                        "version": 0,
+                        "created_at": static_time.datetime,
+                        "manifest": {"foo": 2},
+                        "ready": True,
+                        "has_files": True,
+                        "job": {"id": "foo"},
+                        "reference": {"id": "foo"},
+                        "user": {"id": user.id},
+                    },
+                ]
+            ),
+            client.db.references.insert_many(
+                [
+                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
+                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                ]
+            ),
         )
 
         resp = await client.get("/indexes?ready=True")
 
         assert resp.status == 200
-        resp_json = sorted(await resp.json(), key=lambda d: d["change_count"])
-        assert resp_json == [
-            {
-                "change_count": 2,
-                "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
-                "id": "bot",
-                "job": {"id": "bar"},
-                "modified_otu_count": 4,
-                "ready": True,
-                "reference": {"id": "bar"},
-                "user": {
-                    "administrator": False,
-                    "handle": "leeashley",
-                    "id": "bf1b993c",
-                },
-                "version": 1,
-            },
-            {
-                "change_count": 3,
-                "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
-                "id": "daz",
-                "job": {"id": "foo"},
-                "modified_otu_count": 5,
-                "ready": True,
-                "reference": {"id": "foo"},
-                "user": {
-                    "administrator": False,
-                    "handle": "leeashley",
-                    "id": "bf1b993c",
-                },
-                "version": 0,
-            },
-        ]
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    user = await fake2.users.create()
+    user, _, _ = await asyncio.gather(
+        fake2.users.create(),
+        client.db.references.insert_many(
+            [
+                {"_id": "bar", "name": "Bar", "data_type": "genome"},
+            ]
+        ),
+        client.db.history.insert_many(
+            [
+                {"_id": "0", "index": {"id": "foobar"}, "otu": {"id": "foo"}},
+                {"_id": "1", "index": {"id": "foobar"}, "otu": {"id": "baz"}},
+                {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
+            ]
+        ),
+    )
 
     if not error:
         await client.db.indexes.insert_one(
@@ -175,14 +168,6 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
                 "job": {"id": "sj82la"},
             }
         )
-
-    await client.db.history.insert_many(
-        [
-            {"_id": "0", "index": {"id": "foobar"}, "otu": {"id": "foo"}},
-            {"_id": "1", "index": {"id": "foobar"}, "otu": {"id": "baz"}},
-            {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-        ]
-    )
 
     contributors = [
         {"id": "fred", "count": 1, "handle": "fred", "administrator": True},
@@ -257,6 +242,7 @@ async def test_download_otus_json(
 class TestCreate:
     async def test(
         self,
+        fake2,
         mocker,
         snapshot,
         spawn_client,
@@ -273,23 +259,26 @@ class TestCreate:
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
 
-        await client.db.references.insert_one({"_id": "foo"})
+        user = await fake2.users.create()
 
-        # Insert unbuilt changes to prevent initial check failure.
-        await client.db.history.insert_one(
-            {
-                "_id": "history_1",
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "reference": {"id": "foo"},
-            }
-        )
-
-        m_get_next_version = mocker.patch(
-            "virtool.indexes.db.get_next_version", new=make_mocked_coro(9)
+        await asyncio.gather(
+            client.db.references.insert_one(
+                {"_id": "foo", "name": "Foo", "data_type": "genome"}
+            ),
+            # Insert unbuilt changes to prevent initial check failure.
+            client.db.history.insert_one(
+                {
+                    "_id": "history_1",
+                    "index": {"id": "unbuilt", "version": "unbuilt"},
+                    "reference": {"id": "foo"},
+                    "user": {"id": user.id},
+                }
+            ),
         )
 
         m_create_manifest = mocker.patch(
-            "virtool.references.db.get_manifest", new=make_mocked_coro("manifest")
+            "virtool.references.db.get_manifest",
+            new=make_mocked_coro({"foo": 1, "bar": 2}),
         )
 
         resp = await client.post("/refs/foo/indexes")
@@ -305,7 +294,6 @@ class TestCreate:
         assert await client.db.indexes.find_one() == snapshot(name="index")
         assert data.jobs._client.enqueued == snapshot(name="enqueued")
 
-        m_get_next_version.assert_called_with(client.db, "foo")
         m_create_manifest.assert_called_with(client.db, "foo")
 
     @pytest.mark.parametrize(
@@ -346,57 +334,66 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_find_history(error, static_time, snapshot, spawn_client, resp_is):
+async def test_find_history(error, fake2, static_time, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     if not error:
         await client.db.indexes.insert_one({"_id": "foobar", "version": 0})
 
-    await client.db.history.insert_many(
-        [
-            {
-                "_id": "zxbbvngc.0",
-                "created_at": static_time.datetime,
-                "reference": {"id": "foo"},
-                "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
-                "user": {"id": "igboyes", "administrator": True, "handle": "ian"},
-                "description": "Added Unnamed Isolate as default",
-                "method_name": "add_isolate",
-                "index": {"version": 0, "id": "foobar"},
-            },
-            {
-                "_id": "zxbbvngc.1",
-                "created_at": static_time.datetime,
-                "reference": {"id": "foo"},
-                "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
-                "user": {"id": "igboyes", "administrator": True, "handle": "ian"},
-                "description": "Added Unnamed Isolate as default",
-                "method_name": "add_isolate",
-                "index": {"version": 0, "id": "foobar"},
-            },
-            {
-                "_id": "zxbbvngc.2",
-                "created_at": static_time.datetime,
-                "reference": {"id": "foo"},
-                "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
-                "user": {"id": "igboyes", "administrator": True, "handle": "ian"},
-                "description": "Added Unnamed Isolate as default",
-                "method_name": "add_isolate",
-                "index": {"version": 0, "id": "foobar"},
-            },
-            {
-                "_id": "kjs8sa99.3",
-                "created_at": static_time.datetime,
-                "reference": {"id": "foo"},
-                "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
-                "user": {"id": "fred", "administrator": True, "handle": "fred"},
-                "description": "Edited sequence wrta20tr in Islolate chilli-CR",
-                "method_name": "edit_sequence",
-                "index": {"version": 0, "id": "foobar"},
-            },
-            {"_id": "test_1", "index": {"id": "baz"}},
-            {"_id": "test_2", "index": {"id": "baz"}},
-        ]
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+
+    await asyncio.gather(
+        client.db.history.insert_many(
+            [
+                {
+                    "_id": "zxbbvngc.0",
+                    "created_at": static_time.datetime,
+                    "reference": {"id": "foo"},
+                    "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
+                    "user": {"id": user_1.id},
+                    "description": "Added Unnamed Isolate as default",
+                    "method_name": "add_isolate",
+                    "index": {"version": 0, "id": "foobar"},
+                },
+                {
+                    "_id": "zxbbvngc.1",
+                    "created_at": static_time.datetime,
+                    "reference": {"id": "foo"},
+                    "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
+                    "user": {"id": user_1.id},
+                    "description": "Added Unnamed Isolate as default",
+                    "method_name": "add_isolate",
+                    "index": {"version": 0, "id": "foobar"},
+                },
+                {
+                    "_id": "zxbbvngc.2",
+                    "created_at": static_time.datetime,
+                    "reference": {"id": "foo"},
+                    "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
+                    "user": {"id": user_2.id},
+                    "description": "Added Unnamed Isolate as default",
+                    "method_name": "add_isolate",
+                    "index": {"version": 0, "id": "foobar"},
+                },
+                {
+                    "_id": "kjs8sa99.3",
+                    "created_at": static_time.datetime,
+                    "reference": {"id": "foo"},
+                    "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
+                    "user": {"id": user_1.id},
+                    "description": "Edited sequence wrta20tr in Islolate chilli-CR",
+                    "method_name": "edit_sequence",
+                    "index": {"version": 0, "id": "foobar"},
+                },
+            ]
+        ),
+        client.db.references.insert_many(
+            [
+                {"_id": "bar", "name": "Bar", "data_type": "genome"},
+                {"_id": "foo", "name": "Foo", "data_type": "genome"},
+            ]
+        ),
     )
 
     resp = await client.get("/indexes/foobar/history")
@@ -458,7 +455,15 @@ async def test_upload(
 
     client.app["config"].data_path = tmp_path
 
-    user = await fake2.users.create()
+    user, _ = await asyncio.gather(
+        fake2.users.create(),
+        client.db.references.insert_many(
+            [
+                {"_id": "bar", "name": "Bar", "data_type": "genome"},
+                {"_id": "foo", "name": "Foo", "data_type": "genome"},
+            ]
+        ),
+    )
 
     index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user.id}}
 
@@ -505,7 +510,13 @@ async def test_upload(
 
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
-    error, snapshot, static_time, fake2, spawn_job_client, test_otu, pg
+    error,
+    fake2,
+    pg: AsyncEngine,
+    snapshot,
+    spawn_job_client,
+    static_time,
+    test_otu,
 ):
     """
     Test that an index can be finalized using the Jobs API.
@@ -523,24 +534,26 @@ async def test_finalize(
         files = FILES
 
     if error != "404_reference":
-        await client.db.references.insert_one({"_id": "hxn167", "data_type": "genome"})
+        await client.db.references.insert_one(
+            {"_id": "hxn167", "name": "Test A", "data_type": "genome"}
+        )
 
-    await client.db.indexes.insert_one(
-        {
-            "_id": "test_index",
-            "reference": {"id": "hxn167"},
-            "manifest": {"foo": 4},
-            "user": {"id": user.id},
-            "version": 2,
-            "created_at": static_time.datetime,
-            "has_files": True,
-            "job": {"id": "sj82la"},
-        }
+    await asyncio.gather(
+        client.db.indexes.insert_one(
+            {
+                "_id": "test_index",
+                "reference": {"id": "hxn167"},
+                "manifest": {"foo": 4},
+                "user": {"id": user.id},
+                "version": 2,
+                "created_at": static_time.datetime,
+                "has_files": True,
+                "job": {"id": "sj82la"},
+            }
+        ),
+        # change `version` that should be reflected in `last_indexed_version` after calling
+        client.db.otus.insert_one({**test_otu, "version": 1}),
     )
-
-    # change `version` that should be reflected in `last_indexed_version` after calling
-    test_otu["version"] = 1
-    await client.db.otus.insert_one(test_otu)
 
     for file_name in files:
         await create_index_file(
@@ -562,8 +575,13 @@ async def test_download(status, spawn_job_client, tmp_path):
 
     client.app["config"].data_path = tmp_path
 
-    await client.db.indexes.insert_one(
-        {"_id": "test_index", "reference": {"id": "test_reference"}}
+    await asyncio.gather(
+        client.db.indexes.insert_one(
+            {"_id": "test_index", "reference": {"id": "test_reference"}}
+        ),
+        client.db.references.insert_one(
+            {"_id": "test_reference", "name": "Test A", "data_type": "genome"}
+        ),
     )
 
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"

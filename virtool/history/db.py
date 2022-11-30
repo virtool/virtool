@@ -23,6 +23,7 @@ from virtool.history.utils import (
     write_diff_file,
 )
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
 
@@ -144,9 +145,9 @@ async def add(
     return document
 
 
-async def find(db, req_query, base_query: Optional[Document] = None):
+async def find(mongo, req_query, base_query: Optional[Document] = None):
     data = await paginate(
-        db.history,
+        mongo.history,
         {},
         req_query,
         base_query=base_query,
@@ -158,7 +159,8 @@ async def find(db, req_query, base_query: Optional[Document] = None):
     return {
         **data,
         "documents": await apply_transforms(
-            data["documents"], [AttachUserTransform(db)]
+            data["documents"],
+            [AttachReferenceTransform(mongo), AttachUserTransform(mongo)],
         ),
     }
 

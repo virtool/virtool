@@ -37,6 +37,7 @@ from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
@@ -91,7 +92,11 @@ class AnalysisData(DataLayerPiece):
 
         documents = await apply_transforms(
             documents,
-            [AttachUserTransform(self._db), AttachSubtractionTransform(self._db)],
+            [
+                AttachReferenceTransform(self._db),
+                AttachUserTransform(self._db),
+                AttachSubtractionTransform(self._db),
+            ],
         )
 
         data["documents"] = documents
@@ -142,6 +147,10 @@ class AnalysisData(DataLayerPiece):
         for key in document_before_formatting:
             if key not in document:
                 document.update({key: document_before_formatting[key]})
+
+        document = await apply_transforms(
+            document, [AttachReferenceTransform(self._db)]
+        )
 
         return Analysis(**document)
 
@@ -355,14 +364,12 @@ class AnalysisData(DataLayerPiece):
         :return: the processed analysis document
         """
 
-        analysis_document = await self._db.analyses.find_one(
-            {"_id": analysis_id}, ["ready"]
-        )
+        document = await self._db.analyses.find_one({"_id": analysis_id}, ["ready"])
 
-        if not analysis_document:
+        if not document:
             raise ResourceNotFoundError()
 
-        if "ready" in analysis_document and analysis_document["ready"]:
+        if "ready" in document and document["ready"]:
             raise ResourceConflictError()
 
         document = await self._db.analyses.find_one_and_update(
@@ -370,8 +377,5 @@ class AnalysisData(DataLayerPiece):
         )
 
         await recalculate_workflow_tags(self._db, document["sample"]["id"])
-        await attach_analysis_files(self._pg, analysis_id, document)
 
-        document = await processor(self._db, document)
-
-        return Analysis(**document)
+        return await self.get(analysis_id, None)

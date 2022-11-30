@@ -23,13 +23,18 @@ async def test_create(
     snapshot,
     static_time,
     test_random_alphanumeric,
+    test_ref,
     tmp_path,
 ):
     otu_data = OTUData(mongo, config)
 
     user = await fake2.users.create()
 
-    assert await otu_data.create("foo", data, user.id) == snapshot(name="return")
+    await mongo.references.insert_one(test_ref)
+
+    assert await otu_data.create(test_ref["_id"], data, user.id) == snapshot(
+        name="return"
+    )
 
     assert await asyncio.gather(
         mongo.otus.find_one(), mongo.history.find_one()
@@ -77,9 +82,12 @@ async def test_update(
     static_time,
     test_otu,
     test_random_alphanumeric,
+    test_ref,
     tmp_path,
 ):
     otu_data = OTUData(mongo, config)
+
+    await mongo.references.insert_one(test_ref)
 
     user, _ = await asyncio.gather(
         fake2.users.create(), mongo.otus.insert_one(test_otu)
@@ -282,7 +290,7 @@ async def test_create_sequence(
 
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_get_sequence(
-    missing, snapshot, mongo, config, test_otu, test_isolate, test_sequence
+    missing, snapshot, mongo, config, test_otu, test_isolate, test_ref, test_sequence
 ):
     if missing == "isolate":
         test_otu["isolates"][0]["id"] = "missing"
@@ -292,6 +300,8 @@ async def test_get_sequence(
 
     if missing != "sequence":
         await mongo.sequences.insert_one(test_sequence)
+
+    await mongo.references.insert_one({**test_ref, "_id": "ref"})
 
     otu_data = OTUData(mongo, config)
 

@@ -417,7 +417,9 @@
     },
     'name': 'Tobacco mosaic virus',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'foo',
+      'name': 'Foo',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -512,7 +514,9 @@
     },
     'name': 'Tobacco mosaic virus',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'foo',
+      'name': 'Foo',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -607,7 +611,9 @@
     },
     'name': 'Tobacco mosaic virus',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'foo',
+      'name': 'Foo',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -684,7 +690,10 @@
     'job': <class 'dict'> {
       'id': 'bf1b993c',
     },
-    'manifest': 'manifest',
+    'manifest': <class 'dict'> {
+      'bar': 5,
+      'foo': 2,
+    },
     'ready': False,
     'reference': <class 'dict'> {
       'id': 'foo',
@@ -692,29 +701,47 @@
     'user': <class 'dict'> {
       'id': 'test',
     },
-    'version': 9,
+    'version': 0,
   }
 ---
 # name: test_create_index[True-uvloop][json]
   <class 'dict'> {
     'change_count': 1,
+    'contributors': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'count': 1,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    ],
     'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+    ],
     'has_files': True,
     'id': 'fb085f7f',
     'job': <class 'dict'> {
       'id': 'bf1b993c',
     },
+    'manifest': <class 'dict'> {
+      'bar': 5,
+      'foo': 2,
+    },
     'modified_otu_count': 0,
+    'otus': <class 'list'> [
+    ],
     'ready': False,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'foo',
+      'name': 'Foo',
     },
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
       'id': 'test',
     },
-    'version': 9,
+    'version': 0,
   }
 ---
 # name: test_delete_group_or_user[True-uvloop-group-None]
