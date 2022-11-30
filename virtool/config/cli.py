@@ -53,6 +53,9 @@ def entry():
     help="Make the instance think it is a different version",
     type=str,
 )
+@click.option(
+    "--no-tasks", help="Disable the server's built-in task runner", is_flag=True
+)
 @click.option("--no-sentry", help="Disable Sentry error reporting", is_flag=True)
 @click.option(
     "--openfga-host",
@@ -96,6 +99,7 @@ def cli(
     dev,
     force_version,
     no_sentry,
+    no_tasks,
     openfga_host,
     openfga_scheme,
     postgres_connection_string,
@@ -113,6 +117,7 @@ def cli(
             "dev": dev,
             "force_version": force_version,
             "no_sentry": no_sentry,
+            "no_tasks": no_tasks,
             "openfga_host": openfga_host,
             "openfga_scheme": openfga_scheme,
             "postgres_connection_string": postgres_connection_string,
