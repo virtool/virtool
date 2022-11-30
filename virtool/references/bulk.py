@@ -1,104 +1,35 @@
 import asyncio
 from asyncio import Queue
-from dataclasses import dataclass, astuple
-from pathlib import Path
-from typing import List, Union, Coroutine, Callable, Any, Optional, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo import UpdateOne, DeleteOne, DeleteMany, InsertOne
 from pymongo.errors import BulkWriteError
-from virtool_core.models.enums import HistoryMethod
 
-import virtool.history.db
 from virtool.history.db import prepare_add
-from virtool.history.utils import compose_remove_description
-
 from virtool.mongo.identifier import AbstractIdProvider
-from virtool.otus.db import join
+from virtool.otus.db import join, bulk_join_ids
+from virtool.references.bulk_models import (
+    DBUpdate,
+    DataChunk,
+    OTUUpdate,
+    OTUInsert,
+    OTUDelete,
+    OTUChange,
+    OTUData,
+)
+from virtool.references.db import (
+    bulk_prepare_update_joined_otu,
+    prepare_insert_otu,
+    prepare_remove_otu,
+)
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
+from virtool.types import Document
 
 if TYPE_CHECKING:
     from virtool.mongo.core import DB, Collection
 
 
-@dataclass
-class HistoryChange:
-    verb: HistoryMethod
-    description: str
-    otu_id: str
-    old: Optional[dict] = None
-
-
-@dataclass
-class SequenceChanges:
-    updates: Optional[List[UpdateOne]] = None
-    inserts: Optional[List[dict]] = None
-    deletes: Optional[List[DeleteMany]] = None
-
-    @property
-    def sequence_changes(self):
-        return sum([len(change) for change in astuple(self) if change is not None])
-
-
-@dataclass(init=True)
-class OTUChange:
-    otu_change: Union[UpdateOne, dict, DeleteOne]
-    sequences: SequenceChanges
-    history_method: HistoryMethod
-    old: Optional[dict] = None
-    otu_id: Optional[dict] = None
-
-    def __post_init__(self):
-        self.remaining_sequence_changes = self.sequences.sequence_changes
-        self.otu_changed = False
-
-    @property
-    def is_complete(self):
-        return self.otu_changed and self.remaining_sequence_changes == 0
-
-
-class OTUUpdate(OTUChange):
-    def __init__(self, otu_change, sequences, old, otu_id):
-        super().__init__(
-            otu_change, sequences, HistoryMethod.update, old, otu_id=otu_id
-        )
-
-
-class OTUInsert(OTUChange):
-    def __init__(self, otu_change, sequences):
-        super().__init__(otu_change, sequences, HistoryMethod.create)
-
-
-class OTUDelete(OTUChange):
-    def __init__(self, otu_change, sequences, old, reference_update, otu_id):
-        super().__init__(
-            otu_change, sequences, HistoryMethod.remove, old, otu_id=otu_id
-        )
-        self.is_reference_updated = False
-        self.reference_update = reference_update
-
-    @property
-    def is_complete(self):
-        return (
-            self.otu_changed
-            and self.remaining_sequence_changes == 0
-            and self.is_reference_updated
-        )
-
-
-@dataclass
-class DBUpdate:
-    update: Union[UpdateOne, DeleteOne, DeleteMany, dict]
-    post_update: Optional[Callable[[Any], Coroutine]] = None
-
-
-@dataclass
-class DBUpdateChunk:
-    updates: List[DBUpdate]
-    update_function: Callable[[Any], Coroutine]
-
-
-class DBUpdateWorker:
+class Worker:
     def __init__(self, task_queue: Queue, session):
         self.task_queue = task_queue
         self.session = session
@@ -106,13 +37,12 @@ class DBUpdateWorker:
     async def run(self):
         while True:
             update_chunk = await self.task_queue.get()
-            await update_chunk.update_function(
-                update_chunk.updates, session=self.session
-            )
+            await update_chunk.bulk_function(update_chunk.data, session=self.session)
             self.task_queue.task_done()
+            print("queue size", self.task_queue.qsize())
 
 
-class DBUpdateBuffer:
+class DataBuffer:
     def __init__(self, update_function, task_queue: Queue):
         self.update_buffer = []
         self.update_function = update_function
@@ -126,14 +56,21 @@ class DBUpdateBuffer:
     def flush(self):
         if self.update_buffer:
             self.task_queue.put_nowait(
-                DBUpdateChunk(self.update_buffer, self.update_function)
+                DataChunk(self.update_buffer, self.update_function)
+            )
+            self.update_buffer = []
+
+    async def finish(self):
+        if self.update_buffer:
+            await self.task_queue.put(
+                DataChunk(self.update_buffer, self.update_function)
             )
             self.update_buffer = []
 
     @staticmethod
-    def insert_buffer(collection: "Collection", id_provider: AbstractIdProvider):
+    def bulk_insert(collection: "Collection", id_provider: AbstractIdProvider):
         async def func(change_buffer: List[DBUpdate], session):
-            updates = await DBUpdateBuffer.generate_id_buffer(
+            updates = await DataBuffer.generate_bulk_id_buffer(
                 collection, change_buffer, id_provider, session
             )
             await collection.insert_many(
@@ -145,7 +82,7 @@ class DBUpdateBuffer:
         return func
 
     @staticmethod
-    async def generate_id_buffer(
+    async def generate_bulk_id_buffer(
         collection: "Collection",
         change_buffer: List[DBUpdate],
         id_provider: AbstractIdProvider,
@@ -163,13 +100,13 @@ class DBUpdateBuffer:
             session=session,
         ):
             print("Recursion time uh oh")
-            return await DBUpdateBuffer.generate_id_buffer(
+            return await DataBuffer.generate_bulk_id_buffer(
                 collection, change_buffer, id_provider, session
             )
         return id_update_buffer
 
     @staticmethod
-    def update_buffer(collection: "Collection"):
+    def bulk_update(collection: "Collection"):
         async def func(change_buffer: List[DBUpdate], session):
             print("update_session", session)
             await collection.bulk_write(
@@ -181,7 +118,7 @@ class DBUpdateBuffer:
         return func
 
     @staticmethod
-    def delete_buffer(collection: "Collection"):
+    def bulk_delete(collection: "Collection"):
         async def func(change_buffer: List[DBUpdate], session):
             await collection.bulk_write(
                 [change.update for change in change_buffer], session=session
@@ -192,7 +129,7 @@ class DBUpdateBuffer:
         return func
 
     @staticmethod
-    def history_insert_buffer(collection: "Collection"):
+    def bulk_insert_history(collection: "Collection"):
         async def func(change_buffer: List[DBUpdate], session):
             try:
                 await collection.insert_many(
@@ -208,66 +145,68 @@ class DBUpdateBuffer:
         return func
 
 
-class BulkUpdater:
+class DBBulkUpdater:
     def __init__(
         self,
         mongo: "DB",
         session: AsyncIOMotorClientSession,
         user_id: str,
         progress_tracker: AccumulatingProgressHandlerWrapper,
+        workers,
+        task_queue,
+        prepare_history,
     ):
         self.user_id = user_id
         self.session = session
         self.mongo = mongo
         self.progress_tracker = progress_tracker
-        self.task_queue = asyncio.Queue()
-        self.update_sequence_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.update_buffer(mongo.sequences), self.task_queue
+        self.task_queue = task_queue
+        self.workers = workers
+        self.prepare_history = prepare_history
+
+        self.update_sequence_buffer = DataBuffer(
+            DataBuffer.bulk_update(mongo.sequences), self.task_queue
         )
-        self.insert_sequence_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.insert_buffer(mongo.sequences, mongo.id_provider),
+        self.insert_sequence_buffer = DataBuffer(
+            DataBuffer.bulk_insert(mongo.sequences, mongo.id_provider),
             self.task_queue,
         )
-        self.update_otu_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.update_buffer(mongo.otus), self.task_queue
+        self.update_otu_buffer = DataBuffer(
+            DataBuffer.bulk_update(mongo.otus), self.task_queue
         )
-        self.insert_otu_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.insert_buffer(mongo.otus, mongo.id_provider), self.task_queue
+        self.insert_otu_buffer = DataBuffer(
+            DataBuffer.bulk_insert(mongo.otus, mongo.id_provider), self.task_queue
         )
-        self.delete_sequence_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.delete_buffer(mongo.sequences), self.task_queue
+        self.delete_sequence_buffer = DataBuffer(
+            DataBuffer.bulk_delete(mongo.sequences), self.task_queue
         )
-        self.delete_otus_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.delete_buffer(mongo.otus), self.task_queue
+        self.delete_otus_buffer = DataBuffer(
+            DataBuffer.bulk_delete(mongo.otus), self.task_queue
         )
-        self.update_references_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.update_buffer(mongo.references), self.task_queue
+        self.update_references_buffer = DataBuffer(
+            DataBuffer.bulk_update(mongo.references), self.task_queue
         )
 
-        self.update_history_buffer = DBUpdateBuffer(
-            DBUpdateBuffer.history_insert_buffer(mongo.history), self.task_queue
+        self.update_history_buffer = DataBuffer(
+            DataBuffer.bulk_insert_history(mongo.history), self.task_queue
         )
         self.flag = True
 
-        self.workers = [
-            asyncio.create_task(DBUpdateWorker(self.task_queue, self.session).run())
-            for _ in range(5)
-        ]
-
-    async def update(self, update: OTUUpdate):
-        for sequence_update in update.sequences.updates:
-            self.update_sequence_buffer.add(
-                DBUpdate(sequence_update, self.increment_sequence(update))
+    def update(self, updates: List[OTUUpdate]):
+        for update in updates:
+            for sequence_update in update.sequences.updates:
+                self.update_sequence_buffer.add(
+                    DBUpdate(sequence_update, self.increment_sequence(update))
+                )
+            for sequence_insert in update.sequences.inserts:
+                self.insert_sequence_buffer.add(
+                    DBUpdate(sequence_insert, self.increment_sequence(update))
+                )
+            self.update_otu_buffer.add(
+                DBUpdate(update.otu_change, self.otu_updated(update))
             )
-        for sequence_insert in update.sequences.inserts:
-            self.insert_sequence_buffer.add(
-                DBUpdate(sequence_insert, self.increment_sequence(update))
-            )
-        self.update_otu_buffer.add(
-            DBUpdate(update.otu_change, self.otu_updated(update))
-        )
 
-    async def insert(self, update: OTUInsert):
+    def insert(self, update: OTUInsert):
         for sequence_insert in update.sequences.inserts:
             self.insert_sequence_buffer.add(
                 DBUpdate(sequence_insert, self.increment_sequence(update))
@@ -276,7 +215,7 @@ class BulkUpdater:
             DBUpdate(update.otu_change, self.otu_updated(update))
         )
 
-    async def delete(self, otu_delete: OTUDelete):
+    def delete(self, otu_delete: OTUDelete):
         for sequence_delete in otu_delete.sequences.deletes:
             self.delete_sequence_buffer.add(
                 DBUpdate(sequence_delete, self.increment_sequence(otu_delete))
@@ -288,32 +227,10 @@ class BulkUpdater:
             DBUpdate(otu_delete.reference_update, self.reference_updated(otu_delete))
         )
 
-    async def update_history(self, otu_change: OTUChange):
-        history_method = otu_change.history_method
-        new = None
-        if history_method == "update" or history_method == "create":
-            new = await join(self.mongo, otu_change.otu_id, session=self.session)
-            if history_method == "update" and self.flag:
-                self.flag = False
-                print(
-                    history_method,
-                    new["version"],
-                    self.session,
-                    otu_change.otu_id,
-                    otu_change.old["_id"],
-                    new["_id"],
-                )
-        self.update_history_buffer.add(
-            DBUpdate(
-                await prepare_add(
-                    history_method,
-                    otu_change.old,
-                    new,
-                    self.user_id,
-                )
-            )
-        )
-        await self.progress_tracker.add(1)
+    async def insert_history(self, history_inserts: List[Document]):
+        for history_insert in history_inserts:
+            self.update_history_buffer.add(DBUpdate(history_insert))
+        await self.progress_tracker.add(len(history_inserts))
         if self.progress_tracker._accumulated % 100 == 0:
             print(self.progress_tracker._accumulated)
 
@@ -321,7 +238,7 @@ class BulkUpdater:
         async def func(*args):
             otu_change.remaining_sequence_changes -= 1
             if otu_change.is_complete:
-                await self.update_history(otu_change)
+                await self.prepare_history(otu_change)
 
         return func
 
@@ -331,28 +248,154 @@ class BulkUpdater:
             if otu_change.otu_id is None:
                 otu_change.otu_id = otu_id
             if otu_change.is_complete:
-                await self.update_history(otu_change)
+                await self.prepare_history(otu_change)
 
         return func
 
     def reference_updated(self, otu_change: OTUChange):
         async def func():
-            otu_change.reference_update = True
+            otu_change.is_reference_updated = True
             if otu_change.is_complete:
-                await self.update_history(otu_change)
+                await self.prepare_history(otu_change)
 
         return func
 
     async def finish(self):
-        self.update_sequence_buffer.flush()
-        self.update_otu_buffer.flush()
-        self.insert_sequence_buffer.flush()
-        self.insert_otu_buffer.flush()
-        self.delete_sequence_buffer.flush()
-        self.delete_otus_buffer.flush()
-        self.update_references_buffer.flush()
+        await asyncio.gather(
+            self.update_sequence_buffer.finish(),
+            self.update_otu_buffer.finish(),
+            self.insert_sequence_buffer.finish(),
+            self.insert_otu_buffer.finish(),
+            self.delete_sequence_buffer.finish(),
+            self.delete_otus_buffer.finish(),
+            self.update_references_buffer.finish(),
+            self.update_history_buffer.finish(),
+        )
 
+
+class BulkOTUUpdater:
+    def __init__(self, ref_id, user_id, mongo, progress_tracker, session):
+        self.user_id = user_id
+        self.session = session
+        self.mongo = mongo
+        self.ref_id = ref_id
+        self.progress_tracker = progress_tracker
+        self.task_queue = asyncio.Queue()
+        self.workers = [
+            asyncio.create_task(Worker(self.task_queue, self.session).run())
+            for _ in range(10)
+        ]
+        self.update_db = DBBulkUpdater(
+            mongo,
+            session,
+            user_id,
+            progress_tracker,
+            self.workers,
+            self.task_queue,
+            self.insert_history,
+        )
+        self.prepare_otu_update_buffer = DataBuffer(
+            BulkOTUUpdater.bulk_prepare_update(self.update_db, mongo, ref_id, self),
+            self.task_queue,
+        )
+        self.prepare_insert_history_buffer = DataBuffer(
+            BulkOTUUpdater.bulk_prepare_insert_history(
+                self.update_db, mongo, self.user_id
+            ),
+            self.task_queue,
+        )
+
+        self.all_changes = []
+        self.inserts = 0
+        self.updates = 0
+        self.deletes = 0
+
+    def insert(self, otu, created_at):
+        insert_otu = prepare_insert_otu(otu, created_at, self.ref_id, self.user_id)
+        self.update_db.insert(insert_otu)
+        self.inserts += 1
+        self.all_changes.append(insert_otu)
+
+    def update(self, otu: dict, old: dict):
+        self.prepare_otu_update_buffer.add(OTUData(old, otu))
+
+    async def delete(self, otu_id):
+        remove_otu = await prepare_remove_otu(self.mongo, otu_id, self.session)
+        if remove_otu:
+            self.deletes += 1
+            self.update_db.delete(remove_otu)
+            self.all_changes.append(remove_otu)
+
+    async def insert_history(self, otu_change: OTUChange):
+        self.prepare_insert_history_buffer.add(otu_change)
+
+    async def finish(self):
+        await self.prepare_otu_update_buffer.finish()
+        await self.prepare_insert_history_buffer.finish()
         await self.task_queue.join()
-
+        await self.update_db.finish()
+        await self.task_queue.join()
+        print(
+            f"deletes {self.deletes}, updates {self.updates}, inserts{self.inserts}, total {self.deletes + self.inserts + self.updates}, remainder {self.task_queue.qsize()}, derped update {len(self.prepare_otu_update_buffer.update_buffer)}"
+        )
         for worker in self.workers:
             worker.cancel()
+
+        for change in self.all_changes:
+            if not change.is_complete:
+                print(
+                    change.history_method,
+                    change.remaining_sequence_changes,
+                    change.otu_changed,
+                )
+
+    @staticmethod
+    def bulk_prepare_update(bulk_db_updater: DBBulkUpdater, mongo, ref_id, self):
+        async def func(data: List[OTUData], session):
+            updates = await bulk_prepare_update_joined_otu(mongo, data, ref_id, session)
+            bulk_db_updater.update(updates)
+            self.updates += len(updates)
+            self.all_changes.extend(updates)
+
+        return func
+
+    @staticmethod
+    def bulk_prepare_insert_history(bulk_db_updater: DBBulkUpdater, mongo, user_id):
+        async def func(data: List[OTUChange], session):
+            docs = [
+                otu_change.otu_id
+                for otu_change in data
+                if otu_change.history_method == "update"
+                or otu_change.history_method == "create"
+            ]
+
+            print([(doc.history_method, doc.otu_id) for doc in data])
+
+            joined_documents = await bulk_join_ids(
+                mongo,
+                docs,
+                session,
+            )
+            joined_documents = {
+                document["_id"]: document for document in joined_documents
+            }
+
+            for otu_change in data:
+                print(
+                    otu_change.history_method,
+                    otu_change.old.get("_id", "Nothing"),
+                    joined_documents.get(otu_change.otu_id).get("_id", "Nothing"),
+                )
+
+            inserts = [
+                prepare_add(
+                    otu_change.history_method,
+                    otu_change.old,
+                    joined_documents.get(otu_change.otu_id),
+                    user_id,
+                )
+                for otu_change in data
+            ]  # await bulk_prepare_insert_history(mongo, data, ref_id, session)
+            await bulk_db_updater.insert_history(inserts)
+
+        return func

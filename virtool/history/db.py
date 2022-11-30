@@ -146,7 +146,7 @@ async def add(
     return document
 
 
-async def prepare_add(
+def prepare_add(
     history_method: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],

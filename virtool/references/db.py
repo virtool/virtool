@@ -12,8 +12,6 @@ from typing import (
     Optional,
     Union,
     TYPE_CHECKING,
-    Coroutine,
-    Callable,
 )
 
 import pymongo
@@ -37,13 +35,14 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
-from virtool.references.bulk import (
+from virtool.references.bulk_models import (
     OTUUpdate,
+    SequenceChanges,
+    OTUData,
     OTUInsert,
     OTUDelete,
-    HistoryChange,
-    SequenceChanges,
 )
+
 from virtool.references.utils import (
     RIGHTS,
     check_will_change,
@@ -967,7 +966,86 @@ async def prepare_update_joined_otu(
     )
 
 
-async def prepare_insert_otu(
+async def bulk_prepare_update_joined_otu(
+    mongo: "DB", otu_data: List[OTUData], ref_id: str, session
+) -> List[OTUUpdate]:
+
+    sequence_ids = []
+    for otu_item in otu_data:
+        for isolate in otu_item.otu["isolates"]:
+            sequence_ids.extend([sequence["_id"] for sequence in isolate["sequences"]])
+
+    cursor = mongo.sequences.find(
+        {
+            "reference.id": ref_id,
+            "remote.id": {"$in": sequence_ids},
+        },
+        session=session,
+    )
+
+    found_sequence_ids = {sequence["remote"]["id"] async for sequence in cursor}
+
+    otu_updates = []
+    for otu_item in otu_data:
+
+        if not check_will_change(otu_item.old, otu_item.otu):
+            continue
+
+        otu_update = UpdateOne(
+            {"_id": otu_item.old["_id"]},
+            {
+                "$inc": {"version": 1},
+                "$set": {
+                    "abbreviation": otu_item.otu["abbreviation"],
+                    "name": otu_item.otu["name"],
+                    "lower_name": otu_item.otu["name"].lower(),
+                    "isolates": otu_item.otu["isolates"],
+                    "schema": otu_item.otu.get("schema", []),
+                },
+            },
+        )
+
+        sequence_updates = []
+        sequence_inserts = []
+
+        for isolate in otu_item.otu["isolates"]:
+            for sequence in isolate.pop("sequences"):
+                sequence_update = {
+                    "accession": sequence["accession"],
+                    "definition": sequence["definition"],
+                    "host": sequence["host"],
+                    "segment": sequence.get("segment", ""),
+                    "sequence": sequence["sequence"],
+                    "otu_id": otu_item.old["_id"],
+                    "isolate_id": isolate["id"],
+                    "reference": {"id": ref_id},
+                    "remote": {"id": sequence["_id"]},
+                }
+
+                remote_sequence_id = sequence_update["remote"]["id"]
+                if remote_sequence_id in found_sequence_ids:
+                    sequence_updates.append(
+                        UpdateOne(
+                            {"reference.id": ref_id, "remote.id": remote_sequence_id},
+                            {"$set": sequence_update},
+                        )
+                    )
+                else:
+                    sequence_inserts.append(sequence_update)
+
+        otu_updates.append(
+            OTUUpdate(
+                otu_update,
+                SequenceChanges(updates=sequence_updates, inserts=sequence_inserts),
+                otu_item.old,
+                otu_id=otu_item.old["_id"],
+            )
+        )
+
+    return otu_updates
+
+
+def prepare_insert_otu(
     otu: dict, created_at: datetime.datetime, ref_id: str, user_id: str
 ) -> OTUInsert:
     issues = verify(otu)
@@ -1022,7 +1100,7 @@ async def prepare_insert_otu(
     )
 
 
-async def prepare_remove_otu(mongo: "DB", otu_id: str) -> Optional[OTUDelete]:
+async def prepare_remove_otu(mongo: "DB", otu_id: str, session) -> Optional[OTUDelete]:
     """
     Remove an OTU.
 
@@ -1034,7 +1112,7 @@ async def prepare_remove_otu(mongo: "DB", otu_id: str) -> Optional[OTUDelete]:
     :return: `True` if the removal was successful
 
     """
-    joined = await virtool.otus.db.join(mongo, otu_id)
+    joined = await virtool.otus.db.join(mongo, otu_id, session=session)
 
     if not joined:
         return None
