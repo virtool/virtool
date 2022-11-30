@@ -2,7 +2,7 @@
 Work with OTUs in the database.
 
 """
-from typing import Any, Dict, List, Optional, Union, Mapping
+from typing import Any, Dict, List, Optional, Union, Mapping, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
@@ -10,9 +10,14 @@ import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import DatabaseError
+from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.utils import base_processor, to_bool
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import DB
 
 PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
 
@@ -62,7 +67,7 @@ async def check_name_and_abbreviation(
 
 
 async def find(
-    db,
+    mongo: "DB",
     names: Optional[Union[bool, str]],
     term: Optional[str],
     req_query: Mapping,
@@ -83,11 +88,13 @@ async def find(
         base_query = {"reference.id": ref_id}
 
     if names is True or names == "true":
-        cursor = db.otus.find({**db_query, **base_query}, ["name"], sort=[("name", 1)])
+        cursor = mongo.otus.find(
+            {**db_query, **base_query}, ["name"], sort=[("name", 1)]
+        )
         return [base_processor(d) async for d in cursor]
 
     data = await paginate(
-        db.otus,
+        mongo.otus,
         db_query,
         req_query,
         base_query=base_query,
@@ -95,12 +102,18 @@ async def find(
         projection=PROJECTION,
     )
 
+    data["documents"] = await apply_transforms(
+        data["documents"], [AttachReferenceTransform(mongo)]
+    )
+
     history_query = {"index.id": "unbuilt"}
 
     if ref_id:
         history_query["reference.id"] = ref_id
 
-    data["modified_count"] = len(await db.history.distinct("otu.name", history_query))
+    data["modified_count"] = len(
+        await mongo.history.distinct("otu.name", history_query)
+    )
 
     return data
 
