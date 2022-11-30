@@ -37,7 +37,7 @@ def check_subtraction_file_type(file_name: str) -> str:
 
 
 def join_subtraction_path(config: Config, subtraction_id: str) -> Path:
-    return config.data_path / "subtractions" / subtraction_id.replace(" ", "_").lower()
+    return config.data_path / "subtractions" / subtraction_id.replace(" ", "_")
 
 
 def join_subtraction_index_path(config: Config, subtraction_id: str) -> Path:
