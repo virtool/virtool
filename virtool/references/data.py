@@ -396,7 +396,7 @@ class ReferencesData(DataLayerPiece):
 
         return ReferenceRelease(**{**release, **update_subdocument})
 
-    async def get_otus(
+    async def find_otus(
         self,
         term: Optional[str],
         verified: Optional[bool],
@@ -405,16 +405,16 @@ class ReferencesData(DataLayerPiece):
         query,
     ) -> OTUSearchResult:
 
-        if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
+        if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
+            data = await virtool.otus.db.find(
+                self._mongo, names, term, query, verified, ref_id
+            )
 
-        data = await virtool.otus.db.find(
-            self._mongo, names, term, query, verified, ref_id
-        )
+            return OTUSearchResult(**data)
 
-        return OTUSearchResult(**data)
+        raise ResourceNotFoundError()
 
-    async def create_otus(
+    async def create_otu(
         self, ref_id: str, data: CreateOTURequest, req, user_id: str
     ) -> OTU:
 
@@ -437,7 +437,7 @@ class ReferencesData(DataLayerPiece):
 
         return otu
 
-    async def get_history(
+    async def find_history(
         self, ref_id: str, unbuilt: str, query
     ) -> HistorySearchResult:
 
