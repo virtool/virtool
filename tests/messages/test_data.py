@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError
 from virtool.messages.data import MessagesData
 from virtool.messages.models import SQLInstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
@@ -59,7 +59,7 @@ class TestGet:
             )
             await session.commit()
 
-        with pytest.raises(ResourceNotFoundError):
+        with pytest.raises(ResourceConflictError):
             await messages_data.get()
 
 

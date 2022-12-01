@@ -9,6 +9,7 @@ from virtool.hmm.data import HmmData
 from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
+from virtool.messages.data import MessagesData
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
@@ -47,6 +48,7 @@ class DataLayer:
     users: UsersData
     tasks: TasksData
     sessions: SessionData
+    messages: MessagesData
 
     def __post_init__(self):
         self.hmms.bind_layer(self)

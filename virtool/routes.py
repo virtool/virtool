@@ -23,6 +23,8 @@ import virtool.subtractions.api
 import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
+import virtool.messages.api
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,7 @@ ROUTES = (
     virtool.uploads.api.routes,
     virtool.users.api.routes,
     virtool.oidc.api.routes,
+    virtool.messages.api.routes
 )
 
 

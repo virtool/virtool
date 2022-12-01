@@ -17,6 +17,7 @@ from virtool.indexes.data import IndexData
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
+from virtool.messages.data import MessagesData
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
@@ -63,6 +64,7 @@ def create_data_layer(
         UsersData(db, pg),
         TasksData(pg, redis),
         SessionData(redis),
+        MessagesData(pg, db)
     )
 
     return data_layer
