@@ -25,7 +25,7 @@ class MessagesView(PydanticView):
         """
         try:
             instance_message = await get_data_from_req(self.request).messages.get()
-        except ResourceNotFoundError or ResourceConflictError:
+        except (ResourceNotFoundError, ResourceConflictError):
             return json_response(None)
 
         return json_response(instance_message)
@@ -44,7 +44,7 @@ class MessagesView(PydanticView):
         return json_response(
             instance_message,
             status=200,
-            headers={"Location": f"/instance_message"}
+            headers={"Location": "/instance_message"}
         )
 
     async def patch(self, data: UpdateMessageRequest) -> Union[r200[UpdateMessageResponse], r404, r409]:

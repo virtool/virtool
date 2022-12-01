@@ -68,4 +68,3 @@ class UpdateMessageResponse(InstanceMessage):
                 "user": {"id": "ian", "handle": "ianboyes", "administrator": True}
             }
         }
-
