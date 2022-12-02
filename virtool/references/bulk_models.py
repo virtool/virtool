@@ -1,4 +1,4 @@
-from dataclasses import dataclass, astuple
+from dataclasses import dataclass, astuple, field
 from typing import Optional, List, Union, Callable, Any, Coroutine
 
 from pymongo import UpdateOne, DeleteMany, DeleteOne
@@ -17,9 +17,9 @@ class HistoryChange:
 
 @dataclass
 class SequenceChanges:
-    updates: Optional[List[UpdateOne]] = None
-    inserts: Optional[List[dict]] = None
-    deletes: Optional[List[DeleteMany]] = None
+    updates: Optional[List[UpdateOne]] = field(default_factory=list)
+    inserts: Optional[List[dict]] = field(default_factory=list)
+    deletes: Optional[List[DeleteMany]] = field(default_factory=list)
 
     @property
     def sequence_changes(self):

@@ -140,7 +140,7 @@ async def join(
 
 async def bulk_join_query(
     mongo: "DB",
-    queries: List[dict],
+    query: dict,
     session: Optional[AsyncIOMotorClientSession] = None,
 ) -> List[Dict[str, Any]]:
     """
@@ -149,16 +149,14 @@ async def bulk_join_query(
     If an OTU is passed, the document will not be pulled from the database.
 
     :param mongo: the application database client
-    :param queries: list of Mongo querys.
+    :param query: mongo query for the target documents
     :param document: use this otu document as a basis for the join
     :param session: a Motor session to use for database operations
     :return: the joined otu document
     """
-    # Get the otu entry if a ``document`` parameter was not passed.
 
-    documents = [await mongo.otus.find_one(query, session=session) for query in queries]
-
-    documents = [document for document in documents if document is not None]
+    cursor = mongo.otus.find(query, session=session)
+    documents = [document async for document in cursor]
 
     return await bulk_join_documents(mongo, documents, session)
 
@@ -202,7 +200,7 @@ async def bulk_join_documents(
     :return: the joined otu document
     """
     # Get the otu entry if a ``document`` parameter was not passed
-    print("session", session)
+    # print("session", session)
 
     cursor = mongo.sequences.find(
         {"otu_id": {"$in": [otu["_id"] for otu in otus]}},

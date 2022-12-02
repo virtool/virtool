@@ -925,42 +925,32 @@ class ReferencesData(DataLayerPiece):
             )
 
             bulk_updater = BulkOTUUpdater(
-                ref_id, user_id, self._mongo, tracker, session
+                ref_id, user_id, self._mongo, tracker, session, created_at
             )
 
-            for otu in data.otus:  # chunk this out
-                iterat += 1
-                old = await join(
-                    self._mongo, {"reference.id": ref_id, "remote.id": otu["_id"]}
-                )
-                if old:
-                    bulk_updater.update(otu, old)
-                else:
-                    bulk_updater.insert(otu, created_at)
+            bulk_updater.bulk_upsert(data.otus)
 
             for otu_id in to_delete:
                 iterat += 1
                 await bulk_updater.delete(otu_id)
             print("All update objects created")
+
             await bulk_updater.finish()
             print(
                 f"predicting {len(data.otus) + len(to_delete)} got {iterat} iterations. predicting {total_changes} history updates, got {tracker._accumulated}"
             )
-            print(
-                f"deletes {deletes}, updates {updates}, inserts{inserts}, total {deletes + inserts + updates}"
-            )
 
-            # await self._mongo.references.update_one(
-            #     {"_id": ref_id},
-            #     {
-            #         "$set": {
-            #             "installed": create_update_subdocument(release, True, user_id),
-            #             "updates.$.ready": True,
-            #             "updating": False,
-            #         }
-            #     },
-            #     session=session,
-            # )
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {
+                    "$set": {
+                        "installed": create_update_subdocument(release, True, user_id),
+                        "updates.$.ready": True,
+                        "updating": False,
+                    }
+                },
+                session=session,
+            )
 
         print("Done!!!!!!!!!!!!")
 
