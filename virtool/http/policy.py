@@ -31,11 +31,20 @@ class DefaultRoutePolicy:
         """
         ...
 
-    def run_checks(self, req, handler, client):
+    async def auth_check(self, req, handler, client):
+        """
+        Run a check using the abstract authorization client.
+
+        Redefine this method to build additional checks into a policy.
+        """
+        ...
+
+    async def run_checks(self, req, handler, client):
         if not self.allow_unauthenticated and not client.authenticated:
             raise HTTPUnauthorized(text="Requires authorization")
 
         self.check(req, handler, client)
+        await self.auth_check(req, handler, client)
 
 
 class AdministratorRoutePolicy(DefaultRoutePolicy):
@@ -59,6 +68,20 @@ class PermissionsRoutePolicy(DefaultRoutePolicy):
         for permission in self.permissions:
             if not client.permissions.get(permission.name, False):
                 raise HTTPForbidden(text="Not permitted")
+
+
+class PermissionsAuthPolicy(DefaultRoutePolicy):
+    def __init__(self, object_type, object_id, permission: Permission):
+        self.object_type = object_type
+        self.object_id = object_id
+        self.permission = permission
+
+    async def auth_check(self, req, handler, client):
+        if client.administrator:
+            return
+        abs_client = req.app["auth"]
+        if not await abs_client.check(client.user_id, self.permission, self.object_type, self.object_id):
+            raise HTTPForbidden(text="Not permitted")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):
@@ -142,6 +165,6 @@ async def route_policy_middleware(req: Request, handler: Callable):
 
     """
     route_policy = get_handler_policy(handler, req.method)
-    route_policy.run_checks(req, handler, req["client"])
+    await route_policy.run_checks(req, handler, req["client"])
 
     return await handler(req)

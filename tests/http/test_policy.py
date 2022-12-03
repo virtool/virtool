@@ -19,8 +19,7 @@ from virtool.http.policy import (
     policy,
     PublicRoutePolicy,
     DefaultRoutePolicy,
-    AdministratorRoutePolicy,
-    PermissionsRoutePolicy,
+    AdministratorRoutePolicy, PermissionsAuthPolicy,
 )
 from virtool.http.routes import Routes
 
@@ -288,7 +287,7 @@ async def test_permissions(
             else [Permission.modify_subtraction]
         ),
         addon_route_table=privilege_routes(
-            PermissionsRoutePolicy(Permission.create_sample)
+            PermissionsAuthPolicy("app", "virtool", Permission.create_sample)
         ),
     )
 

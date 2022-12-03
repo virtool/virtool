@@ -15,6 +15,7 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
+from virtool.auth.client import AbstractAuthorizationClient
 from virtool.auth.utils import connect_openfga
 
 import virtool.mongo.connect
@@ -119,6 +120,8 @@ async def startup_data(app: App):
     app["data"] = create_data_layer(
         app["db"], app["pg"], app["config"], app["client"], app["redis"]
     )
+
+    app["auth"].data = app["data"]
 
 
 async def startup_dispatcher(app: Application):
@@ -246,7 +249,7 @@ async def startup_databases(app: Application):
     openfga_host = app["config"].openfga_host
     openfga_scheme = app["config"].openfga_scheme
 
-    mongo, pg, redis, auth = await asyncio.gather(
+    mongo, pg, redis, openfga_client = await asyncio.gather(
         virtool.mongo.connect.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
@@ -265,7 +268,7 @@ async def startup_databases(app: Application):
             "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
-            "auth": auth,
+            "auth": AbstractAuthorizationClient(mongo, openfga_client),
         }
     )
 

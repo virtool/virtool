@@ -3,21 +3,6 @@ import pytest
 from virtool.groups.oas import UpdatePermissionsRequest
 
 
-@pytest.fixture
-async def setup_update_group(spawn_client, fake2):
-    client = await spawn_client(authorize=True, administrator=True)
-
-    group = await fake2.groups.create()
-    await fake2.groups.create()
-
-    await fake2.users.create()
-    await fake2.users.create(groups=[group])
-    await fake2.users.create(groups=[group])
-    await fake2.users.create(groups=[group])
-
-    return client, group
-
-
 async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapshot):
     """
     Test that a ``GET /groups`` return a complete list of groups.

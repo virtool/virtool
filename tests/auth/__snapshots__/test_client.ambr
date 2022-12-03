@@ -1,0 +1,236 @@
+# name: test_add_group_permissions[uvloop-mongo]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test',
+      'groups': <class 'list'> [
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '7cf872dc',
+      'groups': <class 'list'> [
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '3cbb22cc',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': True,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': 'da42dca3',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': True,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '09d01419',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': True,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---
+# name: test_add_group_permissions[uvloop-open_fga]
+  <class 'dict'> {
+    'cancel_job': True,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': True,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: test_add_user_permissions[uvloop]
+  <class 'dict'> {
+    'cancel_job': True,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': False,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: test_list[uvloop-mongo]
+  <class 'dict'> {
+    'cancel_job': True,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': False,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: test_list[uvloop-open_fga]
+  <class 'dict'> {
+    'cancel_job': True,
+    'create_ref': True,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': False,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: test_remove_group_permissions[uvloop-mongo]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test',
+      'groups': <class 'list'> [
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '7cf872dc',
+      'groups': <class 'list'> [
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '3cbb22cc',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': True,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': 'da42dca3',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': True,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '09d01419',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': True,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---
+# name: test_remove_group_permissions[uvloop-open_fga]
+  <class 'dict'> {
+    'cancel_job': False,
+    'create_ref': True,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': False,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: test_remove_user_permissions[uvloop]
+  <class 'dict'> {
+    'cancel_job': False,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': True,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---

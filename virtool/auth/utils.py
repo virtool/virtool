@@ -8,7 +8,12 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
-    ApiClient, OpenFgaApi,
+    ApiClient,
+    OpenFgaApi,
+    WriteRequest,
+    TupleKey,
+    ApiException,
+    TupleKeys,
 )
 from openfga_sdk.api import open_fga_api
 
@@ -75,7 +80,7 @@ async def write_auth_model(api_instance: OpenFgaApi):
         type_definitions = WriteAuthorizationModelRequest(
             type_definitions=[
                 TypeDefinition(
-                    type="instance",
+                    type="app",
                     relations=dict(
                         cancel_job=Userset(
                             this={},
@@ -103,6 +108,14 @@ async def write_auth_model(api_instance: OpenFgaApi):
                         ),
                     ),
                 ),
+                TypeDefinition(
+                    type="group",
+                    relations=dict(
+                        member=Userset(
+                            this={},
+                        )
+                    ),
+                ),
             ],
         )
 
@@ -117,3 +130,26 @@ async def check_openfga_version(client: ApiClient):
     """
 
     logger.info("Found OpenFGA %s", client.user_agent)
+
+
+async def write_tuple(api_client, user_type, user_id, relation, object_type, object_name):
+    """
+    Write a relationship tuple in OpenFGA.
+    """
+    api_instance = open_fga_api.OpenFgaApi(api_client)
+
+    body = WriteRequest(
+        writes=TupleKeys(
+            tuple_keys=[TupleKey(
+                user=f"{user_type}:{user_id}",
+                relation=relation,
+                object=f"{object_type}:{object_name}",
+            ),
+            ]
+        )
+    )
+
+    try:
+        await api_instance.write(body)
+    except ApiException:
+        pass

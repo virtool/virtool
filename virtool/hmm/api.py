@@ -23,7 +23,7 @@ from virtool.data.errors import (
     ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.policy import policy, PermissionsAuthPolicy
 from virtool.http.routes import Routes
 from virtool.mongo.utils import get_one_field
 from virtool.users.utils import Permission
@@ -124,7 +124,7 @@ class UpdatesView(PydanticView):
 
         return json_response(updates)
 
-    @policy(PermissionsRoutePolicy(Permission.modify_hmm))
+    @policy(PermissionsAuthPolicy("app", "virtool", Permission.modify_hmm))
     async def post(self) -> Union[r201[HMMInstalled], r400, r403]:
         """
         Install HMMs.
