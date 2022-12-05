@@ -58,9 +58,7 @@ async def test_create(static_time, spawn_client, snapshot):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    data = {"color": "red", "message": "This is a new message"}
-
-    resp = await client.put("/instance_message", data)
+    resp = await client.put("/instance_message", {"color": "red", "message": "This is a new message"})
 
     assert resp.status == 200
 
@@ -71,11 +69,10 @@ class TestUpdate:
     async def test_active(self, spawn_client, insert_test_message, snapshot):
         client = await spawn_client(authorize=True, administrator=True)
 
-        data = {"color": "grey", "message": "Change test message content"}
 
         await insert_test_message()
 
-        resp = await client.patch("/instance_message", data)
+        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change test message content"})
 
         assert resp.status == 200
         assert await resp.json() == snapshot
@@ -83,19 +80,24 @@ class TestUpdate:
     async def test_not_found(self, spawn_client, snapshot):
         client = await spawn_client(authorize=True, administrator=True)
 
-        data = {"color": "grey", "message": "Change test message content"}
-
-        resp = await client.patch("/instance_message", data)
+        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change test message content"})
 
         assert resp.status == 404
 
     async def test_inactive(self, spawn_client, insert_test_message, resp_is, snapshot):
         client = await spawn_client(authorize=True, administrator=True)
 
-        data = {"color": "grey", "message": "Change test message content"}
-
         await insert_test_message(active=False)
 
-        resp = await client.patch("/instance_message", data)
+        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change test message content"})
 
         await resp_is.conflict(resp, "No active message set")
+
+    async def test_deactivate(self, spawn_client, insert_test_message, snapshot):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        await insert_test_message()
+
+        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change message", "active": False})
+
+        assert await resp.json() == snapshot

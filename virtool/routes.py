@@ -38,19 +38,19 @@ ROUTES = (
     virtool.history.api.routes,
     virtool.hmm.api.routes,
     virtool.indexes.api.routes,
+    virtool.http.root.routes,
     virtool.jobs.api.routes,
     virtool.labels.api.routes,
+    virtool.messages.api.routes,
     virtool.otus.api.routes,
-    virtool.tasks.api.routes,
+    virtool.oidc.api.routes,
     virtool.references.api.routes,
-    virtool.http.root.routes,
     virtool.samples.api.routes,
     virtool.settings.api.routes,
     virtool.subtractions.api.routes,
+    virtool.tasks.api.routes,
     virtool.uploads.api.routes,
     virtool.users.api.routes,
-    virtool.oidc.api.routes,
-    virtool.messages.api.routes
 )
 
 

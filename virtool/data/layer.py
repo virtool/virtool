@@ -34,21 +34,21 @@ class DataLayer:
     analyses: AnalysisData
     blast: BLASTData
     groups: GroupsData
-    settings: SettingsData
     history: HistoryData
-    references: ReferencesData
     hmms: HmmData
     index: IndexData
-    labels: LabelsData
     jobs: JobsData
+    labels: LabelsData
+    messages: MessagesData
     otus: OTUData
+    references: ReferencesData
     samples: SamplesData
     subtractions: SubtractionsData
+    sessions: SessionData
+    settings: SettingsData
+    tasks: TasksData
     uploads: UploadsData
     users: UsersData
-    tasks: TasksData
-    sessions: SessionData
-    messages: MessagesData
 
     def __post_init__(self):
         self.hmms.bind_layer(self)
