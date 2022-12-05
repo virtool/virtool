@@ -25,14 +25,19 @@ class MessagesData:
         async with AsyncSession(self._pg) as session:
             instance_message = (
                 await session.execute(select(SQLInstanceMessage).order_by(SQLInstanceMessage.id.desc()))
-            ).first()[0]
+            ).first()
 
-        if instance_message and instance_message.active:
+        if not instance_message:
+            raise ResourceNotFoundError
+
+        instance_message = instance_message[0]
+
+        if instance_message.active:
             document = instance_message.to_dict()
             document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
             return InstanceMessage(**document)
 
-        raise ResourceNotFoundError
+        raise ResourceConflictError
 
     async def create(self, data: CreateMessageRequest, user_id: str) -> InstanceMessage:
         """
@@ -67,10 +72,12 @@ class MessagesData:
         async with AsyncSession(self._pg) as session:
             instance_message = (
                 await session.execute(select(SQLInstanceMessage).order_by(SQLInstanceMessage.id.desc()))
-            ).first()[0]
+            ).first()
 
             if not instance_message:
                 raise ResourceNotFoundError
+
+            instance_message = instance_message[0]
 
             if not instance_message.active:
                 raise ResourceConflictError("The message is inactive")

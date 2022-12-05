@@ -17,6 +17,7 @@ from virtool.indexes.data import IndexData
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
+from virtool.messages.data import MessagesData
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
@@ -49,20 +50,21 @@ def create_data_layer(
         AnalysisData(db, config, pg),
         BLASTData(db, pg),
         GroupsData(db),
-        SettingsData(db),
         HistoryData(config.data_path, db),
-        ReferencesData(db, pg, config, client),
         HmmData(client, config, db, pg),
         IndexData(db, config, pg),
-        LabelsData(db, pg),
         JobsData(JobsClient(redis), db, pg),
+        LabelsData(db, pg),
+        MessagesData(pg, db),
         OTUData(db, config),
+        ReferencesData(db, pg, config, client),
         SamplesData(config, db, pg),
         SubtractionsData(config.base_url, config, db, pg),
+        SessionData(redis),
+        SettingsData(db),
+        TasksData(pg, redis),
         UploadsData(config, db, pg),
         UsersData(db, pg),
-        TasksData(pg, redis),
-        SessionData(redis),
     )
 
     return data_layer
