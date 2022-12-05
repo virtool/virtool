@@ -161,7 +161,7 @@ async def get_for_jobs_api(req: Request) -> Response:
         if_modified_since = arrow.get(if_modified_since)
 
     try:
-        document, created_at = await get_data_from_req(req).analyses.get(
+        analysis = await get_data_from_req(req).analyses.get(
             req.match_info["analysis_id"],
             if_modified_since,
         )
@@ -172,12 +172,13 @@ async def get_for_jobs_api(req: Request) -> Response:
     except ResourceError:
         raise HTTPBadRequest(text="Parent sample does not exist")
 
-    headers = {
-        "Cache-Control": "no-cache",
-        "Last-Modified": isoformat(created_at),
-    }
-
-    return json_response(document.dict(), headers=headers)
+    return json_response(
+        analysis.dict(by_alias=True),
+        headers={
+            "Cache-Control": "no-cache",
+            "Last-Modified": isoformat(analysis.created_at),
+        },
+    )
 
 
 @routes.jobs_api.delete("/analyses/{analysis_id}")
@@ -262,7 +263,9 @@ class AnalysisFileView(PydanticView):
 
 @routes.view("/analyses/documents/{analysis_id}.{extension}")
 class DocumentDownloadView(PydanticView):
-    async def get(self, analysis_id: str, extension: str, /) -> Union[r200[Response], r404]:
+    async def get(
+        self, analysis_id: str, extension: str, /
+    ) -> Union[r200[Response], r404]:
         """
         Download an analysis.
 
@@ -295,7 +298,9 @@ class DocumentDownloadView(PydanticView):
 
 @routes.view("/analyses/{analysis_id}/{sequence_index}/blast")
 class BlastView(PydanticView):
-    async def put(self, analysis_id: str, sequence_index: int, /) -> Union[r200[Response], r400, r403, r404, r409]:
+    async def put(
+        self, analysis_id: str, sequence_index: int, /
+    ) -> Union[r200[Response], r400, r403, r404, r409]:
         """
         BLAST a NuVs contig.
 
