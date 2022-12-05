@@ -354,7 +354,7 @@ async def startup_b2c(app: Application):
             b2c_user_flow,
         ]
     ):
-        logger.fatal(
+        logger.critical(
             "Required B2C client information not provided for --use-b2c option"
         )
         sys.exit(1)

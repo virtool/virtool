@@ -29,7 +29,7 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
 
     """
     if not postgres_connection_string.startswith("postgresql+asyncpg://"):
-        logger.fatal("Invalid PostgreSQL connection string")
+        logger.critical("Invalid PostgreSQL connection string")
         sys.exit(1)
 
     logger.info("Connecting to PostgreSQL")
@@ -47,7 +47,7 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
 
         return pg
     except ConnectionRefusedError:
-        logger.fatal("Could not connect to PostgreSQL: Connection refused")
+        logger.critical("Could not connect to PostgreSQL: Connection refused")
         sys.exit(1)
 
 
