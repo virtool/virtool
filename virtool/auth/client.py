@@ -1,7 +1,7 @@
 import asyncio
-from typing import Union, List
+from typing import Union
 
-from openfga_sdk import ApiClient
+from openfga_sdk import ApiClient, TupleKey
 from virtool_core.models.enums import Permission
 
 from virtool.api.response import NotFound
@@ -14,11 +14,9 @@ from virtool.auth.mongo import (
 from virtool.auth.openfga import (
     check_in_open_fga,
     list_permissions_in_open_fga,
-    add_group_permissions_in_open_fga,
-    add_user_permissions_in_open_fga,
-    remove_group_permissions_in_open_fga,
-    remove_user_permissions_in_open_fga,
+    add_in_open_fga, remove_in_open_fga,
 )
+from virtool.auth.relationships import GroupPermission, BaseRelationship
 from virtool.data.layer import DataLayer
 
 from virtool.mongo.core import DB
@@ -62,77 +60,50 @@ class AbstractAuthorizationClient:
             return await list_permissions_in_mongo(self.mongo, user_id)
         except NotFound:
             return await list_permissions_in_open_fga(
-                    self.open_fga, user_id, object_type, object_id
+                self.open_fga, user_id, object_type, object_id
+            )
+
+    async def add(self, relationship: BaseRelationship):
+        """
+        Add permissions for a group or user in mongo and OpenFGA.
+        """
+
+        if isinstance(relationship, GroupPermission):
+            try:
+                await add_in_mongo(
+                    self.data, relationship.user_id, relationship.relation
                 )
+            except NotFound:
+                pass
 
-    async def add_group_permissions(
-        self,
-        group_id: str,
-        permissions: List[Permission],
-        object_type: str,
-        object_id: Union[str, int],
-    ):
-        """
-        Add permissions to a group in Mongo and OpenFGA.
-        """
+            relationship.user_id = f"{relationship.user_id}#member"
 
-        await asyncio.gather(
-            *[
-                add_in_mongo(self.data, group_id, permissions),
-                add_group_permissions_in_open_fga(
-                    self.open_fga, group_id, permissions, object_type, object_id
-                ),
-            ],
-            return_exceptions=True
-        )
+        for relation in relationship.relation:
+            tuple_key = TupleKey(
+                user=f"{relationship.user_type}:{relationship.user_id}",
+                relation=relation,
+                object=f"{relationship.object_type}:{relationship.object_name}",
+            )
 
-    async def add_user_permissions(
-        self,
-        user_id: str,
-        permissions: List[Permission],
-        object_type: str,
-        object_id: Union[str, int],
-    ):
-        """
-        Add permissions for a user in OpenFGA.
-        """
+            await add_in_open_fga(self.open_fga, tuple_key)
 
-        await add_user_permissions_in_open_fga(
-            self.open_fga, user_id, permissions, object_type, object_id
-        )
+    async def remove(self, relationship: BaseRelationship):
 
-    async def remove_group_permissions(
-        self,
-        group_id: str,
-        permissions: List[Permission],
-        object_type: str,
-        object_id: Union[str, int],
-    ):
-        """
-        Remove permissions from a group in Mongo and OpenFGA.
-        """
+        if isinstance(relationship, GroupPermission):
+            try:
+                await remove_in_mongo(
+                    self.data, relationship.user_id, relationship.relation
+                )
+            except NotFound:
+                pass
 
-        await asyncio.gather(
-            *[
-                remove_in_mongo(self.data, group_id, permissions),
-                remove_group_permissions_in_open_fga(
-                    self.open_fga, group_id, permissions, object_type, object_id
-                ),
-            ],
-            return_exceptions=True
-        )
+            relationship.user_id = f"{relationship.user_id}#member"
 
-    async def remove_user_permissions(
-        self,
-        user_id: str,
-        permissions: List[Permission],
-        object_type: str,
-        object_id: Union[str, int],
-    ):
-        """
-        Remove permissions from a user in OpenFGA.
-        """
+        for relation in relationship.relation:
+            tuple_key = TupleKey(
+                user=f"{relationship.user_type}:{relationship.user_id}",
+                relation=relation,
+                object=f"{relationship.object_type}:{relationship.object_name}",
+            )
 
-        await remove_user_permissions_in_open_fga(
-            self.open_fga, user_id, permissions, object_type, object_id
-        )
+            await remove_in_open_fga(self.open_fga, tuple_key)

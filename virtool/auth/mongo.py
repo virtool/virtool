@@ -26,7 +26,6 @@ async def list_permissions_in_mongo(mongo: DB, user_id: str) -> dict:
     """
     List user permissions in Mongo.
     """
-
     try:
         user = await mongo.users.find_one(user_id, ["permissions"])
         return user["permissions"]

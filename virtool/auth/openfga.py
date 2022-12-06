@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 from openfga_sdk import (
     ApiClient,
@@ -6,7 +6,8 @@ from openfga_sdk import (
     TupleKey,
     ReadRequest,
     WriteRequest,
-    TupleKeys, ApiException,
+    TupleKeys,
+    ApiException,
 )
 from openfga_sdk.api import open_fga_api
 from virtool_core.models.enums import Permission
@@ -15,11 +16,11 @@ from virtool.users.utils import generate_base_permissions
 
 
 async def check_in_open_fga(
-    open_fga: ApiClient,
-    user_id: str,
-    permission: Permission,
-    object_type: str,
-    object_id: Union[str, int],
+        open_fga: ApiClient,
+        user_id: str,
+        permission: Permission,
+        object_type: str,
+        object_id: Union[str, int],
 ) -> bool:
     """
     Check a permission in OpenFGA.
@@ -40,7 +41,7 @@ async def check_in_open_fga(
 
 
 async def list_permissions_in_open_fga(
-    open_fga: ApiClient, user_id: str, object_type: str, object_id: Union[str, int]
+        open_fga: ApiClient, user_id: str, object_type: str, object_id: Union[str, int]
 ) -> dict:
     """
     List permissions for a user in OpenFGA.
@@ -82,116 +83,29 @@ async def list_permissions_in_open_fga(
     return permissions
 
 
-async def add_group_permissions_in_open_fga(
-    open_fga: ApiClient, group_id: str, permissions: List[Permission], object_type: str, object_id: Union[str, int]
-):
+async def add_in_open_fga(open_fga: ApiClient, tuple_key: TupleKey):
     """
-    Add permissions to a group in OpenFGA.
-    """
-
-    api_instance = open_fga_api.OpenFgaApi(open_fga)
-
-    for permission in permissions:
-
-        body = WriteRequest(
-                writes=TupleKeys(
-                    tuple_keys=[TupleKey(
-                        user=f"group:{group_id}#member",
-                        relation=permission.name,
-                        object=f"{object_type}:{object_id}",
-                    ),
-                    ]
-                )
-            )
-        try:
-            await api_instance.write(body)
-        except ApiException:
-            pass
-
-
-async def add_user_permissions_in_open_fga(
-    open_fga: ApiClient, user_id: str, permissions: List[Permission], object_type: str, object_id: Union[str, int]
-):
-    """
-    Add permissions for a user in OpenFGA.
-    """
-
-    api_instance = open_fga_api.OpenFgaApi(open_fga)
-
-    for permission in permissions:
-
-        body = WriteRequest(
-                writes=TupleKeys(
-                    tuple_keys=[TupleKey(
-                        user=f"user:{user_id}",
-                        relation=permission.name,
-                        object=f"{object_type}:{object_id}",
-                    ),
-                    ]
-                )
-            )
-        try:
-            await api_instance.write(body)
-        except ApiException:
-            pass
-
-
-async def remove_group_permissions_in_open_fga(
-    open_fga: ApiClient,
-    group_id: str,
-    permissions: List[Permission],
-    object_type: str,
-    object_id: Union[str, id],
-):
-    """
-    Remove permissions from a group in OpenFGA.
-    """
-
-    api_instance = open_fga_api.OpenFgaApi(open_fga)
-
-    for permission in permissions:
-        body = WriteRequest(
-            deletes=TupleKeys(
-                tuple_keys=[
-                    TupleKey(
-                        user=f"group:{group_id}#member",
-                        relation=permission.name,
-                        object=f"{object_type}:{object_id}",
-                    ),
-                ],
-            ),
-        )
-        try:
-            await api_instance.write(body)
-        except ApiException:
-            pass
-
-
-async def remove_user_permissions_in_open_fga(
-    open_fga: ApiClient,
-    user_id: str,
-    permissions: List[Permission],
-    object_type: str,
-    object_id: Union[str, id],
-):
-    """
-    Remove permissions for a user in OpenFGA.
+    Add a permission in OpenFGA.
     """
     api_instance = open_fga_api.OpenFgaApi(open_fga)
 
-    for permission in permissions:
-        body = WriteRequest(
-            deletes=TupleKeys(
-                tuple_keys=[
-                    TupleKey(
-                        user=f"user:{user_id}",
-                        relation=permission.name,
-                        object=f"{object_type}:{object_id}",
-                    ),
-                ],
-            ),
-        )
-        try:
-            await api_instance.write(body)
-        except ApiException:
-            pass
+    body = WriteRequest(writes=TupleKeys(tuple_keys=[tuple_key]))
+
+    try:
+        await api_instance.write(body)
+    except ApiException:
+        pass
+
+
+async def remove_in_open_fga(open_fga: ApiClient, tuple_key: TupleKey):
+    """
+    Remove a permission in OpenFGA.
+    """
+    api_instance = open_fga_api.OpenFgaApi(open_fga)
+
+    body = WriteRequest(deletes=TupleKeys(tuple_keys=[tuple_key]))
+
+    try:
+        await api_instance.write(body)
+    except ApiException:
+        pass

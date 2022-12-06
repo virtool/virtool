@@ -3,6 +3,7 @@ import pytest
 from openfga_sdk.api import open_fga_api
 from virtool_core.models.enums import Permission
 
+from virtool.auth.relationships import GroupPermission, UserPermission
 from virtool.auth.utils import write_tuple
 
 
@@ -39,8 +40,6 @@ async def test_check(delete_store, db, has_permission, spawn_client):
     if db == "mongo":
         response = await abs_client.check("test", permission, "app", "virtool")
 
-        # assert await check_in_mongo(abs_client.mongo, "test", permission) is has_permission
-
     else:
         await write_tuple(
             abs_client.open_fga,
@@ -52,8 +51,6 @@ async def test_check(delete_store, db, has_permission, spawn_client):
         )
 
         response = await abs_client.check("ryanf", permission, "app", "virtool")
-
-        # assert await check_in_open_fga(abs_client.open_fga, "ryanf", permission, "app", "virtool") is has_permission
 
     assert response is has_permission
 
@@ -102,12 +99,7 @@ async def test_add_group_permissions(delete_store, setup_update_group, db, snaps
 
     if db == "mongo":
 
-        await abs_client.add_group_permissions(
-            group.id,
-            [Permission.cancel_job, Permission.modify_subtraction],
-            "app",
-            "virtool",
-        )
+        await abs_client.add(GroupPermission(group.id, [Permission.cancel_job, Permission.modify_subtraction]))
 
         assert (
                 await client.db.users.find({}, ["groups", "permissions"]).to_list(None)
@@ -120,12 +112,7 @@ async def test_add_group_permissions(delete_store, setup_update_group, db, snaps
             abs_client.open_fga, "user", "ryanf", "member", "group", "sidney"
         )
 
-        await abs_client.add_group_permissions(
-            "sidney",
-            [Permission.cancel_job, Permission.modify_subtraction],
-            "app",
-            "virtool",
-        )
+        await abs_client.add(GroupPermission("sidney", [Permission.cancel_job, Permission.modify_subtraction]))
 
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
@@ -135,12 +122,7 @@ async def test_add_user_permissions(delete_store, spawn_client, snapshot):
 
     abs_client = client.app["auth"]
 
-    await abs_client.add_user_permissions(
-        "ryanf",
-        [Permission.cancel_job],
-        "app",
-        "virtool",
-    )
+    await abs_client.add(UserPermission("ryanf", [Permission.cancel_job]))
 
     assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
@@ -157,7 +139,7 @@ async def test_remove_group_permissions(mongo, delete_store, db, setup_update_gr
             {"$set": {"permissions.cancel_job": True, "permissions.create_ref": True}},
         )
 
-        await abs_client.remove_group_permissions(group.id, [Permission.cancel_job], "app", "virtool")
+        await abs_client.remove(GroupPermission(group.id, [Permission.cancel_job]))
 
         assert (
                 await client.db.users.find({}, ["groups", "permissions"]).to_list(None)
@@ -187,7 +169,7 @@ async def test_remove_group_permissions(mongo, delete_store, db, setup_update_gr
             "virtool",
         )
 
-        await abs_client.remove_group_permissions("sidney", [Permission.cancel_job], "app", "virtool")
+        await abs_client.remove(GroupPermission("sidney", [Permission.cancel_job]))
 
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
@@ -215,6 +197,6 @@ async def test_remove_user_permissions(delete_store, spawn_client, snapshot):
         "virtool",
     )
 
-    await abs_client.remove_user_permissions("ryanf", [Permission.cancel_job], "app", "virtool")
+    await abs_client.remove(UserPermission("ryanf", [Permission.cancel_job]))
 
     assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
