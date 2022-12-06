@@ -1,6 +1,7 @@
 import math
 import asyncio
 from logging import getLogger
+from operator import itemgetter
 from typing import List, Optional, Union
 
 
@@ -53,6 +54,8 @@ class UploadsData(DataLayerPiece):
                 for result in results.unique().scalars().all():
                     uploads.append(result.to_dict())
 
+                uploads = sorted(uploads, key=itemgetter('created_at'), reverse=True)
+
                 return [
                     UploadMinimal(**upload)
                     for upload in await apply_transforms(
@@ -97,6 +100,8 @@ class UploadsData(DataLayerPiece):
 
         for row in results:
             uploads.append(row.Upload.to_dict())
+
+        uploads = sorted(uploads, key=itemgetter('created_at'), reverse=True)
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
 
