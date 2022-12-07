@@ -3,6 +3,7 @@ Work with references in the database
 
 """
 import asyncio
+from asyncio import to_thread
 import datetime
 import logging
 from pathlib import Path
@@ -37,7 +38,6 @@ from virtool.references.utils import (
 )
 from virtool.types import App
 from virtool.users.db import AttachUserTransform, extend_user
-from virtool.utils import run_in_thread
 
 PROJECTION = [
     "_id",
@@ -720,7 +720,7 @@ async def download_and_parse_release(
 
         await get_data_from_app(app).tasks.update(task_id, step="unpack")
 
-        return await run_in_thread(load_reference_file, download_path)
+        return await to_thread(load_reference_file, download_path)
 
 
 async def insert_change(

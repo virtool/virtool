@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import to_thread
 import math
 from typing import List, Optional
 
@@ -33,7 +34,7 @@ from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor, run_in_thread, wait_for_checks
+from virtool.utils import base_processor, wait_for_checks
 
 
 class SamplesData(DataLayerPiece):
@@ -338,7 +339,7 @@ class SamplesData(DataLayerPiece):
             )
 
         if result.deleted_count:
-            await run_in_thread(
+            await to_thread(
                 virtool_core.utils.rm,
                 join_sample_path(self._config, sample_id),
                 recursive=True,

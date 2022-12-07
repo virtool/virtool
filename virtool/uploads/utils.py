@@ -1,3 +1,4 @@
+from asyncio import to_thread
 import os
 import pathlib
 from logging import getLogger
@@ -7,7 +8,6 @@ import aiofiles
 from cerberus import Validator
 
 from virtool.data.errors import ResourceNotFoundError
-from virtool.utils import run_in_thread
 
 from virtool.config.cls import Config
 
@@ -60,7 +60,7 @@ async def naive_writer(
     size = 0
 
     try:
-        await run_in_thread(os.makedirs, path.parent)
+        await to_thread(os.makedirs, path.parent)
     except FileExistsError:
         pass
 
@@ -88,7 +88,7 @@ async def get_upload_path(config: Config, name_on_disk: str) -> pathlib.Path:
     upload_path = config.data_path / "files" / name_on_disk
 
     # check if the file has been manually removed by the user
-    if not await run_in_thread(upload_path.exists):
+    if not await to_thread(upload_path.exists):
         raise ResourceNotFoundError("Uploaded file not found at expected location")
 
     return upload_path

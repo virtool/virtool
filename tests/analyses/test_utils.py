@@ -5,8 +5,7 @@ import pytest
 
 import virtool.analyses.files
 import virtool.analyses.utils
-from virtool.utils import run_in_thread
-
+from asyncio import to_thread
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_attach_analysis_files(exists, snapshot, pg):
@@ -61,11 +60,11 @@ async def test_move_nuvs_files(tmp_path, spawn_client):
     target_path.mkdir()
 
     await virtool.analyses.utils.move_nuvs_files(
-        "hmm.tsv", run_in_thread, file_path, target_path
+        "hmm.tsv", to_thread, file_path, target_path
     )
     assert set(os.listdir(target_path)) == {"hmm.tsv"}
 
     await virtool.analyses.utils.move_nuvs_files(
-        "assembly.fa", run_in_thread, file_path, target_path
+        "assembly.fa", to_thread, file_path, target_path
     )
     assert set(os.listdir(target_path)) == {"hmm.tsv", "assembly.fa.gz"}

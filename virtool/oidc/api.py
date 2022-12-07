@@ -1,3 +1,4 @@
+from asyncio import to_thread
 from urllib.parse import parse_qs
 
 import jwt
@@ -6,7 +7,6 @@ from aiohttp.web_exceptions import HTTPFound
 
 from virtool.http.policy import PublicRoutePolicy, policy
 from virtool.http.routes import Routes
-from virtool.utils import run_in_thread
 
 routes = Routes()
 
@@ -28,7 +28,7 @@ async def acquire_tokens(req: Request) -> Response:
     }
 
     try:
-        result = await run_in_thread(
+        result = await to_thread(
             req.app["b2c"].msal.acquire_token_by_auth_code_flow,
             req.app["b2c"].auth_code_flow,
             auth_response,
@@ -73,7 +73,7 @@ async def refresh_tokens(req: Request) -> Response:
         ][0]
 
         if user_account:
-            result = await run_in_thread(
+            result = await to_thread(
                 req.app["b2c"].msal.acquire_token_silent,
                 [],
                 user_account,

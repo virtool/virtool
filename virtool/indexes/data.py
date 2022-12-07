@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import to_thread
 import logging
 from pathlib import Path
 from typing import List, Union, Optional
@@ -37,7 +38,7 @@ from virtool.pg.utils import get_rows
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread, compress_json_with_gzip, wait_for_checks
+from virtool.utils import compress_json_with_gzip, wait_for_checks
 
 logger = logging.getLogger("indexes")
 
@@ -193,7 +194,7 @@ class IndexData:
 
             json_string = dumps(patched_otus)
 
-            await run_in_thread(compress_json_with_gzip, json_string, json_path)
+            await to_thread(compress_json_with_gzip, json_string, json_path)
 
         return json_path
 

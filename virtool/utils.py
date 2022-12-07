@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import functools
 import gzip
 import hashlib
 import os
@@ -147,12 +146,6 @@ def random_alphanumeric(
         return candidate
 
     return random_alphanumeric(length=length, excluded=excluded)
-
-
-async def run_in_thread(func, *args, **kwargs):
-    loop = asyncio.get_event_loop()
-    bound_func = functools.partial(func, *args, **kwargs)
-    return await loop.run_in_executor(None, bound_func)
 
 
 def timestamp() -> datetime.datetime:
