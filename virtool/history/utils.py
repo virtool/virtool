@@ -1,3 +1,4 @@
+from asyncio import to_thread
 import datetime
 import json
 import os
@@ -7,8 +8,6 @@ from typing import List, Optional, Tuple, Union
 import aiofiles
 import arrow
 import dictdiffer
-
-from virtool.utils import run_in_thread
 
 
 def calculate_diff(old: dict, new: dict) -> list:
@@ -218,7 +217,7 @@ async def remove_diff_files(app, id_list: List[str]):
         path = join_diff_path(data_path, otu_id, otu_version)
 
         try:
-            await run_in_thread(os.remove, path)
+            await to_thread(os.remove, path)
         except FileNotFoundError:
             pass
 

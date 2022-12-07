@@ -1,5 +1,6 @@
 import math
 import asyncio
+from asyncio import to_thread
 from logging import getLogger
 from typing import List, Optional, Union
 
@@ -19,7 +20,6 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread
 
 logger = getLogger(__name__)
 
@@ -195,7 +195,7 @@ class UploadsData(DataLayerPiece):
         )
 
         try:
-            await run_in_thread(
+            await to_thread(
                 rm, self._config.data_path / "files" / upload.name_on_disk
             )
         except FileNotFoundError:

@@ -1,3 +1,4 @@
+from asyncio import to_thread
 from pathlib import Path
 from typing import List, Union
 
@@ -6,7 +7,6 @@ from virtool_core.utils import file_stats
 
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import check_subtraction_file_type
-from virtool.utils import run_in_thread
 
 
 async def create_subtraction_files(
@@ -29,7 +29,7 @@ async def create_subtraction_files(
                 name=filename,
                 subtraction=subtraction_id,
                 type=check_subtraction_file_type(filename),
-                size=(await run_in_thread(file_stats, path / filename))["size"],
+                size=(await to_thread(file_stats, path / filename))["size"],
             )
         )
 

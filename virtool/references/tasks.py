@@ -1,3 +1,4 @@
+from asyncio import to_thread
 import json
 import os
 import shutil
@@ -29,7 +30,7 @@ from virtool.references.utils import (
     load_reference_file,
 )
 from virtool.tasks.task import Task
-from virtool.utils import chunk_list, get_temp_dir, run_in_thread
+from virtool.utils import chunk_list, get_temp_dir
 from virtool_core.models.enums import HistoryMethod
 
 logger = getLogger(__name__)
@@ -321,7 +322,7 @@ class DeleteReferenceTask(Task):
         ]
 
         for dir_name in self.non_existent_references:
-            await run_in_thread(shutil.rmtree, path / dir_name, True)
+            await to_thread(shutil.rmtree, path / dir_name, True)
 
         await get_data_from_app(self.app).tasks.update(
             self.id, progress=tracker.step_completed, step="remove_directory"

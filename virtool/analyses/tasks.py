@@ -1,3 +1,4 @@
+from asyncio import to_thread
 import os
 import shutil
 
@@ -10,7 +11,6 @@ from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import move_nuvs_files, join_analysis_path
 from virtool.tasks.task import Task
 from virtool.types import App
-from virtool.utils import run_in_thread
 
 
 class StoreNuvsFilesTask(Task):
@@ -48,7 +48,7 @@ class StoreNuvsFilesTask(Task):
 
             if path.is_dir() and not exists:
                 try:
-                    await run_in_thread(os.makedirs, target_path)
+                    await to_thread(os.makedirs, target_path)
                 except FileExistsError:
                     pass
 
@@ -84,6 +84,6 @@ class StoreNuvsFilesTask(Task):
             path = join_analysis_path(config.data_path, analysis_id, sample_id)
 
             if (config.data_path / "analyses" / analysis_id).is_dir():
-                await run_in_thread(shutil.rmtree, path, True)
+                await to_thread(shutil.rmtree, path, True)
 
         await self.tasks_data.update(self.id, step="remove_directory")

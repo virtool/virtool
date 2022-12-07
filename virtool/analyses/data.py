@@ -1,4 +1,4 @@
-from asyncio import gather, CancelledError
+from asyncio import gather, CancelledError, to_thread
 from datetime import datetime
 from logging import getLogger
 from typing import Union, Tuple, Dict, Optional
@@ -43,7 +43,7 @@ from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread, wait_for_checks
+from virtool.utils import wait_for_checks
 
 logger = getLogger("analyses")
 
@@ -207,7 +207,7 @@ class AnalysisData(DataLayerPiece):
         path = self._config.data_path / "samples" / sample_id / "analysis" / analysis_id
 
         try:
-            await run_in_thread(rm, path, True)
+            await to_thread(rm, path, True)
         except FileNotFoundError:
             pass
 

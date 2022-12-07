@@ -140,12 +140,3 @@ def example_path():
 @pytest.fixture
 def thread_pool_executor():
     return ThreadPoolExecutor(thread_name_prefix="vt_pytest_")
-
-
-@pytest.fixture
-def run_in_thread(loop, thread_pool_executor):
-    async def _run_in_thread(func, *args, **kwargs):
-        bound_func = functools.partial(func, *args, **kwargs)
-        return await loop.run_in_executor(thread_pool_executor, bound_func)
-
-    return _run_in_thread

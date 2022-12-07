@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import to_thread
 import shutil
 from asyncio import CancelledError
 from logging import getLogger
@@ -46,7 +47,7 @@ from virtool.subtractions.utils import (
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor, run_in_thread
+from virtool.utils import base_processor
 
 logger = getLogger(__name__)
 
@@ -206,7 +207,7 @@ class SubtractionsData(DataLayerPiece):
 
             await asyncio.gather(
                 unlink_default_subtractions(self._mongo, subtraction_id, session),
-                run_in_thread(
+                to_thread(
                     shutil.rmtree,
                     join_subtraction_path(self._config, subtraction_id),
                     True,
@@ -295,7 +296,7 @@ class SubtractionsData(DataLayerPiece):
 
                 await session.commit()
         except CancelledError:
-            await run_in_thread(
+            await to_thread(
                 rm,
                 self._config.data_path / "subtractions" / subtraction_id / filename,
             )
@@ -327,7 +328,7 @@ class SubtractionsData(DataLayerPiece):
 
         path = join_subtraction_path(self._config, subtraction_id) / filename
 
-        if not await run_in_thread(path.is_file):
+        if not await to_thread(path.is_file):
             logger.warning("")
             raise ResourceNotFoundError
 

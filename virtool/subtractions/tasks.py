@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import to_thread
 import os
 
 from sqlalchemy import select
@@ -12,7 +13,6 @@ from virtool.subtractions.db import ADD_SUBTRACTION_FILES_QUERY
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 from virtool.types import App
-from virtool.utils import run_in_thread
 from virtool.data.utils import get_data_from_app
 
 
@@ -46,7 +46,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
             path = virtool.subtractions.utils.join_subtraction_path(
                 self.app["config"], subtraction["_id"]
             )
-            await run_in_thread(virtool.subtractions.utils.rename_bowtie_files, path)
+            await to_thread(virtool.subtractions.utils.rename_bowtie_files, path)
 
     async def store_subtraction_files(self):
         """
@@ -118,7 +118,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
 
         await self.run_in_thread(compress_file, fasta_path, target_path)
 
-        await run_in_thread(rm, fasta_path)
+        await to_thread(rm, fasta_path)
 
         await self.db.subtraction.find_one_and_update(
             {"_id": subtraction}, {"$set": {"has_file": True}}

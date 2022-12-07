@@ -1,3 +1,4 @@
+from asyncio import to_thread
 import logging
 from typing import Dict, List
 
@@ -12,7 +13,7 @@ from virtool.indexes.models import SQLIndexFile, IndexType
 from virtool.indexes.utils import join_index_path
 from virtool.tasks.task import Task
 from virtool.types import App, Document
-from virtool.utils import compress_json_with_gzip, run_in_thread
+from virtool.utils import compress_json_with_gzip
 
 
 class AddIndexFilesTask(Task):
@@ -51,7 +52,7 @@ class AddIndexFilesTask(Task):
                             name=path.name,
                             index=index_id,
                             type=get_index_file_type_from_name(path.name),
-                            size=(await run_in_thread(file_stats, path))["size"],
+                            size=(await to_thread(file_stats, path))["size"],
                         )
                         for path in sorted(index_path.iterdir())
                         if path.name in FILES
@@ -87,7 +88,7 @@ class AddIndexJSONTask(Task):
                 ref_id, ["data_type", "organism", "targets"]
             )
 
-            await run_in_thread(
+            await to_thread(
                 compress_json_with_gzip,
                 dumps(
                     {
@@ -100,7 +101,7 @@ class AddIndexJSONTask(Task):
                 index_json_path,
             )
 
-            stats = await run_in_thread(file_stats, index_json_path)
+            stats = await to_thread(file_stats, index_json_path)
 
             session.add(
                 SQLIndexFile(
