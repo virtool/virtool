@@ -3,8 +3,27 @@ import pytest
 from openfga_sdk.api import open_fga_api
 from virtool_core.models.enums import Permission
 
-from virtool.auth.relationships import GroupPermission, UserPermission
-from virtool.auth.utils import write_tuple
+from virtool.auth.client import AuthorizationClient
+from virtool.auth.relationships import GroupPermission, UserPermission, GroupMembership
+from virtool.auth.utils import write_tuple, connect_openfga
+
+
+@pytest.fixture()
+def spawn_auth_client(mongo, data_layer, create_user):
+    async def func(
+        permissions=None,
+    ):
+        user_document = create_user(
+            user_id="test",
+            permissions=permissions,
+        )
+        await mongo.users.insert_one(user_document)
+
+        open_fga_client = await connect_openfga("localhost:8080", "http")
+
+        return AuthorizationClient(mongo, open_fga_client, data_layer)
+
+    return func
 
 
 @pytest.fixture()
@@ -28,9 +47,8 @@ async def delete_store():
 
 @pytest.mark.parametrize("db", ["mongo", "open_fga"])
 @pytest.mark.parametrize("has_permission", [True, False])
-async def test_check(delete_store, db, has_permission, spawn_client):
-    client = await spawn_client(authorize=True, permissions=[Permission.cancel_job])
-    abs_client = client.app["auth"]
+async def test_check(delete_store, db, has_permission, spawn_auth_client):
+    abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
     if has_permission:
         permission = Permission.cancel_job
@@ -56,10 +74,8 @@ async def test_check(delete_store, db, has_permission, spawn_client):
 
 
 @pytest.mark.parametrize("db", ["mongo", "open_fga"])
-async def test_list(delete_store, db, spawn_client, snapshot):
-    client = await spawn_client(authorize=True, permissions=[Permission.cancel_job])
-
-    abs_client = client.app["auth"]
+async def test_list(delete_store, db, spawn_auth_client, snapshot):
+    abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
     if db == "mongo":
         response = await abs_client.list_permissions("test", "app", "virtool")
@@ -92,18 +108,59 @@ async def test_list(delete_store, db, spawn_client, snapshot):
 
 
 @pytest.mark.parametrize("db", ["mongo", "open_fga"])
-async def test_add_group_permissions(delete_store, setup_update_group, db, snapshot):
-    client, group = setup_update_group
-
-    abs_client = client.app["auth"]
+async def test_add_to_group(
+    db, spawn_auth_client, delete_store, fake2, snapshot, mongo
+):
+    abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
     if db == "mongo":
 
-        await abs_client.add(GroupPermission(group.id, [Permission.cancel_job, Permission.modify_subtraction]))
+        group = await fake2.groups.create()
+
+        await fake2.users.create()
+
+        user = await fake2.users.create()
+
+        await abs_client.add(GroupMembership(user.id, group.id, ["member"]))
+
+        assert await mongo.users.find({}, ["groups"]).to_list(None) == snapshot
+    else:
+        await abs_client.add(GroupMembership("ryanf", "sidney", ["member"]))
+
+        await abs_client.add(
+            GroupPermission(
+                "sidney", [Permission.cancel_job, Permission.modify_subtraction]
+            )
+        )
+
+        assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
+
+
+@pytest.mark.parametrize("db", ["mongo", "open_fga"])
+async def test_add_group_permissions(
+    delete_store, fake2, spawn_auth_client, mongo, db, snapshot
+):
+    abs_client = await spawn_auth_client()
+
+    group = await fake2.groups.create()
+    await fake2.groups.create()
+
+    await fake2.users.create()
+    await fake2.users.create(groups=[group])
+    await fake2.users.create(groups=[group])
+    await fake2.users.create(groups=[group])
+
+    if db == "mongo":
+
+        await abs_client.add(
+            GroupPermission(
+                group.id, [Permission.cancel_job, Permission.modify_subtraction]
+            )
+        )
 
         assert (
-                await client.db.users.find({}, ["groups", "permissions"]).to_list(None)
-                == snapshot
+            await mongo.users.find({}, ["groups", "permissions"]).to_list(None)
+            == snapshot
         )
 
     else:
@@ -112,15 +169,17 @@ async def test_add_group_permissions(delete_store, setup_update_group, db, snaps
             abs_client.open_fga, "user", "ryanf", "member", "group", "sidney"
         )
 
-        await abs_client.add(GroupPermission("sidney", [Permission.cancel_job, Permission.modify_subtraction]))
+        await abs_client.add(
+            GroupPermission(
+                "sidney", [Permission.cancel_job, Permission.modify_subtraction]
+            )
+        )
 
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
 
-async def test_add_user_permissions(delete_store, spawn_client, snapshot):
-    client = await spawn_client(authorize=True)
-
-    abs_client = client.app["auth"]
+async def test_add_user_permissions(delete_store, spawn_auth_client, snapshot):
+    abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
     await abs_client.add(UserPermission("ryanf", [Permission.cancel_job]))
 
@@ -128,10 +187,18 @@ async def test_add_user_permissions(delete_store, spawn_client, snapshot):
 
 
 @pytest.mark.parametrize("db", ["mongo", "open_fga"])
-async def test_remove_group_permissions(mongo, delete_store, db, setup_update_group, snapshot):
-    client, group = setup_update_group
+async def test_remove_group_permissions(
+    mongo, delete_store, db, spawn_auth_client, snapshot, fake2
+):
+    abs_client = await spawn_auth_client()
 
-    abs_client = client.app["auth"]
+    group = await fake2.groups.create()
+    await fake2.groups.create()
+
+    await fake2.users.create()
+    await fake2.users.create(groups=[group])
+    await fake2.users.create(groups=[group])
+    await fake2.users.create(groups=[group])
 
     if db == "mongo":
         await mongo.groups.find_one_and_update(
@@ -142,8 +209,8 @@ async def test_remove_group_permissions(mongo, delete_store, db, setup_update_gr
         await abs_client.remove(GroupPermission(group.id, [Permission.cancel_job]))
 
         assert (
-                await client.db.users.find({}, ["groups", "permissions"]).to_list(None)
-                == snapshot
+            await mongo.users.find({}, ["groups", "permissions"]).to_list(None)
+            == snapshot
         )
 
     else:
@@ -174,10 +241,8 @@ async def test_remove_group_permissions(mongo, delete_store, db, setup_update_gr
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
 
-async def test_remove_user_permissions(delete_store, spawn_client, snapshot):
-    client = await spawn_client(authorize=True)
-
-    abs_client = client.app["auth"]
+async def test_remove_user_permissions(delete_store, spawn_auth_client, snapshot):
+    abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
     await write_tuple(
         abs_client.open_fga,

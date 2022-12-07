@@ -15,7 +15,7 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
-from virtool.auth.client import AbstractAuthorizationClient
+from virtool.auth.client import AuthorizationClient
 from virtool.auth.utils import connect_openfga
 
 import virtool.mongo.connect
@@ -121,7 +121,17 @@ async def startup_data(app: App):
         app["db"], app["pg"], app["config"], app["client"], app["redis"]
     )
 
-    app["auth"].data = app["data"]
+
+async def startup_auth(app: App):
+    """
+    Create the authorization client object.
+
+    :param app: the application object
+    """
+
+    openfga_client = app["auth"]
+
+    app["auth"] = AuthorizationClient(app["db"], openfga_client, app["data"])
 
 
 async def startup_dispatcher(app: Application):
@@ -268,7 +278,7 @@ async def startup_databases(app: Application):
             "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
-            "auth": AbstractAuthorizationClient(mongo, openfga_client),
+            "auth": openfga_client,
         }
     )
 

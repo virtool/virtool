@@ -1,4 +1,5 @@
 import asyncio
+from abc import ABC, abstractmethod
 from typing import Union
 
 from openfga_sdk import ApiClient, TupleKey
@@ -8,22 +9,47 @@ from virtool.api.response import NotFound
 from virtool.auth.mongo import (
     check_in_mongo,
     list_permissions_in_mongo,
-    add_in_mongo,
-    remove_in_mongo,
 )
 from virtool.auth.openfga import (
     check_in_open_fga,
     list_permissions_in_open_fga,
-    add_in_open_fga, remove_in_open_fga,
+    add_in_open_fga,
+    remove_in_open_fga,
 )
-from virtool.auth.relationships import GroupPermission, BaseRelationship
+from virtool.auth.relationships import BaseRelationship
 from virtool.data.layer import DataLayer
 
 from virtool.mongo.core import DB
 
 
-class AbstractAuthorizationClient:
-    def __init__(self, mongo: DB, open_fga: ApiClient, data: DataLayer = None):
+class AbstractAuthorizationClient(ABC):
+    @abstractmethod
+    async def check(
+        self,
+        user_id: str,
+        permission: Permission,
+        object_type: str,
+        object_id: Union[str, int],
+    ) -> bool:
+        ...
+
+    @abstractmethod
+    async def list_permissions(
+        self, user_id: str, object_type: str, object_id: Union[str, int]
+    ) -> dict:
+        ...
+
+    @abstractmethod
+    async def add(self, relationship: BaseRelationship):
+        ...
+
+    @abstractmethod
+    async def remove(self, relationship: BaseRelationship):
+        ...
+
+
+class AuthorizationClient(AbstractAuthorizationClient):
+    def __init__(self, mongo: DB, open_fga: ApiClient, data: DataLayer):
         self.mongo = mongo
         self.open_fga = open_fga
         self.data = data
@@ -67,16 +93,10 @@ class AbstractAuthorizationClient:
         """
         Add permissions for a group or user in mongo and OpenFGA.
         """
-
-        if isinstance(relationship, GroupPermission):
-            try:
-                await add_in_mongo(
-                    self.data, relationship.user_id, relationship.relation
-                )
-            except NotFound:
-                pass
-
-            relationship.user_id = f"{relationship.user_id}#member"
+        try:
+            await relationship.add(self.data)
+        except NotFound:
+            pass
 
         for relation in relationship.relation:
             tuple_key = TupleKey(
@@ -88,16 +108,13 @@ class AbstractAuthorizationClient:
             await add_in_open_fga(self.open_fga, tuple_key)
 
     async def remove(self, relationship: BaseRelationship):
-
-        if isinstance(relationship, GroupPermission):
-            try:
-                await remove_in_mongo(
-                    self.data, relationship.user_id, relationship.relation
-                )
-            except NotFound:
-                pass
-
-            relationship.user_id = f"{relationship.user_id}#member"
+        """
+        Remove permissions for a group or user in mongo and OpenFGA.
+        """
+        try:
+            await relationship.remove(self.data)
+        except NotFound:
+            pass
 
         for relation in relationship.relation:
             tuple_key = TupleKey(
