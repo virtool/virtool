@@ -1,7 +1,6 @@
 import asyncio
-from asyncio import to_thread
 import shutil
-from asyncio import CancelledError
+from asyncio import CancelledError, to_thread
 from logging import getLogger
 from typing import Optional
 

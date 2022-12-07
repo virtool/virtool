@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import functools
 import gzip
 import hashlib
 import os
