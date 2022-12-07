@@ -1,7 +1,6 @@
 import math
 import asyncio
 from logging import getLogger
-from operator import itemgetter
 from typing import List, Optional, Union
 
 
@@ -49,12 +48,14 @@ class UploadsData(DataLayerPiece):
                 filters.append(SQLUpload.type == upload_type)
 
             if not paginate:
-                results = await session.execute(select(SQLUpload).filter(*filters))
+                results = await session.execute(
+                    select(SQLUpload)
+                    .filter(*filters)
+                    .order_by(SQLUpload.created_at.desc())
+                )
 
                 for result in results.unique().scalars().all():
                     uploads.append(result.to_dict())
-
-                uploads = sorted(uploads, key=itemgetter('created_at'), reverse=True)
 
                 return [
                     UploadMinimal(**upload)
@@ -79,7 +80,11 @@ class UploadsData(DataLayerPiece):
             )
 
             query = (
-                select(SQLUpload).filter(*filters).offset(skip_count).limit(per_page)
+                select(SQLUpload)
+                .filter(*filters)
+                .order_by(SQLUpload.created_at.desc())
+                .offset(skip_count)
+                .limit(per_page)
             )
 
             count, results = await asyncio.gather(
@@ -100,8 +105,6 @@ class UploadsData(DataLayerPiece):
 
         for row in results:
             uploads.append(row.Upload.to_dict())
-
-        uploads = sorted(uploads, key=itemgetter('created_at'), reverse=True)
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
 
