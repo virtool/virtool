@@ -197,9 +197,9 @@ class TestAddPermissions:
         )
 
     async def test_open_fga_group(
-        self, delete_store, fake2, setup_auth_update_group, mongo, snapshot
+        self, delete_store, fake2, spawn_auth_client, mongo, snapshot
     ):
-        abs_client, group = setup_auth_update_group
+        abs_client = await spawn_auth_client()
 
         await asyncio.gather(
             *[

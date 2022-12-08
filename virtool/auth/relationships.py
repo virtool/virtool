@@ -1,4 +1,3 @@
-from virtool.api.response import NotFound
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.groups.oas import UpdateGroupRequest
