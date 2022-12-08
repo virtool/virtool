@@ -1,4 +1,4 @@
-# name: test_add_group_permissions[uvloop-mongo]
+# name: TestAddPermissions.test_mongo[uvloop]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',
@@ -80,7 +80,7 @@
     },
   ]
 ---
-# name: test_add_group_permissions[uvloop-open_fga]
+# name: TestAddPermissions.test_open_fga_group[uvloop]
   <class 'dict'> {
     'cancel_job': True,
     'create_ref': False,
@@ -92,7 +92,19 @@
     'upload_file': False,
   }
 ---
-# name: test_add_to_group[uvloop-mongo]
+# name: TestAddPermissions.test_open_fga_user[uvloop]
+  <class 'dict'> {
+    'cancel_job': True,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': False,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: TestGroupMembership.test_mongo[uvloop]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',
@@ -112,7 +124,7 @@
     },
   ]
 ---
-# name: test_add_to_group[uvloop-open_fga]
+# name: TestGroupMembership.test_open_fga[uvloop]
   <class 'dict'> {
     'cancel_job': True,
     'create_ref': False,
@@ -124,7 +136,7 @@
     'upload_file': False,
   }
 ---
-# name: test_add_user_permissions[uvloop]
+# name: TestList.test_mongo[uvloop]
   <class 'dict'> {
     'cancel_job': True,
     'create_ref': False,
@@ -136,19 +148,7 @@
     'upload_file': False,
   }
 ---
-# name: test_list[uvloop-mongo]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': False,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
----
-# name: test_list[uvloop-open_fga]
+# name: TestList.test_open_fga[uvloop]
   <class 'dict'> {
     'cancel_job': True,
     'create_ref': True,
@@ -160,7 +160,7 @@
     'upload_file': False,
   }
 ---
-# name: test_remove_group_permissions[uvloop-mongo]
+# name: TestRemovePermissions.test_mongo[uvloop]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',
@@ -242,7 +242,7 @@
     },
   ]
 ---
-# name: test_remove_group_permissions[uvloop-open_fga]
+# name: TestRemovePermissions.test_open_fga_group[uvloop]
   <class 'dict'> {
     'cancel_job': False,
     'create_ref': True,
@@ -254,7 +254,7 @@
     'upload_file': False,
   }
 ---
-# name: test_remove_user_permissions[uvloop]
+# name: TestRemovePermissions.test_open_fga_user[uvloop]
   <class 'dict'> {
     'cancel_job': False,
     'create_ref': False,

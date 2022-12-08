@@ -122,16 +122,16 @@ async def startup_data(app: App):
     )
 
 
-async def startup_auth(app: App):
+async def startup_authorization_client(app: App):
     """
     Create the authorization client object.
 
     :param app: the application object
     """
 
-    openfga_client = app["auth"]
+    openfga_instance = app["auth"]
 
-    app["auth"] = AuthorizationClient(app["db"], openfga_client, app["data"])
+    app["auth"] = AuthorizationClient(app["db"], openfga_instance, app["data"])
 
 
 async def startup_dispatcher(app: Application):
@@ -259,7 +259,7 @@ async def startup_databases(app: Application):
     openfga_host = app["config"].openfga_host
     openfga_scheme = app["config"].openfga_scheme
 
-    mongo, pg, redis, openfga_client = await asyncio.gather(
+    mongo, pg, redis, openfga_instance = await asyncio.gather(
         virtool.mongo.connect.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
@@ -278,7 +278,7 @@ async def startup_databases(app: Application):
             "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
-            "auth": openfga_client,
+            "auth": openfga_instance,
         }
     )
 

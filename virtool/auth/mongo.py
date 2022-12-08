@@ -1,7 +1,9 @@
 from virtool_core.models.enums import Permission
 
 from virtool.api.response import NotFound
+from virtool.data.errors import ResourceNotFoundError
 from virtool.mongo.core import DB
+from virtool.mongo.utils import get_one_field
 
 
 async def check_in_mongo(mongo: DB, user_id: str, permission: Permission) -> bool:
@@ -11,7 +13,7 @@ async def check_in_mongo(mongo: DB, user_id: str, permission: Permission) -> boo
 
     return (
         await mongo.users.count_documents(
-            {"_id": user_id, f"permissions.{permission.name}": True}
+            {"_id": user_id, f"permissions.{permission.name}": True}, limit=1
         )
         == 1
     )
@@ -21,8 +23,10 @@ async def list_permissions_in_mongo(mongo: DB, user_id: str) -> dict:
     """
     List user permissions in Mongo.
     """
-    try:
-        user = await mongo.users.find_one(user_id, ["permissions"])
-        return user["permissions"]
-    except TypeError:
-        raise NotFound
+
+    permissions = await get_one_field(mongo.users, "permissions", user_id)
+
+    if permissions:
+        return permissions
+
+    raise ResourceNotFoundError()

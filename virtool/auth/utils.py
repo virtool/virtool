@@ -1,5 +1,6 @@
 import sys
 from logging import getLogger
+from typing import Union
 
 import openfga_sdk
 from aiohttp import ClientConnectorError
@@ -14,6 +15,7 @@ from openfga_sdk import (
     TupleKey,
     ApiException,
     TupleKeys,
+    ReadRequest,
 )
 from openfga_sdk.api import open_fga_api
 
@@ -23,7 +25,7 @@ logger = getLogger("openfga")
 async def connect_openfga(openfga_host: str, openfga_scheme: str):
     """
     Connects to an OpenFGA server and configures the store id.
-    Returns the application client object.
+    Returns the application client instance.
     """
     configuration = openfga_sdk.Configuration(
         api_scheme=openfga_scheme, api_host=openfga_host
@@ -46,7 +48,7 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
         logger.critical("Could not connect")
         sys.exit(1)
 
-    return api_client
+    return api_instance
 
 
 async def get_or_create_store(api_instance: OpenFgaApi):
@@ -132,22 +134,43 @@ async def check_openfga_version(client: ApiClient):
     logger.info("Found OpenFGA %s", client.user_agent)
 
 
-async def write_tuple(api_client, user_type, user_id, relation, object_type, object_name):
+async def read_group_permissions(
+    api_instance: OpenFgaApi,
+    group: str,
+    object_type: str,
+    object_id: Union[str, int],
+    permission_dict: dict,
+):
+    """
+    Read group permissions and update the permission dictionary.
+    """
+    body = ReadRequest(
+        tuple_key=TupleKey(user=f"{group}#member", object=f"{object_type}:{object_id}"),
+    )
+
+    response = await api_instance.read(body)
+
+    for relation_tuple in response.tuples:
+        permission_dict.update({relation_tuple.key.relation: True})
+
+
+async def write_tuple(
+    api_instance, user_type, user_id, relations, object_type, object_name
+):
     """
     Write a relationship tuple in OpenFGA.
     """
-    api_instance = open_fga_api.OpenFgaApi(api_client)
 
-    body = WriteRequest(
-        writes=TupleKeys(
-            tuple_keys=[TupleKey(
-                user=f"{user_type}:{user_id}",
-                relation=relation,
-                object=f"{object_type}:{object_name}",
-            ),
-            ]
+    tuple_list = [
+        TupleKey(
+            user=f"{user_type}:{user_id}",
+            relation=relation,
+            object=f"{object_type}:{object_name}",
         )
-    )
+        for relation in relations
+    ]
+
+    body = WriteRequest(writes=TupleKeys(tuple_keys=tuple_list))
 
     try:
         await api_instance.write(body)

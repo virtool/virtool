@@ -22,7 +22,7 @@ async def shutdown_client(app: Application):
         pass
 
 
-async def shutdown_auth_client(app: Application):
+async def shutdown_authorization_client(app: Application):
     """
     Attempt to close the OpenFGA client session.
 

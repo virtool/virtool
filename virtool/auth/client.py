@@ -2,10 +2,9 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Union
 
-from openfga_sdk import ApiClient, TupleKey
+from openfga_sdk import TupleKey, OpenFgaApi
 from virtool_core.models.enums import Permission
 
-from virtool.api.response import NotFound
 from virtool.auth.mongo import (
     check_in_mongo,
     list_permissions_in_mongo,
@@ -17,6 +16,7 @@ from virtool.auth.openfga import (
     remove_in_open_fga,
 )
 from virtool.auth.relationships import BaseRelationship
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 
 from virtool.mongo.core import DB
@@ -49,7 +49,7 @@ class AbstractAuthorizationClient(ABC):
 
 
 class AuthorizationClient(AbstractAuthorizationClient):
-    def __init__(self, mongo: DB, open_fga: ApiClient, data: DataLayer):
+    def __init__(self, mongo: DB, open_fga: OpenFgaApi, data: DataLayer):
         self.mongo = mongo
         self.open_fga = open_fga
         self.data = data
@@ -62,7 +62,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
         object_id: Union[str, int],
     ) -> bool:
         """
-        Check a permission in Mongo and OpenFGA.
+        Check whether a user has a permission on a resource.
         """
 
         mongo_result, open_fga_result = await asyncio.gather(
@@ -84,7 +84,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
         """
         try:
             return await list_permissions_in_mongo(self.mongo, user_id)
-        except NotFound:
+        except ResourceNotFoundError:
             return await list_permissions_in_open_fga(
                 self.open_fga, user_id, object_type, object_id
             )
@@ -95,32 +95,36 @@ class AuthorizationClient(AbstractAuthorizationClient):
         """
         try:
             await relationship.add(self.data)
-        except NotFound:
+        except ResourceNotFoundError:
             pass
 
-        for relation in relationship.relation:
-            tuple_key = TupleKey(
+        tuple_list = [
+            TupleKey(
                 user=f"{relationship.user_type}:{relationship.user_id}",
                 relation=relation,
                 object=f"{relationship.object_type}:{relationship.object_name}",
             )
+            for relation in relationship.relation
+        ]
 
-            await add_in_open_fga(self.open_fga, tuple_key)
+        await add_in_open_fga(self.open_fga, tuple_list)
 
     async def remove(self, relationship: BaseRelationship):
         """
-        Remove permissions for a group or user in mongo and OpenFGA.
+        Remove an authorization relationship.
         """
         try:
             await relationship.remove(self.data)
-        except NotFound:
+        except ResourceNotFoundError:
             pass
 
-        for relation in relationship.relation:
-            tuple_key = TupleKey(
+        tuple_list = [
+            TupleKey(
                 user=f"{relationship.user_type}:{relationship.user_id}",
                 relation=relation,
                 object=f"{relationship.object_type}:{relationship.object_name}",
             )
+            for relation in relationship.relation
+        ]
 
-            await remove_in_open_fga(self.open_fga, tuple_key)
+        await remove_in_open_fga(self.open_fga, tuple_list)

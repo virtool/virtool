@@ -31,10 +31,7 @@ class GroupMembership(BaseRelationship):
 
         data_dict = UpdateUserRequest(groups=group_list)
 
-        try:
-            await data.users.update(self.user_id, data_dict)
-        except ResourceNotFoundError:
-            raise NotFound()
+        await data.users.update(self.user_id, data_dict)
 
 
 class GroupPermission(BaseRelationship):
@@ -52,7 +49,7 @@ class GroupPermission(BaseRelationship):
             await data.groups.update(self.user_id, data_dict)
         except ResourceNotFoundError:
             self.user_id = f"{self.user_id}#member"
-            raise NotFound()
+            raise ResourceNotFoundError()
 
     async def remove(self, data):
         permission_dict = {permission.name: False for permission in self.relation}
@@ -63,7 +60,7 @@ class GroupPermission(BaseRelationship):
             await data.groups.update(self.user_id, data_dict)
         except ResourceNotFoundError:
             self.user_id = f"{self.user_id}#member"
-            raise NotFound()
+            raise ResourceNotFoundError()
 
 
 class UserPermission(BaseRelationship):

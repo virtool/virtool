@@ -21,7 +21,7 @@ from virtool.shutdown import (
     shutdown_executors,
     shutdown_redis,
     shutdown_scheduler,
-    shutdown_auth_client,
+    shutdown_authorization_client,
 )
 from virtool.startup import (
     startup_b2c,
@@ -40,7 +40,7 @@ from virtool.startup import (
     startup_sentry,
     startup_settings,
     startup_version,
-    startup_auth,
+    startup_authorization_client,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ def create_app(config: Config):
             startup_executors,
             startup_task_runner,
             startup_data,
-            startup_auth,
+            startup_authorization_client,
             startup_tasks,
             startup_settings,
             startup_sentry,
@@ -115,7 +115,7 @@ def create_app(config: Config):
 
     app.on_shutdown.extend(
         [
-            shutdown_auth_client,
+            shutdown_authorization_client,
             shutdown_client,
             shutdown_dispatcher,
             shutdown_executors,
