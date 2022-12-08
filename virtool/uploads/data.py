@@ -48,7 +48,11 @@ class UploadsData(DataLayerPiece):
                 filters.append(SQLUpload.type == upload_type)
 
             if not paginate:
-                results = await session.execute(select(SQLUpload).filter(*filters))
+                results = await session.execute(
+                    select(SQLUpload)
+                    .filter(*filters)
+                    .order_by(SQLUpload.created_at.desc())
+                )
 
                 for result in results.unique().scalars().all():
                     uploads.append(result.to_dict())
@@ -76,7 +80,11 @@ class UploadsData(DataLayerPiece):
             )
 
             query = (
-                select(SQLUpload).filter(*filters).offset(skip_count).limit(per_page)
+                select(SQLUpload)
+                .filter(*filters)
+                .order_by(SQLUpload.created_at.desc())
+                .offset(skip_count)
+                .limit(per_page)
             )
 
             count, results = await asyncio.gather(

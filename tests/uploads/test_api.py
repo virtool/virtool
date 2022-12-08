@@ -122,6 +122,13 @@ class TestFind:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
+    async def test_uploads_order(self, pg, hmm_uploads, spawn_client, snapshot):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        resp = await client.get("/uploads?upload_type=hmm")
+
+        assert await resp.json() == snapshot
+
 
 class TestGet:
     @pytest.mark.parametrize("exists", [True, False])
