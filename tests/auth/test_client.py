@@ -243,9 +243,9 @@ class TestRemovePermissions:
         )
 
     async def test_open_fga_group(
-        self, mongo, delete_store, setup_auth_update_group, snapshot, fake2
+        self, mongo, delete_store, spawn_auth_client, snapshot, fake2
     ):
-        abs_client, group = setup_auth_update_group
+        abs_client = await spawn_auth_client()
 
         await asyncio.gather(
             *[
