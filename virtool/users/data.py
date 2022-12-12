@@ -183,6 +183,12 @@ class UsersData:
             except DatabaseError as err:
                 raise ResourceConflictError(str(err))
 
+        print(data)
+
+        if "active" in data:
+            print("hello")
+            update.update({"active": data["active"], "invalidate_sessions": True})
+
         if update:
             document = await self._mongo.users.find_one_and_update(
                 {"_id": user_id}, {"$set": update}

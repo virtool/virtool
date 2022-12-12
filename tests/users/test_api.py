@@ -223,7 +223,7 @@ class TestUpdate:
         client, _, _, _ = setup_update_user
 
         resp = await client.patch(
-            f"/users/bob",
+            "/users/bob",
             data={
                 "primary_group": "managers",
             },
@@ -231,3 +231,11 @@ class TestUpdate:
 
         assert resp.status == 404
         assert await resp.json() == snapshot
+
+    async def test_deactivate(self, setup_update_user, snapshot):
+        client, _, _, user = setup_update_user
+
+        resp = await client.patch(
+            f"/users/{user.id}",
+            data={"active": False},
+        )

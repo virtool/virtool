@@ -72,12 +72,15 @@ async def authenticate_with_api_key(
     document, user = await asyncio.gather(
         db.keys.find_one({"_id": hash_key(key)}, ["permissions", "user"]),
         db.users.find_one(
-            {"handle": handle}, ["administrator", "groups", "permissions"]
+            {"handle": handle}, ["administrator", "groups", "permissions", "active"]
         ),
     )
 
     if not document or not user or document["user"]["id"] != user["_id"]:
         raise HTTPUnauthorized(text="Invalid authorization header")
+
+    if user["active"] is False:
+        raise HTTPUnauthorized(text="This user account is inactive.")
 
     req["client"] = UserClient(
         db=db,
@@ -127,6 +130,9 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
             oid=token_claims["oid"],
         )
     )
+
+    if user.active is False:
+        raise HTTPUnauthorized(text="This user account is inactive.")
 
     req["client"] = UserClient(
         db=req.app["db"],
@@ -200,6 +206,10 @@ async def middleware(req, handler) -> Response:
 
     if session.authentication:
         user = await get_data_from_req(req).users.get(session.authentication.user_id)
+
+        if user.active is False:
+            raise HTTPUnauthorized(text="This user account is inactive.")
+
         req["client"] = UserClient(
             db,
             user.administrator,

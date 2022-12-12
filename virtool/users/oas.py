@@ -29,6 +29,7 @@ class UpdateUserRequest(BaseModel):
     administrator: Optional[bool] = Field(
         description="set the user’s administrator status"
     )
+    active: Optional[bool] = Field(description="deactivate a user")
     force_reset: Optional[bool] = Field(
         description="force a password reset next time the user logs in"
     )
