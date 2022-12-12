@@ -7,11 +7,11 @@ from openfga_sdk import (
     ReadRequest,
     WriteRequest,
     TupleKeys,
-    ApiException, OpenFgaApi,
+    ApiException,
+    OpenFgaApi,
 )
 from virtool_core.models.enums import Permission
 
-from virtool.auth.utils import read_group_permissions
 from virtool.users.utils import generate_base_permissions
 
 
@@ -48,13 +48,7 @@ async def list_permissions_in_open_fga(
 
     permissions = generate_base_permissions()
 
-    body = ReadRequest(
-        tuple_key=TupleKey(user=f"user:{user_id}", relation="member", object="group:"),
-    )
-
-    response = await api_instance.read(body)
-
-    groups = [relation_tuple.key.object for relation_tuple in response.tuples]
+    groups = await list_groups(api_instance, user_id)
 
     await asyncio.gather(
         *[
@@ -99,3 +93,39 @@ async def remove_in_open_fga(api_instance: OpenFgaApi, tuple_list: List[TupleKey
         await api_instance.write(body)
     except ApiException:
         pass
+
+
+async def read_group_permissions(
+    api_instance: OpenFgaApi,
+    group: str,
+    object_type: str,
+    object_id: Union[str, int],
+    permission_dict: dict,
+):
+    """
+    Read group permissions and update the permission dictionary in OpenFGA.
+    """
+    body = ReadRequest(
+        tuple_key=TupleKey(user=f"{group}#member", object=f"{object_type}:{object_id}"),
+    )
+
+    response = await api_instance.read(body)
+
+    for relation_tuple in response.tuples:
+        permission_dict.update({relation_tuple.key.relation: True})
+
+
+async def list_groups(api_instance: OpenFgaApi, user_id: str) -> List[str]:
+    """
+    Return a list of groups the user is a member of in OpenFGA.
+    """
+
+    body = ReadRequest(
+        tuple_key=TupleKey(user=f"user:{user_id}", relation="member", object="group:"),
+    )
+
+    response = await api_instance.read(body)
+
+    groups = [relation_tuple.key.object for relation_tuple in response.tuples]
+
+    return groups

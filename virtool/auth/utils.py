@@ -1,6 +1,5 @@
 import sys
 from logging import getLogger
-from typing import Union
 
 import openfga_sdk
 from aiohttp import ClientConnectorError
@@ -15,7 +14,6 @@ from openfga_sdk import (
     TupleKey,
     ApiException,
     TupleKeys,
-    ReadRequest,
 )
 from openfga_sdk.api import open_fga_api
 
@@ -132,26 +130,6 @@ async def check_openfga_version(client: ApiClient):
     """
 
     logger.info("Found OpenFGA %s", client.user_agent)
-
-
-async def read_group_permissions(
-    api_instance: OpenFgaApi,
-    group: str,
-    object_type: str,
-    object_id: Union[str, int],
-    permission_dict: dict,
-):
-    """
-    Read group permissions and update the permission dictionary.
-    """
-    body = ReadRequest(
-        tuple_key=TupleKey(user=f"{group}#member", object=f"{object_type}:{object_id}"),
-    )
-
-    response = await api_instance.read(body)
-
-    for relation_tuple in response.tuples:
-        permission_dict.update({relation_tuple.key.relation: True})
 
 
 async def write_tuple(

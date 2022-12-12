@@ -17,7 +17,6 @@ from virtool.auth.openfga import (
 )
 from virtool.auth.relationships import BaseRelationship
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.layer import DataLayer
 
 from virtool.mongo.core import DB
 
@@ -49,10 +48,9 @@ class AbstractAuthorizationClient(ABC):
 
 
 class AuthorizationClient(AbstractAuthorizationClient):
-    def __init__(self, mongo: DB, open_fga: OpenFgaApi, data: DataLayer):
+    def __init__(self, mongo: DB, open_fga: OpenFgaApi):
         self.mongo = mongo
         self.open_fga = open_fga
-        self.data = data
 
     async def check(
         self,
@@ -91,10 +89,10 @@ class AuthorizationClient(AbstractAuthorizationClient):
 
     async def add(self, relationship: BaseRelationship):
         """
-        Add permissions for a group or user in mongo and OpenFGA.
+        Add an authorization relationship.
         """
         try:
-            await relationship.add(self.data)
+            await relationship.add(self.mongo)
         except ResourceNotFoundError:
             pass
 
@@ -114,7 +112,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
         Remove an authorization relationship.
         """
         try:
-            await relationship.remove(self.data)
+            await relationship.remove(self.mongo)
         except ResourceNotFoundError:
             pass
 

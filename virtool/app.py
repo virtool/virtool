@@ -40,7 +40,6 @@ from virtool.startup import (
     startup_sentry,
     startup_settings,
     startup_version,
-    startup_authorization_client,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,7 +98,6 @@ def create_app(config: Config):
             startup_executors,
             startup_task_runner,
             startup_data,
-            startup_authorization_client,
             startup_tasks,
             startup_settings,
             startup_sentry,

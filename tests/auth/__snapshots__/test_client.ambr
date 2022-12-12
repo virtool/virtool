@@ -1,3 +1,72 @@
+# name: TestAddGroupMembership.test_mongo[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test',
+      'groups': <class 'list'> [
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '7cf872dc',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': True,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '3cbb22cc',
+      'groups': <class 'list'> [
+        'fb085f7f',
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': True,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': True,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---
+# name: TestAddGroupMembership.test_open_fga[uvloop][groups]
+  <class 'list'> [
+    'group:sidney',
+  ]
+---
+# name: TestAddGroupMembership.test_open_fga[uvloop][permissions]
+  <class 'dict'> {
+    'cancel_job': True,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': True,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
 # name: TestAddPermissions.test_mongo[uvloop]
   <class 'list'> [
     <class 'dict'> {
@@ -104,38 +173,6 @@
     'upload_file': False,
   }
 ---
-# name: TestGroupMembership.test_mongo[uvloop]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'fb085f7f',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '7cf872dc',
-      'groups': <class 'list'> [
-        'bf1b993c',
-      ],
-    },
-  ]
----
-# name: TestGroupMembership.test_open_fga[uvloop]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': True,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
----
 # name: TestList.test_mongo[uvloop]
   <class 'dict'> {
     'cancel_job': True,
@@ -152,6 +189,89 @@
   <class 'dict'> {
     'cancel_job': True,
     'create_ref': True,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': False,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: TestRemoveGroupMembership.test_mongo[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test',
+      'groups': <class 'list'> [
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '7cf872dc',
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': True,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '3cbb22cc',
+      'groups': <class 'list'> [
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---
+# name: TestRemoveGroupMembership.test_open_fga[uvloop][bob_groups]
+  <class 'list'> [
+    'group:sidney',
+  ]
+---
+# name: TestRemoveGroupMembership.test_open_fga[uvloop][bob_permissions]
+  <class 'dict'> {
+    'cancel_job': True,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': True,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: TestRemoveGroupMembership.test_open_fga[uvloop][ryanf_groups]
+  <class 'list'> [
+  ]
+---
+# name: TestRemoveGroupMembership.test_open_fga[uvloop][ryanf_permissions]
+  <class 'dict'> {
+    'cancel_job': False,
+    'create_ref': False,
     'create_sample': False,
     'modify_hmm': False,
     'modify_subtraction': False,

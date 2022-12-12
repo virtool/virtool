@@ -7,13 +7,13 @@ from virtool_core.models.enums import Permission
 
 from virtool.auth.client import AuthorizationClient
 from virtool.auth.mongo import check_in_mongo, list_permissions_in_mongo
-from virtool.auth.openfga import check_in_open_fga, list_permissions_in_open_fga
+from virtool.auth.openfga import check_in_open_fga, list_permissions_in_open_fga, list_groups
 from virtool.auth.relationships import GroupPermission, UserPermission, GroupMembership
 from virtool.auth.utils import write_tuple, connect_openfga
 
 
 @pytest.fixture()
-def spawn_auth_client(mongo, data_layer, create_user):
+def spawn_auth_client(mongo, create_user):
     async def func(
         permissions=None,
     ):
@@ -28,7 +28,7 @@ def spawn_auth_client(mongo, data_layer, create_user):
             ]
         )
 
-        return AuthorizationClient(mongo, open_fga_instance, data_layer)
+        return AuthorizationClient(mongo, open_fga_instance)
 
     return func
 
@@ -143,19 +143,13 @@ class TestList:
         )
 
 
-class TestGroupMembership:
-    async def test_mongo(self, delete_store, fake2, snapshot, mongo, spawn_auth_client):
-        abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
+class TestAddGroupMembership:
+    async def test_mongo(self, delete_store, fake2, snapshot, mongo, setup_auth_update_user):
+        abs_client, group1, group2, user = setup_auth_update_user
 
-        group = await fake2.groups.create()
+        await abs_client.add(GroupMembership(user.id, group2.id, ["member"]))
 
-        await fake2.users.create()
-
-        user = await fake2.users.create()
-
-        await abs_client.add(GroupMembership(user.id, group.id, ["member"]))
-
-        assert await mongo.users.find({}, ["groups"]).to_list(None) == snapshot
+        assert await mongo.users.find({}, ["groups", "permissions"]).to_list(None) == snapshot
 
     async def test_open_fga(
         self, delete_store, fake2, snapshot, mongo, spawn_auth_client
@@ -176,7 +170,49 @@ class TestGroupMembership:
             ]
         )
 
-        assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
+        assert await list_groups(abs_client.open_fga, "ryanf") == snapshot(name="groups")
+        assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot(name="permissions")
+
+
+class TestRemoveGroupMembership:
+    async def test_mongo(self, delete_store, fake2, snapshot, mongo, setup_auth_update_user):
+        abs_client, group1, group2, user = setup_auth_update_user
+
+        await abs_client.remove(GroupMembership(user.id, group1.id, ["member"]))
+
+        assert await mongo.users.find({}, ["groups", "permissions"]).to_list(None) == snapshot
+
+    async def test_open_fga(
+        self, delete_store, fake2, snapshot, mongo, spawn_auth_client
+    ):
+        abs_client = await spawn_auth_client()
+
+        await asyncio.gather(
+            *[
+                write_tuple(
+                    abs_client.open_fga, "user", "ryanf", ["member"], "group", "sidney"
+                ),
+                write_tuple(
+                    abs_client.open_fga, "user", "bob", ["member"], "group", "sidney"
+                ),
+                write_tuple(
+                    abs_client.open_fga,
+                    "group",
+                    "sidney#member",
+                    [Permission.cancel_job, Permission.modify_subtraction],
+                    "app",
+                    "virtool",
+                ),
+            ]
+        )
+
+        await abs_client.remove(GroupMembership("ryanf", "sidney", ["member"]))
+
+        assert await list_groups(abs_client.open_fga, "ryanf") == snapshot(name="ryanf_groups")
+        assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot(name="ryanf_permissions")
+
+        assert await list_groups(abs_client.open_fga, "bob") == snapshot(name="bob_groups")
+        assert await abs_client.list_permissions("bob", "app", "virtool") == snapshot(name="bob_permissions")
 
 
 class TestAddPermissions:
