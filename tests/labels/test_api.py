@@ -3,6 +3,7 @@ from typing import List
 import pytest
 
 
+@pytest.mark.apitest
 class TestFind:
     async def test_find(self, fake2, snapshot, spawn_client):
         """
@@ -55,6 +56,7 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(status, fake2, spawn_client, snapshot):
     """
@@ -80,6 +82,7 @@ async def test_get(status, fake2, spawn_client, snapshot):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
 async def test_create(error, fake2, spawn_client, test_random_alphanumeric, resp_is):
     """
@@ -119,6 +122,7 @@ async def test_create(error, fake2, spawn_client, test_random_alphanumeric, resp
     }
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
     """
@@ -177,6 +181,7 @@ async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
     status,
@@ -220,6 +225,7 @@ async def test_remove(
         assert label_3.id in label_ids_in_samples
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
 async def test_is_valid_hex_color(value, spawn_client, resp_is):
     """

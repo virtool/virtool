@@ -18,6 +18,7 @@ async def setup_update_group(spawn_client, fake2):
     return client, group
 
 
+@pytest.mark.apitest
 async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapshot):
     """
     Test that a ``GET /groups`` return a complete list of groups.
@@ -34,6 +35,7 @@ async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapsh
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [201, 400])
 async def test_create(status, fake2, spawn_client, snapshot):
     """
@@ -58,6 +60,7 @@ async def test_create(status, fake2, spawn_client, snapshot):
     assert await resp.json() == snapshot(name="json")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(status, fake2, spawn_client, snapshot):
     """
@@ -77,6 +80,7 @@ async def test_get(status, fake2, spawn_client, snapshot):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestUpdate:
     async def test(self, setup_update_group, snapshot):
         client, group = setup_update_group
@@ -109,6 +113,7 @@ class TestUpdate:
         assert await resp.json() == snapshot(name="json")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(status, fake2, snapshot, spawn_client):
     """

@@ -37,6 +37,7 @@ async def setup_update_user(fake2, spawn_client):
     return client, group_1, group_2, await fake2.users.create(groups=[group_1])
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "test"])
 async def test_find(find, fake2, snapshot, spawn_client):
     """
@@ -67,6 +68,7 @@ async def test_find(find, fake2, snapshot, spawn_client):
     )
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status,
@@ -94,6 +96,7 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
 async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     """
@@ -149,6 +152,7 @@ async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     assert check_password("hello_world", password)
 
 
+@pytest.mark.apitest
 class TestUpdate:
     async def test(self, setup_update_user, snapshot):
         client, group_1, _, user = setup_update_user
