@@ -54,7 +54,7 @@ async def delete_store():
 
 class TestCheck:
     @pytest.mark.parametrize("has_permission", [True, False])
-    async def test_mongo(self, delete_store, spawn_auth_client, has_permission):
+    async def test_mongo(self, spawn_auth_client, has_permission):
         abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
         if has_permission:
@@ -102,7 +102,7 @@ class TestCheck:
 
 
 class TestList:
-    async def test_mongo(self, delete_store, spawn_auth_client, snapshot):
+    async def test_mongo(self, spawn_auth_client, snapshot):
         abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
         response = await abs_client.list_permissions("test", "app", "virtool")
@@ -144,15 +144,15 @@ class TestList:
 
 
 class TestAddGroupMembership:
-    async def test_mongo(self, delete_store, fake2, snapshot, mongo, setup_auth_update_user):
-        abs_client, group1, group2, user = setup_auth_update_user
+    async def test_mongo(self, fake2, snapshot, mongo, setup_auth_update_user):
+        abs_client, _, group2, user = setup_auth_update_user
 
         await abs_client.add(GroupMembership(user.id, group2.id, ["member"]))
 
         assert await mongo.users.find({}, ["groups", "permissions"]).to_list(None) == snapshot
 
     async def test_open_fga(
-        self, delete_store, fake2, snapshot, mongo, spawn_auth_client
+        self, delete_store, fake2, snapshot, spawn_auth_client
     ):
         abs_client = await spawn_auth_client()
 
@@ -175,15 +175,15 @@ class TestAddGroupMembership:
 
 
 class TestRemoveGroupMembership:
-    async def test_mongo(self, delete_store, fake2, snapshot, mongo, setup_auth_update_user):
-        abs_client, group1, group2, user = setup_auth_update_user
+    async def test_mongo(self, fake2, snapshot, mongo, setup_auth_update_user):
+        abs_client, group1, _, user = setup_auth_update_user
 
         await abs_client.remove(GroupMembership(user.id, group1.id, ["member"]))
 
         assert await mongo.users.find({}, ["groups", "permissions"]).to_list(None) == snapshot
 
     async def test_open_fga(
-        self, delete_store, fake2, snapshot, mongo, spawn_auth_client
+        self, delete_store, fake2, snapshot, spawn_auth_client
     ):
         abs_client = await spawn_auth_client()
 
@@ -217,7 +217,7 @@ class TestRemoveGroupMembership:
 
 class TestAddPermissions:
     async def test_mongo(
-        self, delete_store, fake2, setup_auth_update_group, mongo, snapshot
+        self, fake2, setup_auth_update_group, mongo, snapshot
     ):
         abs_client, group = setup_auth_update_group
 
@@ -233,7 +233,7 @@ class TestAddPermissions:
         )
 
     async def test_open_fga_group(
-        self, delete_store, fake2, spawn_auth_client, mongo, snapshot
+        self, delete_store, fake2, spawn_auth_client, snapshot
     ):
         abs_client = await spawn_auth_client()
 
@@ -253,7 +253,7 @@ class TestAddPermissions:
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
     async def test_open_fga_user(
-        self, delete_store, fake2, spawn_auth_client, mongo, snapshot
+        self, delete_store, fake2, spawn_auth_client, snapshot
     ):
         abs_client = await spawn_auth_client()
 
@@ -263,7 +263,7 @@ class TestAddPermissions:
 
 
 class TestRemovePermissions:
-    async def test_mongo(self, mongo, delete_store, setup_auth_update_group, snapshot, fake2):
+    async def test_mongo(self, mongo, setup_auth_update_group, snapshot, fake2):
         abs_client, group = setup_auth_update_group
 
         await mongo.groups.update_one(
@@ -279,7 +279,7 @@ class TestRemovePermissions:
         )
 
     async def test_open_fga_group(
-        self, mongo, delete_store, spawn_auth_client, snapshot, fake2
+        self, delete_store, spawn_auth_client, snapshot, fake2
     ):
         abs_client = await spawn_auth_client()
 
@@ -304,7 +304,7 @@ class TestRemovePermissions:
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
     async def test_open_fga_user(
-        self, mongo, delete_store, spawn_auth_client, snapshot, fake2
+        self, delete_store, spawn_auth_client, snapshot, fake2
     ):
         abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 

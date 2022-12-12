@@ -4,7 +4,7 @@ from virtool_core.models.enums import Permission
 
 from virtool.data.errors import ResourceNotFoundError
 from virtool.errors import DatabaseError
-from virtool.groups.db import update_member_users
+from virtool.groups.db import update_member_users, get_merged_permissions
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.db import compose_groups_update
@@ -51,10 +51,7 @@ class GroupMembership(BaseRelationship):
 
         groups.remove(self.object_name)
 
-        try:
-            update = await compose_groups_update(mongo, groups)
-        except DatabaseError as err:
-            raise ResourceNotFoundError(str(err))
+        update = {"groups": groups, "permissions": await get_merged_permissions(mongo, groups)}
 
         await mongo.users.update_one(
             {"_id": self.user_id}, {"$set": update}
