@@ -9,6 +9,7 @@ A sample needs a user and upload to exist.
 ```
 
 """
+import pathlib
 from typing import List, Optional
 
 import aiofiles
@@ -36,12 +37,13 @@ from virtool.uploads.utils import CHUNK_SIZE, naive_writer
 from virtool.users.oas import UpdateUserRequest
 
 
-async def fake_file_chunks(path):
+async def fake_file_chunks(path: pathlib.Path) -> bytearray:
+    """
+    Read a chunk of size `CHUNK_SIZE` from a file.
+    """
     async with aiofiles.open(path, "r") as f:
-        while True:
-            chunk = await f.read(CHUNK_SIZE)
 
-            yield chunk
+        yield await f.read(CHUNK_SIZE)
 
 
 class VirtoolProvider(BaseProvider):
@@ -183,20 +185,19 @@ class UploadsFakerPiece(DataFakerPiece):
         upload_type: str = "reads",
         name: str = "test.fq.gz",
         reserved: bool = False,
-    ):
+    ) -> Upload:
 
         if upload_type not in UploadType.to_list():
             upload_type = "reads"
 
         upload = await self.layer.uploads.create(name, upload_type, reserved, user.id)
 
+        size = self.faker.pyint(min_value=100)
+
         if with_file:
             config = getattr(self.layer.uploads, "_config")
             file_path = config.data_path / "files" / upload.name_on_disk
             size = await naive_writer(fake_file_chunks(file_path), file_path)
-
-        if not with_file:
-            size = 1
 
         upload = await self.layer.uploads.finalize(size, upload.id)
 

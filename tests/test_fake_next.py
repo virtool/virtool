@@ -32,7 +32,7 @@ async def test_fake(fake2, snapshot):
         ),
     )
 
-    upload = await fake2.uploads.create(user_1)
+    upload = await fake2.uploads.create(user_1, with_file=True)
 
     assert upload == snapshot(
         name="upload",

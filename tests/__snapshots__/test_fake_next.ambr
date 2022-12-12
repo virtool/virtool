@@ -125,7 +125,7 @@
     'removed': False,
     'removed_at': None,
     'reserved': False,
-    'size': 1,
+    'size': 0,
     'type': 'reads',
     'uploaded_at': <class 'datetime'>,
     'user': <class 'dict'> {

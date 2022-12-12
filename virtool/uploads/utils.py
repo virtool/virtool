@@ -5,6 +5,7 @@ from logging import getLogger
 from typing import Any, Callable, Optional
 
 import aiofiles
+from aiohttp import MultipartReader
 from cerberus import Validator
 
 from virtool.data.errors import ResourceNotFoundError
@@ -42,16 +43,13 @@ def naive_validator(req) -> Validator.errors:
         return v.errors
 
 
-async def file_chunks(reader):
+async def file_chunks(reader: MultipartReader) -> bytearray:
     """
     Read a chunk of size `CHUNK_SIZE` from a file.
     """
     file = await reader.next()
 
-    while True:
-        chunk = await file.read_chunk(CHUNK_SIZE)
-
-        yield chunk
+    yield await file.read_chunk(CHUNK_SIZE)
 
 
 async def naive_writer(
@@ -76,7 +74,7 @@ async def naive_writer(
 
     async with aiofiles.open(path, "wb") as f:
         async for chunk in chunker:
-            if not chunk:
+            if type(chunk) is str:
                 break
 
             if size == 0 and on_first_chunk:
