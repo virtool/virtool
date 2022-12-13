@@ -19,7 +19,7 @@ class DefaultRoutePolicy:
 
     allow_unauthenticated = False
 
-    def check(self, req, handler, client):
+    async def check(self, req, handler, client):
         """
         This method is a no-op for the default policy.
 
@@ -31,56 +31,32 @@ class DefaultRoutePolicy:
         """
         ...
 
-    async def auth_check(self, req, handler, client):
-        """
-        Run a check using the abstract authorization client.
-
-        Redefine this method to build additional checks into a policy.
-        """
-        ...
-
     async def run_checks(self, req, handler, client):
         if not self.allow_unauthenticated and not client.authenticated:
             raise HTTPUnauthorized(text="Requires authorization")
 
-        self.check(req, handler, client)
-        await self.auth_check(req, handler, client)
+        await self.check(req, handler, client)
 
 
 class AdministratorRoutePolicy(DefaultRoutePolicy):
     """Only authenticated clients that are administrators can access the route."""
 
-    def check(self, req, handler, client: AbstractClient):
+    async def check(self, req, handler, client: AbstractClient):
         if not client.administrator:
             raise HTTPForbidden(text="Requires administrative privilege")
 
 
 class PermissionsRoutePolicy(DefaultRoutePolicy):
-    """Only authenticated clients with the set permissions can access the route."""
-
-    def __init__(self, *permissions: Permission):
-        self.permissions = permissions
-
-    def check(self, req, handler, client: Union[UserClient, JobClient]):
-        if client.administrator:
-            # Administrators bypass permission checks.
-            return
-        for permission in self.permissions:
-            if not client.permissions.get(permission.name, False):
-                raise HTTPForbidden(text="Not permitted")
-
-
-class PermissionsAuthPolicy(DefaultRoutePolicy):
     def __init__(self, object_type, object_id, permission: Permission):
         self.object_type = object_type
         self.object_id = object_id
         self.permission = permission
 
-    async def auth_check(self, req, handler, client):
-        if client.administrator:
-            return
+    async def check(self, req, handler, client):
         abs_client = req.app["auth"]
-        if not await abs_client.check(client.user_id, self.permission, self.object_type, self.object_id):
+        if not client.administrator and not await abs_client.check(
+            client.user_id, self.permission, self.object_type, self.object_id
+        ):
             raise HTTPForbidden(text="Not permitted")
 
 

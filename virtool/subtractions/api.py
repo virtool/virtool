@@ -11,7 +11,7 @@ from virtool_core.models.subtraction import SubtractionSearchResult
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionsAuthPolicy
+from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.subtractions.oas import (
@@ -52,7 +52,7 @@ class SubtractionsView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsAuthPolicy("app", "virtool", Permission.modify_subtraction))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.modify_subtraction))
     async def post(
         self, data: CreateSubtractionRequest
     ) -> Union[r201[CreateSubtractionResponse], r400, r403]:
@@ -112,7 +112,7 @@ class SubtractionView(PydanticView):
 
         return json_response(subtraction)
 
-    @policy(PermissionsAuthPolicy("app", "virtool", Permission.modify_subtraction))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.modify_subtraction))
     async def patch(
         self, subtraction_id: str, /, data: UpdateSubtractionRequest
     ) -> Union[r200[SubtractionResponse], r400, r403, r404]:
@@ -137,7 +137,7 @@ class SubtractionView(PydanticView):
 
         return json_response(subtraction)
 
-    @policy(PermissionsAuthPolicy("app", "virtool", Permission.modify_subtraction))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.modify_subtraction))
     async def delete(self, subtraction_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete a subtraction.

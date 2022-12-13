@@ -1,6 +1,8 @@
 import asyncio
 from typing import Union, List
 
+import itertools
+
 from openfga_sdk import (
     CheckRequest,
     TupleKey,
@@ -12,7 +14,7 @@ from openfga_sdk import (
 )
 from virtool_core.models.enums import Permission
 
-from virtool.users.utils import generate_base_permissions
+from virtool.auth.relationships import BaseRelationship, GroupPermissions
 
 
 async def check_in_open_fga(
@@ -41,23 +43,20 @@ async def check_in_open_fga(
 
 async def list_permissions_in_open_fga(
     api_instance: OpenFgaApi, user_id: str, object_type: str, object_id: Union[str, int]
-) -> dict:
+) -> list[Permission]:
     """
     List permissions for a user in OpenFGA.
     """
 
-    permissions = generate_base_permissions()
-
     groups = await list_groups(api_instance, user_id)
 
-    await asyncio.gather(
+    result = await asyncio.gather(
         *[
-            read_group_permissions(
-                api_instance, group, object_type, object_id, permissions
-            )
+            list_group_permissions(api_instance, group, object_type, object_id)
             for group in groups
         ]
     )
+    permissions = list(itertools.chain(*result))
 
     body = ReadRequest(
         tuple_key=TupleKey(user=f"user:{user_id}", object=f"{object_type}:{object_id}")
@@ -66,16 +65,32 @@ async def list_permissions_in_open_fga(
     response = await api_instance.read(body)
 
     for relation_tuple in response.tuples:
-        permissions.update({relation_tuple.key.relation: True})
+        permissions.append(relation_tuple.key.relation)
 
-    return permissions
+    return sorted(permissions)
 
 
-async def add_in_open_fga(api_instance: OpenFgaApi, tuple_list: List[TupleKey]):
+async def add_in_open_fga(api_instance: OpenFgaApi, relationship: BaseRelationship):
     """
-    Add a permission in OpenFGA.
+    Add relationship tuples in OpenFGA.
     """
-    body = WriteRequest(writes=TupleKeys(tuple_keys=tuple_list))
+    group_membership = ""
+
+    if isinstance(relationship, GroupPermissions):
+        group_membership = "#member"
+
+    body = WriteRequest(
+        writes=TupleKeys(
+            tuple_keys=[
+                TupleKey(
+                    user=f"{relationship.user_type}:{relationship.user_id}{group_membership}",
+                    relation=relation,
+                    object=f"{relationship.object_type}:{relationship.object_name}",
+                )
+                for relation in relationship.relations
+            ]
+        )
+    )
 
     try:
         await api_instance.write(body)
@@ -83,11 +98,27 @@ async def add_in_open_fga(api_instance: OpenFgaApi, tuple_list: List[TupleKey]):
         pass
 
 
-async def remove_in_open_fga(api_instance: OpenFgaApi, tuple_list: List[TupleKey]):
+async def remove_in_open_fga(api_instance: OpenFgaApi, relationship: BaseRelationship):
     """
-    Remove a permission in OpenFGA.
+    Remove relationship tuples in OpenFGA.
     """
-    body = WriteRequest(deletes=TupleKeys(tuple_keys=tuple_list))
+    group_membership = ""
+
+    if isinstance(relationship, GroupPermissions):
+        group_membership = "#member"
+
+    body = WriteRequest(
+        deletes=TupleKeys(
+            tuple_keys=[
+                TupleKey(
+                    user=f"{relationship.user_type}:{relationship.user_id}{group_membership}",
+                    relation=relation,
+                    object=f"{relationship.object_type}:{relationship.object_name}",
+                )
+                for relation in relationship.relations
+            ]
+        )
+    )
 
     try:
         await api_instance.write(body)
@@ -95,15 +126,14 @@ async def remove_in_open_fga(api_instance: OpenFgaApi, tuple_list: List[TupleKey
         pass
 
 
-async def read_group_permissions(
+async def list_group_permissions(
     api_instance: OpenFgaApi,
     group: str,
     object_type: str,
     object_id: Union[str, int],
-    permission_dict: dict,
-):
+) -> List[Permission]:
     """
-    Read group permissions and update the permission dictionary in OpenFGA.
+    List the permissions for a group in OpenFGA.
     """
     body = ReadRequest(
         tuple_key=TupleKey(user=f"{group}#member", object=f"{object_type}:{object_id}"),
@@ -111,8 +141,7 @@ async def read_group_permissions(
 
     response = await api_instance.read(body)
 
-    for relation_tuple in response.tuples:
-        permission_dict.update({relation_tuple.key.relation: True})
+    return [relation_tuple.key.relation for relation_tuple in response.tuples]
 
 
 async def list_groups(api_instance: OpenFgaApi, user_id: str) -> List[str]:

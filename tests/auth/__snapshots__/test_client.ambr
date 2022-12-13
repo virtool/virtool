@@ -56,16 +56,10 @@
   ]
 ---
 # name: TestAddGroupMembership.test_open_fga[uvloop][permissions]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': True,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'cancel_job',
+    'modify_subtraction',
+  ]
 ---
 # name: TestAddPermissions.test_mongo[uvloop]
   <class 'list'> [
@@ -150,52 +144,28 @@
   ]
 ---
 # name: TestAddPermissions.test_open_fga_group[uvloop]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': True,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'cancel_job',
+    'modify_subtraction',
+  ]
 ---
 # name: TestAddPermissions.test_open_fga_user[uvloop]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': False,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'cancel_job',
+  ]
 ---
 # name: TestList.test_mongo[uvloop]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': False,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'cancel_job',
+  ]
 ---
 # name: TestList.test_open_fga[uvloop]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': True,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': False,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'cancel_job',
+    'create_ref',
+    'modify_hmm',
+    'modify_subtraction',
+  ]
 ---
 # name: TestRemoveGroupMembership.test_mongo[uvloop]
   <class 'list'> [
@@ -253,32 +223,18 @@
   ]
 ---
 # name: TestRemoveGroupMembership.test_open_fga[uvloop][bob_permissions]
-  <class 'dict'> {
-    'cancel_job': True,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': True,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'cancel_job',
+    'modify_subtraction',
+  ]
 ---
 # name: TestRemoveGroupMembership.test_open_fga[uvloop][ryanf_groups]
   <class 'list'> [
   ]
 ---
 # name: TestRemoveGroupMembership.test_open_fga[uvloop][ryanf_permissions]
-  <class 'dict'> {
-    'cancel_job': False,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': False,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+  ]
 ---
 # name: TestRemovePermissions.test_mongo[uvloop]
   <class 'list'> [
@@ -363,26 +319,12 @@
   ]
 ---
 # name: TestRemovePermissions.test_open_fga_group[uvloop]
-  <class 'dict'> {
-    'cancel_job': False,
-    'create_ref': True,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': False,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'create_ref',
+  ]
 ---
 # name: TestRemovePermissions.test_open_fga_user[uvloop]
-  <class 'dict'> {
-    'cancel_job': False,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': True,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
-  }
+  <class 'list'> [
+    'modify_subtraction',
+  ]
 ---

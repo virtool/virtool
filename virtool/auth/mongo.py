@@ -1,3 +1,5 @@
+from typing import List
+
 from virtool_core.models.enums import Permission
 
 from virtool.data.errors import ResourceNotFoundError
@@ -18,7 +20,7 @@ async def check_in_mongo(mongo: DB, user_id: str, permission: Permission) -> boo
     )
 
 
-async def list_permissions_in_mongo(mongo: DB, user_id: str) -> dict:
+async def list_permissions_in_mongo(mongo: DB, user_id: str) -> List[Permission]:
     """
     List user permissions in Mongo.
     """
@@ -26,6 +28,8 @@ async def list_permissions_in_mongo(mongo: DB, user_id: str) -> dict:
     permissions = await get_one_field(mongo.users, "permissions", user_id)
 
     if permissions:
-        return permissions
+        return sorted(
+            [permission for permission in permissions if permissions[permission]]
+        )
 
     raise ResourceNotFoundError()

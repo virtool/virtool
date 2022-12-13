@@ -1,8 +1,8 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, List
 
-from openfga_sdk import TupleKey, OpenFgaApi
+from openfga_sdk import OpenFgaApi
 from virtool_core.models.enums import Permission
 
 from virtool.auth.mongo import (
@@ -64,19 +64,17 @@ class AuthorizationClient(AbstractAuthorizationClient):
         """
 
         mongo_result, open_fga_result = await asyncio.gather(
-            *[
-                check_in_mongo(self.mongo, user_id, permission),
-                check_in_open_fga(
-                    self.open_fga, user_id, permission, object_type, object_id
-                ),
-            ]
+            check_in_mongo(self.mongo, user_id, permission),
+            check_in_open_fga(
+                self.open_fga, user_id, permission, object_type, object_id
+            ),
         )
 
         return mongo_result or open_fga_result
 
     async def list_permissions(
         self, user_id: str, object_type: str, object_id: Union[str, int]
-    ) -> dict:
+    ) -> List[Permission]:
         """
         List permissions for a user.
         """
@@ -91,38 +89,19 @@ class AuthorizationClient(AbstractAuthorizationClient):
         """
         Add an authorization relationship.
         """
-        try:
-            await relationship.add(self.mongo)
-        except ResourceNotFoundError:
-            pass
 
-        tuple_list = [
-            TupleKey(
-                user=f"{relationship.user_type}:{relationship.user_id}",
-                relation=relation,
-                object=f"{relationship.object_type}:{relationship.object_name}",
-            )
-            for relation in relationship.relation
-        ]
-
-        await add_in_open_fga(self.open_fga, tuple_list)
+        await asyncio.gather(
+            relationship.add(self.mongo),
+            add_in_open_fga(self.open_fga, relationship),
+            return_exceptions=True,
+        )
 
     async def remove(self, relationship: BaseRelationship):
         """
         Remove an authorization relationship.
         """
-        try:
-            await relationship.remove(self.mongo)
-        except ResourceNotFoundError:
-            pass
-
-        tuple_list = [
-            TupleKey(
-                user=f"{relationship.user_type}:{relationship.user_id}",
-                relation=relation,
-                object=f"{relationship.object_type}:{relationship.object_name}",
-            )
-            for relation in relationship.relation
-        ]
-
-        await remove_in_open_fga(self.open_fga, tuple_list)
+        await asyncio.gather(
+            relationship.remove(self.mongo),
+            remove_in_open_fga(self.open_fga, relationship),
+            return_exceptions=True,
+        )

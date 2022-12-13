@@ -11,11 +11,11 @@ from virtool.users.db import compose_groups_update
 
 
 class BaseRelationship:
-    def __init__(self, relation):
+    def __init__(self, relations):
         self.object_name = "virtool"
         self.object_type = "app"
         self.user_type = "user"
-        self.relation = relation
+        self.relations = relations
 
     async def add(self, mongo: DB):
         ...
@@ -24,9 +24,9 @@ class BaseRelationship:
         ...
 
 
-class GroupMembership(BaseRelationship):
-    def __init__(self, user_id, group_id, relation):
-        super().__init__(relation)
+class GroupMemberships(BaseRelationship):
+    def __init__(self, user_id, group_id, relations: List):
+        super().__init__(relations)
         self.user_id = user_id
         self.object_name = group_id
         self.object_type = "group"
@@ -58,21 +58,20 @@ class GroupMembership(BaseRelationship):
         )
 
 
-class GroupPermission(BaseRelationship):
-    def __init__(self, group_id, relation: List[Permission]):
-        super().__init__(relation)
+class GroupPermissions(BaseRelationship):
+    def __init__(self, group_id, relations: List[Permission]):
+        super().__init__(relations)
         self.user_id = group_id
         self.user_type = "group"
 
     async def add(self, mongo: DB):
 
         if not await id_exists(mongo.groups, self.user_id):
-            self.user_id = f"{self.user_id}#member"
             raise ResourceNotFoundError
 
         update = {"permissions": {}}
 
-        permission_dict = {permission.name: True for permission in self.relation}
+        permission_dict = {permission.name: True for permission in self.relations}
 
         permissions = await get_one_field(
             mongo.groups, "permissions", {"_id": self.user_id}
@@ -95,12 +94,11 @@ class GroupPermission(BaseRelationship):
     async def remove(self, mongo: DB):
 
         if not await id_exists(mongo.groups, self.user_id):
-            self.user_id = f"{self.user_id}#member"
             raise ResourceNotFoundError
 
         update = {"permissions": {}}
 
-        permission_dict = {permission.name: False for permission in self.relation}
+        permission_dict = {permission.name: False for permission in self.relations}
 
         permissions = await get_one_field(
             mongo.groups, "permissions", {"_id": self.user_id}
@@ -121,7 +119,7 @@ class GroupPermission(BaseRelationship):
             await update_member_users(mongo, self.user_id, session=session)
 
 
-class UserPermission(BaseRelationship):
-    def __init__(self, user_id, relation):
-        super().__init__(relation)
+class UserPermissions(BaseRelationship):
+    def __init__(self, user_id, relations):
+        super().__init__(relations)
         self.user_id = user_id
