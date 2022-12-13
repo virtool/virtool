@@ -9,7 +9,7 @@ from aiohttp_pydantic import PydanticView
 from virtool_core.models.enums import Permission
 
 from virtool.errors import PolicyError
-from virtool.http.client import AbstractClient, UserClient, JobClient
+from virtool.http.client import AbstractClient
 
 logger = getLogger(__name__)
 
