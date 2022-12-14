@@ -93,6 +93,9 @@
     'primary_group': None,
   }
 ---
+# name: test_add_permission[uvloop]
+  True
+---
 # name: test_create[uvloop-None]
   <class 'dict'> {
     'active': True,
@@ -300,4 +303,17 @@
     'id': 'not_found',
     'message': 'Not found',
   }
+---
+# name: test_list_permissions[uvloop-bob]
+  <class 'list'> [
+  ]
+---
+# name: test_list_permissions[uvloop-test]
+  <class 'list'> [
+    'create_ref',
+    'create_sample',
+  ]
+---
+# name: test_remove_permission[uvloop]
+  True
 ---

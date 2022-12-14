@@ -231,3 +231,39 @@ class TestUpdate:
 
         assert resp.status == 404
         assert await resp.json() == snapshot
+
+
+@pytest.mark.parametrize("user", ["test", "bob"])
+async def test_list_permissions(spawn_client, user, snapshot):
+    client = await spawn_client(authorize=True, permissions=[Permission.create_sample, Permission.create_ref])
+
+    resp = await client.get(
+        f"/users/{user}/permissions",
+    )
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
+async def test_add_permission(spawn_client, snapshot):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    resp = await client.put(
+        f"/users/test/permissions/{Permission.create_sample}", {}
+    )
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
+async def test_remove_permission(spawn_client, snapshot):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    resp = await client.delete(
+        f"/users/test/permissions/{Permission.create_sample}"
+    )
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
