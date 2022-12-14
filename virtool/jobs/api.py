@@ -57,7 +57,7 @@ class JobsView(PydanticView):
             )
         )
 
-    @policy(PermissionsRoutePolicy(Permission.remove_job))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.remove_job))
     async def delete(
         self,
         job_filter: Optional[str] = Field(
@@ -127,7 +127,7 @@ class JobView(PydanticView):
 
         return json_response(document)
 
-    @policy(PermissionsRoutePolicy(Permission.remove_job))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.remove_job))
     async def delete(self, job_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete a job.
@@ -210,7 +210,7 @@ async def archive(req):
 
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
-    @policy(PermissionsRoutePolicy(Permission.cancel_job))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.cancel_job))
     async def put(self, job_id: str, /) -> Union[r200[JobResponse], r403, r404, r409]:
         """
         Cancel a job.

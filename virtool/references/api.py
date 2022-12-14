@@ -73,7 +73,7 @@ class ReferencesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy(Permission.create_ref))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.create_ref))
     async def post(
         self, data: CreateReferenceRequest
     ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:

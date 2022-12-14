@@ -124,7 +124,7 @@ class UpdatesView(PydanticView):
 
         return json_response(updates)
 
-    @policy(PermissionsRoutePolicy(Permission.modify_hmm))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.modify_hmm))
     async def post(self) -> Union[r201[HMMInstalled], r400, r403]:
         """
         Install HMMs.
