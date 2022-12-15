@@ -6,6 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
+import bson
 import dictdiffer
 import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -146,11 +147,12 @@ async def add(
     return document
 
 
-def prepare_add(
+async def prepare_add(
     history_method: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],
     user_id: str,
+    data_path: Path,
 ) -> Document:
     """
     Add a change document to the history collection.
@@ -189,6 +191,10 @@ def prepare_add(
 
     else:
         document["diff"] = calculate_diff(old, new)
+
+    if len(bson.encode(document)) > 16793600:
+        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
+        document["diff"] = "file"
 
     return document
 

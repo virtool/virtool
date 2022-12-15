@@ -891,28 +891,24 @@ class ReferencesData(DataLayerPiece):
         * Create history.
 
         """
-        created_at: datetime = await get_one_field(
-            self._mongo.references, "created_at", ref_id
-        )
 
-        to_delete = await self._mongo.otus.distinct(
-            "_id",
-            {
-                "reference.id": ref_id,
-                "remote.id": {"$nin": list({otu["_id"] for otu in data.otus})},
-            },
-        )
+        async def update_reference(session):
+            # async with self._mongo.create_session() as session:
+            created_at: datetime = await get_one_field(
+                self._mongo.references, "created_at", ref_id
+            )
 
-        tracker = AccumulatingProgressHandlerWrapper(
-            progress_handler, len(data.otus) + len(to_delete)
-        )
-        print(len(data.otus) + len(to_delete))
-        total_changes = 0
-        iterat = 0
-        updates = 0
-        inserts = 0
-        deletes = 0
-        async with self._mongo.create_session() as session:
+            to_delete = await self._mongo.otus.distinct(
+                "_id",
+                {
+                    "reference.id": ref_id,
+                    "remote.id": {"$nin": list({otu["_id"] for otu in data.otus})},
+                },
+            )
+
+            tracker = AccumulatingProgressHandlerWrapper(
+                progress_handler, len(data.otus) + len(to_delete)
+            )
             await self._mongo.references.update_one(
                 {"_id": ref_id},
                 {
@@ -925,32 +921,37 @@ class ReferencesData(DataLayerPiece):
             )
 
             bulk_updater = BulkOTUUpdater(
-                ref_id, user_id, self._mongo, tracker, session, created_at
+                ref_id,
+                user_id,
+                self._mongo,
+                tracker,
+                session,
+                created_at,
+                self._config.data_path,
             )
 
             bulk_updater.bulk_upsert(data.otus)
 
             for otu_id in to_delete:
-                iterat += 1
                 await bulk_updater.delete(otu_id)
-            print("All update objects created")
-
+            print("all jobs queded n stuff")
             await bulk_updater.finish()
-            print(
-                f"predicting {len(data.otus) + len(to_delete)} got {iterat} iterations. predicting {total_changes} history updates, got {tracker._accumulated}"
-            )
+            print(f"predicting {len(data.otus) + len(to_delete)}")
 
             await self._mongo.references.update_one(
-                {"_id": ref_id},
+                {"_id": ref_id, "updates.id": release["id"]},
                 {
                     "$set": {
                         "installed": create_update_subdocument(release, True, user_id),
                         "updates.$.ready": True,
                         "updating": False,
+                        "release.newer": False,
                     }
                 },
                 session=session,
             )
+
+        await self._mongo.with_transaction(update_reference)
 
         print("Done!!!!!!!!!!!!")
 

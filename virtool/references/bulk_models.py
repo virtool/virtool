@@ -73,18 +73,29 @@ class OTUDelete(OTUChange):
 
 
 @dataclass
-class DBUpdate:
-    update: Union[UpdateOne, DeleteOne, DeleteMany, dict]
-    post_update: Optional[Callable[[Any], Coroutine]] = None
+class OTUData:
+    old: dict
+    otu: Document
+
+
+class BufferData:
+    data: Any
+    callback: Optional[Callable[[Any], Coroutine]]
+
+
+@dataclass
+class DBBufferData(BufferData):
+    data: Union[UpdateOne, DeleteOne, DeleteMany, dict]
+    callback: Optional[Callable[[Any], Coroutine]] = None
+
+
+@dataclass
+class OTUUpdateBufferData(BufferData):
+    data: Union[dict, OTUData, OTUChange]
+    callback: Optional[Callable[[Any], Coroutine]] = None
 
 
 @dataclass
 class DataChunk:
-    data: List[DBUpdate]
+    data: List[BufferData]
     bulk_function: Callable[[Any], Coroutine]
-
-
-@dataclass
-class OTUData:
-    old: dict
-    otu: Document

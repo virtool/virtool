@@ -200,7 +200,6 @@ async def bulk_join_documents(
     :return: the joined otu document
     """
     # Get the otu entry if a ``document`` parameter was not passed
-    # print("session", session)
 
     cursor = mongo.sequences.find(
         {"otu_id": {"$in": [otu["_id"] for otu in otus]}},

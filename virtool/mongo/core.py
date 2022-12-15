@@ -457,3 +457,7 @@ class DB:
     async def with_session(self):
         async with await self.motor_client.client.start_session() as s:
             yield s
+
+    async def with_transaction(self, function: Callable):
+        async with await self.motor_client.client.start_session() as s:
+            await s.with_transaction(function)
