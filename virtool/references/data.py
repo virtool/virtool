@@ -47,7 +47,7 @@ from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.otus.db import join
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
-from virtool.references.bulk import DBBulkUpdater, BulkOTUUpdater
+from virtool.references.bulk import OTUDBBulkUpdater, BulkOTUUpdater
 from virtool.references.db import (
     compose_base_find_query,
     attach_computed,
@@ -893,7 +893,6 @@ class ReferencesData(DataLayerPiece):
         """
 
         async def update_reference(session):
-            # async with self._mongo.create_session() as session:
             created_at: datetime = await get_one_field(
                 self._mongo.references, "created_at", ref_id
             )
@@ -909,6 +908,7 @@ class ReferencesData(DataLayerPiece):
             tracker = AccumulatingProgressHandlerWrapper(
                 progress_handler, len(data.otus) + len(to_delete)
             )
+
             await self._mongo.references.update_one(
                 {"_id": ref_id},
                 {
@@ -921,22 +921,21 @@ class ReferencesData(DataLayerPiece):
             )
 
             bulk_updater = BulkOTUUpdater(
+                self._mongo,
                 ref_id,
                 user_id,
-                self._mongo,
-                tracker,
-                session,
                 created_at,
                 self._config.data_path,
+                tracker,
+                session,
             )
 
             bulk_updater.bulk_upsert(data.otus)
 
             for otu_id in to_delete:
                 await bulk_updater.delete(otu_id)
-            print("all jobs queded n stuff")
+
             await bulk_updater.finish()
-            print(f"predicting {len(data.otus) + len(to_delete)}")
 
             await self._mongo.references.update_one(
                 {"_id": ref_id, "updates.id": release["id"]},
@@ -952,8 +951,6 @@ class ReferencesData(DataLayerPiece):
             )
 
         await self._mongo.with_transaction(update_reference)
-
-        print("Done!!!!!!!!!!!!")
 
     async def clean_all(self):
         """

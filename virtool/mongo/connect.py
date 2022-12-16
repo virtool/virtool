@@ -98,9 +98,13 @@ async def create_indexes(db):
     await db.otus.create_index("name")
     await db.otus.create_index("nickname")
     await db.otus.create_index("abbreviation")
+    await db.otus.create_index([("reference.id", ASCENDING), ("remote.id", ASCENDING)])
     await db.samples.create_index([("created_at", DESCENDING)])
     await db.sequences.create_index("otu_id")
     await db.sequences.create_index("name")
+    await db.sequences.create_index(
+        [("reference.id", ASCENDING), ("remote.id", ASCENDING)]
+    )
     await db.users.create_index("b2c_oid", unique=True, sparse=True)
     await db.users.create_index("handle", unique=True, sparse=True)
     await db.sessions.create_index("expiresAt", expireAfterSeconds=0)

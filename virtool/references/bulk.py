@@ -1,6 +1,8 @@
 import asyncio
-from asyncio import Queue, TimeoutError, CancelledError, FIRST_COMPLETED
-from typing import List, TYPE_CHECKING
+from asyncio import Queue, CancelledError, FIRST_COMPLETED
+from datetime import datetime
+from pathlib import Path
+from typing import List, TYPE_CHECKING, Callable
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
@@ -33,10 +35,9 @@ WORKER_COUNT = 25
 
 
 class Worker:
-    def __init__(self, task_queue: Queue, session, queue_tracker):
+    def __init__(self, task_queue: Queue, session: AsyncIOMotorClientSession):
         self.task_queue = task_queue
         self.session = session
-        self.q_tracker = queue_tracker
 
     async def run(self):
         while True:
@@ -46,24 +47,25 @@ class Worker:
                     update_chunk.data, session=self.session
                 )
                 self.task_queue.task_done()
-                self.q_tracker.add(self.task_queue.qsize())
             except CancelledError:
                 break
 
 
 class WorkerPool:
-    def __init__(self, task_queue, session, queue_tracker, worker_count):
+    def __init__(
+        self, task_queue: Queue, worker_count: int, session: AsyncIOMotorClientSession
+    ):
         self.task_queue = task_queue
         self.workers = [
-            asyncio.create_task(Worker(task_queue, session, queue_tracker).run())
+            asyncio.create_task(Worker(task_queue, session).run())
             for _ in range(worker_count)
         ]
 
     async def finish(self):
-
         await asyncio.wait(
             [self.task_queue.join(), *self.workers], return_when=FIRST_COMPLETED
         )
+
         if exceptions := self.check_exceptions():
             raise exceptions[0]
 
@@ -75,7 +77,7 @@ class WorkerPool:
 
 
 class BaseDataBuffer:
-    def __init__(self, update_function, task_queue: Queue):
+    def __init__(self, update_function: Callable, task_queue: Queue):
         self.update_buffer = []
         self.update_function = update_function
         self.task_queue = task_queue
@@ -114,7 +116,9 @@ class OTUDBBuffer(BaseDataBuffer):
         collection: "Collection",
         id_provider: AbstractIdProvider,
     ):
-        async def func(change_buffer: List[BufferData], session):
+        async def func(
+            change_buffer: List[BufferData], session: AsyncIOMotorClientSession
+        ):
             updates = await generate_bulk_id_buffer(
                 collection, change_buffer, id_provider, session
             )
@@ -128,7 +132,9 @@ class OTUDBBuffer(BaseDataBuffer):
 
     @classmethod
     def update_buffer(cls, task_queue: Queue, collection: "Collection"):
-        async def func(change_buffer: List[BufferData], session):
+        async def func(
+            change_buffer: List[BufferData], session: AsyncIOMotorClientSession
+        ):
             await collection.bulk_write(
                 [item.data for item in change_buffer], session=session
             )
@@ -139,7 +145,9 @@ class OTUDBBuffer(BaseDataBuffer):
 
     @classmethod
     def delete_buffer(cls, task_queue: Queue, collection: "Collection"):
-        async def func(change_buffer: List[BufferData], session):
+        async def func(
+            change_buffer: List[BufferData], session: AsyncIOMotorClientSession
+        ):
             await collection.bulk_write(
                 [change.data for change in change_buffer], session=session
             )
@@ -150,7 +158,9 @@ class OTUDBBuffer(BaseDataBuffer):
 
     @classmethod
     def history_insert_buffer(cls, task_queue: Queue, collection: "Collection"):
-        async def func(change_buffer: List[BufferData], session):
+        async def func(
+            change_buffer: List[BufferData], session: AsyncIOMotorClientSession
+        ):
             await collection.insert_many(
                 [item.data for item in change_buffer], session=session
             )
@@ -162,9 +172,9 @@ async def generate_bulk_id_buffer(
     collection: "Collection",
     change_buffer: List[BufferData],
     id_provider: AbstractIdProvider,
-    session,
-):
-    id_update_buffer = [
+    session: AsyncIOMotorClientSession,
+) -> List[BufferData]:
+    id_insert_buffer = [
         DBBufferData(
             {**update.data, "_id": id_provider.get()},
             update.callback,
@@ -172,51 +182,47 @@ async def generate_bulk_id_buffer(
         for update in change_buffer
     ]
     if await collection.find_one(
-        {"_id": {"$in": [update.data["_id"] for update in id_update_buffer]}},
+        {"_id": {"$in": [update.data["_id"] for update in id_insert_buffer]}},
         session=session,
     ):
         return await generate_bulk_id_buffer(
             collection, change_buffer, id_provider, session
         )
-    return id_update_buffer
+    return id_insert_buffer
 
 
-class DBBulkUpdater:
+class OTUDBBulkUpdater:
     def __init__(
         self,
         mongo: "DB",
-        session: AsyncIOMotorClientSession,
         user_id: str,
         progress_tracker: AccumulatingProgressHandlerWrapper,
-        task_queue,
-        prepare_history,
+        task_queue: Queue,
+        prepare_history: Callable,
     ):
         self.user_id = user_id
-        self.session = session
-        self.mongo = mongo
         self.progress_tracker = progress_tracker
-        self.task_queue = task_queue
         self.prepare_history = prepare_history
 
         self.update_sequence_buffer = OTUDBBuffer.update_buffer(
-            self.task_queue, mongo.sequences
+            task_queue, mongo.sequences
         )
         self.insert_sequence_buffer = OTUDBBuffer.insert_buffer(
-            self.task_queue, mongo.sequences, mongo.id_provider
+            task_queue, mongo.sequences, mongo.id_provider
         )
-        self.update_otu_buffer = OTUDBBuffer.update_buffer(self.task_queue, mongo.otus)
+        self.update_otu_buffer = OTUDBBuffer.update_buffer(task_queue, mongo.otus)
         self.insert_otu_buffer = OTUDBBuffer.insert_buffer(
-            self.task_queue, mongo.otus, mongo.id_provider
+            task_queue, mongo.otus, mongo.id_provider
         )
         self.delete_sequence_buffer = OTUDBBuffer.delete_buffer(
-            self.task_queue, mongo.sequences
+            task_queue, mongo.sequences
         )
-        self.delete_otus_buffer = OTUDBBuffer.delete_buffer(self.task_queue, mongo.otus)
+        self.delete_otus_buffer = OTUDBBuffer.delete_buffer(task_queue, mongo.otus)
         self.update_references_buffer = OTUDBBuffer.update_buffer(
-            self.task_queue, mongo.references
+            task_queue, mongo.references
         )
         self.update_history_buffer = OTUDBBuffer.history_insert_buffer(
-            self.task_queue, mongo.history
+            task_queue, mongo.history
         )
 
     def update(self, updates: List[OTUUpdate]):
@@ -263,11 +269,11 @@ class DBBulkUpdater:
             if otu_change.otu_id is None:
                 otu_change.otu_id = otu_id
 
-            self._add_sequences(otu_change)
+            self._insert_sequences(otu_change)
 
         return func
 
-    def _add_sequences(self, otu_change: OTUChange):
+    def _insert_sequences(self, otu_change: OTUChange):
         for sequence_update in otu_change.sequences.updates:
             self.update_sequence_buffer.add(
                 DBBufferData(sequence_update, self._sequence_updated(otu_change))
@@ -301,38 +307,17 @@ class DBBulkUpdater:
         return func
 
 
-class QTracker:
-    def __init__(self):
-        self.data_log = []
-
-    def add(self, num_items: int):
-        self.data_log.append(num_items)
-
-    @property
-    def average(self):
-        return sum(self.data_log) / len(self.data_log)
-
-    @property
-    def highest(self):
-        return max(self.data_log)
-
-    @property
-    def mode(self):
-        return max(set(self.data_log), key=self.data_log.count)
-
-
 class OTUUpdateBuffer(BaseDataBuffer):
     @classmethod
     def prepare_upsert_buffer(
         cls,
         task_queue: Queue,
-        update_db: DBBulkUpdater,
-        prepare_otu_update_buffer,
-        mongo,
-        ref_id,
-        user_id,
-        created_at,
-        all_changes,
+        update_db: OTUDBBulkUpdater,
+        prepare_otu_update_buffer: BaseDataBuffer,
+        mongo: "DB",
+        ref_id: str,
+        user_id: str,
+        created_at: datetime,
     ):
         async def func(data: List[OTUUpdateBufferData], session):
             old_otus = await bulk_join_query(
@@ -352,13 +337,16 @@ class OTUUpdateBuffer(BaseDataBuffer):
                 else:
                     insert_otu = prepare_insert_otu(otu, created_at, ref_id, user_id)
                     update_db.insert(insert_otu)
-                    all_changes.append(insert_otu)
 
         return cls(func, task_queue)
 
     @classmethod
     def prepare_update_buffer(
-        cls, task_queue: Queue, bulk_db_updater: DBBulkUpdater, mongo, ref_id, self
+        cls,
+        task_queue: Queue,
+        bulk_db_updater: OTUDBBulkUpdater,
+        mongo: "DB",
+        ref_id: str,
     ):
         async def func(otu_data: List[OTUData], session):
             updates = await bulk_prepare_update_joined_otu(
@@ -366,8 +354,6 @@ class OTUUpdateBuffer(BaseDataBuffer):
             )
             if updates:
                 bulk_db_updater.update(updates)
-                self.updates += len(updates)
-                self.all_changes.extend(updates)
 
         return cls(func, task_queue)
 
@@ -375,12 +361,14 @@ class OTUUpdateBuffer(BaseDataBuffer):
     def prepare_insert_history_buffer(
         cls,
         task_queue: Queue,
-        bulk_db_updater: DBBulkUpdater,
-        mongo,
-        user_id,
-        data_path,
+        bulk_db_updater: OTUDBBulkUpdater,
+        mongo: "DB",
+        user_id: str,
+        data_path: Path,
     ):
-        async def func(data: List[OTUUpdateBufferData], session):
+        async def func(
+            data: List[OTUUpdateBufferData], session: AsyncIOMotorClientSession
+        ):
             docs = [
                 otu_data.data.otu_id
                 for otu_data in data
@@ -414,103 +402,61 @@ class OTUUpdateBuffer(BaseDataBuffer):
 
 class BulkOTUUpdater:
     def __init__(
-        self, ref_id, user_id, mongo, progress_tracker, session, created_at, data_path
+        self,
+        mongo: "DB",
+        ref_id: str,
+        user_id: str,
+        created_at: datetime,
+        data_path: Path,
+        progress_tracker: AccumulatingProgressHandlerWrapper,
+        session: AsyncIOMotorClientSession,
     ):
-        self.user_id = user_id
         self.session = session
         self.mongo = mongo
-        self.ref_id = ref_id
-        self.progress_tracker = progress_tracker
         self.task_queue = asyncio.Queue()
-        self.q_tracker = QTracker()
-        self.created_at = created_at
-        self.worker_pool = WorkerPool(
-            self.task_queue, session, self.q_tracker, WORKER_COUNT
-        )
+        self.worker_pool = WorkerPool(self.task_queue, WORKER_COUNT, session)
 
-        self.update_db = DBBulkUpdater(
-            mongo,
-            session,
-            user_id,
-            progress_tracker,
-            self.task_queue,
-            self._insert_history,
+        self.update_db = OTUDBBulkUpdater(
+            mongo, user_id, progress_tracker, self.task_queue, self._insert_history
         )
         self.prepare_otu_update_buffer = OTUUpdateBuffer.prepare_update_buffer(
-            self.task_queue, self.update_db, mongo, ref_id, self
+            self.task_queue, self.update_db, mongo, ref_id
         )
 
         self.prepare_insert_history_buffer = (
             OTUUpdateBuffer.prepare_insert_history_buffer(
-                self.task_queue, self.update_db, mongo, self.user_id, data_path
+                self.task_queue, self.update_db, mongo, user_id, data_path
             )
         )
-
-        self.all_changes = []
 
         self.prepare_upsert_buffer = OTUUpdateBuffer.prepare_upsert_buffer(
             self.task_queue,
             self.update_db,
             self.prepare_otu_update_buffer,
             mongo,
-            self.ref_id,
-            self.user_id,
-            self.created_at,
-            self.all_changes,
+            ref_id,
+            user_id,
+            created_at,
         )
-
-        self.inserts = 0
-        self.updates = 0
-        self.deletes = 0
 
     def bulk_upsert(self, otus: List[dict]):
         for otu in otus:
             self.prepare_upsert_buffer.add(OTUUpdateBufferData(otu))
 
-    async def delete(self, otu_id):
+    async def delete(self, otu_id: str):
         remove_otu = await prepare_remove_otu(self.mongo, otu_id, self.session)
         if remove_otu:
-            self.deletes += 1
             self.update_db.delete(remove_otu)
-            self.all_changes.append(remove_otu)
 
     async def finish(self):
         await asyncio.gather(
             self.prepare_upsert_buffer.finish(),
             self.prepare_otu_update_buffer.finish(),
-            self.update_db.finish(),
             self.prepare_insert_history_buffer.finish(),
+            self.update_db.finish(),
         )
 
         await self.worker_pool.finish()
-
-        print(
-            f"deletes {self.deletes}, updates {self.updates}, inserts{self.inserts}, total {self.deletes + self.inserts + self.updates}, remainder {self.task_queue.qsize()}, derped update {len(self.prepare_otu_update_buffer.update_buffer)}"
-        )
-        print(
-            f"Queue states: Average: {self.q_tracker.average} highest: {self.q_tracker.highest} mode: {self.q_tracker.mode}"
-        )
-        print(
-            len(self.update_db.update_otu_buffer.update_buffer),
-            len(self.update_db.insert_otu_buffer.update_buffer),
-            len(self.update_db.delete_otus_buffer.update_buffer),
-            len(self.update_db.update_references_buffer.update_buffer),
-            len(self.update_db.update_sequence_buffer.update_buffer),
-            len(self.update_db.insert_sequence_buffer.update_buffer),
-            len(self.update_db.delete_sequence_buffer.update_buffer),
-            len(self.update_db.update_history_buffer.update_buffer),
-            len(self.prepare_upsert_buffer.update_buffer),
-            len(self.prepare_otu_update_buffer.update_buffer),
-            len(self.prepare_insert_history_buffer.update_buffer),
-        )
-
-        for change in self.all_changes:
-            if not change.is_complete:
-                print(
-                    change.history_method,
-                    change.remaining_sequence_changes,
-                    change._otu_changed,
-                )
 
     async def _insert_history(self, otu_change: OTUChange):
         self.prepare_insert_history_buffer.add(OTUUpdateBufferData(otu_change))

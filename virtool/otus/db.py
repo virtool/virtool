@@ -210,7 +210,7 @@ async def bulk_join_documents(
     async for sequence in cursor:
         dict_entry = sequences.setdefault(sequence["otu_id"], [])
         dict_entry.append(sequence)
-    print(sequences.keys(), len(otus))
+
     merged_documents = [
         virtool.otus.utils.merge_otu(otu, sequences[otu["_id"]]) for otu in otus
     ]
