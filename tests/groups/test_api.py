@@ -18,7 +18,6 @@ async def setup_update_group(spawn_client, fake2):
     return client, group
 
 
-@pytest.mark.apitest
 async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapshot):
     """
     Test that a ``GET /groups`` return a complete list of groups.

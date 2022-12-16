@@ -13,7 +13,7 @@ from virtool.api.response import InvalidQuery, json_response, NotFound
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import PermissionsRoutePolicy, policy
+from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
@@ -54,7 +54,7 @@ class UploadsView(PydanticView):
 
         return json_response({"documents": uploads})
 
-    @policy(PermissionsRoutePolicy(Permission.upload_file))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.upload_file))
     async def post(
         self,
         name: str,
@@ -145,7 +145,7 @@ class UploadView(PydanticView):
             },
         )
 
-    @policy(PermissionsRoutePolicy(Permission.remove_file))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.remove_file))
     async def delete(self, upload_id: int, /) -> Union[r204, r401, r403, r404]:
         """
         Delete an upload.
