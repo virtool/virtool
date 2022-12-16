@@ -123,7 +123,7 @@ class OTUDBBuffer(BaseDataBuffer):
                 collection, change_buffer, id_provider, session
             )
             await collection.insert_many(
-                [item.data for item in updates], session=session
+                [item.data for item in updates], session=session, silent=True
             )
             for update in updates:
                 await update.callback(update.data["_id"])
@@ -162,7 +162,7 @@ class OTUDBBuffer(BaseDataBuffer):
             change_buffer: List[BufferData], session: AsyncIOMotorClientSession
         ):
             await collection.insert_many(
-                [item.data for item in change_buffer], session=session
+                [item.data for item in change_buffer], session=session, silent=True
             )
 
         return cls(func, task_queue)
@@ -181,13 +181,13 @@ async def generate_bulk_id_buffer(
         )
         for update in change_buffer
     ]
-    if await collection.find_one(
-        {"_id": {"$in": [update.data["_id"] for update in id_insert_buffer]}},
-        session=session,
-    ):
-        return await generate_bulk_id_buffer(
-            collection, change_buffer, id_provider, session
-        )
+    # if await collection.find_one(
+    #     {"_id": {"$in": [update.data["_id"] for update in id_insert_buffer]}},
+    #     session=session,
+    # ):
+    #     return await generate_bulk_id_buffer(
+    #         collection, change_buffer, id_provider, session
+    #     )
     return id_insert_buffer
 
 
@@ -413,6 +413,9 @@ class BulkOTUUpdater:
     ):
         self.session = session
         self.mongo = mongo
+        self.created_at = created_at
+        self.ref_id = ref_id
+        self.user_id = user_id
         self.task_queue = asyncio.Queue()
         self.worker_pool = WorkerPool(self.task_queue, WORKER_COUNT, session)
 
@@ -442,6 +445,13 @@ class BulkOTUUpdater:
     def bulk_upsert(self, otus: List[dict]):
         for otu in otus:
             self.prepare_upsert_buffer.add(OTUUpdateBufferData(otu))
+
+    def bulk_insert(self, otus: List[dict]):
+        for otu in otus:
+            insert_otu = prepare_insert_otu(
+                otu, self.created_at, self.ref_id, self.user_id
+            )
+            self.update_db.insert(insert_otu)
 
     async def delete(self, otu_id: str):
         remove_otu = await prepare_remove_otu(self.mongo, otu_id, self.session)

@@ -847,16 +847,16 @@ class ReferencesData(DataLayerPiece):
                     self._mongo, otu, created_at, ref_id, user_id, session
                 )
 
-                await insert_change(
-                    self._config.data_path,
-                    self._mongo,
-                    otu_id,
-                    HistoryMethod.remote,
-                    user_id,
-                    session,
-                )
+            await insert_change(
+                self._config.data_path,
+                self._mongo,
+                otu_id,
+                HistoryMethod.remote,
+                user_id,
+                session,
+            )
 
-                await tracker.add(1)
+            await tracker.add(1)
 
             await self._mongo.references.update_one(
                 {
