@@ -1,6 +1,5 @@
 import asyncio
 from asyncio import gather
-from enum import Enum
 from pathlib import Path
 
 import pytest
