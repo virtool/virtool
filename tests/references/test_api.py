@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import gather
+from enum import Enum
 from pathlib import Path
 
 import pytest
@@ -12,7 +13,7 @@ from virtool_core.models.task import Task
 import virtool.utils
 from virtool.data.utils import get_data_from_app
 from virtool.pg.utils import get_row_by_id
-from virtool.references.tasks import UpdateRemoteReferenceTask
+from virtool.references.tasks import UpdateRemoteReferenceTask, ImportReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import Task as SQLTask
 
@@ -208,6 +209,9 @@ class TestCreate:
         )
 
         task_id = reference["task"]["id"]
+
+        import_reference_task = ImportReferenceTask(client.app, task_id)
+        await import_reference_task.run()
 
         while True:
             await asyncio.sleep(1)

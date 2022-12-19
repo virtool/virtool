@@ -69,7 +69,7 @@ def create_app(
     test_db_connection_string,
     test_db_name,
 ):
-    def _create_app(dev: bool = False, base_url: str = ""):
+    def _create_app(dev: bool = False, base_url: str = "", no_tasks: bool = True):
         config = Config(
             base_url=base_url,
             db_connection_string=test_db_connection_string,
@@ -79,6 +79,7 @@ def create_app(
             no_check_db=True,
             no_check_files=True,
             no_fetching=True,
+            no_tasks=no_tasks,
             no_sentry=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
@@ -112,10 +113,11 @@ def spawn_client(
         dev=False,
         enable_api=False,
         groups=None,
+        no_tasks=True,
         permissions=None,
         use_b2c=False,
     ):
-        app = create_app(dev, base_url)
+        app = create_app(dev, base_url, no_tasks)
 
         if groups is not None:
             complete_groups = [

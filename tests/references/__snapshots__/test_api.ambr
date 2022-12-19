@@ -212,7 +212,7 @@
       'error': None,
       'id': 1,
       'progress': 0,
-      'step': 'load_file',
+      'step': 'import_reference',
       'type': 'import_reference',
     },
     'unbuilt_change_count': 0,
