@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import gather
 from pathlib import Path
 
 import pytest
@@ -11,7 +10,6 @@ from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.utils import get_data_from_app
-from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import Task as SQLTask
@@ -206,22 +204,6 @@ class TestCreate:
         assert reference == snapshot(
             matcher=path_type({"id": (str,)}),
         )
-
-        task_id = reference["task"]["id"]
-
-        while True:
-            await asyncio.sleep(1)
-
-            task: SQLTask = await get_row_by_id(pg, SQLTask, task_id)
-
-            if task.complete:
-                assert await gather(
-                    client.db.otus.count_documents({}),
-                    client.db.sequences.count_documents({}),
-                    client.db.history.count_documents({}),
-                ) == [20, 26, 20]
-
-                break
 
     async def test_clone_reference(
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
