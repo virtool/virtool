@@ -32,9 +32,22 @@ async def test_fake(fake2, snapshot):
         ),
     )
 
-    upload = await fake2.uploads.create(user_1, with_file=True)
+    upload_1 = await fake2.uploads.create(user_1, with_file=True)
+    upload_2 = await fake2.uploads.create(user_1)
 
-    assert upload == snapshot(
+    assert upload_1 == snapshot(
+        name="upload[with_file]",
+        matcher=path_type(
+            {
+                "created_at": (datetime,),
+                "uploaded_at": (datetime,),
+                ".*timestamp": (datetime,),
+            },
+            regex=True,
+        ),
+    )
+
+    assert upload_2 == snapshot(
         name="upload",
         matcher=path_type(
             {
