@@ -63,4 +63,5 @@ async def test_move_nuvs_files(tmp_path, spawn_client):
     assert set(os.listdir(target_path)) == {"hmm.tsv"}
 
     await virtool.analyses.utils.move_nuvs_files("assembly.fa", file_path, target_path)
+
     assert set(os.listdir(target_path)) == {"hmm.tsv", "assembly.fa.gz"}

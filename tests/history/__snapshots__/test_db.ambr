@@ -316,30 +316,6 @@
     },
   }
 ---
-# name: test_get[uvloop-False]
-  <class 'dict'> {
-    'diff': <class 'dict'> {
-      'foo': 'bar',
-    },
-    'id': 'baz.2',
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
-# name: test_get[uvloop-True]
-  <class 'dict'> {
-    'diff': 'loaded',
-    'id': 'baz.2',
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
 # name: test_get_most_recent_change[uvloop-False]
   None
 ---

@@ -6,11 +6,12 @@ from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional
 
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.progress import TaskProgressHandler
-from virtool.utils import get_temp_dir, run_in_thread
+from asyncio import to_thread
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
+from virtool.utils import get_temp_dir
 
 logger = getLogger("task")
 
@@ -73,7 +74,7 @@ class BaseTask:
 
         """
         task, temp_dir = await asyncio.gather(
-            data.tasks.get(task_id), run_in_thread(get_temp_dir)
+            data.tasks.get(task_id), to_thread(get_temp_dir)
         )
 
         return cls(task_id, data, task.context, temp_dir)
@@ -139,7 +140,7 @@ class BaseTask:
         else:
             await self.data.tasks.complete(self.task_id)
 
-        await run_in_thread(self.temp_dir.cleanup)
+        await to_thread(self.temp_dir.cleanup)
 
     async def cleanup(self):
         """

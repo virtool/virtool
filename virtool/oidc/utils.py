@@ -1,11 +1,10 @@
+from asyncio import to_thread
 import json
 from dataclasses import dataclass, asdict
 
 import jwt
 from aiohttp.web import Application
 from jose.jwt import decode, get_unverified_header
-
-from virtool.utils import run_in_thread
 
 
 @dataclass
@@ -44,7 +43,7 @@ async def update_jwk_args(app: Application, token: jwt) -> JWKArgs:
     :param app: the app object
     :return: jwk_args
     """
-    header = await run_in_thread(get_unverified_header, token)
+    header = await to_thread(get_unverified_header, token)
     authority = app["b2c"].authority
     resp = await app["client"].get(
         f"{authority}/discovery/v2.0/keys", allow_redirects=True

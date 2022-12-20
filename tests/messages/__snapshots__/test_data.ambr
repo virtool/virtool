@@ -1,0 +1,45 @@
+# name: test_create[uvloop]
+  <class 'dict'> {
+    'active': True,
+    'color': <MessageColor.blue: 'blue'>,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 1,
+    'message': 'This is a test message',
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: TestGet.test_active[uvloop]
+  <class 'dict'> {
+    'active': True,
+    'color': <MessageColor.yellow: 'yellow'>,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 2,
+    'message': 'This is test message 2',
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_update[uvloop]
+  <class 'dict'> {
+    'active': True,
+    'color': <MessageColor.red: 'red'>,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 1,
+    'message': 'Updated Message',
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---

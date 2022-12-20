@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import to_thread
 import logging
 import os
 from pathlib import Path
@@ -73,7 +74,7 @@ from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.db import AttachUserTransform
 from virtool.users.utils import Permission
-from virtool.utils import run_in_thread, base_processor
+from virtool.utils import base_processor
 
 logger = logging.getLogger("samples")
 
@@ -103,7 +104,7 @@ class SamplesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy(Permission.create_sample))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.create_sample))
     async def post(
         self, data: CreateSampleRequest
     ) -> Union[r201[CreateSampleResponse], r400, r403]:
@@ -264,7 +265,7 @@ async def finalize(req):
         req.app["pg"],
         sample_id,
         data["quality"],
-        run_in_thread,
+        to_thread,
         req.app["config"].data_path,
     )
 
@@ -568,7 +569,7 @@ async def upload_artifact(req):
     except asyncio.CancelledError:
         logger.debug("Artifact file upload aborted for sample: %s", sample_id)
         await delete_row(pg, upload_id, SampleArtifact)
-        await run_in_thread(os.remove, artifact_file_path)
+        await to_thread(os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
@@ -743,7 +744,7 @@ async def upload_cache_artifact(req):
     except asyncio.CancelledError:
         logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)
         await delete_row(pg, upload_id, SampleArtifact)
-        await run_in_thread(os.remove, cache_path)
+        await to_thread(os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(
@@ -797,7 +798,7 @@ async def download_reads(req: aiohttp.web.Request):
     if not os.path.isfile(file_path):
         raise NotFound()
 
-    stats = await run_in_thread(file_stats, file_path)
+    stats = await to_thread(file_stats, file_path)
 
     headers = {"Content-Length": stats["size"], "Content-Type": "application/gzip"}
 
@@ -838,7 +839,7 @@ async def download_artifact(req: aiohttp.web.Request):
     if not os.path.isfile(file_path):
         raise NotFound()
 
-    stats = await run_in_thread(file_stats, file_path)
+    stats = await to_thread(file_stats, file_path)
 
     headers = {"Content-Length": stats["size"], "Content-Type": "application/gzip"}
 
@@ -875,7 +876,7 @@ async def download_cache_reads(req):
     if not os.path.isfile(file_path):
         raise NotFound()
 
-    stats = await run_in_thread(file_stats, file_path)
+    stats = await to_thread(file_stats, file_path)
 
     headers = {"Content-Length": stats["size"], "Content-Type": "application/gzip"}
 
@@ -919,7 +920,7 @@ async def download_cache_artifact(req):
     if not file_path.exists():
         raise NotFound()
 
-    stats = await run_in_thread(file_stats, file_path)
+    stats = await to_thread(file_stats, file_path)
 
     return FileResponse(
         file_path,

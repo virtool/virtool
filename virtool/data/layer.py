@@ -13,6 +13,7 @@ from virtool.hmm.data import HmmData
 from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
+from virtool.messages.data import MessagesData
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
@@ -37,20 +38,21 @@ class DataLayer:
     analyses: "AnalysisData"
     blast: BLASTData
     groups: GroupsData
-    settings: SettingsData
     history: HistoryData
-    references: ReferencesData
     hmms: HmmData
     index: IndexData
-    labels: LabelsData
     jobs: JobsData
+    labels: LabelsData
+    messages: MessagesData
     otus: OTUData
+    references: ReferencesData
     samples: SamplesData
     subtractions: SubtractionsData
+    sessions: SessionData
+    settings: SettingsData
+    tasks: TasksData
     uploads: UploadsData
     users: UsersData
-    tasks: TasksData
-    sessions: SessionData
 
     def __post_init__(self):
         self.hmms.bind_layer(self)

@@ -1,6 +1,6 @@
 import json
 import logging
-
+from asyncio import to_thread
 from tempfile import TemporaryDirectory
 from typing import Dict, TYPE_CHECKING
 
@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 from virtool.http.utils import download_file
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
-from virtool.utils import run_in_thread
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +73,7 @@ class HMMInstallTask(BaseTask):
             await self._set_error("Could not download HMM data.")
 
     async def decompress(self):
-        await run_in_thread(
-            decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path
-        )
+        await to_thread(decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path)
 
     async def install(self):
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:

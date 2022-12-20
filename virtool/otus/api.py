@@ -4,7 +4,7 @@ from aiohttp import web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r404, r204, r401, r403, r400
-from virtool_core.models.otu import OTU, OTUIsolate, OTUSequence
+from virtool_core.models.otu import OTU, OTUIsolate, Sequence
 
 import virtool.otus.db
 import virtool.references.db
@@ -382,7 +382,7 @@ class SequencesView(PydanticView):
 
     async def post(
         self, otu_id: str, isolate_id: str, /, data: CreateSequenceRequest
-    ) -> Union[r201[OTUSequence], r400, r403, r404]:
+    ) -> Union[r201[Sequence], r400, r403, r404]:
         """
         Create a sequence.
 
@@ -482,7 +482,7 @@ class SequenceView(PydanticView):
         sequence_id: str,
         /,
         data: UpdateSequenceRequest,
-    ) -> Union[r200[OTUSequence], r400, r401, r403, r404]:
+    ) -> Union[r200[Sequence], r400, r401, r403, r404]:
         """
         Update a sequence.
 

@@ -1,4 +1,4 @@
-FROM library/python:3.8-buster as server
+FROM library/python:3.10-buster as server
 WORKDIR /build
 RUN pip install --user poetry==1.1.14
 COPY pyproject.toml ./pyproject.toml
@@ -8,7 +8,7 @@ RUN pip install --user -r requirements.txt
 COPY . . 
 RUN pip install --user .
 
-FROM virtool/external-tools:0.2.0
+FROM virtool/workflow-tools:2.0.1
 WORKDIR /virtool
 COPY --from=server /root/.local /root/.local
 COPY run.py pyproject.toml VERSION* /virtool/

@@ -3,6 +3,7 @@ Work with caches in the database. Caches are bundles of
 trimmed read and QC data generated during analyses.
 
 """
+from asyncio import to_thread
 from typing import Any, Dict
 
 import pymongo.errors
@@ -10,7 +11,7 @@ from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.types import App
-from virtool.utils import run_in_thread, base_processor
+from virtool.utils import base_processor
 
 PROJECTION = ("_id", "created_at", "files", "key", "program", "ready", "sample")
 
@@ -89,6 +90,6 @@ async def remove(app: App, cache_id: str):
     path = config.data_path / "caches" / cache_id
 
     try:
-        await run_in_thread(rm, path, True)
+        await to_thread(rm, path, True)
     except FileNotFoundError:
         pass

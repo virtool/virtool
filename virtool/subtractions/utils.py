@@ -1,5 +1,6 @@
 import logging
 import os
+from asyncio import to_thread
 from pathlib import Path
 from typing import List
 
@@ -8,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.config.cls import Config
 from virtool.subtractions.models import SQLSubtractionFile
-from virtool.utils import run_in_thread
 
 FILES = (
     "subtraction.fa.gz",
@@ -38,7 +38,7 @@ def check_subtraction_file_type(file_name: str) -> str:
 
 
 def join_subtraction_path(config: Config, subtraction_id: str) -> Path:
-    return config.data_path / "subtractions" / subtraction_id.replace(" ", "_").lower()
+    return config.data_path / "subtractions" / subtraction_id.replace(" ", "_")
 
 
 def join_subtraction_index_path(config: Config, subtraction_id: str) -> Path:
@@ -78,8 +78,8 @@ async def rename_bowtie_files(path: Path):
     :param path: the subtraction path
 
     """
-    for file_path in await run_in_thread(path.iterdir):
+    for file_path in await to_thread(path.iterdir):
         if file_path.suffix == ".bt2":
-            await run_in_thread(
+            await to_thread(
                 os.rename, file_path, str(file_path).replace("reference", "subtraction")
             )

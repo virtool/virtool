@@ -16,7 +16,9 @@
           'version': 1,
         },
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'hxn167',
+          'name': 'Reference A',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -39,7 +41,9 @@
           'version': 1,
         },
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'hxn167',
+          'name': 'Reference A',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -62,7 +66,9 @@
           'version': 1,
         },
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'hxn167',
+          'name': 'Reference A',
         },
         'user': <class 'dict'> {
           'administrator': False,
@@ -120,7 +126,9 @@
       'version': 1,
     },
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'user': <class 'dict'> {
       'administrator': False,

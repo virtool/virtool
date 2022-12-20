@@ -44,19 +44,15 @@ from virtool.history.db import patch_to_version
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
-from virtool.otus.db import join
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
-from virtool.references.bulk import OTUDBBulkUpdater, BulkOTUUpdater
+from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
     compose_base_find_query,
     attach_computed,
     get_manifest,
     insert_joined_otu,
     insert_change,
-    prepare_update_joined_otu,
-    prepare_insert_otu,
-    prepare_remove_otu,
 )
 from virtool.references.oas import (
     CreateReferenceRequest,
@@ -77,6 +73,7 @@ from virtool.tasks.progress import (
     TaskProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
+from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import (
@@ -132,6 +129,7 @@ class ReferencesData(DataLayerPiece):
                 [
                     AttachUserTransform(self._mongo),
                     ImportedFromTransform(self._mongo, self._pg),
+                    AttachTaskTransform(self._pg),
                 ],
             ),
             self._mongo.references.count_documents(
@@ -278,7 +276,9 @@ class ReferencesData(DataLayerPiece):
             raise ResourceNotFoundError()
 
         document = await attach_computed(self._mongo, document)
-        document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
+        document = await apply_transforms(
+            document, [AttachUserTransform(self._mongo), AttachTaskTransform(self._pg)]
+        )
 
         try:
             installed = document.pop("updates")[-1]
@@ -402,7 +402,7 @@ class ReferencesData(DataLayerPiece):
 
         return ReferenceRelease(**{**release, **update_subdocument})
 
-    async def get_otus(
+    async def find_otus(
         self,
         term: Optional[str],
         verified: Optional[bool],
@@ -411,16 +411,16 @@ class ReferencesData(DataLayerPiece):
         query,
     ) -> OTUSearchResult:
 
-        if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
+        if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
+            data = await virtool.otus.db.find(
+                self._mongo, names, term, query, verified, ref_id
+            )
 
-        data = await virtool.otus.db.find(
-            self._mongo, names, term, query, verified, ref_id
-        )
+            return OTUSearchResult(**data)
 
-        return OTUSearchResult(**data)
+        raise ResourceNotFoundError()
 
-    async def create_otus(
+    async def create_otu(
         self, ref_id: str, data: CreateOTURequest, req, user_id: str
     ) -> OTU:
 
@@ -443,7 +443,7 @@ class ReferencesData(DataLayerPiece):
 
         return otu
 
-    async def get_history(
+    async def find_history(
         self, ref_id: str, unbuilt: str, query
     ) -> HistorySearchResult:
 
@@ -518,9 +518,7 @@ class ReferencesData(DataLayerPiece):
             job_id=job_id,
         )
 
-        document = await virtool.indexes.db.processor(self._mongo, document)
-
-        return IndexMinimal(**document)
+        return await self.data.index.get(document["_id"])
 
     async def list_groups(self, ref_id: str) -> List[ReferenceGroup]:
         """
@@ -707,10 +705,13 @@ class ReferencesData(DataLayerPiece):
 
         document = await attach_computed(self._mongo, document)
 
-        if "name" in data:
-            await self._mongo.analyses.update_many(
-                {"reference.id": ref_id}, {"$set": {"reference.name": document["name"]}}
-            )
+        async with self._mongo.create_session() as mongo_session:
+            if "name" in data:
+                await self._mongo.analyses.update_many(
+                    {"reference.id": ref_id},
+                    {"$set": {"reference.name": document["name"]}},
+                    session=mongo_session,
+                )
 
         return document
 
@@ -847,16 +848,16 @@ class ReferencesData(DataLayerPiece):
                     self._mongo, otu, created_at, ref_id, user_id, session
                 )
 
-            await insert_change(
-                self._config.data_path,
-                self._mongo,
-                otu_id,
-                HistoryMethod.remote,
-                user_id,
-                session,
-            )
+                await insert_change(
+                    self._config.data_path,
+                    self._mongo,
+                    otu_id,
+                    HistoryMethod.remote,
+                    user_id,
+                    session,
+                )
 
-            await tracker.add(1)
+                await tracker.add(1)
 
             await self._mongo.references.update_one(
                 {

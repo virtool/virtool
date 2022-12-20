@@ -15,8 +15,8 @@
 ---
 # name: test_find[uvloop]
   <class 'list'> [
-    Task(id=1, complete=True, context={'user_id': 'test_1'}, count=40, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, file_size=1024, progress=100, step='download', type='clone_reference'),
-    Task(id=2, complete=False, context={'user_id': 'test_2'}, count=30, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, file_size=14754, progress=80, step='download', type='import_reference'),
+    Task(id=1, complete=True, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, progress=100, step='download', type='clone_reference', context={'user_id': 'test_1'}, count=40, file_size=1024),
+    Task(id=2, complete=False, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, progress=80, step='download', type='import_reference', context={'user_id': 'test_2'}, count=30, file_size=14754),
   ]
 ---
 # name: test_get[uvloop]

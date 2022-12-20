@@ -21,13 +21,18 @@ async def test_create(
     snapshot,
     static_time,
     test_random_alphanumeric,
+    test_ref,
     tmp_path,
     data_layer,
 ):
 
     user = await fake2.users.create()
 
-    assert await data_layer.otus.create("foo", data, user.id) == snapshot(name="return")
+    await mongo.references.insert_one(test_ref)
+
+    assert await data_layer.otus.create(test_ref["_id"], data, user.id) == snapshot(
+        name="return"
+    )
 
     assert await asyncio.gather(
         mongo.otus.find_one(), mongo.history.find_one()
@@ -55,7 +60,8 @@ async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
                     "sequence": "ATAGAGGAGTTA",
                     "isolate_id": "baz",
                 },
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -73,9 +79,12 @@ async def test_update(
     static_time,
     test_otu,
     test_random_alphanumeric,
+    test_ref,
     tmp_path,
     data_layer,
 ):
+
+    await mongo.references.insert_one(test_ref)
 
     user, _ = await asyncio.gather(
         fake2.users.create(), mongo.otus.insert_one(test_otu)
@@ -283,7 +292,15 @@ async def test_create_sequence(
 
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_get_sequence(
-    missing, snapshot, mongo, test_otu, test_isolate, test_sequence, data_layer
+    missing,
+    snapshot,
+    mongo,
+    config,
+    test_otu,
+    test_isolate,
+    test_ref,
+    test_sequence,
+    data_layer,
 ):
     if missing == "isolate":
         test_otu["isolates"][0]["id"] = "missing"
@@ -293,6 +310,8 @@ async def test_get_sequence(
 
     if missing != "sequence":
         await mongo.sequences.insert_one(test_sequence)
+
+    await mongo.references.insert_one({**test_ref, "_id": "ref"})
 
     if missing:
         with pytest.raises(ResourceNotFoundError):

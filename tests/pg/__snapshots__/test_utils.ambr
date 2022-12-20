@@ -6,5 +6,6 @@
 ---
 # name: test_get_rows[uvloop]
   <class 'ScalarResult'> {
+    closed=False,
   }
 ---

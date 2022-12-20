@@ -122,7 +122,8 @@ class TestRecalculateWorkflowTags:
                     "workflow": "pathoscope_bowtie",
                     "ready": True,
                 }
-            ]
+            ],
+            session=None,
         )
 
         m = mocker.patch(
@@ -154,7 +155,8 @@ class TestGetSampleOwner:
             [
                 {"_id": "test", "user": {"id": "foobar"}},
                 {"_id": "baz", "user": {"id": "fred"}},
-            ]
+            ],
+            session=None,
         )
 
         assert await get_sample_owner(mongo, "test") == "foobar"
@@ -193,7 +195,7 @@ class TestRemoveSamples:
             handle.joinpath("text.txt").write_text("hello world")
 
         await mongo.samples.insert_many(
-            [{"_id": "test_1"}, {"_id": "test_2"}, {"_id": "test_3"}]
+            [{"_id": "test_1"}, {"_id": "test_2"}, {"_id": "test_3"}], session=None
         )
 
         await mongo.analyses.insert_many(
@@ -207,7 +209,8 @@ class TestRemoveSamples:
                 {"_id": "a_7", "sample": {"id": "test_3"}},
                 {"_id": "a_8", "sample": {"id": "test_3"}},
                 {"_id": "a_9", "sample": {"id": "test_3"}},
-            ]
+            ],
+            session=None,
         )
 
         await remove_samples(mongo, config, id_list)
@@ -226,7 +229,9 @@ class TestRemoveSamples:
 
         samples_dir.joinpath("test.txt").write_text("hello world")
 
-        await mongo.samples.insert_many([{"_id": "test_1"}, {"_id": "test_2"}])
+        await mongo.samples.insert_many(
+            [{"_id": "test_1"}, {"_id": "test_2"}], session=None
+        )
 
         await remove_samples(mongo, config, ["test_1", "test_2"])
 
@@ -332,7 +337,7 @@ async def test_update_is_compressed(snapshot, mongo):
         {"_id": "bar", "files": [{"name": "reads_1.fq.gz"}]},
     ]
 
-    await mongo.samples.insert_many(samples)
+    await mongo.samples.insert_many(samples, session=None)
     await gather(*[update_is_compressed(mongo, s) for s in samples])
 
     assert await mongo.samples.find().to_list(None) == snapshot

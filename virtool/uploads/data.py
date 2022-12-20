@@ -1,5 +1,6 @@
 import asyncio
 import math
+from asyncio import to_thread
 from logging import getLogger
 from typing import List, Optional, Union
 
@@ -16,7 +17,6 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread
 
 logger = getLogger(__name__)
 
@@ -45,7 +45,11 @@ class UploadsData(DataLayerPiece):
                 filters.append(SQLUpload.type == upload_type)
 
             if not paginate:
-                results = await session.execute(select(SQLUpload).filter(*filters))
+                results = await session.execute(
+                    select(SQLUpload)
+                    .filter(*filters)
+                    .order_by(SQLUpload.created_at.desc())
+                )
 
                 for result in results.unique().scalars().all():
                     uploads.append(result.to_dict())
@@ -73,7 +77,11 @@ class UploadsData(DataLayerPiece):
             )
 
             query = (
-                select(SQLUpload).filter(*filters).offset(skip_count).limit(per_page)
+                select(SQLUpload)
+                .filter(*filters)
+                .order_by(SQLUpload.created_at.desc())
+                .offset(skip_count)
+                .limit(per_page)
             )
 
             count, results = await asyncio.gather(
@@ -192,9 +200,7 @@ class UploadsData(DataLayerPiece):
         )
 
         try:
-            await run_in_thread(
-                rm, self._config.data_path / "files" / upload.name_on_disk
-            )
+            await to_thread(rm, self._config.data_path / "files" / upload.name_on_disk)
         except FileNotFoundError:
             pass
 

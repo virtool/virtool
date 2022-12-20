@@ -15,10 +15,13 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
+from virtool.auth.client import AuthorizationClient
+from virtool.auth.utils import connect_openfga
 
 import virtool.mongo.connect
 import virtool.pg.utils
 from virtool.analyses.tasks import StoreNuvsFilesTask
+from virtool.config import get_config_from_app
 from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
 from virtool.dev.fake import create_fake_data_path
@@ -239,11 +242,14 @@ async def startup_databases(app: Application):
     db_name = app["config"].db_name
     postgres_connection_string = app["config"].postgres_connection_string
     redis_connection_string = app["config"].redis_connection_string
+    openfga_host = app["config"].openfga_host
+    openfga_scheme = app["config"].openfga_scheme
 
-    mongo, pg, redis = await asyncio.gather(
+    mongo, pg, redis, openfga_instance = await asyncio.gather(
         virtool.mongo.connect.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
+        connect_openfga(openfga_host, openfga_scheme),
     )
 
     scheduler = get_scheduler_from_app(app)
@@ -253,11 +259,14 @@ async def startup_databases(app: Application):
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-    app["db"] = DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider())
-
-    app["dispatcher_interface"] = dispatcher_interface
-
-    app["pg"] = pg
+    app.update(
+        {
+            "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
+            "dispatcher_interface": dispatcher_interface,
+            "pg": pg,
+            "auth": AuthorizationClient(mongo, openfga_instance),
+        }
+    )
 
 
 async def startup_refresh(app: Application):
@@ -347,7 +356,7 @@ async def startup_b2c(app: Application):
             b2c_user_flow,
         ]
     ):
-        logger.fatal(
+        logger.critical(
             "Required B2C client information not provided for --use-b2c option"
         )
         sys.exit(1)
@@ -371,12 +380,17 @@ async def startup_task_runner(app: Application):
     :param app: the app object
 
     """
-    scheduler = get_scheduler_from_app(app)
-    (channel,) = await app["redis"].subscribe("channel:tasks")
-    await scheduler.spawn(TaskRunner(app["data"], channel, app).run())
+
+    if not get_config_from_app(app).no_tasks:
+        scheduler = get_scheduler_from_app(app)
+        (channel,) = await app["redis"].subscribe("channel:tasks")
+        await scheduler.spawn(TaskRunner(app["data"], channel, app).run())
 
 
 async def startup_tasks(app: Application):
+    if get_config_from_app(app).no_tasks:
+        return
+
     tasks_data = get_data_from_app(app).tasks
 
     if app["config"].no_check_db:

@@ -1,5 +1,11 @@
 from __future__ import annotations
 import json
+
+import os
+import shutil
+from asyncio import gather, to_thread
+from datetime import timedelta
+
 from logging import getLogger
 from pathlib import Path
 from typing import Dict, Optional, TYPE_CHECKING
@@ -15,9 +21,15 @@ from virtool.references.utils import (
     load_reference_file,
     ReferenceSourceData,
 )
+
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
-from virtool.utils import run_in_thread
+
+from virtool.utils import chunk_list, get_temp_dir
+from virtool_core.models.enums import HistoryMethod
+
+logger = getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -71,7 +83,7 @@ class ImportReferenceTask(BaseTask):
         path = Path(self.context["path"])
 
         try:
-            import_data = await run_in_thread(load_reference_file, path)
+            import_data = await to_thread(load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
             return await self._set_error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
@@ -127,7 +139,7 @@ class RemoteReferenceTask(BaseTask):
         except (ClientConnectorError, WebError):
             await self._set_error("Could not download reference data")
 
-        import_data = await run_in_thread(load_reference_file, path)
+        import_data = await to_thread(load_reference_file, path)
 
         if error := check_import_data(import_data, strict=True, verify=True):
             await self._set_error(dump_string(error))
@@ -173,7 +185,7 @@ class UpdateRemoteReferenceTask(BaseTask):
         except (ClientConnectorError, WebError):
             return await self._set_error("Could not download reference data")
 
-        data = await run_in_thread(load_reference_file, path)
+        data = await to_thread(load_reference_file, path)
 
         self.source_data = ReferenceSourceData(**data)
 

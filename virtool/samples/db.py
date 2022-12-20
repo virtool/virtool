@@ -3,6 +3,7 @@ Code for working with samples in the database and filesystem.
 
 """
 import asyncio
+from asyncio import to_thread
 import logging
 import os
 from collections import defaultdict
@@ -30,7 +31,7 @@ from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor, run_in_thread
+from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import DB
@@ -403,9 +404,9 @@ async def compress_sample_reads(db: "DB", config: Config, sample: Dict[str, Any]
 
         target_path = data_path / "samples" / sample_id / target_filename
 
-        await run_in_thread(compress_file, path, target_path, 1)
+        await to_thread(compress_file, path, target_path, 1)
 
-        stats = await run_in_thread(file_stats, target_path)
+        stats = await to_thread(file_stats, target_path)
 
         files.append(
             {
@@ -420,7 +421,7 @@ async def compress_sample_reads(db: "DB", config: Config, sample: Dict[str, Any]
     await db.samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
 
     for path in paths:
-        await run_in_thread(os.remove, path)
+        await to_thread(os.remove, path)
 
 
 async def move_sample_files_to_pg(db: "DB", pg: AsyncEngine, sample: Dict[str, any]):
@@ -508,7 +509,7 @@ async def finalize(
             row.removed_at = virtool.utils.timestamp()
 
             try:
-                await run_in_thread(rm, data_path / "files" / row.name_on_disk)
+                await to_thread(rm, data_path / "files" / row.name_on_disk)
             except FileNotFoundError:
                 pass
 

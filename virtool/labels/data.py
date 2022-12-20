@@ -129,15 +129,18 @@ class LabelsData:
         :param label_id: ID of the label to delete
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(LabelSQL).filter_by(id=label_id))
-            label = result.scalar()
+            async with self._db.create_session() as mongo_session:
+                result = await session.execute(select(LabelSQL).filter_by(id=label_id))
+                label = result.scalar()
 
-            if label is None:
-                raise ResourceNotFoundError()
+                if label is None:
+                    raise ResourceNotFoundError()
 
-            await self._db.samples.update_many(
-                {"labels": label_id}, {"$pull": {"labels": label_id}}
-            )
+                await self._db.samples.update_many(
+                    {"labels": label_id},
+                    {"$pull": {"labels": label_id}},
+                    session=mongo_session,
+                )
 
-            await session.delete(label)
-            await session.commit()
+                await session.delete(label)
+                await session.commit()

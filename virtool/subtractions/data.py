@@ -1,6 +1,6 @@
 import asyncio
 import shutil
-from asyncio import CancelledError
+from asyncio import CancelledError, to_thread
 from logging import getLogger
 from typing import Optional
 
@@ -53,7 +53,7 @@ from virtool.tasks.progress import (
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor, run_in_thread
+from virtool.utils import base_processor
 
 logger = getLogger(__name__)
 
@@ -124,7 +124,7 @@ class SubtractionsData(DataLayerPiece):
         if upload is None:
             raise ResourceNotFoundError("Upload does not exist")
 
-        await self._mongo.subtraction.insert_one(
+        document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
                 or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
@@ -144,17 +144,19 @@ class SubtractionsData(DataLayerPiece):
             }
         )
 
+        subtraction = await self.get(document["_id"])
+
         await self.data.jobs.create(
             "create_subtraction",
             {
-                "subtraction_id": subtraction_id,
+                "subtraction_id": subtraction.id,
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
             JobRights(),
         )
 
-        return await self.get(subtraction_id)
+        return subtraction
 
     async def get(self, subtraction_id: str) -> Subtraction:
         document = await self._mongo.subtraction.find_one(subtraction_id)
@@ -211,7 +213,7 @@ class SubtractionsData(DataLayerPiece):
 
             await asyncio.gather(
                 unlink_default_subtractions(self._mongo, subtraction_id, session),
-                run_in_thread(
+                to_thread(
                     shutil.rmtree,
                     join_subtraction_path(self._config, subtraction_id),
                     True,
@@ -300,7 +302,7 @@ class SubtractionsData(DataLayerPiece):
 
                 await session.commit()
         except CancelledError:
-            await run_in_thread(
+            await to_thread(
                 rm,
                 self._config.data_path / "subtractions" / subtraction_id / filename,
             )
@@ -332,7 +334,7 @@ class SubtractionsData(DataLayerPiece):
 
         path = join_subtraction_path(self._config, subtraction_id) / filename
 
-        if not await run_in_thread(path.is_file):
+        if not await to_thread(path.is_file):
             logger.warning("")
             raise ResourceNotFoundError
 
@@ -362,8 +364,8 @@ class SubtractionsData(DataLayerPiece):
             join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
         )
 
-        await run_in_thread(compress_file, fasta_path, target_path)
-        await run_in_thread(rm, fasta_path)
+        await to_thread(compress_file, fasta_path, target_path)
+        await to_thread(rm, fasta_path)
 
         await self._mongo.subtraction.find_one_and_update(
             {"_id": subtraction_id}, {"$set": {"has_file": True}}
@@ -389,7 +391,7 @@ class SubtractionsData(DataLayerPiece):
 
             subtraction_files = []
 
-            for filename in sorted(await run_in_thread(os.listdir, path)):
+            for filename in sorted(await to_thread(os.listdir, path)):
                 if filename in FILES:
                     async with AsyncSession(self._pg) as session:
                         exists = (

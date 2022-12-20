@@ -21,7 +21,8 @@ async def test_compress_samples_task(
             {"_id": "foo", "is_legacy": True},
             {"_id": "fab", "is_legacy": False},
             {"_id": "bar", "is_legacy": True},
-        ]
+        ],
+        session=None,
     )
 
     async with AsyncSession(pg) as session:

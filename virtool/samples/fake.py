@@ -1,3 +1,4 @@
+from asyncio import to_thread
 import shutil
 from contextlib import suppress
 from pathlib import Path
@@ -12,7 +13,6 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
 from virtool.samples.files import create_reads_file
 from virtool.types import App
-from virtool.utils import run_in_thread
 
 READ_FILES_PATH = example_path / "reads"
 
@@ -133,7 +133,7 @@ async def create_fake_sample(
             pg=pg,
             sample_id=sample_id,
             quality=await create_fake_quality(fake),
-            _run_in_thread=run_in_thread,
+            _run_in_thread=to_thread,
             data_path=app["config"].data_path,
         )
 
@@ -155,4 +155,4 @@ async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: s
     reads_path = app["config"].data_path / "samples" / sample_id
     reads_path.mkdir(parents=True, exist_ok=True)
 
-    await run_in_thread(shutil.copy, file_path, reads_path / filename)
+    await to_thread(shutil.copy, file_path, reads_path / filename)

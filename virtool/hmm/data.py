@@ -1,5 +1,6 @@
 import asyncio
 import shutil
+from asyncio import to_thread
 from functools import cached_property
 from pathlib import Path
 from typing import List, Dict
@@ -39,7 +40,6 @@ from virtool.tasks.progress import (
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread
 
 
 class HmmData(DataLayerPiece):
@@ -180,7 +180,7 @@ class HmmData(DataLayerPiece):
             )
 
             try:
-                await run_in_thread(
+                await to_thread(
                     shutil.move,
                     str(hmm_temp_profile_path),
                     str(self.profiles_path),
@@ -192,7 +192,7 @@ class HmmData(DataLayerPiece):
     async def get_profiles_path(self) -> Path:
         file_path = self._config.data_path / "hmm" / "profiles.hmm"
 
-        if await run_in_thread(hmm_data_exists, file_path):
+        if await to_thread(hmm_data_exists, file_path):
             return file_path
 
         raise ResourceNotFoundError("Profiles file could not be found")
@@ -200,14 +200,14 @@ class HmmData(DataLayerPiece):
     async def get_annotations_path(self) -> Path:
         path = self._config.data_path / "hmm" / "annotations.json.gz"
 
-        if await run_in_thread(path.exists):
+        if await to_thread(path.exists):
             return path
 
         json_path = await generate_annotations_json_file(
             self._config.data_path, self._mongo
         )
 
-        await run_in_thread(compress_file_with_gzip, json_path, path)
+        await to_thread(compress_file_with_gzip, json_path, path)
 
         return path
 

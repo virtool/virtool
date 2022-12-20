@@ -32,7 +32,8 @@ async def test_find(fake2, spawn_client, snapshot, static_time):
                 "user": {"id": user.id},
             }
             for number in range(0, 5)
-        ]
+        ],
+        session=None,
     )
 
     resp = await client.get("/subtractions")
@@ -380,4 +381,8 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
 
     resp = await client.post("/subtractions", data)
 
+    assert resp.status == 201
+
     assert await resp.json() == snapshot
+
+    assert await client.db.jobs.find_one() == snapshot(name="job")

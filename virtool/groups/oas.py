@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field, constr, root_validator
 from virtool_core.models.group import Group, GroupMinimal
 
 
@@ -24,11 +24,20 @@ class CreateGroupRequest(BaseModel):
     """
 
     name: constr(strip_whitespace=True, min_length=1) = Field(
-        description="a name for the group", alias="group_id"
+        description="a name for the group"
     )
 
     class Config:
         schema_extra = {"example": {"group_id": "research"}}
+
+    @root_validator(pre=True)
+    def convert_group_id_to_name(cls, values):
+        try:
+            values["name"] = values.pop("group_id")
+        except KeyError:
+            pass
+
+        return values
 
 
 class CreateGroupResponse(Group):
@@ -73,14 +82,10 @@ class UpdateGroupRequest(BaseModel):
     Used when updating permissions and/or group `name`.
     """
 
-    permissions: UpdatePermissionsRequest = Field(
-        description="a permission update comprising an object keyed by permissions "
-        "with boolean values",
-        default={},
-    )
+    name: Optional[constr(min_length=1)] = Field(description="a name for the group")
 
-    name: Optional[constr(min_length=1)] = Field(
-        description="a name for the group", default=None
+    permissions: Optional[UpdatePermissionsRequest] = Field(
+        description="a permission update comprising an object keyed by permissions with boolean values"
     )
 
     class Config:

@@ -416,7 +416,9 @@
     },
     'name': 'Tobacco mosaic otu',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -535,7 +537,9 @@
     },
     'name': 'Tobacco mosaic otu',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -662,7 +666,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -773,7 +779,9 @@
     },
     'name': 'Tobacco mosaic otu',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -892,7 +900,9 @@
     },
     'name': 'Tobacco mosaic otu',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1019,7 +1029,9 @@
     },
     'name': 'Tobacco mosaic otu',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1146,7 +1158,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1257,7 +1271,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1368,7 +1384,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1479,7 +1497,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1568,9 +1588,6 @@
             'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
             'host': 'sweet cherry',
             'id': 'abcd1234',
-            'reference': <class 'dict'> {
-              'id': 'ref',
-            },
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
@@ -1595,7 +1612,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1618,9 +1637,6 @@
             'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
             'host': 'sweet cherry',
             'id': 'abcd1234',
-            'reference': <class 'dict'> {
-              'id': 'ref',
-            },
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
@@ -1645,7 +1661,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1668,9 +1686,6 @@
             'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
             'host': 'sweet cherry',
             'id': 'abcd1234',
-            'reference': <class 'dict'> {
-              'id': 'ref',
-            },
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
@@ -1695,7 +1710,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -1718,9 +1735,6 @@
             'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
             'host': 'sweet cherry',
             'id': 'abcd1234',
-            'reference': <class 'dict'> {
-              'id': 'ref',
-            },
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
@@ -1745,7 +1759,9 @@
     },
     'name': 'Prunus virus G',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -3587,9 +3603,6 @@
             'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
             'host': 'sweet cherry',
             'id': 'abcd1234',
-            'reference': <class 'dict'> {
-              'id': 'ref',
-            },
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
@@ -3614,7 +3627,9 @@
     },
     'name': 'Prunus virus F',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'hxn167',
+      'name': 'Reference A',
     },
     'remote': None,
     'schema': <class 'list'> [
@@ -3651,8 +3666,11 @@
     'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
     'host': 'sweet cherry',
     'id': 'abcd1234',
+    'otu_id': '6116cba1',
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'ref',
+      'name': 'Reference A',
     },
     'remote': None,
     'segment': None,

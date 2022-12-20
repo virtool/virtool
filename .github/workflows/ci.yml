@@ -40,6 +40,7 @@ jobs:
         env:
           POSTGRES_USER: virtool
           POSTGRES_PASSWORD: virtool
+          POSTGRES_DB: virtool
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -50,11 +51,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Create OpenFGA Network
+        run: docker network create openfga
+      - name: Start OpenFGA Postgres
+        run: docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+      - name: Migrate OpenFGA
+        run: docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+      - name: Start OpenFGA
+        run: docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: 4.4
           mongodb-replica-set: rs
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -63,7 +77,7 @@ jobs:
           installer-parallel: true
       - name: Load Cached Packages
         id: cached-poetry-dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -92,6 +106,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:

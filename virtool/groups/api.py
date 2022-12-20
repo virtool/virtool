@@ -42,7 +42,13 @@ class GroupsView(PydanticView):
         self, data: CreateGroupRequest
     ) -> Union[r201[CreateGroupResponse], r400]:
         """
-        Create a new group. New groups have no permissions.
+        Create a group.
+
+        Creates a new group with the given name.
+
+        The ``group_id`` parameter is deprecated and will no longer be accepted in a
+        future major release. For now, ``group_id`` will be used as ``name`` if it is
+        provided.
 
         Status Codes:
             201: Successful operation
@@ -84,7 +90,9 @@ class GroupView(PydanticView):
         self, group_id: str, /, data: UpdateGroupRequest
     ) -> Union[r200[GroupResponse], r404]:
         """
-        Update the permissions of a group.
+        Update a group.
+
+        Updates a group's name or permissions.
 
         Permissions that are not included in the ``permissions`` object will retain
         their previous setting.

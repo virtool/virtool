@@ -41,7 +41,8 @@ async def get_sample_data(mongo, fake2, pg, static_time):
                 {"_id": "apple", "name": "Apple"},
                 {"_id": "pear", "name": "Pear"},
                 {"_id": "peach", "name": "Peach"},
-            ]
+            ],
+            session=None,
         ),
         mongo.samples.insert_one(
             {
@@ -187,7 +188,8 @@ async def test_find(
                 "all_read": True,
                 "labels": [label_3.id],
             },
-        ]
+        ],
+        session=None,
     )
 
     path = "/samples"
@@ -314,7 +316,7 @@ class TestCreate:
             await session.commit()
 
         await client.db.groups.insert_many(
-            [{"_id": "diagnostics"}, {"_id": "technician"}]
+            [{"_id": "diagnostics"}, {"_id": "technician"}], session=None
         )
 
         request_data = {
@@ -570,7 +572,8 @@ class TestEdit:
                         "id": "test",
                     },
                 },
-            ]
+            ],
+            session=None,
         )
 
         resp = await client.patch("/samples/foo", {"name": "Bar"})
@@ -839,7 +842,8 @@ async def test_find_analyses(
                 "user": {"id": user_2.id},
                 "foobar": False,
             },
-        ]
+        ],
+        session=None,
     )
 
     url = "/samples/test/analyses"

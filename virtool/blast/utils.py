@@ -1,6 +1,7 @@
 import io
 import json
 import re
+from asyncio import to_thread
 from logging import getLogger
 from typing import Tuple
 from zipfile import ZipFile
@@ -9,7 +10,6 @@ from aiohttp import ClientSession
 
 import virtool.errors
 from virtool.errors import NCBIError
-from virtool.utils import run_in_thread
 
 logger = getLogger("blast")
 
@@ -216,4 +216,4 @@ async def fetch_nuvs_blast_result(client_session: ClientSession, rid: str) -> di
     async with client_session.get(BLAST_URL, params=params) as resp:
         data = await resp.read()
 
-    return await run_in_thread(extract_blast_zip, data, rid)
+    return await to_thread(extract_blast_zip, data, rid)

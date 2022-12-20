@@ -1,3 +1,4 @@
+from asyncio import to_thread
 from pathlib import Path
 from typing import Dict
 
@@ -6,7 +7,6 @@ from virtool_core.utils import file_stats
 
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import check_nuvs_file_type
-from virtool.utils import run_in_thread
 
 
 async def create_analysis_file(
@@ -59,7 +59,7 @@ async def create_nuvs_analysis_files(
         if not filename.endswith(".tsv"):
             filename += ".gz"
 
-        size = (await run_in_thread(file_stats, file_path / filename))["size"]
+        size = (await to_thread(file_stats, file_path / filename))["size"]
 
         analysis_files.append(
             AnalysisFile(

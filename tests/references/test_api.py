@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.task import Task
@@ -14,6 +15,137 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import Task as SQLTask
+
+
+async def test_find(spawn_client, pg, snapshot, fake2, static_time):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    user_1 = await fake2.users.create()
+
+    await client.db.references.insert_many(
+        [
+            {
+                "_id": "foo",
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "name": "Foo",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": False,
+                "task": {"id": 1},
+                "user": {"id": user_1.id},
+                "groups": [],
+            },
+            {
+                "_id": "baz",
+                "created_at": static_time.datetime,
+                "data_type": "barcode",
+                "name": "Baz",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": True,
+                "task": {"id": 2},
+                "user": {"id": user_1.id},
+                "groups": [],
+            },
+        ],
+        session=None,
+    )
+
+    task_1 = SQLTask(
+        id=1,
+        complete=True,
+        context={"user_id": "test_1"},
+        count=40,
+        created_at=static_time.datetime,
+        file_size=1024,
+        progress=100,
+        step="download",
+        type="clone_reference",
+    )
+
+    task_2 = SQLTask(
+        id=2,
+        complete=False,
+        context={"user_id": "test_2"},
+        count=30,
+        created_at=static_time.datetime,
+        file_size=14754,
+        progress=80,
+        step="download",
+        type="import_reference",
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add_all([task_1, task_2])
+        await session.commit()
+
+    resp = await client.get("/refs")
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
+@pytest.mark.parametrize("error", [404, None])
+async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    user_1 = await fake2.users.create()
+
+    user_2 = await fake2.users.create()
+
+    if error is None:
+        await client.db.references.insert_one(
+            {
+                "_id": "bar",
+                "created_at": virtool.utils.timestamp(),
+                "data_type": "genome",
+                "description": "plant pathogen",
+                "name": "Bar",
+                "organism": "virus",
+                "internal_control": None,
+                "restrict_source_types": False,
+                "source_types": ["isolate", "strain"],
+                "task": {"id": 1},
+                "user": {"id": user_1.id},
+                "groups": [],
+                "users": [
+                    {
+                        "id": user_2.id,
+                        "build": True,
+                        "created_at": static_time.datetime,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                ],
+            }
+        )
+
+    task_1 = SQLTask(
+        id=1,
+        complete=True,
+        context={"user_id": "test_1"},
+        count=40,
+        created_at=static_time.datetime,
+        file_size=1024,
+        progress=100,
+        step="download",
+        type="clone_reference",
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add_all([task_1])
+        await session.commit()
+
+    resp = await client.get("/refs/bar")
+
+    if error:
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
 
 
 class TestCreate:
@@ -529,7 +661,9 @@ class TestCreateOTU:
         )
 
         if exists:
-            await client.db.references.insert_one({"_id": "foo"})
+            await client.db.references.insert_one(
+                {"_id": "foo", "name": "Foo", "data_type": "genome"}
+            )
 
         # Pass ref exists check.
         mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(False))
@@ -585,7 +719,9 @@ class TestCreateOTU:
         client = await spawn_client(authorize=True)
 
         if error != "404":
-            await client.db.references.insert_one({"_id": "foo"})
+            await client.db.references.insert_one(
+                {"_id": "foo", "name": "Foo", "data_type": "genome"}
+            )
 
         data = {"name": "Tobacco mosaic virus", "abbreviation": "TMV"}
 
@@ -611,93 +747,34 @@ class TestCreateOTU:
         assert resp.status == 201
 
 
-async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
-    client = await spawn_client(authorize=True)
-
-    body = {
-        "documents": [
-            {
-                "version": 1,
-                "created_at": "2015-10-06T20:00:00Z",
-                "ready": False,
-                "has_files": True,
-                "job": {"id": "bar"},
-                "reference": {"id": "bar"},
-                "user": {
-                    "id": "bf1b993c",
-                    "handle": "leeashley",
-                    "administrator": False,
-                },
-                "id": "bar",
-                "change_count": 4,
-                "modified_otu_count": 3,
-            },
-            {
-                "version": 0,
-                "created_at": "2015-10-06T20:00:00Z",
-                "ready": False,
-                "has_files": True,
-                "job": {"id": "foo"},
-                "reference": {"id": "foo"},
-                "user": {
-                    "id": "bf1b993c",
-                    "handle": "leeashley",
-                    "administrator": False,
-                },
-                "id": "foo",
-                "change_count": 2,
-                "modified_otu_count": 2,
-            },
-        ],
-        "total_count": 2,
-        "found_count": 2,
-        "page_count": 1,
-        "per_page": 25,
-        "page": 1,
-        "total_otu_count": 123,
-        "change_count": 12,
-        "modified_otu_count": 3,
-    }
-
-    m_find = mocker.patch("virtool.indexes.db.find", make_mocked_coro(body))
-
-    resp = await client.get("/refs/foo/indexes")
-
-    if not id_exists:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-
-    assert await resp.json() == body
-
-    m_find.assert_called_with(client.db, md_proxy(), ref_id="foo")
-
-
-async def test_create_index(mocker, snapshot, spawn_client, check_ref_right, resp_is):
+async def test_create_index(
+    fake2, mocker, snapshot, spawn_client, check_ref_right, resp_is
+):
     """
     Test that a valid request results in the creation of a otu document and a ``201`` response.
 
     """
     client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
 
-    await client.db.references.insert_one({"_id": "foo"})
+    user = await fake2.users.create()
 
-    # Insert unbuilt changes to prevent initial check failure.
-    await client.db.history.insert_one(
-        {
-            "_id": "history_1",
-            "index": {"id": "unbuilt", "version": "unbuilt"},
-            "reference": {"id": "foo"},
-        }
-    )
-
-    m_get_next_version = mocker.patch(
-        "virtool.indexes.db.get_next_version", new=make_mocked_coro(9)
+    await asyncio.gather(
+        client.db.references.insert_one(
+            {"_id": "foo", "name": "Foo", "data_type": "genome"}
+        ),
+        # Insert unbuilt changes to prevent initial check failure.
+        client.db.history.insert_one(
+            {
+                "_id": "history_1",
+                "index": {"id": "unbuilt", "version": "unbuilt"},
+                "reference": {"id": "foo"},
+                "user": {"id": user.id},
+            }
+        ),
     )
 
     m_create_manifest = mocker.patch(
-        "virtool.references.db.get_manifest", new=make_mocked_coro("manifest")
+        "virtool.references.db.get_manifest", new=make_mocked_coro({"foo": 2, "bar": 5})
     )
 
     # Pass ref exists check.
@@ -713,7 +790,6 @@ async def test_create_index(mocker, snapshot, spawn_client, check_ref_right, res
     assert await resp.json() == snapshot(name="json")
     assert await client.db.indexes.find_one() == snapshot(name="index")
 
-    m_get_next_version.assert_called_with(client.db, "foo")
     m_create_manifest.assert_called_with(client.db, "foo")
 
 

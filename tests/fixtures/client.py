@@ -80,6 +80,8 @@ def create_app(
             no_check_files=True,
             no_fetching=True,
             no_sentry=True,
+            openfga_host="localhost:8080",
+            openfga_scheme="http",
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
             fake=False,
@@ -125,7 +127,7 @@ def spawn_client(
                 for group in groups
             ]
 
-            await mongo.groups.insert_many(complete_groups)
+            await mongo.groups.insert_many(complete_groups, session=None)
 
         user_document = create_user(
             user_id="test",
@@ -218,6 +220,8 @@ def spawn_job_client(
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
                 no_sentry=True,
+                openfga_host="localhost:8080",
+                openfga_scheme="http",
             )
         )
 

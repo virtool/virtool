@@ -11,7 +11,6 @@ from virtool_core.utils import decompress_tgz
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError
-from virtool.utils import run_in_thread
 from virtool.utils import wait_for_checks
 
 
@@ -120,21 +119,6 @@ def test_to_bool(value, result):
 
     """
     assert virtool.utils.to_bool(value) == result
-
-
-async def test_run_in_thread():
-
-    assert asyncio.iscoroutinefunction(run_in_thread) is True
-
-    def func(*args, **kwargs):
-        testsum = 0
-        for arg in args:
-            testsum += arg
-        for value in kwargs.values():
-            testsum += value
-        return testsum
-
-    assert await run_in_thread(func, 1, 3, 5, key1=5, key2=-4) == 10
 
 
 @pytest.mark.parametrize("exception", [None, "ResourceConflictErr", "TypeError"])

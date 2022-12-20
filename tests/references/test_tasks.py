@@ -241,7 +241,6 @@ async def test_remote_reference_task(
     task = await RemoteReferenceTask.from_task_id(data_layer, 1)
 
     await task.run()
-
     await assert_reference_created()
 
 

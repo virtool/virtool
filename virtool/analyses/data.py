@@ -1,5 +1,7 @@
 import os
-from asyncio import gather, CancelledError
+
+from asyncio import gather, CancelledError, to_thread
+
 from datetime import datetime
 from logging import getLogger
 from shutil import rmtree
@@ -14,6 +16,7 @@ from virtool_core.utils import rm
 import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
+
 from virtool.analyses.db import PROJECTION, processor, TARGET_FILES
 from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
 from virtool.analyses.models import AnalysisFile
@@ -23,13 +26,23 @@ from virtool.analyses.utils import (
     join_analysis_path,
     move_nuvs_files,
 )
+from virtool.analyses.checks import (
+    check_analysis_workflow,
+    check_analysis_nuvs_sequence,
+    check_if_analysis_running,
+    check_if_analysis_ready,
+    check_if_analysis_modified,
+)
+from virtool.analyses.db import PROJECTION, processor
+from virtool.analyses.files import create_analysis_file
+from virtool.analyses.models import AnalysisFile
+from virtool.analyses.utils import attach_analysis_files
 from virtool.api.utils import paginate
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceNotModifiedError,
     ResourceError,
     ResourceConflictError,
 )
@@ -38,6 +51,7 @@ from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
@@ -47,7 +61,7 @@ from virtool.tasks.progress import (
 )
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import run_in_thread
+from virtool.utils import wait_for_checks
 
 logger = getLogger("analyses")
 
@@ -96,7 +110,11 @@ class AnalysisData(DataLayerPiece):
 
         documents = await apply_transforms(
             documents,
-            [AttachUserTransform(self._db), AttachSubtractionTransform(self._db)],
+            [
+                AttachReferenceTransform(self._db),
+                AttachUserTransform(self._db),
+                AttachSubtractionTransform(self._db),
+            ],
         )
 
         data["documents"] = documents
@@ -118,14 +136,7 @@ class AnalysisData(DataLayerPiece):
         if document is None:
             raise ResourceNotFoundError()
 
-        if if_modified_since is not None:
-            try:
-                updated_at = document["updated_at"]
-            except KeyError:
-                updated_at = document["created_at"]
-
-            if if_modified_since == updated_at:
-                raise ResourceNotModifiedError()
+        await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
         document = await attach_analysis_files(self._pg, analysis_id, document)
 
@@ -154,6 +165,10 @@ class AnalysisData(DataLayerPiece):
         for key in document_before_formatting:
             if key not in document:
                 document.update({key: document_before_formatting[key]})
+
+        document = await apply_transforms(
+            document, [AttachReferenceTransform(self._db)]
+        )
 
         return Analysis(**document)
 
@@ -203,19 +218,14 @@ class AnalysisData(DataLayerPiece):
 
         sample_id = document["sample"]["id"]
 
-        if jobs_api_flag:
-            if document["ready"]:
-                raise ResourceConflictError()
-        else:
-            if not document["ready"]:
-                raise ResourceConflictError()
+        await wait_for_checks(check_if_analysis_ready(jobs_api_flag, document["ready"]))
 
         await self._db.analyses.delete_one({"_id": analysis_id})
 
         path = self._config.data_path / "samples" / sample_id / "analysis" / analysis_id
 
         try:
-            await run_in_thread(rm, path, True)
+            await to_thread(rm, path, True)
         except FileNotFoundError:
             pass
 
@@ -318,16 +328,11 @@ class AnalysisData(DataLayerPiece):
             {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
         )
 
-        if document["workflow"] != "nuvs":
-            raise ResourceConflictError("Not a NuVs analysis")
-
-        if not document["ready"]:
-            raise ResourceConflictError("Analysis is still running")
-
-        sequence = find_nuvs_sequence_by_index(document, sequence_index)
-
-        if sequence is None:
-            raise ResourceNotFoundError()
+        await wait_for_checks(
+            check_analysis_workflow(document["workflow"]),
+            check_if_analysis_running(document["ready"]),
+            check_analysis_nuvs_sequence(document, sequence_index),
+        )
 
         timestamp = virtool.utils.timestamp()
 
@@ -377,26 +382,21 @@ class AnalysisData(DataLayerPiece):
         :return: the processed analysis document
         """
 
-        analysis_document = await self._db.analyses.find_one(
-            {"_id": analysis_id}, ["ready"]
-        )
+        document = await self._db.analyses.find_one({"_id": analysis_id}, ["ready"])
 
-        if not analysis_document:
+        if not document:
             raise ResourceNotFoundError()
 
-        if "ready" in analysis_document and analysis_document["ready"]:
-            raise ResourceConflictError
+        if "ready" in document and document["ready"]:
+            raise ResourceConflictError()
 
         document = await self._db.analyses.find_one_and_update(
             {"_id": analysis_id}, {"$set": {"results": results, "ready": True}}
         )
 
         await recalculate_workflow_tags(self._db, document["sample"]["id"])
-        await attach_analysis_files(self._pg, analysis_id, document)
 
-        document = await processor(self._db, document)
-
-        return Analysis(**document)
+        return await self.get(analysis_id, None)
 
     async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
         """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
@@ -422,9 +422,9 @@ class AnalysisData(DataLayerPiece):
                     )
                 ).scalar()
 
-            if await run_in_thread(old_path.is_dir) and not exists:
+            if await to_thread(old_path.is_dir) and not exists:
                 try:
-                    await run_in_thread(os.makedirs, target_path)
+                    await to_thread(os.makedirs, target_path)
                 except FileExistsError:
                     pass
 
@@ -440,6 +440,6 @@ class AnalysisData(DataLayerPiece):
                     self._pg, analysis_id, analysis_files, target_path
                 )
 
-                await run_in_thread(rmtree, old_path, ignore_errors=True)
+                await to_thread(rmtree, old_path, ignore_errors=True)
 
             await tracker.add(1)

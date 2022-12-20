@@ -1,4 +1,5 @@
 import os
+from asyncio import to_thread
 from typing import TYPE_CHECKING, Dict
 
 import pytest
@@ -9,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.task import BaseTask
-from virtool.utils import get_temp_dir, run_in_thread
+from virtool.utils import get_temp_dir
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -49,7 +50,7 @@ class DummyTask(BaseTask):
             f.write("This is a test file.")
 
     async def remove_file(self):
-        await run_in_thread(os.remove, self.temp_path / "test.txt")
+        await to_thread(os.remove, self.temp_path / "test.txt")
 
 
 @pytest.fixture

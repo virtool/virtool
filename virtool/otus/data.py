@@ -5,7 +5,7 @@ from typing import Optional, Tuple, Mapping
 
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
-from virtool_core.models.otu import OTU, OTUSequence
+from virtool_core.models.otu import OTU, Sequence
 
 import virtool.history.db
 import virtool.otus.db
@@ -23,6 +23,7 @@ from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
 from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
 from virtool.otus.utils import find_isolate, format_isolate_name
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
@@ -49,6 +50,10 @@ class OTUData:
 
         if document is None:
             raise ResourceNotFoundError
+
+        document = await apply_transforms(
+            document, [AttachReferenceTransform(self._mongo)]
+        )
 
         return OTU(
             **{
@@ -608,15 +613,19 @@ class OTUData:
 
     async def get_sequence(
         self, otu_id: str, isolate_id: str, sequence_id: str
-    ) -> OTUSequence:
+    ) -> Sequence:
         if await self._mongo.otus.count_documents(
             {"_id": otu_id, "isolates.id": isolate_id}, limit=1
-        ):
-            if document := await self._mongo.sequences.find_one(
+        ) and (
+            document := await self._mongo.sequences.find_one(
                 {"_id": sequence_id, "otu_id": otu_id, "isolate_id": isolate_id},
                 virtool.otus.db.SEQUENCE_PROJECTION,
-            ):
-                return OTUSequence(**document)
+            )
+        ):
+            document = await apply_transforms(
+                document, [AttachReferenceTransform(self._mongo)]
+            )
+            return Sequence(**document)
 
         raise ResourceNotFoundError
 

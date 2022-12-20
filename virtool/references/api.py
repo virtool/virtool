@@ -76,7 +76,7 @@ class ReferencesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy(Permission.create_ref))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.create_ref))
     async def post(
         self, data: CreateReferenceRequest
     ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:
@@ -291,7 +291,7 @@ class ReferenceOTUsView(PydanticView):
             404: Not found
         """
         try:
-            data = await get_data_from_req(self.request).references.get_otus(
+            data = await get_data_from_req(self.request).references.find_otus(
                 find, verified, names, ref_id, self.request.query
             )
         except ResourceNotFoundError:
@@ -306,7 +306,7 @@ class ReferenceOTUsView(PydanticView):
 
         """
         try:
-            otu = await get_data_from_req(self.request).references.create_otus(
+            otu = await get_data_from_req(self.request).references.create_otu(
                 ref_id, data, self.request, self.request["client"].user_id
             )
         except ResourceNotFoundError:
@@ -332,7 +332,7 @@ class ReferenceHistoryView(PydanticView):
             404: Not found
         """
         try:
-            data = await get_data_from_req(self.request).references.get_history(
+            data = await get_data_from_req(self.request).references.find_history(
                 ref_id, unbuilt, self.request.query
             )
         except ResourceNotFoundError:

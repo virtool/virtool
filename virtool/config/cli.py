@@ -53,7 +53,22 @@ def entry():
     help="Make the instance think it is a different version",
     type=str,
 )
+@click.option(
+    "--no-tasks", help="Disable the server's built-in task runner", is_flag=True
+)
 @click.option("--no-sentry", help="Disable Sentry error reporting", is_flag=True)
+@click.option(
+    "--openfga-host",
+    help="The OpenFGA API host",
+    type=str,
+    default="localhost:8080",
+)
+@click.option(
+    "--openfga-scheme",
+    help="The OpenFGA API scheme",
+    type=str,
+    default="https",
+)
 @click.option(
     "--postgres-connection-string",
     help="The PostgreSQL connection string (must begin with 'postgresql+asyncpg://')",
@@ -84,6 +99,9 @@ def cli(
     dev,
     force_version,
     no_sentry,
+    no_tasks,
+    openfga_host,
+    openfga_scheme,
     postgres_connection_string,
     redis_connection_string,
     verbose,
@@ -99,6 +117,9 @@ def cli(
             "dev": dev,
             "force_version": force_version,
             "no_sentry": no_sentry,
+            "no_tasks": no_tasks,
+            "openfga_host": openfga_host,
+            "openfga_scheme": openfga_scheme,
             "postgres_connection_string": postgres_connection_string,
             "redis_connection_string": redis_connection_string,
             "verbose": verbose,

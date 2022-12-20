@@ -1,3 +1,4 @@
+from asyncio import to_thread
 import logging
 from typing import Optional
 from typing import Union, List
@@ -23,7 +24,6 @@ from virtool.indexes.oas import (
 )
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.references.db import check_right
-from virtool.utils import run_in_thread
 
 logger = logging.getLogger("indexes")
 routes = Routes()
@@ -131,7 +131,7 @@ class IndexFileView(PydanticView):
             / filename
         )
 
-        if await run_in_thread(path.exists):
+        if await to_thread(path.exists):
             return FileResponse(
                 path,
                 headers={
@@ -162,7 +162,7 @@ async def download_index_file_for_jobs(req: Request):
         / filename
     )
 
-    if await run_in_thread(path.exists):
+    if await to_thread(path.exists):
         return FileResponse(path)
 
     raise NotFound("File not found")
@@ -209,14 +209,9 @@ async def finalize(req):
     index_id = req.match_info["index_id"]
 
     try:
-        reference = await get_data_from_req(req).index.get_reference(index_id)
+        document = await get_data_from_req(req).index.finalize(index_id)
     except ResourceNotFoundError:
-        raise NotFound("Index does not exist")
-
-    try:
-        document = await get_data_from_req(req).index.finalize(reference.id, index_id)
-    except ResourceNotFoundError:
-        raise NotFound("Reference associated with index does not exist")
+        raise NotFound
     except ResourceConflictError as err:
         raise HTTPConflict(text=str(err))
 

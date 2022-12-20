@@ -47,11 +47,13 @@
     },
     'ready': True,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'baz',
       'name': 'Baz',
     },
     'results': <class 'dict'> {
-      'result': 'TEST_RESULT',
+      'hits': <class 'list'> [
+      ],
     },
     'sample': <class 'dict'> {
       'id': 'sample1',
@@ -64,7 +66,7 @@
       'handle': 'leeashley',
       'id': 'bf1b993c',
     },
-    'workflow': 'test_workflow',
+    'workflow': 'nuvs',
   }
 ---
 # name: test_finalize[uvloop-None].1
@@ -83,9 +85,10 @@
     'ready': True,
     'reference': <class 'dict'> {
       'id': 'baz',
-      'name': 'Baz',
     },
     'results': <class 'dict'> {
+      'hits': <class 'list'> [
+      ],
       'result': 'TEST_RESULT',
     },
     'sample': <class 'dict'> {
@@ -96,7 +99,7 @@
     'user': <class 'dict'> {
       'id': 'bf1b993c',
     },
-    'workflow': 'test_workflow',
+    'workflow': 'nuvs',
   }
 ---
 # name: test_find[uvloop]
@@ -114,6 +117,7 @@
         },
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -142,6 +146,7 @@
         },
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -174,6 +179,7 @@
         },
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
         },
@@ -223,6 +229,7 @@
     },
     'ready': False,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'baz',
       'name': 'Baz',
     },
@@ -277,6 +284,7 @@
     },
     'ready': True,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'baz',
       'name': 'Baz',
     },
@@ -332,7 +340,6 @@
     'ready': True,
     'reference': <class 'dict'> {
       'id': 'baz',
-      'name': 'Baz',
     },
     'results': <class 'dict'> {
       'hits': <class 'list'> [

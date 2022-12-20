@@ -115,7 +115,6 @@ async def test_write_subtraction_fasta_file_task(
     await task.run()
 
     subtraction_path = config.data_path / "subtractions" / "foo"
-
     assert sorted(os.listdir(config.data_path / "subtractions" / "foo")) == [
         "subtraction.1.bt2",
         "subtraction.2.bt2",

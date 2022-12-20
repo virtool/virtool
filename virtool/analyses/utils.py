@@ -1,4 +1,5 @@
 import shutil
+from asyncio import to_thread
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -7,7 +8,7 @@ from sqlalchemy.future import select
 from virtool_core.utils import compress_file
 
 from virtool.analyses.models import AnalysisFile
-from virtool.utils import run_in_thread
+
 
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 
@@ -126,9 +127,9 @@ async def move_nuvs_files(filename: str, file_path: Path, target_path: Path):
 
     """
     if filename == "hmm.tsv":
-        await run_in_thread(shutil.copy, file_path / "hmm.tsv", target_path / "hmm.tsv")
+        await to_thread(shutil.copy, file_path / "hmm.tsv", target_path / "hmm.tsv")
     else:
-        await run_in_thread(
+        await to_thread(
             compress_file,
             file_path / filename,
             target_path / f"{filename}.gz",
