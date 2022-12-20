@@ -220,6 +220,8 @@ class PermissionsView(PydanticView):
 
         permission_list = await abs_client.list_permissions(user_id, "app", "virtool")
 
+        permission_list = [{"id": permission} for permission in permission_list]
+
         return json_response(permission_list)
 
 

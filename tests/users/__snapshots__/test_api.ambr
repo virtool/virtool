@@ -334,8 +334,12 @@
 ---
 # name: test_list_permissions[uvloop-test]
   <class 'list'> [
-    'create_ref',
-    'create_sample',
+    <class 'dict'> {
+      'id': 'create_ref',
+    },
+    <class 'dict'> {
+      'id': 'create_sample',
+    },
   ]
 ---
 # name: test_remove_permission[uvloop-invalid_permission]
