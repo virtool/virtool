@@ -1,11 +1,7 @@
 from __future__ import annotations
+
 import json
-
-import os
-import shutil
-from asyncio import gather, to_thread
-from datetime import timedelta
-
+from asyncio import to_thread
 from logging import getLogger
 from pathlib import Path
 from typing import Dict, Optional, TYPE_CHECKING
@@ -21,12 +17,8 @@ from virtool.references.utils import (
     load_reference_file,
     ReferenceSourceData,
 )
-
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
-
-from virtool.utils import chunk_list, get_temp_dir
-from virtool_core.models.enums import HistoryMethod
 
 logger = getLogger(__name__)
 
