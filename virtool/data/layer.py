@@ -1,7 +1,11 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from virtool.account.data import AccountData
-from virtool.analyses.data import AnalysisData
+
+if TYPE_CHECKING:
+    from virtool.analyses.data import AnalysisData
+
 from virtool.blast.data import BLASTData
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
@@ -31,7 +35,7 @@ class DataLayer:
     """
 
     account: AccountData
-    analyses: AnalysisData
+    analyses: "AnalysisData"
     blast: BLASTData
     groups: GroupsData
     history: HistoryData

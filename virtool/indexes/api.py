@@ -16,7 +16,7 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
-from virtool.indexes.db import FILES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.oas import (
     ListIndexesResponse,
     GetIndexResponse,
@@ -111,7 +111,7 @@ class IndexFileView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        if filename not in FILES:
+        if filename not in INDEX_FILE_NAMES:
             raise NotFound()
 
         try:
@@ -149,7 +149,7 @@ async def download_index_file_for_jobs(req: Request):
     index_id = req.match_info["index_id"]
     filename = req.match_info["filename"]
 
-    if filename not in FILES:
+    if filename not in INDEX_FILE_NAMES:
         raise NotFound()
 
     try:
@@ -174,7 +174,7 @@ async def upload(req):
     index_id = req.match_info["index_id"]
     name = req.match_info["filename"]
 
-    if name not in FILES:
+    if name not in INDEX_FILE_NAMES:
         raise NotFound("Index file not found")
 
     try:

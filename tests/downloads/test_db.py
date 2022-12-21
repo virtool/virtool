@@ -20,7 +20,8 @@ async def test_generate_isolate_fasta(mongo, test_otu, test_sequence):
     await mongo.otus.insert_one(test_otu)
 
     await mongo.sequences.insert_many(
-        [test_sequence, dict(test_sequence, _id="AX12345", sequence="ATAGAGGAGTTA")]
+        [test_sequence, dict(test_sequence, _id="AX12345", sequence="ATAGAGGAGTTA")],
+        session=None,
     )
 
     expected = (

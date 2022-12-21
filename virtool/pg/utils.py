@@ -8,7 +8,7 @@ from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
-from virtool.api.custom_json import orjson_serializer
+from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
     try:
         pg = create_async_engine(
             postgres_connection_string,
-            json_serializer=orjson_serializer,
+            json_serializer=dump_string,
             json_deserializer=orjson.loads,
             pool_recycle=1800,
         )
@@ -86,7 +86,7 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):
             await session.commit()
 
 
-async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int) -> Optional[Base]:
+async def get_row_by_id(pg: AsyncEngine, model: Type[Base], id_: int) -> Optional[Base]:
     """
     Get a row from a SQL `model` by its `id`.
 

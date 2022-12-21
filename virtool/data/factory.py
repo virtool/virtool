@@ -48,7 +48,7 @@ def create_data_layer(
     data_layer = DataLayer(
         AccountData(db, redis),
         AnalysisData(db, config, pg),
-        BLASTData(db, pg),
+        BLASTData(client, db, pg),
         GroupsData(db),
         HistoryData(config.data_path, db),
         HmmData(client, config, db, pg),
@@ -56,7 +56,7 @@ def create_data_layer(
         JobsData(JobsClient(redis), db, pg),
         LabelsData(db, pg),
         MessagesData(pg, db),
-        OTUData(db, config),
+        OTUData(db, config.data_path),
         ReferencesData(db, pg, config, client),
         SamplesData(config, db, pg),
         SubtractionsData(config.base_url, config, db, pg),

@@ -2,9 +2,11 @@ import gzip
 import json
 from datetime import datetime
 from operator import itemgetter
-from typing import List, Set, Optional
+from typing import List, Set, Optional, Dict
 
 from cerberus import Validator
+from pydantic import BaseModel
+from virtool_core.models.reference import ReferenceDataType
 
 import virtool.otus.utils
 
@@ -15,21 +17,29 @@ RIGHTS = ["build", "modify", "modify_otu", "remove"]
 SEQUENCE_KEYS = ["accession", "definition", "host", "sequence"]
 
 
+class ReferenceSourceData(BaseModel):
+    data_type: ReferenceDataType = ReferenceDataType.genome
+    organism: str = "Unknown"
+    otus: List[Dict]
+    targets: Optional[List[Dict]] = None
+
+
 def check_import_data(
-    import_data: dict, strict: bool = True, verify: bool = True
+    data: Dict, strict: bool = True, verify: bool = True
 ) -> List[dict]:
-    errors = detect_duplicates(import_data["otus"])
+    errors = detect_duplicates(data["otus"])
 
     v = Validator(get_import_schema(require_meta=strict), allow_unknown=True)
 
-    v.validate(import_data)
+    v.validate(data)
 
     if v.errors:
         errors.append({"id": "file", "issues": v.errors})
 
     otus = {}
 
-    for otu in import_data["otus"]:
+    for otu in data["otus"]:
+
         verification = None
 
         if verify:

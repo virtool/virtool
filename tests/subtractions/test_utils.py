@@ -18,7 +18,7 @@ async def test_get_subtraction_files(snapshot, pg, test_subtraction_files):
     assert await get_subtraction_files(pg, "foo") == snapshot
 
 
-def test_rename_bowtie_files(tmp_path):
+async def test_rename_bowtie_files(tmp_path):
     test_dir = tmp_path / "subtractions"
     test_dir.mkdir()
 
@@ -26,7 +26,7 @@ def test_rename_bowtie_files(tmp_path):
     test_dir.joinpath("reference.2.bt2").write_text("Bowtie2 file")
     test_dir.joinpath("reference.3.bt2").write_text("Bowtie2 file")
 
-    rename_bowtie_files(test_dir)
+    await rename_bowtie_files(test_dir)
 
     assert set(os.listdir(test_dir)) == {
         "subtraction.1.bt2",

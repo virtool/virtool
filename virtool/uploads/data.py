@@ -1,15 +1,12 @@
-import math
 import asyncio
+import math
 from asyncio import to_thread
 from logging import getLogger
 from typing import List, Optional, Union
 
-
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-
 from sqlalchemy import select, update, func
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from virtool_core.models.upload import Upload, UploadSearchResult, UploadMinimal
-
 from virtool_core.utils import rm
 
 import virtool.utils
@@ -203,9 +200,7 @@ class UploadsData(DataLayerPiece):
         )
 
         try:
-            await to_thread(
-                rm, self._config.data_path / "files" / upload.name_on_disk
-            )
+            await to_thread(rm, self._config.data_path / "files" / upload.name_on_disk)
         except FileNotFoundError:
             pass
 
@@ -263,3 +258,35 @@ class UploadsData(DataLayerPiece):
                 .execution_options(synchronize_session="fetch")
             )
             await session.commit()
+
+    async def migrate_to_postgres(self):
+        """
+        Transforms documents in the `files` collection into rows in the `uploads` SQL
+        table.
+
+        """
+        async for document in self._db.files.find():
+            async with AsyncSession(self._pg) as session:
+                exists = (
+                    await session.execute(
+                        select(SQLUpload).filter_by(name_on_disk=document["_id"])
+                    )
+                ).scalar()
+
+                if not exists:
+                    upload = SQLUpload(
+                        name=document["name"],
+                        name_on_disk=document["_id"],
+                        ready=document["ready"],
+                        removed=False,
+                        reserved=document["reserved"],
+                        size=document["size"],
+                        type=document["type"],
+                        user=document["user"]["id"],
+                        uploaded_at=document["uploaded_at"],
+                    )
+
+                    session.add(upload)
+                    await session.commit()
+
+                    await self._db.files.delete_one({"_id": document["_id"]})

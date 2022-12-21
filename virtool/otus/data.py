@@ -1,5 +1,6 @@
 import asyncio
 from copy import deepcopy
+from pathlib import Path
 from typing import Optional, Tuple, Mapping
 
 from pymongo.results import DeleteResult
@@ -9,7 +10,6 @@ from virtool_core.models.otu import OTU, Sequence
 import virtool.history.db
 import virtool.otus.db
 import virtool.utils
-from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError
 from virtool.downloads.utils import format_fasta_entry, format_fasta_filename
 from virtool.history.utils import (
@@ -30,9 +30,9 @@ from virtool.utils import base_processor
 
 
 class OTUData:
-    def __init__(self, mongo: DB, config: Config):
-        self._config = config
+    def __init__(self, mongo: DB, data_path: Path):
         self._mongo = mongo
+        self._data_path = data_path
 
     async def find(
         self, names: bool, query: Mapping, term: Optional[str], verified: Optional[bool]
@@ -131,7 +131,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.create,
                 None,
                 document,
@@ -198,7 +198,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.edit,
                 old,
                 new,
@@ -253,7 +253,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.remove,
                 joined,
                 None,
@@ -347,7 +347,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.add_isolate,
                 old,
                 new,
@@ -404,7 +404,7 @@ class OTUData:
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.edit_isolate,
                 old,
                 new,
@@ -474,7 +474,7 @@ class OTUData:
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.set_as_default,
                 old,
                 new,
@@ -537,7 +537,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.remove_isolate,
                 old,
                 new,
@@ -600,7 +600,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.create_sequence,
                 old,
                 new,
@@ -673,7 +673,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.edit_sequence,
                 old,
                 new,
@@ -721,7 +721,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._config,
+                self._data_path,
                 HistoryMethod.remove_sequence,
                 old,
                 new,

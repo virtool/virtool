@@ -8,7 +8,7 @@ from virtool_core.models.session import Session
 
 import virtool.app
 import virtool.jobs.main
-from virtool.api.custom_json import dumps
+from virtool.api.custom_json import dump_bytes
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
@@ -129,7 +129,7 @@ def spawn_client(
                 for group in groups
             ]
 
-            await mongo.groups.insert_many(complete_groups)
+            await mongo.groups.insert_many(complete_groups, session=None)
 
         user_document = create_user(
             user_id="test",
@@ -147,7 +147,7 @@ def spawn_client(
             session_id = "foobar"
             await redis.set(
                 session_id,
-                dumps(
+                dump_bytes(
                     Session(
                         **{
                             "created_at": virtool.utils.timestamp(),
@@ -224,7 +224,6 @@ def spawn_job_client(
                 no_sentry=True,
                 openfga_host="localhost:8080",
                 openfga_scheme="http",
-
             )
         )
 

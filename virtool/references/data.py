@@ -1,13 +1,17 @@
 import asyncio
+from datetime import datetime, timedelta
 from typing import List, Optional, Union
 
 import aiohttp
+import arrow
 from aiohttp import ClientSession
 from aiohttp.web_exceptions import (
     HTTPNoContent,
 )
 from multidict import MultiDictProxy
+from semver import VersionInfo
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexSearchResult, IndexMinimal
 from virtool_core.models.otu import OTUSearchResult, OTU
@@ -19,7 +23,6 @@ from virtool_core.models.reference import (
     ReferenceInstalled,
     ReferenceGroup,
 )
-from virtool_core.models.task import Task
 
 import virtool.history.db
 import virtool.indexes.db
@@ -36,16 +39,20 @@ from virtool.data.errors import (
 )
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError, GitHubError
-from virtool.github import format_release
+from virtool.github import format_release, create_update_subdocument
+from virtool.history.db import patch_to_version
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_new_id
+from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
+from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
     compose_base_find_query,
     attach_computed,
     get_manifest,
+    insert_joined_otu,
+    insert_change,
 )
 from virtool.references.oas import (
     CreateReferenceRequest,
@@ -58,15 +65,22 @@ from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
     RemoteReferenceTask,
-    DeleteReferenceTask,
     UpdateRemoteReferenceTask,
 )
+from virtool.references.transforms import ImportedFromTransform
+from virtool.references.utils import ReferenceSourceData
+from virtool.tasks.progress import (
+    TaskProgressHandler,
+    AccumulatingProgressHandlerWrapper,
+)
 from virtool.tasks.transforms import AttachTaskTransform
+from virtool.types import Document
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import (
     AttachUserTransform,
     extend_user,
 )
+from virtool.utils import chunk_list
 
 
 class ReferencesData(DataLayerPiece):
@@ -114,6 +128,7 @@ class ReferencesData(DataLayerPiece):
                 data["documents"],
                 [
                     AttachUserTransform(self._mongo),
+                    ImportedFromTransform(self._mongo, self._pg),
                     AttachTaskTransform(self._pg),
                 ],
             ),
@@ -292,7 +307,7 @@ class ReferencesData(DataLayerPiece):
 
         return Reference(**document)
 
-    async def update(self, ref_id: str, data: UpdateReferenceRequest, req) -> Reference:
+    async def update(self, ref_id: str, data: UpdateReferenceRequest) -> Reference:
         """
         Update a reference.
 
@@ -303,14 +318,11 @@ class ReferencesData(DataLayerPiece):
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
-        if not await virtool.references.db.check_right(req, ref_id, "modify"):
-            raise InsufficientRights()
-
         await self.data.references.update_reference(ref_id, data)
 
         return await self.get(ref_id)
 
-    async def remove(self, ref_id: str, user_id: str, req) -> Task:
+    async def remove(self, ref_id: str, user_id: str, req):
 
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
@@ -318,13 +330,7 @@ class ReferencesData(DataLayerPiece):
         if not await virtool.references.db.check_right(req, ref_id, "remove"):
             raise InsufficientRights()
 
-        task = await self.data.tasks.create(
-            DeleteReferenceTask, context={"ref_id": ref_id, "user_id": user_id}
-        )
-
         await self._mongo.references.delete_one({"_id": ref_id})
-
-        return Task(**task.dict())
 
     async def get_release(self, ref_id: str, app) -> ReferenceRelease:
 
@@ -686,7 +692,7 @@ class ReferencesData(DataLayerPiece):
 
     async def update_reference(self, ref_id: str, data: dict) -> dict:
         """
-        Edit and existing reference using the passed update data.
+        Update an existing reference using the passed update data.
         """
         document = await self._mongo.references.find_one(ref_id)
 
@@ -708,3 +714,286 @@ class ReferencesData(DataLayerPiece):
                 )
 
         return document
+
+    async def populate_cloned_reference(
+        self,
+        manifest,
+        ref_id,
+        user_id,
+        progress_handler: TaskProgressHandler,
+    ):
+        """
+
+
+        :param manifest:
+        :param ref_id:
+        :param user_id:
+        :param progress_handler:
+        :return:
+        """
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(manifest))
+
+        cloned_reference = await self._mongo.references.find_one(ref_id)
+
+        async with self._mongo.create_session() as session:
+            for source_otu_id, version in manifest.items():
+                _, patched, _ = await patch_to_version(
+                    self._config.data_path, self._mongo, source_otu_id, version
+                )
+
+                otu_id = await insert_joined_otu(
+                    self._mongo,
+                    patched,
+                    cloned_reference["created_at"],
+                    ref_id,
+                    user_id,
+                    session,
+                )
+
+                await insert_change(
+                    self._config.data_path,
+                    self._mongo,
+                    otu_id,
+                    HistoryMethod.clone,
+                    user_id,
+                    session,
+                )
+
+                await tracker.add(1)
+
+    async def populate_imported_reference(
+        self,
+        ref_id: str,
+        user_id: str,
+        data: ReferenceSourceData,
+        progress_handler: TaskProgressHandler,
+    ):
+        created_at = await get_one_field(self._mongo.references, "created_at", ref_id)
+
+        tracker = AccumulatingProgressHandlerWrapper(
+            progress_handler, (len(data.otus) * 2)
+        )
+
+        inserted_otu_ids = []
+
+        async with self._mongo.create_session() as session:
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {
+                    "$set": {
+                        "data_type": data.data_type,
+                        "organism": data.organism,
+                        "targets": data.targets,
+                    }
+                },
+            )
+
+            for chunk in chunk_list(data.otus, 10):
+                chunk_otu_ids = await asyncio.gather(
+                    *[
+                        insert_joined_otu(
+                            self._mongo, otu, created_at, ref_id, user_id, session
+                        )
+                        for otu in chunk
+                    ]
+                )
+                inserted_otu_ids.extend(chunk_otu_ids)
+                await tracker.add(len(chunk))
+
+            for chunk in chunk_list(inserted_otu_ids, 10):
+                await asyncio.gather(
+                    *[
+                        insert_change(
+                            self._config.data_path,
+                            self._mongo,
+                            otu_id,
+                            HistoryMethod.import_otu,
+                            user_id,
+                            session,
+                        )
+                        for otu_id in chunk
+                    ]
+                )
+                await tracker.add(len(chunk))
+
+    async def populate_remote_reference(
+        self,
+        ref_id: str,
+        data: ReferenceSourceData,
+        user_id: str,
+        release: Document,
+        progress_handler: TaskProgressHandler,
+    ):
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(data.otus))
+
+        created_at: datetime = await get_one_field(
+            self._mongo.references, "created_at", ref_id
+        )
+
+        async with self._mongo.create_session() as session:
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {
+                    "$set": {
+                        "data_type": data.data_type.value,
+                        "organism": data.organism,
+                        "targets": data.targets,
+                    }
+                },
+                session=session,
+            )
+
+            for otu in data.otus:
+                otu_id = await insert_joined_otu(
+                    self._mongo, otu, created_at, ref_id, user_id, session
+                )
+
+                await insert_change(
+                    self._config.data_path,
+                    self._mongo,
+                    otu_id,
+                    HistoryMethod.remote,
+                    user_id,
+                    session,
+                )
+
+                await tracker.add(1)
+
+            await self._mongo.references.update_one(
+                {
+                    "_id": ref_id,
+                    "updates.id": release["id"],
+                },
+                {
+                    "$set": {
+                        "installed": create_update_subdocument(release, True, user_id),
+                        "updates.$.ready": True,
+                        "updating": False,
+                    }
+                },
+                session=session,
+            )
+
+    async def update_remote_reference(
+        self,
+        ref_id: str,
+        data: ReferenceSourceData,
+        release: Document,
+        user_id: str,
+        progress_handler,
+    ):
+        """
+        Update a remote reference to a newer version.
+
+        * Update reference metadata.
+        * Insert new OTUs.
+        * Update existing OTUs that have changed.
+        * Delete OTUs in the database that don't exist in the update.
+        * Create history.
+
+        """
+
+        async def update_reference(session):
+            created_at: datetime = await get_one_field(
+                self._mongo.references, "created_at", ref_id
+            )
+
+            to_delete = await self._mongo.otus.distinct(
+                "_id",
+                {
+                    "reference.id": ref_id,
+                    "remote.id": {"$nin": list({otu["_id"] for otu in data.otus})},
+                },
+            )
+
+            tracker = AccumulatingProgressHandlerWrapper(
+                progress_handler, len(data.otus) + len(to_delete)
+            )
+
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {
+                    "$set": {
+                        "organism": data.organism,
+                        "targets": data.targets,
+                    }
+                },
+                session=session,
+            )
+
+            bulk_updater = BulkOTUUpdater(
+                self._mongo,
+                ref_id,
+                user_id,
+                created_at,
+                self._config.data_path,
+                tracker,
+                session,
+            )
+
+            bulk_updater.bulk_upsert(data.otus)
+
+            for otu_id in to_delete:
+                await bulk_updater.delete(otu_id)
+
+            await bulk_updater.finish()
+
+            await self._mongo.references.update_one(
+                {"_id": ref_id, "updates.id": release["id"]},
+                {
+                    "$set": {
+                        "installed": create_update_subdocument(release, True, user_id),
+                        "updates.$.ready": True,
+                        "updating": False,
+                        "release.newer": False,
+                    }
+                },
+                session=session,
+            )
+
+        await self._mongo.with_transaction(update_reference)
+
+    async def clean_all(self):
+        """
+        Clean corrupt updates from reference update lists.
+
+        If the installed version is earlier than the last update, the last update is
+        removed.
+
+        """
+        async with self._mongo.create_session() as session:
+            async for reference in self._mongo.references.find(
+                {"remotes_from": {"$exists": True}},
+                ["installed", "task", "updates"],
+                session=session,
+            ):
+                if len(reference["updates"]) == 0:
+                    continue
+
+                latest_update = reference["updates"][-1]
+
+                if latest_update["ready"]:
+                    continue
+
+                try:
+                    raw_version = reference["installed"]["name"].lstrip("v")
+                except (KeyError, TypeError):
+                    continue
+
+                installed_version = VersionInfo.parse(raw_version)
+
+                latest_update_version = VersionInfo.parse(
+                    latest_update["name"].lstrip("v")
+                )
+
+                if latest_update_version <= installed_version:
+                    continue
+
+                if arrow.utcnow() - arrow.get(latest_update["created_at"]) > timedelta(
+                    minutes=15
+                ):
+                    await self._mongo.references.update_one(
+                        {"_id": reference["_id"]},
+                        {"$pop": {"updates": -1}, "$set": {"updating": False}},
+                        session=session,
+                    )

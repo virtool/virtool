@@ -34,7 +34,8 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
             [
                 {"_id": "foo", "data_type": "genome", "name": "Foo"},
                 {"_id": "baz", "data_type": "genome", "name": "Baz"},
-            ]
+            ],
+            session=None,
         ),
         client.db.samples.insert_one(
             {
@@ -93,7 +94,8 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "subtractions": [],
                     "foobar": False,
                 },
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -136,7 +138,8 @@ async def test_get(
 
     await asyncio.gather(
         client.db.subtraction.insert_many(
-            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}]
+            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
+            session=None,
         ),
         client.db.references.insert_one(
             {"_id": "baz", "data_type": "genome", "name": "Baz"}

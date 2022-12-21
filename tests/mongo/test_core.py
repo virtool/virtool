@@ -52,7 +52,8 @@ class TestCollection:
                 {"_id": "foo", "tag": 1},
                 {"_id": "bar", "tag": 2},
                 {"_id": "baz", "tag": 1},
-            ]
+            ],
+            session=None,
         )
 
         delete_result = await collection.delete_many({"tag": 1}, silent=param_silent)
@@ -81,7 +82,8 @@ class TestCollection:
                 {"_id": "foo", "tag": 1},
                 {"_id": "bar", "tag": 2},
                 {"_id": "baz", "tag": 1},
-            ]
+            ],
+            session=None,
         )
 
         delete_result = await collection.delete_one({"tag": 1}, silent=param_silent)

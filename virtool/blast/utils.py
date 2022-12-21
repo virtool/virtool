@@ -1,19 +1,42 @@
 import io
 import json
 import re
+from asyncio import to_thread
 from logging import getLogger
 from typing import Tuple
 from zipfile import ZipFile
 
-import aiohttp
+from aiohttp import ClientSession
 
 import virtool.errors
-
+from virtool.errors import NCBIError
 
 logger = getLogger("blast")
 
 #: The URL to send BLAST requests to.
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
+
+
+async def fetch_ncbi_blast_html(client: ClientSession, sequence: str):
+    params = {
+        "CMD": "Put",
+        "DATABASE": "nr",
+        "PROGRAM": "blastn",
+        "MEGABLAST": "on",
+        "HITLIST_SIZE": 5,
+        "FILTER": "mL",
+        "FORMAT_TYPE": "JSON2",
+    }
+
+    data = {"QUERY": sequence}
+
+    async with client.post(BLAST_URL, params=params, data=data) as resp:
+        body = await resp.text()
+
+        if resp.status != 200:
+            raise NCBIError(f"BLAST request returned {resp.status} with body:\n{body}")
+
+        return await resp.text()
 
 
 def extract_blast_info(html: str) -> Tuple[str, int]:
@@ -28,9 +51,11 @@ def extract_blast_info(html: str) -> Tuple[str, int]:
 
     match = re.search(r"RID = (.+)", string)
     rid = match.group(1)
+    rid = rid.strip(" ")
 
     match = re.search(r"RTOE = (.+)", string)
     rtoe = match.group(1)
+    rtoe = rtoe.strip(" ")
 
     return rid, int(rtoe)
 
@@ -113,37 +138,40 @@ def format_blast_hit(hit: dict) -> dict:
     }
 
 
-async def check_rid(rid: str) -> bool:
+async def check_rid(client_session: ClientSession, rid: str) -> bool:
     """
     Check if the BLAST process identified by the passed RID is ready.
 
+    :param client_session: the application http session
     :param rid: the RID to check
     :return: ``True`` if ready, ``False`` otherwise
 
     """
-    params = {"CMD": "Get", "RID": rid, "FORMAT_OBJECT": "SearchInfo"}
-
-    async with aiohttp.ClientSession() as session, session.get(
-        BLAST_URL, params=params
+    async with client_session.get(
+        BLAST_URL, params={"CMD": "Get", "RID": rid, "FORMAT_OBJECT": "SearchInfo"}
     ) as resp:
         if resp.status != 200:
+            body = await resp.text()
+
             raise virtool.errors.NCBIError(
-                f"RID check request returned status {resp.status}"
+                f"RID check request returned status {resp.status} and body:\n{body}"
             )
 
         return "Status=WAITING" not in await resp.text()
 
 
-async def initialize_ncbi_blast(sequence: str) -> Tuple[str, int]:
+async def initialize_ncbi_blast(
+    client_session: ClientSession, sequence: str
+) -> Tuple[str, int]:
     """
     Send a request to NCBI to BLAST the passed sequence.
 
     Return the RID and RTOE from the response.
 
+    :param client_session: the application http client
     :param sequence: the nucleotide sequence to BLAST
     :return: the RID and RTOE for the request
     """
-    # Parameters passed in the URL string. eg. ?CMD=Put&DATABASE=nr
     params = {
         "CMD": "Put",
         "DATABASE": "nr",
@@ -154,30 +182,26 @@ async def initialize_ncbi_blast(sequence: str) -> Tuple[str, int]:
         "FORMAT_TYPE": "JSON2",
     }
 
-    # Data passed as POST content.
     data = {"QUERY": sequence}
 
-    async with aiohttp.ClientSession() as session, session.post(
-        BLAST_URL, params=params, data=data
-    ) as resp:
+    async with client_session.post(BLAST_URL, params=params, data=data) as resp:
         if resp.status != 200:
+            body = await resp.text()
+
             raise virtool.errors.NCBIError(
-                f"BLAST request returned status: {resp.status}"
+                f"BLAST request returned {resp.status} with body:\n{body}"
             )
 
-        # Extract and return the RID and RTOE from the QBlastInfo tag.
         html = await resp.text()
-
-        logger.debug("Started BLAST on NCBI")
 
         return extract_blast_info(html)
 
 
-async def get_ncbi_blast_result(run_in_process: callable, rid: str) -> dict:
+async def fetch_nuvs_blast_result(client_session: ClientSession, rid: str) -> dict:
     """
     Retrieve the BLAST result with the given `rid` from NCBI.
 
-    :param run_in_process: the application processing running function
+    :param client_session: the application http session
     :param rid: the rid to retrieve a result for
     :return: the BLAST result
 
@@ -189,8 +213,7 @@ async def get_ncbi_blast_result(run_in_process: callable, rid: str) -> dict:
         "FORMAT_OBJECT": "Alignment",
     }
 
-    async with aiohttp.ClientSession() as session, session.get(
-        BLAST_URL, params=params
-    ) as resp:
+    async with client_session.get(BLAST_URL, params=params) as resp:
         data = await resp.read()
-        return await run_in_process(extract_blast_zip, data, rid)
+
+    return await to_thread(extract_blast_zip, data, rid)

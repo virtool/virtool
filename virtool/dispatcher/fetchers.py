@@ -130,7 +130,8 @@ class IndexesFetcher(AbstractFetcher):
 
         """
         documents = await self._db.indexes.find(
-            {"_id": {"$in": change.id_list}}, projection=virtool.indexes.db.PROJECTION
+            {"_id": {"$in": change.id_list}},
+            projection=virtool.indexes.db.INDEXES_PROJECTION,
         ).to_list(None)
 
         documents = await gather(

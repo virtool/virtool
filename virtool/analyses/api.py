@@ -20,7 +20,7 @@ from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 
 from virtool.analyses.models import AnalysisFormat
 from virtool.analyses.oas import FindAnalysesResponse, AnalysisResponse
-from virtool.api.custom_json import isoformat
+from virtool.api.custom_json import datetime_to_isoformat
 from virtool.api.response import (
     InsufficientRights,
     InvalidQuery,
@@ -109,7 +109,7 @@ class AnalysisView(PydanticView):
 
         headers = {
             "Cache-Control": "no-cache",
-            "Last-Modified": isoformat(document.created_at),
+            "Last-Modified": datetime_to_isoformat(document.created_at),
         }
 
         return json_response(document, headers=headers)
@@ -176,7 +176,7 @@ async def get_for_jobs_api(req: Request) -> Response:
         analysis.dict(by_alias=True),
         headers={
             "Cache-Control": "no-cache",
-            "Last-Modified": isoformat(analysis.created_at),
+            "Last-Modified": datetime_to_isoformat(analysis.created_at),
         },
     )
 

@@ -2,6 +2,8 @@
 Work with OTUs in the database.
 
 """
+
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union, Mapping, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -145,6 +147,86 @@ async def join(
 
     # Merge the sequence entries into the otu entry.
     return virtool.otus.utils.merge_otu(document, [d async for d in cursor])
+
+
+async def bulk_join_query(
+    mongo: "DB",
+    query: dict,
+    session: Optional[AsyncIOMotorClientSession] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Join the otu associated with the supplied ``otu_id`` with its sequences.
+
+    If an OTU is passed, the document will not be pulled from the database.
+
+    :param mongo: the application database client
+    :param query: mongo query for the target documents
+    :param document: use this otu document as a basis for the join
+    :param session: a Motor session to use for database operations
+    :return: the joined otu document
+    """
+
+    cursor = mongo.otus.find(query, session=session)
+    documents = [document async for document in cursor]
+
+    return await bulk_join_documents(mongo, documents, session)
+
+
+async def bulk_join_ids(
+    mongo,
+    ids: List[str],
+    session: Optional[AsyncIOMotorClientSession] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Join the otu associated with the supplied ``otu_id`` with its sequences.
+
+    If an OTU is passed, the document will not be pulled from the database.
+
+    :param mongo: the application database client
+    :param ids: the ids of the otus to join
+    :param session: a Motor session to use for database operations
+    :return: the joined otu document
+    """
+    cursor = mongo.otus.find({"_id": {"$in": ids}}, session=session)
+
+    return await bulk_join_documents(
+        mongo, [document async for document in cursor], session
+    )
+
+
+async def bulk_join_documents(
+    mongo,
+    otus: List[Document],
+    session: Optional[AsyncIOMotorClientSession] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Join the otu associated with the supplied ``otu_id`` with its sequences.
+
+    If an OTU is passed, the document will not be pulled from the database.
+
+    :param db: the application database client
+    :param query: the id of the otu to join or a Mongo query.
+    :param document: use this otu document as a basis for the join
+    :param session: a Motor session to use for database operations
+    :return: the joined otu document
+    """
+    # Get the otu entry if a ``document`` parameter was not passed
+
+    cursor = mongo.sequences.find(
+        {"otu_id": {"$in": [otu["_id"] for otu in otus]}},
+        session=session,
+    )
+
+    sequences = {}
+    async for sequence in cursor:
+        dict_entry = sequences.setdefault(sequence["otu_id"], [])
+        dict_entry.append(sequence)
+
+    merged_documents = [
+        virtool.otus.utils.merge_otu(otu, sequences[otu["_id"]]) for otu in otus
+    ]
+
+    return merged_documents
 
 
 async def join_and_format(
