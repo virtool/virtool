@@ -1,3 +1,6 @@
+from typing import Optional
+
+from pydantic import BaseModel, conint
 from virtool_core.models.task import TaskMinimal, Task
 
 
@@ -35,3 +38,9 @@ class TaskResponse(Task):
                 "type": "delete_reference",
             }
         }
+
+
+class TaskUpdate(BaseModel):
+    step: Optional[str]
+    progress: Optional[conint(ge=0, le=100)]
+    error: Optional[str]

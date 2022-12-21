@@ -1,13 +1,14 @@
 import asyncio
 import logging
 
-import virtool.tasks.task
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.models import Task
+from virtool.tasks.task import BaseTask
 
 
 class TaskRunner:
-    def __init__(self, channel, app):
+    def __init__(self, data, channel, app):
+        self._data = data
         self._channel = channel
         self.app = app
 
@@ -39,9 +40,7 @@ class TaskRunner:
 
         logging.info(f"Starting task: %s %s", task.id, task.type)
 
-        loop = asyncio.get_event_loop()
-
-        for task_class in virtool.tasks.task.Task.__subclasses__():
-            if task.type == task_class.task_type:
-                current_task = task_class(self.app, task_id)
-                await loop.create_task(current_task.run())
+        for cls in BaseTask.__subclasses__():
+            if task.type == cls.name:
+                current_task = await cls.from_task_id(self.app["data"], task.id)
+                await asyncio.get_event_loop().create_task(current_task.run())

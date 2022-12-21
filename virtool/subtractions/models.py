@@ -14,7 +14,7 @@ class SubtractionType(str, SQLEnum):
     bowtie2 = "bowtie2"
 
 
-class SubtractionFile(Base):
+class SQLSubtractionFile(Base):
     """
     SQL model to store new subtraction files
 

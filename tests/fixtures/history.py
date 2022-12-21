@@ -267,7 +267,7 @@ def create_mock_history(mongo):
 
             await mongo.otus.insert_one(otu)
 
-        await mongo.history.insert_many(documents)
+        await mongo.history.insert_many(documents, session=None)
 
         return otu
 

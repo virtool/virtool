@@ -6,21 +6,21 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
-import pymongo.errors
+import bson
 import dictdiffer
+import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.enums import HistoryMethod
 
 import virtool.history.utils
 import virtool.otus.db
-
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.config import Config
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
     write_diff_file,
+    compose_history_description,
 )
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
@@ -88,7 +88,7 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 async def add(
     db: "DB",
-    config: Config,
+    data_path: Path,
     method_name: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],
@@ -100,8 +100,8 @@ async def add(
     """
     Add a change document to the history collection.
 
-    :param db: the mongo database object
-    :param config: the app config object
+    :param data_path: system path to the applications datafolder
+    :param db: the application database object
     :param method_name: the name of the handler method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
@@ -111,6 +111,7 @@ async def add(
     :return: the change document
 
     """
+
     otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
     document = {
@@ -136,7 +137,8 @@ async def add(
     try:
         await db.history.insert_one(document, silent=silent, session=session)
     except pymongo.errors.DocumentTooLarge:
-        await write_diff_file(config.data_path, otu_id, otu_version, document["diff"])
+
+        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
 
         await db.history.insert_one(
             dict(document, diff="file"), silent=silent, session=session
@@ -145,7 +147,60 @@ async def add(
     return document
 
 
+async def prepare_add(
+    history_method: HistoryMethod,
+    old: Optional[dict],
+    new: Optional[dict],
+    user_id: str,
+    data_path: Path,
+) -> Document:
+    """
+    Add a change document to the history collection.
+    :param history_method: the name of the method that executed the change
+    :param old: the otu document prior to the change
+    :param new: the otu document after the change
+    :param user_id: the id of the requesting user
+    :return: the change document
+
+    """
+    otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
+
+    try:
+        abbreviation = new["abbreviation"]
+    except (TypeError, KeyError):
+        abbreviation = old["abbreviation"]
+
+    description = compose_history_description(history_method, otu_name, abbreviation)
+
+    document = {
+        "_id": ".".join([str(otu_id), str(otu_version)]),
+        "method_name": history_method.value,
+        "description": description,
+        "created_at": virtool.utils.timestamp(),
+        "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
+        "reference": {"id": ref_id},
+        "index": {"id": "unbuilt", "version": "unbuilt"},
+        "user": {"id": user_id},
+    }
+
+    if history_method.value == "create":
+        document["diff"] = new
+
+    elif history_method.value == "remove":
+        document["diff"] = old
+
+    else:
+        document["diff"] = calculate_diff(old, new)
+
+    if len(bson.encode(document)) > 16793600:
+        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
+        document["diff"] = "file"
+
+    return document
+
+
 async def find(mongo, req_query, base_query: Optional[Document] = None):
+
     data = await paginate(
         mongo.history,
         {},

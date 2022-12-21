@@ -10,7 +10,8 @@ from virtool_core.models.session import (
 )
 
 import virtool.utils
-from virtool.api.custom_json import dumps, isoformat_to_datetime, isoformat, loads
+from virtool.api.custom_json import dump_string
+from virtool.api.custom_json import isoformat_to_datetime, loads
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.utils import hash_key
@@ -41,14 +42,16 @@ class SessionData(DataLayerPiece):
         else:
             expires_after = timedelta(minutes=60).total_seconds()
 
-        new_session = Session(created_at=isoformat(virtool.utils.timestamp()), ip=ip)
+        new_session = Session(created_at=virtool.utils.timestamp(), ip=ip)
 
         token, hashed = virtool.utils.generate_key()
         new_session.authentication = SessionAuthentication(
             token=hashed, user_id=user_id
         )
 
-        await self.redis.set(session_id, dumps(new_session), expire=int(expires_after))
+        await self.redis.set(
+            session_id, dump_string(new_session), expire=int(expires_after)
+        )
 
         return session_id, new_session, token
 
@@ -64,9 +67,9 @@ class SessionData(DataLayerPiece):
         """
         session_id = await self.create_session_id()
 
-        new_session = Session(created_at=isoformat(virtool.utils.timestamp()), ip=ip)
+        new_session = Session(created_at=virtool.utils.timestamp(), ip=ip)
 
-        await self.redis.set(session_id, dumps(new_session), expire=600)
+        await self.redis.set(session_id, dump_string(new_session), expire=600)
 
         return session_id, new_session
 
@@ -78,14 +81,14 @@ class SessionData(DataLayerPiece):
         session = Session(
             created_at=virtool.utils.timestamp(),
             ip=ip,
-            reset={
-                "code": reset_code,
-                "remember": remember,
-                "user_id": user_id,
-            },
+            reset=SessionPasswordReset(
+                code=reset_code,
+                remember=remember,
+                user_id=user_id,
+            ),
         )
 
-        await self.redis.set(session_id, dumps(session), expire=600)
+        await self.redis.set(session_id, dump_string(session), expire=600)
 
         return session_id, session
 
@@ -190,7 +193,6 @@ class SessionData(DataLayerPiece):
         matches the stored reset code.
 
         :param session_id: the session id
-        :param req_reset_code: the reset code associated with the current session
         :return: the associated user_id and remember boolean
         """
         session = await self.get_anonymous(session_id)

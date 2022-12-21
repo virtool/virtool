@@ -15,6 +15,7 @@ from typing import (
     Optional,
     Sequence,
     Union,
+    List,
 )
 
 from motor.motor_asyncio import (
@@ -82,7 +83,6 @@ class Collection:
         self.drop_indexes = self._collection.drop_indexes
         self.find_one = self._collection.find_one
         self.find = self._collection.find
-        self.insert_many = self._collection.insert_many
         self.rename = self._collection.rename
 
     async def apply_processor(self, document):
@@ -235,6 +235,42 @@ class Collection:
 
         return inserted
 
+    async def insert_many(
+        self,
+        documents: List[Document],
+        session: AsyncIOMotorClientSession,
+        silent: bool = False,
+    ):
+
+        inserted = await self.populate_bulk_ids(documents, session=session)
+
+        await self._collection.insert_many(inserted, session=session)
+
+        if not silent:
+            self.enqueue_change(INSERT, *[insert["_id"] for insert in inserted])
+
+        return inserted
+
+    async def populate_bulk_ids(
+        self, documents: List[Document], session: AsyncIOMotorClientSession = None
+    ):
+        is_id_populated = any("_id" in document for document in documents)
+
+        id_documents = [
+            {**document, "_id": document["_id"] or self.mongo.id_provider.get()}
+            for document in documents
+        ]
+
+        if await self.find_one(
+            {"_id": {"in": [document["_id"] for document in id_documents]}},
+            session=session,
+        ):
+            if is_id_populated:
+                raise DuplicateKeyError
+            await self.populate_bulk_ids(documents)
+
+        return id_documents
+
     async def replace_one(
         self,
         query: Dict[str, Any],
@@ -354,7 +390,7 @@ class DB:
         self.hmm = self.bind_collection("hmm", projection=virtool.hmm.db.PROJECTION)
 
         self.indexes = self.bind_collection(
-            "indexes", projection=virtool.indexes.db.PROJECTION
+            "indexes", projection=virtool.indexes.db.INDEXES_PROJECTION
         )
 
         self.jobs = self.bind_collection(
@@ -421,3 +457,7 @@ class DB:
     async def with_session(self):
         async with await self.motor_client.client.start_session() as s:
             yield s
+
+    async def with_transaction(self, function: Callable):
+        async with await self.motor_client.client.start_session() as s:
+            await s.with_transaction(function)

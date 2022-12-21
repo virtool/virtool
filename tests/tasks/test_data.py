@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task
+from virtool.tasks.oas import TaskUpdate
 
 
 @pytest.fixture
@@ -15,7 +16,9 @@ async def tasks_data(pg: AsyncEngine, redis: Redis) -> TasksData:
     return TasksData(pg, redis)
 
 
-async def test_find(snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksData, static_time):
+async def test_find(
+    snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksData, static_time
+):
     task_1 = Task(
         id=1,
         complete=True,
@@ -27,6 +30,7 @@ async def test_find(snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksDa
         step="download",
         type="clone_reference",
     )
+
     task_2 = Task(
         id=2,
         complete=False,
@@ -46,7 +50,9 @@ async def test_find(snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksDa
     assert await tasks_data.find() == snapshot
 
 
-async def test_get(snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksData, static_time):
+async def test_get(
+    snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksData, static_time
+):
     async with AsyncSession(pg) as session:
         session.add(
             Task(
@@ -66,7 +72,40 @@ async def test_get(snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksDat
     assert await tasks_data.get(1) == snapshot
 
 
-async def test_add(loop, snapshot, pg, redis: Redis, static_time, tasks_data: TasksData):
+@pytest.mark.parametrize(
+    "update",
+    [
+        TaskUpdate(step="two"),
+        TaskUpdate(step="three", progress=55),
+        TaskUpdate(progress=55),
+        TaskUpdate(error="failed_task"),
+    ],
+    ids=["step", "step_progress", "progress", "error"],
+)
+async def test_update(
+    update: TaskUpdate, pg: AsyncEngine, tasks_data: TasksData, snapshot, static_time
+):
+    async with AsyncSession(pg) as session:
+        session.add(
+            Task(
+                id=1,
+                complete=False,
+                context={"user_id": "test_1"},
+                created_at=static_time.datetime,
+                progress=22,
+                step="one",
+                type="dummy_task",
+            )
+        )
+        await session.commit()
+
+    assert await tasks_data.update(1, update) == snapshot(name="return_value")
+    assert await tasks_data.get(1) == snapshot(name="pg")
+
+
+async def test_add(
+    loop, snapshot, pg, redis: Redis, static_time, tasks_data: TasksData
+):
     """
     Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel.
 

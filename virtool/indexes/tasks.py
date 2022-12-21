@@ -1,125 +1,38 @@
-from asyncio import to_thread
-import logging
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Dict, List
+from typing import TYPE_CHECKING
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.utils import file_stats
-
-from virtool.api.custom_json import dumps
 from virtool.history.db import patch_to_version
-from virtool.indexes.db import FILES
-from virtool.indexes.models import SQLIndexFile, IndexType
-from virtool.indexes.utils import join_index_path
-from virtool.tasks.task import Task
-from virtool.types import App, Document
-from virtool.utils import compress_json_with_gzip
+from virtool.indexes.models import IndexType
+from virtool.tasks.task import BaseTask
+from virtool.types import Document
+
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
+    from virtool.mongo.core import DB
 
 
-class AddIndexFilesTask(Task):
+class EnsureIndexFilesTask(BaseTask):
     """
     Add a 'files' field to index documents to list what files can be downloaded for that
     index.
     """
 
-    task_type = "add_index_files"
+    name = "ensure_index_files"
 
-    def __init__(self, app: App, task_id: int):
-        super().__init__(app, task_id)
-        self.steps = [self.store_index_files]
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
+        self.steps = [self.ensure_index_files]
 
-    async def store_index_files(self):
-        async for index in self.db.indexes.find({"ready": True}):
-            index_id = index["_id"]
-
-            index_path = join_index_path(
-                self.app["config"].data_path, index["reference"]["id"], index_id
-            )
-
-            async with AsyncSession(self.app["pg"]) as session:
-                first = (
-                    await session.execute(
-                        select(SQLIndexFile).where(SQLIndexFile.index == index_id)
-                    )
-                ).first()
-
-                if first:
-                    continue
-
-                session.add_all(
-                    [
-                        SQLIndexFile(
-                            name=path.name,
-                            index=index_id,
-                            type=get_index_file_type_from_name(path.name),
-                            size=(await to_thread(file_stats, path))["size"],
-                        )
-                        for path in sorted(index_path.iterdir())
-                        if path.name in FILES
-                    ]
-                )
-
-                await session.commit()
-
-
-class AddIndexJSONTask(Task):
-    task_type = "add_index_json"
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.steps = [self.add_index_json_file]
-
-    async def _add_one_json(self, index: Document):
-        index_id = index["_id"]
-        ref_id = index["reference"]["id"]
-        manifest = index["manifest"]
-
-        async with AsyncSession(self.pg) as session:
-            path = join_index_path(self.app["config"].data_path, ref_id, index_id)
-
-            index_json_path = path / "reference.json.gz"
-
-            if index_json_path.is_file():
-                return
-
-            index_data = await export_index(self.app, manifest)
-
-            reference = await self.db.references.find_one(
-                ref_id, ["data_type", "organism", "targets"]
-            )
-
-            await to_thread(
-                compress_json_with_gzip,
-                dumps(
-                    {
-                        "data_type": reference["data_type"],
-                        "organism": reference["organism"],
-                        "otus": index_data,
-                        "targets": reference.get("targets"),
-                    }
-                ),
-                index_json_path,
-            )
-
-            stats = await to_thread(file_stats, index_json_path)
-
-            session.add(
-                SQLIndexFile(
-                    name="reference.json.gz",
-                    index=index_id,
-                    type="json",
-                    size=stats["size"],
-                ),
-            )
-
-            await session.commit()
-
-    async def add_index_json_file(self):
-        async for index in self.db.indexes.find({"ready": True}):
-            try:
-                await self._add_one_json(index)
-            except IndexError:
-                logging.exception("Exception encountered while generating index JSON")
+    async def ensure_index_files(self):
+        await self.data.index.ensure_files()
 
 
 def format_sequence_for_export(sequence: Document) -> Document:
@@ -192,20 +105,21 @@ def format_otu_for_export(otu: Document) -> Document:
     }
 
 
-async def export_index(app: App, manifest: Dict[str, int]) -> List[Document]:
+async def export_index(
+    data_path: Path, mongo: "DB", manifest: Dict[str, int]
+) -> List[Document]:
     """
     Dump OTUs to a JSON-serializable data structure based on an index manifest.
 
-    :param app: the application object
+    :param data_path: the application data path
+    :param mongo: the application mongo client
     :param manifest: the index manifest
     :return: JSON-serializable OTU data
     """
     otu_list = []
 
     for otu_id, otu_version in manifest.items():
-        _, joined, _ = await patch_to_version(
-            app["config"].data_path, app["db"], otu_id, otu_version
-        )
+        _, joined, _ = await patch_to_version(data_path, mongo, otu_id, otu_version)
         otu_list.append(format_otu_for_export(joined))
 
     return otu_list

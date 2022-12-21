@@ -37,7 +37,7 @@ async def test_attach_user_transform(multiple, snapshot, mongo, fake2):
 async def test_compose_groups_update(
     groups, mongo, kings, all_permissions, no_permissions
 ):
-    await mongo.groups.insert_many([kings])
+    await mongo.groups.insert_many([kings], session=None)
 
     coroutine = compose_groups_update(mongo, groups)
 
@@ -63,7 +63,7 @@ async def test_compose_groups_update(
 async def test_compose_primary_group_update(primary_group, mongo, bob, kings, peasants):
     await mongo.users.insert_one(bob)
 
-    await mongo.groups.insert_many([kings, peasants])
+    await mongo.groups.insert_many([kings, peasants], session=None)
 
     coroutine = compose_primary_group_update(mongo, bob["_id"], primary_group)
 

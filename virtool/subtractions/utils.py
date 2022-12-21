@@ -1,5 +1,6 @@
 import logging
 import os
+from asyncio import to_thread
 from pathlib import Path
 from typing import List
 
@@ -7,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.config.cls import Config
-from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.models import SQLSubtractionFile
 
 FILES = (
     "subtraction.fa.gz",
@@ -41,7 +42,7 @@ def join_subtraction_path(config: Config, subtraction_id: str) -> Path:
 
 
 def join_subtraction_index_path(config: Config, subtraction_id: str) -> Path:
-    return join_subtraction_path(config, subtraction_id) / "reference"
+    return join_subtraction_path(config, subtraction_id) / "subtraction"
 
 
 async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]:
@@ -58,7 +59,7 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
         files = (
             (
                 await session.execute(
-                    select(SubtractionFile).filter_by(subtraction=subtraction)
+                    select(SQLSubtractionFile).filter_by(subtraction=subtraction)
                 )
             )
             .scalars()
@@ -70,14 +71,15 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
     return files
 
 
-def rename_bowtie_files(path: str):
+async def rename_bowtie_files(path: Path):
     """
     Rename all Bowtie2 index files from 'reference' to 'subtraction'.
 
     :param path: the subtraction path
 
     """
-    for file in os.listdir(path):
-        if file.endswith(".bt2"):
-            file_path = path / file
-            os.rename(file_path, str(file_path).replace("reference", "subtraction"))
+    for file_path in await to_thread(path.iterdir):
+        if file_path.suffix == ".bt2":
+            await to_thread(
+                os.rename, file_path, str(file_path).replace("reference", "subtraction")
+            )

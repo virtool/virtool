@@ -57,6 +57,7 @@ orjson = "^3.8.0"
 openfga-sdk = "^0.0.1"
 virtool-core = "^3.0.0"
 
+
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
 pytest-cov = "^2.12.1"

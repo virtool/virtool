@@ -1,56 +1,74 @@
-from datetime import datetime
-from typing import List, Optional
+from logging import getLogger
+from typing import List, TYPE_CHECKING
+from zipfile import BadZipFile
 
-from sqlalchemy import delete, select
+from aiohttp import ClientSession
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.blast import NuvsBlast
 
 import virtool.utils
-from virtool.blast.models import NuVsBlast
+from virtool.analyses.utils import find_nuvs_sequence_by_index
+from virtool.blast.db import get_nuvs_blast, delete_nuvs_blast
+from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
+from virtool.blast.utils import (
+    extract_blast_info,
+    fetch_ncbi_blast_html,
+    check_rid,
+)
+from virtool.blast.utils import format_blast_content, fetch_nuvs_blast_result
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.types import Document
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import DB
+
+logger = getLogger(__name__)
 
 
 class BLASTData(DataLayerPiece):
     """
-    A data layer domain for NuVs BLAST data.
+    A data layer piece for BLAST data.
     """
 
-    def __init__(self, db, pg: AsyncEngine):
-        self._db = db
+    def __init__(self, client: ClientSession, mongo: "DB", pg: AsyncEngine):
+        self._client = client
+        self._mongo = mongo
         self._pg = pg
 
     async def create_nuvs_blast(
         self, analysis_id: str, sequence_index: int
-    ) -> Document:
+    ) -> NuvsBlast:
         """
         Create a NuVs BLAST record for the sequence associated with a specific analysis
         ID and sequence index.
 
-        A BLAST task will be spawned that runs a BLAST search against NCBI and
-        populates the database with result. The analysis and BLAST records are
-        updated as the task proceeds.
+        A task will be spawned that runs a BLAST search against NCBI and populates the
+        database with result. The analysis and BLAST records are updated as the task
+        proceeds.
 
         :param analysis_id: the ID for the analysis to create BLAST for
         :param sequence_index: the index of the sequence being BLASTed.
         :return: the dictionary representation of the BLAST record.
         """
-        timestamp = virtool.utils.timestamp()
+        created_at = virtool.utils.timestamp()
 
         async with AsyncSession(self._pg) as session:
-            await self._remove_nuvs_blast(session, analysis_id, sequence_index)
+            await delete_nuvs_blast(session, analysis_id, sequence_index)
             await session.flush()
 
-            blast = NuVsBlast(
+            blast_row = SQLNuVsBlast(
                 analysis_id=analysis_id,
-                created_at=timestamp,
-                last_checked_at=timestamp,
+                created_at=created_at,
+                last_checked_at=created_at,
                 ready=False,
                 sequence_index=sequence_index,
-                updated_at=timestamp,
+                updated_at=created_at,
             )
 
-            session.add(blast)
+            session.add(blast_row)
             await session.flush()
 
             await self.data.tasks.create(
@@ -58,22 +76,52 @@ class BLASTData(DataLayerPiece):
                 {"analysis_id": analysis_id, "sequence_index": sequence_index},
             )
 
-            blast_data = blast.to_dict()
+            blast = NuvsBlast(**blast_row.to_dict())
+
+            # Don't commit until the task has been created.
             await session.commit()
 
-        return blast_data
-
-    @staticmethod
-    async def _get_nuvs_blast(session, analysis_id: str, sequence_index: int):
-        result = await session.execute(
-            select(NuVsBlast)
-            .filter(NuVsBlast.analysis_id == analysis_id)
-            .filter(NuVsBlast.sequence_index == sequence_index)
+        await self._mongo.analyses.update_one(
+            {"_id": analysis_id}, {"$set": {"updated_at": created_at}}
         )
 
-        return result.scalar_one()
+        return blast
 
-    async def get_nuvs_blast(self, analysis_id: str, sequence_index: int) -> Document:
+    async def initialize_on_ncbi(self, analysis_id: str, sequence_index: int):
+        """
+        Send a request to NCBI to BLAST the passed sequence.
+
+        Return the RID and RTOE from the response.
+
+        :param analysis_id: the id the nuvs analysis
+        :param sequence_index: the index of the sequence
+        :return: the RID and RTOE for the request
+        """
+        analysis = await self.data.analyses.get(analysis_id, None)
+
+        sequence = find_nuvs_sequence_by_index(
+            analysis.dict(by_alias=True), sequence_index
+        )
+
+        html = await fetch_ncbi_blast_html(self._client, sequence)
+
+        rid, _ = extract_blast_info(html)
+
+        async with AsyncSession(self._pg) as session:
+            blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
+
+            if blast_row is None:
+                raise ResourceNotFoundError
+
+            blast_row.rid = rid
+
+            blast = NuvsBlast(**blast_row.to_dict())
+
+            await session.commit()
+
+        return blast
+
+    async def get_nuvs_blast(self, analysis_id: str, sequence_index: int) -> NuvsBlast:
         """
         Get a NuVs BLAST record by its analysis ID and sequence index.
 
@@ -82,72 +130,64 @@ class BLASTData(DataLayerPiece):
         :return: the dictionary representation of the BLAST record
         """
         async with AsyncSession(self._pg) as session:
-            return await self._get_nuvs_blast(session, analysis_id, sequence_index)
+            blast = await get_nuvs_blast(session, analysis_id, sequence_index)
+            return NuvsBlast(**blast.to_dict())
 
-    async def update_nuvs_blast(
+    async def check_nuvs_blast(
         self,
         analysis_id: str,
         sequence_index: int,
-        error: Optional[str],
-        last_checked_at: Optional[datetime],
-        rid: Optional[str],
-        ready: bool,
-        result: Optional[dict],
-    ) -> Document:
+    ):
         """
-        Update an existing NuVsBlast as it progresses in Virtool and on NCBI.
+        Sync our BLAST resource with NCBI.
 
-        Returns a `dict` representation of the BLAST record.
+        Send a request to NCBI to check on the status of a BLAST request. Update the
+        ``last_checked_at`` field.
 
-        :param analysis_id: the ID of the NuVs analysis
-        :param sequence_index: the index of the NuVs nucleotide sequence
-        :param error: an optional error string
-        :param last_checked_at: when the NCBI API was last checked for results
-        :param rid: the NCBI ID for the BLAST request
-        :param ready: whether the NCBI BLAST search has completed
-        :param result: the BLAST search result from NCBI
-        :return: the dictionary representation of the BLAST search
+        If the BLAST result is ready:
+
+        1. Set the `ready` field to `true`.
+        2. Download the result and set the JSON as the value of the `result` field.
+
+        If an error is encountered while parsing the result, the `error` field is set.
+
         """
-        timestamp = virtool.utils.timestamp()
+        updated_at = virtool.utils.timestamp()
 
         async with AsyncSession(self._pg) as session:
-            blast = await self._get_nuvs_blast(session, analysis_id, sequence_index)
+            blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
 
-            blast.updated_at = timestamp
-            blast.error = error
-            blast.last_checked_at = last_checked_at
-            blast.rid = rid
-            blast.ready = ready
-            blast.result = result
+            if blast_row is None:
+                raise ResourceNotFoundError
 
-            session.add(blast)
-            await session.flush()
-            document = blast.to_dict()
+            ready = await check_rid(self._client, blast_row.rid)
+
+            blast_row.last_checked_at = updated_at
+            blast_row.updated_at = updated_at
+
+            if ready:
+                try:
+                    result_json = await fetch_nuvs_blast_result(
+                        self._client, blast_row.rid
+                    )
+
+                    blast_row.result = format_blast_content(result_json)
+                    blast_row.ready = True
+                except BadZipFile:
+                    blast_row.error = "Unable to interpret NCBI result"
+
+                await session.flush()
+
             await session.commit()
 
-        await self._db.analyses.update_one(
-            {"_id": analysis_id}, {"$set": {"updated_at": virtool.utils.timestamp()}}
+        await self._mongo.analyses.update_one(
+            {"_id": analysis_id},
+            {"$set": {"updated_at": updated_at}},
         )
 
-        return document
+        return await self.get_nuvs_blast(analysis_id, sequence_index)
 
-    async def _remove_nuvs_blast(
-        self, session: AsyncSession, analysis_id: str, sequence_index: int
-    ) -> int:
-        result = await session.execute(
-            delete(NuVsBlast)
-            .where(NuVsBlast.analysis_id == analysis_id)
-            .where(NuVsBlast.sequence_index == sequence_index)
-        )
-        await session.commit()
-
-        await self._db.analyses.update_one(
-            {"_id": analysis_id}, {"$set": {"updated_at": virtool.utils.timestamp()}}
-        )
-
-        return result.rowcount
-
-    async def remove_nuvs_blast(self, analysis_id: str, sequence_index: int) -> int:
+    async def delete_nuvs_blast(self, analysis_id: str, sequence_index: int) -> int:
         """
         Remove a NuVs BLAST record.
 
@@ -156,7 +196,16 @@ class BLASTData(DataLayerPiece):
         :return: the number of deleted records
         """
         async with AsyncSession(self._pg) as session:
-            return await self._remove_nuvs_blast(session, analysis_id, sequence_index)
+            deleted_count = await delete_nuvs_blast(
+                session, analysis_id, sequence_index
+            )
+            await session.commit()
+
+        await self._mongo.analyses.update_one(
+            {"_id": analysis_id}, {"$set": {"updated_at": virtool.utils.timestamp()}}
+        )
+
+        return deleted_count
 
     async def list_by_analysis(self, analysis_id: str) -> List[Document]:
         """
@@ -167,7 +216,7 @@ class BLASTData(DataLayerPiece):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(NuVsBlast).where(NuVsBlast.analysis_id == analysis_id)
+                select(SQLNuVsBlast).where(SQLNuVsBlast.analysis_id == analysis_id)
             )
 
             return [

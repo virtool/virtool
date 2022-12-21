@@ -15,7 +15,7 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
         client.db.references.insert_one(
             {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
         ),
-        client.db.history.insert_many(test_changes),
+        client.db.history.insert_many(test_changes, session=None),
     )
 
     resp = await client.get("/history")
@@ -33,7 +33,7 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
     client = await spawn_client(authorize=True)
 
     await asyncio.gather(
-        client.db.history.insert_many(test_changes),
+        client.db.history.insert_many(test_changes, session=None),
         client.db.references.insert_one(
             {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
         ),

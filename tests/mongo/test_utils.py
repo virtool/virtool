@@ -36,7 +36,7 @@ class TestApplyProjection:
 
 async def test_delete_unready(mongo):
     await mongo.analyses.insert_many(
-        [{"_id": 1, "ready": True}, {"_id": 2, "ready": False}]
+        [{"_id": 1, "ready": True}, {"_id": 2, "ready": False}], session=None
     )
 
     await virtool.mongo.utils.delete_unready(mongo.analyses)
@@ -55,7 +55,8 @@ async def test_check_missing_ids(mongo):
                 "_id": "bar",
                 "name": "Bar",
             },
-        ]
+        ],
+        session=None,
     )
 
     non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(

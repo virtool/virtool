@@ -3,7 +3,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import create_async_engine
 import orjson
 
-from virtool.api.custom_json import orjson_serializer
+from virtool.api.custom_json import dump_string
 
 
 async def create_test_database(connection_string: str, name: str):
@@ -20,7 +20,7 @@ async def create_test_database(connection_string: str, name: str):
     engine = create_async_engine(
         f"{connection_string}",
         isolation_level="AUTOCOMMIT",
-        json_serializer=orjson_serializer,
+        json_serializer=dump_string,
         json_deserializer=orjson.loads,
         pool_recycle=1800,
     )
