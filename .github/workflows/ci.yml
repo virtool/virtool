@@ -139,6 +139,12 @@ jobs:
         with:
           mongodb-version: 4.4
           mongodb-replica-set: rs
+      - name: Install bowtie
+        run: |
+          wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+          unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+          cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
+          ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v4
