@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.blast.models import NuVsBlast
 from virtool.mongo.transforms import AbstractTransform
 from virtool.types import Document
+from virtool.utils import get_safely
 
 
 class AttachNuVsBLAST(AbstractTransform):
@@ -37,7 +38,10 @@ class AttachNuVsBLAST(AbstractTransform):
             }
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        hits = document["results"]["hits"]
+        hits = get_safely(document, "results", "hits")
+
+        if hits is None:
+            return document
 
         return {
             **document,
