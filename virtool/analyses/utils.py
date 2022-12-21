@@ -1,4 +1,5 @@
 import shutil
+from asyncio import to_thread
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -7,6 +8,7 @@ from sqlalchemy.future import select
 from virtool_core.utils import compress_file
 
 from virtool.analyses.models import AnalysisFile
+
 
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 
@@ -114,23 +116,20 @@ def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -
     return join_analysis_path(data_path, analysis_id, sample_id) / "results.json"
 
 
-async def move_nuvs_files(
-    filename: str, run_in_thread: callable, file_path: Path, target_path: Path
-):
+async def move_nuvs_files(filename: str, file_path: Path, target_path: Path):
     """
     Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files
     and FASTQ files.
 
     :param filename: the name of the analysis file
-    :param run_in_thread: the application thread running function
     :param file_path: the path to the original file
     :param target_path: the path to the new directory
 
     """
     if filename == "hmm.tsv":
-        await run_in_thread(shutil.copy, file_path / "hmm.tsv", target_path / "hmm.tsv")
+        await to_thread(shutil.copy, file_path / "hmm.tsv", target_path / "hmm.tsv")
     else:
-        await run_in_thread(
+        await to_thread(
             compress_file,
             file_path / filename,
             target_path / f"{filename}.gz",

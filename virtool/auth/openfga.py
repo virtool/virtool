@@ -43,7 +43,7 @@ async def check_in_open_fga(
 
 async def list_permissions_in_open_fga(
     api_instance: OpenFgaApi, user_id: str, object_type: str, object_id: Union[str, int]
-) -> list[Permission]:
+) -> List[Permission]:
     """
     List permissions for a user in OpenFGA.
     """

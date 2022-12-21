@@ -216,7 +216,8 @@ class TestEdit:
                     "isolates": [],
                     "reference": {"id": "foo"},
                 },
-            ]
+            ],
+            session=None,
         )
 
         resp = await client.patch("/otus/test", data)
@@ -1159,7 +1160,7 @@ async def test_all(get, missing, spawn_client):
             }
         )
 
-    await client.db.sequences.insert_many(sequences)
+    await client.db.sequences.insert_many(sequences, session=None)
 
     url = "/otus/foobar/isolates"
 

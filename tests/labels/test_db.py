@@ -68,7 +68,8 @@ async def test_sample_count_attacher(labels, snapshot, spawn_client):
             {"_id": "foo", "name": "Foo", "labels": [1, 2, 4]},
             {"_id": "bar", "name": "Bar", "labels": []},
             {"_id": "baz", "name": "Baz", "labels": [2]},
-        ]
+        ],
+        session=None,
     )
 
     assert await apply_transforms(labels, [SampleCountTransform(client.db)]) == snapshot

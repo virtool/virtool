@@ -1,0 +1,39 @@
+# name: test_task[uvloop][blast]
+  <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'id': 1,
+    'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'ready': True,
+    'result': <class 'dict'> {
+      'hits': <class 'list'> [
+      ],
+      'masking': None,
+      'params': 'test_params',
+      'program': 'test',
+      'stat': 'test_stat',
+      'target': 'ATAGAGAACTGTACTAGCTGATCGATCTGACGTAGCAC',
+      'version': '1',
+    },
+    'rid': 'SYZDXEWK014',
+    'task': None,
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+  }
+---
+# name: test_task[uvloop][task]
+  <class 'dict'> {
+    'complete': True,
+    'context': <class 'dict'> {
+      'analysis_id': 'analysis',
+      'sequence_index': 5,
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 100,
+    'step': 'wait',
+    'type': 'blast',
+  }
+---

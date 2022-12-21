@@ -60,7 +60,8 @@ async def test_get_hmms_referenced_in_db(mongo):
                     {"orfs": [{"hits": [{"hit": "y"}, {"hit": "e"}]}]},
                 ],
             },
-        ]
+        ],
+        session=None,
     )
 
     results = await get_hmms_referenced_in_db(mongo)

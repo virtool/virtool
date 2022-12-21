@@ -68,7 +68,8 @@ class TestEdit:
             [
                 {"_id": "baz", "reference": {"id": "foo", "name": "Foo"}},
                 {"_id": "boo", "reference": {"id": "foo", "name": "Foo"}},
-            ]
+            ],
+            session=None,
         )
 
         document = await get_data_from_app(app).references.update_reference(

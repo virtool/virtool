@@ -776,23 +776,6 @@
     ],
   }
 ---
-# name: test_delete_ref[uvloop]
-  <class 'dict'> {
-    'complete': False,
-    'context': <class 'dict'> {
-      'ref_id': 'foo',
-      'user_id': 'test',
-    },
-    'count': 0,
-    'created_at': '2015-10-06T20:00:00Z',
-    'error': None,
-    'file_size': None,
-    'id': 1,
-    'progress': 0,
-    'step': 'delete_reference',
-    'type': 'delete_reference',
-  }
----
 # name: test_edit[uvloop-400_duplicates-barcode]
   <class 'list'> [
     <class 'dict'> {

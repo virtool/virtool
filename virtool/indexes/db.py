@@ -22,7 +22,7 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
 
-PROJECTION = [
+INDEXES_PROJECTION = [
     "_id",
     "created_at",
     "has_files",
@@ -36,7 +36,7 @@ PROJECTION = [
     "version",
 ]
 
-FILES = (
+INDEX_FILE_NAMES = (
     "reference.fa.gz",
     "reference.json.gz",
     "reference.1.bt2",
@@ -180,7 +180,7 @@ async def find(mongo, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
         {},
         req_query,
         base_query=base_query,
-        projection=PROJECTION,
+        projection=INDEXES_PROJECTION,
         reverse=True,
         sort="version",
     )

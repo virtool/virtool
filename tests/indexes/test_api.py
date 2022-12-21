@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.utils import get_data_from_app
-from virtool.indexes.db import FILES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
@@ -35,7 +35,8 @@ class TestFind:
                 [
                     {"_id": "bar", "name": "Bar", "data_type": "genome"},
                     {"_id": "foo", "name": "Foo", "data_type": "genome"},
-                ]
+                ],
+                session=None,
             ),
             client.db.indexes.insert_many(
                 [
@@ -63,7 +64,8 @@ class TestFind:
                         "user": {"id": user.id},
                         "sequence_otu_map": {"foo": "foo_otu"},
                     },
-                ]
+                ],
+                session=None,
             ),
             client.db.history.insert_many(
                 [
@@ -73,7 +75,8 @@ class TestFind:
                     {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
                     {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
                     {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
-                ]
+                ],
+                session=None,
             ),
         )
 
@@ -119,13 +122,15 @@ class TestFind:
                         "reference": {"id": "foo"},
                         "user": {"id": user.id},
                     },
-                ]
+                ],
+                session=None,
             ),
             client.db.references.insert_many(
                 [
                     {"_id": "bar", "name": "Bar", "data_type": "genome"},
                     {"_id": "foo", "name": "Foo", "data_type": "genome"},
-                ]
+                ],
+                session=None,
             ),
         )
 
@@ -145,14 +150,16 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
         client.db.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
         client.db.history.insert_many(
             [
                 {"_id": "0", "index": {"id": "foobar"}, "otu": {"id": "foo"}},
                 {"_id": "1", "index": {"id": "foobar"}, "otu": {"id": "baz"}},
                 {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -391,13 +398,15 @@ async def test_find_history(error, fake2, static_time, snapshot, spawn_client, r
                     "method_name": "edit_sequence",
                     "index": {"version": 0, "id": "foobar"},
                 },
-            ]
+            ],
+            session=None,
         ),
         client.db.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
                 {"_id": "foo", "name": "Foo", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -431,7 +440,7 @@ async def test_delete_index(spawn_job_client, error):
 
     if error != 404:
         await indexes.insert_one(index_document)
-        await history.insert_many(mock_history_documents)
+        await history.insert_many(mock_history_documents, session=None)
 
     response = await client.delete(f"/indexes/{index_id}")
 
@@ -468,7 +477,8 @@ async def test_upload(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
                 {"_id": "foo", "name": "Foo", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -539,7 +549,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = FILES
+        files = INDEX_FILE_NAMES
 
     if error != "404_reference":
         await client.db.references.insert_one(

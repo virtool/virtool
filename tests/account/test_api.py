@@ -144,7 +144,8 @@ async def test_get_api_keys(spawn_client, static_time):
                 "groups": [],
                 "permissions": {},
             },
-        ]
+        ],
+        session=None,
     )
 
     resp = await client.get("/account/keys")
@@ -356,7 +357,8 @@ async def test_remove_all_api_keys(spawn_client, resp_is):
             {"_id": "hello_world", "id": "hello_world_0", "user": {"id": "test"}},
             {"_id": "foobar", "id": "foobar_0", "user": {"id": "test"}},
             {"_id": "baz", "id": "baz_0", "user": {"id": "fred"}},
-        ]
+        ],
+        session=None,
     )
 
     resp = await client.delete("/account/keys")
