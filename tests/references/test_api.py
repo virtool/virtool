@@ -15,6 +15,7 @@ from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import Task as SQLTask
 
 
+@pytest.mark.apitest
 async def test_find(spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authorize=True, administrator=True)
 
@@ -84,6 +85,7 @@ async def test_find(spawn_client, pg, snapshot, fake2, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [404, None])
 async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authorize=True, administrator=True)
@@ -146,6 +148,7 @@ async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestCreate:
     @pytest.mark.parametrize("data_type", ["genome", "barcode"])
     async def test_create(self, data_type, snapshot, spawn_client, static_time):
@@ -273,6 +276,7 @@ class TestCreate:
         )
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize(
     "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
@@ -374,6 +378,7 @@ async def test_edit(
     assert await client.db.references.find_one() == snapshot(name="db")
 
 
+@pytest.mark.apitest
 async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
@@ -416,6 +421,7 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
     assert resp.status == 204
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
     client = await spawn_client(authorize=True)
@@ -482,6 +488,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
     m_fetch_and_update_release.assert_called_with(client.app, "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
 async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, snapshot):
     client = await spawn_client(authorize=True)
@@ -527,6 +534,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, sna
     m_get_one_field.assert_called_with(client.db.references, "updates", "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400"])
 async def test_update(
     error,
@@ -619,6 +627,7 @@ async def test_update(
     assert m_update.call_args[0] == snapshot(name="call")
 
 
+@pytest.mark.apitest
 class TestCreateOTU:
     @pytest.mark.parametrize("exists", [True, False])
     @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
@@ -729,6 +738,7 @@ class TestCreateOTU:
         assert resp.status == 201
 
 
+@pytest.mark.apitest
 async def test_create_index(
     fake2, mocker, snapshot, spawn_client, check_ref_right, resp_is
 ):
@@ -775,6 +785,7 @@ async def test_create_index(
     m_create_manifest.assert_called_with(client.db, "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_add_group_or_user(
@@ -841,6 +852,7 @@ async def test_add_group_or_user(
     assert await client.db.references.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_edit_group_or_user(
@@ -901,6 +913,7 @@ async def test_edit_group_or_user(
     assert await client.db.references.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_delete_group_or_user(

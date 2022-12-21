@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.apitest
 async def test_get(snapshot, spawn_client, test_settings):
     client = await spawn_client(authorize=True)
 
@@ -7,6 +11,7 @@ async def test_get(snapshot, spawn_client, test_settings):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 async def test_update(snapshot, spawn_client, test_settings):
     client = await spawn_client(authorize=True, administrator=True)
 

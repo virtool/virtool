@@ -49,6 +49,7 @@ async def fake_hmm_status(mongo, fake2, static_time):
     return user
 
 
+@pytest.mark.apitest
 async def test_find(fake_hmm_status, snapshot, spawn_client, hmm_document):
     """
     Check that a request with no URL parameters returns a list of HMM annotation documents.
@@ -66,6 +67,7 @@ async def test_find(fake_hmm_status, snapshot, spawn_client, hmm_document):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 async def test_get_status(fake_hmm_status, snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
     resp = await client.get("/hmms/status")
@@ -74,6 +76,7 @@ async def test_get_status(fake_hmm_status, snapshot, spawn_client, static_time):
     assert await resp.json() == snapshot(name="json")
 
 
+@pytest.mark.apitest
 async def test_get_release(fake_hmm_status, spawn_client, snapshot):
     """
     Test that the endpoint returns the latest HMM release. Check that error responses are sent in all expected
@@ -88,6 +91,7 @@ async def test_get_release(fake_hmm_status, spawn_client, snapshot):
     assert await resp.json() == snapshot(name="json")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, snapshot, spawn_client, hmm_document, resp_is):
     """
@@ -112,6 +116,7 @@ async def test_get(error, snapshot, spawn_client, hmm_document, resp_is):
     assert await resp.json() == snapshot(name="json")
 
 
+@pytest.mark.apitest
 async def test_get_hmm_annotations(spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
     client.app["config"].data_path = tmp_path
@@ -137,6 +142,7 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
         assert hmms == [{"id": "foo"}, {"id": "bar"}]
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("data_exists", [True, False])
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_get_hmm_profiles(

@@ -13,6 +13,7 @@ def files(test_files_path):
     return {"file": open(test_files_path / "test.fq.gz", "rb")}
 
 
+@pytest.mark.apitest
 class TestUpload:
     @pytest.mark.parametrize("upload_type", UploadType.to_list())
     async def test(
@@ -76,6 +77,7 @@ class TestUpload:
         await resp_is.bad_request(resp, "Unsupported upload type")
 
 
+@pytest.mark.apitest
 class TestFind:
     @pytest.mark.parametrize("upload_type", ["reads", "reference", None])
     async def test(self, upload_type, spawn_client, snapshot, test_uploads):
@@ -130,6 +132,7 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestGet:
     @pytest.mark.parametrize("exists", [True, False])
     async def test(self, exists, files, resp_is, spawn_client, tmp_path):
@@ -184,6 +187,7 @@ class TestGet:
         assert resp.status == 404
 
 
+@pytest.mark.apitest
 class TestDelete:
     async def test(self, files, spawn_client, tmp_path, resp_is):
         """

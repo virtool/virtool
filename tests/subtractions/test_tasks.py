@@ -75,15 +75,17 @@ async def test_add_subtraction_files_task(
 async def test_write_subtraction_fasta_file_task(
     config, data_layer, mongo, pg, snapshot, static_time, test_files_path, tmpdir
 ):
-    subtractions_path = Path(tmpdir.mkdir("subtractions").mkdir("foo"))
+    subtractions_path = Path(tmpdir.mkdir("subtractions"))
+    subtraction_path = subtractions_path / "foo"
+    subtraction_path.mkdir()
 
     for path in (test_files_path / "index").iterdir():
         if path.name.startswith("host."):
             shutil.copy(
-                path, subtractions_path / path.name.replace("host", "subtraction")
+                path, subtraction_path / path.name.replace("host", "subtraction")
             )
 
-    assert sorted(os.listdir(subtractions_path)) == [
+    assert sorted(os.listdir(subtraction_path)) == [
         "subtraction.1.bt2",
         "subtraction.2.bt2",
         "subtraction.3.bt2",
@@ -114,8 +116,7 @@ async def test_write_subtraction_fasta_file_task(
 
     await task.run()
 
-    subtraction_path = config.data_path / "subtractions" / "foo"
-    assert sorted(os.listdir(config.data_path / "subtractions" / "foo")) == [
+    assert sorted(os.listdir(subtraction_path)) == [
         "subtraction.1.bt2",
         "subtraction.2.bt2",
         "subtraction.3.bt2",
