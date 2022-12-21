@@ -10,6 +10,7 @@ from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import Upload
 
 
+@pytest.mark.apitest
 async def test_find(fake2, spawn_client, snapshot, static_time):
     client = await spawn_client(authorize=True, administrator=True)
 
@@ -42,6 +43,7 @@ async def test_find(fake2, spawn_client, snapshot, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 async def test_get(fake, spawn_client):
     subtraction = await fake.subtractions.insert()
 
@@ -52,6 +54,7 @@ async def test_get(fake, spawn_client):
     assert resp.status == 200
 
 
+@pytest.mark.apitest
 async def test_get_from_job(fake, spawn_job_client, snapshot):
     client = await spawn_job_client(authorize=True)
 
@@ -63,6 +66,7 @@ async def test_get_from_job(fake, spawn_job_client, snapshot):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "data",
     [
@@ -112,6 +116,7 @@ async def test_edit(data, fake2, has_user, mocker, snapshot, spawn_client, stati
     assert await client.db.subtraction.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("exists", [True, False])
 async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
     client = await spawn_client(
@@ -138,6 +143,7 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
     assert resp.status == 204 if exists else 400
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
 async def test_upload(
     error, tmp_path, spawn_job_client, snapshot, resp_is, pg: AsyncEngine
@@ -183,6 +189,7 @@ async def test_upload(
     assert os.listdir(tmp_path / "subtractions" / "foo") == ["subtraction.1.bt2"]
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize_subtraction(
     error,
@@ -244,6 +251,7 @@ async def test_finalize_subtraction(
     assert await client.db.subtraction.find_one("foo") == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_job_remove(
@@ -291,6 +299,7 @@ async def test_job_remove(
     assert await client.db.samples.find_one("test") == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
 async def test_download_subtraction_files(
     error, tmp_path, spawn_job_client, pg: AsyncEngine
@@ -344,6 +353,7 @@ async def test_download_subtraction_files(
     assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()
 
 
+@pytest.mark.apitest
 async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
     user = await fake2.users.create()
 

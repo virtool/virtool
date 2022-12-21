@@ -23,6 +23,7 @@ from virtool.jobs.client import DummyJobsClient
 OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 
 
+@pytest.mark.apitest
 class TestFind:
     async def test(self, mocker, snapshot, fake2, spawn_client, static_time):
         client = await spawn_client(authorize=True)
@@ -139,6 +140,7 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
@@ -206,6 +208,7 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_download_otus_json(
     file_exists, mocker, tmp_path, mongo, spawn_job_client
@@ -246,6 +249,7 @@ async def test_download_otus_json(
         )
 
 
+@pytest.mark.apitest
 class TestCreate:
     async def test(
         self,
@@ -340,6 +344,7 @@ class TestCreate:
             return
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_find_history(error, fake2, static_time, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
@@ -415,6 +420,7 @@ async def test_find_history(error, fake2, static_time, snapshot, spawn_client, r
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 404])
 async def test_delete_index(spawn_job_client, error):
     index_id = "index1"
@@ -446,6 +452,7 @@ async def test_delete_index(spawn_job_client, error):
             assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
     error,
@@ -518,6 +525,7 @@ async def test_upload(
         ).scalar() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error,
@@ -579,6 +587,7 @@ async def test_finalize(
         assert await client.db.otus.find_one("6116cba1") == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_download(status, spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)

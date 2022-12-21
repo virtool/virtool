@@ -7,6 +7,7 @@ from virtool_core.models.enums import ReferencePermission
 import virtool.otus.db
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "tobacco"])
 @pytest.mark.parametrize("verified", [None, True, False])
 @pytest.mark.parametrize("names", [None, True, False])
@@ -38,6 +39,7 @@ async def test_find(find, verified, names, mocker, snapshot, spawn_client, test_
     m.assert_called_with(client.db, names or False, find, mocker.ANY, verified)
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error,
@@ -76,6 +78,7 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestEdit:
     @pytest.mark.parametrize(
         "data, existing_abbreviation, description",
@@ -282,6 +285,7 @@ class TestEdit:
         await resp_is.not_found(resp)
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "abbreviation,exists", [("", True), ("PVF", True), ("", False)]
 )
@@ -319,6 +323,7 @@ async def test_remove(
     assert await client.db.history.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_list_isolates(error, snapshot, spawn_client, resp_is, test_otu):
     """
@@ -349,6 +354,7 @@ async def test_list_isolates(error, snapshot, spawn_client, resp_is, test_otu):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_get_isolate(
     error, snapshot, spawn_client, resp_is, test_otu, test_sequence
@@ -377,6 +383,7 @@ async def test_get_isolate(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestAddIsolate:
     @pytest.mark.parametrize("default", [True, False])
     async def test_default(
@@ -515,6 +522,7 @@ class TestAddIsolate:
         await resp_is.not_found(resp)
 
 
+@pytest.mark.apitest
 class TestUpdateIsolate:
     @pytest.mark.parametrize(
         "data,description",
@@ -637,6 +645,7 @@ class TestUpdateIsolate:
         await resp_is.not_found(resp)
 
 
+@pytest.mark.apitest
 class TestSetAsDefault:
     async def test(
         self,
@@ -745,6 +754,7 @@ class TestSetAsDefault:
         await resp_is.not_found(resp)
 
 
+@pytest.mark.apitest
 class TestRemoveIsolate:
     async def test(
         self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
@@ -830,6 +840,7 @@ class TestRemoveIsolate:
         await resp_is.not_found(resp)
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_list_sequences(
     error, snapshot, spawn_client, resp_is, test_otu, test_sequence
@@ -854,6 +865,7 @@ async def test_list_sequences(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
 async def test_get_sequence(
     error, snapshot, spawn_client, resp_is, test_otu, test_ref, test_sequence
@@ -883,6 +895,7 @@ async def test_get_sequence(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error,segment",
     [(None, "null"), (None, "test_segment"), ("404_otu", None), ("404_isolate", None)],
@@ -955,6 +968,7 @@ async def test_create_sequence(
     ) == snapshot(name="db")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error, segment",
     [
@@ -1029,6 +1043,7 @@ async def test_edit_sequence(
     )
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
 async def test_remove_sequence(
     error, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
@@ -1062,6 +1077,7 @@ async def test_remove_sequence(
     assert await client.db.history.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_otu):
     client = await spawn_client(authorize=True)
@@ -1080,6 +1096,7 @@ async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_ot
     assert resp.status == 200
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_download_isolate(
     error, resp_is, spawn_client, test_otu, test_isolate, test_sequence
@@ -1108,6 +1125,7 @@ async def test_download_isolate(
     return
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_all(get, missing, spawn_client):
