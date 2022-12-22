@@ -80,7 +80,7 @@ async def authenticate_with_api_key(
         raise HTTPUnauthorized(text="Invalid authorization header")
 
     if user["active"] is False:
-        raise HTTPUnauthorized(text="This user account is inactive.")
+        raise HTTPUnauthorized(text="User is deactivated.")
 
     req["client"] = UserClient(
         db=db,
@@ -132,7 +132,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
     )
 
     if user.active is False:
-        raise HTTPUnauthorized(text="This user account is inactive.")
+        raise HTTPUnauthorized(text="User is deactivated.")
 
     req["client"] = UserClient(
         db=req.app["db"],
@@ -208,7 +208,7 @@ async def middleware(req, handler) -> Response:
         user = await get_data_from_req(req).users.get(session.authentication.user_id)
 
         if user.active is False:
-            raise HTTPUnauthorized(text="This user account is inactive.")
+            raise HTTPUnauthorized(text="User is deactivated.")
 
         req["client"] = UserClient(
             db,

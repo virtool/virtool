@@ -183,10 +183,7 @@ class UsersData:
             except DatabaseError as err:
                 raise ResourceConflictError(str(err))
 
-        print(data)
-
         if "active" in data:
-            print("hello")
             update.update({"active": data["active"], "invalidate_sessions": True})
 
         if update:
