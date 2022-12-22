@@ -5,6 +5,7 @@ from virtool_core.models.enums import Permission
 from virtool.auth.models import Permission as SQLPermission, ResourceType, ActionType
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "resource,status",
     [(ResourceType.app, 200), (ResourceType.group, 200), ("invalid", 400), (None, 200)],
