@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
+from virtool.auth.data import AuthData
 from virtool.blast.data import BLASTData
 from virtool.config import Config
 from virtool.data.layer import DataLayer
@@ -48,6 +49,7 @@ def create_data_layer(
     data_layer = DataLayer(
         AccountData(db, redis),
         AnalysisData(db, config, pg),
+        AuthData(pg),
         BLASTData(client, db, pg),
         GroupsData(db),
         HistoryData(config.data_path, db),
