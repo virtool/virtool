@@ -8,7 +8,7 @@ import logging
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
@@ -28,10 +28,13 @@ from virtool.mongo.utils import id_exists
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.types import App, Document
+from virtool.types import Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import DB
 
 logger = logging.getLogger(__name__)
 
@@ -373,22 +376,23 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
         )
 
 
-async def compress_sample_reads(app: App, sample: Dict[str, Any]):
+async def compress_sample_reads(db: "DB", config: Config, sample: Dict[str, Any]):
     """
     Compress the reads for one legacy samples.
 
-    :param app: the application object
+    :param db: the application database object
+    :param config: the application configuration dictionary
     :param sample: the sample document
 
     """
-    await update_is_compressed(app["db"], sample)
+    await update_is_compressed(db, sample)
 
     if not check_is_legacy(sample):
         return
 
-    paths = join_legacy_read_paths(app["config"], sample)
+    paths = join_legacy_read_paths(config, sample)
 
-    data_path = app["config"].data_path
+    data_path = config.data_path
     sample_id = sample["_id"]
 
     files = []
@@ -414,26 +418,27 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
             }
         )
 
-    await app["db"].samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
+    await db.samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
 
     for path in paths:
         await to_thread(os.remove, path)
 
 
-async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
+async def move_sample_files_to_pg(db: "DB", pg: AsyncEngine, sample: Dict[str, any]):
     """
     Creates a row in the `sample_reads` table for each file in a sample's `files` array.
 
     Also, creates a row in the `uploads` table for information stored in a file's
     `from` field with a relation to the `SampleRead`.
 
-    :param app: the application object
+    :param db: the application database object
+    :param pg: the PostgreSQL AsyncEngine object
     :param sample: the sample document
     """
     files = sample.get("files")
     sample_id = sample["_id"]
 
-    async with AsyncSession(app["pg"]) as session:
+    async with AsyncSession(pg) as session:
         for file_ in files:
             from_ = file_.get("from")
 
@@ -457,9 +462,7 @@ async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
 
         await session.commit()
 
-        await app["db"].samples.update_one(
-            {"_id": sample_id}, {"$unset": {"files": ""}}
-        )
+        await db.samples.update_one({"_id": sample_id}, {"$unset": {"files": ""}})
 
 
 async def finalize(

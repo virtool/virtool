@@ -2,7 +2,7 @@ from typing import Callable
 
 import aiohttp.web
 
-from virtool.api.custom_json import dumps, pretty_dumps
+from virtool.api.custom_json import dump_bytes, dump_pretty_bytes
 
 
 @aiohttp.web.middleware
@@ -26,8 +26,8 @@ async def middleware(req: aiohttp.web.Request, handler: Callable):
         resp.headers["Content-Type"] = "application/json; charset=utf=8"
 
         if accepts_json:
-            resp.body = dumps(json_data)
+            resp.body = dump_bytes(json_data)
         else:
-            resp.body = pretty_dumps(json_data)
+            resp.body = dump_pretty_bytes(json_data)
 
     return resp

@@ -39,7 +39,8 @@ class TestSimpleMongoFetcher:
             [
                 {"_id": "foo", "name": "Foo", "include": True, "hidden": True},
                 {"_id": "bar", "name": "Bar", "include": True, "hidden": True},
-            ]
+            ],
+            session=None,
         )
 
         if use_projection:
@@ -70,7 +71,8 @@ class TestSimpleMongoFetcher:
             [
                 {"_id": "foo", "name": "Foo", "include": True},
                 {"_id": "bar", "name": "Bar", "include": True},
-            ]
+            ],
+            session=None,
         )
 
         if use_processor:
@@ -132,7 +134,7 @@ class TestIndexesFetcher:
         test_indexes,
         ws,
     ):
-        await mongo.indexes.insert_many(test_indexes)
+        await mongo.indexes.insert_many(test_indexes, session=None)
 
         async def m_indexes_processor(db, document):
             assert db == mongo

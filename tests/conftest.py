@@ -22,6 +22,7 @@ from tests.fixtures.settings import *
 from tests.fixtures.subtractions import *
 from tests.fixtures.config import *
 from tests.fixtures.data import *
+from tests.fixtures.auth import *
 
 
 def pytest_addoption(parser):

@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.utils import get_data_from_app
-from virtool.indexes.db import FILES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
@@ -23,6 +23,7 @@ from virtool.jobs.client import DummyJobsClient
 OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 
 
+@pytest.mark.apitest
 class TestFind:
     async def test(self, mocker, snapshot, fake2, spawn_client, static_time):
         client = await spawn_client(authorize=True)
@@ -34,7 +35,8 @@ class TestFind:
                 [
                     {"_id": "bar", "name": "Bar", "data_type": "genome"},
                     {"_id": "foo", "name": "Foo", "data_type": "genome"},
-                ]
+                ],
+                session=None,
             ),
             client.db.indexes.insert_many(
                 [
@@ -62,7 +64,8 @@ class TestFind:
                         "user": {"id": user.id},
                         "sequence_otu_map": {"foo": "foo_otu"},
                     },
-                ]
+                ],
+                session=None,
             ),
             client.db.history.insert_many(
                 [
@@ -72,7 +75,8 @@ class TestFind:
                     {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
                     {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
                     {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
-                ]
+                ],
+                session=None,
             ),
         )
 
@@ -118,13 +122,15 @@ class TestFind:
                         "reference": {"id": "foo"},
                         "user": {"id": user.id},
                     },
-                ]
+                ],
+                session=None,
             ),
             client.db.references.insert_many(
                 [
                     {"_id": "bar", "name": "Bar", "data_type": "genome"},
                     {"_id": "foo", "name": "Foo", "data_type": "genome"},
-                ]
+                ],
+                session=None,
             ),
         )
 
@@ -134,6 +140,7 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
@@ -143,14 +150,16 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
         client.db.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
         client.db.history.insert_many(
             [
                 {"_id": "0", "index": {"id": "foobar"}, "otu": {"id": "foo"}},
                 {"_id": "1", "index": {"id": "foobar"}, "otu": {"id": "baz"}},
                 {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -199,6 +208,7 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_download_otus_json(
     file_exists, mocker, tmp_path, mongo, spawn_job_client
@@ -239,6 +249,7 @@ async def test_download_otus_json(
         )
 
 
+@pytest.mark.apitest
 class TestCreate:
     async def test(
         self,
@@ -333,6 +344,7 @@ class TestCreate:
             return
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_find_history(error, fake2, static_time, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
@@ -386,13 +398,15 @@ async def test_find_history(error, fake2, static_time, snapshot, spawn_client, r
                     "method_name": "edit_sequence",
                     "index": {"version": 0, "id": "foobar"},
                 },
-            ]
+            ],
+            session=None,
         ),
         client.db.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
                 {"_id": "foo", "name": "Foo", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -406,6 +420,7 @@ async def test_find_history(error, fake2, static_time, snapshot, spawn_client, r
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 404])
 async def test_delete_index(spawn_job_client, error):
     index_id = "index1"
@@ -425,7 +440,7 @@ async def test_delete_index(spawn_job_client, error):
 
     if error != 404:
         await indexes.insert_one(index_document)
-        await history.insert_many(mock_history_documents)
+        await history.insert_many(mock_history_documents, session=None)
 
     response = await client.delete(f"/indexes/{index_id}")
 
@@ -437,6 +452,7 @@ async def test_delete_index(spawn_job_client, error):
             assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
     error,
@@ -461,7 +477,8 @@ async def test_upload(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
                 {"_id": "foo", "name": "Foo", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -508,6 +525,7 @@ async def test_upload(
         ).scalar() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error,
@@ -531,7 +549,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = FILES
+        files = INDEX_FILE_NAMES
 
     if error != "404_reference":
         await client.db.references.insert_one(
@@ -569,6 +587,7 @@ async def test_finalize(
         assert await client.db.otus.find_one("6116cba1") == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_download(status, spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)

@@ -1,10 +1,14 @@
+import os
+
 from asyncio import gather, CancelledError, to_thread
+
 from datetime import datetime
 from logging import getLogger
+from shutil import rmtree
 from typing import Union, Tuple, Dict, Optional
 
 from multidict import MultiDictProxy
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis
 from virtool_core.utils import rm
@@ -12,6 +16,16 @@ from virtool_core.utils import rm
 import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
+
+from virtool.analyses.db import PROJECTION, processor, TARGET_FILES
+from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
+from virtool.analyses.models import AnalysisFile
+from virtool.analyses.utils import (
+    attach_analysis_files,
+    find_nuvs_sequence_by_index,
+    join_analysis_path,
+    move_nuvs_files,
+)
 from virtool.analyses.checks import (
     check_analysis_workflow,
     check_analysis_nuvs_sequence,
@@ -24,7 +38,7 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import attach_analysis_files
 from virtool.api.utils import paginate
-from virtool.blast.models import NuVsBlast
+from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
@@ -41,6 +55,10 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.tasks.progress import (
+    AccumulatingProgressHandlerWrapper,
+    AbstractProgressHandler,
+)
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
 from virtool.utils import wait_for_checks
@@ -320,9 +338,9 @@ class AnalysisData(DataLayerPiece):
 
         async with AsyncSession(self._pg) as session:
             await session.execute(
-                delete(NuVsBlast)
-                .where(NuVsBlast.analysis_id == analysis_id)
-                .where(NuVsBlast.sequence_index == sequence_index)
+                delete(SQLNuVsBlast)
+                .where(SQLNuVsBlast.analysis_id == analysis_id)
+                .where(SQLNuVsBlast.sequence_index == sequence_index)
             )
             await session.commit()
 
@@ -333,7 +351,7 @@ class AnalysisData(DataLayerPiece):
 
             await session.flush()
 
-            blast = NuVsBlast(
+            blast = SQLNuVsBlast(
                 analysis_id=analysis_id,
                 created_at=timestamp,
                 last_checked_at=timestamp,
@@ -379,3 +397,49 @@ class AnalysisData(DataLayerPiece):
         await recalculate_workflow_tags(self._db, document["sample"]["id"])
 
         return await self.get(analysis_id, None)
+
+    async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
+        """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
+
+        count = await self._db.analyses.count_documents({"workflow": "nuvs"})
+
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
+
+        async for analysis in self._db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+
+            old_path = join_analysis_path(
+                self._config.data_path, analysis_id, sample_id
+            )
+
+            target_path = self._config.data_path / "analyses" / analysis_id
+
+            async with AsyncSession(self._pg) as session:
+                exists = (
+                    await session.execute(
+                        select(AnalysisFile).filter_by(analysis=analysis_id)
+                    )
+                ).scalar()
+
+            if await to_thread(old_path.is_dir) and not exists:
+                try:
+                    await to_thread(os.makedirs, target_path)
+                except FileExistsError:
+                    pass
+
+                analysis_files = []
+
+                for filename in sorted(os.listdir(old_path)):
+                    if filename in TARGET_FILES:
+                        analysis_files.append(filename)
+
+                        await move_nuvs_files(filename, old_path, target_path)
+
+                await create_nuvs_analysis_files(
+                    self._pg, analysis_id, analysis_files, target_path
+                )
+
+                await to_thread(rmtree, old_path, ignore_errors=True)
+
+            await tracker.add(1)

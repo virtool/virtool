@@ -5,6 +5,7 @@ from logging import getLogger
 from typing import Optional
 
 from aiohttp import MultipartReader
+import os
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -14,9 +15,10 @@ from virtool_core.models.subtraction import (
     SubtractionSearchResult,
     SubtractionFile,
 )
-from virtool_core.utils import rm
+from virtool_core.utils import rm, compress_file
 
 import virtool.mongo.utils
+import virtool.subtractions.files
 import virtool.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
@@ -32,7 +34,7 @@ from virtool.subtractions.db import (
     PROJECTION,
     unlink_default_subtractions,
 )
-from virtool.subtractions.models import SubtractionFile as SQLSubtractionFile
+from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
     UpdateSubtractionRequest,
@@ -42,6 +44,11 @@ from virtool.subtractions.utils import (
     join_subtraction_path,
     FILES,
     check_subtraction_file_type,
+    join_subtraction_index_path,
+)
+from virtool.tasks.progress import (
+    AbstractProgressHandler,
+    AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
@@ -332,3 +339,74 @@ class SubtractionsData(DataLayerPiece):
             raise ResourceNotFoundError
 
         return FileDescriptor(path=path, size=file["size"])
+
+    async def generate_fasta_file(self, subtraction_id: str):
+        """
+        Generate a FASTA file for a subtraction that has Bowtie2 index files, but no
+        FASTA file.
+
+        """
+        index_path = join_subtraction_index_path(self._config, subtraction_id)
+
+        fasta_path = (
+            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa"
+        )
+
+        proc = await asyncio.create_subprocess_shell(
+            f"bowtie2-inspect {index_path} > {fasta_path}",
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        await proc.communicate()
+
+        target_path = (
+            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
+        )
+
+        await to_thread(compress_file, fasta_path, target_path)
+        await to_thread(rm, fasta_path)
+
+        await self._mongo.subtraction.find_one_and_update(
+            {"_id": subtraction_id}, {"$set": {"has_file": True}}
+        )
+
+    async def rename_and_track_files(self, progress_handler: AbstractProgressHandler):
+        """
+        Rename index files and add a ``files`` field to any legacy subtractions.
+
+        Changes Bowtie2 index name from 'reference' to 'subtraction'.
+
+        """
+        count = await self._mongo.subtraction.count_documents({"deleted": False})
+
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
+
+        async for subtraction in self._mongo.subtraction.find({"deleted": False}):
+            subtraction_id = subtraction["_id"]
+
+            path = join_subtraction_path(self._config, subtraction_id)
+
+            await virtool.subtractions.utils.rename_bowtie_files(path)
+
+            subtraction_files = []
+
+            for filename in sorted(await to_thread(os.listdir, path)):
+                if filename in FILES:
+                    async with AsyncSession(self._pg) as session:
+                        exists = (
+                            await session.execute(
+                                select(SQLSubtractionFile).filter_by(
+                                    subtraction=subtraction_id, name=filename
+                                )
+                            )
+                        ).scalar()
+
+                    if not exists:
+                        subtraction_files.append(filename)
+
+            await virtool.subtractions.files.create_subtraction_files(
+                self._pg, subtraction_id, subtraction_files, path
+            )
+
+            await tracker.add(1)

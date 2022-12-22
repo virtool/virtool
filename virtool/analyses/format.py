@@ -129,8 +129,6 @@ async def format_pathoscope(config, db, document: Dict[str, Any]) -> Dict[str, A
         otu_id, otu_version = otu_specifier
         coros.append(format_pathoscope_hits(config, db, otu_id, otu_version, hits))
 
-    print(document)
-
     return {
         **document,
         "results": {**document["results"], "hits": await gather(*coros)},

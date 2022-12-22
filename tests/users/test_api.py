@@ -37,6 +37,7 @@ async def setup_update_user(fake2, spawn_client):
     return client, group_1, group_2, await fake2.users.create(groups=[group_1])
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "test"])
 async def test_find(find, fake2, snapshot, spawn_client):
     """
@@ -67,6 +68,7 @@ async def test_find(find, fake2, snapshot, spawn_client):
     )
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status,
@@ -94,6 +96,7 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
 async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     """
@@ -149,6 +152,7 @@ async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     assert check_password("hello_world", password)
 
 
+@pytest.mark.apitest
 class TestUpdate:
     async def test(self, setup_update_user, snapshot):
         client, group_1, _, user = setup_update_user
@@ -232,10 +236,58 @@ class TestUpdate:
         assert resp.status == 404
         assert await resp.json() == snapshot
 
-    async def test_deactivate(self, setup_update_user, snapshot):
-        client, _, _, user = setup_update_user
 
-        resp = await client.patch(
-            f"/users/{user.id}",
-            data={"active": False},
-        )
+@pytest.mark.parametrize("user", ["test", "bob"])
+async def test_list_permissions(spawn_client, user, snapshot):
+    client = await spawn_client(authorize=True, permissions=[Permission.create_sample, Permission.create_ref])
+
+    resp = await client.get(
+        f"/users/{user}/permissions",
+    )
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
+@pytest.mark.parametrize(
+    "permission, status",
+    [
+        (Permission.create_sample, 200),
+        ("invalid", 400),
+    ],
+    ids=[
+        "valid_permission",
+        "invalid_permission"
+    ],
+)
+async def test_add_permission(spawn_client, permission, status, snapshot):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    resp = await client.put(
+        f"/users/test/permissions/{permission}", {}
+    )
+
+    assert resp.status == status
+    assert await resp.json() == snapshot()
+
+
+@pytest.mark.parametrize(
+    "permission, status",
+    [
+        (Permission.create_sample, 200),
+        ("invalid", 400),
+    ],
+    ids=[
+        "valid_permission",
+        "invalid_permission"
+    ],
+)
+async def test_remove_permission(spawn_client, permission, status, snapshot):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    resp = await client.delete(
+        f"/users/test/permissions/{permission}"
+    )
+
+    assert resp.status == status
+    assert await resp.json() == snapshot()

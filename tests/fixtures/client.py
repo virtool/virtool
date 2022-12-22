@@ -8,7 +8,7 @@ from virtool_core.models.session import Session
 
 import virtool.app
 import virtool.jobs.main
-from virtool.api.custom_json import dumps
+from virtool.api.custom_json import dump_bytes
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
@@ -69,7 +69,7 @@ def create_app(
     test_db_connection_string,
     test_db_name,
 ):
-    def _create_app(dev: bool = False, base_url: str = ""):
+    def _create_app(dev: bool = False, base_url: str = "", no_tasks: bool = True):
         config = Config(
             base_url=base_url,
             db_connection_string=test_db_connection_string,
@@ -79,6 +79,7 @@ def create_app(
             no_check_db=True,
             no_check_files=True,
             no_fetching=True,
+            no_tasks=no_tasks,
             no_sentry=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
@@ -112,10 +113,11 @@ def spawn_client(
         dev=False,
         enable_api=False,
         groups=None,
+        no_tasks=True,
         permissions=None,
         use_b2c=False,
     ):
-        app = create_app(dev, base_url)
+        app = create_app(dev, base_url, no_tasks)
 
         if groups is not None:
             complete_groups = [
@@ -127,7 +129,7 @@ def spawn_client(
                 for group in groups
             ]
 
-            await mongo.groups.insert_many(complete_groups)
+            await mongo.groups.insert_many(complete_groups, session=None)
 
         user_document = create_user(
             user_id="test",
@@ -145,7 +147,7 @@ def spawn_client(
             session_id = "foobar"
             await redis.set(
                 session_id,
-                dumps(
+                dump_bytes(
                     Session(
                         **{
                             "created_at": virtool.utils.timestamp(),
@@ -222,7 +224,6 @@ def spawn_job_client(
                 no_sentry=True,
                 openfga_host="localhost:8080",
                 openfga_scheme="http",
-
             )
         )
 

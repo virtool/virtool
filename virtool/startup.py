@@ -15,6 +15,7 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
+from virtool.auth.client import AuthorizationClient
 from virtool.auth.utils import connect_openfga
 
 import virtool.mongo.connect
@@ -31,8 +32,7 @@ from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
-    AddIndexFilesTask,
-    AddIndexJSONTask,
+    EnsureIndexFilesTask,
 )
 from virtool.mongo.core import DB
 from virtool.mongo.identifier import RandomIdProvider
@@ -42,7 +42,6 @@ from virtool.pg.testing import create_test_database
 from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
-    DeleteReferenceTask,
 )
 from virtool.routes import setup_routes
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
@@ -246,7 +245,7 @@ async def startup_databases(app: Application):
     openfga_host = app["config"].openfga_host
     openfga_scheme = app["config"].openfga_scheme
 
-    mongo, pg, redis, auth = await asyncio.gather(
+    mongo, pg, redis, openfga_instance = await asyncio.gather(
         virtool.mongo.connect.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
@@ -265,7 +264,7 @@ async def startup_databases(app: Application):
             "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
-            "auth": auth,
+            "auth": AuthorizationClient(mongo, openfga_instance),
         }
     )
 
@@ -381,10 +380,11 @@ async def startup_task_runner(app: Application):
     :param app: the app object
 
     """
+
     if not get_config_from_app(app).no_tasks:
         scheduler = get_scheduler_from_app(app)
         (channel,) = await app["redis"].subscribe("channel:tasks")
-        await scheduler.spawn(TaskRunner(channel, app).run())
+        await scheduler.spawn(TaskRunner(app["data"], channel, app).run())
 
 
 async def startup_tasks(app: Application):
@@ -408,13 +408,11 @@ async def startup_tasks(app: Application):
             WriteSubtractionFASTATask, context={"subtraction": subtraction}
         )
 
-    await tasks_data.create(AddIndexFilesTask)
-    await tasks_data.create(AddIndexJSONTask)
-    await tasks_data.create(DeleteReferenceTask, context={"user_id": "virtool"})
+    await tasks_data.create(EnsureIndexFilesTask)
     await tasks_data.create(AddSubtractionFilesTask)
     await tasks_data.create(StoreNuvsFilesTask)
     await tasks_data.create(CompressSamplesTask)
     await tasks_data.create(MoveSampleFilesTask)
     await tasks_data.create(CleanReferencesTask)
 
-    await scheduler.spawn(tasks_data.create_periodic(MigrateFilesTask, 3600))
+    await scheduler.spawn(tasks_data.create_periodically(MigrateFilesTask, 3600))

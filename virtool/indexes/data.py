@@ -2,17 +2,20 @@ import asyncio
 from asyncio import to_thread
 import logging
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Dict
 
 from multidict import MultiDictProxy
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index, IndexFile
 from virtool_core.models.reference import ReferenceNested
+from virtool_core.utils import file_stats
 
 import virtool.indexes.db
-from virtool.api.custom_json import dumps
+import virtool.history.db
+from virtool.api.custom_json import dump_bytes
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import (
@@ -26,21 +29,46 @@ from virtool.indexes.checks import (
     check_index_files_uploaded,
 )
 from virtool.indexes.db import (
+    INDEX_FILE_NAMES,
     update_last_indexed_versions,
     IndexCountsTransform,
 )
 from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.tasks import get_index_file_type_from_name, export_index
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_one_field
+
+from virtool.mongo.utils import id_exists, get_one_field
+
 from virtool.pg.utils import get_rows
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
+
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
+from virtool.utils import compress_json_with_gzip, wait_for_checks
+
+
 logger = logging.getLogger("indexes")
+
+FIND_PIPELINE = [
+    {"$match": {"ready": True}},
+    {"$sort": {"version": -1}},
+    {
+        "$group": {
+            "_id": "$reference.id",
+            "index_id": {"$first": "$_id"},
+            "version": {"$first": "$version"},
+            "created_at": {"$first": "$created_at"},
+            "has_files": {"$first": "$has_files"},
+            "user": {"$first": "$user"},
+            "ready": {"$first": "$ready"},
+            "job": {"$first": "$job"},
+        }
+    },
+]
 
 
 class IndexData:
@@ -192,7 +220,7 @@ class IndexData:
                 self._mongo, self._config, index["manifest"]
             )
 
-            json_string = dumps(patched_otus)
+            json_string = dump_bytes(patched_otus)
 
             await to_thread(compress_json_with_gzip, json_string, json_path)
 
@@ -284,7 +312,6 @@ class IndexData:
     ) -> HistorySearchResult:
         """
         Find the virus changes that are included in a given index build.
-
         :param index_id: the index ID
         :param req_query: the request query object
         :return: the changes
@@ -312,6 +339,84 @@ class IndexData:
         )
 
         return HistorySearchResult(**data)
+
+    async def ensure_files(self):
+        """Ensure all data files associated with indexes are tracked."""
+        async for index in self._mongo.indexes.find({"ready": True}):
+            index_id = index["_id"]
+
+            index_path = join_index_path(
+                self._config.data_path, index["reference"]["id"], index_id
+            )
+
+            await self._ensure_json(
+                index_path,
+                index["reference"]["id"],
+                index["manifest"],
+            )
+
+            async with AsyncSession(self._pg) as session:
+                first = (
+                    await session.execute(
+                        select(SQLIndexFile).where(SQLIndexFile.index == index_id)
+                    )
+                ).first()
+
+                if first:
+                    continue
+
+                session.add_all(
+                    [
+                        SQLIndexFile(
+                            name=path.name,
+                            index=index_id,
+                            type=get_index_file_type_from_name(path.name),
+                            size=(await to_thread(file_stats, path))["size"],
+                        )
+                        for path in sorted(index_path.iterdir())
+                        if path.name in INDEX_FILE_NAMES
+                    ]
+                )
+
+                await session.commit()
+
+    async def _ensure_json(
+        self,
+        path: Path,
+        ref_id: str,
+        manifest: Dict,
+    ):
+        """
+        Ensure that a there is a compressed JSON representation of the index found at
+        `path`` exists.
+
+        :param path: the path to the index directory
+        :param ref_id: the id of the parent reference
+        :param manifest: the otu id-version manifest for the index
+        """
+        json_path = path / "reference.json.gz"
+
+        if await to_thread(json_path.is_file):
+            return
+
+        reference = await self._mongo.references.find_one(
+            ref_id, ["data_type", "organism", "targets"]
+        )
+
+        index_data = await export_index(self._config.data_path, self._mongo, manifest)
+
+        await to_thread(
+            compress_json_with_gzip,
+            dump_bytes(
+                {
+                    "data_type": reference["data_type"],
+                    "organism": reference["organism"],
+                    "otus": index_data,
+                    "targets": reference.get("targets"),
+                }
+            ),
+            json_path,
+        )
 
     async def delete(self, index_id: str):
         """

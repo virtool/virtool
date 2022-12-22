@@ -1,9 +1,9 @@
 import asyncio
-from operator import itemgetter
 
 import pytest
 
 
+@pytest.mark.apitest
 async def test_find(snapshot, spawn_client, test_changes, static_time):
     """
     Test that a list of processed change documents are returned with a ``200`` status.
@@ -15,7 +15,7 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
         client.db.references.insert_one(
             {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
         ),
-        client.db.history.insert_many(test_changes),
+        client.db.history.insert_many(test_changes, session=None),
     )
 
     resp = await client.get("/history")
@@ -24,6 +24,7 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_time):
     """
@@ -33,7 +34,7 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
     client = await spawn_client(authorize=True)
 
     await asyncio.gather(
-        client.db.history.insert_many(test_changes),
+        client.db.history.insert_many(test_changes, session=None),
         client.db.references.insert_one(
             {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
         ),
@@ -51,6 +52,7 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
 async def test_revert(

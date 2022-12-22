@@ -119,7 +119,7 @@ async def test_archive(mongo, fake2, jobs_data: JobsData, pg, snapshot, static_t
 
 
 async def test_force_delete_jobs(mongo, jobs_data: JobsData):
-    await mongo.jobs.insert_many([{"_id": "foo"}, {"_id": "bar"}])
+    await mongo.jobs.insert_many([{"_id": "foo"}, {"_id": "bar"}], session=None)
 
     await jobs_data.force_delete()
 

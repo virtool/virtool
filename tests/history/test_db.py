@@ -13,7 +13,13 @@ class TestAdd:
         old, new = test_otu_edit
 
         change = await virtool.history.db.add(
-            mongo, config, HistoryMethod.edit, old, new, f"Edited {new['name']}", "test"
+            mongo,
+            config.data_path,
+            HistoryMethod.edit,
+            old,
+            new,
+            f"Edited {new['name']}",
+            "test",
         )
 
         assert change == snapshot
@@ -89,7 +95,8 @@ async def test_get_most_recent_change(exists, snapshot, mongo, static_time):
                     "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 2},
                     "index": {"id": "unbuilt"},
                 },
-            ]
+            ],
+            session=None,
         )
 
     return_value = await virtool.history.db.get_most_recent_change(mongo, "6116cba1")

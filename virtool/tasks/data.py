@@ -1,16 +1,16 @@
 import asyncio
-from asyncio import CancelledError
 from typing import List, Type, Optional, Dict
 
 from aioredis import Redis
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.tasks.models import Task as SQLTask
-from virtool.tasks.task import Task as TaskClass
+from virtool.tasks.oas import TaskUpdate
+from virtool.tasks.task import BaseTask
 
 
 class TasksData:
@@ -49,53 +49,12 @@ class TasksData:
 
         raise ResourceNotFoundError
 
-    async def register(self, task_class: Type[TaskClass], context: dict = None) -> Task:
-        """
-        Create a new task record and store it.
-
-        :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
-        :param context: A dict containing data used by the task
-
-        :return: the new task record
-
-        """
-        task = SQLTask(
-            complete=False,
-            context=context or {},
-            step=task_class.task_type,
-            count=0,
-            created_at=virtool.utils.timestamp(),
-            progress=0,
-            type=task_class.task_type,
-        )
-
-        async with AsyncSession(self._pg) as session:
-            session.add(task)
-            await session.flush()
-            document = task.to_dict()
-            await session.commit()
-
-        return Task(**document)
-
-    async def update(
-        self,
-        task_id: int,
-        count: int = None,
-        progress: int = None,
-        step: str = None,
-        context_update: dict = None,
-        error: str = None,
-    ) -> Task:
+    async def update(self, task_id: int, task_update: TaskUpdate) -> Task:
         """
         Update a task record with given `task_id`
 
-        :param task_id: ID of the task
-        :param count: a counter that can be used to calculate progress
-        :param progress: task progress for the current step
-        :param step: the step of the current task
-        :param context_update: a dict containing data to be updated for context
-        :param error: the error for the current task
-
+        :param task_id: the id of the task
+        :param task_update: as task update object
         :return: the task record
 
         """
@@ -103,21 +62,16 @@ class TasksData:
             result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
 
-            if count is not None:
-                task.count = count
+            data = task_update.dict(exclude_unset=True)
 
-            if progress is not None:
-                task.progress = progress
+            if "progress" in data:
+                task.progress = data["progress"]
 
-            if step:
-                task.step = step
+            if "error" in data:
+                task.error = data["error"]
 
-            if error is not None:
-                task.error = error
-
-            if context_update:
-                for key, value in context_update.items():
-                    task.context[key] = value
+            if "step" in data:
+                task.step = data["step"]
 
             task = Task(**task.to_dict())
 
@@ -129,16 +83,21 @@ class TasksData:
         """
         Update a task record as completed.
 
-        Set complete to True and progress to 100
+        Set complete to ``true`` and progress to ``100``.
 
-        :param task_id: ID of the task
+        :param task_id: id of the task
 
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
+
+            if task.complete:
+                raise ValueError("Task is already complete")
+
             task.complete = True
             task.progress = 100
+
             await session.commit()
 
     async def remove(self, task_id: int):
@@ -155,7 +114,7 @@ class TasksData:
 
             await session.commit()
 
-    async def create(self, task_class: Type[TaskClass], context: dict = None) -> Task:
+    async def create(self, task_class: Type[BaseTask], context: dict = None) -> Task:
         """
         Register a new task.
 
@@ -164,35 +123,44 @@ class TasksData:
         :return: the task record
 
         """
-        try:
-            task = await self.register(task_class, context=context)
-            await self._redis.publish("channel:tasks", task.id)
-            return task
+        task = SQLTask(
+            complete=False,
+            context=context or {},
+            step=task_class.name,
+            count=0,
+            created_at=virtool.utils.timestamp(),
+            progress=0,
+            type=task_class.name,
+        )
 
-        except CancelledError:
-            pass
+        async with AsyncSession(self._pg) as session:
+            session.add(task)
+            await session.flush()
+            task = Task(**task.to_dict())
+            await session.commit()
 
-    async def create_periodic(
+        await self._redis.publish("channel:tasks", task.id)
+
+        return task
+
+    async def create_periodically(
         self,
-        task_class: Type[TaskClass],
+        cls: Type[BaseTask],
         interval: int = None,
         context: Optional[Dict] = None,
-    ) -> Task:
+    ):
         """
         Register a new task that will be run regularly at the given interval.
 
-        :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
+        :param cls: a task class
         :param interval: a time interval
-        :param context:A dict containing data used by the task
+        :param context: a dict containing data used by the task
         :return: the task record
 
         """
         try:
             while True:
-                task = await self.register(task_class, context=context)
-                await self._redis.publish("channel:tasks", task.id)
+                await self.create(cls, context=context)
                 await asyncio.sleep(interval)
-
-                return task
         except asyncio.CancelledError:
             pass

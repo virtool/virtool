@@ -5,8 +5,8 @@ from typing import Dict
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.utils import file_stats
 
-import virtool.analyses.utils
 from virtool.analyses.models import AnalysisFile
+from virtool.analyses.utils import check_nuvs_file_type
 
 
 async def create_analysis_file(
@@ -54,7 +54,7 @@ async def create_nuvs_analysis_files(
     analysis_files = []
 
     for filename in files:
-        file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
+        file_type = check_nuvs_file_type(filename)
 
         if not filename.endswith(".tsv"):
             filename += ".gz"

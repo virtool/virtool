@@ -93,6 +93,33 @@
     'primary_group': None,
   }
 ---
+# name: test_add_permission[uvloop-invalid_permission]
+  <class 'list'> [
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'cancel_job',
+          'create_ref',
+          'create_sample',
+          'modify_hmm',
+          'modify_subtraction',
+          'remove_file',
+          'remove_job',
+          'upload_file',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'permission',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'cancel_job', 'create_ref', 'create_sample', 'modify_hmm', 'modify_subtraction', 'remove_file', 'remove_job', 'upload_file'",
+      'type': 'type_error.enum',
+    },
+  ]
+---
+# name: test_add_permission[uvloop-valid_permission]
+  True
+---
 # name: test_create[uvloop-None]
   <class 'dict'> {
     'active': True,
@@ -300,4 +327,45 @@
     'id': 'not_found',
     'message': 'Not found',
   }
+---
+# name: test_list_permissions[uvloop-bob]
+  <class 'list'> [
+  ]
+---
+# name: test_list_permissions[uvloop-test]
+  <class 'list'> [
+    <class 'dict'> {
+      'id': 'create_ref',
+    },
+    <class 'dict'> {
+      'id': 'create_sample',
+    },
+  ]
+---
+# name: test_remove_permission[uvloop-invalid_permission]
+  <class 'list'> [
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'cancel_job',
+          'create_ref',
+          'create_sample',
+          'modify_hmm',
+          'modify_subtraction',
+          'remove_file',
+          'remove_job',
+          'upload_file',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'permission',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'cancel_job', 'create_ref', 'create_sample', 'modify_hmm', 'modify_subtraction', 'remove_file', 'remove_job', 'upload_file'",
+      'type': 'type_error.enum',
+    },
+  ]
+---
+# name: test_remove_permission[uvloop-valid_permission]
+  True
 ---

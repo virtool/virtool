@@ -8,7 +8,12 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
-    ApiClient, OpenFgaApi,
+    ApiClient,
+    OpenFgaApi,
+    WriteRequest,
+    TupleKey,
+    ApiException,
+    TupleKeys,
 )
 from openfga_sdk.api import open_fga_api
 
@@ -18,7 +23,7 @@ logger = getLogger("openfga")
 async def connect_openfga(openfga_host: str, openfga_scheme: str):
     """
     Connects to an OpenFGA server and configures the store id.
-    Returns the application client object.
+    Returns the application client instance.
     """
     configuration = openfga_sdk.Configuration(
         api_scheme=openfga_scheme, api_host=openfga_host
@@ -41,7 +46,7 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
         logger.critical("Could not connect")
         sys.exit(1)
 
-    return api_client
+    return api_instance
 
 
 async def get_or_create_store(api_instance: OpenFgaApi):
@@ -75,7 +80,7 @@ async def write_auth_model(api_instance: OpenFgaApi):
         type_definitions = WriteAuthorizationModelRequest(
             type_definitions=[
                 TypeDefinition(
-                    type="instance",
+                    type="app",
                     relations=dict(
                         cancel_job=Userset(
                             this={},
@@ -103,6 +108,14 @@ async def write_auth_model(api_instance: OpenFgaApi):
                         ),
                     ),
                 ),
+                TypeDefinition(
+                    type="group",
+                    relations=dict(
+                        member=Userset(
+                            this={},
+                        )
+                    ),
+                ),
             ],
         )
 
@@ -117,3 +130,27 @@ async def check_openfga_version(client: ApiClient):
     """
 
     logger.info("Found OpenFGA %s", client.user_agent)
+
+
+async def write_tuple(
+    api_instance, user_type, user_id, relations, object_type, object_name
+):
+    """
+    Write a relationship tuple in OpenFGA.
+    """
+
+    tuple_list = [
+        TupleKey(
+            user=f"{user_type}:{user_id}",
+            relation=relation,
+            object=f"{object_type}:{object_name}",
+        )
+        for relation in relations
+    ]
+
+    body = WriteRequest(writes=TupleKeys(tuple_keys=tuple_list))
+
+    try:
+        await api_instance.write(body)
+    except ApiException:
+        pass

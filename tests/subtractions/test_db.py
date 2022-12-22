@@ -21,7 +21,7 @@ from virtool.subtractions.db import (
 )
 async def test_attach_subtractions(documents, mongo, snapshot):
     await mongo.subtraction.insert_many(
-        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
+        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}], session=None
     )
 
     result = await apply_transforms(documents, [AttachSubtractionTransform(mongo)])
@@ -35,7 +35,8 @@ async def test_get_linked_samples(mongo):
             {"_id": "foo", "name": "Foo", "subtractions": ["1", "5", "3"]},
             {"_id": "bar", "name": "Bar", "subtractions": ["2", "5", "8"]},
             {"_id": "baz", "name": "Baz", "subtractions": ["2"]},
-        ]
+        ],
+        session=None,
     )
 
     samples = await virtool.subtractions.db.get_linked_samples(mongo, "5")
@@ -49,7 +50,8 @@ async def test_unlink_default_subtractions(mongo):
             {"_id": "foo", "subtractions": ["1", "2", "3"]},
             {"_id": "bar", "subtractions": ["2", "5", "8"]},
             {"_id": "baz", "subtractions": ["2"]},
-        ]
+        ],
+        session=None,
     )
 
     async with mongo.create_session() as session:

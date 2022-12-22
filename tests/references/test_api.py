@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import gather
 from pathlib import Path
 
 import pytest
@@ -11,12 +10,12 @@ from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.utils import get_data_from_app
-from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import Task as SQLTask
 
 
+@pytest.mark.apitest
 async def test_find(spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authorize=True, administrator=True)
 
@@ -48,7 +47,8 @@ async def test_find(spawn_client, pg, snapshot, fake2, static_time):
                 "user": {"id": user_1.id},
                 "groups": [],
             },
-        ]
+        ],
+        session=None,
     )
 
     task_1 = SQLTask(
@@ -85,6 +85,7 @@ async def test_find(spawn_client, pg, snapshot, fake2, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [404, None])
 async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authorize=True, administrator=True)
@@ -147,6 +148,7 @@ async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestCreate:
     @pytest.mark.parametrize("data_type", ["genome", "barcode"])
     async def test_create(self, data_type, snapshot, spawn_client, static_time):
@@ -206,22 +208,6 @@ class TestCreate:
         assert reference == snapshot(
             matcher=path_type({"id": (str,)}),
         )
-
-        task_id = reference["task"]["id"]
-
-        while True:
-            await asyncio.sleep(1)
-
-            task: SQLTask = await get_row_by_id(pg, SQLTask, task_id)
-
-            if task.complete:
-                assert await gather(
-                    client.db.otus.count_documents({}),
-                    client.db.sequences.count_documents({}),
-                    client.db.history.count_documents({}),
-                ) == [20, 26, 20]
-
-                break
 
     async def test_clone_reference(
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
@@ -290,6 +276,7 @@ class TestCreate:
         )
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize(
     "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
@@ -358,7 +345,7 @@ async def test_edit(
     can_modify = error != "403"
 
     mocker.patch(
-        "virtool.references.db.check_right", make_mocked_coro(return_value=can_modify)
+        "virtool.references.api.check_right", make_mocked_coro(return_value=can_modify)
     )
 
     resp = await client.patch("/refs/foo", data)
@@ -391,6 +378,7 @@ async def test_edit(
     assert await client.db.references.find_one() == snapshot(name="db")
 
 
+@pytest.mark.apitest
 async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
@@ -429,10 +417,11 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
     resp = await client.delete("/refs/foo")
 
     assert await client.db.references.count_documents({}) == 0
-    assert await resp.json() == snapshot
-    assert resp.status == 202
+    assert await resp.text() == ""
+    assert resp.status == 204
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
     client = await spawn_client(authorize=True)
@@ -499,6 +488,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
     m_fetch_and_update_release.assert_called_with(client.app, "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
 async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, snapshot):
     client = await spawn_client(authorize=True)
@@ -544,6 +534,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, sna
     m_get_one_field.assert_called_with(client.db.references, "updates", "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400"])
 async def test_update(
     error,
@@ -636,6 +627,7 @@ async def test_update(
     assert m_update.call_args[0] == snapshot(name="call")
 
 
+@pytest.mark.apitest
 class TestCreateOTU:
     @pytest.mark.parametrize("exists", [True, False])
     @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
@@ -746,6 +738,7 @@ class TestCreateOTU:
         assert resp.status == 201
 
 
+@pytest.mark.apitest
 async def test_create_index(
     fake2, mocker, snapshot, spawn_client, check_ref_right, resp_is
 ):
@@ -792,6 +785,7 @@ async def test_create_index(
     m_create_manifest.assert_called_with(client.db, "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_add_group_or_user(
@@ -858,6 +852,7 @@ async def test_add_group_or_user(
     assert await client.db.references.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_edit_group_or_user(
@@ -918,6 +913,7 @@ async def test_edit_group_or_user(
     assert await client.db.references.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_delete_group_or_user(

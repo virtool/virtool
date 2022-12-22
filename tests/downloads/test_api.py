@@ -1,6 +1,7 @@
 import pytest
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_all(get, missing, spawn_client):
@@ -35,7 +36,7 @@ async def test_all(get, missing, spawn_client):
             }
         )
 
-    await client.db.sequences.insert_many(sequences)
+    await client.db.sequences.insert_many(sequences, session=None)
 
     url = "/download/otus/foobar"
 
