@@ -38,4 +38,3 @@ class Permission(Base):
     description = Column(String)
     resource_type = Column(Enum(ResourceType))
     action = Column(Enum(ActionType))
-
