@@ -22,6 +22,7 @@ def files(test_files_path, tmp_path):
     return data
 
 
+@pytest.mark.apitest
 async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -34,7 +35,8 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
             [
                 {"_id": "foo", "data_type": "genome", "name": "Foo"},
                 {"_id": "baz", "data_type": "genome", "name": "Baz"},
-            ]
+            ],
+            session=None,
         ),
         client.db.samples.insert_one(
             {
@@ -93,7 +95,8 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "subtractions": [],
                     "foobar": False,
                 },
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -103,6 +106,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
 async def test_get(
@@ -136,7 +140,8 @@ async def test_get(
 
     await asyncio.gather(
         client.db.subtraction.insert_many(
-            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}]
+            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
+            session=None,
         ),
         client.db.references.insert_one(
             {"_id": "baz", "data_type": "genome", "name": "Baz"}
@@ -207,6 +212,7 @@ async def test_get(
         assert not m_format_analysis.called
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
 async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
     client = await spawn_client(authorize=True)
@@ -265,6 +271,7 @@ async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
     assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
     error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path
@@ -314,6 +321,7 @@ async def test_upload_file(
         await resp_is.invalid_query(resp, {"name": ["required field"]})
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
 async def test_download_analysis_result(
@@ -358,6 +366,7 @@ async def test_download_analysis_result(
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("extension", ["csv", "xlsx", "bug"])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_download_analysis_document(extension, exists, mocker, spawn_client):
@@ -386,6 +395,7 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
         assert resp.status == 200
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"],
@@ -475,6 +485,7 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
 async def test_finalize(
     fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
@@ -530,6 +541,7 @@ async def test_finalize(
         assert document["ready"] is True
 
 
+@pytest.mark.apitest
 async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
     user = await fake2.users.create()
 

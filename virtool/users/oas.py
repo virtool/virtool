@@ -41,3 +41,20 @@ class UpdateUserRequest(BaseModel):
     )
 
     _prevent_none = prevent_none("administrator", "force_reset", "groups", "password")
+
+
+class PermissionsResponse(BaseModel):
+    class Config:
+        schema_extra = {
+            "example": [
+                "create_ref",
+                "create_sample",
+            ]
+        }
+
+
+class PermissionResponse(BaseModel):
+    class Config:
+        schema_extra = {
+            "example": True
+        }

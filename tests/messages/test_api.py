@@ -6,7 +6,6 @@ from virtool.messages.models import SQLInstanceMessage
 
 @pytest.fixture()
 async def insert_test_message(fake2, pg, static_time):
-
     async def insert(active=True):
         user = await fake2.users.create()
 
@@ -27,10 +26,9 @@ async def insert_test_message(fake2, pg, static_time):
     return insert
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(
-    error, spawn_client, insert_test_message, snapshot
-):
+async def test_get(error, spawn_client, insert_test_message, snapshot):
     """
     Test that a ``GET /instance_message`` return the active instance message.
 
@@ -50,6 +48,7 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 async def test_create(static_time, spawn_client, snapshot):
     """
     Test that a newly active instance message can be added
@@ -58,21 +57,26 @@ async def test_create(static_time, spawn_client, snapshot):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    resp = await client.put("/instance_message", {"color": "red", "message": "This is a new message"})
+    resp = await client.put(
+        "/instance_message", {"color": "red", "message": "This is a new message"}
+    )
 
     assert resp.status == 200
 
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestUpdate:
     async def test_active(self, spawn_client, insert_test_message, snapshot):
         client = await spawn_client(authorize=True, administrator=True)
 
-
         await insert_test_message()
 
-        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change test message content"})
+        resp = await client.patch(
+            "/instance_message",
+            {"color": "grey", "message": "Change test message content"},
+        )
 
         assert resp.status == 200
         assert await resp.json() == snapshot
@@ -80,7 +84,10 @@ class TestUpdate:
     async def test_not_found(self, spawn_client, snapshot):
         client = await spawn_client(authorize=True, administrator=True)
 
-        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change test message content"})
+        resp = await client.patch(
+            "/instance_message",
+            {"color": "grey", "message": "Change test message content"},
+        )
 
         assert resp.status == 404
 
@@ -89,7 +96,10 @@ class TestUpdate:
 
         await insert_test_message(active=False)
 
-        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change test message content"})
+        resp = await client.patch(
+            "/instance_message",
+            {"color": "grey", "message": "Change test message content"},
+        )
 
         await resp_is.conflict(resp, "No active message set")
 
@@ -98,6 +108,9 @@ class TestUpdate:
 
         await insert_test_message()
 
-        resp = await client.patch("/instance_message", {"color": "grey", "message": "Change message", "active": False})
+        resp = await client.patch(
+            "/instance_message",
+            {"color": "grey", "message": "Change message", "active": False},
+        )
 
         assert await resp.json() == snapshot

@@ -21,6 +21,7 @@ from virtool.shutdown import (
     shutdown_executors,
     shutdown_redis,
     shutdown_scheduler,
+    shutdown_authorization_client,
 )
 from virtool.startup import (
     startup_b2c,
@@ -89,14 +90,14 @@ def create_app(config: Config):
         [
             startup_version,
             startup_events,
+            startup_http_client,
             startup_databases,
             startup_dispatcher,
-            startup_http_client,
             startup_paths,
             startup_routes,
             startup_executors,
-            startup_task_runner,
             startup_data,
+            startup_task_runner,
             startup_tasks,
             startup_settings,
             startup_sentry,
@@ -112,6 +113,7 @@ def create_app(config: Config):
 
     app.on_shutdown.extend(
         [
+            shutdown_authorization_client,
             shutdown_client,
             shutdown_dispatcher,
             shutdown_executors,

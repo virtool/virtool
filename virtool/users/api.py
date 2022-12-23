@@ -1,15 +1,17 @@
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
+from virtool_core.models.enums import Permission
 from virtool_core.models.user import User
 
 import virtool.http.auth
 import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.auth.relationships import UserPermissions
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import (
@@ -23,7 +25,7 @@ from virtool.users.checks import check_password_length
 from virtool.users.oas import (
     UpdateUserRequest,
     CreateUserRequest,
-    CreateFirstUserRequest,
+    CreateFirstUserRequest, PermissionsResponse, PermissionResponse,
 )
 
 routes = Routes()
@@ -203,3 +205,52 @@ class UserView(PydanticView):
             raise NotFound("User does not exist")
 
         return json_response(user)
+
+
+@routes.view("/users/{user_id}/permissions")
+class PermissionsView(PydanticView):
+    async def get(self, user_id: str, /) -> r200[PermissionsResponse]:
+        """
+        List all permissions that a user has on the application.
+
+        Status Codes:
+            200: Successful operation
+        """
+        abs_client = self.request.app["auth"]
+
+        permission_list = await abs_client.list_permissions(user_id, "app", "virtool")
+
+        permission_list = [{"id": permission} for permission in permission_list]
+
+        return json_response(permission_list)
+
+
+@routes.view("/users/{user_id}/permissions/{permission}")
+class PermissionView(PydanticView):
+    @policy(AdministratorRoutePolicy)
+    async def put(self, user_id: str, permission: Permission, /) -> r200[PermissionResponse]:
+        """
+        Add a permission for a user
+
+        Status Codes:
+            200: Successful operation
+        """
+        abs_client = self.request.app["auth"]
+
+        await abs_client.add(UserPermissions(user_id, [permission]))
+
+        return json_response(True)
+
+    @policy(AdministratorRoutePolicy)
+    async def delete(self, user_id: str, permission: Permission, /) -> r200[PermissionResponse]:
+        """
+        Delete a permission for a user
+
+        Status Codes:
+            200: Successful operation
+        """
+        abs_client = self.request.app["auth"]
+
+        await abs_client.remove(UserPermissions(user_id, [permission]))
+
+        return json_response(True)

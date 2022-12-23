@@ -3,6 +3,7 @@ from typing import List
 import pytest
 
 
+@pytest.mark.apitest
 class TestFind:
     async def test_find(self, fake2, snapshot, spawn_client):
         """
@@ -25,7 +26,8 @@ class TestFind:
                 },
                 {"_id": "bar", "name": "Bar", "labels": [label_1.id, label_2.id]},
                 {"_id": "baz", "name": "Baz", "labels": [label_2.id]},
-            ]
+            ],
+            session=None,
         )
 
         resp = await client.get("/labels")
@@ -55,6 +57,7 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(status, fake2, spawn_client, snapshot):
     """
@@ -71,7 +74,8 @@ async def test_get(status, fake2, spawn_client, snapshot):
             {"_id": "foo", "name": "Foo", "labels": [label_1.id]},
             {"_id": "bar", "name": "Bar", "labels": [label_2.id]},
             {"_id": "baz", "name": "Baz", "labels": [label_1.id]},
-        ]
+        ],
+        session=None,
     )
 
     resp = await client.get(f"/labels/{22 if status == 404 else label_1.id}")
@@ -80,6 +84,7 @@ async def test_get(status, fake2, spawn_client, snapshot):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
 async def test_create(error, fake2, spawn_client, test_random_alphanumeric, resp_is):
     """
@@ -119,6 +124,7 @@ async def test_create(error, fake2, spawn_client, test_random_alphanumeric, resp
     }
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
     """
@@ -135,7 +141,8 @@ async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
             {"_id": "foo", "name": "Foo", "labels": [label_1.id]},
             {"_id": "bar", "name": "Bar", "labels": [label_2.id]},
             {"_id": "baz", "name": "Baz", "labels": [label_1.id]},
-        ]
+        ],
+        session=None,
     )
 
     data = {}
@@ -177,6 +184,7 @@ async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
     status,
@@ -198,14 +206,14 @@ async def test_remove(
     label_3 = await fake2.labels.create()
 
     await client.db.subtraction.insert_many(
-        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
+        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}], session=None
     )
 
     mock_samples[0].update({"labels": [label_1.id, label_3.id]})
     mock_samples[1].update({"labels": [label_2.id, label_3.id]})
     mock_samples[2].update({"labels": [label_1.id]})
 
-    await client.db.samples.insert_many(mock_samples)
+    await client.db.samples.insert_many(mock_samples, session=None)
 
     resp = await client.delete(f"/labels/{22 if status == 404 else label_1.id}")
 
@@ -220,6 +228,7 @@ async def test_remove(
         assert label_3.id in label_ids_in_samples
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
 async def test_is_valid_hex_color(value, spawn_client, resp_is):
     """

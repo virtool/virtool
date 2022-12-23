@@ -2,6 +2,7 @@ import pytest
 from virtool_core.models.enums import Permission
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("archived", [True, False, None])
 @pytest.mark.parametrize("state", ["running", None])
 @pytest.mark.parametrize("users", [None, "bob", ["bob", "test"]])
@@ -38,6 +39,7 @@ async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
         assert all(job["state"] == state for job in body["documents"])
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("job_filter", [None, "finished", "complete", "failed"])
 async def test_delete(job_filter, fake2, spawn_client, test_job, resp_is, snapshot):
     client = await spawn_client(authorize=True, permissions=[Permission.remove_job])
@@ -59,6 +61,7 @@ async def test_delete(job_filter, fake2, spawn_client, test_job, resp_is, snapsh
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
@@ -85,6 +88,7 @@ async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
     assert "key" not in body
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_acquire(
     error, mocker, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
@@ -122,6 +126,7 @@ async def test_acquire(
     assert "key" in body
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_archive(
     error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
@@ -153,6 +158,7 @@ async def test_archive(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 404])
 async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is):
 
@@ -176,6 +182,7 @@ async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, r
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error", [None, "not_found", "invalid_archived", "none_archived"]
 )
@@ -244,6 +251,7 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
     assert body == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
@@ -287,6 +295,7 @@ async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test
     assert "key" not in body
 
 
+@pytest.mark.apitest
 class TestPushStatus:
     @pytest.mark.parametrize("error", [None, 404, 409])
     async def test(self, error, snapshot, resp_is, spawn_client, static_time, test_job):

@@ -104,7 +104,7 @@ class SamplesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy(Permission.create_sample))
+    @policy(PermissionsRoutePolicy("app", "virtool", Permission.create_sample))
     async def post(
         self, data: CreateSampleRequest
     ) -> Union[r201[CreateSampleResponse], r400, r403]:

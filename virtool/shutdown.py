@@ -22,6 +22,20 @@ async def shutdown_client(app: Application):
         pass
 
 
+async def shutdown_authorization_client(app: Application):
+    """
+    Attempt to close the OpenFGA client session.
+
+    :param app: The application object
+    """
+    logger.info("Stopping OpenFGA client")
+
+    try:
+        await app["auth"].open_fga.close()
+    except KeyError:
+        pass
+
+
 async def shutdown_dispatcher(app: Application):
     """
     Attempt to close the app's `Dispatcher` object.

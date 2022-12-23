@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.apitest
 async def test_delete_tokens(spawn_client):
     """
     Assert that id_token cookie is deleted from response at /oidc/delete_tokens endpoint

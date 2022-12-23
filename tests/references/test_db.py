@@ -130,7 +130,8 @@ async def test_create_manifest(mongo, test_otu):
             dict(test_otu, _id="foo", version=5),
             dict(test_otu, _id="baz", version=3, reference={"id": "123"}),
             dict(test_otu, _id="bar", version=11),
-        ]
+        ],
+        session=None,
     )
 
     assert await virtool.references.db.get_manifest(mongo, "hxn167") == {

@@ -1,6 +1,9 @@
 import asyncio
+import shutil
 from asyncio import to_thread
+from functools import cached_property
 from pathlib import Path
+from typing import List, Dict
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
@@ -31,6 +34,10 @@ from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
+from virtool.tasks.progress import (
+    AbstractProgressHandler,
+    AccumulatingProgressHandlerWrapper,
+)
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.db import AttachUserTransform
 
@@ -41,6 +48,11 @@ class HmmData(DataLayerPiece):
         self._config = config
         self._mongo = mongo
         self._pg = pg
+
+    @cached_property
+    def profiles_path(self) -> Path:
+        """The path to the HMM profiles file in the application data."""
+        return self._config.data_path / "hmm" / "profiles.hmm"
 
     async def find(self, query: MultiDictProxy):
         db_query = {}
@@ -128,6 +140,55 @@ class HmmData(DataLayerPiece):
 
         return HMMInstalled(**installed)
 
+    async def install(
+        self,
+        annotations: List[Dict],
+        release,
+        user_id: str,
+        progress_handler: AbstractProgressHandler,
+        hmm_temp_profile_path,
+    ):
+        """
+        Installs annotation and profiles given a list of annotation dictionaries and
+        path to profile file.
+
+        """
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(annotations))
+
+        try:
+            release_id = int(release["id"])
+        except TypeError:
+            release_id = release["id"]
+
+        async with self._mongo.create_session() as session:
+
+            for annotation in annotations:
+                await self._mongo.hmm.insert_one(
+                    dict(annotation, hidden=False), session=session
+                )
+                await tracker.add(1)
+
+            await self._mongo.status.update_one(
+                {"_id": "hmm", "updates.id": release_id},
+                {
+                    "$set": {
+                        "installed": create_update_subdocument(release, True, user_id),
+                        "updates.$.ready": True,
+                    }
+                },
+                session=session,
+            )
+
+            try:
+                await to_thread(
+                    shutil.move,
+                    str(hmm_temp_profile_path),
+                    str(self.profiles_path),
+                )
+            except Exception:
+                await session.abort_transaction()
+                raise
+
     async def get_profiles_path(self) -> Path:
         file_path = self._config.data_path / "hmm" / "profiles.hmm"
 
@@ -149,3 +210,16 @@ class HmmData(DataLayerPiece):
         await to_thread(compress_file_with_gzip, json_path, path)
 
         return path
+
+    async def clean_status(self):
+        """
+        Reset the HMM status to its starting state.
+
+        This is called in the event that an HMM data installation fails.
+        """
+        async with self._mongo.create_session() as session:
+            await self._mongo.status.find_one_and_update(
+                {"_id": "hmm"},
+                {"$set": {"installed": None, "task": None, "updates": []}},
+                session=session,
+            )

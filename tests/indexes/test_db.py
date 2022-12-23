@@ -43,7 +43,7 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, mongo):
     if not exists:
         test_indexes = [dict(i, ready=False, has_files=False) for i in test_indexes]
 
-    await mongo.indexes.insert_many(test_indexes)
+    await mongo.indexes.insert_many(test_indexes, session=None)
 
     ref_id = "hxn167" if has_ref else "foobar"
 
@@ -62,7 +62,7 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, mongo):
 @pytest.mark.parametrize("has_ref", [True, False])
 async def test_get_next_version(empty, has_ref, test_indexes, mongo):
     if not empty:
-        await mongo.indexes.insert_many(test_indexes)
+        await mongo.indexes.insert_many(test_indexes, session=None)
 
     expected = 4
 
@@ -83,7 +83,8 @@ async def test_processor(snapshot, fake2, mongo):
             {"_id": "bar.1", "index": {"id": "baz"}, "otu": {"id": "bar"}},
             {"_id": "bar.2", "index": {"id": "baz"}, "otu": {"id": "bar"}},
             {"_id": "far.0", "index": {"id": "boo"}, "otu": {"id": "foo"}},
-        ]
+        ],
+        session=None,
     )
 
     assert (

@@ -100,7 +100,8 @@ class TestUpdate:
                         "_id": "kings",
                         "permissions": {**no_permissions, "create_ref": True},
                     },
-                ]
+                ],
+                session=None,
             ),
         )
 

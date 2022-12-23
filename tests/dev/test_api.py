@@ -1,6 +1,7 @@
 import pytest
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("dev", [True, False])
 async def test_dev_mode(dev, spawn_client):
     """
