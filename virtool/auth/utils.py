@@ -106,6 +106,30 @@ async def write_auth_model(api_instance: OpenFgaApi):
                         upload_file=Userset(
                             this={},
                         ),
+                        create_user=Userset(
+                            this={},
+                        ),
+                        update_user=Userset(
+                            this={},
+                        ),
+                        delete_user=Userset(
+                            this={},
+                        ),
+                        update_user_permissions=Userset(
+                            this={},
+                        ),
+                        update_settings=Userset(
+                            this={},
+                        ),
+                        create_group=Userset(
+                            this={},
+                        ),
+                        update_group=Userset(
+                            this={},
+                        ),
+                        delete_group=Userset(
+                            this={},
+                        ),
                     ),
                 ),
                 TypeDefinition(
