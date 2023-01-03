@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, Integer, String
+from sqlalchemy import Column, Enum, String
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
@@ -16,7 +16,8 @@ class ResourceType(str, SQLEnum):
 
 class Action(str, SQLEnum):
     """
-    Conserved actions that can be performed on a resource and are controlled by permissions.
+    Conserved actions that can be performed on a resource and
+    are controlled by permissions.
     """
 
     create = "create"

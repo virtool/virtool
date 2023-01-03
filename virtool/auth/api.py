@@ -22,7 +22,8 @@ class SourceView(PydanticView):
 
         Lists all Virtool permissions.
 
-        The list can be filtered by resource type using the `resource_type` query parameter.
+        The list can be filtered by resource type using the
+        `resource_type` query parameter.
 
         Status Codes:
             200: Successful operation
