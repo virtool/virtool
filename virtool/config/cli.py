@@ -14,6 +14,15 @@ from virtool.config.cls import Config
 logger = getLogger("config")
 
 
+def validate_data(ctx, param, value):
+    path = Path(value)
+
+    if not path.exists():
+        raise click.BadParameter("Data path does not exist")
+
+    return path
+
+
 def create_default_map():
     try:
         with open("./config.json", "r") as f:
@@ -34,6 +43,7 @@ def entry():
 )
 @click.option(
     "--data-path",
+    callback=validate_data,
     default="data",
     help="The path to the application data directory",
     type=click.Path(),
@@ -111,7 +121,7 @@ def cli(
     ctx.obj.update(
         {
             "base_url": base_url,
-            "data_path": Path(data_path),
+            "data_path": data_path,
             "db_connection_string": db_connection_string,
             "db_name": db_name,
             "dev": dev,
