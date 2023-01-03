@@ -3,15 +3,15 @@
     <class 'dict'> {
       'action': 'create',
       'description': 'Required for creating a sample',
-      'id': 1,
-      'name': 'create_sample',
+      'id': 'create_sample',
+      'name': 'Create Sample',
       'resource_type': 'app',
     },
     <class 'dict'> {
       'action': 'modify',
       'description': 'Required for modifying a subtraction',
-      'id': 2,
-      'name': 'modify_subtraction',
+      'id': 'modify_subtraction',
+      'name': 'Modify Subtraction',
       'resource_type': 'app',
     },
   ]
@@ -21,15 +21,15 @@
     <class 'dict'> {
       'action': 'create',
       'description': 'Required for creating a sample',
-      'id': 1,
-      'name': 'create_sample',
+      'id': 'create_sample',
+      'name': 'Create Sample',
       'resource_type': 'app',
     },
     <class 'dict'> {
       'action': 'modify',
       'description': 'Required for modifying a subtraction',
-      'id': 2,
-      'name': 'modify_subtraction',
+      'id': 'modify_subtraction',
+      'name': 'Modify Subtraction',
       'resource_type': 'app',
     },
   ]

@@ -6,7 +6,7 @@ from virtool.pg.utils import SQLEnum
 
 class ResourceType(str, SQLEnum):
     """
-    Enumerated resource type for permissions
+    Types of resources a permission can apply to (e.g. 'app', 'sample', 'group').
 
     """
 
@@ -14,10 +14,11 @@ class ResourceType(str, SQLEnum):
     group = "group"
 
 
-class ActionType(str, SQLEnum):
+class Action(str, SQLEnum):
     """
-    Enumerated action type for permissions
+    Conserved actions that can be performed on a resource and are controlled by permissions.
     """
+
     create = "create"
     update = "update"
     delete = "delete"
@@ -25,7 +26,7 @@ class ActionType(str, SQLEnum):
     remove = "remove"
 
 
-class Permission(Base):
+class SQLPermission(Base):
     """
     SQL model to store permissions
 
@@ -33,8 +34,8 @@ class Permission(Base):
 
     __tablename__ = "permissions"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True)
     name = Column(String)
     description = Column(String)
     resource_type = Column(Enum(ResourceType))
-    action = Column(Enum(ActionType))
+    action = Column(Enum(Action))

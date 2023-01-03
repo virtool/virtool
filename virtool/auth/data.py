@@ -1,14 +1,17 @@
+from typing import List
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.auth.models import Permission as SQLPermission
+from virtool.auth.models import SQLPermission
+from virtool_core.models.auth import PermissionMinimal
 
 
 class AuthData:
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
-    async def find(self, resource_type):
+    async def find(self, resource_type) -> List[PermissionMinimal]:
         """
         List all possible permissions.
 
@@ -23,4 +26,6 @@ class AuthData:
         async with AsyncSession(self._pg) as session:
             result = await session.execute(statement)
 
-        return [permission.to_dict() for permission in result.scalars()]
+        return [
+            PermissionMinimal(**permission.to_dict()) for permission in result.scalars()
+        ]

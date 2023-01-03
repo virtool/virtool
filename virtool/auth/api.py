@@ -3,7 +3,6 @@ from typing import Optional
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200
 
-
 from virtool.api.response import json_response
 from virtool.auth.models import ResourceType
 from virtool.auth.oas import ListPermissionsResponse
@@ -14,12 +13,16 @@ routes = Routes()
 
 
 @routes.view("/source/permissions")
-class ReferenceView(PydanticView):
-    async def get(self, resource_type: Optional[ResourceType] = None) -> r200[ListPermissionsResponse]:
+class SourceView(PydanticView):
+    async def get(
+        self, resource_type: Optional[ResourceType] = None
+    ) -> r200[ListPermissionsResponse]:
         """
-        Lists permissions.
+        List permissions.
 
-        Lists all permissions depending on the resource type.
+        Lists all Virtool permissions.
+
+        The list can be filtered by resource type using the `resource_type` query parameter.
 
         Status Codes:
             200: Successful operation

@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
 
-from virtool.auth.models import Permission as SQLPermission, ResourceType, ActionType
+from virtool.auth.models import SQLPermission, ResourceType, Action
 
 
 @pytest.mark.apitest
@@ -17,28 +17,27 @@ async def test_find(spawn_client, resource, status, pg, snapshot):
         session.add_all(
             [
                 SQLPermission(
-                    id=1,
-                    name=Permission.create_sample,
+                    id=Permission.create_sample,
+                    name="Create Sample",
                     resource_type=ResourceType.app,
-                    action=ActionType.create,
+                    action=Action.create,
                     description="Required for creating a sample",
                 ),
                 SQLPermission(
-                    id=2,
-                    name=Permission.modify_subtraction,
+                    id=Permission.modify_subtraction,
+                    name="Modify Subtraction",
                     resource_type=ResourceType.app,
-                    action=ActionType.modify,
+                    action=Action.modify,
                     description="Required for modifying a subtraction",
-
                 ),
             ]
         )
         await session.commit()
 
-    url = "/source/permissions?"
+    url = "/source/permissions"
 
     if resource:
-        url += f"resource_type={resource}"
+        url += f"?resource_type={resource}"
 
     resp = await client.get(url)
 
