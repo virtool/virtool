@@ -1,0 +1,58 @@
+# name: test_find[uvloop-None-200]
+  <class 'list'> [
+    <class 'dict'> {
+      'action': 'create',
+      'description': 'Required for creating a sample',
+      'id': 'create_sample',
+      'name': 'Create Sample',
+      'resource_type': 'app',
+    },
+    <class 'dict'> {
+      'action': 'modify',
+      'description': 'Required for modifying a subtraction',
+      'id': 'modify_subtraction',
+      'name': 'Modify Subtraction',
+      'resource_type': 'app',
+    },
+  ]
+---
+# name: test_find[uvloop-app-200]
+  <class 'list'> [
+    <class 'dict'> {
+      'action': 'create',
+      'description': 'Required for creating a sample',
+      'id': 'create_sample',
+      'name': 'Create Sample',
+      'resource_type': 'app',
+    },
+    <class 'dict'> {
+      'action': 'modify',
+      'description': 'Required for modifying a subtraction',
+      'id': 'modify_subtraction',
+      'name': 'Modify Subtraction',
+      'resource_type': 'app',
+    },
+  ]
+---
+# name: test_find[uvloop-group-200]
+  <class 'list'> [
+  ]
+---
+# name: test_find[uvloop-invalid-400]
+  <class 'list'> [
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'app',
+          'group',
+        ],
+      },
+      'in': 'query string',
+      'loc': <class 'list'> [
+        'resource_type',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'app', 'group'",
+      'type': 'type_error.enum',
+    },
+  ]
+---
