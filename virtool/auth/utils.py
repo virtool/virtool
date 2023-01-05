@@ -76,50 +76,56 @@ async def write_auth_model(api_instance: OpenFgaApi):
     """
     response = await api_instance.read_authorization_models()
 
-    if not response.authorization_models:
-        type_definitions = WriteAuthorizationModelRequest(
-            type_definitions=[
-                TypeDefinition(
-                    type="app",
-                    relations=dict(
-                        cancel_job=Userset(
-                            this={},
-                        ),
-                        create_ref=Userset(
-                            this={},
-                        ),
-                        create_sample=Userset(
-                            this={},
-                        ),
-                        modify_hmm=Userset(
-                            this={},
-                        ),
-                        modify_subtraction=Userset(
-                            this={},
-                        ),
-                        remove_file=Userset(
-                            this={},
-                        ),
-                        remove_job=Userset(
-                            this={},
-                        ),
-                        upload_file=Userset(
-                            this={},
-                        ),
+    type_definitions = WriteAuthorizationModelRequest(
+        type_definitions=[
+            TypeDefinition(
+                type="app",
+                relations=dict(
+                    cancel_job=Userset(
+                        this={},
+                    ),
+                    create_ref=Userset(
+                        this={},
+                    ),
+                    create_sample=Userset(
+                        this={},
+                    ),
+                    modify_hmm=Userset(
+                        this={},
+                    ),
+                    modify_subtraction=Userset(
+                        this={},
+                    ),
+                    remove_file=Userset(
+                        this={},
+                    ),
+                    remove_job=Userset(
+                        this={},
+                    ),
+                    upload_file=Userset(
+                        this={},
                     ),
                 ),
-                TypeDefinition(
-                    type="group",
-                    relations=dict(
-                        member=Userset(
-                            this={},
-                        )
-                    ),
+            ),
+            TypeDefinition(
+                type="group",
+                relations=dict(
+                    member=Userset(
+                        this={},
+                    )
                 ),
-            ],
-        )
+            ),
+        ],
+    )
 
-        await api_instance.write_authorization_model(type_definitions)
+    if (
+        response.authorization_models
+        and response.authorization_models[0].type_definitions
+        == type_definitions.type_definitions
+    ):
+        return
+
+    await api_instance.write_authorization_model(type_definitions)
 
 
 async def check_openfga_version(client: ApiClient):
