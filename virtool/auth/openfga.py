@@ -12,15 +12,14 @@ from openfga_sdk import (
     ApiException,
     OpenFgaApi,
 )
-from virtool_core.models.enums import Permission
-
+from virtool.auth.permissions import PermissionType
 from virtool.auth.relationships import BaseRelationship, GroupPermissions
 
 
 async def check_in_open_fga(
     api_instance: OpenFgaApi,
     user_id: str,
-    permission: Permission,
+    permission: PermissionType,
     object_type: str,
     object_id: Union[str, int],
 ) -> bool:
@@ -43,7 +42,7 @@ async def check_in_open_fga(
 
 async def list_permissions_in_open_fga(
     api_instance: OpenFgaApi, user_id: str, object_type: str, object_id: Union[str, int]
-) -> List[Permission]:
+) -> List[PermissionType]:
     """
     List permissions for a user in OpenFGA.
     """
@@ -84,7 +83,7 @@ async def add_in_open_fga(api_instance: OpenFgaApi, relationship: BaseRelationsh
             tuple_keys=[
                 TupleKey(
                     user=f"{relationship.user_type}:{relationship.user_id}{group_membership}",
-                    relation=relation,
+                    relation=relation.name,
                     object=f"{relationship.object_type}:{relationship.object_name}",
                 )
                 for relation in relationship.relations
@@ -112,7 +111,7 @@ async def remove_in_open_fga(api_instance: OpenFgaApi, relationship: BaseRelatio
             tuple_keys=[
                 TupleKey(
                     user=f"{relationship.user_type}:{relationship.user_id}{group_membership}",
-                    relation=relation,
+                    relation=relation.name,
                     object=f"{relationship.object_type}:{relationship.object_name}",
                 )
                 for relation in relationship.relations
@@ -131,7 +130,7 @@ async def list_group_permissions(
     group: str,
     object_type: str,
     object_id: Union[str, int],
-) -> List[Permission]:
+) -> List[PermissionType]:
     """
     List the permissions for a group in OpenFGA.
     """

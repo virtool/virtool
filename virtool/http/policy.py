@@ -6,8 +6,8 @@ from aiohttp import web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
-from virtool_core.models.enums import Permission
 
+from virtool.auth.permissions import PermissionType
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient
 
@@ -47,7 +47,7 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
 
 
 class PermissionsRoutePolicy(DefaultRoutePolicy):
-    def __init__(self, object_type, object_id, permission: Permission):
+    def __init__(self, object_type, object_id, permission: PermissionType):
         self.object_type = object_type
         self.object_id = object_id
         self.permission = permission

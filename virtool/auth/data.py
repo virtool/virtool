@@ -1,10 +1,10 @@
 from typing import List
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.auth.models import SQLPermission
 from virtool_core.models.auth import PermissionMinimal
+
+from virtool.auth.permissions import AppPermissions, GroupPermissions
 
 
 class AuthData:
@@ -18,14 +18,33 @@ class AuthData:
         :return: a list of all permissions
 
         """
-        statement = select(SQLPermission)
-
-        if resource_type:
-            statement = statement.filter_by(resource_type=resource_type)
-
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(statement)
-
-        return [
-            PermissionMinimal(**permission.to_dict()) for permission in result.scalars()
+        app_permissions = [
+            PermissionMinimal(
+                id=permission.value.id,
+                name=permission.value.name,
+                resource_type=permission.value.resource_type,
+                action=permission.value.action,
+                description=permission.value.description,
+            )
+            for permission in AppPermissions
         ]
+
+        group_permissions = [
+            PermissionMinimal(
+                id=permission.value.id,
+                name=permission.value.name,
+                resource_type=permission.value.resource_type,
+                action=permission.value.action,
+                description=permission.value.description,
+            )
+            for permission in GroupPermissions
+        ]
+
+        if not resource_type:
+            return [*app_permissions, *group_permissions]
+
+        if resource_type.value == "app":
+            return app_permissions
+
+        if resource_type.value == "group":
+            return group_permissions

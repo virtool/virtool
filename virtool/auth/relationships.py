@@ -1,7 +1,6 @@
 from typing import List
 
-from virtool_core.models.enums import Permission
-
+from virtool.auth.permissions import PermissionType
 from virtool.data.errors import ResourceNotFoundError
 from virtool.errors import DatabaseError
 from virtool.groups.db import update_member_users, get_merged_permissions
@@ -39,9 +38,7 @@ class GroupMemberships(BaseRelationship):
         except DatabaseError as err:
             raise ResourceNotFoundError(str(err))
 
-        await mongo.users.update_one(
-            {"_id": self.user_id}, {"$set": update}
-        )
+        await mongo.users.update_one({"_id": self.user_id}, {"$set": update})
 
     async def remove(self, mongo: DB):
         groups = await get_one_field(mongo.users, "groups", {"_id": self.user_id}) or []
@@ -51,15 +48,16 @@ class GroupMemberships(BaseRelationship):
 
         groups.remove(self.object_name)
 
-        update = {"groups": groups, "permissions": await get_merged_permissions(mongo, groups)}
+        update = {
+            "groups": groups,
+            "permissions": await get_merged_permissions(mongo, groups),
+        }
 
-        await mongo.users.update_one(
-            {"_id": self.user_id}, {"$set": update}
-        )
+        await mongo.users.update_one({"_id": self.user_id}, {"$set": update})
 
 
 class GroupPermissions(BaseRelationship):
-    def __init__(self, group_id, relations: List[Permission]):
+    def __init__(self, group_id, relations: List[PermissionType]):
         super().__init__(relations)
         self.user_id = group_id
         self.user_type = "group"
@@ -84,10 +82,10 @@ class GroupPermissions(BaseRelationship):
 
         async with mongo.create_session() as session:
             await mongo.groups.update_one(
-                    {"_id": self.user_id},
-                    {"$set": update},
-                    session=session,
-                )
+                {"_id": self.user_id},
+                {"$set": update},
+                session=session,
+            )
 
             await update_member_users(mongo, self.user_id, session=session)
 
@@ -111,10 +109,10 @@ class GroupPermissions(BaseRelationship):
 
         async with mongo.create_session() as session:
             await mongo.groups.update_one(
-                    {"_id": self.user_id},
-                    {"$set": update},
-                    session=session,
-                )
+                {"_id": self.user_id},
+                {"$set": update},
+                session=session,
+            )
 
             await update_member_users(mongo, self.user_id, session=session)
 

@@ -8,6 +8,7 @@ from pydantic import Field, conint
 from virtool_core.models.job import JobMinimal, JobSearchResult
 
 from virtool.api.response import NotFound, json_response
+from virtool.auth.permissions import AppPermissions
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotFoundError,
@@ -20,7 +21,6 @@ from virtool.jobs.oas import (
     JobResponse,
     ArchiveJobsRequest,
 )
-from virtool.users.utils import Permission
 
 logger = getLogger(__name__)
 
@@ -57,7 +57,7 @@ class JobsView(PydanticView):
             )
         )
 
-    @policy(PermissionsRoutePolicy("app", "virtool", Permission.remove_job))
+    @policy(PermissionsRoutePolicy("app", "virtool", AppPermissions.remove_job))
     async def delete(
         self,
         job_filter: Optional[str] = Field(
@@ -127,7 +127,7 @@ class JobView(PydanticView):
 
         return json_response(document)
 
-    @policy(PermissionsRoutePolicy("app", "virtool", Permission.remove_job))
+    @policy(PermissionsRoutePolicy("app", "virtool", AppPermissions.remove_job))
     async def delete(self, job_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete a job.
@@ -210,7 +210,7 @@ async def archive(req):
 
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
-    @policy(PermissionsRoutePolicy("app", "virtool", Permission.cancel_job))
+    @policy(PermissionsRoutePolicy("app", "virtool", AppPermissions.cancel_job))
     async def put(self, job_id: str, /) -> Union[r200[JobResponse], r403, r404, r409]:
         """
         Cancel a job.

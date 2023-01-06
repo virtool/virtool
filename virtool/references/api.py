@@ -9,11 +9,11 @@ from aiohttp.web_exceptions import (
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
-from virtool_core.models.enums import Permission
 from virtool_core.models.otu import OTU
 
 from virtool.api.response import InsufficientRights
 from virtool.api.response import NotFound, json_response
+from virtool.auth.permissions import AppPermissions
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
@@ -76,7 +76,7 @@ class ReferencesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy("app", "virtool", Permission.create_ref))
+    @policy(PermissionsRoutePolicy("app", "virtool", AppPermissions.create_ref))
     async def post(
         self, data: CreateReferenceRequest
     ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:
