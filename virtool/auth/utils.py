@@ -82,14 +82,14 @@ async def write_auth_model(api_instance: OpenFgaApi):
     app_definition = TypeDefinition(
         type="app",
         relations={
-            permission.value.id: Userset(this={}) for permission in AppPermissions
+            permission.name: Userset(this={}) for permission in AppPermissions
         },
     )
 
     group_definition = TypeDefinition(
         type="group",
         relations={
-            permission.value.id: Userset(this={}) for permission in GroupPermissions
+            permission.name: Userset(this={}) for permission in GroupPermissions
         },
     )
 

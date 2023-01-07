@@ -11,7 +11,8 @@ class AuthData:
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
-    async def find(self, resource_type) -> List[PermissionMinimal]:
+    @staticmethod
+    async def find(resource_type) -> List[PermissionMinimal]:
         """
         List all possible permissions.
 
@@ -20,7 +21,7 @@ class AuthData:
         """
         app_permissions = [
             PermissionMinimal(
-                id=permission.value.id,
+                id=permission.name,
                 name=permission.value.name,
                 resource_type=permission.value.resource_type,
                 action=permission.value.action,
@@ -31,7 +32,7 @@ class AuthData:
 
         group_permissions = [
             PermissionMinimal(
-                id=permission.value.id,
+                id=permission.name,
                 name=permission.value.name,
                 resource_type=permission.value.resource_type,
                 action=permission.value.action,

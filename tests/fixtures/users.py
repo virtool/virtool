@@ -1,6 +1,5 @@
 import pytest
 
-from virtool.auth.permissions import AppPermissions
 from virtool.users.utils import Permission
 
 
