@@ -66,7 +66,10 @@ async def test_create_api_key(
         "id": "foo_0",
         "name": "Foo",
         "created_at": static_time.datetime,
-        "groups": [{"id": group1.id, "name": group1.name}, {"id": group2.id, "name": group2.name}, ],
+        "groups": [
+            {"id": group1.id, "name": group1.name},
+            {"id": group2.id, "name": group2.name},
+        ],
         "permissions": permissions,
     }
 

@@ -1,4 +1,3 @@
-import datetime
 from typing import Union, Tuple, List
 
 from aioredis import Redis
@@ -7,7 +6,11 @@ from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
 
 import virtool.utils
-from virtool.account.db import compose_password_update, API_KEY_PROJECTION, fetch_complete_key
+from virtool.account.db import (
+    compose_password_update,
+    API_KEY_PROJECTION,
+    fetch_complete_key,
+)
 from virtool.account.oas import (
     UpdateSettingsRequest,
     CreateKeysRequest,
