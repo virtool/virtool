@@ -2,7 +2,9 @@
 Work with the current user account and its API keys.
 
 """
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+from virtool_core.models.account import APIKey
 
 import virtool.users.utils
 import virtool.utils
@@ -61,6 +63,37 @@ async def get_alternate_id(db, name: str) -> str:
             return candidate
 
         suffix += 1
+
+
+async def fetch_complete_key(mongo, key_id: str) -> Optional[APIKey]:
+    async for key in mongo.keys.aggregate(
+        [
+            {"$match": {"id": key_id}},
+            {
+                "$lookup": {
+                    "from": "groups",
+                    "localField": "groups",
+                    "foreignField": "_id",
+                    "as": "groups",
+                }
+            },
+            {
+                "$project": {
+                    "_id": False,
+                    "id": True,
+                    "administrator": True,
+                    "name": True,
+                    "groups": True,
+                    "permissions": True,
+                    "created_at": True,
+                }
+            },
+        ]
+    ):
+
+        return APIKey(**key)
+
+    return None
 
 
 API_KEY_PROJECTION = {

@@ -1,3 +1,4 @@
+import datetime
 from typing import Union, Tuple, List
 
 from aioredis import Redis
@@ -6,7 +7,7 @@ from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
 
 import virtool.utils
-from virtool.account.db import compose_password_update, API_KEY_PROJECTION
+from virtool.account.db import compose_password_update, API_KEY_PROJECTION, fetch_complete_key
 from virtool.account.oas import (
     UpdateSettingsRequest,
     CreateKeysRequest,
@@ -133,7 +134,7 @@ class AccountData(DataLayerPiece):
         """
         cursor = self._db.keys.find({"user.id": user_id}, API_KEY_PROJECTION)
 
-        return [APIKey(**d) async for d in cursor]
+        return [await fetch_complete_key(self._db, d["id"]) async for d in cursor]
 
     async def create_key(
         self, data: CreateKeysRequest, user_id: str
@@ -176,10 +177,7 @@ class AccountData(DataLayerPiece):
 
         await self._db.keys.insert_one(document)
 
-        del document["_id"]
-        del document["user"]
-
-        return raw, APIKey(**document)
+        return raw, await fetch_complete_key(self._db, document["id"])
 
     async def delete_keys(self, user_id: str):
         """
