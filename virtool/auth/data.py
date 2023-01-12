@@ -7,10 +7,9 @@ from virtool.auth.client import AuthorizationClient
 from virtool.auth.models import SQLPermission
 from virtool.auth.openfga import list_all_groups
 from virtool.auth.relationships import GroupPermissions
+from virtool.mongo.core import DB
 
 from virtool_core.models.auth import PermissionMinimal
-
-from virtool.mongo.core import DB
 
 
 class AuthData:
