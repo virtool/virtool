@@ -66,7 +66,7 @@ def spawn_auth_client(mongo, create_user):
                     user_id="test",
                     permissions=permissions,
                 )
-            ),
+            )
 
         open_fga_instance = await connect_openfga("localhost:8080", "http")
 

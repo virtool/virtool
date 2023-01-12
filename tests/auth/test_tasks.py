@@ -3,7 +3,6 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
 
-from virtool.auth.openfga import list_group_permissions
 from virtool.auth.tasks import SyncPermissionsTask
 from virtool.auth.utils import write_tuple
 from virtool.tasks.models import Task
