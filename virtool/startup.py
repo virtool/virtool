@@ -16,6 +16,7 @@ from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
 from virtool.auth.client import AuthorizationClient
+from virtool.auth.tasks import SyncPermissionsTask
 from virtool.auth.utils import connect_openfga
 
 import virtool.mongo.connect
@@ -116,7 +117,12 @@ async def startup_data(app: App):
     """
 
     app["data"] = create_data_layer(
-        app["db"], app["pg"], app["config"], app["client"], app["redis"]
+        app["db"],
+        app["pg"],
+        app["config"],
+        app["client"],
+        app["redis"],
+        app["auth"],
     )
 
 
@@ -414,5 +420,6 @@ async def startup_tasks(app: Application):
     await tasks_data.create(CompressSamplesTask)
     await tasks_data.create(MoveSampleFilesTask)
     await tasks_data.create(CleanReferencesTask)
+    await tasks_data.create(SyncPermissionsTask)
 
     await scheduler.spawn(tasks_data.create_periodically(MigrateFilesTask, 3600))

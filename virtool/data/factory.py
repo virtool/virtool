@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
+from virtool.auth.client import AuthorizationClient
 from virtool.auth.data import AuthData
 from virtool.blast.data import BLASTData
 from virtool.config import Config
@@ -34,7 +35,12 @@ if TYPE_CHECKING:
 
 
 def create_data_layer(
-    db: "DB", pg: AsyncEngine, config: Config, client, redis: Redis
+    db: "DB",
+    pg: AsyncEngine,
+    config: Config,
+    client,
+    redis: Redis,
+    auth: AuthorizationClient,
 ) -> DataLayer:
     """
     Create and return a data layer object.
@@ -44,12 +50,13 @@ def create_data_layer(
     :param config: the application config object
     :param client: an async HTTP client session for the server
     :param redis: the redis object
+    :param auth: the authorization client object
     :return: the application data layer
     """
     data_layer = DataLayer(
         AccountData(db, redis),
         AnalysisData(db, config, pg),
-        AuthData(pg),
+        AuthData(auth, pg, db),
         BLASTData(client, db, pg),
         GroupsData(db),
         HistoryData(config.data_path, db),

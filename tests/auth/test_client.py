@@ -1,11 +1,8 @@
 import asyncio
 
-import openfga_sdk
 import pytest
-from openfga_sdk.api import open_fga_api
 from virtool_core.models.enums import Permission
 
-from virtool.auth.client import AuthorizationClient
 from virtool.auth.mongo import check_in_mongo, list_permissions_in_mongo
 from virtool.auth.openfga import (
     check_in_open_fga,
@@ -17,45 +14,7 @@ from virtool.auth.relationships import (
     UserPermissions,
     GroupMemberships,
 )
-from virtool.auth.utils import write_tuple, connect_openfga
-
-
-@pytest.fixture()
-def spawn_auth_client(mongo, create_user):
-    async def func(
-        permissions=None,
-    ):
-        user_document = create_user(
-            user_id="test",
-            permissions=permissions,
-        )
-        _, open_fga_instance = await asyncio.gather(
-            mongo.users.insert_one(user_document),
-            connect_openfga("localhost:8080", "http"),
-        )
-
-        return AuthorizationClient(mongo, open_fga_instance)
-
-    return func
-
-
-@pytest.fixture()
-async def delete_store():
-    """
-    Delete stores.
-    """
-
-    configuration = openfga_sdk.Configuration(
-        api_scheme="http", api_host="localhost:8080"
-    )
-    api_client = open_fga_api.ApiClient(configuration)
-    api_instance = open_fga_api.OpenFgaApi(api_client)
-
-    response = await api_instance.list_stores()
-
-    for store in response.stores:
-        configuration.store_id = store.id
-        await api_instance.delete_store()
+from virtool.auth.utils import write_tuple
 
 
 class TestCheck:

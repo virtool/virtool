@@ -1,0 +1,7 @@
+# name: test_sync[uvloop]
+  <class 'list'> [
+    'cancel_job',
+    'create_sample',
+    'modify_subtraction',
+  ]
+---

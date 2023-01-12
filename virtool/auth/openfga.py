@@ -16,6 +16,8 @@ from virtool_core.models.enums import Permission
 
 from virtool.auth.relationships import BaseRelationship, GroupPermissions
 
+import re
+
 
 async def check_in_open_fga(
     api_instance: OpenFgaApi,
@@ -158,3 +160,26 @@ async def list_groups(api_instance: OpenFgaApi, user_id: str) -> List[str]:
     groups = [relation_tuple.key.object for relation_tuple in response.tuples]
 
     return groups
+
+
+async def list_all_groups(api_instance: OpenFgaApi) -> List[str]:
+    body = ReadRequest(
+        tuple_key=TupleKey(
+            object="app:virtool",
+        ),
+    )
+
+    group_list = []
+
+    response = await api_instance.read(body)
+
+    for relation_tuple in response.tuples:
+        user_string = relation_tuple.key.user
+        pattern = re.compile(r"(group):(.*)#(.*)")
+
+        search = re.search(pattern, user_string)
+
+        if search and search.group(2) not in group_list:
+            group_list.append(search.group(2))
+
+    return group_list
