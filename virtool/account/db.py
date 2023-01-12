@@ -2,7 +2,7 @@
 Work with the current user account and its API keys.
 
 """
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from virtool_core.models.account import APIKey
 
@@ -65,7 +65,13 @@ async def get_alternate_id(db, name: str) -> str:
         suffix += 1
 
 
-async def fetch_complete_key(mongo, key_id: str) -> Optional[APIKey]:
+async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
+    """
+    Fetch an API key that contains complete group data.
+
+    :param mongo: the application database object
+    :param key_id: the API key id
+    """
     async for key in mongo.keys.aggregate(
         [
             {"$match": {"id": key_id}},

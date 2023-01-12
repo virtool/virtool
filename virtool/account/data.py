@@ -9,7 +9,7 @@ import virtool.utils
 from virtool.account.db import (
     compose_password_update,
     API_KEY_PROJECTION,
-    fetch_complete_key,
+    fetch_complete_api_key,
 )
 from virtool.account.oas import (
     UpdateSettingsRequest,
@@ -135,9 +135,33 @@ class AccountData(DataLayerPiece):
         :param user_id: the user ID
         :return: the api keys
         """
-        cursor = self._db.keys.find({"user.id": user_id}, API_KEY_PROJECTION)
-
-        return [await fetch_complete_key(self._db, d["id"]) async for d in cursor]
+        return [
+            APIKey(**key)
+            async for key in self._db.keys.aggregate(
+                [
+                    {"$match": {"user.id": user_id}},
+                    {
+                        "$lookup": {
+                            "from": "groups",
+                            "localField": "groups",
+                            "foreignField": "_id",
+                            "as": "groups",
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": False,
+                            "id": True,
+                            "administrator": True,
+                            "name": True,
+                            "groups": True,
+                            "permissions": True,
+                            "created_at": True,
+                        }
+                    },
+                ]
+            )
+        ]
 
     async def create_key(
         self, data: CreateKeysRequest, user_id: str
@@ -180,7 +204,7 @@ class AccountData(DataLayerPiece):
 
         await self._db.keys.insert_one(document)
 
-        return raw, await fetch_complete_key(self._db, document["id"])
+        return raw, await fetch_complete_api_key(self._db, document["id"])
 
     async def delete_keys(self, user_id: str):
         """
