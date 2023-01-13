@@ -8,7 +8,6 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
-    ApiClient,
     OpenFgaApi,
     WriteRequest,
     TupleKey,
@@ -45,6 +44,7 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
         sys.exit(1)
 
     return api_instance
+
 
 async def get_or_create_store(api_instance: OpenFgaApi):
     """
@@ -124,6 +124,7 @@ async def write_auth_model(api_instance: OpenFgaApi):
         return
 
     await api_instance.write_authorization_model(type_definitions)
+
 
 async def write_tuple(
     api_instance, user_type, user_id, relations, object_type, object_name
