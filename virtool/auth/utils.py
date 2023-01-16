@@ -54,7 +54,7 @@ async def get_or_create_store(api_instance: OpenFgaApi):
     """
     response = await api_instance.list_stores()
 
-    logger.info("OpenFGA Connection Successful")
+    logger.info("Connected to OpenFGA")
 
     if response.stores:
         logger.info("Found existing store")
