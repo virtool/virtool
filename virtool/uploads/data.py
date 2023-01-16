@@ -18,7 +18,7 @@ from virtool.uploads.db import finalize
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import AttachUserTransform
 
-logger = getLogger(__name__)
+logger = getLogger("uploads")
 
 
 class UploadsData(DataLayerPiece):
@@ -34,6 +34,9 @@ class UploadsData(DataLayerPiece):
         Find and filter uploads.
         """
 
+        if paginate:
+            return await self._find_beta(user, page, per_page, upload_type)
+
         filters = [SQLUpload.removed == False, SQLUpload.ready == True]
         uploads = []
 
@@ -44,43 +47,60 @@ class UploadsData(DataLayerPiece):
             if upload_type:
                 filters.append(SQLUpload.type == upload_type)
 
-            if not paginate:
-                results = await session.execute(
-                    select(SQLUpload)
-                    .filter(*filters)
-                    .order_by(SQLUpload.created_at.desc())
-                )
-
-                for result in results.unique().scalars().all():
-                    uploads.append(result.to_dict())
-
-                return [
-                    UploadMinimal(**upload)
-                    for upload in await apply_transforms(
-                        uploads, [AttachUserTransform(self._db)]
-                    )
-                ]
-
-            skip_count = 0
-
-            if page > 1:
-                skip_count = (page - 1) * per_page
-
-            total_query = select(
-                func.count(SQLUpload.id).over().label("total")
-            ).subquery()
-
-            found_query = (
-                select(func.count(SQLUpload.id).over().label("found"))
-                .filter(*filters)
-                .subquery()
+            results = await session.execute(
+                select(SQLUpload).filter(*filters).order_by(SQLUpload.created_at.desc())
             )
 
+            for result in results.unique().scalars().all():
+                uploads.append(result.to_dict())
+
+            return [
+                UploadMinimal(**upload)
+                for upload in await apply_transforms(
+                    uploads, [AttachUserTransform(self._db)]
+                )
+            ]
+
+    async def _find_beta(
+        self, user, page: int, per_page: int, upload_type
+    ) -> UploadSearchResult:
+        base_filters = [
+            SQLUpload.ready == True,
+            SQLUpload.removed == False,
+            SQLUpload.reserved == False,
+        ]
+
+        filters = []
+
+        if user:
+            filters.append(SQLUpload.user == user)
+
+        if upload_type:
+            filters.append(SQLUpload.type == upload_type)
+
+        total_query = (
+            select(func.count(SQLUpload.id).label("total"))
+            .filter(*base_filters)
+            .subquery()
+        )
+
+        found_query = (
+            select(func.count(SQLUpload.id).label("found"))
+            .filter(*base_filters, *filters)
+            .subquery()
+        )
+
+        skip = 0
+
+        if page > 1:
+            skip = (page - 1) * per_page
+
+        async with AsyncSession(self._pg) as session:
             query = (
                 select(SQLUpload)
-                .filter(*filters)
+                .filter(*base_filters, *filters)
                 .order_by(SQLUpload.created_at.desc())
-                .offset(skip_count)
+                .offset(skip)
                 .limit(per_page)
             )
 
@@ -89,19 +109,16 @@ class UploadsData(DataLayerPiece):
                 session.execute(query),
             )
 
-        total_count = 0
-        found_count = 0
+            total_count = 0
+            found_count = 0
 
-        count = count.unique().all()
+            count = count.unique().all()
 
-        if count:
-            total_count = count[0].total
-            found_count = count[0].found
+            if count:
+                total_count = count[0].total
+                found_count = count[0].found
 
-        results = results.unique().fetchall()
-
-        for row in results:
-            uploads.append(row.Upload.to_dict())
+            uploads = [row.to_dict() for row in results.unique().scalars()]
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
 
