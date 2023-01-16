@@ -8,7 +8,6 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
-    ApiClient,
     OpenFgaApi,
     WriteRequest,
     TupleKey,
@@ -34,8 +33,6 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
     try:
         api_client = openfga_sdk.ApiClient(configuration)
 
-        await check_openfga_version(api_client)
-
         api_instance = open_fga_api.OpenFgaApi(api_client)
 
         configuration.store_id = await get_or_create_store(api_instance)
@@ -55,8 +52,9 @@ async def get_or_create_store(api_instance: OpenFgaApi):
 
     :return: the store id
     """
-
     response = await api_instance.list_stores()
+
+    logger.info("Connected to OpenFGA")
 
     if response.stores:
         logger.info("Found existing store")
@@ -76,60 +74,56 @@ async def write_auth_model(api_instance: OpenFgaApi):
     """
     response = await api_instance.read_authorization_models()
 
-    if not response.authorization_models:
-        type_definitions = WriteAuthorizationModelRequest(
-            type_definitions=[
-                TypeDefinition(
-                    type="app",
-                    relations=dict(
-                        cancel_job=Userset(
-                            this={},
-                        ),
-                        create_ref=Userset(
-                            this={},
-                        ),
-                        create_sample=Userset(
-                            this={},
-                        ),
-                        modify_hmm=Userset(
-                            this={},
-                        ),
-                        modify_subtraction=Userset(
-                            this={},
-                        ),
-                        remove_file=Userset(
-                            this={},
-                        ),
-                        remove_job=Userset(
-                            this={},
-                        ),
-                        upload_file=Userset(
-                            this={},
-                        ),
+    type_definitions = WriteAuthorizationModelRequest(
+        type_definitions=[
+            TypeDefinition(
+                type="app",
+                relations=dict(
+                    cancel_job=Userset(
+                        this={},
+                    ),
+                    create_ref=Userset(
+                        this={},
+                    ),
+                    create_sample=Userset(
+                        this={},
+                    ),
+                    modify_hmm=Userset(
+                        this={},
+                    ),
+                    modify_subtraction=Userset(
+                        this={},
+                    ),
+                    remove_file=Userset(
+                        this={},
+                    ),
+                    remove_job=Userset(
+                        this={},
+                    ),
+                    upload_file=Userset(
+                        this={},
                     ),
                 ),
-                TypeDefinition(
-                    type="group",
-                    relations=dict(
-                        member=Userset(
-                            this={},
-                        )
-                    ),
+            ),
+            TypeDefinition(
+                type="group",
+                relations=dict(
+                    member=Userset(
+                        this={},
+                    )
                 ),
-            ],
-        )
+            ),
+        ],
+    )
 
-        await api_instance.write_authorization_model(type_definitions)
+    if (
+        response.authorization_models
+        and response.authorization_models[0].type_definitions
+        == type_definitions.type_definitions
+    ):
+        return
 
-
-async def check_openfga_version(client: ApiClient):
-    """
-    Check the OpenFGA version.
-
-    :param client: the application OpenFGA client
-    """
-
-    logger.info("Found OpenFGA %s", client.user_agent)
+    await api_instance.write_authorization_model(type_definitions)
 
 
 async def write_tuple(

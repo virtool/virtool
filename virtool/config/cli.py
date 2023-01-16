@@ -36,7 +36,7 @@ def entry():
     "--data-path",
     default="data",
     help="The path to the application data directory",
-    type=click.Path(),
+    type=click.Path(exists=True),
 )
 @click.option(
     "--db-connection-string",

@@ -12,7 +12,11 @@ from virtool.auth.openfga import (
     list_permissions_in_open_fga,
     list_groups,
 )
-from virtool.auth.relationships import GroupPermissions, UserPermissions, GroupMemberships
+from virtool.auth.relationships import (
+    GroupPermissions,
+    UserPermissions,
+    GroupMemberships,
+)
 from virtool.auth.utils import write_tuple, connect_openfga
 
 
@@ -114,7 +118,6 @@ class TestList:
         assert await list_permissions_in_mongo(abs_client.mongo, "test") == response
 
     async def test_open_fga(self, delete_store, spawn_auth_client, snapshot):
-
         abs_client = await spawn_auth_client()
 
         await asyncio.gather(

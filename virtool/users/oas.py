@@ -41,7 +41,7 @@ class UpdateUserRequest(BaseModel):
         description="the users primary group used for sample rights"
     )
 
-    _prevent_none = prevent_none("*")
+    _prevent_none = prevent_none("administrator", "force_reset", "groups", "password")
 
 
 class PermissionsResponse(BaseModel):

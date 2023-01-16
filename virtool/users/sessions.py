@@ -176,8 +176,10 @@ class SessionData(DataLayerPiece):
 
         :param session_id: the session id
         """
-
-        session = await self._get(session_id)
+        try:
+            session = await self._get(session_id)
+        except ResourceNotFoundError:
+            return session_id
 
         if session.reset is None:
             return session_id

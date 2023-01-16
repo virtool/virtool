@@ -119,8 +119,10 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
 
 
 @pytest.mark.apitest
-async def test_get_api_keys(spawn_client, static_time):
+async def test_get_api_keys(spawn_client, static_time, fake2, snapshot):
     client = await spawn_client(authorize=True)
+
+    group = await fake2.groups.create()
 
     await client.db.keys.insert_many(
         [
@@ -131,7 +133,7 @@ async def test_get_api_keys(spawn_client, static_time):
                 "user": {"id": "test"},
                 "created_at": static_time.datetime,
                 "administrator": True,
-                "groups": [],
+                "groups": [group.id],
                 "permissions": {},
             },
             {
@@ -150,42 +152,7 @@ async def test_get_api_keys(spawn_client, static_time):
 
     resp = await client.get("/account/keys")
 
-    assert await resp.json() == [
-        {
-            "administrator": True,
-            "created_at": "2015-10-06T20:00:00Z",
-            "groups": [],
-            "id": "foobar_0",
-            "name": "Foobar",
-            "permissions": {
-                "cancel_job": False,
-                "create_ref": False,
-                "create_sample": False,
-                "modify_hmm": False,
-                "modify_subtraction": False,
-                "remove_file": False,
-                "remove_job": False,
-                "upload_file": False,
-            },
-        },
-        {
-            "administrator": False,
-            "created_at": "2015-10-06T20:00:00Z",
-            "groups": [],
-            "id": "baz_1",
-            "name": "Baz",
-            "permissions": {
-                "cancel_job": False,
-                "create_ref": False,
-                "create_sample": False,
-                "modify_hmm": False,
-                "modify_subtraction": False,
-                "remove_file": False,
-                "remove_job": False,
-                "upload_file": False,
-            },
-        },
-    ]
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
