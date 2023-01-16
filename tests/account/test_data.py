@@ -14,7 +14,7 @@ from virtool.groups.oas import UpdatePermissionsRequest
     "has_permission", [True, False], ids=["has permission", "missing permission"]
 )
 async def test_create_api_key(
-    administrator, has_permission, mocker, mongo, redis, static_time
+    administrator, has_permission, mocker, mongo, redis, static_time, fake2
 ):
     """
     Test that an API key is created correctly with varying key owner administrator status and
@@ -29,7 +29,9 @@ async def test_create_api_key(
         "virtool.utils.generate_key", return_value=("bar", "baz")
     )
 
-    groups = [{"id": "technicians"}, {"id": "managers"}]
+    group1, group2 = await fake2.groups.create(), await fake2.groups.create()
+
+    groups = [group1.id, group2.id]
 
     # Vary the key owner's administrator status and permissions.
     await mongo.users.insert_one(
@@ -64,7 +66,10 @@ async def test_create_api_key(
         "id": "foo_0",
         "name": "Foo",
         "created_at": static_time.datetime,
-        "groups": groups,
+        "groups": [
+            {"id": group1.id, "name": group1.name},
+            {"id": group2.id, "name": group2.name},
+        ],
         "permissions": permissions,
     }
 
@@ -77,15 +82,10 @@ async def test_create_api_key(
     m_get_alternate_id.assert_called_with(mongo, "Foo")
     m_generate_key.assert_called()
 
-    # Check returned document matches expected.
-    for group in expected["groups"]:
-        group.update({"name": group["id"]})
-
     assert document == expected
 
     # Modify expected document to check what we expect to have been inserted in the database.
-    del expected["groups"][0]["name"]
-    del expected["groups"][1]["name"]
+    expected["groups"] = groups
 
     expected.update({"_id": "baz", "user": {"id": "bob"}})
 

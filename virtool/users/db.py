@@ -205,7 +205,7 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
 
     :return: user handle created from B2C user info
     """
-    handle = f"{given_name}-{family_name}-{random.randint(1,100)}"
+    handle = f"{given_name}-{family_name}-{random.randint(1, 100)}"
 
     if await collection.count_documents({"handle": handle}):
         return await generate_handle(collection, given_name, family_name)
@@ -305,25 +305,34 @@ async def update_sessions_and_keys(
 
 
 async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
-    user = await mongo.users.find_one(user_id)
-
-    if user:
-        if not user.get("primary_group"):
-            user["primary_group"] = None
-
-        groups = []
-        primary_group = None
-
-        async for group in mongo.groups.find({"_id": {"$in": user["groups"]}}):
-            group = base_processor(group)
-
-            if user["primary_group"] and group["id"] == user["primary_group"]:
-                primary_group = group
-
-            groups.append(group)
-
-        user = base_processor(user)
-
-        return User(**{**user, "groups": groups, "primary_group": primary_group})
+    async for user in mongo.users.aggregate(
+        [
+            {"$match": {"_id": user_id}},
+            {
+                "$lookup": {
+                    "from": "groups",
+                    "localField": "groups",
+                    "foreignField": "_id",
+                    "as": "groups",
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "groups",
+                    "localField": "primary_group",
+                    "foreignField": "_id",
+                    "as": "primary_group",
+                }
+            },
+        ]
+    ):
+        return User(
+            **{
+                **user,
+                "primary_group": user["primary_group"][0]
+                if user["primary_group"]
+                else None,
+            }
+        )
 
     return None
