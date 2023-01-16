@@ -8,7 +8,6 @@ from openfga_sdk import (
     WriteAuthorizationModelRequest,
     TypeDefinition,
     Userset,
-    ApiClient,
     OpenFgaApi,
     WriteRequest,
     TupleKey,
@@ -34,8 +33,6 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
     try:
         api_client = openfga_sdk.ApiClient(configuration)
 
-        await check_openfga_version(api_client)
-
         api_instance = open_fga_api.OpenFgaApi(api_client)
 
         configuration.store_id = await get_or_create_store(api_instance)
@@ -55,8 +52,9 @@ async def get_or_create_store(api_instance: OpenFgaApi):
 
     :return: the store id
     """
-
     response = await api_instance.list_stores()
+
+    logger.info("Connected to OpenFGA")
 
     if response.stores:
         logger.info("Found existing store")
@@ -126,16 +124,6 @@ async def write_auth_model(api_instance: OpenFgaApi):
         return
 
     await api_instance.write_authorization_model(type_definitions)
-
-
-async def check_openfga_version(client: ApiClient):
-    """
-    Check the OpenFGA version.
-
-    :param client: the application OpenFGA client
-    """
-
-    logger.info("Found OpenFGA %s", client.user_agent)
 
 
 async def write_tuple(
