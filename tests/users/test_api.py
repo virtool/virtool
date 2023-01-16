@@ -227,7 +227,7 @@ class TestUpdate:
         client, _, _, _ = setup_update_user
 
         resp = await client.patch(
-            f"/users/bob",
+            "/users/bob",
             data={
                 "primary_group": "managers",
             },
@@ -291,5 +291,3 @@ async def test_remove_permission(spawn_client, permission, status, snapshot):
 
     assert resp.status == status
     assert await resp.json() == snapshot()
-
-
