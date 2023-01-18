@@ -1,13 +1,12 @@
 from typing import List
 
-from virtool_core.models.enums import Permission
-
+from virtool.auth.permissions import PermissionType
 from virtool.data.errors import ResourceNotFoundError
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 
 
-async def check_in_mongo(mongo: DB, user_id: str, permission: Permission) -> bool:
+async def check_in_mongo(mongo: DB, user_id: str, permission: PermissionType) -> bool:
     """
     Check permissions in Mongo.
     """
@@ -20,7 +19,7 @@ async def check_in_mongo(mongo: DB, user_id: str, permission: Permission) -> boo
     )
 
 
-async def list_permissions_in_mongo(mongo: DB, user_id: str) -> List[Permission]:
+async def list_permissions_in_mongo(mongo: DB, user_id: str) -> List[PermissionType]:
     """
     List user permissions in Mongo.
     """

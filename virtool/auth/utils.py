@@ -1,4 +1,5 @@
 import sys
+from enum import Enum
 from logging import getLogger
 
 import openfga_sdk
@@ -15,6 +16,10 @@ from openfga_sdk import (
     TupleKeys,
 )
 from openfga_sdk.api import open_fga_api
+
+from virtool.auth.permissions import (
+    AppPermission,
+)
 
 logger = getLogger("openfga")
 
@@ -74,46 +79,18 @@ async def write_auth_model(api_instance: OpenFgaApi):
     """
     response = await api_instance.read_authorization_models()
 
+    app_definition = TypeDefinition(
+        type="app",
+        relations={permission.name: Userset(this={}) for permission in AppPermission},
+    )
+
+    group_definition = TypeDefinition(
+        type="group",
+        relations={"member": Userset(this={})},
+    )
+
     type_definitions = WriteAuthorizationModelRequest(
-        type_definitions=[
-            TypeDefinition(
-                type="app",
-                relations=dict(
-                    cancel_job=Userset(
-                        this={},
-                    ),
-                    create_ref=Userset(
-                        this={},
-                    ),
-                    create_sample=Userset(
-                        this={},
-                    ),
-                    modify_hmm=Userset(
-                        this={},
-                    ),
-                    modify_subtraction=Userset(
-                        this={},
-                    ),
-                    remove_file=Userset(
-                        this={},
-                    ),
-                    remove_job=Userset(
-                        this={},
-                    ),
-                    upload_file=Userset(
-                        this={},
-                    ),
-                ),
-            ),
-            TypeDefinition(
-                type="group",
-                relations=dict(
-                    member=Userset(
-                        this={},
-                    )
-                ),
-            ),
-        ],
+        type_definitions=[app_definition, group_definition],
     )
 
     if (
@@ -136,7 +113,7 @@ async def write_tuple(
     tuple_list = [
         TupleKey(
             user=f"{user_type}:{user_id}",
-            relation=relation,
+            relation=relation.name if isinstance(relation, Enum) else relation,
             object=f"{object_type}:{object_name}",
         )
         for relation in relations

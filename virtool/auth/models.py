@@ -20,11 +20,13 @@ class Action(str, SQLEnum):
     are controlled by permissions.
     """
 
+    cancel = "cancel"
     create = "create"
     update = "update"
     delete = "delete"
     modify = "modify"
     remove = "remove"
+    upload = "upload"
 
 
 class SQLPermission(Base):

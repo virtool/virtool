@@ -15,6 +15,7 @@ from virtool.auth.openfga import (
     add_in_open_fga,
     remove_in_open_fga,
 )
+from virtool.auth.permissions import PermissionType
 from virtool.auth.relationships import BaseRelationship
 from virtool.data.errors import ResourceNotFoundError
 
@@ -55,7 +56,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
     async def check(
         self,
         user_id: str,
-        permission: Permission,
+        permission: PermissionType,
         object_type: str,
         object_id: Union[str, int],
     ) -> bool:
@@ -74,7 +75,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
 
     async def list_permissions(
         self, user_id: str, object_type: str, object_id: Union[str, int]
-    ) -> List[Permission]:
+    ) -> List[PermissionType]:
         """
         List permissions for a user.
         """
