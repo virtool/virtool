@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool_core.models.auth import PermissionMinimal
 
-from virtool.auth.permissions import AppPermissions, GroupPermissions
+from virtool.auth.permissions import AppPermission
 
 
 class AuthData:
@@ -27,25 +27,11 @@ class AuthData:
                 action=permission.value.action,
                 description=permission.value.description,
             )
-            for permission in AppPermissions
-        ]
-
-        group_permissions = [
-            PermissionMinimal(
-                id=permission.name,
-                name=permission.value.name,
-                resource_type=permission.value.resource_type,
-                action=permission.value.action,
-                description=permission.value.description,
-            )
-            for permission in GroupPermissions
+            for permission in AppPermission
         ]
 
         if not resource_type:
-            return [*app_permissions, *group_permissions]
+            return [*app_permissions]
 
         if resource_type.value == "app":
             return app_permissions
-
-        if resource_type.value == "group":
-            return group_permissions

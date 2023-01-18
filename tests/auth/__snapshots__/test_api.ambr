@@ -112,13 +112,6 @@
       'name': 'Delete Group',
       'resource_type': 'app',
     },
-    <class 'dict'> {
-      'action': '',
-      'description': 'Required to be a member of a group',
-      'id': 'member',
-      'name': 'Member',
-      'resource_type': 'group',
-    },
   ]
 ---
 # name: test_find[uvloop-app-200]
@@ -234,17 +227,6 @@
       'id': 'delete_group',
       'name': 'Delete Group',
       'resource_type': 'app',
-    },
-  ]
----
-# name: test_find[uvloop-group-200]
-  <class 'list'> [
-    <class 'dict'> {
-      'action': '',
-      'description': 'Required to be a member of a group',
-      'id': 'member',
-      'name': 'Member',
-      'resource_type': 'group',
     },
   ]
 ---

@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 from typing import Union, List
 
 import itertools
@@ -83,7 +84,7 @@ async def add_in_open_fga(api_instance: OpenFgaApi, relationship: BaseRelationsh
             tuple_keys=[
                 TupleKey(
                     user=f"{relationship.user_type}:{relationship.user_id}{group_membership}",
-                    relation=relation.name,
+                    relation=relation.name if isinstance(relation, Enum) else relation,
                     object=f"{relationship.object_type}:{relationship.object_name}",
                 )
                 for relation in relationship.relations
@@ -111,7 +112,7 @@ async def remove_in_open_fga(api_instance: OpenFgaApi, relationship: BaseRelatio
             tuple_keys=[
                 TupleKey(
                     user=f"{relationship.user_type}:{relationship.user_id}{group_membership}",
-                    relation=relation.name,
+                    relation=relation.name if isinstance(relation, Enum) else relation,
                     object=f"{relationship.object_type}:{relationship.object_name}",
                 )
                 for relation in relationship.relations

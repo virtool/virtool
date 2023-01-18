@@ -14,7 +14,7 @@ class Permission:
     action: str
 
 
-class AppPermissions(Enum):
+class AppPermission(Enum):
     cancel_job = Permission(
         id="cancel_job",
         name="Cancel Job",
@@ -129,14 +129,4 @@ class AppPermissions(Enum):
     )
 
 
-class GroupPermissions(Enum):
-    member = Permission(
-        id="member",
-        name="Member",
-        description="Required to be a member of a group",
-        resource_type=ResourceType.group,
-        action="",
-    )
-
-
-PermissionType = Union[AppPermissions, GroupPermissions]
+PermissionType = Union[AppPermission]

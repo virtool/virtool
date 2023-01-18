@@ -10,7 +10,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
 from pydantic import Field, conint
 
 from virtool.api.response import InvalidQuery, json_response, NotFound
-from virtool.auth.permissions import AppPermissions
+from virtool.auth.permissions import AppPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
@@ -54,7 +54,7 @@ class UploadsView(PydanticView):
 
         return json_response({"documents": uploads})
 
-    @policy(PermissionsRoutePolicy("app", "virtool", AppPermissions.upload_file))
+    @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.upload_file))
     async def post(
         self,
         name: str,
@@ -145,7 +145,7 @@ class UploadView(PydanticView):
             },
         )
 
-    @policy(PermissionsRoutePolicy("app", "virtool", AppPermissions.remove_file))
+    @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.remove_file))
     async def delete(self, upload_id: int, /) -> Union[r204, r401, r403, r404]:
         """
         Delete an upload.

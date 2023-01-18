@@ -16,7 +16,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
 
 from virtool.api.response import NotFound, json_response
-from virtool.auth.permissions import AppPermissions
+from virtool.auth.permissions import AppPermission
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
@@ -124,7 +124,7 @@ class UpdatesView(PydanticView):
 
         return json_response(updates)
 
-    @policy(PermissionsRoutePolicy("app", "virtool", AppPermissions.modify_hmm))
+    @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.modify_hmm))
     async def post(self) -> Union[r201[HMMInstalled], r400, r403]:
         """
         Install HMMs.

@@ -1,4 +1,5 @@
 import sys
+from enum import Enum
 from logging import getLogger
 
 import openfga_sdk
@@ -17,8 +18,7 @@ from openfga_sdk import (
 from openfga_sdk.api import open_fga_api
 
 from virtool.auth.permissions import (
-    AppPermissions,
-    GroupPermissions,
+    AppPermission,
 )
 
 logger = getLogger("openfga")
@@ -81,16 +81,12 @@ async def write_auth_model(api_instance: OpenFgaApi):
 
     app_definition = TypeDefinition(
         type="app",
-        relations={
-            permission.name: Userset(this={}) for permission in AppPermissions
-        },
+        relations={permission.name: Userset(this={}) for permission in AppPermission},
     )
 
     group_definition = TypeDefinition(
         type="group",
-        relations={
-            permission.name: Userset(this={}) for permission in GroupPermissions
-        },
+        relations={"member": Userset(this={})},
     )
 
     type_definitions = WriteAuthorizationModelRequest(
@@ -117,7 +113,7 @@ async def write_tuple(
     tuple_list = [
         TupleKey(
             user=f"{user_type}:{user_id}",
-            relation=relation.name,
+            relation=relation.name if isinstance(relation, Enum) else relation,
             object=f"{object_type}:{object_name}",
         )
         for relation in relations

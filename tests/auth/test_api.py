@@ -6,7 +6,7 @@ from virtool.auth.models import ResourceType
 @pytest.mark.apitest
 @pytest.mark.parametrize(
     "resource,status",
-    [(ResourceType.app, 200), (ResourceType.group, 200), ("invalid", 400), (None, 200)],
+    [(ResourceType.app, 200), ("invalid", 400), (None, 200)],
 )
 async def test_find(spawn_client, resource, status, pg, snapshot):
     client = await spawn_client(authorize=True)

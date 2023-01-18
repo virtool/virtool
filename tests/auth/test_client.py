@@ -12,7 +12,7 @@ from virtool.auth.openfga import (
     list_permissions_in_open_fga,
     list_groups,
 )
-from virtool.auth.permissions import AppPermissions, GroupPermissions as GroupPermission
+from virtool.auth.permissions import AppPermission
 from virtool.auth.relationships import (
     GroupPermissions,
     UserPermissions,
@@ -65,9 +65,9 @@ class TestCheck:
         abs_client = await spawn_auth_client(permissions=[Permission.cancel_job])
 
         if has_permission:
-            permission = AppPermissions.cancel_job
+            permission = AppPermission.cancel_job
         else:
-            permission = AppPermissions.modify_subtraction
+            permission = AppPermission.modify_subtraction
 
         response = await abs_client.check("test", permission, "app", "virtool")
 
@@ -82,15 +82,15 @@ class TestCheck:
         abs_client = await spawn_auth_client()
 
         if has_permission:
-            permission = AppPermissions.cancel_job
+            permission = AppPermission.cancel_job
         else:
-            permission = AppPermissions.modify_subtraction
+            permission = AppPermission.modify_subtraction
 
         await write_tuple(
             abs_client.open_fga,
             "user",
             "ryanf",
-            [AppPermissions.cancel_job],
+            [AppPermission.cancel_job],
             "app",
             "virtool",
         )
@@ -126,7 +126,7 @@ class TestList:
                 abs_client.open_fga,
                 "user",
                 "ryanf",
-                [GroupPermission.member],
+                ["member"],
                 "group",
                 "sidney",
             ),
@@ -134,7 +134,7 @@ class TestList:
                 abs_client.open_fga,
                 "group",
                 "sidney#member",
-                [AppPermissions.cancel_job, AppPermissions.create_ref],
+                [AppPermission.cancel_job, AppPermission.create_ref],
                 "app",
                 "virtool",
             ),
@@ -142,7 +142,7 @@ class TestList:
                 abs_client.open_fga,
                 "user",
                 "ryanf",
-                [GroupPermission.member],
+                ["member"],
                 "group",
                 "test",
             ),
@@ -150,7 +150,7 @@ class TestList:
                 abs_client.open_fga,
                 "group",
                 "test#member",
-                [AppPermissions.modify_subtraction, AppPermissions.modify_hmm],
+                [AppPermission.modify_subtraction, AppPermission.modify_hmm],
                 "app",
                 "virtool",
             ),
@@ -173,7 +173,7 @@ class TestAddGroupMembership:
         abs_client, _, group2, user = setup_auth_update_user
 
         await abs_client.add(
-            GroupMemberships(user.id, group2.id, [GroupPermission.member])
+            GroupMemberships(user.id, group2.id, ["member"])
         )
 
         assert (
@@ -186,13 +186,13 @@ class TestAddGroupMembership:
 
         await asyncio.gather(
             abs_client.add(
-                GroupMemberships("ryanf", "sidney", [GroupPermission.member])
+                GroupMemberships("ryanf", "sidney", ["member"])
             ),
             write_tuple(
                 abs_client.open_fga,
                 "group",
                 "sidney#member",
-                [AppPermissions.cancel_job, AppPermissions.modify_subtraction],
+                [AppPermission.cancel_job, AppPermission.modify_subtraction],
                 "app",
                 "virtool",
             ),
@@ -225,7 +225,7 @@ class TestRemoveGroupMembership:
                 abs_client.open_fga,
                 "user",
                 "ryanf",
-                [GroupPermission.member],
+                ["member"],
                 "group",
                 "sidney",
             ),
@@ -233,7 +233,7 @@ class TestRemoveGroupMembership:
                 abs_client.open_fga,
                 "user",
                 "bob",
-                [GroupPermission.member],
+                ["member"],
                 "group",
                 "sidney",
             ),
@@ -241,14 +241,14 @@ class TestRemoveGroupMembership:
                 abs_client.open_fga,
                 "group",
                 "sidney#member",
-                [AppPermissions.cancel_job, AppPermissions.modify_subtraction],
+                [AppPermission.cancel_job, AppPermission.modify_subtraction],
                 "app",
                 "virtool",
             ),
         )
 
         await abs_client.remove(
-            GroupMemberships("ryanf", "sidney", [GroupPermission.member])
+            GroupMemberships("ryanf", "sidney", ["member"])
         )
 
         assert await list_groups(abs_client.open_fga, "ryanf") == snapshot(
@@ -272,7 +272,7 @@ class TestAddPermissions:
 
         await abs_client.add(
             GroupPermissions(
-                group.id, [AppPermissions.cancel_job, AppPermissions.modify_subtraction]
+                group.id, [AppPermission.cancel_job, AppPermission.modify_subtraction]
             )
         )
 
@@ -291,14 +291,14 @@ class TestAddPermissions:
                 abs_client.open_fga,
                 "user",
                 "ryanf",
-                [GroupPermission.member],
+                ["member"],
                 "group",
                 "sidney",
             ),
             abs_client.add(
                 GroupPermissions(
                     "sidney",
-                    [AppPermissions.cancel_job, AppPermissions.modify_subtraction],
+                    [AppPermission.cancel_job, AppPermission.modify_subtraction],
                 )
             ),
         )
@@ -310,7 +310,7 @@ class TestAddPermissions:
     ):
         abs_client = await spawn_auth_client()
 
-        await abs_client.add(UserPermissions("ryanf", [AppPermissions.cancel_job]))
+        await abs_client.add(UserPermissions("ryanf", [AppPermission.cancel_job]))
 
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
@@ -324,7 +324,7 @@ class TestRemovePermissions:
             {"$set": {"permissions.cancel_job": True, "permissions.create_ref": True}},
         )
 
-        await abs_client.remove(GroupPermissions(group.id, [AppPermissions.cancel_job]))
+        await abs_client.remove(GroupPermissions(group.id, [AppPermission.cancel_job]))
 
         assert (
             await mongo.users.find({}, ["groups", "permissions"]).to_list(None)
@@ -341,7 +341,7 @@ class TestRemovePermissions:
                 abs_client.open_fga,
                 "user",
                 "ryanf",
-                [GroupPermission.member],
+                ["member"],
                 "group",
                 "sidney",
             ),
@@ -349,13 +349,13 @@ class TestRemovePermissions:
                 abs_client.open_fga,
                 "group",
                 "sidney#member",
-                [AppPermissions.cancel_job, AppPermissions.create_ref],
+                [AppPermission.cancel_job, AppPermission.create_ref],
                 "app",
                 "virtool",
             ),
         )
 
-        await abs_client.remove(GroupPermissions("sidney", [AppPermissions.cancel_job]))
+        await abs_client.remove(GroupPermissions("sidney", [AppPermission.cancel_job]))
 
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
 
@@ -368,11 +368,11 @@ class TestRemovePermissions:
             abs_client.open_fga,
             "user",
             "ryanf",
-            [AppPermissions.cancel_job, AppPermissions.modify_subtraction],
+            [AppPermission.cancel_job, AppPermission.modify_subtraction],
             "app",
             "virtool",
         )
 
-        await abs_client.remove(UserPermissions("ryanf", [AppPermissions.cancel_job]))
+        await abs_client.remove(UserPermissions("ryanf", [AppPermission.cancel_job]))
 
         assert await abs_client.list_permissions("ryanf", "app", "virtool") == snapshot
