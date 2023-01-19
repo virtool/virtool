@@ -87,7 +87,6 @@ def entry():
     "--sentry-dsn",
     help="The sentry DSN",
     type=str,
-    default="",
 )
 @click.pass_context
 def cli(

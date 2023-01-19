@@ -29,4 +29,4 @@ class Config:
     port: int = 9950
     use_b2c: bool = False
     verbose: bool = False
-    sentry_dsn: str = "https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532"
+    sentry_dsn: str = ""
