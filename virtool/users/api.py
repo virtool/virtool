@@ -37,7 +37,7 @@ class UsersView(PydanticView):
     async def get(
         self,
         find: Optional[str] = Field(
-            description="Provide text to filter by partial matches to the id field."
+            description="Provide text to filter by partial matches to the handle field."
         ),
     ) -> Union[r200[User], r403]:
         """
@@ -51,7 +51,7 @@ class UsersView(PydanticView):
         """
         db = self.request.app["db"]
 
-        db_query = compose_regex_query(find, ["_id"]) if find else {}
+        db_query = compose_regex_query(find, ["handle"]) if find else {}
 
         data = await paginate(
             db.users,
