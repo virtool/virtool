@@ -26,8 +26,11 @@ class AttachTaskTransform(AbstractTransform):
         attached = []
 
         for document in documents:
-            if task_id := get_safely(document, "task", "id"):
-                attached.append({**document, "task": prepared[task_id]})
+            task_id = get_safely(document, "task", "id")
+
+            attached.append(
+                {**document, "task": prepared[task_id] if task_id else None}
+            )
 
         return attached
 
