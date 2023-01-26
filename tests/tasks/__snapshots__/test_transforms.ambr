@@ -32,6 +32,14 @@
         'type': 'clone_reference',
       },
     },
+    <class 'dict'> {
+      'id': 3,
+      'task': None,
+    },
+    <class 'dict'> {
+      'id': 4,
+      'task': None,
+    },
   ]
 ---
 # name: test_attach_task_transform_single[uvloop]
