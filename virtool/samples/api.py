@@ -89,7 +89,7 @@ class SamplesView(PydanticView):
         label: List[int] = Field(default_factory=lambda: []),
         page: conint(gt=0) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        workflows: Optional[List[str]] = Field(default_factory=lambda: []),
+        workflows: List[str] = Field(default_factory=lambda: []),
     ) -> Union[r200[SampleSearchResult], r400]:
         """
         Find samples, filtering by data passed as URL parameters
