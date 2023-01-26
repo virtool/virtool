@@ -137,12 +137,12 @@ class UsersFakerPiece(DataFakerPiece):
 
     async def create(
         self,
+        handle: Optional[str] = None,
         groups: Optional[List[Group]] = None,
         primary_group: Optional[Group] = None,
     ):
-        user = await self.layer.users.create(
-            self.faker.profile()["username"], self.faker.password()
-        )
+        handle = handle or self.faker.profile()["username"]
+        user = await self.layer.users.create(handle, self.faker.password())
 
         if groups or primary_group:
             if groups:

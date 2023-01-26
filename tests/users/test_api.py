@@ -38,8 +38,8 @@ async def setup_update_user(fake2, spawn_client):
 
 
 @pytest.mark.apitest
-@pytest.mark.parametrize("find", [None, "test"])
-async def test_find(find, fake2, snapshot, spawn_client):
+@pytest.mark.parametrize("find", [None, "fred"])
+async def test_find(find, fake2, snapshot, spawn_client, data_layer):
     """
     Test that a ``GET /users`` returns a list of users.
 
@@ -48,7 +48,7 @@ async def test_find(find, fake2, snapshot, spawn_client):
         authorize=True, administrator=True, permissions=[Permission.create_sample]
     )
 
-    await fake2.users.create()
+    await fake2.users.create(handle=find)
     await fake2.users.create()
 
     url = "/users"
