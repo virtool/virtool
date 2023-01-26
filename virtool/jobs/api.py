@@ -57,35 +57,6 @@ class JobsView(PydanticView):
             )
         )
 
-    @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.remove_job))
-    async def delete(
-        self,
-        job_filter: Optional[str] = Field(
-            alias="filter",
-            description="Clear jobs that are in a certain state. Acceptable states are finished, complete, failed, terminated",
-        ),
-    ) -> r200:
-        """
-        Clear jobs.
-
-        Clears completed, failed or all finished jobs.
-
-        Status Codes:
-            200: Successful Operation
-        """
-
-        # Remove jobs that completed successfully.
-        complete = job_filter in [None, "finished", "complete"]
-
-        # Remove jobs that errored or were cancelled.
-        failed = job_filter in [None, "failed", "finished" "terminated"]
-
-        removed_job_ids = await get_data_from_req(self.request).jobs.clear(
-            complete=complete, failed=failed
-        )
-
-        return json_response({"removed": removed_job_ids})
-
     async def patch(
         self, data: ArchiveJobsRequest
     ) -> Union[r200[List[JobMinimal]], r400]:
@@ -126,35 +97,6 @@ class JobView(PydanticView):
             raise NotFound()
 
         return json_response(document)
-
-    @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.remove_job))
-    async def delete(self, job_id: str, /) -> Union[r204, r403, r404, r409]:
-        """
-        Delete a job.
-
-        Deletes a job.
-
-        Jobs that are in an active state (waiting, pending, preparing
-        running) cannot be deleted. A `409` will be returned if this operation is
-        attempted.
-
-        **We recommend archiving jobs instead of deleting them**. In the future, job
-        deletion will not be supported.
-
-        Status Codes:
-            204: Successful operation
-            403: Not permitted
-            404: Not found
-            409: Job is running or waiting and cannot be removed
-        """
-        try:
-            await get_data_from_req(self.request).jobs.delete(job_id)
-        except ResourceConflictError:
-            raise HTTPConflict(text="Job is running or waiting and cannot be removed")
-        except ResourceNotFoundError:
-            raise NotFound()
-
-        raise HTTPNoContent
 
 
 @routes.jobs_api.get("/jobs/{job_id}")
