@@ -443,26 +443,6 @@ class JobsData:
 
         return JobStatus(**document["status"][-1])
 
-    async def clear(self, complete: bool = False, failed: bool = False):
-        or_list = []
-
-        if complete:
-            or_list = OR_COMPLETE
-
-        if failed:
-            or_list += OR_FAILED
-
-        if len(or_list) == 0:
-            return []
-
-        query = {"$or": or_list}
-
-        removed = await self._db.jobs.distinct("_id", query)
-
-        await self._db.jobs.delete_many(query)
-
-        return removed
-
     async def delete(self, job_id: str):
         """
         Delete a job by its ID.

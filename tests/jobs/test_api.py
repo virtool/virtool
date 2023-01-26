@@ -40,28 +40,6 @@ async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
 
 
 @pytest.mark.apitest
-@pytest.mark.parametrize("job_filter", [None, "finished", "complete", "failed"])
-async def test_delete(job_filter, fake2, spawn_client, test_job, resp_is, snapshot):
-    client = await spawn_client(authorize=True, permissions=[Permission.remove_job])
-
-    user = await fake2.users.create()
-
-    test_job["user"] = {"id": user.id}
-
-    await client.db.jobs.insert_one(test_job)
-
-    url = "/jobs"
-
-    if job_filter:
-        url += f"?filter={job_filter}"
-
-    resp = await client.delete(url)
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-
-
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
