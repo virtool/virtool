@@ -112,6 +112,10 @@ class AnalysisView(PydanticView):
             "Last-Modified": datetime_to_isoformat(document.created_at),
         }
 
+        if if_modified_since is not None:
+            if datetime_to_isoformat(if_modified_since.datetime) == headers.get("Last-Modified"):
+                raise HTTPNotModified()
+
         return json_response(document, headers=headers)
 
     async def delete(self, analysis_id: str, /) -> Union[r204, r403, r404, r409]:
