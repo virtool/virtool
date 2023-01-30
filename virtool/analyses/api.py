@@ -113,7 +113,7 @@ class AnalysisView(PydanticView):
         }
 
         if if_modified_since is not None and (datetime_to_isoformat(if_modified_since.datetime) == headers.get("Last-Modified")):
-                raise HTTPNotModified()
+            raise HTTPNotModified()
 
         return json_response(document, headers=headers)
 

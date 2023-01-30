@@ -22,7 +22,7 @@ def json_response(
 
     resp = Response(status=status, headers=headers)
     resp["json_data"] = data
-    if workflows is not None:
+    if workflows is not None and len(workflows) != 0:
         resp["workflows"] = workflows
 
     return resp
