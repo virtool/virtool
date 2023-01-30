@@ -1,5 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
-
 import pytest
 from aiohttp.client import ClientSession
 from aiohttp.web import Application
