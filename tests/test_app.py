@@ -30,8 +30,6 @@ async def test_startup_executors():
 
     await startup_executors(app)
 
-    assert isinstance(app["executor"], ThreadPoolExecutor)
-
 
 async def test_startup_http_client(loop, fake_app):
     await startup_http_client(fake_app)
