@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from virtool.analyses.utils import find_nuvs_sequence_by_index
+from virtool.api.custom_json import datetime_to_isoformat
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotModifiedError,
@@ -14,10 +15,10 @@ async def check_if_analysis_modified(
 ):
     if if_modified_since is not None:
         try:
-            if if_modified_since.isoformat() == document["updated_at"].isoformat():
+            if if_modified_since == document["updated_at"]:
                 raise ResourceNotModifiedError()
         except KeyError:
-            if if_modified_since.isoformat() == document["created_at"].isoformat():
+            if if_modified_since == document["created_at"]:
                 raise ResourceNotModifiedError()
 
 
