@@ -37,6 +37,7 @@ from virtool.analyses.db import PROJECTION, processor
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import attach_analysis_files
+from virtool.api.custom_json import datetime_to_isoformat
 from virtool.api.utils import paginate
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask

@@ -2,6 +2,7 @@
 Provides request handlers for managing and viewing analyses.
 
 """
+import datetime
 from logging import getLogger
 from typing import Union
 
@@ -111,9 +112,6 @@ class AnalysisView(PydanticView):
             "Cache-Control": "no-cache",
             "Last-Modified": datetime_to_isoformat(document.created_at),
         }
-
-        if if_modified_since is not None and (datetime_to_isoformat(if_modified_since.datetime) == headers.get("Last-Modified")):
-                raise HTTPNotModified()
 
         return json_response(document, headers=headers)
 
