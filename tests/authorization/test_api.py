@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.auth.models import ResourceType
+from virtool.authorization.permissions import ResourceType
 
 
 @pytest.mark.apitest

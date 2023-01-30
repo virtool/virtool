@@ -1,7 +1,7 @@
 import asyncio
-from asyncio import to_thread
 import logging
 import os
+from asyncio import to_thread
 from pathlib import Path
 from typing import List, Union, Optional
 
@@ -32,13 +32,13 @@ from virtool.api.response import (
     json_response,
 )
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.auth.permissions import AppPermission
+from virtool.authorization.permissions import SpacePermission
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
-from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
@@ -104,7 +104,7 @@ class SamplesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.create_sample))
+    @policy(PermissionRoutePolicy("space", 0, SpacePermission.CREATE_SAMPLE))
     async def post(
         self, data: CreateSampleRequest
     ) -> Union[r201[CreateSampleResponse], r400, r403]:

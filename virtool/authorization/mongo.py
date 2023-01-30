@@ -1,6 +1,6 @@
 from typing import List
 
-from virtool.auth.permissions import PermissionType
+from virtool.authorization.permissions import PermissionType
 from virtool.data.errors import ResourceNotFoundError
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field

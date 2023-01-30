@@ -12,7 +12,7 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
-import virtool.http.auth
+import virtool.http.authentication
 import virtool.http.routes
 from virtool.account.oas import (
     UpdateAccountRequest,

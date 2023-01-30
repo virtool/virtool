@@ -1,4 +1,4 @@
-from typing import Union, Optional, List
+from typing import Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
@@ -7,11 +7,13 @@ from pydantic import Field
 from virtool_core.models.enums import Permission
 from virtool_core.models.user import User
 
-import virtool.http.auth
+import virtool.http.authentication
 import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.auth.relationships import UserPermissions
+from virtool.authorization.permissions import PermissionType, ResourceType
+from virtool.authorization.relationships import UserPermission
+from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import (
@@ -25,7 +27,9 @@ from virtool.users.checks import check_password_length
 from virtool.users.oas import (
     UpdateUserRequest,
     CreateUserRequest,
-    CreateFirstUserRequest, PermissionsResponse, PermissionResponse,
+    CreateFirstUserRequest,
+    PermissionsResponse,
+    PermissionResponse,
 )
 
 routes = Routes()
@@ -216,41 +220,44 @@ class PermissionsView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        abs_client = self.request.app["auth"]
 
-        permission_list = await abs_client.list_permissions(user_id, "app", "virtool")
+        permissions = await get_authorization_client_from_req(
+            self.request
+        ).list_permissions(user_id, ResourceType.SPACE, 0)
 
-        permission_list = [{"id": permission} for permission in permission_list]
-
-        return json_response(permission_list)
+        return json_response([{"id": permission} for permission in permissions])
 
 
 @routes.view("/users/{user_id}/permissions/{permission}")
 class PermissionView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def put(self, user_id: str, permission: Permission, /) -> r200[PermissionResponse]:
+    async def put(
+        self, user_id: str, permission: PermissionType, /
+    ) -> r200[PermissionResponse]:
         """
         Add a permission for a user
 
         Status Codes:
             200: Successful operation
         """
-        abs_client = self.request.app["auth"]
-
-        await abs_client.add(UserPermissions(user_id, [permission]))
+        await get_authorization_client_from_req(self.request).add(
+            UserPermission(user_id, permission)
+        )
 
         return json_response(True)
 
     @policy(AdministratorRoutePolicy)
-    async def delete(self, user_id: str, permission: Permission, /) -> r200[PermissionResponse]:
+    async def delete(
+        self, user_id: str, permission: PermissionType, /
+    ) -> r200[PermissionResponse]:
         """
         Delete a permission for a user
 
         Status Codes:
             200: Successful operation
         """
-        abs_client = self.request.app["auth"]
-
-        await abs_client.remove(UserPermissions(user_id, [permission]))
+        await get_authorization_client_from_req(self.request).remove(
+            UserPermission(user_id, permission)
+        )
 
         return json_response(True)

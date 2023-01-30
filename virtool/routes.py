@@ -24,7 +24,7 @@ import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
 import virtool.messages.api
-import virtool.auth.api
+import virtool.authorization.api
 
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ ROUTES = (
     virtool.messages.api.routes,
     virtool.otus.api.routes,
     virtool.oidc.api.routes,
-    virtool.auth.api.routes,
+    virtool.authorization.api.routes,
     virtool.references.api.routes,
     virtool.samples.api.routes,
     virtool.settings.api.routes,

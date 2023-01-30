@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from pymongo.errors import DuplicateKeyError
 from virtool_core.models.group import GroupMinimal, Group
 
+from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceConflictError,
@@ -12,15 +13,21 @@ from virtool.groups.db import (
     fetch_complete_group,
 )
 from virtool.groups.oas import UpdateGroupRequest
-from virtool.mongo.core import DB
+from virtool.groups.utils import (
+    convert_permissions_dict_to_relationships,
+)
 from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
+if TYPE_CHECKING:
+    from virtool.mongo.core import DB
+
 
 class GroupsData:
-    def __init__(self, db):
-        self._db: DB = db
+    def __init__(self, authorization_client: AuthorizationClient, db: "DB"):
+        self._authorization_client = authorization_client
+        self._db = db
 
     async def find(self) -> List[GroupMinimal]:
         """
@@ -83,6 +90,12 @@ class GroupsData:
 
         update = {}
 
+        adds = None
+        removes = None
+
+        if "name" in data:
+            update["name"] = data["name"]
+
         if "permissions" in data:
             permissions = await get_one_field(
                 self._db.groups, "permissions", {"_id": group_id}
@@ -93,11 +106,18 @@ class GroupsData:
                 **data["permissions"],
             }
 
-        if "name" in data:
-            update["name"] = data["name"]
+            adds, removes = convert_permissions_dict_to_relationships(
+                group_id, update["permissions"]
+            )
 
         if update:
             async with self._db.create_session() as session:
+                if adds:
+                    await self._authorization_client.add(*adds)
+
+                if removes:
+                    await self._authorization_client.remove(*removes)
+
                 await self._db.groups.update_one(
                     {"_id": group_id},
                     {"$set": update},
@@ -110,6 +130,8 @@ class GroupsData:
 
     async def delete(self, group_id: str):
         async with self._db.create_session() as session:
+            await self._authorization_client.delete_group(group_id)
+
             delete_result = await self._db.groups.delete_one(
                 {"_id": group_id}, session=session
             )

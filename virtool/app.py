@@ -7,7 +7,7 @@ import aiojobs.aiohttp
 from aiohttp_pydantic import oas
 
 import virtool.http.accept
-import virtool.http.auth
+import virtool.http.authentication
 import virtool.http.errors
 import virtool.http.query
 from virtool.config.cls import Config

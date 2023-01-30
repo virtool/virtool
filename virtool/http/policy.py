@@ -7,7 +7,8 @@ from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
 
-from virtool.auth.permissions import PermissionType
+from virtool.authorization.permissions import PermissionType, ResourceType
+from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient
 
@@ -17,9 +18,15 @@ logger = getLogger(__name__)
 class DefaultRoutePolicy:
     """Any authenticated client can access the route."""
 
-    allow_unauthenticated = False
+    allow_unauthenticated: bool = False
+    """
+    Allow unauthenticated clients to access the route that this policy applies to.
+    
+    Policies that subclass the default policy must explicitly opt-in to allowing
+    unauthenticated clients to access the route. 
+    """
 
-    async def check(self, req, handler, client):
+    async def check(self, req: Request, handler, client):
         """
         This method is a no-op for the default policy.
 
@@ -46,18 +53,39 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
             raise HTTPForbidden(text="Requires administrative privilege")
 
 
-class PermissionsRoutePolicy(DefaultRoutePolicy):
-    def __init__(self, object_type, object_id, permission: PermissionType):
+class PermissionRoutePolicy(DefaultRoutePolicy):
+    def __init__(
+        self,
+        object_type: ResourceType,
+        object_id: Union[int, str],
+        permission: PermissionType,
+    ):
         self.object_type = object_type
         self.object_id = object_id
         self.permission = permission
 
-    async def check(self, req, handler, client):
-        abs_client = req.app["auth"]
-        if not client.administrator and not await abs_client.check(
+    async def check(self, req: Request, handler: Callable, client):
+        """
+        Checks if the client has the required permission for the object.
+
+        Raises ``HTTPForbidden`` if the client does not have the required permission.
+
+        The check will pass if:
+        * The user is an administrator.
+        * The user has the required permission in their legacy MongoDB-based
+          permissions.
+        * The permission check passes against the authorization client.
+
+        """
+        if client.administrator or self.permission.value in client.permissions:
+            return
+
+        if await get_authorization_client_from_req(req).check(
             client.user_id, self.permission, self.object_type, self.object_id
         ):
-            raise HTTPForbidden(text="Not permitted")
+            return
+
+        raise HTTPForbidden(text="Not permitted")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):
@@ -73,6 +101,11 @@ class WebSocketRoutePolicy(DefaultRoutePolicy):
 
 
 def policy(route_policy: Union[DefaultRoutePolicy, Type[DefaultRoutePolicy]]):
+    """
+    Applies the provided route policy to the decorated request handler.
+
+    """
+
     def decorator(func):
         try:
             if func.policy:

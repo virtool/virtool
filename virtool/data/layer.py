@@ -5,7 +5,7 @@ from virtool.account.data import AccountData
 
 if TYPE_CHECKING:
     from virtool.analyses.data import AnalysisData
-from virtool.auth.data import AuthData
+from virtool.authorization.data import AuthorizationData
 from virtool.blast.data import BLASTData
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
@@ -33,9 +33,10 @@ class DataLayer:
     database and storage.
 
     """
+
     account: AccountData
     analyses: "AnalysisData"
-    auth: AuthData
+    auth: AuthorizationData
     blast: BLASTData
     groups: GroupsData
     history: HistoryData

@@ -233,6 +233,7 @@ async def middleware(req, handler) -> Response:
         )
 
     resp = await handler(req)
+
     if req.path != "/account/reset":
         session_id = await get_data_from_req(req).sessions.clear_reset_session(
             session_id

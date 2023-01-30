@@ -31,7 +31,7 @@ async def shutdown_authorization_client(app: Application):
     logger.info("Stopping OpenFGA client")
 
     try:
-        await app["auth"].open_fga.close()
+        await app["authorization"].open_fga.close()
     except KeyError:
         pass
 

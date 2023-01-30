@@ -1,0 +1,12 @@
+# name: test_update[uvloop][added]
+  <class 'dict'> {
+    'cancel_job': False,
+    'create_ref': False,
+    'create_sample': True,
+    'modify_hmm': False,
+    'modify_subtraction': True,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
