@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Optional
 
 from virtool.analyses.utils import find_nuvs_sequence_by_index
-from virtool.api.custom_json import datetime_to_isoformat
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotModifiedError,
