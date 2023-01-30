@@ -57,11 +57,6 @@ async def shutdown_executors(app: Application):
     :param app: the application object
     """
     try:
-        app["executor"].shutdown(wait=True)
-    except KeyError:
-        pass
-
-    try:
         app["process_executor"].shutdown(wait=True)
     except KeyError:
         pass
