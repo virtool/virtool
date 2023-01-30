@@ -153,6 +153,7 @@ class SamplesData(DataLayerPiece):
             page=page,
             page_count=int(math.ceil(found_count / per_page)),
             per_page=per_page,
+            workflows=workflows
         )
 
     async def get(self, sample_id: str) -> Sample:

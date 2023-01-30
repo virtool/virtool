@@ -102,7 +102,7 @@ class SamplesView(PydanticView):
             label, page, per_page, find, workflows, self.request["client"]
         )
 
-        return json_response(data=search_result, workflows=workflows)
+        return json_response(data=search_result)
 
     @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.create_sample))
     async def post(
