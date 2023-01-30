@@ -1,11 +1,11 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound, HTTPUnprocessableEntity
 
 
 def json_response(
-    data: Any, status: int = 200, headers: Optional[Dict[str, str]] = None
+    data: Any, status: int = 200, headers: Optional[Dict[str, str]] = None, workflows: List[str] = None
 ) -> Response:
     """
     Return a response object whose attached JSON dict will be formatted by middleware
@@ -14,6 +14,7 @@ def json_response(
     :param data: the data to send in the response as JSON
     :param status: the HTTP status code for the response
     :param headers: HTTP response headers
+    :param workflows: the list of workflows
     :return: the response
 
     """
@@ -21,6 +22,8 @@ def json_response(
 
     resp = Response(status=status, headers=headers)
     resp["json_data"] = data
+    if workflows is not None:
+        resp["workflows"] = workflows
 
     return resp
 
