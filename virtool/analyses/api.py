@@ -79,6 +79,7 @@ class AnalysisView(PydanticView):
 
         Status Codes:
             200: Successful operation
+            304: Not modified
             400: Parent sample does not exist
             403: Insufficient rights
             404: Not found
