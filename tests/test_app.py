@@ -1,5 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
-
 import pytest
 from aiohttp.client import ClientSession
 from aiohttp.web import Application
@@ -29,8 +27,6 @@ async def test_startup_executors():
     app = Application()
 
     await startup_executors(app)
-
-    assert isinstance(app["executor"], ThreadPoolExecutor)
 
 
 async def test_startup_http_client(loop, fake_app):

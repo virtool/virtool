@@ -51,7 +51,6 @@ async def test_shutdown_executors(mocker, spawn_client):
 
     await shutdown_executors(app)
 
-    assert app["executor"]._shutdown
     assert mock.called
 
 
