@@ -52,6 +52,7 @@ LIST_PROJECTION = [
     "notes",
     "labels",
     "subtractions",
+    "workflows",
 ]
 
 PROJECTION = [
@@ -187,6 +188,7 @@ async def create_sample(
     notes: str,
     labels: List[int],
     user_id: str,
+    workflows: str,
     settings: Settings,
     paired: bool = False,
     _id: Optional[str] = None,
@@ -205,6 +207,7 @@ async def create_sample(
     :param notes: user-defined notes for the sample
     :param labels: IDs of labels associated with the sample
     :param user_id: the ID of the user that is creating the sample
+    :param workflows: workflow state of teh sample
     :param settings: the application settings
     :param paired: Whether a sample is paired or not, defaults to False
     :param _id: An id to assign to a sample instead of it being automatically generated
@@ -238,6 +241,7 @@ async def create_sample(
             "user": {"id": user_id},
             "group": group,
             "locale": locale,
+            "workflows": workflows,
             "paired": paired,
         }
     )
@@ -263,6 +267,36 @@ async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     return None
 
 
+async def check_workflow_state(analyses: list) -> dict:
+    """
+    Checks analyses to determine sample state.
+
+    :param analyses: the analyses for the sample
+    :return: workflow state of a sample
+
+    """
+    ready = []
+    workflow_state = ""
+
+    if not analyses:
+        workflow_state = "none"
+
+    else:
+        for analysis in analyses:
+            if analysis["workflow"] == "pathoscope_bowtie" or "pathoscope_barracuda":
+                ready.append(analysis["ready"])
+
+            if analysis["workflow"] == "nuvs":
+                ready.append(analysis["ready"])
+
+            if not any(ready):
+                workflow_state = "pending"
+            else:
+                workflow_state = "complete"
+
+    return {"workflows": workflow_state}
+
+
 async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     """
     Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
@@ -277,6 +311,14 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     )
 
     update = virtool.samples.utils.calculate_workflow_tags(analyses)
+
+    library_type = db.samples.find({"_id": sample_id}, ["library_type"])
+
+    if library_type == "amplicon":
+        db.samples.find_one_and_update({"_id": sample_id}, {"$set": {"workflows": "incompatible"}})
+    else:
+        workflow_state = await check_workflow_state(analyses)
+        update = update | workflow_state
 
     document = await db.samples.find_one_and_update(
         {"_id": sample_id}, {"$set": update}, projection=LIST_PROJECTION

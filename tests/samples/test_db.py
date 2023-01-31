@@ -142,6 +142,7 @@ class TestRecalculateWorkflowTags:
             "_id": "test",
             "pathoscope": True,
             "nuvs": "ip",
+            "workflows": "complete",
         }
 
 
@@ -271,7 +272,9 @@ async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client)
         "test",
         [],
         "bob",
+        workflows="",
         settings=settings,
+
     )
 
     assert result == snapshot
