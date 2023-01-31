@@ -210,6 +210,7 @@
     'user': <class 'dict'> {
       'id': 'bob',
     },
+    'workflows': '',
   }
 ---
 # name: test_create_sample[uvloop].1
@@ -242,6 +243,7 @@
     'user': <class 'dict'> {
       'id': 'bob',
     },
+    'workflows': '',
   }
 ---
 # name: test_finalize[uvloop]
