@@ -26,7 +26,7 @@ def get_authorization_client_from_req(req: Request) -> AuthorizationClient:
     """
     Get the authorization client instance from a request object.
     """
-    return req.app["auth_client"]
+    return req.app["authorization"]
 
 
 async def connect_openfga(openfga_host: str, openfga_scheme: str):

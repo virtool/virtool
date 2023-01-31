@@ -24,7 +24,7 @@ def merge_group_permissions(groups: List[dict]) -> Dict[str, bool]:
     for p in Permission:
         for group in groups:
             try:
-                if group["permissions"][p.value.id]:
+                if group["permissions"][p.value]:
                     permission_dict[p.value] = True
             except KeyError:
                 permission_dict[p.value] = False

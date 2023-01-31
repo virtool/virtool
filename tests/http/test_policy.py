@@ -288,7 +288,7 @@ async def test_permissions(
             else [Permission.modify_subtraction]
         ),
         addon_route_table=privilege_routes(
-            PermissionRoutePolicy("app", "virtool", Permission.create_sample)
+            PermissionRoutePolicy(ResourceType.SPACE, 0, SpacePermission.CREATE_SAMPLE)
         ),
     )
 
