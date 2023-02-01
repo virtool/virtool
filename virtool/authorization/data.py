@@ -19,8 +19,8 @@ class AuthorizationData:
                 PermissionMinimal(
                     id=permission.name,
                     name=permission.value.name,
-                    resource_type=permission.value.resource_type,
-                    action=permission.value.action,
+                    resource_type=permission.value.resource_type.value,
+                    action=permission.value.action.value,
                     description=permission.value.description,
                 )
                 for permission in [

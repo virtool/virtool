@@ -1,3 +1,4 @@
+import openfga_sdk
 import pytest
 
 from virtool.authorization.client import AuthorizationClient
@@ -150,21 +151,34 @@ async def test_add_and_remove_group_permissions(fake2, spawn_auth_client):
 
 
 async def test_add_and_remove_user_permissions(fake2, spawn_auth_client):
-    authorization_client = await spawn_auth_client()
+    client = await spawn_auth_client()
 
-    await authorization_client.add(
+    await client.add(
         UserPermission("ryanf", SpacePermission.CANCEL_JOB),
         UserPermission("ryanf", SpacePermission.MODIFY_SUBTRACTION),
         UserPermission("ryanf", SpacePermission.MODIFY_HMM),
     )
 
-    assert await authorization_client.list_permissions(
+    assert await client.list_permissions(
         "ryanf", ResourceType.SPACE, 0
     ) == [
         "cancel_job",
         "modify_hmm",
         "modify_subtraction",
     ]
+
+
+async def test_delete_group(fake2, spawn_auth_client):
+    client = await spawn_auth_client()
+
+    await client.add(
+        GroupPermission("sidney", SpacePermission.CANCEL_JOB),
+        GroupPermission("sidney", SpacePermission.MODIFY_SUBTRACTION),
+    )
+
+    await client.delete_group("sidney")
+
+    assert await client.list_group_permissions("sidney", ResourceType.SPACE, 0) == []
 
 
 async def test_add_idempotent(fake2, spawn_auth_client):

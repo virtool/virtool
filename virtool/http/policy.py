@@ -77,7 +77,7 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
         * The permission check passes against the authorization client.
 
         """
-        if client.administrator or self.permission.value.id in client.permissions:
+        if client.administrator or client.permissions[self.permission.value.id]:
             return
 
         if await get_authorization_client_from_req(req).check(

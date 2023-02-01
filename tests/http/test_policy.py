@@ -14,6 +14,7 @@ from aiohttp.web_response import json_response
 from aiohttp_pydantic import PydanticView
 from virtool_core.models.enums import Permission
 
+from virtool.authorization.permissions import SpacePermission, ResourceType
 from virtool.errors import PolicyError
 from virtool.http.policy import (
     policy,

@@ -27,5 +27,5 @@ class SourceView(PydanticView):
             200: Successful operation
         """
         return json_response(
-            await get_data_from_req(self.request).auth.find(resource_type)
+            await get_data_from_req(self.request).auth.find()
         )

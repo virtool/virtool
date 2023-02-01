@@ -11,7 +11,7 @@ import virtool.http.authentication
 import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.authorization.permissions import PermissionType, ResourceType
+from virtool.authorization.permissions import PermissionType, ResourceType, SpacePermission
 from virtool.authorization.relationships import UserPermission
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -135,7 +135,7 @@ class FirstUserView(PydanticView):
 
         session_id, session, token = await get_data_from_req(
             self.request
-        ).sessions.create(virtool.http.auth.get_ip(self.request), user.id)
+        ).sessions.create(virtool.http.authentication.get_ip(self.request), user.id)
 
         self.request["client"].authorize(session, is_api=False)
 
@@ -232,7 +232,7 @@ class PermissionsView(PydanticView):
 class PermissionView(PydanticView):
     @policy(AdministratorRoutePolicy)
     async def put(
-        self, user_id: str, permission: PermissionType, /
+        self, user_id: str, permission: str, /
     ) -> r200[PermissionResponse]:
         """
         Add a permission for a user
@@ -240,6 +240,11 @@ class PermissionView(PydanticView):
         Status Codes:
             200: Successful operation
         """
+        try:
+            permission = SpacePermission.from_string(permission)
+        except KeyError as err:
+            raise HTTPBadRequest(text=str(err))
+
         await get_authorization_client_from_req(self.request).add(
             UserPermission(user_id, permission)
         )
@@ -248,7 +253,7 @@ class PermissionView(PydanticView):
 
     @policy(AdministratorRoutePolicy)
     async def delete(
-        self, user_id: str, permission: PermissionType, /
+        self, user_id: str, permission: str, /
     ) -> r200[PermissionResponse]:
         """
         Delete a permission for a user
@@ -256,6 +261,11 @@ class PermissionView(PydanticView):
         Status Codes:
             200: Successful operation
         """
+        try:
+            permission = SpacePermission.from_string(permission)
+        except KeyError as err:
+            raise HTTPBadRequest(text=str(err))
+
         await get_authorization_client_from_req(self.request).remove(
             UserPermission(user_id, permission)
         )

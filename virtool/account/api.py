@@ -290,7 +290,7 @@ class LoginView(PydanticView):
         """
 
         session_id = self.request.cookies.get("session_id")
-        ip = virtool.http.auth.get_ip(self.request)
+        ip = virtool.http.authentication.get_ip(self.request)
 
         try:
             user_id = await get_data_from_req(self.request).account.login(data)
@@ -348,7 +348,7 @@ class LogoutView(PydanticView):
         """
         session_id, _ = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
-            virtool.http.auth.get_ip(self.request),
+            virtool.http.authentication.get_ip(self.request),
         )
 
         resp = Response(status=200)
@@ -383,7 +383,7 @@ class ResetView(PydanticView):
             ).account.reset(
                 self.request.cookies.get("session_id"),
                 data,
-                virtool.http.auth.get_ip(self.request),
+                virtool.http.authentication.get_ip(self.request),
             )
         except (ResourceError, ResourceNotFoundError):
             raise HTTPBadRequest(text="Invalid session")

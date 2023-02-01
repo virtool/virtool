@@ -14,8 +14,8 @@ from openfga_sdk import (
 )
 from virtool_core.models.enums import Permission
 
-from virtool.authorization.permissions import PermissionType, ResourceType
-from virtool.authorization.relationships import AbstractRelationship
+from virtool.authorization.permissions import PermissionType, ResourceType, SpacePermission
+from virtool.authorization.relationships import AbstractRelationship, GroupPermission
 from virtool.authorization.results import (
     RemoveRelationshipResult,
     AddRelationshipResult,
@@ -120,7 +120,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
             )
         )
 
-        return [relation_tuple.key.relation for relation_tuple in response.tuples]
+        return sorted([relation_tuple.key.relation for relation_tuple in response.tuples])
 
     async def list_permissions(
         self, user_id: str, resource_type: ResourceType, resource_id: Union[str, int]
@@ -227,6 +227,12 @@ class AuthorizationClient(AbstractAuthorizationClient):
         result.removed_count = len(relationships) - result.not_found_count
 
         return result
+
+    async def delete_group(self, group_id):
+        permissions = await self.list_group_permissions(group_id, ResourceType.SPACE, 0)
+
+        for permission in permissions:
+            await self.remove(GroupPermission(group_id, SpacePermission.from_string(permission)))
 
 
 def raise_exception_if_not_default_space(

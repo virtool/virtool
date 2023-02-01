@@ -267,7 +267,7 @@ async def startup_databases(app: Application):
             "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
-            "authorization": AuthorizationClient(mongo, openfga_instance),
+            "authorization": AuthorizationClient(openfga_instance),
         }
     )
 
