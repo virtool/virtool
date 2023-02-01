@@ -24,8 +24,8 @@ class AuthorizationData:
                     description=permission.value.description,
                 )
                 for permission in [
-                    *[p for p in AppPermission],
-                    *[p for p in SpacePermission],
+                    *list(AppPermission),
+                    *list(SpacePermission),
                 ]
             ]
         ]

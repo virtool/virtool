@@ -4,14 +4,13 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
-from virtool_core.models.enums import Permission
 from virtool_core.models.user import User
 
 import virtool.http.authentication
 import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.authorization.permissions import PermissionType, ResourceType, SpacePermission
+from virtool.authorization.permissions import ResourceType, SpacePermission
 from virtool.authorization.relationships import UserPermission
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError

@@ -1,13 +1,9 @@
-import asyncio
 import datetime
 from datetime import datetime
-from pprint import pprint
-
 import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 
-from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.permissions import SpacePermission
 from virtool.authorization.relationships import UserPermission
 from virtool.data.utils import get_data_from_app
@@ -38,22 +34,6 @@ async def setup_update_user(fake2, spawn_client):
     )
 
     return client, group_1, group_2, await fake2.users.create(groups=[group_1])
-
-@pytest.fixture()
-def spawn_auth_client(authorization_client, create_user, mongo):
-    async def func(
-        permissions=None,
-    ) -> AuthorizationClient:
-        await mongo.users.insert_one(
-            create_user(
-                user_id="test",
-                permissions=permissions,
-            )
-        )
-
-        return authorization_client
-
-    return func
 
 
 @pytest.mark.apitest
@@ -257,8 +237,10 @@ class TestUpdate:
 
 
 @pytest.mark.parametrize("user", ["test", "bob"])
-async def test_list_permissions(spawn_client, authorization_client, user, snapshot):
+async def test_list_permissions(spawn_client, user, snapshot):
     client = await spawn_client(authorize=True, permissions=[Permission.create_sample, Permission.create_ref])
+
+    authorization_client = client.app["authorization"]
 
     await authorization_client.add(
         UserPermission("test", SpacePermission.CREATE_SAMPLE),

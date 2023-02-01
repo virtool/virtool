@@ -9,7 +9,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
 from virtool_core.models.subtraction import SubtractionSearchResult
 
 from virtool.api.response import NotFound, json_response
-from virtool.authorization.permissions import AppPermission, SpacePermission, ResourceType
+from virtool.authorization.permissions import SpacePermission, ResourceType
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionRoutePolicy

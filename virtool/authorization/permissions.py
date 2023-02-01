@@ -24,7 +24,7 @@ class ResourceType(Enum):
     SPACE = "space"
     """
     A Virtool space.
-    
+
     Used for controlling creation of resources in the space and manage space members and
     settings.
     """
@@ -50,7 +50,7 @@ class Action(Enum):
     UPLOAD = "upload"
     """
     Allow a user to upload a file.
-    
+
     This will be deprecated in favor of ``CREATE``.
     """
 
@@ -63,7 +63,7 @@ class Action(Enum):
     REMOVE = "remove"
     """
     Allow a user to delete a resource.
-    
+
     This will be deprecated in favor of ``DELETE``.
     """
 
@@ -166,8 +166,8 @@ class SpacePermission(Enum):
         action=Action.DELETE,
     )
     CREATE_UPLOAD = Permission(
-        id="upload_file",
-        name="Upload File",
+        id="create_upload",
+        name="Create Upload",
         description="Allow files to be uploaded.",
         resource_type=ResourceType.SPACE,
         action=Action.CREATE,

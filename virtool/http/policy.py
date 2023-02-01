@@ -7,7 +7,7 @@ from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
 
-from virtool.authorization.permissions import PermissionType, ResourceType
+from virtool.authorization.permissions import PermissionType, ResourceType, adapt_permission_new_to_legacy
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient
@@ -21,9 +21,9 @@ class DefaultRoutePolicy:
     allow_unauthenticated: bool = False
     """
     Allow unauthenticated clients to access the route that this policy applies to.
-    
+
     Policies that subclass the default policy must explicitly opt-in to allowing
-    unauthenticated clients to access the route. 
+    unauthenticated clients to access the route.
     """
 
     async def check(self, req: Request, handler, client):
@@ -77,7 +77,9 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
         * The permission check passes against the authorization client.
 
         """
-        if client.administrator or client.permissions[self.permission.value.id]:
+        permission = adapt_permission_new_to_legacy(self.permission)
+
+        if client.administrator or client.permissions[permission.value.id]:
             return
 
         if await get_authorization_client_from_req(req).check(

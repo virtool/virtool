@@ -1,4 +1,3 @@
-import openfga_sdk
 import pytest
 
 from virtool.authorization.client import AuthorizationClient

@@ -317,7 +317,7 @@
       'action': 'create',
       'description': 'Allow files to be uploaded.',
       'id': 'CREATE_UPLOAD',
-      'name': 'Upload File',
+      'name': 'Create Upload',
       'resource_type': 'space',
     },
     <class 'dict'> {
