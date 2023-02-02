@@ -19,7 +19,7 @@ async def test_check_mongo_version(mongo, caplog, mocker, version):
         assert e.code == 1
 
 
-async def test_required_revision(mongo, spawn_client):
+async def test_check_revision(mongo, spawn_client):
     await mongo.migrations.insert_one(
         {
             "_id": "test",

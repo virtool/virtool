@@ -51,7 +51,7 @@ async def check_revision(db: AsyncIOMotorDatabase):
     :param db: the application database object
     """
     if not await db.migrations.find_one({"revision_id": REQUIRED_MONGODB_REVISION}):
-        logger.fatal("Virtool does not have the required MongoDB revision.")
+        logger.fatal("The required MongoDB revision has not been applied: %s.", REQUIRED_MONGODB_REVISION)
         sys.exit(1)
 
 
