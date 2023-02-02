@@ -13,12 +13,13 @@ REQUIRED_MONGODB_REVISION = "6q5k8tz8uph3"
 logger = getLogger("mongo")
 
 
-async def connect(db_connection_string: str, db_name: str) -> AsyncIOMotorDatabase:
+async def connect(db_connection_string: str, db_name: str, skip_revision_check: bool) -> AsyncIOMotorDatabase:
     """
     Connect to a MongoDB server and return an application database object.
 
     :param db_connection_string: the mongoDB connection string
     :param db_name: the database name
+    :param skip_revision_check: skips the check for the required mongodb revision if set to true
     :return: database
 
     """
@@ -34,13 +35,21 @@ async def connect(db_connection_string: str, db_name: str) -> AsyncIOMotorDataba
 
     await check_mongo_version(db_client)
 
-    await check_revision(db_client[db_name])
+    if not skip_revision_check:
+        await check_revision(db_client[db_name])
 
     return db_client[db_name]
 
 
 async def check_revision(db: AsyncIOMotorDatabase):
+    """
+    Check if the required MongoDB revision has been applied.
 
+    Log a fatal error and exit if the required revision
+    has not been applied.
+
+    :param db: the application database object
+    """
     if not await db.migrations.find_one({"revision_id": REQUIRED_MONGODB_REVISION}):
         logger.fatal("Virtool does not have the required MongoDB revision.")
         sys.exit(1)

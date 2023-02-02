@@ -54,6 +54,9 @@ def entry():
     type=str,
 )
 @click.option(
+    "--no-revision", help="Disable the MongoDB revision check", is_flag=True
+)
+@click.option(
     "--no-tasks", help="Disable the server's built-in task runner", is_flag=True
 )
 @click.option("--no-sentry", help="Disable Sentry error reporting", is_flag=True)
@@ -97,6 +100,7 @@ def cli(
     db_name,
     dev,
     force_version,
+    no_revision,
     no_sentry,
     no_tasks,
     openfga_host,
@@ -115,6 +119,7 @@ def cli(
             "db_name": db_name,
             "dev": dev,
             "force_version": force_version,
+            "no_revision": no_revision,
             "no_sentry": no_sentry,
             "no_tasks": no_tasks,
             "openfga_host": openfga_host,

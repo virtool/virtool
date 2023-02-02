@@ -24,6 +24,7 @@ class Config:
     no_check_files: bool = False
     no_check_db: bool = False
     no_fetching: bool = False
+    no_revision: bool = False
     no_sentry: bool = False
     no_tasks: bool = False
     port: int = 9950

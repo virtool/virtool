@@ -79,6 +79,7 @@ def create_app(
             no_check_db=True,
             no_check_files=True,
             no_fetching=True,
+            no_revision=True,
             no_tasks=no_tasks,
             no_sentry=True,
             openfga_host="localhost:8080",
