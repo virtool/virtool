@@ -19,7 +19,7 @@ async def connect(db_connection_string: str, db_name: str, skip_revision_check: 
 
     :param db_connection_string: the mongoDB connection string
     :param db_name: the database name
-    :param skip_revision_check: skips the check for the required mongodb revision if set to true
+    :param skip_revision_check: skips check for required MongoDB revision if set
     :return: database
 
     """

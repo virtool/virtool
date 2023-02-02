@@ -222,6 +222,7 @@ def spawn_job_client(
                 fake=False,
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
+                no_revision=True,
                 no_sentry=True,
                 openfga_host="localhost:8080",
                 openfga_scheme="http",
