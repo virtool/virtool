@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import io
 import json
 import os
@@ -110,15 +109,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
 async def test_get(
-        ready,
-        fake2,
-        error,
-        mocker,
-        snapshot,
-        spawn_client,
-        static_time,
-        resp_is,
-        pg,
+    ready, fake2, error, mocker, snapshot, spawn_client, static_time, resp_is, pg
 ):
     client = await spawn_client(authorize=True)
 
@@ -165,12 +156,7 @@ async def test_get(
 
     if error != "404":
         await client.db.analyses.insert_one(document)
-        await create_analysis_file(
-            pg,
-            "foobar",
-            "fasta",
-            "reference.fa",
-        )
+        await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",
@@ -216,15 +202,7 @@ async def test_get(
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", ["304"])
 async def test_get_304(
-        ready,
-        fake2,
-        error,
-        mocker,
-        snapshot,
-        spawn_client,
-        static_time,
-        resp_is,
-        pg,
+    ready, fake2, error, mocker, snapshot, spawn_client, static_time, resp_is, pg
 ):
     client = await spawn_client(authorize=True)
 
@@ -269,31 +247,13 @@ async def test_get_304(
     )
 
     await client.db.analyses.insert_one(document)
-    await create_analysis_file(
-        pg,
-        "foobar",
-        "fasta",
-        "reference.fa",
+    await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
+
+    resp = await client.get(
+        url="/analyses/foobar", headers={"If-Modified-Since": "2015-10-06T20:00:00Z"}
     )
 
-    m_format_analysis = mocker.patch(
-        "virtool.analyses.format.format_analysis",
-        make_mocked_coro(
-            {
-                "_id": "foo",
-                "created_at": static_time.datetime,
-                "formatted": True,
-                "user": {"id": user.id},
-                "subtractions": ["apple", "plum"],
-                "results": {"hits": []},
-                "workflow": "pathoscope_bowtie",
-            }
-        ),
-    )
-
-    resp = await client.get(url="/analyses/foobar", headers={"If-Modified-Since": "2015-10-06T20:00:00Z"})
-
-    if error == '304':
+    if error == "304":
         assert resp.status == 304
 
 
@@ -359,7 +319,7 @@ async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
-        error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path
+    error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path
 ):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
@@ -376,11 +336,7 @@ async def test_upload_file(
 
     if error != 404:
         await client.db.analyses.insert_one(
-            {
-                "_id": "foobar",
-                "ready": True,
-                "job": {"id": "hello"},
-            }
+            {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
         )
 
     if error == 422:
@@ -410,7 +366,7 @@ async def test_upload_file(
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
 async def test_download_analysis_result(
-        file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmp_path
+    file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmp_path
 ):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
@@ -425,11 +381,7 @@ async def test_download_analysis_result(
     expected_path = client.app["config"].data_path / "analyses" / "1-reference.fa"
 
     await client.db.analyses.insert_one(
-        {
-            "_id": "foobar",
-            "ready": True,
-            "job": {"id": "hello"},
-        }
+        {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
     )
 
     if row_exists:
@@ -458,12 +410,7 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
     client = await spawn_client(authorize=True)
 
     if exists:
-        await client.db.analyses.insert_one(
-            {
-                "_id": "foobar",
-                "ready": True,
-            }
-        )
+        await client.db.analyses.insert_one({"_id": "foobar", "ready": True})
 
     mocker.patch(
         f"virtool.analyses.format.format_analysis_to_{'excel' if extension == 'xlsx' else 'csv'}",
@@ -563,8 +510,8 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
     assert resp.status == 201
 
     assert (
-            resp.headers["Location"]
-            == "https://virtool.example.com/analyses/foobar/5/blast"
+        resp.headers["Location"]
+        == "https://virtool.example.com/analyses/foobar/5/blast"
     )
 
     assert await resp.json() == snapshot
@@ -573,7 +520,7 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
 async def test_finalize(
-        fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
+    fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
 ):
     user = await fake2.users.create()
 
@@ -585,11 +532,7 @@ async def test_finalize(
     client = await spawn_job_client(authorize=True)
 
     await asyncio.gather(
-        client.db.samples.insert_one(
-            {
-                "_id": "sample1",
-            }
-        ),
+        client.db.samples.insert_one({"_id": "sample1"}),
         client.db.references.insert_one(
             {"_id": "baz", "name": "Baz", "data_type": "genome"}
         ),
@@ -656,11 +599,7 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
     client = await spawn_job_client(authorize=True)
 
     await asyncio.gather(
-        client.db.samples.insert_one(
-            {
-                "_id": "sample1",
-            }
-        ),
+        client.db.samples.insert_one({"_id": "sample1"}),
         client.db.references.insert_one(
             {"_id": "baz", "name": "Baz", "data_type": "genome"}
         ),

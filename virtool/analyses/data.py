@@ -157,10 +157,7 @@ class AnalysisData(DataLayerPiece):
         document = await processor(self._db, document)
 
         if document["workflow"] == "nuvs":
-            document = await apply_transforms(
-                document,
-                [AttachNuVsBLAST(self._pg)],
-            )
+            document = await apply_transforms(document, [AttachNuVsBLAST(self._pg)])
 
         for key in document_before_formatting:
             if key not in document:

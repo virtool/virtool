@@ -2,7 +2,6 @@
 Provides request handlers for managing and viewing analyses.
 
 """
-from datetime import datetime
 from logging import getLogger
 from typing import Union
 
@@ -97,12 +96,12 @@ class AnalysisView(PydanticView):
         if_modified_since = self.request.headers.get("If-Modified-Since")
 
         if if_modified_since is not None:
-            if_modified_since = arrow.get(if_modified_since)
+            if_modified_since = arrow.get(if_modified_since).naive
 
         try:
             document = await get_data_from_req(self.request).analyses.get(
                 analysis_id,
-                if_modified_since,
+                if_modified_since
             )
         except ResourceNotFoundError:
             raise NotFound()
