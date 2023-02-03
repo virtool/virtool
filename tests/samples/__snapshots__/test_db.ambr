@@ -210,7 +210,11 @@
     'user': <class 'dict'> {
       'id': 'bob',
     },
-    'workflows': '',
+    'workflows': <class 'dict'> {
+      'aodp': 'none',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: test_create_sample[uvloop].1
@@ -243,7 +247,11 @@
     'user': <class 'dict'> {
       'id': 'bob',
     },
-    'workflows': '',
+    'workflows': <class 'dict'> {
+      'aodp': 'none',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: test_finalize[uvloop]

@@ -28,7 +28,11 @@
     'user': <class 'dict'> {
       'id': '7CtBo2yG',
     },
-    'workflows': '',
+    'workflows': <class 'dict'> {
+      'aodp': 'none',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: test_create_fake_unpaired[uvloop-False-True]
@@ -61,7 +65,11 @@
     'user': <class 'dict'> {
       'id': '7CtBo2yG',
     },
-    'workflows': '',
+    'workflows': <class 'dict'> {
+      'aodp': 'none',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: test_create_fake_unpaired[uvloop-True-False]
@@ -225,7 +233,11 @@
       'handle': 'leeashley',
       'id': '7CtBo2yG',
     },
-    'workflows': '',
+    'workflows': <class 'dict'> {
+      'aodp': 'none',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: test_create_fake_unpaired[uvloop-True-True]
@@ -399,6 +411,10 @@
       'handle': 'leeashley',
       'id': '7CtBo2yG',
     },
-    'workflows': '',
+    'workflows': <class 'dict'> {
+      'aodp': 'none',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
