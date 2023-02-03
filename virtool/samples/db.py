@@ -88,6 +88,7 @@ PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
 AODP = ["aodp"]
 NUVS = ["nuvs"]
 
+
 class ArtifactsAndReadsTransform(AbstractTransform):
     def __init__(self, pg):
         self._pg = pg
@@ -324,15 +325,15 @@ async def check_workflow_state(analyses: list, library_type) -> dict:
 
     if not workflows:
         return {"workflows": workflow_states}
-    else:
-        for workflow in workflows:
-            for analysis in updated_analyses:
-                if analysis["workflow"] == workflow:
-                    if not analysis["ready"]:
-                        workflow_states[workflow] = "pending"
-                    elif analysis["ready"]:
-                        workflow_states[workflow] = "complete"
-                        break
+
+    for workflow in workflows:
+        for analysis in updated_analyses:
+            if analysis["workflow"] == workflow:
+                if not analysis["ready"]:
+                    workflow_states[workflow] = "pending"
+                elif analysis["ready"]:
+                    workflow_states[workflow] = "complete"
+                    break
 
     return {"workflows": workflow_states}
 
