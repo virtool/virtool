@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import io
 import json
 import os
@@ -6,7 +7,6 @@ import os
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
-
 
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
@@ -110,15 +110,15 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
 async def test_get(
-    ready,
-    fake2,
-    error,
-    mocker,
-    snapshot,
-    spawn_client,
-    static_time,
-    resp_is,
-    pg,
+        ready,
+        fake2,
+        error,
+        mocker,
+        snapshot,
+        spawn_client,
+        static_time,
+        resp_is,
+        pg,
 ):
     client = await spawn_client(authorize=True)
 
@@ -187,7 +187,7 @@ async def test_get(
         ),
     )
 
-    resp = await client.get("/analyses/foobar")
+    resp = await client.get(url="/analyses/foobar")
 
     if error == "400":
         await resp_is.bad_request(resp, "Parent sample does not exist")
@@ -210,6 +210,91 @@ async def test_get(
         assert args[2] == snapshot
     else:
         assert not m_format_analysis.called
+
+
+@pytest.mark.apitest
+@pytest.mark.parametrize("ready", [True, False])
+@pytest.mark.parametrize("error", ["304"])
+async def test_get_304(
+        ready,
+        fake2,
+        error,
+        mocker,
+        snapshot,
+        spawn_client,
+        static_time,
+        resp_is,
+        pg,
+):
+    client = await spawn_client(authorize=True)
+
+    user = await fake2.users.create()
+
+    document = {
+        "_id": "foobar",
+        "created_at": static_time.datetime,
+        "ready": ready,
+        "job": {"id": "test"},
+        "index": {"version": 3, "id": "bar"},
+        "workflow": "pathoscope_bowtie",
+        "results": {"hits": []},
+        "sample": {"id": "baz"},
+        "reference": {"id": "baz"},
+        "subtractions": ["plum", "apple"],
+        "user": {"id": user.id},
+    }
+
+    await asyncio.gather(
+        client.db.subtraction.insert_many(
+            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
+            session=None,
+        ),
+        client.db.references.insert_one(
+            {"_id": "baz", "data_type": "genome", "name": "Baz"}
+        ),
+    )
+
+    await client.db.samples.insert_one(
+        {
+            "_id": "baz",
+            "all_read": error != "403",
+            "all_write": False,
+            "group": "tech",
+            "group_read": True,
+            "group_write": True,
+            "labels": [],
+            "subtractions": ["apple", "plum"],
+            "user": {"id": user.id},
+        }
+    )
+
+    await client.db.analyses.insert_one(document)
+    await create_analysis_file(
+        pg,
+        "foobar",
+        "fasta",
+        "reference.fa",
+    )
+
+    m_format_analysis = mocker.patch(
+        "virtool.analyses.format.format_analysis",
+        make_mocked_coro(
+            {
+                "_id": "foo",
+                "created_at": static_time.datetime,
+                "formatted": True,
+                "user": {"id": user.id},
+                "subtractions": ["apple", "plum"],
+                "results": {"hits": []},
+                "workflow": "pathoscope_bowtie",
+            }
+        ),
+    )
+
+    resp = await client.get(url="/analyses/foobar", headers={"If-Modified-Since": "2015-10-06T20:00:00Z"})
+
+    if error == '304':
+        assert resp.status == 304
 
 
 @pytest.mark.apitest
@@ -274,7 +359,7 @@ async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
-    error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path
+        error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path
 ):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
@@ -325,7 +410,7 @@ async def test_upload_file(
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
 async def test_download_analysis_result(
-    file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmp_path
+        file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmp_path
 ):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
@@ -478,8 +563,8 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
     assert resp.status == 201
 
     assert (
-        resp.headers["Location"]
-        == "https://virtool.example.com/analyses/foobar/5/blast"
+            resp.headers["Location"]
+            == "https://virtool.example.com/analyses/foobar/5/blast"
     )
 
     assert await resp.json() == snapshot
@@ -488,7 +573,7 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
 async def test_finalize(
-    fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
+        fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
 ):
     user = await fake2.users.create()
 
@@ -566,7 +651,7 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
     patch_json = {"results": {"hits": [], "result": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
-    assert len(json.dumps(patch_json)) > 1024**2
+    assert len(json.dumps(patch_json)) > 1024 ** 2
 
     client = await spawn_job_client(authorize=True)
 
