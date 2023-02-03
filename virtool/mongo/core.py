@@ -403,6 +403,8 @@ class DB:
 
         self.labels = self.bind_collection("labels")
 
+        self.migrations = self.bind_collection("migrations")
+
         self.otus = self.bind_collection("otus", projection=virtool.otus.db.PROJECTION)
 
         self.tasks = self.bind_collection("tasks")
