@@ -249,7 +249,7 @@ async def startup_databases(app: Application):
     openfga_scheme = app["config"].openfga_scheme
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
-        virtool.mongo.connect.connect(db_connection_string, db_name),
+        virtool.mongo.connect.connect(db_connection_string, db_name, app["config"].no_revision_check),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
         connect_openfga(openfga_host, openfga_scheme),
