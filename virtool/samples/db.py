@@ -6,6 +6,7 @@ import asyncio
 from asyncio import to_thread
 import logging
 import os
+import copy
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
@@ -83,6 +84,9 @@ RIGHTS_PROJECTION = {
     "user": True,
 }
 
+PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
+AODP = ["aodp"]
+NUVS = ["nuvs"]
 
 class ArtifactsAndReadsTransform(AbstractTransform):
     def __init__(self, pg):
@@ -177,21 +181,20 @@ def convert_workflow_condition(condition: str) -> Optional[dict]:
 
 
 async def create_sample(
-    db,
-    name: str,
-    host: str,
-    isolate: str,
-    group: str,
-    locale: str,
-    library_type: str,
-    subtractions: List[str],
-    notes: str,
-    labels: List[int],
-    user_id: str,
-    workflows: str,
-    settings: Settings,
-    paired: bool = False,
-    _id: Optional[str] = None,
+        db,
+        name: str,
+        host: str,
+        isolate: str,
+        group: str,
+        locale: str,
+        library_type: str,
+        subtractions: List[str],
+        notes: str,
+        labels: List[int],
+        user_id: str,
+        settings: Settings,
+        paired: bool = False,
+        _id: Optional[str] = None,
 ) -> Document:
     """
     Create, insert, and return a new sample document.
@@ -207,7 +210,6 @@ async def create_sample(
     :param notes: user-defined notes for the sample
     :param labels: IDs of labels associated with the sample
     :param user_id: the ID of the user that is creating the sample
-    :param workflows: workflow state of teh sample
     :param settings: the application settings
     :param paired: Whether a sample is paired or not, defaults to False
     :param _id: An id to assign to a sample instead of it being automatically generated
@@ -241,7 +243,11 @@ async def create_sample(
             "user": {"id": user_id},
             "group": group,
             "locale": locale,
-            "workflows": workflows,
+            "workflows": {
+                "aodp": "none",
+                "nuvs": "none",
+                "pathoscope": "none"
+            },
             "paired": paired,
         }
     )
@@ -267,34 +273,68 @@ async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     return None
 
 
-async def check_workflow_state(analyses: list) -> dict:
+async def define_initial_workflows(library_type, workflows) -> dict:
+    """
+    Checks for incompatibility workflow states
+
+    :param library_type: to check for compatability
+    :param workflows: to determine which analyses to check the state of
+    :return: initial workflow states
+    """
+    workflow_states = {
+        "aodp": "none",
+        "nuvs": "none",
+        "pathoscope": "none"
+    }
+
+    if library_type == "amplicon":
+        workflow_states.update({"nuvs": "incompatible", "pathoscope": "incompatible"})
+        workflows.update({"aodp"})
+        workflows.difference_update({"pathoscope", "nuvs"})
+    else:
+        workflow_states["aodp"] = "incompatible"
+        workflows.update({"nuvs", "pathoscope"})
+        workflows.difference_update({"aodp"})
+
+    return workflow_states, workflows
+
+
+async def check_workflow_state(analyses: list, library_type) -> dict:
     """
     Checks analyses to determine sample state.
 
     :param analyses: the analyses for the sample
+    :param library_type: for compatability check
     :return: workflow state of a sample
 
     """
-    ready = []
-    workflow_state = ""
+    workflows = set()
+    updated_analyses = copy.deepcopy(analyses)
 
-    if not analyses:
-        workflow_state = "none"
+    for analysis in updated_analyses:
+        if analysis["workflow"] in PATHOSCOPE_TASK_NAMES:
+            analysis["workflow"] = "pathoscope"
+            workflows.update({"pathoscope"})
+            if analysis["workflow"] in AODP:
+                workflows.update({"aodp"})
+            if analysis["workflow"] in NUVS:
+                workflows.update({"nuvs"})
 
+    workflow_states, workflows = await define_initial_workflows(library_type, workflows)
+
+    if not workflows:
+        return {"workflows": workflow_states}
     else:
-        for analysis in analyses:
-            if analysis["workflow"] == "pathoscope_bowtie" or "pathoscope_barracuda":
-                ready.append(analysis["ready"])
+        for workflow in workflows:
+            for analysis in updated_analyses:
+                if analysis["workflow"] == workflow:
+                    if not analysis["ready"]:
+                        workflow_states[workflow] = "pending"
+                    elif analysis["ready"]:
+                        workflow_states[workflow] = "complete"
+                        break
 
-            if analysis["workflow"] == "nuvs":
-                ready.append(analysis["ready"])
-
-            if not any(ready):
-                workflow_state = "pending"
-            else:
-                workflow_state = "complete"
-
-    return {"workflows": workflow_state}
+    return {"workflows": workflow_states}
 
 
 async def recalculate_workflow_tags(db, sample_id: str) -> dict:
@@ -314,14 +354,12 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
 
     library_type = db.samples.find({"_id": sample_id}, ["library_type"])
 
-    if library_type == "amplicon":
-        db.samples.find_one_and_update({"_id": sample_id}, {"$set": {"workflows": "incompatible"}})
-    else:
-        workflow_state = await check_workflow_state(analyses)
-        update = update | workflow_state
+    workflow_states = await check_workflow_state(analyses, library_type)
+
+    updates = {**workflow_states, **update}
 
     document = await db.samples.find_one_and_update(
-        {"_id": sample_id}, {"$set": update}, projection=LIST_PROJECTION
+        {"_id": sample_id}, {"$set": updates}, projection=LIST_PROJECTION
     )
 
     return document
@@ -359,7 +397,7 @@ async def remove_samples(db, config: Config, id_list: List[str]) -> DeleteResult
 
 
 async def validate_force_choice_group(
-    db, data: dict, session: Optional[AsyncIOMotorClientSession] = None
+        db, data: dict, session: Optional[AsyncIOMotorClientSession] = None
 ) -> Optional[str]:
     group = data.get("group")
 
@@ -385,9 +423,9 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
     files = sample["files"]
 
     return (
-        all(file.get("raw", False) is False for file in files)
-        and files[0]["name"] == "reads_1.fastq"
-        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+            all(file.get("raw", False) is False for file in files)
+            and files[0]["name"] == "reads_1.fastq"
+            and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -508,12 +546,12 @@ async def move_sample_files_to_pg(db: "DB", pg: AsyncEngine, sample: Dict[str, a
 
 
 async def finalize(
-    db,
-    pg: AsyncEngine,
-    sample_id: str,
-    quality: Dict[str, Any],
-    _run_in_thread: callable,
-    data_path: Path,
+        db,
+        pg: AsyncEngine,
+        sample_id: str,
+        quality: Dict[str, Any],
+        _run_in_thread: callable,
+        data_path: Path,
 ) -> Dict[str, Any]:
     """
     Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``

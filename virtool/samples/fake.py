@@ -124,7 +124,6 @@ async def create_fake_sample(
         labels=[],
         user_id=user_id,
         group="none",
-        workflows="",
         settings=settings,
     )
 
