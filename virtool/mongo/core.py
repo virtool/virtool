@@ -448,9 +448,8 @@ class DB:
 
     @asynccontextmanager
     async def create_session(self):
-        async with await self.motor_client.client.start_session() as s:
-            async with s.start_transaction():
-                yield s
+        async with await self.motor_client.client.start_session() as s, s.start_transaction():
+            yield s
 
     @asynccontextmanager
     async def with_session(self):
