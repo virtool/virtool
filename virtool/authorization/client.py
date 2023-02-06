@@ -1,3 +1,17 @@
+"""
+Authorization clients.
+
+One is backed by OpenFGA. One is in-memory for testing.
+
+Requirements:
+* List the application administrators and their roles.
+* List the members and roles of a group.
+* List the members and base roles of a space.
+
+
+
+
+"""
 import asyncio
 import itertools
 from abc import ABC, abstractmethod
@@ -14,12 +28,17 @@ from openfga_sdk import (
 )
 from virtool_core.models.enums import Permission
 
-from virtool.authorization.permissions import PermissionType, ResourceType, SpacePermission
+from virtool.authorization.permissions import (
+    PermissionType,
+    ResourceType,
+    SpacePermission,
+)
 from virtool.authorization.relationships import AbstractRelationship, GroupPermission
 from virtool.authorization.results import (
     RemoveRelationshipResult,
     AddRelationshipResult,
 )
+from virtool.authorization.roles import AdministratorRole
 
 
 class AbstractAuthorizationClient(ABC):
@@ -31,6 +50,10 @@ class AbstractAuthorizationClient(ABC):
         resource_type: ResourceType,
         resource_id: Union[str, int],
     ) -> bool:
+        ...
+
+    @abstractmethod
+    async def list_administrators(self) -> List[dict]:
         ...
 
     @abstractmethod
@@ -84,9 +107,34 @@ class AuthorizationClient(AbstractAuthorizationClient):
 
         return response.allowed
 
-    async def list_groups(self, user_id: str) -> List[str]:
+    async def list_administrators(self) -> List[dict]:
         """
-        Return a list of group IDs the user is a member of in OpenFGA.
+        Return a list of user ids that are administrators.
+        """
+        responses = await asyncio.gather(
+            *[
+                self.open_fga.read(
+                    ReadRequest(
+                        tuple_key=TupleKey(
+                            user="user:", relation=role.value, object="app:"
+                        ),
+                    )
+                )
+                for role in AdministratorRole
+            ]
+        )
+
+        return sorted(
+            [
+                relation_tuple.key.user.split(":")[1]
+                for response in responses
+                for relation_tuple in response
+            ]
+        )
+
+    async def list_user_groups(self, user_id: str) -> List[str]:
+        """
+        Return a list of group ids the user is a member of.
         """
         response = await self.open_fga.read(
             ReadRequest(
@@ -120,7 +168,9 @@ class AuthorizationClient(AbstractAuthorizationClient):
             )
         )
 
-        return sorted([relation_tuple.key.relation for relation_tuple in response.tuples])
+        return sorted(
+            [relation_tuple.key.relation for relation_tuple in response.tuples]
+        )
 
     async def list_permissions(
         self, user_id: str, resource_type: ResourceType, resource_id: Union[str, int]
@@ -232,7 +282,9 @@ class AuthorizationClient(AbstractAuthorizationClient):
         permissions = await self.list_group_permissions(group_id, ResourceType.SPACE, 0)
 
         for permission in permissions:
-            await self.remove(GroupPermission(group_id, SpacePermission.from_string(permission)))
+            await self.remove(
+                GroupPermission(group_id, SpacePermission.from_string(permission))
+            )
 
 
 def raise_exception_if_not_default_space(

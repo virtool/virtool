@@ -1,5 +1,5 @@
 """All Virtool roles."""
-
+from ctypes import Union
 from enum import Enum
 
 
@@ -49,77 +49,64 @@ class SpaceRole(Enum):
 
     OWNER = "owner"
     """
-    Full control over space and all resources, members, and groups.
+    Full control over space a and all resources and members.
     - Remove or add members.
     - Cancel any job.
     """
 
-    CREATOR = "creator"
-    """
-    Create samples, subtractions, references, projects, uploads. Create, edit, and
-    delete labels.
-    """
-
-    ANALYZER = "analyzer"
-    """Create samples, projects, and uploads."""
-
     MEMBER = "member"
-    """View resources only."""
+    """Access a space."""
 
-    SAMPLE_MANAGER = "sample_manager"
-    """Edit or delete any sample. Modify access control for individual samples."""
+    LABEL_MANAGER = "label_manager"
+    """Create, edit, or delete labels."""
 
-    SAMPLE_EDITOR = "sample_editor"
-    """Edit any sample."""
+    PROJECT_MANAGER = "manager"
+    """Create, edit, or delete projects."""
 
-    SAMPLE_VIEWER = "sample_viewer"
-    """View any sample."""
+    PROJECT_EDITOR = "editor"
+    """Create or edit projects."""
 
-    SUBTRACTION_MANAGER = "subtraction_manager"
-    """Edit or delete any subtraction."""
-
-    SUBTRACTION_EDITOR = "subtraction_editor"
-    """Edit any subtraction."""
-
-    SUBTRACTION_VIEWER = "subtraction_viewer"
-    """View or use in analysis any subtraction."""
+    PROJECT_VIEWER = "viewer"
+    """View projects."""
 
     REFERENCE_MANAGER = "reference_manager"
     """
-    Edit, build, or delete any reference. Modify OTUs in any reference. Modify access
+    Edit, build, contribute to (modify otus), or delete any reference. Modify access
     control and settings for any reference.
     """
 
     REFERENCE_BUILDER = "reference_builder"
-    """Edit and build references. Modify OTUs."""
+    """Edit, build, and contribute to any reference."""
 
     REFERENCE_EDITOR = "reference_editor"
-    """Edit or modify OTUs for any reference."""
+    """Edit or contribute to any reference."""
 
     REFERENCE_CONTRIBUTOR = "reference_contributor"
     """Create, edit, or delete (modify) OTUs in any reference."""
 
     REFERENCE_VIEWER = "reference_viewer"
-    """View any and use in analysis any reference."""
+    """View any and use any reference."""
 
+    SAMPLE_MANAGER = "sample_manager"
+    """Create, edit, and delete sample."""
 
-class ProjectRole(Enum):
-    """Roles that are assigned to users or groups for a specific project."""
+    SAMPLE_EDITOR = "sample_editor"
+    """Create and edit samples."""
 
-    MANAGER = "manager"
-    """Edit, delete, or manage access for the project and contained samples."""
+    SAMPLE_ANALYZER = "sample_analyzer"
+    """Analyze samples."""
 
-    EDITOR = "editor"
-    """Edit the project and contained samples."""
+    SAMPLE_VIEWER = "sample_viewer"
+    """View samples."""
 
-    CONTRIBUTOR = "contributor"
-    """Edit samples in the project."""
+    SUBTRACTION_MANAGER = "subtraction_manager"
+    """Create, edit, or delete subtractions."""
 
-    ANALYZE = "analyze"
-    """Analyze samples in the project."""
+    SUBTRACTION_EDITOR = "subtraction_editor"
+    """Edit subtractions."""
 
-    VIEWER = "viewer"
-    """View the project and contained samples."""
+    SUBTRACTION_VIEWER = "subtraction_viewer"
+    """View or use subtractions."""
 
 
 class ReferenceRole(Enum):
@@ -144,17 +131,4 @@ class ReferenceRole(Enum):
     """View the reference and OTUs."""
 
 
-class SampleRole(Enum):
-    """Roles that are assigned to users or groups for a specific sample."""
-
-    MANAGER = "manager"
-    """Edit, analyze, delete, or modify access control for the sample."""
-
-    EDITOR = "editor"
-    """Edit or analyze the sample."""
-
-    ANALYZER = "analyzer"
-    """Analyze the sample."""
-
-    VIEWER = "viewer"
-    """View or analyze the sample."""
+RoleType = Union[AdministratorRole, SpaceRole, ReferenceRole]

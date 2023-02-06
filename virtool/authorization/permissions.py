@@ -209,31 +209,6 @@ class SpacePermission(Enum):
         return cls[value.upper()]
 
 
-class SamplePermission(Enum):
-    """
-    Enumerate permissions that apply to samples.
-
-    Sample creation is a space permission.
-
-    """
-
-    DELETE_SAMPLE = Permission(
-        id="delete_sample",
-        name="Delete Sample",
-        description="Allow samples to be deleted.",
-        resource_type=ResourceType.SAMPLE,
-        action=Action.DELETE,
-    )
-
-    UPDATE_SAMPLE = Permission(
-        id="update_sample",
-        name="Update Sample",
-        description="Allow samples to be updated.",
-        resource_type=ResourceType.SAMPLE,
-        action=Action.UPDATE,
-    )
-
-
 PermissionType = Union[AppPermission, LegacyPermission, SpacePermission]
 
 
