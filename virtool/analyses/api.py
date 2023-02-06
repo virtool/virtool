@@ -78,6 +78,7 @@ class AnalysisView(PydanticView):
 
         Status Codes:
             200: Successful operation
+            304: Not modified
             400: Parent sample does not exist
             403: Insufficient rights
             404: Not found
@@ -95,12 +96,12 @@ class AnalysisView(PydanticView):
         if_modified_since = self.request.headers.get("If-Modified-Since")
 
         if if_modified_since is not None:
-            if_modified_since = arrow.get(if_modified_since)
+            if_modified_since = arrow.get(if_modified_since).naive
 
         try:
             document = await get_data_from_req(self.request).analyses.get(
                 analysis_id,
-                if_modified_since,
+                if_modified_since
             )
         except ResourceNotFoundError:
             raise NotFound()

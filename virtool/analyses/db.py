@@ -125,9 +125,7 @@ async def create(
         "sample": {"id": sample_id},
         "subtractions": subtractions,
         "updated_at": created_at,
-        "user": {
-            "id": user_id,
-        },
+        "user": {"id": user_id},
         "workflow": workflow,
     }
 

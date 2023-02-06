@@ -14,12 +14,11 @@ async def check_if_analysis_modified(
 ):
     if if_modified_since is not None:
         try:
-            updated_at = document["updated_at"]
+            if if_modified_since == document["updated_at"]:
+                raise ResourceNotModifiedError()
         except KeyError:
-            updated_at = document["created_at"]
-
-        if if_modified_since == updated_at:
-            raise ResourceNotModifiedError()
+            if if_modified_since == document["created_at"]:
+                raise ResourceNotModifiedError()
 
 
 async def check_if_analysis_ready(jobs_api_flag: bool, ready: bool):
