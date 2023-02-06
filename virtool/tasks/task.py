@@ -17,7 +17,6 @@ logger = getLogger("task")
 
 
 class BaseTask:
-
     name: str
     """The name of the task (eg. 'add_subtraction_files')."""
 

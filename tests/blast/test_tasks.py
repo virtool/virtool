@@ -15,7 +15,6 @@ async def test_task(
     test_files_path,
     snapshot,
 ):
-
     user = await fake2.users.create()
 
     await asyncio.gather(

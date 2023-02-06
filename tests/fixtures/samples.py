@@ -4,7 +4,6 @@ import arrow
 
 @pytest.fixture
 def mock_sample(static_time):
-
     return {
         "_id": "test",
         "name": "Test",

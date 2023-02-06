@@ -183,7 +183,6 @@ async def get_for_jobs_api(req: Request) -> Response:
 
 @routes.jobs_api.delete("/analyses/{analysis_id}")
 async def delete_analysis(req):
-
     try:
         await get_data_from_req(req).analyses.delete(
             req.match_info["analysis_id"], True

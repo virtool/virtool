@@ -67,7 +67,6 @@ class ChangeView(PydanticView):
         if reference is not None and not await virtool.references.db.check_right(
             self.request, reference["id"], "modify_otu"
         ):
-
             raise InsufficientRights()
 
         try:

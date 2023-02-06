@@ -50,7 +50,6 @@ async def test_check_nuvs_file_type(file_type):
 
 
 async def test_move_nuvs_files(tmp_path, spawn_client):
-
     file_path = tmp_path.joinpath("files")
     file_path.mkdir()
     file_path.joinpath("hmm.tsv").write_text("HMM file")

@@ -55,7 +55,6 @@ class DummyTask(BaseTask):
 
 @pytest.fixture
 async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
-
     task = SQLTask(
         id=1,
         complete=False,

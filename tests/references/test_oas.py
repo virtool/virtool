@@ -45,9 +45,11 @@ def test_values(value, mock_create_reference_schema):
         mock_create_reference_schema.update({value: "virtool/ref-plant-viruses"})
 
     CreateReferenceRequest(**mock_create_reference_schema)
-    
 
-@pytest.mark.parametrize("value", ["release_id", "import_from", "clone_from", "remote_from"])
+
+@pytest.mark.parametrize(
+    "value", ["release_id", "import_from", "clone_from", "remote_from"]
+)
 def test_null(value, mock_create_reference_schema):
     mock_create_reference_schema.update({value: None})
 

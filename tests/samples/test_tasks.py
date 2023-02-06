@@ -76,7 +76,6 @@ async def test_move_sample_files_task(
     snapshot,
     static_time,
 ):
-
     sample = {
         "_id": "foo",
         "is_legacy": legacy,

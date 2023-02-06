@@ -39,7 +39,6 @@ def check_import_data(
     otus = {}
 
     for otu in data["otus"]:
-
         verification = None
 
         if verify:

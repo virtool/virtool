@@ -109,9 +109,7 @@ class UpdateSettingsRequest(BaseModel):
             }
         }
 
-    _prevent_none = prevent_none(
-        "*"
-    )
+    _prevent_none = prevent_none("*")
 
 
 class CreateKeysRequest(BaseModel):
@@ -129,9 +127,7 @@ class CreateKeysRequest(BaseModel):
             "example": {"name": "Foobar", "permissions": {"create_sample": True}}
         }
 
-    _prevent_none = prevent_none(
-        "permissions"
-    )
+    _prevent_none = prevent_none("permissions")
 
 
 class CreateAPIKeyResponse(APIKey):
@@ -168,9 +164,7 @@ class UpdateKeyRequest(BaseModel):
     class Config:
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
 
-    _prevent_none = prevent_none(
-        "permissions"
-    )
+    _prevent_none = prevent_none("permissions")
 
 
 class APIKeyResponse(APIKey):
@@ -213,9 +207,7 @@ class CreateLoginRequest(BaseModel):
             }
         }
 
-    _prevent_none = prevent_none(
-        "remember"
-    )
+    _prevent_none = prevent_none("remember")
 
 
 class LoginResponse(BaseModel):

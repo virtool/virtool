@@ -4,6 +4,7 @@ from virtool_core.models.settings import Settings
 
 from virtool.settings.data import SettingsData
 
+
 @pytest.fixture
 async def settings_data(mongo) -> SettingsData:
     return SettingsData(mongo)

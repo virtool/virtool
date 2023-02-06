@@ -74,7 +74,6 @@ class SessionData(DataLayerPiece):
         return session_id, new_session
 
     async def create_reset_session(self, ip, user_id, remember) -> Tuple[str, Session]:
-
         reset_code = secrets.token_hex(32)
         session_id = await self.create_session_id()
 

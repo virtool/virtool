@@ -241,7 +241,6 @@ class Collection:
         session: AsyncIOMotorClientSession,
         silent: bool = False,
     ):
-
         inserted = await self.populate_bulk_ids(documents, session=session)
 
         await self._collection.insert_many(inserted, session=session)
