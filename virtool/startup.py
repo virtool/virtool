@@ -51,6 +51,7 @@ from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
     WriteSubtractionFASTATask,
 )
+from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
@@ -382,8 +383,8 @@ async def startup_task_runner(app: Application):
 
     if not get_config_from_app(app).no_tasks:
         scheduler = get_scheduler_from_app(app)
-        (channel,) = await app["redis"].subscribe("channel:tasks")
-        await scheduler.spawn(TaskRunner(app["data"], channel, app).run())
+        tasks_client = TasksClient(app["redis"])
+        await scheduler.spawn(TaskRunner(app["data"], tasks_client, app).run())
 
 
 async def startup_tasks(app: Application):

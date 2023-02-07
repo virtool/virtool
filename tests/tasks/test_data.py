@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.subtractions.tasks import AddSubtractionFilesTask
+from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task
 from virtool.tasks.oas import TaskUpdate
@@ -13,7 +14,7 @@ from virtool.tasks.oas import TaskUpdate
 
 @pytest.fixture
 async def tasks_data(pg: AsyncEngine, redis: Redis) -> TasksData:
-    return TasksData(pg, redis)
+    return TasksData(pg, TasksClient(redis))
 
 
 async def test_find(
