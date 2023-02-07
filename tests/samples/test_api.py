@@ -354,10 +354,6 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        await get_data_from_app(client.app).settings.update(
-            UpdateSettingsRequest(sample_unique_names=True)
-        )
-
         async with AsyncSession(pg) as session:
             session.add(test_upload)
 
@@ -405,9 +401,7 @@ class TestCreate:
                     {"_id": "diagnostics", "name": "Diagnostics"},
                 ),
                 get_data_from_app(client.app).settings.update(
-                    UpdateSettingsRequest(
-                        sample_group="force_choice", sample_unique_names=True
-                    )
+                    UpdateSettingsRequest(sample_group="force_choice")
                 ),
                 client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
             )
@@ -428,7 +422,7 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsRequest(sample_group="force_choice", sample_unique_names=True)
+            UpdateSettingsRequest(sample_group="force_choice")
         )
 
         async with AsyncSession(pg) as session:
@@ -438,7 +432,7 @@ class TestCreate:
                 session.commit(),
                 get_data_from_app(client.app).settings.update(
                     UpdateSettingsRequest(
-                        sample_group="force_choice", sample_unique_names=True
+                        sample_group="force_choice",
                     )
                 ),
                 client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
@@ -484,10 +478,6 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        await get_data_from_app(client.app).settings.update(
-            UpdateSettingsRequest(sample_unique_names=True)
-        )
-
         await client.db.subtraction.insert_one(
             {
                 "_id": "apple",
@@ -502,15 +492,12 @@ class TestCreate:
         resp = await client.post(
             "/samples", {"name": "Foobar", "files": [1, 2], "subtractions": ["apple"]}
         )
+
         await resp_is.bad_request(resp, "File does not exist")
 
     async def test_label_dne(self, spawn_client, pg: AsyncEngine, resp_is, test_upload):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
-        )
-
-        await get_data_from_app(client.app).settings.update(
-            UpdateSettingsRequest(sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:

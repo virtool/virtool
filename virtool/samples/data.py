@@ -193,7 +193,7 @@ class SamplesData(DataLayerPiece):
         settings = await self.data.settings.get_all()
 
         await wait_for_checks(
-            check_name_is_in_use(self._db, settings, data.name),
+            check_name_is_in_use(self._db, data.name),
             check_labels_do_not_exist(self._pg, data.labels),
             check_subtractions_do_not_exist(self._db, data.subtractions),
         )
@@ -287,15 +287,12 @@ class SamplesData(DataLayerPiece):
     ) -> UpdateResult:
         data = data.dict(exclude_unset=True)
 
-        settings = await self.data.settings.get_all()
-
         aws = []
 
         if "name" in data:
             aws.append(
                 check_name_is_in_use(
                     self._db,
-                    settings,
                     data["name"],
                     sample_id=sample_id,
                     session=session,
