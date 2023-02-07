@@ -14,22 +14,21 @@ on:
 
 jobs:
   commitlint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v4
+      - uses: wagoid/commitlint-github-action@v5
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       - name: Build
         run: docker build .
   test-api:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       redis:
         image: redis:6.0
@@ -49,28 +48,22 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Create OpenFGA Network
-        run: docker network create openfga
-      - name: Start OpenFGA Postgres
-        run: docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
-      - name: Migrate OpenFGA
-        run: docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+      - uses: actions/checkout@v2
       - name: Start OpenFGA
-        run: docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
+        run: |
+          docker network create openfga
+          docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+          docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+          docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: 4.4
           mongodb-replica-set: rs
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
@@ -91,7 +84,7 @@ jobs:
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Run
-        run: >-
+        run: |
           poetry run
           pytest
           -x
@@ -104,7 +97,7 @@ jobs:
           --snapshot-details
           --snapshot-warn-unused
   test-unit:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       redis:
         image: redis:6.0
@@ -124,16 +117,13 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Create OpenFGA Network
-        run: docker network create openfga
-      - name: Start OpenFGA Postgres
-        run: docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
-      - name: Migrate OpenFGA
-        run: docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+      - uses: actions/checkout@v2
       - name: Start OpenFGA
-        run: docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
+        run: |
+          docker network create openfga
+          docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+          docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+          docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.7.0
         with:
@@ -145,13 +135,10 @@ jobs:
           unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
@@ -166,7 +153,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       - name: Run
-        run: >-
+        run: |
           poetry run
           pytest
           -x
@@ -179,17 +166,13 @@ jobs:
           --snapshot-details          
           --snapshot-warn-unused
   oas:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
@@ -210,19 +193,17 @@ jobs:
           name: openapi.json
           path: virtool/spec/openapi.json
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [test-api, test-unit, build, oas]
     if: github.event_name == 'push'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Download artifact
+      - uses: actions/checkout@v2
+      - name: Download OpenAPI JSON
         uses: actions/download-artifact@v3
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
-      - name: Setup NodeJS
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v1
         with:
           node-version: 14
       - name: Install semantic-release
