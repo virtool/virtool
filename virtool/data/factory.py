@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.data import AuthorizationData
 from virtool.blast.data import BLASTData
 from virtool.config import Config
 from virtool.data.layer import DataLayer
@@ -56,7 +55,6 @@ def create_data_layer(
     data_layer = DataLayer(
         AccountData(mongo, redis),
         AnalysisData(mongo, config, pg),
-        AuthorizationData(),
         BLASTData(client, mongo, pg),
         GroupsData(authorization_client, mongo),
         HistoryData(config.data_path, mongo),

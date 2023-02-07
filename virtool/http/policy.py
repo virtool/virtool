@@ -6,9 +6,8 @@ from aiohttp import web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
+from virtool_core.models.enums import Permission
 
-from virtool.authorization.permissions import PermissionType, ResourceType, adapt_permission_new_to_legacy
-from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient
 
@@ -56,12 +55,8 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
 class PermissionRoutePolicy(DefaultRoutePolicy):
     def __init__(
         self,
-        object_type: ResourceType,
-        object_id: Union[int, str],
-        permission: PermissionType,
+        permission: Permission,
     ):
-        self.object_type = object_type
-        self.object_id = object_id
         self.permission = permission
 
     async def check(self, req: Request, handler: Callable, client):
@@ -77,14 +72,7 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
         * The permission check passes against the authorization client.
 
         """
-        permission = adapt_permission_new_to_legacy(self.permission)
-
-        if client.administrator or client.permissions[permission.value.id]:
-            return
-
-        if await get_authorization_client_from_req(req).check(
-            client.user_id, self.permission, self.object_type, self.object_id
-        ):
+        if client.administrator or client.permissions[self.permission.value]:
             return
 
         raise HTTPForbidden(text="Not permitted")

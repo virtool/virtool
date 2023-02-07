@@ -6,6 +6,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
+from virtool_core.models.enums import Permission
 from virtool_core.models.subtraction import SubtractionSearchResult
 
 from virtool.api.response import NotFound, json_response
@@ -52,7 +53,7 @@ class SubtractionsView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionRoutePolicy(ResourceType.SPACE, 0, SpacePermission.MODIFY_SUBTRACTION))
+    @policy(PermissionRoutePolicy(Permission.modify_subtraction))
     async def post(
         self, data: CreateSubtractionRequest
     ) -> Union[r201[CreateSubtractionResponse], r400, r403]:
@@ -112,7 +113,7 @@ class SubtractionView(PydanticView):
 
         return json_response(subtraction)
 
-    @policy(PermissionRoutePolicy(ResourceType.SPACE, 0, SpacePermission.MODIFY_SUBTRACTION))
+    @policy(PermissionRoutePolicy(Permission.modify_subtraction))
     async def patch(
         self, subtraction_id: str, /, data: UpdateSubtractionRequest
     ) -> Union[r200[SubtractionResponse], r400, r403, r404]:
@@ -137,7 +138,7 @@ class SubtractionView(PydanticView):
 
         return json_response(subtraction)
 
-    @policy(PermissionRoutePolicy(ResourceType.SPACE, 0, SpacePermission.MODIFY_SUBTRACTION))
+    @policy(PermissionRoutePolicy(Permission.modify_subtraction))
     async def delete(self, subtraction_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete a subtraction.

@@ -207,25 +207,3 @@ class SpacePermission(Enum):
             value = "create_reference"
 
         return cls[value.upper()]
-
-
-PermissionType = Union[AppPermission, LegacyPermission, SpacePermission]
-
-
-def adapt_permission_new_to_legacy(permission: PermissionType) -> PermissionType:
-    """
-    Return a legacy permission that corresponds to the provided new-style permission.
-
-    If the provided permission is already a new style permission, it is returned.
-
-    :param permission: a permission
-    :return: the permission
-
-    """
-    if permission == SpacePermission.CREATE_UPLOAD:
-        return LegacyPermission.UPLOAD_FILE
-
-    if permission == SpacePermission.DELETE_UPLOAD:
-        return LegacyPermission.REMOVE_FILE
-
-    return permission

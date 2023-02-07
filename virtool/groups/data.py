@@ -13,9 +13,6 @@ from virtool.groups.db import (
     fetch_complete_group,
 )
 from virtool.groups.oas import UpdateGroupRequest
-from virtool.groups.utils import (
-    convert_permissions_dict_to_relationships,
-)
 from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
@@ -90,9 +87,6 @@ class GroupsData:
 
         update = {}
 
-        adds = None
-        removes = None
-
         if "name" in data:
             update["name"] = data["name"]
 
@@ -106,18 +100,8 @@ class GroupsData:
                 **data["permissions"],
             }
 
-            adds, removes = convert_permissions_dict_to_relationships(
-                group_id, update["permissions"]
-            )
-
         if update:
             async with self._db.create_session() as session:
-                if adds:
-                    await self._authorization_client.add(*adds)
-
-                if removes:
-                    await self._authorization_client.remove(*removes)
-
                 await self._db.groups.update_one(
                     {"_id": group_id},
                     {"$set": update},
@@ -130,8 +114,6 @@ class GroupsData:
 
     async def delete(self, group_id: str):
         async with self._db.create_session() as session:
-            await self._authorization_client.delete_group(group_id)
-
             delete_result = await self._db.groups.delete_one(
                 {"_id": group_id}, session=session
             )

@@ -4,6 +4,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
+from virtool_core.models.enums import Permission
 from virtool_core.models.user import User
 
 import virtool.http.authentication
@@ -230,19 +231,15 @@ class PermissionsView(PydanticView):
 @routes.view("/users/{user_id}/permissions/{permission}")
 class PermissionView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def put(
-        self, user_id: str, permission: str, /
-    ) -> r200[PermissionResponse]:
+    async def put(self, user_id: str, permission: str, /) -> r200[PermissionResponse]:
         """
         Add a permission for a user
 
         Status Codes:
             200: Successful operation
         """
-        try:
-            permission = SpacePermission.from_string(permission)
-        except KeyError as err:
-            raise HTTPBadRequest(text=str(err))
+        if permission not in Permission:
+            raise HTTPBadRequest(text=f"Invalid permission: {permission}")
 
         await get_authorization_client_from_req(self.request).add(
             UserPermission(user_id, permission)
@@ -260,10 +257,8 @@ class PermissionView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        try:
-            permission = SpacePermission.from_string(permission)
-        except KeyError as err:
-            raise HTTPBadRequest(text=str(err))
+        if permission not in Permission:
+            raise HTTPBadRequest(text=f"Invalid permission: {permission}")
 
         await get_authorization_client_from_req(self.request).remove(
             UserPermission(user_id, permission)

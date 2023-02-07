@@ -18,7 +18,6 @@ from openfga_sdk import (
 from virtool_core.models.enums import Permission
 
 from virtool.authorization.permissions import (
-    PermissionType,
     ResourceType,
 )
 from virtool.authorization.relationships import AbstractRelationship
@@ -26,7 +25,7 @@ from virtool.authorization.results import (
     RemoveRelationshipResult,
     AddRelationshipResult,
 )
-from virtool.authorization.roles import AdministratorRole, ReferenceRole
+from virtool.authorization.roles import AdministratorRole, ReferenceRole, RoleType
 
 
 class AbstractAuthorizationClient(ABC):
@@ -65,19 +64,19 @@ class AuthorizationClient(AbstractAuthorizationClient):
     async def check(
         self,
         user_id: str,
-        permission: PermissionType,
+        role: RoleType,
         resource_type: ResourceType,
         resource_id: Union[str, int],
     ) -> bool:
         """
-        Check whether a user has a permission on a resource.
+        Check whether a user has the given role on a resource.
         """
 
         response = await self.open_fga.check(
             CheckRequest(
                 tuple_key=TupleKey(
                     user=f"user:{user_id}",
-                    relation=permission.value.id,
+                    relation=role.value,
                     object=f"{resource_type.value}:{resource_id}",
                 ),
             )
