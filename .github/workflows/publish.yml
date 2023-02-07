@@ -9,40 +9,40 @@ env:
 
 jobs:
   dockerhub:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Write VERSION file
+        uses: actions/checkout@v3
+      - name: Write VERSION
         run: echo ${{ github.event.release.tag_name }} > VERSION
-      - name: Update pyproject.toml version
+      - name: Update pyproject.toml
         run: sed -i 's/0\.0\.0/${{ github.event.release.tag_name }}/' pyproject.toml
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and Push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v4
         with:
           push: true
           tags: virtool/virtool:${{ github.event.release.tag_name }}
   ghcr:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
     if: github.repository_owner == 'Virtool'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Write VERSION file
+        uses: actions/checkout@v3
+      - name: Write VERSION
         run: echo ${{ github.event.release.tag_name }} > VERSION
       - name: Update pyproject.toml version
         run: sed -i 's/0\.0\.0/${{ github.event.release.tag_name }}/' pyproject.toml
       - name: Login to Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.GH_USERNAME }}
@@ -53,7 +53,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/virtool/virtool
       - name: Build and Push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v4
         with:
           context: .
           push: true
