@@ -85,34 +85,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
     """
     response = await api_instance.read_authorization_models()
 
-    # The permission string for OpenFGA is the ``Permission.id`` value. Instances of
-    # ``Permission`` are the values for the permission (eg. ``AppPermission``) enums.
-    app_permissions_definition = TypeDefinition(
-        type="app",
-        relations={
-            permission.value.id: Userset(this={}) for permission in AppPermission
-        },
-    )
-
-    space_permissions_definition = TypeDefinition(
-        type="space",
-        relations={
-            permission.value.id: Userset(this={}) for permission in SpacePermission
-        },
-    )
-
-    group_membership_definition = TypeDefinition(
-        type="group",
-        relations={"member": Userset(this={})},
-    )
-
-    type_definitions = WriteAuthorizationModelRequest(
-        type_definitions=[
-            app_permissions_definition,
-            group_membership_definition,
-            space_permissions_definition,
-        ],
-    )
+    ...
 
     if (
         response.authorization_models

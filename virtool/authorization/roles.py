@@ -9,7 +9,7 @@ class AdministratorRole(Enum):
     These roles are relations between users and the application object. The take the
     following form in OpenFGA:
     ```
-    (user:bob, full_administrator, app:virtool)
+    (user:bob, full, app:virtool)
     ```
     """
 
@@ -56,6 +56,9 @@ class SpaceRole(Enum):
 
     MEMBER = "member"
     """Access a space."""
+
+
+class SpaceResourceRole(Enum):
 
     LABEL_MANAGER = "label_manager"
     """Create, edit, or delete labels."""

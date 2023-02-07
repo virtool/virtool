@@ -1,21 +1,10 @@
 """
 Authorization clients.
 
-One is backed by OpenFGA. One is in-memory for testing.
-
-Requirements:
-* List the application administrators and their roles.
-* List the members and roles of a group.
-* List the members and base roles of a space.
-
-
-
-
 """
 import asyncio
-import itertools
 from abc import ABC, abstractmethod
-from typing import Union, List
+from typing import Union, List, Tuple
 
 from openfga_sdk import (
     OpenFgaApi,
@@ -31,14 +20,13 @@ from virtool_core.models.enums import Permission
 from virtool.authorization.permissions import (
     PermissionType,
     ResourceType,
-    SpacePermission,
 )
-from virtool.authorization.relationships import AbstractRelationship, GroupPermission
+from virtool.authorization.relationships import AbstractRelationship
 from virtool.authorization.results import (
     RemoveRelationshipResult,
     AddRelationshipResult,
 )
-from virtool.authorization.roles import AdministratorRole
+from virtool.authorization.roles import AdministratorRole, ReferenceRole
 
 
 class AbstractAuthorizationClient(ABC):
@@ -54,16 +42,6 @@ class AbstractAuthorizationClient(ABC):
 
     @abstractmethod
     async def list_administrators(self) -> List[dict]:
-        ...
-
-    @abstractmethod
-    async def list_groups(self, user_id: str) -> List[str]:
-        ...
-
-    @abstractmethod
-    async def list_permissions(
-        self, user_id: str, resource_type: ResourceType, resource_id: Union[str, int]
-    ) -> dict:
         ...
 
     @abstractmethod
@@ -107,9 +85,34 @@ class AuthorizationClient(AbstractAuthorizationClient):
 
         return response.allowed
 
-    async def list_administrators(self) -> List[dict]:
+    async def get_space_roles(self, space_id: int) -> List[str]:
         """
-        Return a list of user ids that are administrators.
+        Return a list of roles for a space.
+
+        :param space_id: the id of the space
+        :return: a list of roles
+        """
+        response = await self.open_fga.read(
+            ReadRequest(
+                tuple_key=TupleKey(
+                    user="user:", relation="base", object=f"group:{space_id}"
+                )
+            )
+        )
+
+        return sorted(
+            [
+                relation_tuple.key.user.split(":")[1]
+                for relation_tuple in response.tuples
+            ]
+        )
+
+    async def list_administrators(self) -> List[Tuple[str, AdministratorRole]]:
+        """
+        Return a list of user ids that are administrators and their roles.
+
+        :return: a list of tuples containing user ids and their roles
+
         """
         responses = await asyncio.gather(
             *[
@@ -132,9 +135,12 @@ class AuthorizationClient(AbstractAuthorizationClient):
             ]
         )
 
-    async def list_user_groups(self, user_id: str) -> List[str]:
+    async def list_user_spaces(self, user_id: str) -> List[int]:
         """
-        Return a list of group ids the user is a member of.
+        Return a list of ids of spaces the user is a member of.
+
+        :param user_id: the id of the user
+        :return: a list of space ids
         """
         response = await self.open_fga.read(
             ReadRequest(
@@ -151,59 +157,20 @@ class AuthorizationClient(AbstractAuthorizationClient):
             ]
         )
 
-    async def list_group_permissions(
-        self, group_id: str, resource_type: ResourceType, resource_id: Union[str, int]
-    ) -> List[PermissionType]:
+    async def list_reference_users(
+        self, ref_id: str
+    ) -> List[Tuple[str, ReferenceRole]]:
         """
-        List the permissions a group has.
+        List users and their roles for a reference.
+
+        The returned list only includes users that have an explicit role defined on the
+        reference. Space members that have access to the reference through the space
+        base role are not included.
+
+        :param ref_id: the id of the reference
+        :return: a list of user ids and their roles
         """
-        raise_exception_if_not_default_space(resource_type, resource_id)
-
-        response = await self.open_fga.read(
-            ReadRequest(
-                tuple_key=TupleKey(
-                    user=f"group:{group_id}#member",
-                    object=f"{resource_type.value}:{resource_id}",
-                ),
-            )
-        )
-
-        return sorted(
-            [relation_tuple.key.relation for relation_tuple in response.tuples]
-        )
-
-    async def list_permissions(
-        self, user_id: str, resource_type: ResourceType, resource_id: Union[str, int]
-    ) -> List[PermissionType]:
-        """
-        List permissions for a user.
-        """
-        raise_exception_if_not_default_space(resource_type, resource_id)
-
-        group_ids = await self.list_groups(user_id)
-
-        result = await asyncio.gather(
-            *[
-                self.list_group_permissions(group_id, resource_type, resource_id)
-                for group_id in group_ids
-            ]
-        )
-
-        permissions = list(itertools.chain(*result))
-
-        response = await self.open_fga.read(
-            ReadRequest(
-                tuple_key=TupleKey(
-                    user=f"user:{user_id}",
-                    object=f"{resource_type.value}:{resource_id}",
-                )
-            )
-        )
-
-        for relation_tuple in response.tuples:
-            permissions.append(relation_tuple.key.relation)
-
-        return sorted(permissions)
+        ...
 
     async def add(self, *relationships: AbstractRelationship):
 
@@ -277,14 +244,6 @@ class AuthorizationClient(AbstractAuthorizationClient):
         result.removed_count = len(relationships) - result.not_found_count
 
         return result
-
-    async def delete_group(self, group_id):
-        permissions = await self.list_group_permissions(group_id, ResourceType.SPACE, 0)
-
-        for permission in permissions:
-            await self.remove(
-                GroupPermission(group_id, SpacePermission.from_string(permission))
-            )
 
 
 def raise_exception_if_not_default_space(
