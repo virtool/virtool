@@ -17,13 +17,16 @@ jobs:
     runs-on: ubuntu-22.04
     if: github.event_name == 'pull_request'
     steps:
+      - name: Checkout
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v5
+      - name: Commitlint
+        uses: wagoid/commitlint-github-action@v5
   build:
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout
       - uses: actions/checkout@v2
       - name: Build
         run: docker build .
@@ -48,7 +51,8 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Start OpenFGA
         run: |
           docker network create openfga
@@ -60,10 +64,12 @@ jobs:
         with:
           mongodb-version: 4.4
           mongodb-replica-set: rs
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - uses: snok/install-poetry@v1
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
@@ -84,7 +90,7 @@ jobs:
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Run
-        run: |
+        run: >-
           poetry run
           pytest
           -x
@@ -117,7 +123,8 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Start OpenFGA
         run: |
           docker network create openfga
@@ -135,10 +142,12 @@ jobs:
           unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - uses: snok/install-poetry@v1
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
@@ -153,7 +162,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       - name: Run
-        run: |
+        run: >-
           poetry run
           pytest
           -x
@@ -168,11 +177,14 @@ jobs:
   oas:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - uses: snok/install-poetry@v1
+      - name: Setup Poetry
+        uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
@@ -186,8 +198,11 @@ jobs:
       - name: Install Packages
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
-      - run: mkdir -p virtool/spec
-      - run: poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/openapi.json
+      - name: Write OAS
+        run: |
+          mkdir -p virtool/spec
+          poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/openapi.json
+      - name: Upload OAS
       - uses: actions/upload-artifact@v3
         with:
           name: openapi.json
@@ -197,13 +212,15 @@ jobs:
     needs: [test-api, test-unit, build, oas]
     if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v2
-      - name: Download OpenAPI JSON
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Download OAS
         uses: actions/download-artifact@v3
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
-      - uses: actions/setup-node@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
         with:
           node-version: 14
       - name: Install semantic-release
