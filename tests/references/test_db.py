@@ -9,7 +9,6 @@ RIGHTS = {"build": False, "modify": False, "modify_otu": False, "remove": False}
 @pytest.mark.parametrize("field", ["group", "user"])
 @pytest.mark.parametrize("rights", [True, False])
 async def test_add_group_or_user(error, field, rights, mongo, static_time):
-
     ref_id = "foo"
 
     subdocuments = [
@@ -23,7 +22,7 @@ async def test_add_group_or_user(error, field, rights, mongo, static_time):
         )
 
     if error != "missing_member":
-        for (_id, handle) in [("bar", "foo"), ("buzz", "boo")]:
+        for _id, handle in [("bar", "foo"), ("buzz", "boo")]:
             await mongo.groups.insert_one({"_id": _id})
             await mongo.users.insert_one({"_id": _id, "handle": handle})
 
@@ -123,7 +122,6 @@ async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, 
 
 
 async def test_create_manifest(mongo, test_otu):
-
     await mongo.otus.insert_many(
         [
             test_otu,
@@ -144,7 +142,6 @@ async def test_create_manifest(mongo, test_otu):
 @pytest.mark.parametrize("missing", [None, "reference", "subdocument"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_edit_member(field, missing, snapshot, mongo, static_time):
-
     ref_id = "foo"
 
     subdocuments = [{**RIGHTS, "id": "bar"}, {**RIGHTS, "id": "baz"}]
@@ -166,7 +163,6 @@ async def test_edit_member(field, missing, snapshot, mongo, static_time):
 
 @pytest.mark.parametrize("field", ["groups", "users"])
 async def test_delete_member(field, snapshot, mongo):
-
     ref_id = "foo"
 
     subdocuments = [{"id": "bar"}, {"id": "baz"}]

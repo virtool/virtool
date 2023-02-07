@@ -68,7 +68,6 @@ logger = getLogger("analyses")
 
 class AnalysisData(DataLayerPiece):
     def __init__(self, db: DB, config, pg: AsyncEngine):
-
         self._db = db
         self._config = config
         self._pg = pg

@@ -25,7 +25,9 @@ from virtool.users.checks import check_password_length
 from virtool.users.oas import (
     UpdateUserRequest,
     CreateUserRequest,
-    CreateFirstUserRequest, PermissionsResponse, PermissionResponse,
+    CreateFirstUserRequest,
+    PermissionsResponse,
+    PermissionResponse,
 )
 
 routes = Routes()
@@ -228,7 +230,9 @@ class PermissionsView(PydanticView):
 @routes.view("/users/{user_id}/permissions/{permission}")
 class PermissionView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def put(self, user_id: str, permission: Permission, /) -> r200[PermissionResponse]:
+    async def put(
+        self, user_id: str, permission: Permission, /
+    ) -> r200[PermissionResponse]:
         """
         Add a permission for a user
 
@@ -242,7 +246,9 @@ class PermissionView(PydanticView):
         return json_response(True)
 
     @policy(AdministratorRoutePolicy)
-    async def delete(self, user_id: str, permission: Permission, /) -> r200[PermissionResponse]:
+    async def delete(
+        self, user_id: str, permission: Permission, /
+    ) -> r200[PermissionResponse]:
         """
         Delete a permission for a user
 

@@ -25,7 +25,6 @@ async def test_create(
     tmp_path,
     data_layer,
 ):
-
     user = await fake2.users.create()
 
     await mongo.references.insert_one(test_ref)
@@ -40,7 +39,6 @@ async def test_create(
 
 
 async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
-
     await gather(
         mongo.otus.insert_one(
             {
@@ -83,7 +81,6 @@ async def test_update(
     tmp_path,
     data_layer,
 ):
-
     await mongo.references.insert_one(test_ref)
 
     user, _ = await asyncio.gather(
@@ -206,7 +203,6 @@ async def test_remove_isolate(
 async def test_set_default(
     mongo, snapshot, test_otu, static_time, tmp_path, data_layer
 ):
-
     test_otu["isolates"].append(
         {"default": False, "id": "bar", "source_type": "isolate", "source_name": "A"}
     )

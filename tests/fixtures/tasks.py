@@ -4,8 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.tasks.models import Task
 
 
-
-
 @pytest.fixture
 async def test_tasks(pg, static_time):
     task_1 = Task(

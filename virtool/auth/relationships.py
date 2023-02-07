@@ -63,7 +63,6 @@ class GroupPermissions(BaseRelationship):
         self.user_type = "group"
 
     async def add(self, mongo: DB):
-
         if not await id_exists(mongo.groups, self.user_id):
             raise ResourceNotFoundError
 
@@ -90,7 +89,6 @@ class GroupPermissions(BaseRelationship):
             await update_member_users(mongo, self.user_id, session=session)
 
     async def remove(self, mongo: DB):
-
         if not await id_exists(mongo.groups, self.user_id):
             raise ResourceNotFoundError
 

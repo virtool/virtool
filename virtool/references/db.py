@@ -737,7 +737,6 @@ async def create_remote(
 async def download_and_parse_release(
     app, url: str, task_id: int, progress_handler: callable
 ):
-
     with virtool.utils.get_temp_dir() as tempdir:
         download_path = Path(tempdir) / "reference.tar.gz"
 
@@ -906,7 +905,6 @@ async def update(
 async def prepare_update_joined_otu(
     mongo: "DB", old, otu: Document, ref_id: str
 ) -> Optional[OTUUpdate]:
-
     if not check_will_change(old, otu):
         return None
 
@@ -969,7 +967,6 @@ async def prepare_update_joined_otu(
 async def bulk_prepare_update_joined_otu(
     mongo: "DB", otu_data: List[OTUData], ref_id: str, session
 ) -> List[OTUUpdate]:
-
     sequence_ids = []
     for otu_item in otu_data:
         for isolate in otu_item.otu["isolates"]:
@@ -987,7 +984,6 @@ async def bulk_prepare_update_joined_otu(
 
     otu_updates = []
     for otu_item in otu_data:
-
         if not check_will_change(otu_item.old, otu_item.otu):
             continue
 

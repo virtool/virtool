@@ -139,7 +139,6 @@ async def test_archive(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 404])
 async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is):
-
     user = await fake2.users.create()
 
     test_job["user"] = {"id": user.id}

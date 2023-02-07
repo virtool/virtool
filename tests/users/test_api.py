@@ -239,7 +239,9 @@ class TestUpdate:
 
 @pytest.mark.parametrize("user", ["test", "bob"])
 async def test_list_permissions(spawn_client, user, snapshot):
-    client = await spawn_client(authorize=True, permissions=[Permission.create_sample, Permission.create_ref])
+    client = await spawn_client(
+        authorize=True, permissions=[Permission.create_sample, Permission.create_ref]
+    )
 
     resp = await client.get(
         f"/users/{user}/permissions",
@@ -255,17 +257,12 @@ async def test_list_permissions(spawn_client, user, snapshot):
         (Permission.create_sample, 200),
         ("invalid", 400),
     ],
-    ids=[
-        "valid_permission",
-        "invalid_permission"
-    ],
+    ids=["valid_permission", "invalid_permission"],
 )
 async def test_add_permission(spawn_client, permission, status, snapshot):
     client = await spawn_client(authorize=True, administrator=True)
 
-    resp = await client.put(
-        f"/users/test/permissions/{permission}", {}
-    )
+    resp = await client.put(f"/users/test/permissions/{permission}", {})
 
     assert resp.status == status
     assert await resp.json() == snapshot()
@@ -277,17 +274,12 @@ async def test_add_permission(spawn_client, permission, status, snapshot):
         (Permission.create_sample, 200),
         ("invalid", 400),
     ],
-    ids=[
-        "valid_permission",
-        "invalid_permission"
-    ],
+    ids=["valid_permission", "invalid_permission"],
 )
 async def test_remove_permission(spawn_client, permission, status, snapshot):
     client = await spawn_client(authorize=True, administrator=True)
 
-    resp = await client.delete(
-        f"/users/test/permissions/{permission}"
-    )
+    resp = await client.delete(f"/users/test/permissions/{permission}")
 
     assert resp.status == status
     assert await resp.json() == snapshot()
