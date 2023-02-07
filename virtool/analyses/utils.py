@@ -130,7 +130,5 @@ async def move_nuvs_files(filename: str, file_path: Path, target_path: Path):
         await to_thread(shutil.copy, file_path / "hmm.tsv", target_path / "hmm.tsv")
     else:
         await to_thread(
-            compress_file,
-            file_path / filename,
-            target_path / f"{filename}.gz",
+            compress_file, file_path / filename, target_path / f"{filename}.gz"
         )

@@ -96,7 +96,6 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
             },
         ]
     ):
-
         return APIKey(**key)
 
     return None

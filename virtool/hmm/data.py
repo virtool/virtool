@@ -161,7 +161,6 @@ class HmmData(DataLayerPiece):
             release_id = release["id"]
 
         async with self._mongo.create_session() as session:
-
             for annotation in annotations:
                 await self._mongo.hmm.insert_one(
                     dict(annotation, hidden=False), session=session

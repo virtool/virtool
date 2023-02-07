@@ -241,7 +241,6 @@ class Collection:
         session: AsyncIOMotorClientSession,
         silent: bool = False,
     ):
-
         inserted = await self.populate_bulk_ids(documents, session=session)
 
         await self._collection.insert_many(inserted, session=session)
@@ -403,6 +402,8 @@ class DB:
 
         self.labels = self.bind_collection("labels")
 
+        self.migrations = self.bind_collection("migrations")
+
         self.otus = self.bind_collection("otus", projection=virtool.otus.db.PROJECTION)
 
         self.tasks = self.bind_collection("tasks")
@@ -449,9 +450,8 @@ class DB:
 
     @asynccontextmanager
     async def create_session(self):
-        async with await self.motor_client.client.start_session() as s:
-            async with s.start_transaction():
-                yield s
+        async with await self.motor_client.client.start_session() as s, s.start_transaction():
+            yield s
 
     @asynccontextmanager
     async def with_session(self):

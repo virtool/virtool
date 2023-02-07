@@ -33,6 +33,7 @@ class DataLayer:
     database and storage.
 
     """
+
     account: AccountData
     analyses: "AnalysisData"
     auth: AuthData

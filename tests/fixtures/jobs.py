@@ -86,6 +86,6 @@ def test_job(mongo, static_time):
             ],
             "workflow": "build_index",
             "user": {"id": "igboyes"},
-            "ping": None
+            "ping": None,
         },
     )

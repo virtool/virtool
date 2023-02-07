@@ -67,12 +67,12 @@ class AnalysisResponse(Analysis):
                                     "sequences": [],
                                     "source_name": "WA-MR",
                                     "source_type": "isolate",
-                                },
+                                }
                             ],
                             "length": 18671,
                             "name": "Grapevine leafroll-associated virus 3",
                             "version": 30,
-                        },
+                        }
                     ],
                     "read_count": 584,
                     "subtracted_count": 0,
@@ -80,11 +80,7 @@ class AnalysisResponse(Analysis):
                 "sample": {"id": "7tu8c5m5"},
                 "subtractions": [{"id": "1sk885at", "name": "Vitis vinifera"}],
                 "updated_at": "2022-08-15T17:42:35.979000Z",
-                "user": {
-                    "administrator": True,
-                    "handle": "mrott",
-                    "id": "ihvze2u9",
-                },
+                "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
                 "workflow": "pathoscope_bowtie",
             }
         }

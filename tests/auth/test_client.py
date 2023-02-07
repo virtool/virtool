@@ -172,9 +172,7 @@ class TestAddGroupMembership:
     async def test_mongo(self, fake2, snapshot, mongo, setup_auth_update_user):
         abs_client, _, group2, user = setup_auth_update_user
 
-        await abs_client.add(
-            GroupMemberships(user.id, group2.id, ["member"])
-        )
+        await abs_client.add(GroupMemberships(user.id, group2.id, ["member"]))
 
         assert (
             await mongo.users.find({}, ["groups", "permissions"]).to_list(None)
@@ -185,9 +183,7 @@ class TestAddGroupMembership:
         abs_client = await spawn_auth_client()
 
         await asyncio.gather(
-            abs_client.add(
-                GroupMemberships("ryanf", "sidney", ["member"])
-            ),
+            abs_client.add(GroupMemberships("ryanf", "sidney", ["member"])),
             write_tuple(
                 abs_client.open_fga,
                 "group",
@@ -247,9 +243,7 @@ class TestRemoveGroupMembership:
             ),
         )
 
-        await abs_client.remove(
-            GroupMemberships("ryanf", "sidney", ["member"])
-        )
+        await abs_client.remove(GroupMemberships("ryanf", "sidney", ["member"]))
 
         assert await list_groups(abs_client.open_fga, "ryanf") == snapshot(
             name="ryanf_groups"

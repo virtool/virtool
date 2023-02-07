@@ -22,7 +22,7 @@ def bob(no_permissions, static_time):
             "show_versions": True,
             "quick_analyze_workflow": "pathoscope_bowtie",
         },
-        "active": True
+        "active": True,
     }
 
 
@@ -31,14 +31,15 @@ def create_user(static_time):
     def func(
         user_id="test", handle="bob", administrator=False, groups=None, permissions=None
     ):
-
         permissions = permissions or []
 
         return {
             "_id": user_id,
             "handle": handle,
             "administrator": administrator,
-            "permissions": {perm.value: perm.value in permissions for perm in Permission},
+            "permissions": {
+                perm.value: perm.value in permissions for perm in Permission
+            },
             "groups": groups or [],
             "invalidate_sessions": False,
             "last_password_change": static_time.datetime,
@@ -52,7 +53,7 @@ def create_user(static_time):
             },
             "force_reset": False,
             "password": "$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.".encode(),
-            "active": True
+            "active": True,
         }
 
     return func

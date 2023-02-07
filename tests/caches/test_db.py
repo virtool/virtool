@@ -2,6 +2,7 @@ import pytest
 import virtool.caches.db
 import os
 
+
 @pytest.fixture
 def trim_parameters():
     return {
@@ -86,4 +87,3 @@ async def test_remove(exception, mongo, tmp_path, config):
     assert await mongo.caches.count_documents({}) == 0
 
     assert os.listdir(f1) == []
-
