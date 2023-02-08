@@ -14,22 +14,24 @@ on:
 
 jobs:
   commitlint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v4
+      - name: Commitlint
+        uses: wagoid/commitlint-github-action@v5
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build
         run: docker build .
   test-api:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       redis:
         image: redis:6.0
@@ -50,22 +52,19 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Create OpenFGA Network
-        run: docker network create openfga
-      - name: Start OpenFGA Postgres
-        run: docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
-      - name: Migrate OpenFGA
-        run: docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+        uses: actions/checkout@v3
       - name: Start OpenFGA
-        run: docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
+        run: |
+          docker network create openfga
+          docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+          docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+          docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: 4.4
           mongodb-replica-set: rs
-      - name: Set up python
-        id: setup-python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -104,7 +103,7 @@ jobs:
           --snapshot-details
           --snapshot-warn-unused
   test-unit:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       redis:
         image: redis:6.0
@@ -125,15 +124,13 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Create OpenFGA Network
-        run: docker network create openfga
-      - name: Start OpenFGA Postgres
-        run: docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
-      - name: Migrate OpenFGA
-        run: docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+        uses: actions/checkout@v3
       - name: Start OpenFGA
-        run: docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
+        run: |
+          docker network create openfga
+          docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+          docker run --rm --network=openfga openfga/openfga migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+          docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.7.0
         with:
@@ -145,8 +142,7 @@ jobs:
           unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
-      - name: Set up python
-        id: setup-python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -179,16 +175,15 @@ jobs:
           --snapshot-details          
           --snapshot-warn-unused
   oas:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up python
-        id: setup-python
+        uses: actions/checkout@v3
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install Poetry
+      - name: Setup Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
@@ -196,32 +191,35 @@ jobs:
           installer-parallel: true
       - name: Load Cached Packages
         id: cached-poetry-dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install Packages
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
-      - run: mkdir -p virtool/spec
-      - run: poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/openapi.json
-      - uses: actions/upload-artifact@v3
+      - name: Write OAS
+        run: |
+          mkdir -p virtool/spec
+          poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/openapi.json
+      - name: Upload OAS
+        uses: actions/upload-artifact@v3
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [test-api, test-unit, build, oas]
     if: github.event_name == 'push'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Download artifact
+        uses: actions/checkout@v3
+      - name: Download OAS
         uses: actions/download-artifact@v3
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
-      - name: Setup NodeJS
+      - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
           node-version: 14
