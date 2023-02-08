@@ -1215,7 +1215,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
 
     if (
         response.authorization_models
-        and response.authorization_models[-1].type_definitions
+        and response.authorization_models[0].type_definitions
         == model_dict["type_definitions"]
     ):
         logger.info("OpenFGA authorization model is up-to-date.")
