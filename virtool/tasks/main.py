@@ -32,9 +32,10 @@ from virtool.startup import (
 from virtool.tasks.api import TasksRunnerView
 
 
-async def startup_dispatcher_SQL_listener(app: Application):
+async def startup_dispatcher_sql_listener(app: Application):
     """
-
+    Starts  the SQL dispatcher listener. Essential for reporting changes in PostgreSQL to the
+    dispatcher for client side updates.
 
     :param app: the app object
 
@@ -44,7 +45,7 @@ async def startup_dispatcher_SQL_listener(app: Application):
 
 async def create_app(config: Config):
     """
-    Creates the Virtool application.
+    Creates task runner application
 
     """
     app = Application(
@@ -68,7 +69,7 @@ async def create_app(config: Config):
             startup_fake_config,
             startup_events,
             startup_databases,
-            startup_dispatcher_SQL_listener,
+            startup_dispatcher_sql_listener,
             startup_paths,
             startup_executors,
             startup_fake,
@@ -94,7 +95,7 @@ async def create_app(config: Config):
 async def run(config: Config):
     app = await create_app(config)
     runner = await create_app_runner(app, config.host, config.port)
-    _, pending = await asyncio.wait(
+    await asyncio.wait(
         [
             wait_for_restart(runner, app["events"]),
             wait_for_shutdown(runner, app["events"]),

@@ -111,11 +111,11 @@ async def test_add(
     Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel.
 
     """
-    (channel,) = await redis.subscribe("channel:tasks")
+    tasks_client = TasksClient(redis)
 
     await tasks_data.create(AddSubtractionFilesTask)
 
-    task_id = await wait_for(channel.get_json(), timeout=3)
+    task_id = await wait_for(tasks_client.pop(), timeout=3)
 
     assert task_id == 1
 

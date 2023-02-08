@@ -1,0 +1,15 @@
+# name: test_spawn[uvloop-True][test_spawn_task_dummy_task]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+    },
+    'count': 0,
+    'created_at': <class 'datetime'>,
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': 'dummy_task',
+    'type': 'dummy_task',
+  }
+---

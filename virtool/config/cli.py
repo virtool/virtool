@@ -240,7 +240,7 @@ def start_task_runner(ctx, host, port):
 
 
 @cli.command("spawn_task")
-@click.option("--task-name", help="Name of the task too spawn", type=str)
+@click.option("--task-name", help="Name of the task to spawn", type=str)
 @click.pass_context
 def spawn_task(ctx, task_name):
     debug = ctx.obj["dev"] or ctx.obj["verbose"]

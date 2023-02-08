@@ -1,7 +1,6 @@
 import asyncio
 from typing import List, Type, Optional, Dict
 
-from aioredis import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
