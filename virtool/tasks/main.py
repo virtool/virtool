@@ -34,8 +34,8 @@ from virtool.tasks.api import TasksRunnerView
 
 async def startup_dispatcher_sql_listener(app: Application):
     """
-    Starts  the SQL dispatcher listener. Essential for reporting changes in PostgreSQL to the
-    dispatcher for client side updates.
+    Starts  the SQL dispatcher listener. Essential for reporting changes in
+    PostgreSQL to the dispatcher for client side updates.
 
     :param app: the app object
 

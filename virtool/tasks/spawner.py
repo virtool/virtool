@@ -1,34 +1,75 @@
 import logging
 from typing import Type
+from typing import Union
 
 import aiojobs
+from aiohttp.abc import Application
+from sqlalchemy.util import asyncio
+from virtool_core.redis import connect
 
+import virtool.pg.utils
 from virtool.config import Config
 from virtool.data.errors import ResourceError
-from virtool.data.utils import get_data_from_app
+from virtool.dispatcher.client import DispatcherClient
+from virtool.sentry import setup
 from virtool.shutdown import (
-    shutdown_client,
-    shutdown_executors,
     shutdown_scheduler,
     shutdown_redis,
-    shutdown_authorization_client,
 )
 from virtool.startup import (
-    startup_events,
-    startup_http_client,
-    startup_databases,
-    startup_paths,
-    startup_executors,
-    startup_data,
-    startup_sentry,
+    get_scheduler_from_app,
     startup_version,
-    startup_fake,
-    startup_fake_config,
-    startup_settings,
 )
+from virtool.tasks.client import TasksClient
+from virtool.tasks.data import TasksData
 from virtool.tasks.task import BaseTask
 
 logger = logging.getLogger("task_spawner")
+
+
+async def startup_databases(app: Application):
+    """
+    Connects to MongoDB, Redis and Postgres concurrently
+
+    :param app: the app object
+
+    """
+    postgres_connection_string = app["config"].postgres_connection_string
+
+    redis_connection_string = app["config"].redis_connection_string
+
+    pg, redis = await asyncio.gather(
+        virtool.pg.utils.connect(postgres_connection_string),
+        connect(redis_connection_string),
+    )
+
+    app["redis"] = redis
+    dispatcher_interface = DispatcherClient(app["redis"])
+    await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
+
+    app.update(
+        {
+            "dispatcher_interface": dispatcher_interface,
+            "pg": pg,
+        }
+    )
+
+
+async def startup_tasks_datalayer(app: Application):
+    app["tasks_datalayer"] = TasksData(app["pg"], TasksClient(app["redis"]))
+
+
+async def startup_sentry(app: Union[dict, Application]):
+    if (
+        not app["config"].no_sentry
+        and app["config"].sentry_dsn
+        and not app["config"].dev
+    ):
+        logger.info("Configuring Sentry")
+        setup(app["version"], app["config"].sentry_dsn)
+
+    else:
+        logger.info("Skipped configuring Sentry")
 
 
 async def create_app(config: Config):
@@ -41,15 +82,8 @@ async def create_app(config: Config):
 
     on_startup = [
         startup_version,
-        startup_http_client,
-        startup_fake_config,
-        startup_events,
         startup_databases,
-        startup_paths,
-        startup_executors,
-        startup_fake,
-        startup_data,
-        startup_settings,
+        startup_tasks_datalayer,
         startup_sentry,
     ]
 
@@ -61,9 +95,6 @@ async def create_app(config: Config):
 
 async def shutdown_app(app):
     shutdown_steps = [
-        shutdown_authorization_client,
-        shutdown_client,
-        shutdown_executors,
         shutdown_scheduler,
         shutdown_redis,
     ]
@@ -87,6 +118,6 @@ async def spawn(config: Config, task_name: str):
     task = get_task_from_name(task_name)
     logger.info("Spawning task %s", task.name)
 
-    await get_data_from_app(app).tasks.create(task)
+    await app["tasks_datalayer"].create(task)
 
     await shutdown_app(app)
