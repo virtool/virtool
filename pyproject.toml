@@ -54,8 +54,8 @@ python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 aiojobs = "^1.0.0"
 aiohttp-pydantic = "^1.12.1"
 orjson = "^3.8.0"
-openfga-sdk = "^0.0.1"
 virtool-core = "^4.1.0"
+openfga-sdk = "^0.1.1"
 
 
 [tool.poetry.dev-dependencies]

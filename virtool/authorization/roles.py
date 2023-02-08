@@ -1,5 +1,5 @@
 """All Virtool roles."""
-from ctypes import Union
+from typing import Union
 from enum import Enum
 
 

@@ -590,7 +590,7 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "openfga-sdk"
-version = "0.0.1"
+version = "0.1.1"
 description = "A high performance and flexible authorization/permission engine built for developers and inspired by Google Zanzibar."
 category = "main"
 optional = false
@@ -1227,7 +1227,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "c9020dd7da02403715e6006121770968c11ab49c5d1377a681bdb29a59da7b0a"
+content-hash = "23b70ed0ee8c50d160790ea047d3d6e751fe07aae94de56f56a42f57f47cacbd"
 
 [metadata.files]
 aiodns = [
@@ -2135,8 +2135,8 @@ numpy = [
     {file = "numpy-1.24.1.tar.gz", hash = "sha256:2386da9a471cc00a1f47845e27d916d5ec5346ae9696e01a8a34760858fe9dd2"},
 ]
 openfga-sdk = [
-    {file = "openfga-sdk-0.0.1.tar.gz", hash = "sha256:56e7e9c72ae1f01c1b27fc94e0f0273a2058a90cef4dd94885e3f67570feb3a8"},
-    {file = "openfga_sdk-0.0.1-py3-none-any.whl", hash = "sha256:9f39472abfba353abe43b88281eecdbc8aa15a1c5183a25582f7652f50b2f23d"},
+    {file = "openfga-sdk-0.1.1.tar.gz", hash = "sha256:e2e30afdf4dc48b086af9f46a49159249cd909dcb694218854d0320f51b83cf5"},
+    {file = "openfga_sdk-0.1.1-py3-none-any.whl", hash = "sha256:86ce66ce446675e912071e8f96630120d6e9503c8f6d04088784731892becd2e"},
 ]
 openpyxl = [
     {file = "openpyxl-3.0.10-py2.py3-none-any.whl", hash = "sha256:0ab6d25d01799f97a9464630abacbb34aafecdcaa0ef3cba6d6b3499867d0355"},
