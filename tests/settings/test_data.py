@@ -10,7 +10,7 @@ async def settings_data(mongo) -> SettingsData:
     return SettingsData(mongo)
 
 
-async def test_ensure(mongo, settings_data, snapshot, test_settings):
+async def test_ensure(mongo, settings_data: SettingsData, snapshot, test_settings):
     settings = await settings_data.ensure()
 
     assert settings == Settings(

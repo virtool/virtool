@@ -8,20 +8,18 @@ from virtool.samples.utils import check_labels
 
 
 async def check_name_is_in_use(
-    db,
-    settings,
+    mongo,
     name: str,
     sample_id: Optional[str] = None,
     session: Optional[AsyncIOMotorClientSession] = None,
 ):
-    if settings.sample_unique_names:
-        query = {"name": name}
+    query = {"name": name}
 
-        if sample_id:
-            query["_id"] = {"$ne": sample_id}
+    if sample_id:
+        query["_id"] = {"$ne": sample_id}
 
-        if await db.samples.count_documents(query, session=session):
-            raise ResourceConflictError("Sample name is already in use")
+    if await mongo.samples.count_documents(query, limit=1, session=session) != 0:
+        raise ResourceConflictError("Sample name is already in use")
 
 
 async def check_subtractions_do_not_exist(

@@ -16,7 +16,7 @@ class GetSettingsResponse(Settings):
                 "sample_group": "force_choice",
                 "sample_group_read": True,
                 "sample_group_write": True,
-                "sample_unique_names": False,
+                "sample_unique_names": True,
             }
         }
 
@@ -27,7 +27,6 @@ class UpdateSettingsRequest(BaseModel):
     sample_group_write: bool = False
     sample_all_read: bool = True
     sample_all_write: bool = False
-    sample_unique_names: bool = True
     hmm_slug: constr(strip_whitespace=True) = "virtool/virtool-hmm"
     enable_api: bool = False
     enable_sentry: bool = True
@@ -45,6 +44,6 @@ class UpdateSettingsResponse(Settings):
                 "hmm_slug": "virtool/virtool-hmm",
                 "minimum_passsword_length": 12,
                 "sample_all_read": False,
-                "sample_unique_names": False,
+                "sample_unique_names": True,
             }
         }
