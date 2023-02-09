@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from virtool.authorization.permissions import ResourceType
-from virtool.authorization.roles import SpaceRole, AdministratorRole
+from virtool.authorization.roles import SpaceRole, AdministratorRole, SpaceResourceRole, ReferenceRole
 
 
 class AbstractRelationship(ABC):
@@ -127,7 +127,7 @@ class SpaceMembership(AbstractRelationship):
 class SpaceBaseRoleAssignment(AbstractRelationship):
     """Represents a space having the given base role."""
 
-    def __init__(self, space_id: int, role: SpaceRole):
+    def __init__(self, space_id: int, role: SpaceResourceRole):
         self._space_id = space_id
         self._role = role
 
@@ -145,11 +145,11 @@ class SpaceBaseRoleAssignment(AbstractRelationship):
 
     @property
     def user_id(self) -> Union[int, str]:
-        return self._space_id
+        return f"{self._space_id}#member"
 
     @property
     def user_type(self) -> str:
-        return "user"
+        return "space"
 
 
 class SpaceUserRoleAssignment(AbstractRelationship):
@@ -158,7 +158,7 @@ class SpaceUserRoleAssignment(AbstractRelationship):
 
     """
 
-    def __init__(self, space_id: int, user_id: str, role: SpaceRole):
+    def __init__(self, space_id: int, user_id: str, role: SpaceResourceRole):
         self._space_id = space_id
         self._user_id = user_id
         self._role = role
@@ -170,6 +170,38 @@ class SpaceUserRoleAssignment(AbstractRelationship):
     @property
     def object_type(self) -> str:
         return ResourceType.SPACE.value
+
+    @property
+    def relation(self) -> str:
+        return self._role.value
+
+    @property
+    def user_id(self) -> str:
+        return self._user_id
+
+    @property
+    def user_type(self) -> str:
+        return "user"
+
+
+class ReferenceUserRoleAssignment(AbstractRelationship):
+    """
+    Represents a user having a given role on a reference.
+
+    """
+
+    def __init__(self, ref_id: str, user_id: str, role: ReferenceRole):
+        self._ref_id = ref_id
+        self._user_id = user_id
+        self._role = role
+
+    @property
+    def object_id(self) -> str:
+        return self._ref_id
+
+    @property
+    def object_type(self) -> str:
+        return ResourceType.REFERENCE.value
 
     @property
     def relation(self) -> str:

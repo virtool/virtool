@@ -1,3 +1,4 @@
+import openfga_sdk
 import pytest
 
 from virtool.authorization.client import AuthorizationClient
@@ -6,11 +7,19 @@ from virtool.authorization.permissions import (
     ResourceType,
 )
 from virtool.authorization.relationships import (
-    GroupMembership,
-    UserPermission,
-    GroupPermission,
+    SpaceUserRoleAssignment,
+    SpaceMembership,
+    AdministratorRoleAssignment,
+    ReferenceUserRoleAssignment, SpaceBaseRoleAssignment,
 )
 from virtool.authorization.results import RemoveRelationshipResult
+from virtool.authorization.roles import (
+    SpaceResourceRole,
+    SpaceRole,
+    SubtractionPermission,
+    AdministratorRole,
+    ReferenceRole, ProjectPermission,
+)
 
 
 @pytest.fixture()
@@ -32,7 +41,7 @@ def spawn_auth_client(authorization_client, create_user, mongo):
 
 class TestCheck:
     @pytest.mark.parametrize("has_permission", [True, False])
-    async def test_user_permission(
+    async def test_member_permission(
         self,
         has_permission,
         spawn_auth_client,
@@ -40,144 +49,120 @@ class TestCheck:
         client = await spawn_auth_client()
 
         permission = (
-            SpacePermission.CANCEL_JOB
+            SpaceResourceRole.SUBTRACTION_EDITOR
             if has_permission
-            else SpacePermission.MODIFY_SUBTRACTION
-        )
-
-        await client.add(UserPermission("ryanf", permission))
-
-        assert (
-            await client.check(
-                "ryanf", SpacePermission.CANCEL_JOB, ResourceType.SPACE, 0
-            )
-            is has_permission
-        )
-
-    @pytest.mark.parametrize("has_permission", [True, False])
-    async def test_group_permission(
-        self,
-        has_permission,
-        spawn_auth_client,
-    ):
-        client = await spawn_auth_client()
-
-        permission = (
-            SpacePermission.CANCEL_JOB
-            if has_permission
-            else SpacePermission.MODIFY_SUBTRACTION
+            else SpaceResourceRole.SUBTRACTION_VIEWER
         )
 
         await client.add(
-            GroupMembership("ryanf", "sidney"), GroupPermission("sidney", permission)
+            SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
+            SpaceUserRoleAssignment(0, "ryanf", permission),
         )
 
         assert (
             await client.check(
-                "ryanf", SpacePermission.CANCEL_JOB, ResourceType.SPACE, 0
+                "ryanf", SubtractionPermission.EDIT_SUBTRACTION, ResourceType.SPACE, 0
             )
             is has_permission
         )
 
+    async def test_base_role_permissions(self, spawn_auth_client):
 
-async def test_list_groups(spawn_auth_client):
+        client = await spawn_auth_client()
+
+        await client.add(
+            SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
+            SpaceBaseRoleAssignment(0, SpaceResourceRole.SUBTRACTION_EDITOR),
+            SpaceBaseRoleAssignment(0, SpaceResourceRole.PROJECT_MANAGER),
+        )
+
+        assert await client.check("ryanf", SubtractionPermission.EDIT_SUBTRACTION, ResourceType.SPACE, 0) is True
+        assert await client.check("ryanf", ProjectPermission.DELETE_PROJECT, ResourceType.SPACE, 0) is True
+
+
+async def test_list_space_base_roles(spawn_auth_client):
     client = await spawn_auth_client()
 
     await client.add(
-        GroupMembership("ryanf", "sidney"), GroupMembership("ryanf", "devs")
+        SpaceBaseRoleAssignment(0, SpaceResourceRole.SUBTRACTION_EDITOR),
+        SpaceBaseRoleAssignment(0, SpaceResourceRole.PROJECT_MANAGER),
     )
 
-    assert await client.list_groups("ryanf") == ["devs", "sidney"]
+    assert await client.get_space_roles(0) == ["project_manager", "subtraction_editor"]
 
 
-async def test_list_permissions(snapshot, spawn_auth_client):
+async def test_list_user_spaces(spawn_auth_client):
     client = await spawn_auth_client()
 
     await client.add(
-        GroupMembership("ryanf", "sidney"), GroupMembership("ryanf", "devs")
+        SpaceMembership("ryanf", 2, SpaceRole.MEMBER),
+        SpaceMembership("ryanf", 1, SpaceRole.MEMBER),
+        SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
     )
 
-    await client.add(GroupPermission("sidney", SpacePermission.CANCEL_JOB))
+    assert await client.list_user_spaces("ryanf") == [0, 1, 2]
 
-    assert await client.list_permissions("ryanf", ResourceType.SPACE, 0) == [
-        "cancel_job"
+
+async def test_list_user_roles(snapshot, spawn_auth_client):
+    client = await spawn_auth_client()
+
+    await client.add(
+        SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
+        SpaceUserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
+        SpaceUserRoleAssignment(0, "ryanf", SpaceResourceRole.PROJECT_MANAGER),
+    )
+
+    assert await client.list_user_roles("ryanf", 0) == [
+        "member",
+        "project_manager",
+        "subtraction_editor",
     ]
 
 
-async def test_add_group_member(fake2, mongo, snapshot, spawn_auth_client):
-    client: AuthorizationClient = await spawn_auth_client()
-
-    await client.add(
-        GroupMembership("ryanf", "sidney"), GroupMembership("ryanf", "students")
-    )
-
-    assert await client.list_groups("ryanf") == ["sidney", "students"]
-
-
-async def test_remove_group_member(fake2, mongo, snapshot, spawn_auth_client):
-    client: AuthorizationClient = await spawn_auth_client()
-
-    await client.add(GroupMembership("ryanf", "sidney"))
-
-    result = await client.remove(
-        GroupMembership("ryanf", "sidney"), GroupMembership("ryanf", "devs")
-    )
-
-    assert result == RemoveRelationshipResult(not_found_count=1, removed_count=1)
-
-    assert await client.list_groups("ryanf") == []
-
-
-async def test_add_and_remove_group_permissions(fake2, spawn_auth_client):
-    client = await spawn_auth_client()
-
-    await client.add(GroupMembership("ryanf", "sidney"))
-    await client.add(
-        GroupPermission("sidney", SpacePermission.CANCEL_JOB),
-        GroupPermission("sidney", SpacePermission.MODIFY_SUBTRACTION),
-    )
-
-    assert await client.list_group_permissions("sidney", ResourceType.SPACE, 0) == [
-        "cancel_job",
-        "modify_subtraction",
-    ]
-
-    await client.remove(GroupPermission("sidney", SpacePermission.CANCEL_JOB))
-
-    assert await client.list_group_permissions("sidney", ResourceType.SPACE, 0) == [
-        "modify_subtraction",
-    ]
-
-
-async def test_add_and_remove_user_permissions(fake2, spawn_auth_client):
+async def test_add_and_remove_user_roles(spawn_auth_client):
     client = await spawn_auth_client()
 
     await client.add(
-        UserPermission("ryanf", SpacePermission.CANCEL_JOB),
-        UserPermission("ryanf", SpacePermission.MODIFY_SUBTRACTION),
-        UserPermission("ryanf", SpacePermission.MODIFY_HMM),
+        SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
+        SpaceUserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
+        SpaceUserRoleAssignment(0, "ryanf", SpaceResourceRole.PROJECT_MANAGER),
     )
 
-    assert await client.list_permissions(
-        "ryanf", ResourceType.SPACE, 0
-    ) == [
-        "cancel_job",
-        "modify_hmm",
-        "modify_subtraction",
-    ]
+    await client.remove(
+        SpaceUserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR)
+    )
+
+    assert await client.list_user_roles("ryanf", 0) == ["member", "project_manager"]
 
 
-async def test_delete_group(fake2, spawn_auth_client):
+async def test_list_administrators(spawn_auth_client):
     client = await spawn_auth_client()
 
     await client.add(
-        GroupPermission("sidney", SpacePermission.CANCEL_JOB),
-        GroupPermission("sidney", SpacePermission.MODIFY_SUBTRACTION),
+        AdministratorRoleAssignment("ryanf", AdministratorRole.BASE),
+        AdministratorRoleAssignment("igboyes", AdministratorRole.FULL),
+        AdministratorRoleAssignment("rhoffmann", AdministratorRole.FULL),
     )
 
-    await client.delete_group("sidney")
+    assert await client.list_administrators() == [
+        ("igboyes", "full"),
+        ("rhoffmann", "full"),
+        ("ryanf", "base"),
+    ]
 
-    assert await client.list_group_permissions("sidney", ResourceType.SPACE, 0) == []
+
+async def test_list_reference_users(spawn_auth_client):
+    client = await spawn_auth_client()
+
+    await client.add(
+        ReferenceUserRoleAssignment("new_ref", "ryanf", ReferenceRole.BUILDER),
+        ReferenceUserRoleAssignment("new_ref", "igboyes", ReferenceRole.MANAGER),
+    )
+
+    assert await client.list_reference_users("new_ref") == [
+        ("igboyes", "manager"),
+        ("ryanf", "builder"),
+    ]
 
 
 async def test_add_idempotent(fake2, spawn_auth_client):
@@ -187,10 +172,16 @@ async def test_add_idempotent(fake2, spawn_auth_client):
     """
     client = await spawn_auth_client()
 
-    await client.add(GroupMembership("ryanf", "sidney"))
+    await client.add(
+        SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
+        SpaceUserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
+    )
 
-    assert await client.list_groups("ryanf") == ["sidney"]
+    assert await client.list_user_roles("ryanf", 0) == ["member", "subtraction_editor"]
 
-    await client.add(GroupMembership("ryanf", "sidney"))
+    await client.add(
+        SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
+        SpaceUserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
+    )
 
-    assert await client.list_groups("ryanf") == ["sidney"]
+    assert await client.list_user_roles("ryanf", 0) == ["member", "subtraction_editor"]

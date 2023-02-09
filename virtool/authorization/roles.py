@@ -59,17 +59,16 @@ class SpaceRole(Enum):
 
 
 class SpaceResourceRole(Enum):
-
     LABEL_MANAGER = "label_manager"
     """Create, edit, or delete labels."""
 
-    PROJECT_MANAGER = "manager"
+    PROJECT_MANAGER = "project_manager"
     """Create, edit, or delete projects."""
 
-    PROJECT_EDITOR = "editor"
+    PROJECT_EDITOR = "project_editor"
     """Create or edit projects."""
 
-    PROJECT_VIEWER = "viewer"
+    PROJECT_VIEWER = "project_viewer"
     """View projects."""
 
     REFERENCE_MANAGER = "reference_manager"
@@ -135,3 +134,82 @@ class ReferenceRole(Enum):
 
 
 RoleType = Union[AdministratorRole, SpaceRole, ReferenceRole]
+
+
+class LabelPermission(Enum):
+    DELETE_LABEL = "delete_label"
+    """Allows labels to be deleted."""
+
+    CREATE_LABEL = "create_label"
+    """Allows labels to be created."""
+
+    EDIT_LABEL = "edit_label"
+    """Allows labels to be edited."""
+
+
+class ProjectPermission(Enum):
+    DELETE_PROJECT = "delete_project"
+    """Allows projects to be deleted."""
+
+    CREATE_PROJECT = "create_project"
+    """Allows projects to be created."""
+
+    EDIT_PROJECT = "edit_project"
+    """Allows projects to be edited."""
+
+    VIEW_PROJECT = "view_project"
+    """ Allows projects to be viewed."""
+
+
+class SamplePermission(Enum):
+    DELETE_SAMPLE = "delete_sample"
+    """Allows samples to be deleted."""
+
+    CREATE_SAMPLE = "create_sample"
+    """Allows samples to be created."""
+
+    EDIT_SAMPLE = "edit_sample"
+    """Allows samples to be edited."""
+
+    ANALYZE_SAMPLE = "analyze_sample"
+    """Allows samples to be analyzed."""
+
+    VIEW_SAMPLE = "view_sample"
+    """ Allows samples to be viewed."""
+
+
+class SubtractionPermission(Enum):
+    DELETE_SUBTRACTION = "delete_subtraction"
+    """Allows subtractions to be deleted."""
+
+    CREATE_SUBTRACTION = "create_subtraction"
+    """Allows subtractions to be created."""
+
+    EDIT_SUBTRACTION = "edit_subtraction"
+    """Allows subtractions to be edited."""
+
+    VIEW_SUBTRACTION = "view_subtraction"
+    """ Allows subtractions to be viewed."""
+
+
+class ReferencePermission(Enum):
+    DELETE_REFERENCE = "delete_reference"
+    """Allows references to be deleted."""
+
+    BUILD_REFERENCE = "build_reference"
+    """Allows references to be built."""
+
+    CREATE_REFERENCE = "create_reference"
+    """Allows references to be created."""
+
+    EDIT_REFERENCE = "edit_reference"
+    """Allows references to be edited."""
+
+    CONTRIBUTE_REFERENCE = "contribute_reference"
+    """Allows references to be contributed to."""
+
+    VIEW_REFERENCE = "view_reference"
+    """ Allows references to be viewed."""
+
+
+PermissionType = Union[LabelPermission, SamplePermission, ProjectPermission, ReferencePermission, SubtractionPermission]

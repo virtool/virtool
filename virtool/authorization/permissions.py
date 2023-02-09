@@ -16,11 +16,7 @@ class ResourceType(Enum):
 
     APP = "app"
     """The application itself (eg. update_settings, create_user)"""
-
-    GROUP = "group"
-    JOB = "job"
     REFERENCE = "reference"
-    SAMPLE = "sample"
     SPACE = "space"
     """
     A Virtool space.
@@ -28,8 +24,6 @@ class ResourceType(Enum):
     Used for controlling creation of resources in the space and manage space members and
     settings.
     """
-    SUBTRACTION = "subtraction"
-    UPLOAD = "upload"
 
 
 class Action(Enum):

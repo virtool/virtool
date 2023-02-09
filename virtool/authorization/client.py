@@ -25,7 +25,13 @@ from virtool.authorization.results import (
     RemoveRelationshipResult,
     AddRelationshipResult,
 )
-from virtool.authorization.roles import AdministratorRole, ReferenceRole, RoleType
+from virtool.authorization.roles import (
+    AdministratorRole,
+    ReferenceRole,
+    RoleType,
+    PermissionType,
+    SpaceResourceRole,
+)
 
 
 class AbstractAuthorizationClient(ABC):
@@ -64,7 +70,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
     async def check(
         self,
         user_id: str,
-        role: RoleType,
+        role: PermissionType,
         resource_type: ResourceType,
         resource_id: Union[str, int],
     ) -> bool:
@@ -86,7 +92,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
 
     async def get_space_roles(self, space_id: int) -> List[str]:
         """
-        Return a list of roles for a space.
+        Return a list of base roles for a space.
 
         :param space_id: the id of the space
         :return: a list of roles
@@ -94,16 +100,13 @@ class AuthorizationClient(AbstractAuthorizationClient):
         response = await self.open_fga.read(
             ReadRequest(
                 tuple_key=TupleKey(
-                    user="user:", relation="base", object=f"group:{space_id}"
+                    user=f"space:{space_id}#member", object=f"space:{space_id}"
                 )
             )
         )
 
         return sorted(
-            [
-                relation_tuple.key.user.split(":")[1]
-                for relation_tuple in response.tuples
-            ]
+            [relation_tuple.key.relation for relation_tuple in response.tuples]
         )
 
     async def list_administrators(self) -> List[Tuple[str, AdministratorRole]]:
@@ -113,24 +116,16 @@ class AuthorizationClient(AbstractAuthorizationClient):
         :return: a list of tuples containing user ids and their roles
 
         """
-        responses = await asyncio.gather(
-            *[
-                self.open_fga.read(
-                    ReadRequest(
-                        tuple_key=TupleKey(
-                            user="user:", relation=role.value, object="app:"
-                        ),
-                    )
-                )
-                for role in AdministratorRole
-            ]
+        response = await self.open_fga.read(
+            ReadRequest(
+                tuple_key=TupleKey(object="app:virtool"),
+            )
         )
 
         return sorted(
             [
-                relation_tuple.key.user.split(":")[1]
-                for response in responses
-                for relation_tuple in response
+                (relation_tuple.key.user.split(":")[1], relation_tuple.key.relation)
+                for relation_tuple in response.tuples
             ]
         )
 
@@ -144,16 +139,29 @@ class AuthorizationClient(AbstractAuthorizationClient):
         response = await self.open_fga.read(
             ReadRequest(
                 tuple_key=TupleKey(
-                    user=f"user:{user_id}", relation="member", object="group:"
+                    user=f"user:{user_id}", relation="member", object="space:"
                 ),
             )
         )
 
         return sorted(
             [
-                relation_tuple.key.object.split(":")[1]
+                int(relation_tuple.key.object.split(":")[1])
                 for relation_tuple in response.tuples
             ]
+        )
+
+    async def list_user_roles(
+        self, user_id: str, space_id: int
+    ) -> List[SpaceResourceRole]:
+        response = await self.open_fga.read(
+            ReadRequest(
+                tuple_key=TupleKey(user=f"user:{user_id}", object=f"space:{space_id}")
+            )
+        )
+
+        return sorted(
+            [relation_tuple.key.relation for relation_tuple in response.tuples]
         )
 
     async def list_reference_users(
@@ -169,7 +177,18 @@ class AuthorizationClient(AbstractAuthorizationClient):
         :param ref_id: the id of the reference
         :return: a list of user ids and their roles
         """
-        ...
+        response = await self.open_fga.read(
+            ReadRequest(
+                tuple_key=TupleKey(object=f"reference:{ref_id}"),
+            )
+        )
+
+        return sorted(
+            [
+                (relation_tuple.key.user.split(":")[1], relation_tuple.key.relation)
+                for relation_tuple in response.tuples
+            ]
+        )
 
     async def add(self, *relationships: AbstractRelationship):
 
