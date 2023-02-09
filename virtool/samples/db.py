@@ -6,11 +6,10 @@ import asyncio
 from asyncio import to_thread
 import logging
 import os
-import copy
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
@@ -39,6 +38,8 @@ if TYPE_CHECKING:
     from virtool.mongo.core import DB
 
 logger = logging.getLogger(__name__)
+
+CHANGABLE_WORKFLOW_STATES = ["none", "pending"]
 
 LIST_PROJECTION = [
     "_id",
@@ -84,11 +85,6 @@ RIGHTS_PROJECTION = {
     "all_write": True,
     "user": True,
 }
-
-AODP = ["aodp"]
-NUVS = ["nuvs"]
-
-WORKFLOW_STATE_PENDING = "pending"
 
 
 class WorkflowState(Enum):
@@ -253,7 +249,7 @@ async def create_sample(
             "user": {"id": user_id},
             "group": group,
             "locale": locale,
-            "workflows": define_initial_workflows(library_type, settings.workflows),
+            "workflows": define_initial_workflows(library_type),
             "paired": paired,
         }
     )
@@ -279,25 +275,25 @@ async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     return None
 
 
-def define_initial_workflows(library_type) -> Dict[str, WorkflowState]:
+def define_initial_workflows(library_type) -> Dict[str, str]:
     """
     Checks for incompatibility workflow states
 
     :param library_type: to check for compatability
     :return: initial workflow states
-    """
 
+    """
     if library_type == "amplicon":
         return {
-            "nuvs": WorkflowState.INCOMPATIBLE,
-            "pathoscope": WorkflowState.INCOMPATIBLE,
-            "aodp": WorkflowState.NONE,
+            "aodp": WorkflowState.NONE.value,
+            "nuvs": WorkflowState.INCOMPATIBLE.value,
+            "pathoscope": WorkflowState.INCOMPATIBLE.value,
         }
 
     return {
-        "nuvs": WorkflowState.NONE,
-        "pathoscope": WorkflowState.NONE,
-        "aodp": WorkflowState.INCOMPATIBLE,
+        "aodp": WorkflowState.INCOMPATIBLE.value,
+        "nuvs": WorkflowState.NONE.value,
+        "pathoscope": WorkflowState.NONE.value,
     }
 
 
@@ -312,34 +308,30 @@ def derive_workflow_state(analyses: list, library_type) -> dict:
     :return: workflow state of a sample
 
     """
-
     workflow_states = define_initial_workflows(library_type)
+    workflow = "aodp"
+
+    if workflow_states["aodp"] == WorkflowState.INCOMPATIBLE.value:
+        workflow = "nuvs"
 
     for analysis in analyses:
-        if analysis["workflow"] in PATHOSCOPE_TASK_NAMES:
+        if (
+            analysis["workflow"] == workflow
+            and workflow_states[workflow] in CHANGABLE_WORKFLOW_STATES
+        ):
+            if not analysis["ready"]:
+                workflow_states[workflow] = WorkflowState.PENDING.value
+            elif analysis["ready"]:
+                workflow_states[workflow] = WorkflowState.COMPLETE.value
 
-            analysis["workflow"] = "pathoscope"
-            workflows.update({"pathoscope"})
-
-        if analysis["workflow"] == "aodp":
-            workflows.update({"aodp"})
-
-        if analysis["workflow"] == "nuvs":
-            workflows.update({"nuvs"})
-
-    workflow_states, workflows = define_initial_workflows(library_type, workflows)
-
-    if not workflows:
-        return {"workflows": workflow_states}
-
-    for workflow in workflows:
-        for analysis in updated_analyses:
-            if analysis["workflow"] == workflow:
-                if not analysis["ready"]:
-                    workflow_states[workflow] = WorkflowState.PENDING
-                elif analysis["ready"]:
-                    workflow_states[workflow] = WorkflowState.COMPLETE
-                    break
+        elif (
+            analysis["workflow"] in PATHOSCOPE_TASK_NAMES
+            and workflow_states["pathoscope"] in CHANGABLE_WORKFLOW_STATES
+        ):
+            if not analysis["ready"]:
+                workflow_states["pathoscope"] = WorkflowState.PENDING.value
+            elif analysis["ready"]:
+                workflow_states["pathoscope"] = WorkflowState.COMPLETE.value
 
     return {"workflows": workflow_states}
 
