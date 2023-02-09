@@ -1,22 +1,22 @@
 import asyncio
 from typing import List, Type, Optional, Dict
 
-from aioredis import Redis
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
+from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.task import BaseTask
 
 
 class TasksData:
-    def __init__(self, pg: AsyncEngine, redis: Redis):
+    def __init__(self, pg: AsyncEngine, tasks_client: AbstractTasksClient):
         self._pg = pg
-        self._redis = redis
+        self._tasks_client = tasks_client
 
     async def find(self) -> List[Task]:
         """
@@ -110,7 +110,7 @@ class TasksData:
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLTask).filter_by(id=task_id))
             task = result.scalar()
-            session.delete(task)
+            await session.delete(task)
 
             await session.commit()
 
@@ -139,7 +139,7 @@ class TasksData:
             task = Task(**task.to_dict())
             await session.commit()
 
-        await self._redis.publish("channel:tasks", task.id)
+        await self._tasks_client.enqueue(task.type, task.id)
 
         return task
 
