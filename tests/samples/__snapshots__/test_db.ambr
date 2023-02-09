@@ -211,7 +211,7 @@
       'id': 'bob',
     },
     'workflows': <class 'dict'> {
-      'aodp': 'none',
+      'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
     },
@@ -248,7 +248,7 @@
       'id': 'bob',
     },
     'workflows': <class 'dict'> {
-      'aodp': 'none',
+      'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
     },
