@@ -15,12 +15,12 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
-from virtool.auth.client import AuthorizationClient
-from virtool.auth.utils import connect_openfga
 
 import virtool.mongo.connect
 import virtool.pg.utils
 from virtool.analyses.tasks import StoreNuvsFilesTask
+from virtool.auth.client import AuthorizationClient
+from virtool.auth.utils import connect_openfga
 from virtool.config import get_config_from_app
 from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
@@ -46,7 +46,6 @@ from virtool.references.tasks import (
 from virtool.routes import setup_routes
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
-from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
     CheckSubtractionsFASTATask,
