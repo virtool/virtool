@@ -26,10 +26,11 @@ class TasksClient(AbstractTasksClient):
         await self.redis.rpush(REDIS_TASKS_LIST_KEY, task_id)
 
     async def pop(self) -> int:
-        result = await self.redis.blpop(REDIS_TASKS_LIST_KEY)
+        with await self.redis as redis:
+            result = await redis.blpop(REDIS_TASKS_LIST_KEY)
 
-        if result is not None:
-            return int(result[1])
+            if result is not None:
+                return int(result[1])
 
 
 class DummyTasksClient(AbstractTasksClient):
