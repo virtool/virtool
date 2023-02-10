@@ -4,7 +4,7 @@
     <SQLSubtractionFile(id=2, name=subtraction.fa.gz, subtraction=foo, type=fasta, size=10)>,
   ]
 ---
-# name: test_write_subtraction_fasta_file_task[uvloop]
+# name: test_check_subtraction_fasta_file_task[uvloop]
   '
   >host_1
   ATTGAGCCCATGGTTAGAAAAGAAAACATTGGAAATTGTACATTGGGATGTACATAGACA
