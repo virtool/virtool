@@ -26,6 +26,7 @@ from virtool.samples.db import (
 )
 from virtool.samples.models import SampleReads
 from virtool.samples.utils import calculate_workflow_tags
+from virtool.samples.db import define_initial_workflows, derive_workflow_state
 from virtool.uploads.models import Upload
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
@@ -142,9 +143,87 @@ class TestRecalculateWorkflowTags:
             "_id": "test",
             "pathoscope": True,
             "nuvs": "ip",
-            "workflows": {"aodp": "incompatible",
-                          "nuvs": "complete",
-                          "pathoscope": "complete"},
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "complete",
+                "pathoscope": "complete",
+            },
+        }
+
+
+class TestDeriveWorkflowStates:
+    @pytest.mark.parametrize("library_type", ["amplicon", "normal", "srna", "other"])
+    def test_define_initial_workflows(self, library_type, snapshot):
+        """
+        Test that initial workflow states are correctly defined.
+        """
+        workflow_states = define_initial_workflows(library_type=library_type)
+        assert workflow_states == snapshot
+
+    @pytest.mark.parametrize(
+        "path_ready,path_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "nuvs_ready,nuvs_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "aodp_ready,aodp_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    def test_complete_pending(
+        self, path_ready, path_state, nuvs_ready, nuvs_state, aodp_ready, aodp_state
+    ):
+        """
+        Test that workflows are set to complete and pending as expected.
+        """
+        index = 0
+        library_type = "other"
+        path_ready_1, path_ready_2 = path_ready
+        nuvs_ready_1, nuvs_ready_2 = nuvs_ready
+        aodp_ready_1, aodp_ready_2 = aodp_ready
+
+        documents = [
+            {"_id": index, "ready": path_ready_1, "workflow": "pathoscope_barracuda"},
+            {"_id": index, "ready": path_ready_2, "workflow": "pathoscope_bowtie"},
+            {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
+            {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
+            {"_id": index, "ready": aodp_ready_1, "workflow": "aodp"},
+            {"_id": index, "ready": aodp_ready_2, "workflow": "aodp"},
+        ]
+        final_workflow_states = derive_workflow_state(documents, library_type)
+        assert final_workflow_states == {
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": nuvs_state,
+                "pathoscope": path_state,
+            }
+        }
+
+        library_type = "amplicon"
+        final_workflow_states = derive_workflow_state(documents, library_type)
+        assert final_workflow_states == {
+            "workflows": {
+                "aodp": aodp_state,
+                "nuvs": "incompatible",
+                "pathoscope": "incompatible",
+            }
         }
 
 
@@ -275,7 +354,6 @@ async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client)
         [],
         "bob",
         settings=settings,
-
     )
 
     assert result == snapshot

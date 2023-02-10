@@ -1,3 +1,31 @@
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[amplicon]
+  <class 'dict'> {
+    'aodp': 'none',
+    'nuvs': 'incompatible',
+    'pathoscope': 'incompatible',
+  }
+---
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[normal]
+  <class 'dict'> {
+    'aodp': 'incompatible',
+    'nuvs': 'none',
+    'pathoscope': 'none',
+  }
+---
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[other]
+  <class 'dict'> {
+    'aodp': 'incompatible',
+    'nuvs': 'none',
+    'pathoscope': 'none',
+  }
+---
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[srna]
+  <class 'dict'> {
+    'aodp': 'incompatible',
+    'nuvs': 'none',
+    'pathoscope': 'none',
+  }
+---
 # name: TestRemoveSamples.test[uvloop-id_list0]
   <class 'set'> {
     'test_2',
