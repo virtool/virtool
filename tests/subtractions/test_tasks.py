@@ -110,8 +110,8 @@ async def test_check_subtraction_fasta_file_task(
                 context={},
                 count=0,
                 progress=0,
-                step="check_subtractions_fasta_file",
-                type="check_subtractions_fasta_file",
+                step="check_subtractions_fasta_files",
+                type="check_subtractions_fasta_files",
                 created_at=static_time.datetime,
             )
         )

@@ -40,7 +40,7 @@ class CheckSubtractionsFASTATask(BaseTask):
 
     """
 
-    name = "check_subtractions_fasta_file"
+    name = "check_subtractions_fasta_files"
 
     def __init__(
         self, task_id: int, data: DataLayer, context: Dict, temp_dir: TemporaryDirectory
