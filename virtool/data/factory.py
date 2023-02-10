@@ -24,6 +24,7 @@ from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.settings.data import SettingsData
 from virtool.subtractions.data import SubtractionsData
+from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
@@ -64,7 +65,7 @@ def create_data_layer(
         SubtractionsData(config.base_url, config, db, pg),
         SessionData(redis),
         SettingsData(db),
-        TasksData(pg, redis),
+        TasksData(pg, TasksClient(redis)),
         UploadsData(config, db, pg),
         UsersData(db, pg),
     )

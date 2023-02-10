@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.subtractions.tasks import AddSubtractionFilesTask
+from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task
 from virtool.tasks.oas import TaskUpdate
@@ -13,7 +14,7 @@ from virtool.tasks.oas import TaskUpdate
 
 @pytest.fixture
 async def tasks_data(pg: AsyncEngine, redis: Redis) -> TasksData:
-    return TasksData(pg, redis)
+    return TasksData(pg, TasksClient(redis))
 
 
 async def test_find(
@@ -110,11 +111,11 @@ async def test_add(
     Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel.
 
     """
-    (channel,) = await redis.subscribe("channel:tasks")
+    tasks_client = TasksClient(redis)
 
     await tasks_data.create(AddSubtractionFilesTask)
 
-    task_id = await wait_for(channel.get_json(), timeout=3)
+    task_id = await wait_for(tasks_client.pop(), timeout=3)
 
     assert task_id == 1
 
