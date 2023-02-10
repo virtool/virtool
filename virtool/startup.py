@@ -49,7 +49,7 @@ from virtool.sentry import setup
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
-    WriteSubtractionFASTATask,
+    CheckSubtractionsFASTATask,
 )
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
@@ -245,7 +245,9 @@ async def startup_databases(app: Application):
     openfga_scheme = app["config"].openfga_scheme
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
-        virtool.mongo.connect.connect(db_connection_string, db_name, app["config"].no_revision_check),
+        virtool.mongo.connect.connect(
+            db_connection_string, db_name, app["config"].no_revision_check
+        ),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
         connect_openfga(openfga_host, openfga_scheme),
@@ -399,15 +401,8 @@ async def startup_tasks(app: Application):
     scheduler = get_scheduler_from_app(app)
 
     logger.info("Checking subtraction FASTA files")
-    subtractions_without_fasta = await check_subtraction_fasta_files(
-        app["db"], app["config"]
-    )
 
-    for subtraction in subtractions_without_fasta:
-        await tasks_data.create(
-            WriteSubtractionFASTATask, context={"subtraction": subtraction}
-        )
-
+    await tasks_data.create(CheckSubtractionsFASTATask)
     await tasks_data.create(EnsureIndexFilesTask)
     await tasks_data.create(AddSubtractionFilesTask)
     await tasks_data.create(StoreNuvsFilesTask)

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
-    WriteSubtractionFASTATask,
+    CheckSubtractionsFASTATask,
 )
 from virtool.tasks.models import Task
 from virtool.utils import get_temp_dir
@@ -72,7 +72,7 @@ async def test_add_subtraction_files_task(
         ).scalars().all() == snapshot
 
 
-async def test_write_subtraction_fasta_file_task(
+async def test_check_subtraction_fasta_file_task(
     config, data_layer, mongo, pg, snapshot, static_time, test_files_path, tmpdir
 ):
     subtractions_path = Path(tmpdir.mkdir("subtractions"))
@@ -94,6 +94,14 @@ async def test_write_subtraction_fasta_file_task(
         "subtraction.rev.2.bt2",
     ]
 
+    await mongo.subtraction.insert_one(
+        {
+            "_id": "foo",
+            "name": "Foo",
+            "deleted": False,
+        }
+    )
+
     async with AsyncSession(pg) as session:
         session.add(
             Task(
@@ -102,15 +110,15 @@ async def test_write_subtraction_fasta_file_task(
                 context={},
                 count=0,
                 progress=0,
-                step="write_subtraction_fasta_file",
-                type="generate_fasta_file",
+                step="check_subtractions_fasta_file",
+                type="check_subtractions_fasta_file",
                 created_at=static_time.datetime,
             )
         )
 
         await session.commit()
 
-    task = WriteSubtractionFASTATask(
+    task = CheckSubtractionsFASTATask(
         1, data_layer, {"subtraction": "foo"}, get_temp_dir()
     )
 

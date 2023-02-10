@@ -109,19 +109,19 @@ async def fetch_complete_subtraction(
         )
 
 
-async def check_subtraction_fasta_files(db, config: Config) -> list:
+async def check_subtraction_fasta_files(mongo, config: Config) -> list:
     """
     Check subtraction directories for files and set 'has_file' to boolean based on
     whether a ``.fa.gz`` file exists.
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param config: the application configuration
     :return: a list of subtraction IDs without FASTA files
 
     """
     subtractions_without_fasta = []
 
-    async for subtraction in db.subtraction.find({"deleted": False}):
+    async for subtraction in mongo.subtraction.find({"deleted": False}):
         path = join_subtraction_path(config, subtraction["_id"])
         has_file = True
 
@@ -129,7 +129,7 @@ async def check_subtraction_fasta_files(db, config: Config) -> list:
             has_file = False
             subtractions_without_fasta.append(subtraction["_id"])
 
-        await db.subtraction.find_one_and_update(
+        await mongo.subtraction.find_one_and_update(
             {"_id": subtraction["_id"]}, {"$set": {"has_file": has_file}}
         )
 
