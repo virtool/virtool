@@ -107,16 +107,19 @@ async def get_sample_data(mongo, fake2, pg, static_time):
 
 @pytest.mark.apitest
 @pytest.mark.parametrize(
-    "find,per_page,page,labels",
+    "find,per_page,page,labels,workflows",
     [
-        (None, None, None, None),
-        (None, 2, 1, None),
-        (None, 2, 2, None),
-        ("gv", None, None, None),
-        ("sp", None, None, None),
-        (None, None, None, [3]),
-        (None, None, None, [2, 3]),
-        (None, None, None, [0]),
+        (None, None, None, None, None),
+        (None, 2, 1, None, None),
+        (None, 2, 2, None, None),
+        ("gv", None, None, None, None),
+        ("sp", None, None, None, None),
+        (None, None, None, [3], None),
+        (None, None, None, [2, 3], None),
+        (None, None, None, [0], None),
+        (None, None, None, None, ["nuvs:ready", "pathoscope:ready"]),
+        (None, None, None, None, ["pathoscope:ready", "pathoscope:none"]),
+        (None, None, None, None, ["nuvs:none", "pathoscope:none", "pathoscope:ready"]),
     ],
 )
 async def test_find(
@@ -124,6 +127,7 @@ async def test_find(
     per_page,
     page,
     labels,
+    workflows,
     snapshot,
     fake2,
     spawn_client,
@@ -143,19 +147,20 @@ async def test_find(
         [
             {
                 "user": {"id": user_1.id},
-                "nuvs": False,
+                "nuvs": True,
                 "host": "",
                 "foobar": True,
                 "isolate": "Thing",
                 "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
                 "_id": "beb1eb10",
                 "name": "16GVP042",
-                "pathoscope": False,
+                "pathoscope": True,
                 "library_type": "normal",
                 "all_read": True,
                 "ready": True,
                 "labels": [label_1.id, label_2.id],
                 "notes": "",
+                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
             },
             {
                 "user": {"id": user_2.id},
@@ -172,6 +177,7 @@ async def test_find(
                 "ready": True,
                 "labels": [label_1.id],
                 "notes": "This is a good sample.",
+                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
             },
             {
                 "user": {"id": user_2.id},
@@ -188,6 +194,7 @@ async def test_find(
                 "pathoscope": False,
                 "all_read": True,
                 "labels": [label_3.id],
+                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
             },
         ],
         session=None,
@@ -208,6 +215,10 @@ async def test_find(
     if labels is not None:
         label_query = "&label=".join(str(label) for label in labels)
         query.append(f"label={label_query}")
+
+    if workflows is not None:
+        workflows_query = "&workflows=".join(str(workflow) for workflow in workflows)
+        query.append(f"workflows={workflows_query}")
 
     if query:
         path += f"?{'&'.join(query)}"
