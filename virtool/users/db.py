@@ -336,3 +336,14 @@ async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
         )
 
     return None
+
+
+async def lookup_user_by_id(_local_field: str, _as: str = "users") -> Dict:
+    return {
+        "$lookup": {
+            "from": "users",
+            "localField": _local_field,
+            "foreignField": "_id",
+            "as": _as,
+        }
+    }

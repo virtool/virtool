@@ -38,7 +38,7 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
-from virtool.users.db import AttachUserTransform
+from virtool.users.db import AttachUserTransform, lookup_user_by_id
 from virtool.utils import base_processor, wait_for_checks
 
 logger = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ class SamplesData(DataLayerPiece):
                         ],
                     }
                 },
+                lookup_user_by_id(_local_field="users"),
                 {
                     "$project": {
                         "data": dict_projection,
@@ -143,7 +144,7 @@ class SamplesData(DataLayerPiece):
 
         documents = await apply_transforms(
             [base_processor(document) for document in data],
-            [AttachLabelsTransform(self._pg), AttachUserTransform(self._db)],
+            [AttachLabelsTransform(self._pg)],
         )
 
         return SampleSearchResult(

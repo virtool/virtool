@@ -594,7 +594,7 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
     patch_json = {"results": {"hits": [], "result": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
-    assert len(json.dumps(patch_json)) > 1024 ** 2
+    assert len(json.dumps(patch_json)) > 1024**2
 
     client = await spawn_job_client(authorize=True)
 
