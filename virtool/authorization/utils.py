@@ -6,20 +6,11 @@ from aiohttp import ClientConnectorError
 from aiohttp.web_request import Request
 from openfga_sdk import (
     CreateStoreRequest,
-    WriteAuthorizationModelRequest,
-    TypeDefinition,
-    Userset,
     OpenFgaApi,
-    Usersets,
-    ObjectRelation,
 )
 from openfga_sdk.api import open_fga_api
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.permissions import (
-    AppPermission,
-    SpacePermission,
-)
 
 logger = getLogger("authz")
 
@@ -140,6 +131,9 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
+                    "modify_hmm": {
+                        "computedUserset": {"object": "", "relation": "base"}
+                    },
                 },
                 "metadata": {
                     "relations": {
@@ -148,6 +142,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         "settings": {"directly_related_user_types": [{"type": "user"}]},
                         "spaces": {"directly_related_user_types": [{"type": "user"}]},
                         "users": {"directly_related_user_types": [{"type": "user"}]},
+                        "modify_hmm": {"directly_related_user_types": []},
                     }
                 },
             },
@@ -740,6 +735,31 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         }
                     },
                     "owner": {"this": {}},
+                    "cancel_job": {
+                        "union": {
+                            "child": [
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "owner",
+                                    }
+                                },
+                                {
+                                    "tupleToUserset": {
+                                        "tupleset": {
+                                            "object": "",
+                                            "relation": "parent",
+                                        },
+                                        "computedUserset": {
+                                            "object": "",
+                                            "relation": "base",
+                                        },
+                                    }
+                                },
+                            ]
+                        }
+                    },
+                    "parent": {"this": {}},
                     "project_editor": {
                         "intersection": {
                             "child": [
@@ -1085,6 +1105,92 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
+                    "upload_manager": {
+                        "intersection": {
+                            "child": [
+                                {"this": {}},
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "member",
+                                    }
+                                },
+                            ]
+                        }
+                    },
+                    "create_upload": {
+                        "union": {
+                            "child": [
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "upload_manager",
+                                    }
+                                },
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "owner",
+                                    }
+                                },
+                            ]
+                        }
+                    },
+                    "delete_upload": {
+                        "union": {
+                            "child": [
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "upload_manager",
+                                    }
+                                },
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "owner",
+                                    }
+                                },
+                            ]
+                        }
+                    },
+                    "upload_viewer": {
+                        "intersection": {
+                            "child": [
+                                {"this": {}},
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "member",
+                                    }
+                                },
+                            ]
+                        }
+                    },
+                    "view_upload": {
+                        "union": {
+                            "child": [
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "upload_viewer",
+                                    }
+                                },
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "upload_manager",
+                                    }
+                                },
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": "owner",
+                                    }
+                                },
+                            ]
+                        }
+                    },
                 },
                 "metadata": {
                     "relations": {
@@ -1113,6 +1219,8 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         },
                         "member": {"directly_related_user_types": [{"type": "user"}]},
                         "owner": {"directly_related_user_types": [{"type": "user"}]},
+                        "cancel_job": {"directly_related_user_types": []},
+                        "parent": {"directly_related_user_types": [{"type": "app"}]},
                         "project_editor": {
                             "directly_related_user_types": [
                                 {"type": "user"},
@@ -1208,12 +1316,27 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         "view_reference": {"directly_related_user_types": []},
                         "view_sample": {"directly_related_user_types": []},
                         "view_subtraction": {"directly_related_user_types": []},
+                        "upload_manager": {
+                            "directly_related_user_types": [
+                                {"type": "user"},
+                                {"type": "space", "relation": "member"},
+                            ]
+                        },
+                        "create_upload": {"directly_related_user_types": []},
+                        "delete_upload": {"directly_related_user_types": []},
+                        "upload_viewer": {
+                            "directly_related_user_types": [
+                                {"type": "user"},
+                                {"type": "space", "relation": "member"},
+                            ]
+                        },
+                        "view_upload": {"directly_related_user_types": []},
                     }
                 },
             },
             {"type": "user", "relations": {}},
         ],
-        "schema_version": "1.0",
+        "schema_version": "1.1",
     }
 
     if (

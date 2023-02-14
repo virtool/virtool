@@ -33,7 +33,7 @@ from virtool.api.response import (
     json_response,
 )
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.authorization.permissions import SpacePermission, ResourceType
+from virtool.authorization.roles import SamplePermission
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -105,7 +105,7 @@ class SamplesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionRoutePolicy(Permission.create_sample))
+    @policy(PermissionRoutePolicy(0, SamplePermission.CREATE_SAMPLE))
     async def post(
         self, data: CreateSampleRequest
     ) -> Union[r201[CreateSampleResponse], r400, r403]:

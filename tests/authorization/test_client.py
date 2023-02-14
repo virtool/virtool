@@ -1,24 +1,23 @@
-import openfga_sdk
 import pytest
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.permissions import (
-    SpacePermission,
     ResourceType,
 )
 from virtool.authorization.relationships import (
     SpaceUserRoleAssignment,
     SpaceMembership,
     AdministratorRoleAssignment,
-    ReferenceUserRoleAssignment, SpaceBaseRoleAssignment,
+    ReferenceUserRoleAssignment,
+    SpaceBaseRoleAssignment,
 )
-from virtool.authorization.results import RemoveRelationshipResult
 from virtool.authorization.roles import (
     SpaceResourceRole,
     SpaceRole,
     SubtractionPermission,
     AdministratorRole,
-    ReferenceRole, ProjectPermission,
+    ReferenceRole,
+    ProjectPermission,
 )
 
 
@@ -76,8 +75,18 @@ class TestCheck:
             SpaceBaseRoleAssignment(0, SpaceResourceRole.PROJECT_MANAGER),
         )
 
-        assert await client.check("ryanf", SubtractionPermission.EDIT_SUBTRACTION, ResourceType.SPACE, 0) is True
-        assert await client.check("ryanf", ProjectPermission.DELETE_PROJECT, ResourceType.SPACE, 0) is True
+        assert (
+            await client.check(
+                "ryanf", SubtractionPermission.EDIT_SUBTRACTION, ResourceType.SPACE, 0
+            )
+            is True
+        )
+        assert (
+            await client.check(
+                "ryanf", ProjectPermission.DELETE_PROJECT, ResourceType.SPACE, 0
+            )
+            is True
+        )
 
 
 async def test_list_space_base_roles(spawn_auth_client):

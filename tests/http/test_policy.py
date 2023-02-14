@@ -14,7 +14,7 @@ from aiohttp.web_response import json_response
 from aiohttp_pydantic import PydanticView
 from virtool_core.models.enums import Permission
 
-from virtool.authorization.permissions import SpacePermission, ResourceType
+from virtool.authorization.roles import AdministratorRole, SamplePermission
 from virtool.errors import PolicyError
 from virtool.http.policy import (
     policy,
@@ -239,7 +239,9 @@ async def test_administrator(
     client = await spawn_client(
         authorize=authenticated,
         administrator=administrator,
-        addon_route_table=privilege_routes(AdministratorRoutePolicy),
+        addon_route_table=privilege_routes(
+            AdministratorRoutePolicy(AdministratorRole.BASE)
+        ),
     )
 
     for url in ["/view", "/func"]:
@@ -289,7 +291,7 @@ async def test_permissions(
             else [Permission.modify_subtraction]
         ),
         addon_route_table=privilege_routes(
-            PermissionRoutePolicy(ResourceType.SPACE, 0, SpacePermission.CREATE_SAMPLE)
+            PermissionRoutePolicy(0, SamplePermission.CREATE_SAMPLE)
         ),
     )
 
@@ -333,7 +335,7 @@ async def test_more_than_one_function():
     with pytest.raises(PolicyError):
 
         @routes.get("/func")
-        @policy(AdministratorRoutePolicy)
+        @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
         @policy(PublicRoutePolicy)
         async def get(_):
             """An example public route."""
@@ -352,7 +354,7 @@ async def test_more_than_one_view(spawn_client):
 
         @routes.view("/view")
         class TooManyPolicies(PydanticView):
-            @policy(AdministratorRoutePolicy)
+            @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
             @policy(PublicRoutePolicy)
             async def get(self):
                 """An example public route."""

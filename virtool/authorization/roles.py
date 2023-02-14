@@ -3,7 +3,7 @@ from typing import Union
 from enum import Enum
 
 
-class AdministratorRole(Enum):
+class AdministratorRole(str, Enum):
     """Roles that are assigned to administrators.
 
     These roles are relations between users and the application object. The take the
@@ -35,7 +35,7 @@ class AdministratorRole(Enum):
     """
 
 
-class SpaceRole(Enum):
+class SpaceRole(str, Enum):
     """
     Roles that are bestowed to users in a space.
 
@@ -58,7 +58,7 @@ class SpaceRole(Enum):
     """Access a space."""
 
 
-class SpaceResourceRole(Enum):
+class SpaceResourceRole(str, Enum):
     LABEL_MANAGER = "label_manager"
     """Create, edit, or delete labels."""
 
@@ -111,7 +111,7 @@ class SpaceResourceRole(Enum):
     """View or use subtractions."""
 
 
-class ReferenceRole(Enum):
+class ReferenceRole(str, Enum):
     """Roles that are assigned to users or groups for a specific reference."""
 
     MANAGER = "manager"
@@ -136,7 +136,7 @@ class ReferenceRole(Enum):
 RoleType = Union[AdministratorRole, SpaceRole, ReferenceRole]
 
 
-class LabelPermission(Enum):
+class LabelPermission(str, Enum):
     DELETE_LABEL = "delete_label"
     """Allows labels to be deleted."""
 
@@ -147,7 +147,7 @@ class LabelPermission(Enum):
     """Allows labels to be edited."""
 
 
-class ProjectPermission(Enum):
+class ProjectPermission(str, Enum):
     DELETE_PROJECT = "delete_project"
     """Allows projects to be deleted."""
 
@@ -161,7 +161,7 @@ class ProjectPermission(Enum):
     """ Allows projects to be viewed."""
 
 
-class SamplePermission(Enum):
+class SamplePermission(str, Enum):
     DELETE_SAMPLE = "delete_sample"
     """Allows samples to be deleted."""
 
@@ -178,7 +178,7 @@ class SamplePermission(Enum):
     """ Allows samples to be viewed."""
 
 
-class SubtractionPermission(Enum):
+class SubtractionPermission(str, Enum):
     DELETE_SUBTRACTION = "delete_subtraction"
     """Allows subtractions to be deleted."""
 
@@ -192,15 +192,12 @@ class SubtractionPermission(Enum):
     """ Allows subtractions to be viewed."""
 
 
-class ReferencePermission(Enum):
+class ReferencePermission(str, Enum):
     DELETE_REFERENCE = "delete_reference"
     """Allows references to be deleted."""
 
     BUILD_REFERENCE = "build_reference"
     """Allows references to be built."""
-
-    CREATE_REFERENCE = "create_reference"
-    """Allows references to be created."""
 
     EDIT_REFERENCE = "edit_reference"
     """Allows references to be edited."""
@@ -212,4 +209,68 @@ class ReferencePermission(Enum):
     """ Allows references to be viewed."""
 
 
-PermissionType = Union[LabelPermission, SamplePermission, ProjectPermission, ReferencePermission, SubtractionPermission]
+class UploadPermission(str, Enum):
+    CREATE_UPLOAD = "create_upload"
+    """Allows files to be uploaded."""
+
+    DELETE_UPLOAD = "delete_upload"
+    """Allows files to be deleted."""
+
+
+class HMMPermission(str, Enum):
+    MODIFY_HMM = "modify_hmm"
+    """Allows Hmms to be modified."""
+
+
+class JobPermission(str, Enum):
+    CANCEL_JOB = "cancel_job"
+    """Allows jobs to be canceled."""
+
+
+class LegacyPermission(str, Enum):
+    MODIFY_SUBTRACTION = "modify_subtraction"
+
+    UPLOAD_FILE = "upload_file"
+
+    REMOVE_FILE = "remove_file"
+
+    CREATE_REF = "create_ref"
+
+
+PermissionType = Union[
+    LabelPermission,
+    SamplePermission,
+    ProjectPermission,
+    ReferencePermission,
+    SubtractionPermission,
+    UploadPermission,
+    HMMPermission,
+    JobPermission,
+    LegacyPermission,
+]
+
+
+def adapt_permission_new_to_legacy(permission: PermissionType) -> PermissionType:
+    """
+    Return a legacy permission that corresponds to the provided new-style permission.
+    If the provided permission is already a legacy style permission, it is returned.
+    :param permission: a permission
+    :return: the permission
+    """
+    if (
+        permission == SubtractionPermission.DELETE_SUBTRACTION
+        or permission == SubtractionPermission.EDIT_SUBTRACTION
+        or permission == SubtractionPermission.CREATE_SUBTRACTION
+    ):
+        return LegacyPermission.MODIFY_SUBTRACTION
+
+    if permission == UploadPermission.CREATE_UPLOAD:
+        return LegacyPermission.UPLOAD_FILE
+
+    if permission == UploadPermission.DELETE_UPLOAD:
+        return LegacyPermission.REMOVE_FILE
+
+    if permission == ReferencePermission.BUILD_REFERENCE:
+        return LegacyPermission.CREATE_REF
+
+    return permission

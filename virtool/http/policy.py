@@ -6,8 +6,14 @@ from aiohttp import web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
-from virtool_core.models.enums import Permission
 
+from virtool.authorization.permissions import ResourceType
+from virtool.authorization.roles import (
+    PermissionType,
+    adapt_permission_new_to_legacy,
+    AdministratorRole,
+)
+from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient
 
@@ -45,19 +51,27 @@ class DefaultRoutePolicy:
 
 
 class AdministratorRoutePolicy(DefaultRoutePolicy):
+    def __init__(self, role: AdministratorRole):
+        self.role = role
+
     """Only authenticated clients that are administrators can access the route."""
 
     async def check(self, req, handler, client: AbstractClient):
-        if not client.administrator:
-            raise HTTPForbidden(text="Requires administrative privilege")
+        if client.administrator:
+            return
+
+        if await get_authorization_client_from_req(req).check(
+            client.user_id, self.role, ResourceType.APP, "virtool"
+        ):
+            return
+
+        raise HTTPForbidden(text="Requires administrative privilege")
 
 
 class PermissionRoutePolicy(DefaultRoutePolicy):
-    def __init__(
-        self,
-        permission: Permission,
-    ):
+    def __init__(self, space_id: int, permission: PermissionType):
         self.permission = permission
+        self.space_id = space_id
 
     async def check(self, req: Request, handler: Callable, client):
         """
@@ -72,7 +86,14 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
         * The permission check passes against the authorization client.
 
         """
-        if client.administrator or client.permissions[self.permission.value]:
+        old_permission = adapt_permission_new_to_legacy(self.permission)
+
+        if client.administrator or client.permissions[old_permission.value]:
+            return
+
+        if await get_authorization_client_from_req(req).check(
+            client.user_id, self.permission, ResourceType.SPACE, self.space_id
+        ):
             return
 
         raise HTTPForbidden(text="Not permitted")

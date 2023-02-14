@@ -1,7 +1,6 @@
 import pytest
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.permissions import ResourceType
 from virtool.groups.data import GroupsData
 from virtool.groups.oas import UpdateGroupRequest
 
@@ -31,17 +30,9 @@ async def test_update(
 
     assert group.permissions == snapshot(name="added")
 
-    assert await authorization_client.list_group_permissions(
-        group.id, ResourceType.SPACE, 0
-    ) == ["create_sample", "modify_subtraction"]
-
     group = await groups_data.update(
         group.id,
         UpdateGroupRequest(**{"permissions": {"create_sample": False}}),
     )
 
     assert group.permissions == snapshot(name="removed")
-
-    assert await authorization_client.list_group_permissions(
-        group.id, ResourceType.SPACE, 0
-    ) == ["modify_subtraction"]

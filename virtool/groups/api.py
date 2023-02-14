@@ -6,6 +6,7 @@ from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
 
 
 from virtool.api.response import NotFound, json_response
+from virtool.authorization.roles import AdministratorRole
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import (
@@ -37,7 +38,7 @@ class GroupsView(PydanticView):
             ]
         )
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def post(
         self, data: CreateGroupRequest
     ) -> Union[r201[CreateGroupResponse], r400]:
@@ -85,7 +86,7 @@ class GroupView(PydanticView):
 
         return json_response(GroupResponse.parse_obj(group))
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def patch(
         self, group_id: str, /, data: UpdateGroupRequest
     ) -> Union[r200[GroupResponse], r404]:
@@ -108,7 +109,7 @@ class GroupView(PydanticView):
 
         return json_response(GroupResponse.parse_obj(group))
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def delete(self, group_id: str, /) -> Union[r204, r404]:
         """
         Delete a group.

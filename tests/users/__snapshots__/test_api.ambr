@@ -94,10 +94,36 @@
   }
 ---
 # name: test_add_permission[uvloop-invalid_permission]
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': "'INVALID'",
-  }
+  <class 'list'> [
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'label_manager',
+          'project_manager',
+          'project_editor',
+          'project_viewer',
+          'reference_manager',
+          'reference_builder',
+          'reference_editor',
+          'reference_contributor',
+          'reference_viewer',
+          'sample_manager',
+          'sample_editor',
+          'sample_analyzer',
+          'sample_viewer',
+          'subtraction_manager',
+          'subtraction_editor',
+          'subtraction_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'label_manager', 'project_manager', 'project_editor', 'project_viewer', 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer', 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer', 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
+      'type': 'type_error.enum',
+    },
+  ]
 ---
 # name: test_add_permission[uvloop-valid_permission]
   True
@@ -317,18 +343,44 @@
 # name: test_list_permissions[uvloop-test]
   <class 'list'> [
     <class 'dict'> {
-      'id': 'create_ref',
+      'id': 'reference_builder',
     },
     <class 'dict'> {
-      'id': 'create_sample',
+      'id': 'sample_editor',
     },
   ]
 ---
 # name: test_remove_permission[uvloop-invalid_permission]
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': "'INVALID'",
-  }
+  <class 'list'> [
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'label_manager',
+          'project_manager',
+          'project_editor',
+          'project_viewer',
+          'reference_manager',
+          'reference_builder',
+          'reference_editor',
+          'reference_contributor',
+          'reference_viewer',
+          'sample_manager',
+          'sample_editor',
+          'sample_analyzer',
+          'sample_viewer',
+          'subtraction_manager',
+          'subtraction_editor',
+          'subtraction_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'label_manager', 'project_manager', 'project_editor', 'project_viewer', 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer', 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer', 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
+      'type': 'type_error.enum',
+    },
+  ]
 ---
 # name: test_remove_permission[uvloop-valid_permission]
   True
