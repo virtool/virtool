@@ -323,7 +323,6 @@ class ReferencesData(DataLayerPiece):
         return await self.get(ref_id)
 
     async def remove(self, ref_id: str, user_id: str, req):
-
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
@@ -333,7 +332,6 @@ class ReferencesData(DataLayerPiece):
         await self._mongo.references.delete_one({"_id": ref_id})
 
     async def get_release(self, ref_id: str, app) -> ReferenceRelease:
-
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
@@ -352,7 +350,6 @@ class ReferencesData(DataLayerPiece):
         return ReferenceRelease(**release)
 
     async def get_updates(self, ref_id: str) -> List[ReferenceInstalled]:
-
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
@@ -367,7 +364,6 @@ class ReferencesData(DataLayerPiece):
         return []
 
     async def create_update(self, ref_id: str, user_id: str, req) -> ReferenceRelease:
-
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
@@ -410,7 +406,6 @@ class ReferencesData(DataLayerPiece):
         ref_id: Optional[str],
         query,
     ) -> OTUSearchResult:
-
         if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             data = await virtool.otus.db.find(
                 self._mongo, names, term, query, verified, ref_id
@@ -423,7 +418,6 @@ class ReferencesData(DataLayerPiece):
     async def create_otu(
         self, ref_id: str, data: CreateOTURequest, req, user_id: str
     ) -> OTU:
-
         reference = await self._mongo.references.find_one(ref_id, ["groups", "users"])
 
         if reference is None:
@@ -446,7 +440,6 @@ class ReferencesData(DataLayerPiece):
     async def find_history(
         self, ref_id: str, unbuilt: str, query
     ) -> HistorySearchResult:
-
         if not await self._mongo.references.count_documents({"_id": ref_id}):
             raise ResourceNotFoundError()
 
@@ -463,7 +456,6 @@ class ReferencesData(DataLayerPiece):
         return HistorySearchResult(**data)
 
     async def find_indexes(self, ref_id: str, query) -> IndexSearchResult:
-
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
@@ -472,7 +464,6 @@ class ReferencesData(DataLayerPiece):
         return IndexSearchResult(**data)
 
     async def create_index(self, ref_id: str, req, user_id: str) -> IndexMinimal:
-
         reference = await self._mongo.references.find_one(ref_id, ["groups", "users"])
 
         if reference is None:
@@ -539,7 +530,6 @@ class ReferencesData(DataLayerPiece):
     async def create_group(
         self, ref_id: str, data: CreateReferenceGroupsSchema, req
     ) -> ReferenceGroup:
-
         data = data.dict(exclude_none=True)
 
         document = await self._mongo.references.find_one(ref_id, ["groups", "users"])
@@ -566,7 +556,6 @@ class ReferencesData(DataLayerPiece):
         return ReferenceGroup(**subdocument)
 
     async def get_group(self, ref_id: str, group_id: str) -> ReferenceGroup:
-
         document = await self._mongo.references.find_one(
             {"_id": ref_id, "groups.id": group_id}, ["groups", "users"]
         )
@@ -582,7 +571,6 @@ class ReferencesData(DataLayerPiece):
     async def update_group(
         self, data: ReferenceRightsRequest, ref_id: str, group_id: str, req
     ) -> ReferenceGroup:
-
         data = data.dict(exclude_unset=True)
 
         document = await self._mongo.references.find_one(
@@ -602,7 +590,6 @@ class ReferencesData(DataLayerPiece):
         return ReferenceGroup(**subdocument)
 
     async def delete_group(self, ref_id: str, group_id: str, req):
-
         document = await self._mongo.references.find_one(
             {"_id": ref_id, "groups.id": group_id}, ["groups", "users"]
         )
@@ -622,7 +609,6 @@ class ReferencesData(DataLayerPiece):
     async def create_user(
         self, data: CreateReferenceUsersRequest, ref_id: str, req
     ) -> ReferenceUser:
-
         data = data.dict(exclude_none=True)
 
         document = await self._mongo.references.find_one(ref_id, ["groups", "users"])
@@ -651,7 +637,6 @@ class ReferencesData(DataLayerPiece):
     async def update_user(
         self, data: ReferenceRightsRequest, ref_id: str, user_id: str, req
     ) -> ReferenceUser:
-
         data = data.dict(exclude_unset=True)
 
         document = await self._mongo.references.find_one(

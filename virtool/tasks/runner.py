@@ -1,15 +1,23 @@
 import asyncio
 import logging
 
+from aiohttp.abc import Application
+
+from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
+from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask
 
+from sentry_sdk import capture_exception
+
 
 class TaskRunner:
-    def __init__(self, data, channel, app):
+    def __init__(
+        self, data: DataLayer, tasks_client: AbstractTasksClient, app: Application
+    ):
         self._data = data
-        self._channel = channel
+        self._tasks_client = tasks_client
         self.app = app
 
     async def run(self):
@@ -18,9 +26,8 @@ class TaskRunner:
         try:
             while True:
                 logging.info("Waiting for next task")
-                await asyncio.sleep(0.3)
 
-                task_id = await self._channel.get_json()
+                task_id = await self._tasks_client.pop()
 
                 await self.run_task(task_id)
 
@@ -28,6 +35,10 @@ class TaskRunner:
 
         except asyncio.CancelledError:
             logging.info("Stopped task runner")
+        except Exception as err:
+            logging.fatal("Task runner shutting down due to exception %s", err)
+            capture_exception(err)
+            self.app["events"]["shutdown"].set()
 
     async def run_task(self, task_id: int):
         """

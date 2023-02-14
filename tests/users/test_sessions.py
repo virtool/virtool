@@ -69,7 +69,6 @@ async def test_create_session(
     ip,
     session_manager,
 ):
-
     user = await fake2.users.create()
 
     await session_manager.create(ip, user.id, remember=remember)
@@ -94,7 +93,6 @@ async def test_create_anonymous_session(
     ip,
     session_manager,
 ):
-
     await session_manager.create(ip)
 
     assert loads(await redis.get(session_id)) == snapshot(
@@ -131,7 +129,6 @@ async def test_get_authenticated(
     snapshot,
     session_manager,
 ):
-
     user = await fake2.users.create()
     session_id, _, token = await session_manager.create(ip, user.id)
 
@@ -151,7 +148,6 @@ async def test_get_anonymous(
     snapshot,
     session_manager,
 ):
-
     session_id, _ = await session_manager.create(ip)
 
     assert (await data_layer.sessions.get_anonymous(session_id)) == snapshot(
@@ -170,7 +166,6 @@ async def test_delete(
     snapshot,
     session_manager,
 ):
-
     session_id, _ = await session_manager.create(ip)
 
     # Check that the session exists
@@ -225,7 +220,6 @@ async def test_clear_reset_session(
 async def test_get_reset_data(
     snapshot, redis, data_layer, session_id, ip, session_manager, fake2
 ):
-
     user = await fake2.users.create()
     session_id, _ = await session_manager.create(ip, user.id, reset=True)
 

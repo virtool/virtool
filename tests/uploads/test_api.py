@@ -108,7 +108,9 @@ class TestFind:
             (None, 2),
         ],
     )
-    async def test_pagination(self, per_page, page, test_uploads, spawn_client, snapshot):
+    async def test_pagination(
+        self, per_page, page, test_uploads, spawn_client, snapshot
+    ):
         client = await spawn_client(authorize=True, administrator=True)
 
         url = "/uploads?paginate=True"

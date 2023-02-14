@@ -41,12 +41,18 @@ class RedisDispatcherListener(AsyncIterable):
         while True:
             try:
                 change = await self._channel.get_json()
-                return Change(change["interface"], change["operation"], change["id_list"])
+                return Change(
+                    change["interface"], change["operation"], change["id_list"]
+                )
             except ChannelClosedError:
                 try:
-                    self._channel = await asyncio.wait_for(resubscribe(self._redis, self._channel_name), 10)
+                    self._channel = await asyncio.wait_for(
+                        resubscribe(self._redis, self._channel_name), 10
+                    )
                 except asyncio.TimeoutError:
-                    logger.critical("Could not resubscribe to redis %s", self._channel_name)
+                    logger.critical(
+                        "Could not resubscribe to redis %s", self._channel_name
+                    )
                     sys.exit(1)
             except TypeError:
                 pass

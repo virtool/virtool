@@ -61,7 +61,6 @@ class DiffTransform(AbstractTransform):
         return {**document, "diff": prepared}
 
     async def prepare_one(self, document: Document) -> Any:
-
         if document["diff"] == "file":
             otu_id, otu_version = document["id"].split(".")
 
@@ -137,7 +136,6 @@ async def add(
     try:
         await db.history.insert_one(document, silent=silent, session=session)
     except pymongo.errors.DocumentTooLarge:
-
         await write_diff_file(data_path, otu_id, otu_version, document["diff"])
 
         await db.history.insert_one(
@@ -200,7 +198,6 @@ async def prepare_add(
 
 
 async def find(mongo, req_query, base_query: Optional[Document] = None):
-
     data = await paginate(
         mongo.history,
         {},

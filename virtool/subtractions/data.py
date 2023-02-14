@@ -33,6 +33,7 @@ from virtool.subtractions.db import (
     attach_computed,
     PROJECTION,
     unlink_default_subtractions,
+    check_subtraction_fasta_files,
 )
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.oas import (
@@ -410,3 +411,12 @@ class SubtractionsData(DataLayerPiece):
             )
 
             await tracker.add(1)
+
+    async def check_fasta_files(self):
+        """
+        Check that all subtractions have a FASTA file.
+
+        If a subtraction has Bowtie2 index files but no FASTA file, generate one.
+
+        """
+        return await check_subtraction_fasta_files(self._mongo, self._config)

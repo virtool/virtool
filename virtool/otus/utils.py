@@ -96,7 +96,6 @@ def format_otu(
     del formatted["lower_name"]
 
     for isolate in formatted["isolates"]:
-
         for sequence in isolate["sequences"]:
             del sequence["otu_id"]
             del sequence["isolate_id"]

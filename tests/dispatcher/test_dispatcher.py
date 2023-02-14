@@ -5,7 +5,9 @@ from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.listener import RedisDispatcherListener
 
 
-def test_add_and_remove_connection(mocker, mongo, pg: AsyncEngine, channel: Channel, redis: Redis):
+def test_add_and_remove_connection(
+    mocker, mongo, pg: AsyncEngine, channel: Channel, redis: Redis
+):
     dispatcher = Dispatcher(pg, mongo, RedisDispatcherListener(channel, redis))
 
     m = mocker.Mock()

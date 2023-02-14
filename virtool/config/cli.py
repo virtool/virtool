@@ -8,6 +8,8 @@ import uvloop
 from virtool_core.logging import configure_logs
 
 import virtool.jobs.main
+import virtool.tasks.main
+import virtool.tasks.spawner
 from virtool.app import run_app
 from virtool.config.cls import Config
 
@@ -216,3 +218,38 @@ def start_jobs_api(ctx, port, host):
     )
 
     asyncio.get_event_loop().run_until_complete(virtool.jobs.main.run(config))
+
+
+@cli.command("tasks")
+@click.option("--host", default="localhost", help="The host to listen on", type=str)
+@click.option("--port", default=9950, help="The port to listen on", type=int)
+@click.pass_context
+def start_task_runner(ctx, host, port):
+    debug = ctx.obj["dev"] or ctx.obj["verbose"]
+    configure_logs(debug)
+
+    logger.info("Starting tasks worker")
+
+    config = Config(
+        **ctx.obj,
+        host=host,
+        port=port,
+    )
+
+    asyncio.get_event_loop().run_until_complete(virtool.tasks.main.run(config))
+
+
+@cli.command("spawn_task")
+@click.option("--task-name", help="Name of the task to spawn", type=str)
+@click.pass_context
+def spawn_task(ctx, task_name):
+    debug = ctx.obj["dev"] or ctx.obj["verbose"]
+    configure_logs(debug)
+
+    logger.info("Spawning task")
+
+    config = Config(**ctx.obj)
+
+    asyncio.get_event_loop().run_until_complete(
+        virtool.tasks.spawner.spawn(config, task_name)
+    )

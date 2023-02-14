@@ -1,14 +1,20 @@
 import os
-from asyncio import to_thread
+from asyncio import to_thread, wait_for
+from datetime import datetime
 from typing import TYPE_CHECKING, Dict
 
 import pytest
 from humanfriendly.testing import TemporaryDirectory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy.matchers import path_type
 
+from virtool.config import Config
+from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
+from virtool.tasks.client import TasksClient
 from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.spawner import spawn
 from virtool.tasks.task import BaseTask
 from virtool.utils import get_temp_dir
 
@@ -55,7 +61,6 @@ class DummyTask(BaseTask):
 
 @pytest.fixture
 async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
-
     task = SQLTask(
         id=1,
         complete=False,
@@ -119,6 +124,89 @@ async def test_run(error, task, pg: AsyncEngine):
     else:
         assert result["progress"] == 100
         assert not os.path.exists(task.temp_path)
+
+
+@pytest.fixture
+def test_channel():
+    return "test-task-channel"
+
+
+@pytest.fixture
+def task_spawner(
+    test_db_connection_string,
+    test_db_name,
+    pg_connection_string,
+    redis_connection_string,
+    mocker,
+    test_channel,
+):
+    async def func(task_name: str):
+        mocker.patch("virtool.tasks.client.REDIS_TASKS_LIST_KEY", test_channel)
+        config = Config(
+            base_url="",
+            db_connection_string=test_db_connection_string,
+            db_name=test_db_name,
+            dev=True,
+            force_version="v0.0.0",
+            no_sentry=True,
+            no_check_db=True,
+            no_check_files=True,
+            no_fetching=True,
+            no_revision_check=True,
+            openfga_host="localhost:8080",
+            openfga_scheme="http",
+            postgres_connection_string=pg_connection_string,
+            redis_connection_string=redis_connection_string,
+            fake=False,
+        )
+        await spawn(config, task_name)
+
+    return func
+
+
+@pytest.fixture
+def tasks_client(redis):
+    return TasksClient(redis)
+
+
+@pytest.mark.parametrize("valid_task", [True, False])
+async def test_spawn(
+    valid_task,
+    task_spawner,
+    tasks_client: TasksClient,
+    pg: AsyncEngine,
+    snapshot,
+):
+    task_name = "dummy_task" if valid_task else "nonexistent-task"
+
+    error = None
+
+    try:
+        await task_spawner(task_name)
+    except ResourceError as e:
+        error = e
+
+    if not valid_task:
+        assert error
+
+    if valid_task:
+        task_id = await wait_for(tasks_client.pop(), 2)
+
+        async with AsyncSession(pg) as session:
+            result = (
+                (
+                    await session.execute(
+                        select(SQLTask).filter_by(id=int(task_id), type=task_name)
+                    )
+                )
+                .scalar()
+                .to_dict()
+            )
+
+            assert result == snapshot(
+                matcher=path_type({"created_at": (datetime,)}),
+                name=f"test_spawn_task_{task_name}",
+            )
 
 
 async def test_progress_handler_set_progress(task: BaseTask, pg: AsyncEngine):

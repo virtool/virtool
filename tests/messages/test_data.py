@@ -15,7 +15,6 @@ async def messages_data(pg: AsyncEngine, mongo: DB) -> MessagesData:
 
 class TestGet:
     async def test_active(self, snapshot, static_time, messages_data, pg, fake2):
-
         user = await fake2.users.create()
 
         async with AsyncSession(pg) as session:
@@ -35,8 +34,8 @@ class TestGet:
                         message="This is test message 2",
                         created_at=static_time.datetime,
                         updated_at=static_time.datetime,
-                        user=user.id
-                    )
+                        user=user.id,
+                    ),
                 ]
             )
             await session.commit()
@@ -44,7 +43,6 @@ class TestGet:
         assert await messages_data.get() == snapshot
 
     async def test_inactive(self, static_time, messages_data, pg):
-
         async with AsyncSession(pg) as session:
             session.add(
                 SQLInstanceMessage(
@@ -64,10 +62,11 @@ class TestGet:
 
 
 async def test_create(snapshot, static_time, messages_data, fake2):
-
     user = await fake2.users.create()
 
-    create_request = CreateMessageRequest(color="blue", message="This is a test message")
+    create_request = CreateMessageRequest(
+        color="blue", message="This is a test message"
+    )
 
     await messages_data.create(create_request, user.id)
 
@@ -75,7 +74,6 @@ async def test_create(snapshot, static_time, messages_data, fake2):
 
 
 async def test_update(snapshot, pg, static_time, messages_data, fake2):
-
     user = await fake2.users.create()
 
     async with AsyncSession(pg) as session:

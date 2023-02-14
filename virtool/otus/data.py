@@ -113,7 +113,6 @@ class OTUData:
         :return: the OTU
         """
         async with self._mongo.create_session() as session:
-
             document = await self._mongo.otus.insert_one(
                 {
                     "name": data.name,
@@ -699,7 +698,6 @@ class OTUData:
         old = await virtool.otus.db.join(self._mongo, otu_id)
 
         async with self._mongo.create_session() as session:
-
             await self._mongo.sequences.delete_one(
                 {"_id": sequence_id}, session=session
             )
