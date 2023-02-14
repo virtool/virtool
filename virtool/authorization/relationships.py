@@ -14,8 +14,9 @@ class AbstractRelationship(ABC):
     """
     Whether the relationship is exclusive of other relationships of the same type.
 
-    Relationships are exclusive.  other relationships exist for the sample user-relation-object
-    combination, existing relationships will be removed before adding this one.
+    Relationships are exclusive. If other relationships exist for the 
+    sample user-relation-object combination, existing relationships 
+    will be removed before adding this one.
 
     This takes into account prefixed roles like ``sample_creator``. Only roles with the
     same prefix are exclusive of each other. For example, if ``sample_editor`` is
@@ -92,7 +93,7 @@ class SpaceMembership(AbstractRelationship):
 
     """
     Represents a user being a member or and owner of a space.
-    
+
     It is exclusive because a user can only be either a member or owner of one space at
     a time.
 

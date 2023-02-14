@@ -69,10 +69,10 @@ def create_data_layer(
         SamplesData(config, mongo, pg),
         SubtractionsData(config.base_url, config, mongo, pg),
         SessionData(redis),
-        SettingsData(db),
+        SettingsData(mongo),
         TasksData(pg, TasksClient(redis)),
-        UploadsData(config, db, pg),
-        UsersData(db, pg),
+        UploadsData(config, mongo, pg),
+        UsersData(mongo, pg),
     )
 
     return data_layer

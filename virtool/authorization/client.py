@@ -28,7 +28,6 @@ from virtool.authorization.results import (
 from virtool.authorization.roles import (
     AdministratorRole,
     ReferenceRole,
-    RoleType,
     PermissionType,
     SpaceResourceRole,
 )

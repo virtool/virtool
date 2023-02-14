@@ -115,9 +115,9 @@ class ReferenceRole(str, Enum):
     """Roles that are assigned to users or groups for a specific reference."""
 
     MANAGER = "manager"
-    """    
+    """
     Edit, build, delete, or manage access and settings for the reference. Create, edit,
-    or delete OTUs.    
+    or delete OTUs.
     """
 
     BUILDER = "builder"
@@ -257,10 +257,10 @@ def adapt_permission_new_to_legacy(permission: PermissionType) -> PermissionType
     :param permission: a permission
     :return: the permission
     """
-    if (
-        permission == SubtractionPermission.DELETE_SUBTRACTION
-        or permission == SubtractionPermission.EDIT_SUBTRACTION
-        or permission == SubtractionPermission.CREATE_SUBTRACTION
+    if permission in (
+        SubtractionPermission.DELETE_SUBTRACTION,
+        SubtractionPermission.EDIT_SUBTRACTION,
+        SubtractionPermission.CREATE_SUBTRACTION,
     ):
         return LegacyPermission.MODIFY_SUBTRACTION
 

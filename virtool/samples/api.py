@@ -14,7 +14,6 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import constr, conint, Field
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.enums import Permission
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
