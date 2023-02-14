@@ -338,12 +338,25 @@ async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
     return None
 
 
-async def lookup_user_by_id(_local_field: str, _as: str = "users") -> Dict:
-    return {
-        "$lookup": {
-            "from": "users",
-            "localField": _local_field,
-            "foreignField": "_id",
-            "as": _as,
-        }
-    }
+def lookup_user_by_id(local_field: str, set_as: str = "user") -> list[Dict]:
+    return [
+        {
+            "$lookup": {
+                "from": "users",
+                "let": {"user_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$_id", "$$user_id"]}}},
+                    {
+                        "$project": {
+                            "id": "$_id",
+                            "_id": 0,
+                            "handle": 1,
+                            "administrator": 1,
+                        }
+                    },
+                ],
+                "as": set_as,
+            }
+        },
+        {"$set": {set_as: {"$first": f"${set_as}"}}},
+    ]

@@ -121,10 +121,10 @@ class SamplesData(DataLayerPiece):
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
+                            *lookup_user_by_id(local_field="user.id"),
                         ],
                     }
                 },
-                lookup_user_by_id(_local_field="users"),
                 {
                     "$project": {
                         "data": dict_projection,
