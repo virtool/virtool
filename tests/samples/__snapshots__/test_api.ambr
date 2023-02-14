@@ -363,6 +363,889 @@
     'message': 'Subtractions do not exist: bar',
   }
 ---
+# name: TestFindSamples.test_labels[uvloop-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_labels[uvloop-labels1]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_labels[uvloop-labels2]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_labels[uvloop-labels3]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_page_perpage[uvloop-2-1]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 2,
+    'per_page': 2,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_page_perpage[uvloop-2-2]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 2,
+    'page_count': 2,
+    'per_page': 2,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_page_perpage[uvloop-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_term[uvloop-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_term[uvloop-gv]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_term[uvloop-sp]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_workflows[uvloop-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_workflows[uvloop-workflows1]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_workflows[uvloop-workflows2]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_workflows[uvloop-workflows3]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
 # name: TestGet.test_get[uvloop-administrator][json]
   <class 'dict'> {
     'all_read': False,
@@ -754,613 +1637,6 @@
     'sample': <class 'dict'> {
       'id': 'test',
     },
-  }
----
-# name: test_find[uvloop-None-2-1-None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          },
-        ],
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-          <class 'dict'> {
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          },
-        ],
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
-    'found_count': 3,
-    'page': 1,
-    'page_count': 2,
-    'per_page': 2,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-2-2-None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-        ],
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-    ],
-    'found_count': 3,
-    'page': 2,
-    'page_count': 2,
-    'per_page': 2,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          },
-        ],
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-          <class 'dict'> {
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          },
-        ],
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-        ],
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-    ],
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-None-workflows10]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          },
-        ],
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-        ],
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-None-workflows8]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-          <class 'dict'> {
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          },
-        ],
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-None-workflows9]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          },
-        ],
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-          <class 'dict'> {
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          },
-        ],
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-        ],
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-    ],
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-labels5-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          },
-        ],
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-    ],
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-labels6-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          },
-        ],
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-          <class 'dict'> {
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          },
-        ],
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-labels7-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-gv-None-None-None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-          <class 'dict'> {
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          },
-        ],
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          },
-        ],
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-sp-None-None-None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          },
-        ],
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
-      },
-    ],
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
   }
 ---
 # name: test_find_analyses[uvloop-Baz-None]
