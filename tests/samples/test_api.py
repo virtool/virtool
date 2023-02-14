@@ -105,35 +105,7 @@ async def get_sample_data(mongo, fake2, pg, static_time):
     return user.id
 
 
-@pytest.mark.apitest
-@pytest.mark.parametrize(
-    "find,per_page,page,labels,workflows",
-    [
-        (None, None, None, None, None),
-        (None, 2, 1, None, None),
-        (None, 2, 2, None, None),
-        ("gv", None, None, None, None),
-        ("sp", None, None, None, None),
-        (None, None, None, [3], None),
-        (None, None, None, [2, 3], None),
-        (None, None, None, [0], None),
-        (None, None, None, None, ["nuvs:ready", "pathoscope:ready"]),
-        (None, None, None, None, ["pathoscope:ready", "pathoscope:none"]),
-        (None, None, None, None, ["nuvs:none", "pathoscope:none", "pathoscope:ready"]),
-    ],
-)
-async def test_find(
-    find,
-    per_page,
-    page,
-    labels,
-    workflows,
-    snapshot,
-    fake2,
-    spawn_client,
-    static_time,
-    pg: AsyncEngine,
-):
+async def setup_initial_test_setup(fake2, spawn_client, static_time):
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
@@ -199,33 +171,109 @@ async def test_find(
         ],
         session=None,
     )
+    return client
 
-    path = "/samples"
-    query = []
 
-    if find is not None:
-        query.append(f"find={find}")
+@pytest.mark.apitest
+class TestFindSamples:
+    @pytest.mark.parametrize("find", [None, "gv", "sp"])
+    async def test_term(
+        self,
+        find,
+        fake2,
+        spawn_client,
+        static_time,
+        snapshot,
+    ):
+        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
+        path = "/samples"
+        query = []
+        if find is not None:
+            query.append(f"find={find}")
+        if query:
+            path += f"?{'&'.join(query)}"
 
-    if per_page is not None:
-        query.append(f"per_page={per_page}")
+        resp = await client.get(path)
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
-    if page is not None:
-        query.append(f"page={page}")
+    @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
+    async def test_page_perpage(
+        self,
+        per_page,
+        page,
+        fake2,
+        spawn_client,
+        static_time,
+        snapshot,
+    ):
+        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
+        path = "/samples"
+        query = []
+        if per_page is not None:
+            query.append(f"per_page={per_page}")
+        if page is not None:
+            query.append(f"page={page}")
+            path += f"?{'&'.join(query)}"
 
-    if labels is not None:
-        label_query = "&label=".join(str(label) for label in labels)
-        query.append(f"label={label_query}")
+        resp = await client.get(path)
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
-    if workflows is not None:
-        workflows_query = "&workflows=".join(str(workflow) for workflow in workflows)
-        query.append(f"workflows={workflows_query}")
+    @pytest.mark.parametrize("labels", [None, [3], [2, 3], [0]])
+    async def test_labels(
+        self,
+        labels,
+        fake2,
+        spawn_client,
+        static_time,
+        snapshot,
+    ):
+        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
+        path = "/samples"
+        query = []
 
-    if query:
-        path += f"?{'&'.join(query)}"
+        if labels is not None:
+            label_query = "&label=".join(str(label) for label in labels)
+            query.append(f"label={label_query}")
+        if query:
+            path += f"?{'&'.join(query)}"
 
-    resp = await client.get(path)
-    assert resp.status == 200
-    assert await resp.json() == snapshot
+        resp = await client.get(path)
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+
+    @pytest.mark.parametrize(
+        "workflows",
+        [
+            None,
+            ["nuvs:ready", "pathoscope:ready"],
+            ["pathoscope:ready", "pathoscope:none"],
+            ["nuvs:none", "pathoscope:none", "pathoscope:ready"],
+        ],
+    )
+    async def test_workflows(
+        self,
+        workflows,
+        snapshot,
+        fake2,
+        spawn_client,
+        static_time,
+    ):
+        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
+
+        path = "/samples"
+        query = []
+        if workflows is not None:
+            workflows_query = "&workflows=".join(workflow for workflow in workflows)
+            query.append(f"workflows={workflows_query}")
+
+        if query:
+            path += f"?{'&'.join(query)}"
+
+        resp = await client.get(path)
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
