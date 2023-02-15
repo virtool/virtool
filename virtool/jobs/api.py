@@ -5,7 +5,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400, r403, r404, r409
 from pydantic import Field, conint
-from virtool_core.models.job import JobMinimal, JobSearchResult
+from virtool_core.models.job import JobMinimal, JobSearchResult, JobState
 
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
@@ -34,7 +34,7 @@ class JobsView(PydanticView):
         archived: Optional[bool] = None,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        state: List[str] = Field(default_factory=list),
+        state: List[JobState] = Field(default_factory=list),
         user: List[str] = Field(default_factory=list),
     ) -> Union[r200[JobSearchResult], r400]:
         """
