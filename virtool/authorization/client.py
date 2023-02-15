@@ -19,6 +19,7 @@ from virtool_core.models.enums import Permission
 
 from virtool.authorization.permissions import (
     ResourceType,
+    ReferencePermission,
 )
 from virtool.authorization.relationships import AbstractRelationship
 from virtool.authorization.results import (
@@ -28,36 +29,11 @@ from virtool.authorization.results import (
 from virtool.authorization.roles import (
     AdministratorRole,
     ReferenceRole,
-    PermissionType,
     SpaceResourceRole,
 )
 
 
-class AbstractAuthorizationClient(ABC):
-    @abstractmethod
-    async def check(
-        self,
-        user_id: str,
-        permission: Permission,
-        resource_type: ResourceType,
-        resource_id: Union[str, int],
-    ) -> bool:
-        ...
-
-    @abstractmethod
-    async def list_administrators(self) -> List[dict]:
-        ...
-
-    @abstractmethod
-    async def add(self, *relationships: AbstractRelationship):
-        ...
-
-    @abstractmethod
-    async def remove(self, *relationships: AbstractRelationship):
-        ...
-
-
-class AuthorizationClient(AbstractAuthorizationClient):
+class AuthorizationClient:
     """
     An authorization client backed by OpenFGA.
 
@@ -69,7 +45,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
     async def check(
         self,
         user_id: str,
-        role: PermissionType,
+        permission: Union[Permission, ReferencePermission, AdministratorRole],
         resource_type: ResourceType,
         resource_id: Union[str, int],
     ) -> bool:
@@ -81,7 +57,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
             CheckRequest(
                 tuple_key=TupleKey(
                     user=f"user:{user_id}",
-                    relation=role.value,
+                    relation=permission.value,
                     object=f"{resource_type.value}:{resource_id}",
                 ),
             )
@@ -167,7 +143,7 @@ class AuthorizationClient(AbstractAuthorizationClient):
         self, ref_id: str
     ) -> List[Tuple[str, ReferenceRole]]:
         """
-        List users and their roles for a reference.
+        List users and their roles on a reference.
 
         The returned list only includes users that have an explicit role defined on the
         reference. Space members that have access to the reference through the space
@@ -261,17 +237,3 @@ class AuthorizationClient(AbstractAuthorizationClient):
         result.removed_count = len(relationships) - result.not_found_count
 
         return result
-
-
-def raise_exception_if_not_default_space(
-    resource_type: ResourceType, resource_id: Union[int, str]
-):
-    """
-    Raise an exception if the described resource is not the default space (id=0).
-
-    This will be removed once more resource types are supported.
-    """
-    if resource_type != ResourceType.SPACE or resource_id != 0:
-        raise ValueError(
-            "Only permissions on the default space are currently supported"
-        )

@@ -10,7 +10,7 @@ import virtool.http.authentication
 import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.authorization.relationships import SpaceUserRoleAssignment
+from virtool.authorization.relationships import UserRoleAssignment
 from virtool.authorization.roles import AdministratorRole, SpaceResourceRole
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -240,7 +240,7 @@ class PermissionView(PydanticView):
             200: Successful operation
         """
         await get_authorization_client_from_req(self.request).add(
-            SpaceUserRoleAssignment(0, user_id, role)
+            UserRoleAssignment(0, user_id, role)
         )
 
         return json_response(True)
@@ -256,7 +256,7 @@ class PermissionView(PydanticView):
             200: Successful operation
         """
         await get_authorization_client_from_req(self.request).remove(
-            SpaceUserRoleAssignment(0, user_id, role)
+            UserRoleAssignment(0, user_id, role)
         )
 
         return json_response(True)

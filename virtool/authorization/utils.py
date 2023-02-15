@@ -11,15 +11,25 @@ from openfga_sdk import (
 from openfga_sdk.api import open_fga_api
 
 from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.permissions import Permission
+from virtool.authorization.roles import AdministratorRole
+from virtool.types import App
 
 logger = getLogger("authz")
+
+
+def get_authorization_client_from_app(app: App) -> AuthorizationClient:
+    """
+    Get the authorization client instance from an application object.
+    """
+    return app["authorization"]
 
 
 def get_authorization_client_from_req(req: Request) -> AuthorizationClient:
     """
     Get the authorization client instance from a request object.
     """
-    return req.app["authorization"]
+    return get_authorization_client_from_app(req.app)
 
 
 async def connect_openfga(openfga_host: str, openfga_scheme: str):
@@ -78,7 +88,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
     """
     response = await api_instance.read_authorization_models()
 
-    model_dict = {
+    model = {
         "type_definitions": [
             {
                 "type": "app",
@@ -90,7 +100,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                                 {
                                     "computedUserset": {
                                         "object": "",
-                                        "relation": "users",
+                                        "relation": AdministratorRole.USERS.value,
                                     }
                                 },
                             ]
@@ -101,7 +111,12 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         "union": {
                             "child": [
                                 {"this": {}},
-                                {"computedUserset": {"object": "", "relation": "full"}},
+                                {
+                                    "computedUserset": {
+                                        "object": "",
+                                        "relation": AdministratorRole.FULL.value,
+                                    }
+                                },
                             ]
                         }
                     },
@@ -112,7 +127,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                                 {
                                     "computedUserset": {
                                         "object": "",
-                                        "relation": "settings",
+                                        "relation": AdministratorRole.SETTINGS.value,
                                     }
                                 },
                             ]
@@ -125,14 +140,11 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                                 {
                                     "computedUserset": {
                                         "object": "",
-                                        "relation": "spaces",
+                                        "relation": AdministratorRole.SPACES.value,
                                     }
                                 },
                             ]
                         }
-                    },
-                    "modify_hmm": {
-                        "computedUserset": {"object": "", "relation": "base"}
                     },
                 },
                 "metadata": {
@@ -152,13 +164,13 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                     "build_reference": {
                         "computedUserset": {"object": "", "relation": "builder"}
                     },
-                    "contribute_reference": {
+                    Permission.CONTRIBUTE_REFERENCE.value: {
                         "computedUserset": {"object": "", "relation": "contributor"}
                     },
-                    "delete_reference": {
+                    Permission.DELETE_REFERENCE.value: {
                         "computedUserset": {"object": "", "relation": "manager"}
                     },
-                    "edit_reference": {
+                    Permission.UPDATE_REFERENCE.value: {
                         "computedUserset": {"object": "", "relation": "editor"}
                     },
                     "parent": {"this": {}},
@@ -302,7 +314,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         "build_reference": {"directly_related_user_types": []},
                         "contribute_reference": {"directly_related_user_types": []},
                         "delete_reference": {"directly_related_user_types": []},
-                        "edit_reference": {"directly_related_user_types": []},
+                        "update_reference": {"directly_related_user_types": []},
                         "parent": {"directly_related_user_types": [{"type": "space"}]},
                         "builder": {"directly_related_user_types": [{"type": "user"}]},
                         "contributor": {
@@ -564,7 +576,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
-                    "edit_label": {
+                    "update_label": {
                         "union": {
                             "child": [
                                 {
@@ -582,7 +594,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
-                    "edit_project": {
+                    "update_project": {
                         "union": {
                             "child": [
                                 {
@@ -606,7 +618,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
-                    "edit_reference": {
+                    "update_reference": {
                         "union": {
                             "child": [
                                 {
@@ -636,7 +648,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
-                    "edit_sample": {
+                    "update_sample": {
                         "union": {
                             "child": [
                                 {
@@ -660,7 +672,7 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
-                    "edit_subtraction": {
+                    "update_subtraction": {
                         "union": {
                             "child": [
                                 {
@@ -1205,11 +1217,11 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         "delete_reference": {"directly_related_user_types": []},
                         "delete_sample": {"directly_related_user_types": []},
                         "delete_subtraction": {"directly_related_user_types": []},
-                        "edit_label": {"directly_related_user_types": []},
-                        "edit_project": {"directly_related_user_types": []},
-                        "edit_reference": {"directly_related_user_types": []},
-                        "edit_sample": {"directly_related_user_types": []},
-                        "edit_subtraction": {"directly_related_user_types": []},
+                        "update_label": {"directly_related_user_types": []},
+                        "update_project": {"directly_related_user_types": []},
+                        "update_reference": {"directly_related_user_types": []},
+                        "update_sample": {"directly_related_user_types": []},
+                        "update_subtraction": {"directly_related_user_types": []},
                         "create_subtraction": {"directly_related_user_types": []},
                         "label_manager": {
                             "directly_related_user_types": [
@@ -1342,11 +1354,11 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
     if (
         response.authorization_models
         and response.authorization_models[0].type_definitions
-        == model_dict["type_definitions"]
+        == model["type_definitions"]
     ):
         logger.info("OpenFGA authorization model is up-to-date.")
         return
 
-    await api_instance.write_authorization_model(model_dict)
+    await api_instance.write_authorization_model(model)
 
     logger.info("Updated OpenFGA authorization model.")

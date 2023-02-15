@@ -5,7 +5,12 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from virtool.authorization.permissions import ResourceType
-from virtool.authorization.roles import SpaceRole, AdministratorRole, SpaceResourceRole, ReferenceRole
+from virtool.authorization.roles import (
+    SpaceRole,
+    AdministratorRole,
+    SpaceResourceRole,
+    ReferenceRole,
+)
 
 
 class AbstractRelationship(ABC):
@@ -125,7 +130,7 @@ class SpaceMembership(AbstractRelationship):
         return "user"
 
 
-class SpaceBaseRoleAssignment(AbstractRelationship):
+class SpaceRoleAssignment(AbstractRelationship):
     """Represents a space having the given base role."""
 
     def __init__(self, space_id: int, role: SpaceResourceRole):
@@ -153,7 +158,7 @@ class SpaceBaseRoleAssignment(AbstractRelationship):
         return "space"
 
 
-class SpaceUserRoleAssignment(AbstractRelationship):
+class UserRoleAssignment(AbstractRelationship):
     """
     Represents a user having a given role in a space.
 
@@ -185,7 +190,7 @@ class SpaceUserRoleAssignment(AbstractRelationship):
         return "user"
 
 
-class ReferenceUserRoleAssignment(AbstractRelationship):
+class ReferenceRoleAssignment(AbstractRelationship):
     """
     Represents a user having a given role on a reference.
 

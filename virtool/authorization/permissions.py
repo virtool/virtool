@@ -1,11 +1,9 @@
-from dataclasses import dataclass
+"""
+Permissions for checking a user's ability to access a request handler.
+
+"""
 from enum import Enum
-from logging import getLogger
 from typing import Union
-
-logger = getLogger("authz")
-
-APP_ID = "virtool"
 
 
 class ResourceType(Enum):
@@ -26,178 +24,111 @@ class ResourceType(Enum):
     """
 
 
-class Action(Enum):
+class LegacyPermission(str, Enum):
+    CANCEL_JOB = "cancel_job"
+    CREATE_REF = "create_ref"
+    CREATE_SAMPLE = "create_sample"
+    MODIFY_HMM = "modify_hmm"
+    MODIFY_SUBTRACTION = "modify_subtraction"
+    REMOVE_FILE = "remove_file"
+    REMOVE_JOB = "remove_job"
+    UPLOAD_FILE = "upload_file"
+
+
+class Permission(str, Enum):
+    CREATE_LABEL = "create_label"
+    """Create a label in a space."""
+    UPDATE_LABEL = "update_label"
+    """Update any label in a space."""
+    DELETE_LABEL = "delete_label"
+    """Delete any label in a space."""
+
+    VIEW_PROJECT = "view_project"
+    """View any project in a space."""
+    CREATE_PROJECT = "create_project"
+    """Create a project in a space."""
+    UPDATE_PROJECT = "update_project"
+    """Update any project in a space."""
+    DELETE_PROJECT = "delete_project"
+    """Delete any project in a space."""
+
+    VIEW_REFERENCE = "view_reference"
+    """View any reference in a space."""
+    BUILD_REFERENCE = "build_reference"
+    """Build a new index for any reference in a space."""
+    CREATE_REFERENCE = "create_reference"
+    """Create a new reference in a space."""
+    UPDATE_REFERENCE = "update_reference"
+    """Update any reference in a space."""
+    CONTRIBUTE_REFERENCE = "contribute_reference"
+    """Contribute OTU changes to any reference in a space."""
+    DELETE_REFERENCE = "delete_reference"
+    """Delete any reference in a space."""
+
+    VIEW_SAMPLE = "view_sample"
+    """View any sample in a space."""
+    ANALYZE_SAMPLE = "analyze_sample"
+    """Analyze any sample in a space."""
+    CREATE_SAMPLE = "create_sample"
+    """Create a new sample in a space."""
+    UPDATE_SAMPLE = "update_sample"
+    """Update any sample in a space."""
+    DELETE_SAMPLE = "delete_sample"
+    """Delete any sample in a space."""
+
+    VIEW_SUBTRACTION = "view_subtraction"
+    """View any subtraction in a space."""
+    CREATE_SUBTRACTION = "create_subtraction"
+    """Create a new subtraction in a space."""
+    UPDATE_SUBTRACTION = "update_subtraction"
+    """Update any subtraction in a space."""
+    DELETE_SUBTRACTION = "delete_subtraction"
+    """Delete any subtraction in a space."""
+
+    CREATE_UPLOAD = "create_upload"
+    """Upload a file to a space."""
+    DELETE_UPLOAD = "delete_upload"
+    """Delete any upload in a space."""
+
+
+class ReferencePermission(str, Enum):
+    VIEW_REFERENCE = "view_reference"
+    """View any reference in a space."""
+    BUILD_REFERENCE = "build_reference"
+    """Build a new index for any reference in a space."""
+    CREATE_REFERENCE = "create_reference"
+    """Create a new reference in a space."""
+    UPDATE_REFERENCE = "update_reference"
+    """Update any reference in a space."""
+    CONTRIBUTE_REFERENCE = "contribute_reference"
+    """Contribute OTU changes to any reference in a space."""
+    DELETE_REFERENCE = "delete_reference"
+    """Delete any reference in a space."""
+
+
+def adapt_permission_new_to_legacy(
+    permission: Union[Permission, ReferencePermission]
+) -> LegacyPermission:
     """
-    Conserved actions that can be performed on a resource and
-    are controlled by permissions.
+    Return a legacy permission that corresponds to the provided new-style permission.
+    If the provided permission is already a legacy style permission, it is returned.
+    :param permission: a permission
+    :return: the permission
     """
+    if permission in (
+        Permission.DELETE_SUBTRACTION,
+        Permission.UPDATE_SUBTRACTION,
+        Permission.CREATE_SUBTRACTION,
+    ):
+        return LegacyPermission.MODIFY_SUBTRACTION
 
-    CANCEL = "cancel"
-    """Allow a user to cancel a job."""
+    if permission == Permission.CREATE_UPLOAD:
+        return LegacyPermission.UPLOAD_FILE
 
-    CREATE = "create"
-    """Allow a user to create a resource."""
+    if permission == Permission.DELETE_UPLOAD:
+        return LegacyPermission.REMOVE_FILE
 
-    UPDATE = "update"
-    """Allow a user to update a resource."""
+    if permission == Permission.CREATE_REFERENCE:
+        return LegacyPermission.CREATE_REF
 
-    UPLOAD = "upload"
-    """
-    Allow a user to upload a file.
-
-    This will be deprecated in favor of ``CREATE``.
-    """
-
-    MODIFY = "modify"
-    """Allow a user to create or update a resource."""
-
-    DELETE = "delete"
-    """Allow a user to delete a resource."""
-
-    REMOVE = "remove"
-    """
-    Allow a user to delete a resource.
-
-    This will be deprecated in favor of ``DELETE``.
-    """
-
-
-@dataclass
-class Permission:
-    id: str
-    name: str
-    description: str
-    resource_type: ResourceType
-    action: Action
-
-
-class LegacyPermission(Enum):
-    REMOVE_FILE = Permission(
-        id="remove_file",
-        name="Remove File",
-        description="Delete a user upload.",
-        resource_type=ResourceType.SPACE,
-        action=Action.DELETE,
-    )
-    UPLOAD_FILE = Permission(
-        id="upload_file",
-        name="Upload File",
-        description="Upload a file.",
-        resource_type=ResourceType.SPACE,
-        action=Action.UPLOAD,
-    )
-
-
-class AppPermission(Enum):
-    CREATE_USER = Permission(
-        id="create_user",
-        name="Create User",
-        description="Allow creation of users.",
-        resource_type=ResourceType.APP,
-        action=Action.CREATE,
-    )
-    UPDATE_USER = Permission(
-        id="update_user",
-        name="Update User",
-        description="Allow users to be updated.",
-        resource_type=ResourceType.APP,
-        action=Action.UPDATE,
-    )
-    DELETE_USER = Permission(
-        id="delete_user",
-        name="Delete User",
-        description="Allow deletion of users.",
-        resource_type=ResourceType.APP,
-        action=Action.DELETE,
-    )
-    UPDATE_SETTINGS = Permission(
-        id="update_settings",
-        name="Update Settings",
-        description="Allow settings to be updated.",
-        resource_type=ResourceType.APP,
-        action=Action.UPDATE,
-    )
-
-    @classmethod
-    def from_string(cls, value: str) -> Permission:
-        return cls[value]
-
-
-class SpacePermission(Enum):
-    CREATE_GROUP = Permission(
-        id="create_group",
-        name="Create Group",
-        description="Allow creation of groups.",
-        resource_type=ResourceType.SPACE,
-        action=Action.CREATE,
-    )
-    UPDATE_GROUP = Permission(
-        id="update_group",
-        name="Update Group",
-        description="Allow groups to be updated.",
-        resource_type=ResourceType.SPACE,
-        action=Action.UPDATE,
-    )
-    MODIFY_HMM = Permission(
-        id="modify_hmm",
-        name="Modify HMM",
-        description="Allow modification of HMMs.",
-        resource_type=ResourceType.SPACE,
-        action=Action.MODIFY,
-    )
-    MODIFY_SUBTRACTION = Permission(
-        id="modify_subtraction",
-        name="Modify Subtraction",
-        description="Allow modification of subtractions.",
-        resource_type=ResourceType.SPACE,
-        action=Action.MODIFY,
-    )
-    DELETE_GROUP = Permission(
-        id="delete_group",
-        name="Delete Group",
-        description="Allow creation of groups",
-        resource_type=ResourceType.SPACE,
-        action=Action.DELETE,
-    )
-    CREATE_UPLOAD = Permission(
-        id="create_upload",
-        name="Create Upload",
-        description="Allow files to be uploaded.",
-        resource_type=ResourceType.SPACE,
-        action=Action.CREATE,
-    )
-    DELETE_UPLOAD = Permission(
-        id="delete_upload",
-        name="Delete Upload",
-        description="Allow user-uploaded files to be deleted.",
-        resource_type=ResourceType.SPACE,
-        action=Action.DELETE,
-    )
-    CREATE_REFERENCE = Permission(
-        id="create_ref",
-        name="Create Reference",
-        description="Allow creation of references.",
-        resource_type=ResourceType.SPACE,
-        action=Action.CREATE,
-    )
-    CREATE_SAMPLE = Permission(
-        id="create_sample",
-        name="Create Sample",
-        description="Allow creation of samples.",
-        resource_type=ResourceType.SPACE,
-        action=Action.CREATE,
-    )
-    CANCEL_JOB = Permission(
-        id="cancel_job",
-        name="Cancel Job",
-        description="Allow cancellation of jobs.",
-        resource_type=ResourceType.SPACE,
-        action=Action.CANCEL,
-    )
-
-    @classmethod
-    def from_string(cls, value: str):
-        if value == "create_ref":
-            value = "create_reference"
-
-        return cls[value.upper()]
+    raise ValueError(f"Unknown permission: {permission}")

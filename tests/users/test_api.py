@@ -4,7 +4,7 @@ import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 
-from virtool.authorization.relationships import SpaceUserRoleAssignment
+from virtool.authorization.relationships import UserRoleAssignment
 from virtool.authorization.roles import SpaceResourceRole
 from virtool.data.utils import get_data_from_app
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
@@ -245,8 +245,8 @@ async def test_list_permissions(spawn_client, user, snapshot):
     authorization_client = client.app["authorization"]
 
     await authorization_client.add(
-        SpaceUserRoleAssignment(0, "test", SpaceResourceRole.SAMPLE_EDITOR),
-        SpaceUserRoleAssignment(0, "test", SpaceResourceRole.REFERENCE_BUILDER),
+        UserRoleAssignment(0, "test", SpaceResourceRole.SAMPLE_EDITOR),
+        UserRoleAssignment(0, "test", SpaceResourceRole.REFERENCE_BUILDER),
     )
 
     resp = await client.get(

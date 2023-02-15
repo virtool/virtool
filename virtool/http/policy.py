@@ -7,10 +7,11 @@ from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
 
-from virtool.authorization.permissions import ResourceType
+from virtool.authorization.permissions import (
+    ResourceType,
+    LegacyPermission,
+)
 from virtool.authorization.roles import (
-    PermissionType,
-    adapt_permission_new_to_legacy,
     AdministratorRole,
 )
 from virtool.authorization.utils import get_authorization_client_from_req
@@ -51,10 +52,10 @@ class DefaultRoutePolicy:
 
 
 class AdministratorRoutePolicy(DefaultRoutePolicy):
+    """Only authenticated clients that are administrators can access the route."""
+
     def __init__(self, role: AdministratorRole):
         self.role = role
-
-    """Only authenticated clients that are administrators can access the route."""
 
     async def check(self, req, handler, client: AbstractClient):
         if client.administrator:
@@ -69,9 +70,8 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
 
 
 class PermissionRoutePolicy(DefaultRoutePolicy):
-    def __init__(self, space_id: int, permission: PermissionType):
+    def __init__(self, permission: LegacyPermission):
         self.permission = permission
-        self.space_id = space_id
 
     async def check(self, req: Request, handler: Callable, client):
         """
@@ -83,17 +83,9 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
         * The user is an administrator.
         * The user has the required permission in their legacy MongoDB-based
           permissions.
-        * The permission check passes against the authorization client.
 
         """
-        old_permission = adapt_permission_new_to_legacy(self.permission)
-
-        if client.administrator or client.permissions[old_permission.value]:
-            return
-
-        if await get_authorization_client_from_req(req).check(
-            client.user_id, self.permission, ResourceType.SPACE, self.space_id
-        ):
+        if client.administrator or client.permissions[self.permission.value]:
             return
 
         raise HTTPForbidden(text="Not permitted")
