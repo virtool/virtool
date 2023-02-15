@@ -1,3 +1,4 @@
+import math
 import os
 
 from asyncio import gather, CancelledError, to_thread
@@ -5,9 +6,8 @@ from asyncio import gather, CancelledError, to_thread
 from datetime import datetime
 from logging import getLogger
 from shutil import rmtree
-from typing import Union, Tuple, Dict, Optional
+from typing import Tuple, Optional
 
-from multidict import MultiDictProxy
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis
@@ -17,7 +17,7 @@ import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
 
-from virtool.analyses.db import PROJECTION, processor, TARGET_FILES
+from virtool.analyses.db import PROJECTION, TARGET_FILES
 from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import (
@@ -33,11 +33,10 @@ from virtool.analyses.checks import (
     check_if_analysis_ready,
     check_if_analysis_modified,
 )
-from virtool.analyses.db import PROJECTION, processor
+from virtool.analyses.db import PROJECTION
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import attach_analysis_files
-from virtool.api.utils import paginate
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
@@ -47,23 +46,29 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.piece import DataLayerPiece
+from virtool.jobs.db import processor
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
-from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
-from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import AttachUserTransform
-from virtool.utils import wait_for_checks
+from virtool.utils import wait_for_checks, base_processor
 
 logger = getLogger("analyses")
+
+EXCLUDE_FIELDS = {
+    "user.settings": 0,
+    "user.password": 0,
+    "user.active": 0,
+    "user.invalidate_session": 0,
+    "job.key": 0,
+}
 
 
 class AnalysisData(DataLayerPiece):
@@ -72,53 +77,128 @@ class AnalysisData(DataLayerPiece):
         self._config = config
         self._pg = pg
 
-    async def find(
-        self, query: Union[Dict, MultiDictProxy[str]], client
-    ) -> AnalysisSearchResult:
+    async def find(self, page: int, per_page: int, client) -> AnalysisSearchResult:
         """
         List all analysis documents.
 
-        :param query: the request query
+        :param page: the page number
+        :param per_page: the number of documents per page
         :param client: the client object
         :return: a list of all analysis documents
         """
-        db_query = {}
+        dict_projection = {item: True for item in PROJECTION}
 
-        data = await paginate(
-            self._db.analyses,
-            db_query,
-            query,
-            projection=PROJECTION,
-            sort=[("created_at", -1)],
-        )
+        sort = {"created_at": -1}
+
+        skip_count = 0
+
+        if page > 1:
+            skip_count = (page - 1) * per_page
+
+        async for paginate_dict in self._db.analyses.aggregate(
+            [
+                {
+                    "$facet": {
+                        "total_count": [
+                            {"$count": "total_count"},
+                        ],
+                        "found_count": [
+                            {"$count": "found_count"},
+                        ],
+                        "data": [
+                            {
+                                "$lookup": {
+                                    "from": "jobs",
+                                    "localField": "job.id",
+                                    "foreignField": "_id",
+                                    "as": "job",
+                                }
+                            },
+                            {
+                                "$unwind": {
+                                    "path": "$job",
+                                    "preserveNullAndEmptyArrays": True,
+                                }
+                            },
+                            {
+                                "$lookup": {
+                                    "from": "subtraction",
+                                    "localField": "subtractions",
+                                    "foreignField": "_id",
+                                    "as": "subtractions",
+                                }
+                            },
+                            {
+                                "$lookup": {
+                                    "from": "references",
+                                    "localField": "reference.id",
+                                    "foreignField": "_id",
+                                    "as": "reference",
+                                }
+                            },
+                            {"$unwind": {"path": "$reference"}},
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "localField": "user.id",
+                                    "foreignField": "_id",
+                                    "as": "user",
+                                }
+                            },
+                            {"$unwind": {"path": "$user"}},
+                            {"$sort": sort},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "data": dict_projection,
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0]
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0]
+                        },
+                    }
+                },
+            ],
+        ):
+            data = paginate_dict["data"]
+            found_count = paginate_dict.get("found_count", 0)
+            total_count = paginate_dict.get("total_count", 0)
+
+        for analysis in data:
+            analysis["job"] = (
+                await processor(self._db, analysis["job"])
+                if "job" in analysis
+                else None
+            )
 
         per_document_can_read = await gather(
             *[
                 virtool.samples.db.check_rights(
                     self._db, document["sample"]["id"], client, write=False
                 )
-                for document in data["documents"]
+                for document in data
             ]
         )
 
         documents = [
             document
-            for document, can_write in zip(data["documents"], per_document_can_read)
+            for document, can_write in zip(data, per_document_can_read)
             if can_write
         ]
 
-        documents = await apply_transforms(
-            documents,
-            [
-                AttachReferenceTransform(self._db),
-                AttachUserTransform(self._db),
-                AttachSubtractionTransform(self._db),
-            ],
+        return AnalysisSearchResult(
+            documents=documents,
+            found_count=found_count,
+            total_count=total_count,
+            page=page,
+            page_count=int(math.ceil(found_count / per_page)),
+            per_page=per_page,
         )
-
-        data["documents"] = documents
-
-        return AnalysisSearchResult(**data)
 
     async def get(
         self, analysis_id: str, if_modified_since: Optional[datetime]
@@ -130,43 +210,76 @@ class AnalysisData(DataLayerPiece):
         :param if_modified_since: the date the document should have been last modified
         :return: the analysis
         """
-        document = await self._db.analyses.find_one(analysis_id)
-
-        if document is None:
-            raise ResourceNotFoundError()
-
-        await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
-
-        document = await attach_analysis_files(self._pg, analysis_id, document)
-
-        document_before_formatting = document
-
-        sample = await self._db.samples.find_one(
-            {"_id": document["sample"]["id"]}, {"quality": False}
-        )
-
-        if not sample:
-            raise ResourceError()
-
-        if document["ready"]:
-            document = await virtool.analyses.format.format_analysis(
-                self._config, self._db, document
+        async for analysis in self._db.analyses.aggregate(
+            [
+                {"$match": {"_id": analysis_id}},
+                {
+                    "$lookup": {
+                        "from": "jobs",
+                        "localField": "job.id",
+                        "foreignField": "_id",
+                        "as": "job",
+                    }
+                },
+                {"$unwind": {"path": "$job", "preserveNullAndEmptyArrays": True}},
+                {
+                    "$lookup": {
+                        "from": "subtraction",
+                        "localField": "subtractions",
+                        "foreignField": "_id",
+                        "as": "subtractions",
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "references",
+                        "localField": "reference.id",
+                        "foreignField": "_id",
+                        "as": "reference",
+                    }
+                },
+                {"$unwind": {"path": "$reference"}},
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "user.id",
+                        "foreignField": "_id",
+                        "as": "user",
+                    }
+                },
+                {"$unwind": {"path": "$user"}},
+                {"$project": EXCLUDE_FIELDS},
+            ]
+        ):
+            await wait_for_checks(
+                check_if_analysis_modified(if_modified_since, analysis)
             )
 
-        document = await processor(self._db, document)
+            analysis = await attach_analysis_files(self._pg, analysis_id, analysis)
 
-        if document["workflow"] == "nuvs":
-            document = await apply_transforms(document, [AttachNuVsBLAST(self._pg)])
+            if analysis["ready"]:
+                analysis = await virtool.analyses.format.format_analysis(
+                    self._config, self._db, analysis
+                )
 
-        for key in document_before_formatting:
-            if key not in document:
-                document.update({key: document_before_formatting[key]})
+            analysis = base_processor(analysis)
 
-        document = await apply_transforms(
-            document, [AttachReferenceTransform(self._db)]
-        )
+            if analysis["workflow"] == "nuvs":
+                analysis = await apply_transforms(
+                    analysis,
+                    [AttachNuVsBLAST(self._pg)],
+                )
 
-        return Analysis(**document)
+            return Analysis(
+                **{
+                    **analysis,
+                    "job": await processor(self._db, analysis["job"])
+                    if "job" in analysis
+                    else None,
+                }
+            )
+
+        raise ResourceNotFoundError()
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """
