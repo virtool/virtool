@@ -100,8 +100,7 @@ class AnalysisView(PydanticView):
 
         try:
             document = await get_data_from_req(self.request).analyses.get(
-                analysis_id,
-                if_modified_since
+                analysis_id, if_modified_since
             )
         except ResourceNotFoundError:
             raise NotFound()

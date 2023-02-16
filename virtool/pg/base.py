@@ -1,6 +1,17 @@
 from enum import Enum
+from sqlalchemy.orm import registry
 
-from sqlalchemy.ext.declarative import as_declarative
+
+def as_declarative(**kw):
+    bind, metadata, class_registry = (
+        kw.pop("bind", None),
+        kw.pop("metadata", None),
+        kw.pop("class_registry", None),
+    )
+
+    return registry(
+        _bind=bind, metadata=metadata, class_registry=class_registry
+    ).as_declarative_base(**kw)
 
 
 @as_declarative()

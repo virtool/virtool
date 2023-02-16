@@ -13,7 +13,9 @@ REQUIRED_MONGODB_REVISION = "6q5k8tz8uph3"
 logger = getLogger("mongo")
 
 
-async def connect(db_connection_string: str, db_name: str, skip_revision_check: bool) -> AsyncIOMotorDatabase:
+async def connect(
+    db_connection_string: str, db_name: str, skip_revision_check: bool
+) -> AsyncIOMotorDatabase:
     """
     Connect to a MongoDB server and return an application database object.
 
@@ -51,7 +53,10 @@ async def check_revision(db: AsyncIOMotorDatabase):
     :param db: the application database object
     """
     if not await db.migrations.find_one({"revision_id": REQUIRED_MONGODB_REVISION}):
-        logger.fatal("The required MongoDB revision has not been applied: %s.", REQUIRED_MONGODB_REVISION)
+        logger.fatal(
+            "The required MongoDB revision has not been applied: %s.",
+            REQUIRED_MONGODB_REVISION,
+        )
         sys.exit(1)
 
 
