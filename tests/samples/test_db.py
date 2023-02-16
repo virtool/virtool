@@ -160,33 +160,37 @@ class TestDeriveWorkflowStates:
         workflow_states = define_initial_workflows(library_type=library_type)
         assert workflow_states == snapshot
 
-    @pytest.mark.parametrize(
-        "path_ready,path_state",
-        [
-            ([False, False], "pending"),
-            ([True, False], "complete"),
-            ([False, True], "complete"),
-            ([True, True], "complete"),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "nuvs_ready,nuvs_state",
-        [
-            ([False, False], "pending"),
-            ([True, False], "complete"),
-            ([False, True], "complete"),
-            ([True, True], "complete"),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "aodp_ready,aodp_state",
-        [
-            ([False, False], "pending"),
-            ([True, False], "complete"),
-            ([False, True], "complete"),
-            ([True, True], "complete"),
-        ],
-    )
+    # parameterize that changes workflows between nuvs, pathoscope, and aodp
+    @pytest.mark.parametrize(...)
+    # paramtereise the states of the workflow
+
+    # @pytest.mark.parametrize(
+    #     "analysis_states,final_analysis_state",
+    #     [
+    #         ([False, False], "pending"),
+    #         ([True, False], "complete"),
+    #         ([False, True], "complete"),
+    #         ([True, True], "complete"),
+    #     ],
+    # )
+    # @pytest.mark.parametrize(
+    #     "nuvs_ready,nuvs_state",
+    #     [
+    #         ([False, False], "pending"),
+    #         ([True, False], "complete"),
+    #         ([False, True], "complete"),
+    #         ([True, True], "complete"),
+    #     ],
+    # )
+    # @pytest.mark.parametrize(
+    #     "aodp_ready,aodp_state",
+    #     [
+    #         ([False, False], "pending"),
+    #         ([True, False], "complete"),
+    #         ([False, True], "complete"),
+    #         ([True, True], "complete"),
+    #     ],
+    # )
     def test_complete_pending(
         self, path_ready, path_state, nuvs_ready, nuvs_state, aodp_ready, aodp_state
     ):
@@ -194,27 +198,32 @@ class TestDeriveWorkflowStates:
         Test that workflows are set to complete and pending as expected.
         """
         index = 0
-        library_type = "other"
-        path_ready_1, path_ready_2 = path_ready
-        nuvs_ready_1, nuvs_ready_2 = nuvs_ready
-        aodp_ready_1, aodp_ready_2 = aodp_ready
+        # library_type = "other"
+        # path_ready_1, path_ready_2 = path_ready
+        # nuvs_ready_1, nuvs_ready_2 = nuvs_ready
+        # aodp_ready_1, aodp_ready_2 = aodp_ready
 
+        # input documents are only of the given analysis type
         documents = [
-            {"_id": index, "ready": path_ready_1, "workflow": "pathoscope_barracuda"},
-            {"_id": index, "ready": path_ready_2, "workflow": "pathoscope_bowtie"},
-            {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
-            {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
-            {"_id": index, "ready": aodp_ready_1, "workflow": "aodp"},
-            {"_id": index, "ready": aodp_ready_2, "workflow": "aodp"},
+            {"_id": index, "ready": path_ready_1, "workflow": workflow_name}
+            for analysis_state in analysis_states
         ]
+        # documents = [
+        #     {"_id": index, "ready": path_ready_1, "workflow": "pathoscope_barracuda"},
+        #     {"_id": index, "ready": path_ready_2, "workflow": "pathoscope_bowtie"},
+        #     {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
+        #     {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
+        #     {"_id": index, "ready": aodp_ready_1, "workflow": "aodp"},
+        #     {"_id": index, "ready": aodp_ready_2, "workflow": "aodp"},
+        # ]
         final_workflow_states = derive_workflow_state(documents, library_type)
-        assert final_workflow_states == {
-            "workflows": {
-                "aodp": "incompatible",
-                "nuvs": nuvs_state,
-                "pathoscope": path_state,
-            }
+
+        excpected_final_workflow_states = {
+            **define_initial_workflows(library_type=library_type),
+            **{workflow_name: workflow_state},
         }
+
+        assert final_workflow_states == expected_final_workflow_states
 
         library_type = "amplicon"
         final_workflow_states = derive_workflow_state(documents, library_type)
