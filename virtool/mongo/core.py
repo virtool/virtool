@@ -77,7 +77,6 @@ class Collection:
         self.bulk_write = self._collection.bulk_write
         self.count_documents = self._collection.count_documents
         self.create_index = self._collection.create_index
-        self.create_indexes = virtool.mongo.connect.create_indexes
         self.distinct = self._collection.distinct
         self.drop_index = self._collection.drop_index
         self.drop_indexes = self._collection.drop_indexes

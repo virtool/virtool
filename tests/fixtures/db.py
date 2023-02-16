@@ -51,7 +51,6 @@ async def test_motor(test_db_connection_string, test_db_name, loop, request):
         ]
     )
 
-    await virtool.mongo.connect.create_indexes(db)
     yield db
     await client.drop_database(test_db_name)
 

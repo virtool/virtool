@@ -51,7 +51,9 @@ class TestCreate:
             matcher=path_type({"last_password_change": (datetime,)}),
         )
 
-    async def test_already_exists(self, fake2, users_data):
+    async def test_already_exists(self, fake2, mongo, users_data):
+        await mongo.users.create_index("handle", unique=True, sparse=True)
+
         user = await fake2.users.create()
 
         with pytest.raises(ResourceConflictError) as err:
