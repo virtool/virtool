@@ -27,11 +27,11 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
 
     client = await spawn_client(authorize=True)
 
-    user = await fake2.users.create()
+    user_1 = await fake2.users.create()
 
-    user2 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    job = await fake2.jobs.create(user=user2)
+    job = await fake2.jobs.create(user=user_2)
 
     await asyncio.gather(
         client.db.references.insert_many(
@@ -47,7 +47,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                 "created_at": static_time.datetime,
                 "all_read": True,
                 "all_write": True,
-                "user": {"id": user.id},
+                "user": {"id": user_1.id},
                 "labels": [],
             }
         ),
@@ -63,7 +63,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "ready": True,
                     "job": {"id": job.id},
                     "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user.id},
+                    "user": {"id": user_1.id},
                     "sample": {"id": "test"},
                     "reference": {"id": "baz", "name": "Baz"},
                     "results": {"hits": []},
@@ -77,7 +77,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "ready": True,
                     "job": {"id": job.id},
                     "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user.id},
+                    "user": {"id": user_1.id},
                     "sample": {"id": "test"},
                     "reference": {"id": "baz", "name": "Baz"},
                     "results": {"hits": []},
@@ -91,7 +91,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "ready": True,
                     "job": None,
                     "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user.id},
+                    "user": {"id": user_1.id},
                     "sample": {"id": "test"},
                     "reference": {"id": "foo"},
                     "results": {"hits": []},
@@ -126,10 +126,10 @@ async def test_get(
 ):
     client = await spawn_client(authorize=True)
 
-    user = await fake2.users.create()
-    user2 = await fake2.users.create()
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    job = await fake2.jobs.create(user=user2)
+    job = await fake2.jobs.create(user=user_2)
 
     document = {
         "_id": "foobar",
@@ -142,7 +142,7 @@ async def test_get(
         "sample": {"id": "baz"},
         "reference": {"id": "baz"},
         "subtractions": ["plum", "apple"],
-        "user": {"id": user.id},
+        "user": {"id": user_1.id},
     }
 
     await asyncio.gather(
@@ -166,7 +166,7 @@ async def test_get(
                 "group_write": True,
                 "labels": [],
                 "subtractions": ["apple", "plum"],
-                "user": {"id": user.id},
+                "user": {"id": user_1.id},
             }
         )
 
@@ -207,8 +207,31 @@ async def test_get(
                             "timestamp": static_time.datetime,
                         }
                     ],
-                    "user": {"id": "fb085f7f"},
+                    "user": {
+                        "_id": "fb085f7f",
+                        "handle": "zclark",
+                        "administrator": False,
+                        "groups": [],
+                        "permissions": {
+                            "cancel_job": False,
+                            "create_ref": False,
+                            "create_sample": False,
+                            "modify_hmm": False,
+                            "modify_subtraction": False,
+                            "remove_file": False,
+                            "remove_job": False,
+                            "upload_file": False,
+                        },
+                        "primary_group": None,
+                        "force_reset": False,
+                        "last_password_change": static_time.datetime,
+                        "invalidate_sessions": False,
+                    },
                     "ping": None,
+                    "created_at": static_time.datetime,
+                    "progress": 0,
+                    "stage": None,
+                    "id": "7cf872dc",
                 },
                 "index": {"version": 3, "id": "bar"},
                 "workflow": "pathoscope_bowtie",
@@ -238,6 +261,24 @@ async def test_get(
                     "force_reset": False,
                     "last_password_change": static_time.datetime,
                     "invalidate_sessions": False,
+                },
+                "last_status": {
+                    "state": "waiting",
+                    "stage": None,
+                    "step_name": None,
+                    "step_description": None,
+                    "error": None,
+                    "progress": 0,
+                    "timestamp": static_time.datetime,
+                },
+                "first_status": {
+                    "state": "waiting",
+                    "stage": None,
+                    "step_name": None,
+                    "step_description": None,
+                    "error": None,
+                    "progress": 0,
+                    "timestamp": static_time.datetime,
                 },
                 "files": [
                     {
@@ -604,11 +645,11 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
 async def test_finalize(
     fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
 ):
-    user = await fake2.users.create()
+    user_1 = await fake2.users.create()
 
-    user2 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    job = await fake2.jobs.create(user=user2)
+    job = await fake2.jobs.create(user=user_2)
 
     patch_json = {"results": {"result": "TEST_RESULT", "hits": []}}
 
@@ -635,7 +676,7 @@ async def test_finalize(
                 "workflow": "nuvs",
                 "reference": {"id": "baz"},
                 "files": [],
-                "user": {"id": user.id},
+                "user": {"id": user_1.id},
                 "ready": error == 409,
                 "subtractions": [],
             }

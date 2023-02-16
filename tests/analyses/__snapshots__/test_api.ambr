@@ -370,6 +370,15 @@
         'uploaded_at': None,
       },
     ],
+    'first_status': <class 'dict'> {
+      'error': None,
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'step_description': None,
+      'step_name': None,
+      'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+    },
     'index': <class 'dict'> {
       'id': 'bar',
       'version': 3,
@@ -386,9 +395,13 @@
         'we': -899431834.68956,
         'whose': 8388626647.46166,
       },
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': '7cf872dc',
       'ping': None,
+      'progress': 0,
       'rights': <class 'dict'> {
       },
+      'stage': None,
       'state': 'waiting',
       'status': <class 'list'> [
         <class 'dict'> {
@@ -402,9 +415,36 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'fb085f7f',
+        '_id': 'fb085f7f',
+        'administrator': False,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'zclark',
+        'invalidate_sessions': False,
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
       },
       'workflow': 'jobs_aodp',
+    },
+    'last_status': <class 'dict'> {
+      'error': None,
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'step_description': None,
+      'step_name': None,
+      'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
     },
     'ready': True,
     'reference': <class 'dict'> {

@@ -17,12 +17,11 @@ import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
 
-from virtool.analyses.db import PROJECTION, TARGET_FILES
+from virtool.analyses.db import TARGET_FILES
 from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import (
     attach_analysis_files,
-    find_nuvs_sequence_by_index,
     join_analysis_path,
     move_nuvs_files,
 )
@@ -33,10 +32,6 @@ from virtool.analyses.checks import (
     check_if_analysis_ready,
     check_if_analysis_modified,
 )
-from virtool.analyses.db import PROJECTION
-from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import AnalysisFile
-from virtool.analyses.utils import attach_analysis_files
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
@@ -46,7 +41,6 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.piece import DataLayerPiece
-from virtool.jobs.db import processor
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
@@ -62,12 +56,16 @@ from virtool.utils import wait_for_checks, base_processor
 
 logger = getLogger("analyses")
 
-EXCLUDE_FIELDS = {
-    "user.settings": 0,
-    "user.password": 0,
-    "user.active": 0,
-    "user.invalidate_session": 0,
-    "job.key": 0,
+EXCLUDED_FIELDS = {
+    "user.settings": False,
+    "user.password": False,
+    "user.active": False,
+    "user.invalidate_session": False,
+    "job.key": False,
+    "job.user.settings": False,
+    "job.user.password": False,
+    "job.user.active": False,
+    "job.user.invalidate_session": False,
 }
 
 
@@ -86,8 +84,6 @@ class AnalysisData(DataLayerPiece):
         :param client: the client object
         :return: a list of all analysis documents
         """
-        dict_projection = {item: True for item in PROJECTION}
-
         sort = {"created_at": -1}
 
         skip_count = 0
@@ -146,6 +142,45 @@ class AnalysisData(DataLayerPiece):
                                 }
                             },
                             {"$unwind": {"path": "$user"}},
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "localField": "job.user.id",
+                                    "foreignField": "_id",
+                                    "as": "job.user",
+                                }
+                            },
+                            {
+                                "$unwind": {
+                                    "path": "$job.user",
+                                    "preserveNullAndEmptyArrays": True,
+                                }
+                            },
+                            {
+                                "$unwind": {
+                                    "path": "$job.user",
+                                    "preserveNullAndEmptyArrays": True,
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "last_status": {"$last": "$job.status"},
+                                    "first_status": {"$first": "$job.status"},
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "job.created_at": "$first_status.timestamp",
+                                    "job.progress": "$last_status.progress",
+                                    "job.state": "$last_status.state",
+                                    "job.stage": "$last_status.stage",
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "job.id": "$job._id",
+                                }
+                            },
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
@@ -154,7 +189,36 @@ class AnalysisData(DataLayerPiece):
                 },
                 {
                     "$project": {
-                        "data": dict_projection,
+                        "data": {
+                            "_id": True,
+                            "workflow": True,
+                            "created_at": True,
+                            "index": True,
+                            "job._id": True,
+                            "job.acquired": True,
+                            "job.workflow": True,
+                            "job.args": True,
+                            "job.rights": True,
+                            "job.state": True,
+                            "job.status": True,
+                            "job.user._id": True,
+                            "job.user.handle": True,
+                            "job.user.administrator": True,
+                            "job.ping": True,
+                            "job.created_at": True,
+                            "job.progress": True,
+                            "job.stage": True,
+                            "job.id": True,
+                            "job.archived": True,
+                            "ready": True,
+                            "reference": True,
+                            "sample": True,
+                            "subtractions": True,
+                            "updated_at": True,
+                            "user._id": True,
+                            "user.handle": True,
+                            "user.administrator": True,
+                        },
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0]
                         },
@@ -169,12 +233,9 @@ class AnalysisData(DataLayerPiece):
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
 
-        for analysis in data:
-            analysis["job"] = (
-                await processor(self._db, analysis["job"])
-                if "job" in analysis
-                else None
-            )
+        for document in data:
+            if not document["job"]:
+                document["job"] = None
 
         per_document_can_read = await gather(
             *[
@@ -210,7 +271,7 @@ class AnalysisData(DataLayerPiece):
         :param if_modified_since: the date the document should have been last modified
         :return: the analysis
         """
-        async for analysis in self._db.analyses.aggregate(
+        result = await self._db.analyses.aggregate(
             [
                 {"$match": {"_id": analysis_id}},
                 {
@@ -248,38 +309,63 @@ class AnalysisData(DataLayerPiece):
                     }
                 },
                 {"$unwind": {"path": "$user"}},
-                {"$project": EXCLUDE_FIELDS},
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "job.user.id",
+                        "foreignField": "_id",
+                        "as": "job.user",
+                    }
+                },
+                {"$unwind": {"path": "$job.user", "preserveNullAndEmptyArrays": True}},
+                {
+                    "$set": {
+                        "last_status": {"$last": "$job.status"},
+                        "first_status": {"$first": "$job.status"},
+                    }
+                },
+                {
+                    "$set": {
+                        "job.created_at": "$first_status.timestamp",
+                        "job.progress": "$last_status.progress",
+                        "job.state": "$last_status.state",
+                        "job.stage": "$last_status.stage",
+                    }
+                },
+                {
+                    "$set": {
+                        "job.id": "$job._id",
+                    }
+                },
+                {"$project": EXCLUDED_FIELDS},
             ]
-        ):
-            await wait_for_checks(
-                check_if_analysis_modified(if_modified_since, analysis)
+        ).to_list(length=1)
+
+        if not result:
+            raise ResourceNotFoundError()
+
+        analysis = result[0]
+
+        await wait_for_checks(check_if_analysis_modified(if_modified_since, analysis))
+
+        analysis = await attach_analysis_files(self._pg, analysis_id, analysis)
+
+        if analysis["ready"]:
+            analysis = await virtool.analyses.format.format_analysis(
+                self._config, self._db, analysis
             )
 
-            analysis = await attach_analysis_files(self._pg, analysis_id, analysis)
+        analysis = base_processor(analysis)
 
-            if analysis["ready"]:
-                analysis = await virtool.analyses.format.format_analysis(
-                    self._config, self._db, analysis
-                )
-
-            analysis = base_processor(analysis)
-
-            if analysis["workflow"] == "nuvs":
-                analysis = await apply_transforms(
-                    analysis,
-                    [AttachNuVsBLAST(self._pg)],
-                )
-
-            return Analysis(
-                **{
-                    **analysis,
-                    "job": await processor(self._db, analysis["job"])
-                    if "job" in analysis
-                    else None,
-                }
+        if analysis["workflow"] == "nuvs":
+            analysis = await apply_transforms(
+                analysis,
+                [AttachNuVsBLAST(self._pg)],
             )
 
-        raise ResourceNotFoundError()
+        return Analysis(
+            **{**analysis, "job": analysis["job"] if analysis["job"] else None}
+        )
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """
