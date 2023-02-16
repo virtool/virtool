@@ -39,7 +39,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-CHANGABLE_WORKFLOW_STATES = ["none", "pending"]
 
 LIST_PROJECTION = [
     "_id",
@@ -92,6 +91,12 @@ class WorkflowState(Enum):
     INCOMPATIBLE = "incompatible"
     NONE = "none"
     PENDING = "pending"
+
+
+UNCHANGABLE_WORKFLOW_STATES = [
+    WorkflowState.COMPLETE.value,
+    WorkflowState.INCOMPATIBLE.value,
+]
 
 
 class ArtifactsAndReadsTransform(AbstractTransform):
@@ -309,31 +314,35 @@ def derive_workflow_state(analyses: list, library_type) -> dict:
 
     """
     workflow_states = define_initial_workflows(library_type)
-    workflow = "aodp"
-
-    if workflow_states["aodp"] == WorkflowState.INCOMPATIBLE.value:
-        workflow = "nuvs"
 
     for analysis in analyses:
-        if (
-            analysis["workflow"] == workflow
-            and workflow_states[workflow] in CHANGABLE_WORKFLOW_STATES
-        ):
-            if not analysis["ready"]:
-                workflow_states[workflow] = WorkflowState.PENDING.value
-            elif analysis["ready"]:
-                workflow_states[workflow] = WorkflowState.COMPLETE.value
+        workflow_name = get_workflow_name(analysis["workflow"])
 
-        elif (
-            analysis["workflow"] in PATHOSCOPE_TASK_NAMES
-            and workflow_states["pathoscope"] in CHANGABLE_WORKFLOW_STATES
-        ):
-            if not analysis["ready"]:
-                workflow_states["pathoscope"] = WorkflowState.PENDING.value
-            elif analysis["ready"]:
-                workflow_states["pathoscope"] = WorkflowState.COMPLETE.value
+        if workflow_states[workflow_name] in UNCHANGABLE_WORKFLOW_STATES:
+            continue
+
+        workflow_states[workflow_name] = (
+            WorkflowState.COMPLETE.value
+            if analysis["ready"]
+            else WorkflowState.PENDING.value
+        )
 
     return {"workflows": workflow_states}
+
+
+def get_workflow_name(workflow_name: str) -> str:
+    """
+    Returns the name of the workflow that is being used. If the workflow name is
+    "pathoscope_bowtie" or "pathoscope_bowtie2", then "pathoscope" is returned.
+
+    :param workflow_name: the name of the workflow
+    :return: the name of the workflow that is being used
+
+    """
+    if workflow_name in PATHOSCOPE_TASK_NAMES:
+        return "pathoscope"
+
+    return workflow_name
 
 
 async def recalculate_workflow_tags(db, sample_id: str) -> dict:

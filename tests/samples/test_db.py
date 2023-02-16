@@ -160,26 +160,9 @@ class TestDeriveWorkflowStates:
         workflow_states = define_initial_workflows(library_type=library_type)
         assert workflow_states == snapshot
 
+    @pytest.mark.parametrize("workflow_name", ["nuvs", "pathoscope"])
     @pytest.mark.parametrize(
-        "path_ready,path_state",
-        [
-            ([False, False], "pending"),
-            ([True, False], "complete"),
-            ([False, True], "complete"),
-            ([True, True], "complete"),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "nuvs_ready,nuvs_state",
-        [
-            ([False, False], "pending"),
-            ([True, False], "complete"),
-            ([False, True], "complete"),
-            ([True, True], "complete"),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "aodp_ready,aodp_state",
+        "analysis_states, final_workflow_state",
         [
             ([False, False], "pending"),
             ([True, False], "complete"),
@@ -188,43 +171,71 @@ class TestDeriveWorkflowStates:
         ],
     )
     def test_complete_pending(
-        self, path_ready, path_state, nuvs_ready, nuvs_state, aodp_ready, aodp_state
+        self, workflow_name, analysis_states, final_workflow_state
     ):
         """
         Test that workflows are set to complete and pending as expected.
         """
         index = 0
         library_type = "other"
-        path_ready_1, path_ready_2 = path_ready
-        nuvs_ready_1, nuvs_ready_2 = nuvs_ready
-        aodp_ready_1, aodp_ready_2 = aodp_ready
+        ready_1, ready_2 = analysis_states
 
         documents = [
-            {"_id": index, "ready": path_ready_1, "workflow": "pathoscope_barracuda"},
-            {"_id": index, "ready": path_ready_2, "workflow": "pathoscope_bowtie"},
-            {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
-            {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
-            {"_id": index, "ready": aodp_ready_1, "workflow": "aodp"},
-            {"_id": index, "ready": aodp_ready_2, "workflow": "aodp"},
+            {"_id": index, "ready": ready_1, "workflow": workflow_name},
+            {"_id": index, "ready": ready_2, "workflow": workflow_name},
         ]
-        final_workflow_states = derive_workflow_state(documents, library_type)
-        assert final_workflow_states == {
-            "workflows": {
-                "aodp": "incompatible",
-                "nuvs": nuvs_state,
-                "pathoscope": path_state,
-            }
-        }
 
-        library_type = "amplicon"
         final_workflow_states = derive_workflow_state(documents, library_type)
-        assert final_workflow_states == {
+
+        if workflow_name == "pathoscope":
+            expected_final_workflow_state = {
+                "workflows": {
+                    "aodp": "incompatible",
+                    "nuvs": "none",
+                    workflow_name: final_workflow_state,
+                }
+            }
+        else:
+            expected_final_workflow_state = {
+                "workflows": {
+                    "aodp": "incompatible",
+                    workflow_name: final_workflow_state,
+                    "pathoscope": "none",
+                }
+            }
+
+        assert final_workflow_states == expected_final_workflow_state
+
+    @pytest.mark.parametrize(
+        "analysis_states, final_workflow_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    def test_complete_pending_aodp(self, analysis_states, final_workflow_state):
+        index = 0
+        library_type = "amplicon"
+        ready_1, ready_2 = analysis_states
+
+        documents = [
+            {"_id": index, "ready": ready_1, "workflow": "aodp"},
+            {"_id": index, "ready": ready_2, "workflow": "aodp"},
+        ]
+
+        final_workflow_states = derive_workflow_state(documents, library_type)
+
+        expected_final_workflow_state = {
             "workflows": {
-                "aodp": aodp_state,
+                "aodp": final_workflow_state,
                 "nuvs": "incompatible",
                 "pathoscope": "incompatible",
             }
         }
+
+        assert final_workflow_states == expected_final_workflow_state
 
 
 class TestGetSampleOwner:
