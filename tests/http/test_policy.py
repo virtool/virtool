@@ -14,7 +14,8 @@ from aiohttp.web_response import json_response
 from aiohttp_pydantic import PydanticView
 from virtool_core.models.enums import Permission
 
-from virtool.authorization.roles import AdministratorRole, SamplePermission
+from virtool.authorization.permissions import LegacyPermission
+from virtool.authorization.roles import AdministratorRole
 from virtool.errors import PolicyError
 from virtool.http.policy import (
     policy,
@@ -286,12 +287,12 @@ async def test_permissions(
         authorize=authenticated,
         administrator=administrator,
         permissions=(
-            [Permission.create_sample, Permission.modify_subtraction]
+            [Permission.CREATE_SAMPLE, Permission.modify_subtraction]
             if has_permission
             else [Permission.modify_subtraction]
         ),
         addon_route_table=privilege_routes(
-            PermissionRoutePolicy(0, SamplePermission.CREATE_SAMPLE)
+            PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE)
         ),
     )
 
