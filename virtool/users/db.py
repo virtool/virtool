@@ -349,8 +349,8 @@ def lookup_nested_user_by_id(
 
             set_as (str): desired name of the returned record (default "user").
 
-        Returns: $lookup step (list[Dict]): mongoDB aggregation step to use in an aggregation pipeline,
-        must be unpacked for inline use in an aggregation pipeline.
+        Returns: $lookup step (list[Dict]): mongoDB aggregation step to use in
+        an aggregation pipeline; unpack for inline use in aggregation pipeline.
     """
     return [
         {
