@@ -6,7 +6,6 @@ from aiohttp.test_utils import make_mocked_coro
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy.util import asyncio
 
-import virtool.mongo.connect
 import virtool.mongo.core
 from virtool.mongo.identifier import FakeIdProvider
 

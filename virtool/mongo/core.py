@@ -32,7 +32,6 @@ import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
 import virtool.jobs.db
-import virtool.mongo.connect
 import virtool.mongo.utils
 import virtool.otus.db
 import virtool.references.db
