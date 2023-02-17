@@ -344,13 +344,9 @@ def lookup_nested_user_by_id(
     """
     Create a mongoDB aggregation pipeline step to look up a nested user by id.
 
-        Params:
-            local_field (str): user id field to search look up (default "user.id");
-
-            set_as (str): desired name of the returned record (default "user").
-
-        Returns: $lookup step (list[Dict]): mongoDB aggregation step to use in
-        an aggregation pipeline; unpack for inline use in aggregation pipeline.
+    :param local_field:  user id field to search look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
     """
     return [
         {
