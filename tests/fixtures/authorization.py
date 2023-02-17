@@ -6,7 +6,8 @@ import pytest
 from openfga_sdk import TupleKey, WriteRequest, TupleKeys, ApiException
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.utils import write_openfga_authorization_model
+from virtool.authorization.permissions import ResourceType
+from virtool.authorization.utils import write_openfga_authorization_model, delete_tuples
 
 
 @pytest.fixture
@@ -26,6 +27,10 @@ async def authorization_client(openfga_store_name: str) -> AuthorizationClient:
     await write_openfga_authorization_model(api_instance)
 
     yield AuthorizationClient(api_instance)
+
+    await delete_tuples(api_instance, ResourceType.SPACE, 0)
+
+    await delete_tuples(api_instance, ResourceType.APP, "virtool")
 
     await api_instance.delete_store()
 

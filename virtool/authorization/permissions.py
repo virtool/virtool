@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Union
 
 
-class ResourceType(Enum):
+class ResourceType(str, Enum):
     """
     Types of resources a permission can apply to (e.g. 'app', 'sample', 'group').
 
