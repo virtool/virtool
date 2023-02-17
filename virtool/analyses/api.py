@@ -17,6 +17,7 @@ from aiohttp.web import (
 )
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
+from pydantic import conint
 
 from virtool.analyses.models import AnalysisFormat
 from virtool.analyses.oas import FindAnalysesResponse, AnalysisResponse
@@ -46,7 +47,11 @@ routes = Routes()
 
 @routes.view("/analyses")
 class AnalysesView(PydanticView):
-    async def get(self) -> r200[FindAnalysesResponse]:
+    async def get(
+        self,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
+    ) -> r200[FindAnalysesResponse]:
         """
         Find analyses.
 
@@ -59,7 +64,8 @@ class AnalysesView(PydanticView):
         """
 
         search_result = await get_data_from_req(self.request).analyses.find(
-            self.request.query,
+            page,
+            per_page,
             self.request["client"],
         )
 
@@ -100,8 +106,7 @@ class AnalysisView(PydanticView):
 
         try:
             document = await get_data_from_req(self.request).analyses.get(
-                analysis_id,
-                if_modified_since
+                analysis_id, if_modified_since
             )
         except ResourceNotFoundError:
             raise NotFound()

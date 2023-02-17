@@ -12,13 +12,13 @@
     'rights': <class 'dict'> {
     },
     'stage': None,
-    'state': 'preparing',
+    'state': <JobState.PREPARING: 'preparing'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 3,
         'stage': None,
-        'state': 'preparing',
+        'state': <JobState.PREPARING: 'preparing'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -72,13 +72,13 @@
     'rights': <class 'dict'> {
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -132,13 +132,13 @@
     'rights': <class 'dict'> {
     },
     'stage': 'foo',
-    'state': 'running',
+    'state': <JobState.RUNNING: 'running'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': 'foo',
-        'state': 'running',
+        'state': <JobState.RUNNING: 'running'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -201,13 +201,13 @@
       },
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -287,13 +287,13 @@
       },
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),

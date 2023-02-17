@@ -5,6 +5,7 @@ from pathlib import Path
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import Permission, LibraryType
 
@@ -1296,6 +1297,10 @@ class TestCreateCache:
         Test that uniqueness is enforced on `key`-`sample.id` pairs for `caches`
 
         """
+        await mongo.caches.create_index(
+            [("key", ASCENDING), ("sample.id", ASCENDING)], unique=True
+        )
+
         client = await spawn_job_client(authorize=True)
 
         await client.db.samples.insert_one(
