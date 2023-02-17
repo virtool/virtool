@@ -2,19 +2,7 @@ from enum import Enum
 from sqlalchemy.orm import registry
 
 
-def as_declarative(**kw):
-    _, metadata, class_registry = (
-        kw.pop("bind", None),
-        kw.pop("metadata", None),
-        kw.pop("class_registry", None),
-    )
-
-    return registry(
-        metadata=metadata, class_registry=class_registry
-    ).as_declarative_base(**kw)
-
-
-@as_declarative()
+@registry().as_declarative_base()
 class Base:
     def __repr__(self):
         params = ", ".join(
