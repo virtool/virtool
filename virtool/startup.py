@@ -104,9 +104,6 @@ async def startup_check_db(app: Application):
     except pymongo.errors.CollectionInvalid:
         pass
 
-    logger.info("Checking database indexes")
-    await virtool.mongo.connect.create_indexes(db)
-
 
 async def startup_data(app: App):
     """
