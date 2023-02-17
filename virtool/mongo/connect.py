@@ -7,7 +7,7 @@ from semver import VersionInfo
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 
-REQUIRED_MONGODB_REVISION = "6q5k8tz8uph3"
+REQUIRED_MONGODB_REVISION = "l20h8fsbbb28"
 
 logger = getLogger("mongo")
 
