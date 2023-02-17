@@ -9,7 +9,7 @@ class Config:
     dev: bool
     openfga_host: str
     openfga_scheme: str
-    openfga_store: str
+    openfga_store_name: str
     postgres_connection_string: str
     redis_connection_string: str
     b2c_client_id: str = None

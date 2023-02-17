@@ -37,7 +37,9 @@ def get_authorization_client_from_req(req: Request) -> AuthorizationClient:
     return get_authorization_client_from_app(req.app)
 
 
-async def delete_tuples(api_instance, object_type: ResourceType, object_id: Union[int, str]):
+async def delete_tuples(
+    api_instance, object_type: ResourceType, object_id: Union[int, str]
+):
 
     response = await api_instance.read(
         ReadRequest(
@@ -55,7 +57,9 @@ async def delete_tuples(api_instance, object_type: ResourceType, object_id: Unio
         )
 
 
-async def connect_openfga(openfga_host: str, openfga_scheme: str, openfga_store: str):
+async def connect_openfga(
+    openfga_host: str, openfga_scheme: str, openfga_store_name: str
+):
     """
     Connects to an OpenFGA server and configures the store id.
     Returns the application client instance.
@@ -70,7 +74,7 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str, openfga_store:
         api_instance = open_fga_api.OpenFgaApi(openfga_sdk.ApiClient(configuration))
 
         configuration.store_id = await get_or_create_openfga_store(
-            api_instance, openfga_store
+            api_instance, openfga_store_name
         )
 
         await write_openfga_authorization_model(api_instance)
@@ -82,7 +86,9 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str, openfga_store:
     return api_instance
 
 
-async def get_or_create_openfga_store(api_instance: OpenFgaApi, openfga_store: str):
+async def get_or_create_openfga_store(
+    api_instance: OpenFgaApi, openfga_store_name: str
+):
     """
     Get the OpenFGA Store or create one if it does not exist.
 
@@ -94,13 +100,13 @@ async def get_or_create_openfga_store(api_instance: OpenFgaApi, openfga_store: s
 
     if response.stores:
         for store in response.stores:
-            if store.name == openfga_store:
+            if store.name == openfga_store_name:
                 logger.info("Found existing OpenFGA store")
                 return store.id
 
     response = await api_instance.create_store(
         CreateStoreRequest(
-            name="Virtool",
+            name=openfga_store_name,
         )
     )
 
