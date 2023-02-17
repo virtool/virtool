@@ -3,7 +3,7 @@ from sqlalchemy.orm import registry
 
 
 def as_declarative(**kw):
-    bind, metadata, class_registry = (
+    _, metadata, class_registry = (
         kw.pop("bind", None),
         kw.pop("metadata", None),
         kw.pop("class_registry", None),
