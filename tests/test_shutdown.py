@@ -1,5 +1,3 @@
-from sqlalchemy import text
-
 from virtool.startup import get_scheduler_from_app
 from virtool.shutdown import (
     shutdown_client,
@@ -7,7 +5,6 @@ from virtool.shutdown import (
     shutdown_executors,
     shutdown_scheduler,
     shutdown_redis,
-    drop_fake_postgres,
 )
 
 

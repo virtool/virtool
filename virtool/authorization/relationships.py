@@ -19,8 +19,8 @@ class AbstractRelationship(ABC):
     """
     Whether the relationship is exclusive of other relationships of the same type.
 
-    Relationships are exclusive. If other relationships exist for the 
-    sample user-relation-object combination, existing relationships 
+    Relationships are exclusive. If other relationships exist for the
+    sample user-relation-object combination, existing relationships
     will be removed before adding this one.
 
     This takes into account prefixed roles like ``sample_creator``. Only roles with the

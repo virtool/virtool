@@ -287,7 +287,7 @@ async def test_permissions(
         authorize=authenticated,
         administrator=administrator,
         permissions=(
-            [Permission.CREATE_SAMPLE, Permission.modify_subtraction]
+            [LegacyPermission.CREATE_SAMPLE, LegacyPermission.MODIFY_SUBTRACTION]
             if has_permission
             else [Permission.modify_subtraction]
         ),

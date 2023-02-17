@@ -3,7 +3,6 @@ Authorization clients.
 
 """
 import asyncio
-from abc import ABC, abstractmethod
 from typing import Union, List, Tuple
 
 from openfga_sdk import (

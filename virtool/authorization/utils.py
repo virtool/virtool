@@ -1,4 +1,3 @@
-import asyncio
 import sys
 from logging import getLogger
 from typing import Union
