@@ -98,11 +98,13 @@ async def test_get(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
-async def test_create(error, fake2, snapshot, spawn_client, resp_is):
+async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is):
     """
     Test that a valid request results in a user document being properly inserted.
 
     """
+    await mongo.users.create_index("handle", unique=True, sparse=True)
+
     client = await spawn_client(authorize=True, administrator=True)
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}
