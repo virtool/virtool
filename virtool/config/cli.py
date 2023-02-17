@@ -75,6 +75,12 @@ def entry():
     default="https",
 )
 @click.option(
+    "--openfga-store",
+    help="The OpenFGA API store",
+    type=str,
+    default="Virtool",
+)
+@click.option(
     "--postgres-connection-string",
     help="The PostgreSQL connection string (must begin with 'postgresql+asyncpg://')",
     type=str,
@@ -107,6 +113,7 @@ def cli(
     no_tasks,
     openfga_host,
     openfga_scheme,
+    openfga_store,
     postgres_connection_string,
     redis_connection_string,
     verbose,
@@ -126,6 +133,7 @@ def cli(
             "no_tasks": no_tasks,
             "openfga_host": openfga_host,
             "openfga_scheme": openfga_scheme,
+            "openfga_store": openfga_store,
             "postgres_connection_string": postgres_connection_string,
             "redis_connection_string": redis_connection_string,
             "verbose": verbose,

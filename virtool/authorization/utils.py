@@ -6,7 +6,7 @@ from aiohttp import ClientConnectorError
 from aiohttp.web_request import Request
 from openfga_sdk import (
     CreateStoreRequest,
-    OpenFgaApi,
+    OpenFgaApi, WriteRequest, TupleKeys, TupleKey,
 )
 from openfga_sdk.api import open_fga_api
 
@@ -32,7 +32,7 @@ def get_authorization_client_from_req(req: Request) -> AuthorizationClient:
     return get_authorization_client_from_app(req.app)
 
 
-async def connect_openfga(openfga_host: str, openfga_scheme: str):
+async def connect_openfga(openfga_host: str, openfga_scheme: str, openfga_store: str):
     """
     Connects to an OpenFGA server and configures the store id.
     Returns the application client instance.
@@ -46,7 +46,7 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
     try:
         api_instance = open_fga_api.OpenFgaApi(openfga_sdk.ApiClient(configuration))
 
-        configuration.store_id = await get_or_create_openfga_store(api_instance)
+        configuration.store_id = await get_or_create_openfga_store(api_instance, openfga_store)
 
         await write_openfga_authorization_model(api_instance)
 
@@ -57,7 +57,7 @@ async def connect_openfga(openfga_host: str, openfga_scheme: str):
     return api_instance
 
 
-async def get_or_create_openfga_store(api_instance: OpenFgaApi):
+async def get_or_create_openfga_store(api_instance: OpenFgaApi, openfga_store: str):
     """
     Get the OpenFGA Store or create one if it does not exist.
 
@@ -68,8 +68,10 @@ async def get_or_create_openfga_store(api_instance: OpenFgaApi):
     logger.info("Connected to OpenFGA")
 
     if response.stores:
-        logger.info("Found existing OpenFGA store")
-        return response.stores[0].id
+        for store in response.stores:
+            if store.name == openfga_store:
+                logger.info("Found existing OpenFGA store")
+                return store.id
 
     response = await api_instance.create_store(
         CreateStoreRequest(

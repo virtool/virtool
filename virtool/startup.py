@@ -247,14 +247,16 @@ async def startup_databases(app: Application):
     redis_connection_string = app["config"].redis_connection_string
     openfga_host = app["config"].openfga_host
     openfga_scheme = app["config"].openfga_scheme
+    openfga_store = app["config"].openfga_store
+    skip_revision_check = app["config"].no_revision_check
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
         virtool.mongo.connect.connect(
-            db_connection_string, db_name, app["config"].no_revision_check
+            db_connection_string, db_name, skip_revision_check
         ),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
-        connect_openfga(openfga_host, openfga_scheme),
+        connect_openfga(openfga_host, openfga_scheme, openfga_store),
     )
 
     scheduler = get_scheduler_from_app(app)
