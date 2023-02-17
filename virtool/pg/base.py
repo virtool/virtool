@@ -10,7 +10,7 @@ def as_declarative(**kw):
     )
 
     return registry(
-        _bind=bind, metadata=metadata, class_registry=class_registry
+        metadata=metadata, class_registry=class_registry
     ).as_declarative_base(**kw)
 
 
