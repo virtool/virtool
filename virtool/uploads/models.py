@@ -22,6 +22,7 @@ class Upload(Base):
     SQL table to store all new uploads
 
     """
+    __allow_unmapped__ = True
 
     __tablename__ = "uploads"
 
