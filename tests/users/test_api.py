@@ -1,12 +1,11 @@
-import asyncio
 import datetime
 from datetime import datetime
-from pprint import pprint
-
 import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 
+from virtool.authorization.relationships import UserRoleAssignment
+from virtool.authorization.roles import SpaceResourceRole
 from virtool.data.utils import get_data_from_app
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.settings.oas import UpdateSettingsRequest
@@ -245,6 +244,13 @@ async def test_list_permissions(spawn_client, user, snapshot):
         authorize=True, permissions=[Permission.create_sample, Permission.create_ref]
     )
 
+    authorization_client = client.app["authorization"]
+
+    await authorization_client.add(
+        UserRoleAssignment(0, "test", SpaceResourceRole.SAMPLE_EDITOR),
+        UserRoleAssignment(0, "test", SpaceResourceRole.REFERENCE_BUILDER),
+    )
+
     resp = await client.get(
         f"/users/{user}/permissions",
     )
@@ -254,34 +260,34 @@ async def test_list_permissions(spawn_client, user, snapshot):
 
 
 @pytest.mark.parametrize(
-    "permission, status",
+    "role, status",
     [
-        (Permission.create_sample, 200),
+        (SpaceResourceRole.SAMPLE_EDITOR, 200),
         ("invalid", 400),
     ],
     ids=["valid_permission", "invalid_permission"],
 )
-async def test_add_permission(spawn_client, permission, status, snapshot):
+async def test_add_permission(spawn_client, role, status, snapshot):
     client = await spawn_client(authorize=True, administrator=True)
 
-    resp = await client.put(f"/users/test/permissions/{permission}", {})
+    resp = await client.put(f"/users/test/permissions/{role}", {})
 
     assert resp.status == status
     assert await resp.json() == snapshot()
 
 
 @pytest.mark.parametrize(
-    "permission, status",
+    "role, status",
     [
-        (Permission.create_sample, 200),
+        (SpaceResourceRole.SAMPLE_EDITOR, 200),
         ("invalid", 400),
     ],
     ids=["valid_permission", "invalid_permission"],
 )
-async def test_remove_permission(spawn_client, permission, status, snapshot):
+async def test_remove_permission(spawn_client, role, status, snapshot):
     client = await spawn_client(authorize=True, administrator=True)
 
-    resp = await client.delete(f"/users/test/permissions/{permission}")
+    resp = await client.delete(f"/users/test/permissions/{role}")
 
     assert resp.status == status
     assert await resp.json() == snapshot()

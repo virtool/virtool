@@ -139,6 +139,7 @@ def task_spawner(
     redis_connection_string,
     mocker,
     test_channel,
+    openfga_store_name,
 ):
     async def func(task_name: str):
         mocker.patch("virtool.tasks.client.REDIS_TASKS_LIST_KEY", test_channel)
@@ -155,6 +156,7 @@ def task_spawner(
             no_revision_check=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
+            openfga_store_name=openfga_store_name,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
             fake=False,

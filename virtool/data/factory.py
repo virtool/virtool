@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
-from virtool.auth.data import AuthData
+from virtool.authorization.client import AuthorizationClient
 from virtool.blast.data import BLASTData
 from virtool.config import Config
 from virtool.data.layer import DataLayer
@@ -35,39 +35,44 @@ if TYPE_CHECKING:
 
 
 def create_data_layer(
-    db: "DB", pg: AsyncEngine, config: Config, client, redis: Redis
+    authorization_client: AuthorizationClient,
+    mongo: "DB",
+    pg: AsyncEngine,
+    config: Config,
+    client,
+    redis: Redis,
 ) -> DataLayer:
     """
     Create and return a data layer object.
 
-    :param db: the mongoDB object
-    :param pg: the postgress object
+    :param authorization_client: the authorization client
+    :param mongo: the MongoDB client
+    :param pg: the Postgres client
     :param config: the application config object
     :param client: an async HTTP client session for the server
     :param redis: the redis object
     :return: the application data layer
     """
     data_layer = DataLayer(
-        AccountData(db, redis),
-        AnalysisData(db, config, pg),
-        AuthData(pg),
-        BLASTData(client, db, pg),
-        GroupsData(db),
-        HistoryData(config.data_path, db),
-        HmmData(client, config, db, pg),
-        IndexData(db, config, pg),
-        JobsData(JobsClient(redis), db, pg),
-        LabelsData(db, pg),
-        MessagesData(pg, db),
-        OTUData(db, config.data_path),
-        ReferencesData(db, pg, config, client),
-        SamplesData(config, db, pg),
-        SubtractionsData(config.base_url, config, db, pg),
+        AccountData(mongo, redis),
+        AnalysisData(mongo, config, pg),
+        BLASTData(client, mongo, pg),
+        GroupsData(authorization_client, mongo),
+        HistoryData(config.data_path, mongo),
+        HmmData(client, config, mongo, pg),
+        IndexData(mongo, config, pg),
+        JobsData(JobsClient(redis), mongo, pg),
+        LabelsData(mongo, pg),
+        MessagesData(pg, mongo),
+        OTUData(mongo, config.data_path),
+        ReferencesData(mongo, pg, config, client),
+        SamplesData(config, mongo, pg),
+        SubtractionsData(config.base_url, config, mongo, pg),
         SessionData(redis),
-        SettingsData(db),
+        SettingsData(mongo),
         TasksData(pg, TasksClient(redis)),
-        UploadsData(config, db, pg),
-        UsersData(db, pg),
+        UploadsData(config, mongo, pg),
+        UsersData(mongo, pg),
     )
 
     return data_layer
