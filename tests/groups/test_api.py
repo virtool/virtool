@@ -36,11 +36,13 @@ async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapsh
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [201, 400])
-async def test_create(status, fake2, spawn_client, snapshot):
+async def test_create(status, fake2, mongo, spawn_client, snapshot):
     """
     Test that a group can be added to the database at ``POST /groups/:group_id``.
 
     """
+    await mongo.groups.create_index("name", unique=True, sparse=True)
+
     client = await spawn_client(
         authorize=True, administrator=True, base_url="https://virtool.example.com"
     )

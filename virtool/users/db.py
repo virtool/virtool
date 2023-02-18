@@ -336,3 +336,36 @@ async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
         )
 
     return None
+
+
+def lookup_nested_user_by_id(
+    local_field: str = "user.id", set_as: str = "user"
+) -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up a nested user by id.
+
+    :param local_field:  user id field to search look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "users",
+                "let": {"user_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$_id", "$$user_id"]}}},
+                    {
+                        "$project": {
+                            "id": "$_id",
+                            "_id": False,
+                            "handle": True,
+                            "administrator": True,
+                        }
+                    },
+                ],
+                "as": set_as,
+            }
+        },
+        {"$set": {set_as: {"$first": f"${set_as}"}}},
+    ]

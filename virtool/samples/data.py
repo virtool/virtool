@@ -38,7 +38,7 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
-from virtool.users.db import AttachUserTransform
+from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.utils import base_processor, wait_for_checks
 
 logger = logging.getLogger(__name__)
@@ -121,6 +121,7 @@ class SamplesData(DataLayerPiece):
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
+                            *lookup_nested_user_by_id(local_field="user.id"),
                         ],
                     }
                 },
@@ -143,7 +144,7 @@ class SamplesData(DataLayerPiece):
 
         documents = await apply_transforms(
             [base_processor(document) for document in data],
-            [AttachLabelsTransform(self._pg), AttachUserTransform(self._db)],
+            [AttachLabelsTransform(self._pg)],
         )
 
         return SampleSearchResult(

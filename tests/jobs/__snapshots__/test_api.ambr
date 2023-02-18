@@ -887,33 +887,6 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_delete[uvloop-None]
-  <class 'dict'> {
-    'removed': <class 'list'> [
-      '4c530449',
-    ],
-  }
----
-# name: test_delete[uvloop-complete]
-  <class 'dict'> {
-    'removed': <class 'list'> [
-      '4c530449',
-    ],
-  }
----
-# name: test_delete[uvloop-failed]
-  <class 'dict'> {
-    'removed': <class 'list'> [
-    ],
-  }
----
-# name: test_delete[uvloop-finished]
-  <class 'dict'> {
-    'removed': <class 'list'> [
-      '4c530449',
-    ],
-  }
----
 # name: test_find_beta[uvloop-None-None-False]
   <class 'dict'> {
     'counts': <class 'dict'> {

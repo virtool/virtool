@@ -5,6 +5,7 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r403
 
 from virtool.api.response import json_response
+from virtool.authorization.roles import AdministratorRole
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
@@ -32,7 +33,7 @@ class SettingsView(PydanticView):
 
         return json_response(settings)
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.SETTINGS))
     async def patch(
         self, data: UpdateSettingsRequest
     ) -> Union[r200[UpdateSettingsResponse], r403]:

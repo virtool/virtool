@@ -27,7 +27,11 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
 
     client = await spawn_client(authorize=True)
 
-    user = await fake2.users.create()
+    user_1 = await fake2.users.create()
+
+    user_2 = await fake2.users.create()
+
+    job = await fake2.jobs.create(user=user_2)
 
     await asyncio.gather(
         client.db.references.insert_many(
@@ -43,7 +47,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                 "created_at": static_time.datetime,
                 "all_read": True,
                 "all_write": True,
-                "user": {"id": user.id},
+                "user": {"id": user_1.id},
                 "labels": [],
             }
         ),
@@ -57,9 +61,9 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "workflow": "pathoscope_bowtie",
                     "created_at": static_time.datetime,
                     "ready": True,
-                    "job": {"id": "test"},
+                    "job": {"id": job.id},
                     "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user.id},
+                    "user": {"id": user_1.id},
                     "sample": {"id": "test"},
                     "reference": {"id": "baz", "name": "Baz"},
                     "results": {"hits": []},
@@ -71,9 +75,9 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "workflow": "pathoscope_bowtie",
                     "created_at": static_time.datetime,
                     "ready": True,
-                    "job": {"id": "test"},
+                    "job": {"id": job.id},
                     "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user.id},
+                    "user": {"id": user_1.id},
                     "sample": {"id": "test"},
                     "reference": {"id": "baz", "name": "Baz"},
                     "results": {"hits": []},
@@ -85,9 +89,9 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
                     "workflow": "pathoscope_bowtie",
                     "created_at": static_time.datetime,
                     "ready": True,
-                    "job": {"id": "test"},
+                    "job": None,
                     "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user.id},
+                    "user": {"id": user_1.id},
                     "sample": {"id": "test"},
                     "reference": {"id": "foo"},
                     "results": {"hits": []},
@@ -106,27 +110,39 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
 
 
 @pytest.mark.apitest
-@pytest.mark.parametrize("ready", [True, False])
+@pytest.mark.parametrize("ready, job_exists", [(True, True), (False, False)])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
 async def test_get(
-    ready, fake2, error, mocker, snapshot, spawn_client, static_time, resp_is, pg
+    ready,
+    job_exists,
+    fake2,
+    error,
+    mocker,
+    snapshot,
+    spawn_client,
+    static_time,
+    resp_is,
+    pg,
 ):
     client = await spawn_client(authorize=True)
 
-    user = await fake2.users.create()
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+
+    job = await fake2.jobs.create(user=user_2)
 
     document = {
         "_id": "foobar",
         "created_at": static_time.datetime,
         "ready": ready,
-        "job": {"id": "test"},
+        "job": {"id": job.id if job_exists else "test"},
         "index": {"version": 3, "id": "bar"},
         "workflow": "pathoscope_bowtie",
         "results": {"hits": []},
         "sample": {"id": "baz"},
         "reference": {"id": "baz"},
         "subtractions": ["plum", "apple"],
-        "user": {"id": user.id},
+        "user": {"id": user_1.id},
     }
 
     await asyncio.gather(
@@ -150,7 +166,7 @@ async def test_get(
                 "group_write": True,
                 "labels": [],
                 "subtractions": ["apple", "plum"],
-                "user": {"id": user.id},
+                "user": {"id": user_1.id},
             }
         )
 
@@ -162,13 +178,120 @@ async def test_get(
         "virtool.analyses.format.format_analysis",
         make_mocked_coro(
             {
-                "_id": "foo",
+                "_id": "foobar",
                 "created_at": static_time.datetime,
-                "formatted": True,
-                "user": {"id": user.id},
-                "subtractions": ["apple", "plum"],
-                "results": {"hits": []},
+                "ready": True,
+                "job": {
+                    "_id": "7cf872dc",
+                    "acquired": False,
+                    "archived": False,
+                    "workflow": "jobs_aodp",
+                    "args": {
+                        "we": -899431834.68956,
+                        "outside": 2513,
+                        "two": 468.89084383643,
+                        "movie": 748,
+                        "whose": 8388626647.46166,
+                        "foreign": -9158348948.40671,
+                    },
+                    "rights": {},
+                    "state": "waiting",
+                    "status": [
+                        {
+                            "state": "waiting",
+                            "stage": None,
+                            "step_name": None,
+                            "step_description": None,
+                            "error": None,
+                            "progress": 0,
+                            "timestamp": static_time.datetime,
+                        }
+                    ],
+                    "user": {
+                        "_id": "fb085f7f",
+                        "handle": "zclark",
+                        "administrator": False,
+                        "groups": [],
+                        "permissions": {
+                            "cancel_job": False,
+                            "create_ref": False,
+                            "create_sample": False,
+                            "modify_hmm": False,
+                            "modify_subtraction": False,
+                            "remove_file": False,
+                            "remove_job": False,
+                            "upload_file": False,
+                        },
+                        "primary_group": None,
+                        "force_reset": False,
+                        "last_password_change": static_time.datetime,
+                        "invalidate_sessions": False,
+                    },
+                    "ping": None,
+                    "created_at": static_time.datetime,
+                    "progress": 0,
+                    "stage": None,
+                    "id": "7cf872dc",
+                },
+                "index": {"version": 3, "id": "bar"},
                 "workflow": "pathoscope_bowtie",
+                "results": {"hits": []},
+                "sample": {"id": "baz"},
+                "reference": {"_id": "baz", "data_type": "genome", "name": "Baz"},
+                "subtractions": [
+                    {"_id": "apple", "name": "Apple"},
+                    {"_id": "plum", "name": "Plum"},
+                ],
+                "user": {
+                    "_id": "bf1b993c",
+                    "handle": "leeashley",
+                    "administrator": False,
+                    "groups": [],
+                    "permissions": {
+                        "cancel_job": False,
+                        "create_ref": False,
+                        "create_sample": False,
+                        "modify_hmm": False,
+                        "modify_subtraction": False,
+                        "remove_file": False,
+                        "remove_job": False,
+                        "upload_file": False,
+                    },
+                    "primary_group": None,
+                    "force_reset": False,
+                    "last_password_change": static_time.datetime,
+                    "invalidate_sessions": False,
+                },
+                "last_status": {
+                    "state": "waiting",
+                    "stage": None,
+                    "step_name": None,
+                    "step_description": None,
+                    "error": None,
+                    "progress": 0,
+                    "timestamp": static_time.datetime,
+                },
+                "first_status": {
+                    "state": "waiting",
+                    "stage": None,
+                    "step_name": None,
+                    "step_description": None,
+                    "error": None,
+                    "progress": 0,
+                    "timestamp": static_time.datetime,
+                },
+                "files": [
+                    {
+                        "id": 1,
+                        "analysis": "foobar",
+                        "description": None,
+                        "format": "fasta",
+                        "name": "reference.fa",
+                        "name_on_disk": "1-reference.fa",
+                        "size": None,
+                        "uploaded_at": None,
+                    }
+                ],
             }
         ),
     )
@@ -522,7 +645,11 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
 async def test_finalize(
     fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
 ):
-    user = await fake2.users.create()
+    user_1 = await fake2.users.create()
+
+    user_2 = await fake2.users.create()
+
+    job = await fake2.jobs.create(user=user_2)
 
     patch_json = {"results": {"result": "TEST_RESULT", "hits": []}}
 
@@ -544,12 +671,12 @@ async def test_finalize(
                 "_id": "analysis1",
                 "sample": {"id": "sample1"},
                 "created_at": static_time.datetime,
-                "job": {"id": "test"},
+                "job": {"id": job.id},
                 "index": {"version": 2, "id": "foo"},
                 "workflow": "nuvs",
                 "reference": {"id": "baz"},
                 "files": [],
-                "user": {"id": user.id},
+                "user": {"id": user_1.id},
                 "ready": error == 409,
                 "subtractions": [],
             }

@@ -15,7 +15,7 @@ routes = Routes()
 @policy(PublicRoutePolicy)
 async def acquire_tokens(req: Request) -> Response:
     """
-    Gather authentication response from auth uri query string.
+    Gather authentication response from authorization uri query string.
     Fetch tokens from b2c authorization endpoint.
 
     Once tokens are acquired, redirect user back to Virtool homepage.

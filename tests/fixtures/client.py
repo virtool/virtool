@@ -68,6 +68,7 @@ def create_app(
     redis_connection_string,
     test_db_connection_string,
     test_db_name,
+    openfga_store_name,
 ):
     def _create_app(dev: bool = False, base_url: str = "", no_tasks: bool = True):
         config = Config(
@@ -84,6 +85,7 @@ def create_app(
             no_sentry=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
+            openfga_store_name=openfga_store_name,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
             fake=False,
@@ -103,7 +105,7 @@ def spawn_client(
     mongo,
     create_app,
     create_user,
-    data_layer,
+    authorization_client,
 ):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
@@ -191,6 +193,8 @@ def spawn_job_client(
     pg_connection_string,
     pg,
     test_db_name,
+    openfga_store_name,
+    authorization_client,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
@@ -226,6 +230,7 @@ def spawn_job_client(
                 no_sentry=True,
                 openfga_host="localhost:8080",
                 openfga_scheme="http",
+                openfga_store_name=openfga_store_name,
             )
         )
 

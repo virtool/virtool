@@ -5,7 +5,6 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-import virtool.mongo.connect
 import virtool.mongo.core
 from virtool.mongo.identifier import FakeIdProvider
 
@@ -50,7 +49,6 @@ async def test_motor(test_db_connection_string, test_db_name, loop, request):
         ]
     )
 
-    await virtool.mongo.connect.create_indexes(db)
     yield db
     await client.drop_database(test_db_name)
 

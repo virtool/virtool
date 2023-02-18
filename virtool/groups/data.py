@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from pymongo.errors import DuplicateKeyError
 from virtool_core.models.group import GroupMinimal, Group
 
+from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceConflictError,
@@ -12,15 +13,18 @@ from virtool.groups.db import (
     fetch_complete_group,
 )
 from virtool.groups.oas import UpdateGroupRequest
-from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
+if TYPE_CHECKING:
+    from virtool.mongo.core import DB
+
 
 class GroupsData:
-    def __init__(self, db):
-        self._db: DB = db
+    def __init__(self, authorization_client: AuthorizationClient, db: "DB"):
+        self._authorization_client = authorization_client
+        self._db = db
 
     async def find(self) -> List[GroupMinimal]:
         """
@@ -83,6 +87,9 @@ class GroupsData:
 
         update = {}
 
+        if "name" in data:
+            update["name"] = data["name"]
+
         if "permissions" in data:
             permissions = await get_one_field(
                 self._db.groups, "permissions", {"_id": group_id}
@@ -92,9 +99,6 @@ class GroupsData:
                 **permissions,
                 **data["permissions"],
             }
-
-        if "name" in data:
-            update["name"] = data["name"]
 
         if update:
             async with self._db.create_session() as session:

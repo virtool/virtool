@@ -98,21 +98,29 @@
     <class 'dict'> {
       'ctx': <class 'dict'> {
         'enum_values': <class 'list'> [
-          'cancel_job',
-          'create_ref',
-          'create_sample',
-          'modify_hmm',
-          'modify_subtraction',
-          'remove_file',
-          'remove_job',
-          'upload_file',
+          'label_manager',
+          'project_manager',
+          'project_editor',
+          'project_viewer',
+          'reference_manager',
+          'reference_builder',
+          'reference_editor',
+          'reference_contributor',
+          'reference_viewer',
+          'sample_manager',
+          'sample_editor',
+          'sample_analyzer',
+          'sample_viewer',
+          'subtraction_manager',
+          'subtraction_editor',
+          'subtraction_viewer',
         ],
       },
       'in': 'path',
       'loc': <class 'list'> [
-        'permission',
+        'role',
       ],
-      'msg': "value is not a valid enumeration member; permitted: 'cancel_job', 'create_ref', 'create_sample', 'modify_hmm', 'modify_subtraction', 'remove_file', 'remove_job', 'upload_file'",
+      'msg': "value is not a valid enumeration member; permitted: 'label_manager', 'project_manager', 'project_editor', 'project_viewer', 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer', 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer', 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
       'type': 'type_error.enum',
     },
   ]
@@ -335,10 +343,10 @@
 # name: test_list_permissions[uvloop-test]
   <class 'list'> [
     <class 'dict'> {
-      'id': 'create_ref',
+      'id': 'reference_builder',
     },
     <class 'dict'> {
-      'id': 'create_sample',
+      'id': 'sample_editor',
     },
   ]
 ---
@@ -347,21 +355,29 @@
     <class 'dict'> {
       'ctx': <class 'dict'> {
         'enum_values': <class 'list'> [
-          'cancel_job',
-          'create_ref',
-          'create_sample',
-          'modify_hmm',
-          'modify_subtraction',
-          'remove_file',
-          'remove_job',
-          'upload_file',
+          'label_manager',
+          'project_manager',
+          'project_editor',
+          'project_viewer',
+          'reference_manager',
+          'reference_builder',
+          'reference_editor',
+          'reference_contributor',
+          'reference_viewer',
+          'sample_manager',
+          'sample_editor',
+          'sample_analyzer',
+          'sample_viewer',
+          'subtraction_manager',
+          'subtraction_editor',
+          'subtraction_viewer',
         ],
       },
       'in': 'path',
       'loc': <class 'list'> [
-        'permission',
+        'role',
       ],
-      'msg': "value is not a valid enumeration member; permitted: 'cancel_job', 'create_ref', 'create_sample', 'modify_hmm', 'modify_subtraction', 'remove_file', 'remove_job', 'upload_file'",
+      'msg': "value is not a valid enumeration member; permitted: 'label_manager', 'project_manager', 'project_editor', 'project_viewer', 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer', 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer', 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
       'type': 'type_error.enum',
     },
   ]

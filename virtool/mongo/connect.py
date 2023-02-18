@@ -2,13 +2,12 @@ import sys
 from logging import getLogger
 
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorClient
-from pymongo import DESCENDING, ASCENDING
 from pymongo.errors import ServerSelectionTimeoutError
 from semver import VersionInfo
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 
-REQUIRED_MONGODB_REVISION = "6q5k8tz8uph3"
+REQUIRED_MONGODB_REVISION = "l20h8fsbbb28"
 
 logger = getLogger("mongo")
 
@@ -93,43 +92,3 @@ async def get_mongo_version(db: AsyncIOMotorClient) -> str:
 
     """
     return (await db.motor_client.client.server_info())["version"]
-
-
-async def create_indexes(db):
-    """
-    Create all MongoDB indexes.
-
-    :param db: the application database object
-
-    """
-    await db.analyses.create_index("sample.id")
-    await db.analyses.create_index([("created_at", DESCENDING)])
-    await db.caches.create_index(
-        [("key", ASCENDING), ("sample.id", ASCENDING)], unique=True
-    )
-    await db.groups.create_index("name", unique=True, sparse=True)
-    await db.history.create_index("otu.id")
-    await db.history.create_index("index.id")
-    await db.history.create_index("created_at")
-    await db.history.create_index([("otu.name", ASCENDING)])
-    await db.history.create_index([("otu.version", DESCENDING)])
-    await db.indexes.create_index(
-        [("version", ASCENDING), ("reference.id", ASCENDING)],
-        unique=True,
-    )
-    await db.keys.create_index("id", unique=True)
-    await db.keys.create_index("user.id")
-    await db.otus.create_index([("_id", ASCENDING), ("isolate.id", ASCENDING)])
-    await db.otus.create_index("name")
-    await db.otus.create_index("nickname")
-    await db.otus.create_index("abbreviation")
-    await db.otus.create_index([("reference.id", ASCENDING), ("remote.id", ASCENDING)])
-    await db.samples.create_index([("created_at", DESCENDING)])
-    await db.sequences.create_index("otu_id")
-    await db.sequences.create_index("name")
-    await db.sequences.create_index(
-        [("reference.id", ASCENDING), ("remote.id", ASCENDING)]
-    )
-    await db.users.create_index("b2c_oid", unique=True, sparse=True)
-    await db.users.create_index("handle", unique=True, sparse=True)
-    await db.sessions.create_index("expiresAt", expireAfterSeconds=0)
