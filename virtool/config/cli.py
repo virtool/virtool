@@ -75,7 +75,7 @@ def entry():
     default="https",
 )
 @click.option(
-    "--openfga-store",
+    "--openfga-store-name",
     help="The OpenFGA API store",
     type=str,
     default="Virtool",
