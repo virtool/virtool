@@ -4,8 +4,9 @@ from aiohttp.web import Request, Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r403
 
-from virtool.api.response import json_response
 from virtool_core.models.roles import AdministratorRole
+
+from virtool.api.response import json_response
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes

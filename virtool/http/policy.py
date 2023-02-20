@@ -7,12 +7,13 @@ from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
 
+from virtool_core.models.roles import (
+    AdministratorRole,
+)
+
 from virtool.authorization.permissions import (
     ResourceType,
     LegacyPermission,
-)
-from virtool_core.models.roles import (
-    AdministratorRole,
 )
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.errors import PolicyError
