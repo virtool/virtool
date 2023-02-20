@@ -15,7 +15,7 @@ from aiohttp_pydantic import PydanticView
 from virtool_core.models.enums import Permission
 
 from virtool.authorization.permissions import LegacyPermission
-from virtool.authorization.roles import AdministratorRole
+from virtool_core.models.roles import AdministratorRole
 from virtool.errors import PolicyError
 from virtool.http.policy import (
     policy,

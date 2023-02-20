@@ -14,7 +14,7 @@ from virtool.authorization.relationships import (
     SpaceRoleAssignment,
     ReferenceRoleAssignment,
 )
-from virtool.authorization.roles import (
+from virtool_core.models.roles import (
     SpaceResourceRole,
     SpaceRole,
     AdministratorRole,

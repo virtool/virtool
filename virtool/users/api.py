@@ -11,7 +11,7 @@ import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.relationships import UserRoleAssignment
-from virtool.authorization.roles import AdministratorRole, SpaceResourceRole
+from virtool_core.models.roles import AdministratorRole, SpaceResourceRole
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req

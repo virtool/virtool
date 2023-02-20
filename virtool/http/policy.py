@@ -11,7 +11,7 @@ from virtool.authorization.permissions import (
     ResourceType,
     LegacyPermission,
 )
-from virtool.authorization.roles import (
+from virtool_core.models.roles import (
     AdministratorRole,
 )
 from virtool.authorization.utils import get_authorization_client_from_req

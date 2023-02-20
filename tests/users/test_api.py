@@ -5,7 +5,7 @@ from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 
 from virtool.authorization.relationships import UserRoleAssignment
-from virtool.authorization.roles import SpaceResourceRole
+from virtool_core.models.roles import SpaceResourceRole
 from virtool.data.utils import get_data_from_app
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.settings.oas import UpdateSettingsRequest

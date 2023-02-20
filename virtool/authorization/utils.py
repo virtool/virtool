@@ -17,7 +17,7 @@ from openfga_sdk.api import open_fga_api
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.permissions import Permission, ResourceType
-from virtool.authorization.roles import AdministratorRole
+from virtool_core.models.roles import AdministratorRole
 from virtool.types import App
 
 logger = getLogger("authz")

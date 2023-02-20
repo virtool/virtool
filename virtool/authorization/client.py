@@ -25,7 +25,7 @@ from virtool.authorization.results import (
     RemoveRelationshipResult,
     AddRelationshipResult,
 )
-from virtool.authorization.roles import (
+from virtool_core.models.roles import (
     AdministratorRole,
     ReferenceRole,
     SpaceResourceRole,
