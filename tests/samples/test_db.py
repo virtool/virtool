@@ -170,7 +170,7 @@ class TestDeriveWorkflowStates:
             ([True, True], "complete"),
         ],
     )
-    def test_complete_pending(
+    def test_derive_workflow_states(
         self, workflow_name, analysis_states, final_workflow_state
     ):
         """
@@ -187,24 +187,17 @@ class TestDeriveWorkflowStates:
 
         final_workflow_states = derive_workflow_state(documents, library_type)
 
-        if workflow_name == "pathoscope":
-            expected_final_workflow_state = {
-                "workflows": {
-                    "aodp": "incompatible",
-                    "nuvs": "none",
-                    workflow_name: final_workflow_state,
-                }
+        expected_workflow_states = {
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "none",
+                "pathoscope": "none",
             }
-        else:
-            expected_final_workflow_state = {
-                "workflows": {
-                    "aodp": "incompatible",
-                    workflow_name: final_workflow_state,
-                    "pathoscope": "none",
-                }
-            }
+        }
 
-        assert final_workflow_states == expected_final_workflow_state
+        expected_workflow_states["workflows"][workflow_name] = final_workflow_state
+
+        assert final_workflow_states == expected_workflow_states
 
     @pytest.mark.parametrize(
         "analysis_states, final_workflow_state",
@@ -215,7 +208,7 @@ class TestDeriveWorkflowStates:
             ([True, True], "complete"),
         ],
     )
-    def test_complete_pending_aodp(self, analysis_states, final_workflow_state):
+    def test_derive_aodp_workflow_states(self, analysis_states, final_workflow_state):
         index = 0
         library_type = "amplicon"
         ready_1, ready_2 = analysis_states
