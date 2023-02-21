@@ -9,7 +9,7 @@ from aioredis import (
 )
 
 REDIS_TASKS_LIST_KEY = "tasks"
-logging.getLogger("tasksClient")
+logging.getLogger("tasks")
 
 
 class AbstractTasksClient(ABC):
@@ -30,16 +30,15 @@ class TasksClient(AbstractTasksClient):
         await self.redis.rpush(REDIS_TASKS_LIST_KEY, task_id)
 
     async def pop(self) -> int:
-        result = await self._blpop(self.redis)
+        result = await self._blpop()
 
         if result is not None:
             return int(result[1])
 
-    @staticmethod
-    async def _blpop(redis: Redis):
+    async def _blpop(self):
         while True:
             try:
-                with await redis as exclusive_redis:
+                with await self.redis as exclusive_redis:
                     return await exclusive_redis.blpop(REDIS_TASKS_LIST_KEY)
             except (
                 ConnectionRefusedError,
