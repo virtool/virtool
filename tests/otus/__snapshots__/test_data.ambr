@@ -2524,6 +2524,7 @@
     'remote': None,
     'segment': None,
     'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+    'target': None,
   }
 ---
 # name: test_remove_isolate[uvloop-bar]
