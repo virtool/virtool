@@ -19,4 +19,4 @@ config.json
 settings.json
 env
 tags
-.vscode/launch.json
+.vscode
