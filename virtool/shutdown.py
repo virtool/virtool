@@ -2,6 +2,7 @@ import logging
 
 from aiohttp.web import Application
 
+from virtool.authorization.utils import get_authorization_client_from_app
 from virtool.pg.base import Base
 from virtool.startup import get_scheduler_from_app
 
@@ -29,11 +30,7 @@ async def shutdown_authorization_client(app: Application):
     :param app: The application object
     """
     logger.info("Stopping OpenFGA client")
-
-    try:
-        await app["auth"].open_fga.close()
-    except KeyError:
-        pass
+    await get_authorization_client_from_app(app).open_fga.close()
 
 
 async def shutdown_dispatcher(app: Application):

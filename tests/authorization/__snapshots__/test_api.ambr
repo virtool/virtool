@@ -248,3 +248,105 @@
     },
   ]
 ---
+# name: test_find[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'action': 'create',
+      'description': 'Allow creation of users.',
+      'id': 'CREATE_USER',
+      'name': 'Create User',
+      'resource_type': 'app',
+    },
+    <class 'dict'> {
+      'action': 'update',
+      'description': 'Allow users to be updated.',
+      'id': 'UPDATE_USER',
+      'name': 'Update User',
+      'resource_type': 'app',
+    },
+    <class 'dict'> {
+      'action': 'delete',
+      'description': 'Allow deletion of users.',
+      'id': 'DELETE_USER',
+      'name': 'Delete User',
+      'resource_type': 'app',
+    },
+    <class 'dict'> {
+      'action': 'update',
+      'description': 'Allow settings to be updated.',
+      'id': 'UPDATE_SETTINGS',
+      'name': 'Update Settings',
+      'resource_type': 'app',
+    },
+    <class 'dict'> {
+      'action': 'create',
+      'description': 'Allow creation of groups.',
+      'id': 'CREATE_GROUP',
+      'name': 'Create Group',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'update',
+      'description': 'Allow groups to be updated.',
+      'id': 'UPDATE_GROUP',
+      'name': 'Update Group',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'modify',
+      'description': 'Allow modification of HMMs.',
+      'id': 'MODIFY_HMM',
+      'name': 'Modify HMM',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'modify',
+      'description': 'Allow modification of subtractions.',
+      'id': 'MODIFY_SUBTRACTION',
+      'name': 'Modify Subtraction',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'delete',
+      'description': 'Allow creation of groups',
+      'id': 'DELETE_GROUP',
+      'name': 'Delete Group',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'create',
+      'description': 'Allow files to be uploaded.',
+      'id': 'CREATE_UPLOAD',
+      'name': 'Create Upload',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'delete',
+      'description': 'Allow user-uploaded files to be deleted.',
+      'id': 'DELETE_UPLOAD',
+      'name': 'Delete Upload',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'create',
+      'description': 'Allow creation of references.',
+      'id': 'CREATE_REFERENCE',
+      'name': 'Create Reference',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'create',
+      'description': 'Allow creation of samples.',
+      'id': 'CREATE_SAMPLE',
+      'name': 'Create Sample',
+      'resource_type': 'space',
+    },
+    <class 'dict'> {
+      'action': 'cancel',
+      'description': 'Allow cancellation of jobs.',
+      'id': 'CANCEL_JOB',
+      'name': 'Cancel Job',
+      'resource_type': 'space',
+    },
+  ]
+---

@@ -13,7 +13,7 @@ from virtool_core.models.otu import OTU
 
 from virtool.api.response import InsufficientRights
 from virtool.api.response import NotFound, json_response
-from virtool.auth.permissions import AppPermission
+from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
@@ -21,7 +21,7 @@ from virtool.data.errors import (
     ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
 from virtool.otus.oas import CreateOTURequest
@@ -76,7 +76,7 @@ class ReferencesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy("app", "virtool", AppPermission.create_ref))
+    @policy(PermissionRoutePolicy(LegacyPermission.CREATE_REF))
     async def post(
         self, data: CreateReferenceRequest
     ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:

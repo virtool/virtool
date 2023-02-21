@@ -95,13 +95,13 @@
     'rights': <class 'dict'> {
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': <class 'datetime'>,
