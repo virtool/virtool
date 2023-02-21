@@ -14,7 +14,6 @@ from virtool_core.models.roles import (
 
 
 class AbstractRelationship(ABC):
-
     exclusive = False
     """
     Whether the relationship is exclusive of other relationships of the same type.

@@ -41,7 +41,6 @@ def get_authorization_client_from_req(req: Request) -> AuthorizationClient:
 async def delete_tuples(
     api_instance, object_type: ResourceType, object_id: Union[int, str]
 ):
-
     response = await api_instance.read(
         ReadRequest(
             tuple_key=TupleKey(object=f"{object_type}:{object_id}"),

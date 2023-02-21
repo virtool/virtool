@@ -165,7 +165,6 @@ class AuthorizationClient:
         )
 
     async def add(self, *relationships: AbstractRelationship):
-
         """
         Add one or more authorization relationships.
 
