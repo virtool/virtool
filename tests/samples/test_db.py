@@ -26,6 +26,7 @@ from virtool.samples.db import (
 )
 from virtool.samples.models import SampleReads
 from virtool.samples.utils import calculate_workflow_tags
+from virtool.samples.db import define_initial_workflows, derive_workflow_state
 from virtool.uploads.models import Upload
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
@@ -142,7 +143,92 @@ class TestRecalculateWorkflowTags:
             "_id": "test",
             "pathoscope": True,
             "nuvs": "ip",
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "complete",
+                "pathoscope": "complete",
+            },
         }
+
+
+class TestDeriveWorkflowStates:
+    @pytest.mark.parametrize("library_type", ["amplicon", "normal", "srna", "other"])
+    def test_define_initial_workflows(self, library_type, snapshot):
+        """
+        Test that initial workflow states are correctly defined.
+        """
+        workflow_states = define_initial_workflows(library_type=library_type)
+        assert workflow_states == snapshot
+
+    @pytest.mark.parametrize("workflow_name", ["nuvs", "pathoscope"])
+    @pytest.mark.parametrize(
+        "analysis_states, final_workflow_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    def test_derive_workflow_states(
+        self, workflow_name, analysis_states, final_workflow_state
+    ):
+        """
+        Test that workflows are set to complete and pending as expected.
+        """
+        index = 0
+        library_type = "other"
+        ready_1, ready_2 = analysis_states
+
+        documents = [
+            {"_id": index, "ready": ready_1, "workflow": workflow_name},
+            {"_id": index, "ready": ready_2, "workflow": workflow_name},
+        ]
+
+        final_workflow_states = derive_workflow_state(documents, library_type)
+
+        expected_workflow_states = {
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "none",
+                "pathoscope": "none",
+            }
+        }
+
+        expected_workflow_states["workflows"][workflow_name] = final_workflow_state
+
+        assert final_workflow_states == expected_workflow_states
+
+    @pytest.mark.parametrize(
+        "analysis_states, final_workflow_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    def test_derive_aodp_workflow_states(self, analysis_states, final_workflow_state):
+        index = 0
+        library_type = "amplicon"
+        ready_1, ready_2 = analysis_states
+
+        documents = [
+            {"_id": index, "ready": ready_1, "workflow": "aodp"},
+            {"_id": index, "ready": ready_2, "workflow": "aodp"},
+        ]
+
+        final_workflow_states = derive_workflow_state(documents, library_type)
+
+        expected_final_workflow_state = {
+            "workflows": {
+                "aodp": final_workflow_state,
+                "nuvs": "incompatible",
+                "pathoscope": "incompatible",
+            }
+        }
+
+        assert final_workflow_states == expected_final_workflow_state
 
 
 class TestGetSampleOwner:

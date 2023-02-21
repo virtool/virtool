@@ -7,6 +7,7 @@ from asyncio import to_thread
 import logging
 import os
 from collections import defaultdict
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
@@ -24,9 +25,9 @@ import virtool.utils
 from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
-from virtool.mongo.utils import id_exists
+from virtool.mongo.utils import id_exists, get_one_field
 from virtool.samples.models import SampleArtifact, SampleReads
-from virtool.samples.utils import join_legacy_read_paths
+from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
 from virtool.uploads.models import Upload
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
     from virtool.mongo.core import DB
 
 logger = logging.getLogger(__name__)
+
 
 LIST_PROJECTION = [
     "_id",
@@ -52,6 +54,7 @@ LIST_PROJECTION = [
     "notes",
     "labels",
     "subtractions",
+    "workflows",
 ]
 
 PROJECTION = [
@@ -81,6 +84,19 @@ RIGHTS_PROJECTION = {
     "all_write": True,
     "user": True,
 }
+
+
+class WorkflowState(Enum):
+    COMPLETE = "complete"
+    INCOMPATIBLE = "incompatible"
+    NONE = "none"
+    PENDING = "pending"
+
+
+UNCHANGABLE_WORKFLOW_STATES = [
+    WorkflowState.COMPLETE.value,
+    WorkflowState.INCOMPATIBLE.value,
+]
 
 
 class ArtifactsAndReadsTransform(AbstractTransform):
@@ -238,6 +254,7 @@ async def create_sample(
             "user": {"id": user_id},
             "group": group,
             "locale": locale,
+            "workflows": define_initial_workflows(library_type),
             "paired": paired,
         }
     )
@@ -263,6 +280,71 @@ async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     return None
 
 
+def define_initial_workflows(library_type) -> Dict[str, str]:
+    """
+    Checks for incompatibility workflow states
+
+    :param library_type: to check for compatability
+    :return: initial workflow states
+
+    """
+    if library_type == "amplicon":
+        return {
+            "aodp": WorkflowState.NONE.value,
+            "nuvs": WorkflowState.INCOMPATIBLE.value,
+            "pathoscope": WorkflowState.INCOMPATIBLE.value,
+        }
+
+    return {
+        "aodp": WorkflowState.INCOMPATIBLE.value,
+        "nuvs": WorkflowState.NONE.value,
+        "pathoscope": WorkflowState.NONE.value,
+    }
+
+
+def derive_workflow_state(analyses: list, library_type) -> dict:
+    """
+    Derive a workflow state dictionary for the passed analyses and library_type.
+
+    Workflows that are incompatible with the library type are set to "incompatible".
+
+    :param analyses: the analyses for the sample
+    :param library_type: for compatability check
+    :return: workflow state of a sample
+
+    """
+    workflow_states = define_initial_workflows(library_type)
+
+    for analysis in analyses:
+        workflow_name = get_workflow_name(analysis["workflow"])
+
+        if workflow_states[workflow_name] in UNCHANGABLE_WORKFLOW_STATES:
+            continue
+
+        workflow_states[workflow_name] = (
+            WorkflowState.COMPLETE.value
+            if analysis["ready"]
+            else WorkflowState.PENDING.value
+        )
+
+    return {"workflows": workflow_states}
+
+
+def get_workflow_name(workflow_name: str) -> str:
+    """
+    Returns the name of the workflow that is being used. If the workflow name is
+    "pathoscope_bowtie" or "pathoscope_bowtie2", then "pathoscope" is returned.
+
+    :param workflow_name: the name of the workflow
+    :return: the name of the workflow that is being used
+
+    """
+    if workflow_name in PATHOSCOPE_TASK_NAMES:
+        return "pathoscope"
+
+    return workflow_name
+
+
 async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     """
     Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
@@ -276,7 +358,12 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
         db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(None)
     )
 
-    update = virtool.samples.utils.calculate_workflow_tags(analyses)
+    library_type = await get_one_field(db.samples, "library_type", sample_id)
+
+    update = {
+        **virtool.samples.utils.calculate_workflow_tags(analyses),
+        **derive_workflow_state(analyses, library_type),
+    }
 
     document = await db.samples.find_one_and_update(
         {"_id": sample_id}, {"$set": update}, projection=LIST_PROJECTION

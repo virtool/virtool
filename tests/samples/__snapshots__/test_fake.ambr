@@ -28,6 +28,11 @@
     'user': <class 'dict'> {
       'id': '7CtBo2yG',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: test_create_fake_unpaired[uvloop-False-True]
@@ -59,6 +64,11 @@
     ],
     'user': <class 'dict'> {
       'id': '7CtBo2yG',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     },
   }
 ---
@@ -222,6 +232,11 @@
       'administrator': False,
       'handle': 'leeashley',
       'id': '7CtBo2yG',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     },
   }
 ---
@@ -395,6 +410,11 @@
       'administrator': False,
       'handle': 'leeashley',
       'id': '7CtBo2yG',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     },
   }
 ---
