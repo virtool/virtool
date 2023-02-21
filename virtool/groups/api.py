@@ -4,9 +4,9 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
 
+from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import NotFound, json_response
-from virtool.authorization.roles import AdministratorRole
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import (

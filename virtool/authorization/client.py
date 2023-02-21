@@ -15,6 +15,11 @@ from openfga_sdk import (
     CheckRequest,
 )
 from virtool_core.models.enums import Permission
+from virtool_core.models.roles import (
+    AdministratorRole,
+    ReferenceRole,
+    SpaceResourceRole,
+)
 
 from virtool.authorization.permissions import (
     ResourceType,
@@ -24,11 +29,6 @@ from virtool.authorization.relationships import AbstractRelationship
 from virtool.authorization.results import (
     RemoveRelationshipResult,
     AddRelationshipResult,
-)
-from virtool.authorization.roles import (
-    AdministratorRole,
-    ReferenceRole,
-    SpaceResourceRole,
 )
 
 

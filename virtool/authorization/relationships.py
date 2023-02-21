@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from virtool.authorization.permissions import ResourceType
-from virtool.authorization.roles import (
+from virtool_core.models.roles import (
     SpaceRole,
     AdministratorRole,
     SpaceResourceRole,
