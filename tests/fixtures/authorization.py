@@ -37,7 +37,6 @@ async def authorization_client(openfga_store_name: str) -> AuthorizationClient:
 
 @pytest.fixture
 async def setup_auth_update_group(spawn_auth_client, fake2):
-
     abs_client = await spawn_auth_client()
 
     group = await fake2.groups.create()
@@ -57,7 +56,6 @@ async def setup_auth_update_group(spawn_auth_client, fake2):
 
 @pytest.fixture
 async def setup_auth_update_user(spawn_auth_client, fake2, mongo):
-
     abs_client = await spawn_auth_client()
 
     group1 = await fake2.groups.create()

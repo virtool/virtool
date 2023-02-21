@@ -67,7 +67,6 @@ class TestCheck:
         )
 
     async def test_base_role_permissions(self, spawn_auth_client):
-
         client = await spawn_auth_client()
 
         await client.add(
