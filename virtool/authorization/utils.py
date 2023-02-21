@@ -1000,24 +1000,6 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
-                    "update_label": {
-                        "union": {
-                            "child": [
-                                {
-                                    "computedUserset": {
-                                        "object": "",
-                                        "relation": "label_manager",
-                                    }
-                                },
-                                {
-                                    "computedUserset": {
-                                        "object": "",
-                                        "relation": "owner",
-                                    }
-                                },
-                            ]
-                        }
-                    },
                     "view_project": {
                         "union": {
                             "child": [
@@ -1356,7 +1338,6 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                                 {"type": "space", "relation": "member"},
                             ]
                         },
-                        "update_label": {"directly_related_user_types": []},
                         "view_project": {"directly_related_user_types": []},
                         "view_reference": {"directly_related_user_types": []},
                         "view_sample": {"directly_related_user_types": []},
