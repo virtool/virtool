@@ -1,9 +1,8 @@
 from enum import Enum
+from sqlalchemy.orm import registry
 
-from sqlalchemy.ext.declarative import as_declarative
 
-
-@as_declarative()
+@registry().as_declarative_base()
 class Base:
     def __repr__(self):
         params = ", ".join(
@@ -14,7 +13,6 @@ class Base:
 
     def to_dict(self):
         row = {}
-
         for column in self.__table__.columns:
             value = getattr(self, column.name, None)
 

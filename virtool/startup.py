@@ -15,12 +15,12 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.utils import connect_openfga
 
 import virtool.mongo.connect
 import virtool.pg.utils
 from virtool.analyses.tasks import StoreNuvsFilesTask
-from virtool.auth.client import AuthorizationClient
-from virtool.auth.utils import connect_openfga
 from virtool.config import get_config_from_app
 from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
@@ -113,7 +113,12 @@ async def startup_data(app: App):
     """
 
     app["data"] = create_data_layer(
-        app["db"], app["pg"], app["config"], app["client"], app["redis"]
+        app["authorization"],
+        app["db"],
+        app["pg"],
+        app["config"],
+        app["client"],
+        app["redis"],
     )
 
 
@@ -239,14 +244,16 @@ async def startup_databases(app: Application):
     redis_connection_string = app["config"].redis_connection_string
     openfga_host = app["config"].openfga_host
     openfga_scheme = app["config"].openfga_scheme
+    openfga_store_name = app["config"].openfga_store_name
+    skip_revision_check = app["config"].no_revision_check
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
         virtool.mongo.connect.connect(
-            db_connection_string, db_name, app["config"].no_revision_check
+            db_connection_string, db_name, skip_revision_check
         ),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
-        connect_openfga(openfga_host, openfga_scheme),
+        connect_openfga(openfga_host, openfga_scheme, openfga_store_name),
     )
 
     scheduler = get_scheduler_from_app(app)
@@ -261,7 +268,7 @@ async def startup_databases(app: Application):
             "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
-            "auth": AuthorizationClient(mongo, openfga_instance),
+            "authorization": AuthorizationClient(openfga_instance),
         }
     )
 

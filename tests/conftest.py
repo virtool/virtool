@@ -22,16 +22,16 @@ from tests.fixtures.settings import *
 from tests.fixtures.subtractions import *
 from tests.fixtures.config import *
 from tests.fixtures.data import *
-from tests.fixtures.auth import *
+from tests.fixtures.authorization import *
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--db-connection-string", action="store", default="mongodb://localhost:27017"
+        "--db-connection-string", action="store", default="mongodb://root:virtool@localhost:27017"
     )
 
     parser.addoption(
-        "--redis-connection-string", action="store", default="redis://localhost:6379"
+        "--redis-connection-string", action="store", default="redis://root:virtool@localhost:6379"
     )
 
     parser.addoption(

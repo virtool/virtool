@@ -1,17 +1,18 @@
-from typing import Union, Optional, List
+from typing import Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
-from virtool_core.models.enums import Permission
 from virtool_core.models.user import User
+from virtool_core.models.roles import AdministratorRole, SpaceResourceRole
 
-import virtool.http.auth
+import virtool.http.authentication
 import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.auth.relationships import UserPermissions
+from virtool.authorization.relationships import UserRoleAssignment
+from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import (
@@ -35,7 +36,7 @@ routes = Routes()
 
 @routes.view("/users")
 class UsersView(PydanticView):
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
         self,
         find: Optional[str] = Field(
@@ -65,7 +66,7 @@ class UsersView(PydanticView):
 
         return json_response(data)
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def post(self, data: CreateUserRequest) -> Union[r201[User], r400, r403]:
         """
         Create a user.
@@ -133,7 +134,7 @@ class FirstUserView(PydanticView):
 
         session_id, session, token = await get_data_from_req(
             self.request
-        ).sessions.create(virtool.http.auth.get_ip(self.request), user.id)
+        ).sessions.create(virtool.http.authentication.get_ip(self.request), user.id)
 
         self.request["client"].authorize(session, is_api=False)
 
@@ -151,7 +152,7 @@ class FirstUserView(PydanticView):
 
 @routes.view("/users/{user_id}")
 class UserView(PydanticView):
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(self, user_id: str, /) -> Union[r200[User], r403, r404]:
         """
         Retrieve a user.
@@ -170,7 +171,7 @@ class UserView(PydanticView):
 
         return json_response(user)
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
         self, user_id: str, /, data: UpdateUserRequest
     ) -> Union[r200[User], r400, r403, r404, r409]:
@@ -213,41 +214,40 @@ class UserView(PydanticView):
 class PermissionsView(PydanticView):
     async def get(self, user_id: str, /) -> r200[PermissionsResponse]:
         """
-        List all permissions that a user has on the application.
+        List all roles that a user has on the space.
 
         Status Codes:
             200: Successful operation
         """
-        abs_client = self.request.app["auth"]
 
-        permission_list = await abs_client.list_permissions(user_id, "app", "virtool")
+        permissions = await get_authorization_client_from_req(
+            self.request
+        ).list_user_roles(user_id, 0)
 
-        permission_list = [{"id": permission} for permission in permission_list]
-
-        return json_response(permission_list)
+        return json_response([{"id": permission} for permission in permissions])
 
 
-@routes.view("/users/{user_id}/permissions/{permission}")
+@routes.view("/users/{user_id}/permissions/{role}")
 class PermissionView(PydanticView):
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def put(
-        self, user_id: str, permission: Permission, /
+        self, user_id: str, role: SpaceResourceRole, /
     ) -> r200[PermissionResponse]:
         """
-        Add a permission for a user
+        Add a role for a user
 
         Status Codes:
             200: Successful operation
         """
-        abs_client = self.request.app["auth"]
-
-        await abs_client.add(UserPermissions(user_id, [permission]))
+        await get_authorization_client_from_req(self.request).add(
+            UserRoleAssignment(0, user_id, role)
+        )
 
         return json_response(True)
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def delete(
-        self, user_id: str, permission: Permission, /
+        self, user_id: str, role: SpaceResourceRole, /
     ) -> r200[PermissionResponse]:
         """
         Delete a permission for a user
@@ -255,8 +255,8 @@ class PermissionView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        abs_client = self.request.app["auth"]
-
-        await abs_client.remove(UserPermissions(user_id, [permission]))
+        await get_authorization_client_from_req(self.request).remove(
+            UserRoleAssignment(0, user_id, role)
+        )
 
         return json_response(True)

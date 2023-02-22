@@ -35,4 +35,3 @@ async def test_check_revision(mongo, spawn_client):
 
     except SystemExit as e:
         assert e.code == 1
-

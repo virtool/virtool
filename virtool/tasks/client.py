@@ -1,10 +1,15 @@
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import List
 
-from aioredis import Redis
+from aioredis import (
+    Redis,
+    ConnectionClosedError,
+)
 
 REDIS_TASKS_LIST_KEY = "tasks"
+logging.getLogger("tasks")
 
 
 class AbstractTasksClient(ABC):
@@ -22,15 +27,25 @@ class TasksClient(AbstractTasksClient):
         self.redis = redis
 
     async def enqueue(self, task_type: str, task_id: int):
-        logging.info(task_id)
         await self.redis.rpush(REDIS_TASKS_LIST_KEY, task_id)
 
     async def pop(self) -> int:
-        with await self.redis as redis:
-            result = await redis.blpop(REDIS_TASKS_LIST_KEY)
+        result = await self._blpop()
 
-            if result is not None:
-                return int(result[1])
+        if result is not None:
+            return int(result[1])
+
+    async def _blpop(self):
+        while True:
+            try:
+                with await self.redis as exclusive_redis:
+                    return await exclusive_redis.blpop(REDIS_TASKS_LIST_KEY)
+            except (
+                ConnectionRefusedError,
+                ConnectionResetError,
+                ConnectionClosedError,
+            ):
+                await asyncio.sleep(5)
 
 
 class DummyTasksClient(AbstractTasksClient):

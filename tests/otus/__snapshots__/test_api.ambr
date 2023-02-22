@@ -1591,6 +1591,7 @@
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            'target': None,
           },
         ],
         'source_name': '8816-v2',
@@ -1640,6 +1641,7 @@
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            'target': None,
           },
         ],
         'source_name': '8816-v2',
@@ -1689,6 +1691,7 @@
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            'target': None,
           },
         ],
         'source_name': '8816-v2',
@@ -1738,6 +1741,7 @@
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            'target': None,
           },
         ],
         'source_name': '8816-v2',
@@ -3606,6 +3610,7 @@
             'remote': None,
             'segment': None,
             'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            'target': None,
           },
         ],
         'source_name': '8816-v2',
@@ -3675,6 +3680,7 @@
     'remote': None,
     'segment': None,
     'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+    'target': None,
   }
 ---
 # name: test_list_isolates[uvloop-None]

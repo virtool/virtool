@@ -7,7 +7,7 @@ import aiojobs.aiohttp
 from aiohttp_pydantic import oas
 
 import virtool.http.accept
-import virtool.http.auth
+import virtool.http.authentication
 import virtool.http.errors
 import virtool.http.query
 from virtool.config.cls import Config
@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 def create_app_without_startup():
     middlewares = [
         headers_middleware,
-        virtool.http.auth.middleware,
+        virtool.http.authentication.middleware,
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
@@ -70,7 +70,7 @@ def create_app(config: Config):
     """
     middlewares = [
         headers_middleware,
-        virtool.http.auth.middleware,
+        virtool.http.authentication.middleware,
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,

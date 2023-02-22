@@ -13,14 +13,16 @@ from aiohttp.web_exceptions import HTTPNoContent
 from aiohttp.web_response import json_response
 from aiohttp_pydantic import PydanticView
 from virtool_core.models.enums import Permission
+from virtool_core.models.roles import AdministratorRole
 
+from virtool.authorization.permissions import LegacyPermission
 from virtool.errors import PolicyError
 from virtool.http.policy import (
     policy,
     PublicRoutePolicy,
     DefaultRoutePolicy,
     AdministratorRoutePolicy,
-    PermissionsRoutePolicy,
+    PermissionRoutePolicy,
 )
 from virtool.http.routes import Routes
 
@@ -238,7 +240,9 @@ async def test_administrator(
     client = await spawn_client(
         authorize=authenticated,
         administrator=administrator,
-        addon_route_table=privilege_routes(AdministratorRoutePolicy),
+        addon_route_table=privilege_routes(
+            AdministratorRoutePolicy(AdministratorRole.BASE)
+        ),
     )
 
     for url in ["/view", "/func"]:
@@ -283,12 +287,12 @@ async def test_permissions(
         authorize=authenticated,
         administrator=administrator,
         permissions=(
-            [Permission.create_sample, Permission.modify_subtraction]
+            [LegacyPermission.CREATE_SAMPLE, LegacyPermission.MODIFY_SUBTRACTION]
             if has_permission
             else [Permission.modify_subtraction]
         ),
         addon_route_table=privilege_routes(
-            PermissionsRoutePolicy("app", "virtool", Permission.create_sample)
+            PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE)
         ),
     )
 
@@ -332,7 +336,7 @@ async def test_more_than_one_function():
     with pytest.raises(PolicyError):
 
         @routes.get("/func")
-        @policy(AdministratorRoutePolicy)
+        @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
         @policy(PublicRoutePolicy)
         async def get(_):
             """An example public route."""
@@ -351,7 +355,7 @@ async def test_more_than_one_view(spawn_client):
 
         @routes.view("/view")
         class TooManyPolicies(PydanticView):
-            @policy(AdministratorRoutePolicy)
+            @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
             @policy(PublicRoutePolicy)
             async def get(self):
                 """An example public route."""
