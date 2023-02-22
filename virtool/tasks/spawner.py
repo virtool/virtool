@@ -1,10 +1,10 @@
 import logging
 from typing import Type
 from typing import Union
+import asyncio
 
 import aiojobs
 from aiohttp.abc import Application
-from sqlalchemy.util import asyncio
 from virtool_core.redis import connect
 
 import virtool.pg.utils
