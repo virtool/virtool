@@ -1,7 +1,7 @@
 import logging
 from typing import Type
 from typing import Union
-import sqlalchemy.ext.asyncio as asyncio
+import asyncio
 
 import aiojobs
 from aiohttp.abc import Application

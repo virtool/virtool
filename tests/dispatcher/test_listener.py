@@ -1,6 +1,6 @@
 import json
 
-import sqlalchemy.ext.asyncio as asyncio
+import asyncio
 from aioredis import Redis
 
 from virtool.dispatcher.change import Change
