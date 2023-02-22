@@ -106,93 +106,94 @@ async def get_sample_data(mongo, fake2, pg, static_time):
     return user.id
 
 
-async def setup_initial_test_setup(fake2, spawn_client, static_time):
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+@pytest.fixture
+async def setup_find_samples_client(fake2, spawn_client, static_time):
+    async def setup():
+        user_1 = await fake2.users.create()
+        user_2 = await fake2.users.create()
 
-    label_1 = await fake2.labels.create()
-    label_2 = await fake2.labels.create()
-    label_3 = await fake2.labels.create()
+        label_1 = await fake2.labels.create()
+        label_2 = await fake2.labels.create()
+        label_3 = await fake2.labels.create()
 
-    client = await spawn_client(authorize=True)
+        client = await spawn_client(authorize=True)
 
-    await client.db.samples.insert_many(
-        [
-            {
-                "user": {"id": user_1.id},
-                "nuvs": True,
-                "host": "",
-                "foobar": True,
-                "isolate": "Thing",
-                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
-                "_id": "beb1eb10",
-                "name": "16GVP042",
-                "pathoscope": True,
-                "library_type": "normal",
-                "all_read": True,
-                "ready": True,
-                "labels": [label_1.id, label_2.id],
-                "notes": "",
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-            {
-                "user": {"id": user_2.id},
-                "nuvs": False,
-                "host": "",
-                "foobar": True,
-                "isolate": "Test",
-                "library_type": "srna",
-                "created_at": arrow.get(static_time.datetime).datetime,
-                "_id": "72bb8b31",
-                "name": "16GVP043",
-                "pathoscope": False,
-                "all_read": True,
-                "ready": True,
-                "labels": [label_1.id],
-                "notes": "This is a good sample.",
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-            {
-                "user": {"id": user_2.id},
-                "nuvs": False,
-                "host": "",
-                "library_type": "amplicon",
-                "notes": "",
-                "foobar": True,
-                "ready": True,
-                "isolate": "",
-                "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
-                "_id": "cb400e6d",
-                "name": "16SPP044",
-                "pathoscope": False,
-                "all_read": True,
-                "labels": [label_3.id],
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-        ],
-        session=None,
-    )
-    return client
+        await client.db.samples.insert_many(
+            [
+                {
+                    "user": {"id": user_1.id},
+                    "nuvs": True,
+                    "host": "",
+                    "foobar": True,
+                    "isolate": "Thing",
+                    "created_at": arrow.get(static_time.datetime)
+                    .shift(hours=1)
+                    .datetime,
+                    "_id": "beb1eb10",
+                    "name": "16GVP042",
+                    "pathoscope": True,
+                    "library_type": "normal",
+                    "all_read": True,
+                    "ready": True,
+                    "labels": [label_1.id, label_2.id],
+                    "notes": "",
+                    "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+                },
+                {
+                    "user": {"id": user_2.id},
+                    "nuvs": False,
+                    "host": "",
+                    "foobar": True,
+                    "isolate": "Test",
+                    "library_type": "srna",
+                    "created_at": arrow.get(static_time.datetime).datetime,
+                    "_id": "72bb8b31",
+                    "name": "16GVP043",
+                    "pathoscope": False,
+                    "all_read": True,
+                    "ready": True,
+                    "labels": [label_1.id],
+                    "notes": "This is a good sample.",
+                    "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+                },
+                {
+                    "user": {"id": user_2.id},
+                    "nuvs": False,
+                    "host": "",
+                    "library_type": "amplicon",
+                    "notes": "",
+                    "foobar": True,
+                    "ready": True,
+                    "isolate": "",
+                    "created_at": arrow.get(static_time.datetime)
+                    .shift(hours=2)
+                    .datetime,
+                    "_id": "cb400e6d",
+                    "name": "16SPP044",
+                    "pathoscope": False,
+                    "all_read": True,
+                    "labels": [label_3.id],
+                    "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+                },
+            ],
+            session=None,
+        )
+        return client
+
+    return setup()
 
 
 @pytest.mark.apitest
 class TestFindSamples:
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
     async def test_term(
-        self,
-        find,
-        fake2,
-        spawn_client,
-        static_time,
-        snapshot,
+        self, find, fake2, spawn_client, snapshot, setup_find_samples_client
     ):
-        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
+        client = await setup_find_samples_client
         path = "/samples"
-        query = []
+
         if find is not None:
-            query.append(f"find={find}")
-        if query:
-            path += f"?{'&'.join(query)}"
+            path += f"?find={find}"
 
         resp = await client.get(path)
         assert resp.status == 200
@@ -200,15 +201,9 @@ class TestFindSamples:
 
     @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
     async def test_page_perpage(
-        self,
-        per_page,
-        page,
-        fake2,
-        spawn_client,
-        static_time,
-        snapshot,
+        self, per_page, page, fake2, spawn_client, snapshot, setup_find_samples_client
     ):
-        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
+        client = await setup_find_samples_client
         path = "/samples"
         query = []
         if per_page is not None:
@@ -223,22 +218,14 @@ class TestFindSamples:
 
     @pytest.mark.parametrize("labels", [None, [3], [2, 3], [0]])
     async def test_labels(
-        self,
-        labels,
-        fake2,
-        spawn_client,
-        static_time,
-        snapshot,
+        self, labels, fake2, spawn_client, snapshot, setup_find_samples_client
     ):
-        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
+        client = await setup_find_samples_client
         path = "/samples"
-        query = []
 
         if labels is not None:
             label_query = "&label=".join(str(label) for label in labels)
-            query.append(f"label={label_query}")
-        if query:
-            path += f"?{'&'.join(query)}"
+            path += f"?label={label_query}"
 
         resp = await client.get(path)
         assert resp.status == 200
@@ -254,23 +241,14 @@ class TestFindSamples:
         ],
     )
     async def test_workflows(
-        self,
-        workflows,
-        snapshot,
-        fake2,
-        spawn_client,
-        static_time,
+        self, workflows, fake2, spawn_client, snapshot, setup_find_samples_client
     ):
-        client = await setup_initial_test_setup(fake2, spawn_client, static_time)
-
+        client = await setup_find_samples_client
         path = "/samples"
-        query = []
+
         if workflows is not None:
             workflows_query = "&workflows=".join(workflow for workflow in workflows)
-            query.append(f"workflows={workflows_query}")
-
-        if query:
-            path += f"?{'&'.join(query)}"
+            path += f"?workflows={workflows_query}"
 
         resp = await client.get(path)
         assert resp.status == 200
