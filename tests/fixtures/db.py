@@ -1,4 +1,4 @@
-import asyncio
+import sqlalchemy.ext.asyncio as asyncio
 
 import motor.motor_asyncio
 import pytest
