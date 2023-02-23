@@ -4,6 +4,8 @@ from sqlalchemy.orm import registry
 
 @registry().as_declarative_base()
 class Base:
+    __allow_unmapped__ = True
+
     def __repr__(self):
         params = ", ".join(
             f"{column}={value}" for column, value in self.to_dict().items()

@@ -2,7 +2,7 @@ import aiojobs
 import aiojobs.aiohttp
 from aiohttp import web
 from aiohttp.web import Application
-from sqlalchemy.util import asyncio
+import asyncio
 
 import virtool.http.accept
 import virtool.http.errors
