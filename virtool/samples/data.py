@@ -30,6 +30,7 @@ from virtool.samples.db import (
     LIST_PROJECTION,
     ArtifactsAndReadsTransform,
     validate_force_choice_group,
+    define_initial_workflows,
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
@@ -253,6 +254,7 @@ class SamplesData(DataLayerPiece):
                         "results": None,
                         "subtractions": data.subtractions,
                         "user": {"id": user_id},
+                        "workflows": define_initial_workflows(data.library_type),
                     },
                     session=session,
                 ),
