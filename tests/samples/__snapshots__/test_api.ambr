@@ -84,6 +84,11 @@
     'user': <class 'dict'> {
       'id': 'test',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: TestCreate.test[uvloop-none]
@@ -172,6 +177,11 @@
     'user': <class 'dict'> {
       'id': 'test',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: TestCreate.test[uvloop-users_primary_group]
@@ -259,6 +269,11 @@
     ],
     'user': <class 'dict'> {
       'id': 'test',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     },
   }
 ---
