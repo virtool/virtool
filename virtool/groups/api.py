@@ -26,7 +26,9 @@ routes = Routes()
 class GroupsView(PydanticView):
     async def get(self) -> r200[List[GetGroupResponse]]:
         """
-        List all existing user groups.
+        List groups.
+
+        Lists all user groups. The group IDs and names are included in the response.
 
         Status Codes:
             200: Successful operation
@@ -73,7 +75,10 @@ class GroupsView(PydanticView):
 class GroupView(PydanticView):
     async def get(self, group_id: str, /) -> Union[r200[GroupResponse], r404]:
         """
-        Get the complete representation of a single user group.
+        Get a group.
+
+        Fetches the complete representation of a single user group including its
+        permissions.
 
         Status Codes:
             200: Successful operation
