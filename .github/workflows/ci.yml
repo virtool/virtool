@@ -226,7 +226,11 @@ jobs:
       - name: Install semantic-release
         run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
       - name: Run semantic-release
+        id: semantic
         env:
           GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx semantic-release
+      - name: Trigger Pages Hook
+        if: ${{ steps.semantic.outputs.new-release-published }}
+        run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
