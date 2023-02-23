@@ -179,6 +179,12 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                             ]
                         }
                     },
+                    "modify_hmm": {
+                        "computedUserset": {
+                            "object": "",
+                            "relation": "base"
+                        }
+                    }
                 },
                 "metadata": {
                     "relations": {
