@@ -231,6 +231,3 @@ jobs:
           GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx semantic-release
-      - name: Trigger Hooks
-        if: ${{ steps.semantic.outputs.new-release-published }}
-        run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
