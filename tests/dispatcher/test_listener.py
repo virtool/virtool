@@ -1,7 +1,7 @@
 import json
 
+import asyncio
 from aioredis import Redis
-from sqlalchemy.util import asyncio
 
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.listener import RedisDispatcherListener
