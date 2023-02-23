@@ -8,6 +8,13 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+
+  hooks:
+    runs-on: ubuntu-22.04
+    if: github.repository_owner == 'Virtool'
+    steps:
+      - name: Trigger Cloudflare
+        run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
   dockerhub:
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool'
