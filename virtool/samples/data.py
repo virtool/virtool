@@ -193,7 +193,6 @@ class SamplesData(DataLayerPiece):
 
             return Sample(**document)
 
-
     async def create(
         self,
         data: CreateSampleRequest,
