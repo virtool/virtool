@@ -39,7 +39,7 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
-from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
+from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import base_processor, wait_for_checks
 
 logger = logging.getLogger(__name__)
@@ -158,29 +158,40 @@ class SamplesData(DataLayerPiece):
         )
 
     async def get(self, sample_id: str) -> Sample:
-        document = await self._db.samples.find_one({"_id": sample_id})
-
-        if not document:
-            raise ResourceNotFoundError
-
-        document["caches"] = [
-            base_processor(cache)
-            async for cache in self._db.caches.find({"sample.id": sample_id})
-        ]
-
-        document = await apply_transforms(
-            base_processor(document),
+        async for document in self._db.samples.aggregate(
             [
-                ArtifactsAndReadsTransform(self._pg),
-                AttachLabelsTransform(self._pg),
-                AttachSubtractionTransform(self._db),
-                AttachUserTransform(self._db),
-            ],
-        )
+                {"$match": {"_id": sample_id}},
+                *lookup_nested_user_by_id(local_field="user.id"),
+                {
+                    "$lookup": {
+                        "from": "samples",
+                        "localField": "samples",
+                        "foreignField": "_id",
+                        "as": "samples",
+                    }
+                },
+            ]
+        ):
+            if not document:
+                raise ResourceNotFoundError
 
-        document["paired"] = len(document["reads"]) == 2
+            document["caches"] = [
+                base_processor(cache)
+                async for cache in self._db.caches.find({"sample.id": sample_id})
+            ]
 
-        return Sample(**document)
+            document = await apply_transforms(
+                base_processor(document),
+                [
+                    ArtifactsAndReadsTransform(self._pg),
+                    AttachLabelsTransform(self._pg),
+                    AttachSubtractionTransform(self._db),
+                ],
+            )
+
+            document["paired"] = len(document["reads"]) == 2
+
+            return Sample(**document)
 
     async def create(
         self,
