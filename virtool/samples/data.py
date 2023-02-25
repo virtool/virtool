@@ -161,15 +161,7 @@ class SamplesData(DataLayerPiece):
         async for document in self._db.samples.aggregate(
             [
                 {"$match": {"_id": sample_id}},
-                *lookup_nested_user_by_id(local_field="user.id"),
-                {
-                    "$lookup": {
-                        "from": "samples",
-                        "localField": "samples",
-                        "foreignField": "_id",
-                        "as": "samples",
-                    }
-                },
+                *lookup_nested_user_by_id(local_field="user.id")
             ]
         ):
             if not document:
