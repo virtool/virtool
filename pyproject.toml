@@ -24,6 +24,9 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
 ]
 
+[tool.isort]
+profile = "black"
+
 [tool.poetry.dependencies]
 python = "~3.10"
 aiofiles = "^0.7.0"
@@ -73,6 +76,9 @@ pytest-rerunfailures = "^10.2"
 
 [tool.poetry.scripts]
 virtool = "virtool.config:entry"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.12.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
