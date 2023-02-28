@@ -241,7 +241,7 @@ async def push_status(req):
     try:
         document = await get_data_from_req(req).jobs.push_status(
             req.match_info["job_id"],
-            data["state"],
+            JobState(data["state"]),
             data["stage"],
             data["step_name"],
             data["step_description"],

@@ -207,7 +207,7 @@ class JobsData:
             "args": job_args,
             "key": None,
             "rights": rights.as_dict(),
-            "state": "waiting",
+            "state": JobState.WAITING.value,
             "status": [compose_status(JobState.WAITING, None)],
             "user": {"id": user_id},
             "ping": None,
@@ -429,19 +429,19 @@ class JobsData:
         if status is None:
             raise ResourceNotFoundError
 
-        if status[-1]["state"] in (
-            "complete",
-            "cancelled",
-            "error",
-            "terminated",
-            "timeout",
+        if JobState(status[-1]["state"]) in (
+            JobState.COMPLETE,
+            JobState.CANCELLED,
+            JobState.ERROR,
+            JobState.TERMINATED,
+            JobState.TIMEOUT,
         ):
             raise ResourceConflictError("Job is finished")
 
         document = await self._db.jobs.find_one_and_update(
             {"_id": job_id},
             {
-                "$set": {"state": state},
+                "$set": {"state": state.value},
                 "$push": {
                     "status": compose_status(
                         state, stage, step_name, step_description, error, progress
@@ -496,7 +496,6 @@ class JobsData:
         now = arrow.utcnow()
 
         async with self._db.create_session() as session:
-
             async for document in self._db.jobs.find(
                 {
                     "state": {"$in": ["preparing", "running"]},

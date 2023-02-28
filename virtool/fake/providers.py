@@ -16,9 +16,9 @@ WORKFLOW_NAMES = [
 ]
 
 WORKFLOW_STATUS = [
-    {"state": JobState.CANCELLED, "stage": "first"},
-    {"state": JobState.COMPLETE, "stage": "first"},
-    {"state": JobState.RUNNING, "stage": "second"},
+    {"state": JobState.CANCELLED.value, "stage": "first"},
+    {"state": JobState.COMPLETE.value, "stage": "first"},
+    {"state": JobState.RUNNING.value, "stage": "second"},
 ]
 
 
@@ -31,9 +31,9 @@ class JobsProvider(Provider):
 
     def job_status(self):
         return [
-            {"state": JobState.WAITING, "stage": None},
-            {"state": JobState.PREPARING, "stage": None},
-            {"state": JobState.RUNNING, "stage": "first"},
+            {"state": JobState.WAITING.value, "stage": None},
+            {"state": JobState.PREPARING.value, "stage": None},
+            {"state": JobState.RUNNING.value, "stage": "first"},
             self.random_element(WORKFLOW_STATUS),
         ]
 
