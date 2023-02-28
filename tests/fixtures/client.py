@@ -5,10 +5,12 @@ import aiohttp
 import pytest
 from aiohttp.web_routedef import RouteTableDef
 from virtool_core.models.session import Session
+from virtool_core.models.roles import AdministratorRole
 
 import virtool.app
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes
+from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
@@ -134,11 +136,12 @@ def spawn_client(
 
             await mongo.groups.insert_many(complete_groups, session=None)
 
-        user_document = create_user(
+        user_document = await create_user(
             user_id="test",
             administrator=administrator,
             groups=groups,
             permissions=permissions,
+            authorization_client=authorization_client if administrator else None,
         )
         await mongo.users.insert_one(user_document)
 

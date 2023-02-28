@@ -28,7 +28,7 @@ def spawn_auth_client(authorization_client, create_user, mongo):
         permissions=None,
     ) -> AuthorizationClient:
         await mongo.users.insert_one(
-            create_user(
+            await create_user(
                 user_id="test",
                 permissions=permissions,
             )

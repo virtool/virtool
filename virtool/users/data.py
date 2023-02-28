@@ -2,9 +2,12 @@ import random
 
 from pymongo.errors import DuplicateKeyError
 from virtool_core.models.user import User
+from virtool_core.models.roles import AdministratorRole
 
 import virtool.users.utils
 import virtool.utils
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.errors import DatabaseError
 from virtool.users.db import (
@@ -20,7 +23,8 @@ from virtool.utils import base_processor
 
 
 class UsersData:
-    def __init__(self, mongo, pg):
+    def __init__(self, authorization_client: AuthorizationClient, mongo, pg):
+        self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
 
@@ -87,6 +91,8 @@ class UsersData:
                 session=session,
             )
 
+        await self._authorization_client.add(AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL))
+
         return await fetch_complete_user(self._mongo, document["_id"])
 
     async def find_or_create_b2c_user(
@@ -150,6 +156,12 @@ class UsersData:
 
         try:
             update["administrator"] = data["administrator"]
+
+            if data["administrator"]:
+                await self._authorization_client.add(AdministratorRoleAssignment(user_id, AdministratorRole.FULL))
+            else:
+                await self._authorization_client.remove(AdministratorRoleAssignment(user_id, AdministratorRole.FULL))
+
         except KeyError:
             pass
 

@@ -13,8 +13,8 @@ from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture
-def users_data(mongo, pg):
-    return UsersData(mongo, pg)
+def users_data(authorization_client, mongo, pg):
+    return UsersData(authorization_client, mongo, pg)
 
 
 class TestCreate:
