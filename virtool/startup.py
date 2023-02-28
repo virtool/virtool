@@ -34,6 +34,7 @@ from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
     EnsureIndexFilesTask,
 )
+from virtool.jobs.tasks import TimeoutJobsTask
 from virtool.mongo.core import DB
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
@@ -412,5 +413,6 @@ async def startup_tasks(app: Application):
     await tasks_data.create(CompressSamplesTask)
     await tasks_data.create(MoveSampleFilesTask)
     await tasks_data.create(CleanReferencesTask)
+    await tasks_data.create(TimeoutJobsTask)
 
     await scheduler.spawn(tasks_data.create_periodically(MigrateFilesTask, 3600))
