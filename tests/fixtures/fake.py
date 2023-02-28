@@ -5,7 +5,7 @@ import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
-from virtool_core.models.job import JobState, Job
+from virtool_core.models.job import JobState
 
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
