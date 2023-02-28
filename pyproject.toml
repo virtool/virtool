@@ -61,7 +61,6 @@ python-jose = "^3.3.0"
 virtool-core = "^4.6.0"
 
 
-
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
 pytest-cov = "^2.12.1"

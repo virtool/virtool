@@ -1,6 +1,7 @@
 import logging
 
 import virtool.account.api
+import virtool.administrators.api
 import virtool.analyses.api
 import virtool.caches.api
 import virtool.dev.api
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 ROUTES = (
     virtool.account.api.routes,
+    virtool.administrators.api.routes,
     virtool.analyses.api.routes,
     virtool.caches.api.routes,
     virtool.downloads.api.routes,

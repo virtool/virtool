@@ -83,6 +83,17 @@ class AuthorizationClient:
             [relation_tuple.key.relation for relation_tuple in response.tuples]
         )
 
+    async def get_administrator(self, user_id: str) -> Tuple[str, AdministratorRole]:
+        response = await self.open_fga.read(
+            ReadRequest(
+                tuple_key=TupleKey(user=f"user:{user_id}", object="app:virtool"),
+            )
+        )
+
+        relation_tuple = response.tuples[0]
+
+        return relation_tuple.key.user.split(":")[1], relation_tuple.key.relation
+
     async def list_administrators(self) -> List[Tuple[str, AdministratorRole]]:
         """
         Return a list of user ids that are administrators and their roles.
@@ -168,20 +179,26 @@ class AuthorizationClient:
 
         :param relationships:
         """
-        requests = [
-            WriteRequest(
-                writes=TupleKeys(
-                    tuple_keys=[
-                        TupleKey(
-                            user=f"{relationship.user_type}:{relationship.user_id}",
-                            relation=relationship.relation,
-                            object=f"{relationship.object_type}:{relationship.object_id}",
-                        )
-                    ]
+
+        requests = []
+
+        for relationship in relationships:
+            if relationship.exclusive:
+                await relationship.remove_tuples(self.open_fga, requests)
+
+            requests.append(
+                WriteRequest(
+                    writes=TupleKeys(
+                        tuple_keys=[
+                            TupleKey(
+                                user=f"{relationship.user_type}:{relationship.user_id}",
+                                relation=relationship.relation,
+                                object=f"{relationship.object_type}:{relationship.object_id}",
+                            )
+                        ]
+                    )
                 )
             )
-            for relationship in relationships
-        ]
 
         done, _ = await asyncio.wait(
             [self.open_fga.write(request) for request in requests]
