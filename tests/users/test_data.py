@@ -110,6 +110,12 @@ class TestUpdate:
         assert await users_data.update(bob["_id"], update) == snapshot(name="obj")
         assert await mongo.users.find_one() == snapshot(name="db")
 
+        assert (
+            await users_data._authorization_client.list_administrators() == []
+            if not update.administrator
+            else [(bob["_id"], "full")]
+        )
+
     async def test_password(self, bob, mongo, snapshot, users_data):
         """
         Test editing an existing user.

@@ -5,12 +5,10 @@ import aiohttp
 import pytest
 from aiohttp.web_routedef import RouteTableDef
 from virtool_core.models.session import Session
-from virtool_core.models.roles import AdministratorRole
 
 import virtool.app
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes
-from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
