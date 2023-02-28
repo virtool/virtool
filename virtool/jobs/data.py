@@ -498,7 +498,9 @@ class JobsData:
         async with self._db.create_session() as session:
             async for document in self._db.jobs.find(
                 {
-                    "state": {"$in": ["preparing", "running"]},
+                    "state": {
+                        "$in": [JobState.PREPARING.value, JobState.RUNNING.value]
+                    },
                     "$or": [
                         {"ping.pinged_at": {"$lt": now.shift(minutes=-5).naive}},
                         {

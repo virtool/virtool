@@ -220,12 +220,15 @@ async def ping(req):
         "state": {
             "type": "string",
             "allowed": [
-                "waiting",
-                "running",
-                "complete",
-                "cancelled",
-                "error",
-                "terminated",
+                state.value
+                for state in (
+                    JobState.WAITING,
+                    JobState.RUNNING,
+                    JobState.COMPLETE,
+                    JobState.CANCELLED,
+                    JobState.ERROR,
+                    JobState.TERMINATED,
+                )
             ],
             "required": True,
         },
