@@ -642,3 +642,56 @@ async def get_sample(app, sample_id: str):
     document["paired"] = len(document["reads"]) == 2
 
     return document
+
+
+async def increment_sample_names(
+    mongo: "db",
+    base_name: str,
+    space_id: str,
+    sample_ids: List[str],
+    session: AsyncIOMotorClientSession,
+):
+    """
+    Increment the names of samples with duplicate names. The first sample in the
+    list will not be incremented.
+
+    :param mongo: the mongo database instance
+    :param base_name: the base name of the samples
+    :param space_id: the id of the space the samples belong to
+    :param sample_ids: an ordered list of samples ids to be incremented
+    :param session: the mongo session
+    :return: None
+    """
+
+    name_generator = next_sample_name_generator(mongo, base_name, space_id, session)
+    for sample_id in sample_ids[1:]:
+        new_name = await name_generator.asend(None)
+        await mongo.samples.update_one(
+            {"_id": sample_id},
+            {"$set": {"name": new_name}},
+            session=session,
+        )
+
+
+async def next_sample_name_generator(mongo, base_name, space_id, session):
+    """
+    Get the next available sample name.
+
+    :param mongo: the mongo database instance
+    :param base_name: the base name of the sample
+    :param space_id: the id of the space the sample belongs to
+    :param session: the mongo session
+    :return: the next available sample name
+    """
+    sample_number = 2
+    while True:
+        if not await mongo.samples.find_one(
+            {
+                "name": f"{base_name} ({sample_number})",
+                "space_id": space_id,
+            },
+            session=session,
+        ):
+            yield f"{base_name} ({sample_number})"
+
+        sample_number += 1
