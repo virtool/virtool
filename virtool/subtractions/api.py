@@ -72,7 +72,7 @@ class SubtractionsView(PydanticView):
         """
         try:
             subtraction = await get_data_from_req(self.request).subtractions.create(
-                data, self.request["client"].user_id
+                data, self.request["client"].user_id, 0
             )
         except ResourceNotFoundError as err:
             if "Upload does not exist" in str(err):

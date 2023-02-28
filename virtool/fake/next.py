@@ -79,6 +79,7 @@ class JobsFakerPiece(DataFakerPiece):
             self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
             JobRights(),
+            0,
         )
 
 

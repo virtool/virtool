@@ -185,6 +185,7 @@ class JobsData:
         job_args: Document,
         user_id: str,
         rights: JobRights,
+        space_id: int,
         job_id: Optional[str] = None,
     ) -> Job:
         """
@@ -207,6 +208,7 @@ class JobsData:
             "args": job_args,
             "key": None,
             "rights": rights.as_dict(),
+            "space": {"id": space_id},
             "state": JobState.WAITING.value,
             "status": [compose_status(JobState.WAITING, None)],
             "user": {"id": user_id},

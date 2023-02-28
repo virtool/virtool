@@ -108,6 +108,7 @@ class SubtractionsData(DataLayerPiece):
         self,
         data: CreateSubtractionRequest,
         user_id: str,
+        space_id: int,
         subtraction_id: Optional[str] = None,
     ) -> Subtraction:
         """
@@ -115,6 +116,7 @@ class SubtractionsData(DataLayerPiece):
 
         :param data: a subtraction creation request
         :param user_id: the id of the creating user
+        :param space_id: the id of the subtraction's parent space
         :param subtraction_id: the id of the subtraction
         :return: the subtraction
 
@@ -140,6 +142,7 @@ class SubtractionsData(DataLayerPiece):
                 "name": data.name,
                 "nickname": data.nickname,
                 "ready": False,
+                "space": {"id": space_id},
                 "upload": data.upload_id,
                 "user": {"id": user_id},
             }
@@ -155,6 +158,7 @@ class SubtractionsData(DataLayerPiece):
             },
             user_id,
             JobRights(),
+            0,
         )
 
         return subtraction

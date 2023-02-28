@@ -40,6 +40,9 @@
     'ping': None,
     'rights': <class 'dict'> {
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'state': 'waiting',
     'status': <class 'list'> [
       <class 'dict'> {

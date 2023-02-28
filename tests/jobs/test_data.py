@@ -67,7 +67,7 @@ async def test_create(
 
     assert (
         await jobs_data.create(
-            "create_sample", {"sample_id": "foo"}, user["_id"], rights, job_id=job_id
+            "create_sample", {"sample_id": "foo"}, user["_id"], rights, 0, job_id=job_id
         )
         == snapshot
     )
