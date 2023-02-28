@@ -377,9 +377,10 @@ class TestPushStatus:
         if details:
             error["details"] = details
 
-        body = {"error": error, "state": "error", "stage": "fastqc", "progress": 14}
-
-        resp = await client.post(f"/jobs/{test_job.id}/status", body)
+        resp = await client.post(
+            f"/jobs/{test_job.id}/status",
+            {"error": error, "state": "error", "stage": "fastqc", "progress": 14},
+        )
 
         assert (resp.status, await resp.json()) == snapshot
 

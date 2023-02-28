@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import List
 from typing import Optional, Dict
 
+import arrow
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.job import (
     JobMinimal,
@@ -11,6 +12,7 @@ from virtool_core.models.job import (
     JobStatus,
     Job,
     JobPing,
+    JobState,
 )
 from virtool_core.models.user import UserNested
 
@@ -18,7 +20,7 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
-from virtool.jobs.db import OR_COMPLETE, OR_FAILED, PROJECTION, fetch_complete_job
+from virtool.jobs.db import PROJECTION, fetch_complete_job
 from virtool.jobs.utils import JobRights, compose_status
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
@@ -64,19 +66,9 @@ class JobsData:
         archived: bool,
         page: int,
         per_page: int,
-        states: List[str],
+        states: List[JobState],
         users: List[str],
     ) -> JobSearchResult:
-        """
-        {
-          "waiting": {
-            "all": 23,
-            "pathoscope": 12,
-            "create_sample": 8,
-            "nuvs": 3
-          }
-        }
-        """
         skip_count = 0
 
         if page > 1:
@@ -89,7 +81,14 @@ class JobsData:
             **({"user.id": {"$in": users}} if users else {}),
         }
 
-        match_state = {"state": {"$in": states}} if states else {}
+        match_state = (
+            {"state": {"$in": [state.value for state in states]}} if states else {}
+        )
+
+        data = {}
+        found_count = 0
+        total_count = 0
+        page_count = 0
 
         async for paginate_dict in self._db.jobs.aggregate(
             [
@@ -208,8 +207,8 @@ class JobsData:
             "args": job_args,
             "key": None,
             "rights": rights.as_dict(),
-            "state": "waiting",
-            "status": [compose_status("waiting", None)],
+            "state": JobState.WAITING.value,
+            "status": [compose_status(JobState.WAITING, None)],
             "user": {"id": user_id},
             "ping": None,
         }
@@ -258,7 +257,9 @@ class JobsData:
             {"_id": job_id},
             {
                 "$set": {"acquired": True, "key": hashed},
-                "$push": {"status": compose_status("preparing", None, progress=3)},
+                "$push": {
+                    "status": compose_status(JobState.PREPARING, None, progress=3)
+                },
             },
             projection=PROJECTION,
         )
@@ -399,7 +400,9 @@ class JobsData:
                 {
                     "$push": {
                         "status": compose_status(
-                            "cancelled", latest["stage"], progress=latest["progress"]
+                            JobState.CANCELLED,
+                            latest["stage"],
+                            progress=latest["progress"],
                         )
                     }
                 },
@@ -414,7 +417,7 @@ class JobsData:
     async def push_status(
         self,
         job_id: str,
-        state: Optional[str],
+        state: Optional[JobState],
         stage: Optional[str],
         step_name: Optional[str] = None,
         step_description: Optional[str] = None,
@@ -426,13 +429,19 @@ class JobsData:
         if status is None:
             raise ResourceNotFoundError
 
-        if status[-1]["state"] in ("complete", "cancelled", "error", "terminated"):
+        if JobState(status[-1]["state"]) in (
+            JobState.COMPLETE,
+            JobState.CANCELLED,
+            JobState.ERROR,
+            JobState.TERMINATED,
+            JobState.TIMEOUT,
+        ):
             raise ResourceConflictError("Job is finished")
 
         document = await self._db.jobs.find_one_and_update(
             {"_id": job_id},
             {
-                "$set": {"state": state},
+                "$set": {"state": state.value},
                 "$push": {
                     "status": compose_status(
                         state, stage, step_name, step_description, error, progress
@@ -472,3 +481,52 @@ class JobsData:
         job_ids = await self._db.jobs.distinct("_id")
         await gather(*[self._client.cancel(job_id) for job_id in job_ids])
         await self._db.jobs.delete_many({"_id": {"$in": job_ids}})
+
+    async def timeout(self):
+        """
+        Timeout dead jobs.
+
+        Times out all jobs that have been running or preparing for more than 30 days.
+        This conservatively cleans up legacy jobs that do not have a ping field.
+
+        Times out all jobs that have a ping field and haven't received a ping in 5
+        minutes.
+
+        """
+        now = arrow.utcnow()
+
+        async with self._db.create_session() as session:
+            async for document in self._db.jobs.find(
+                {
+                    "state": {
+                        "$in": [JobState.PREPARING.value, JobState.RUNNING.value]
+                    },
+                    "$or": [
+                        {"ping.pinged_at": {"$lt": now.shift(minutes=-5).naive}},
+                        {
+                            "ping": None,
+                            "created_at": {"$lt": now.shift(days=-30).naive},
+                        },
+                    ],
+                },
+                session=session,
+            ):
+                latest = document["status"][-1]
+
+                await self._db.jobs.update_one(
+                    {"_id": document["_id"]},
+                    {
+                        "$set": {"state": JobState.TIMEOUT.value},
+                        "$push": {
+                            "status": compose_status(
+                                JobState.TIMEOUT,
+                                latest["stage"],
+                                latest["step_name"],
+                                latest["step_description"],
+                                None,
+                                latest["progress"],
+                            )
+                        },
+                    },
+                    session=session,
+                )

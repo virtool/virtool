@@ -5,6 +5,7 @@ import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
+from virtool_core.models.job import JobState
 
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
@@ -57,7 +58,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
         else:
             status = [
                 {
-                    "state": "waiting",
+                    "state": JobState.WAITING.value,
                     "stage": None,
                     "error": None,
                     "progress": 0,
@@ -77,7 +78,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
             "args": {},
             "key": None,
             "rights": {},
-            "state": "waiting",
+            "state": JobState.WAITING.value,
             "progress": status[-1]["progress"],
             "status": status,
             "user": {"id": await self.generator.users.get_id()},
