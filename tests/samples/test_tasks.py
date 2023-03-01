@@ -7,7 +7,7 @@ from virtool.samples.models import SampleReads
 from virtool.samples.tasks import (
     CompressSamplesTask,
     MoveSampleFilesTask,
-    DeduplicateSampleNames,
+    DeduplicateSampleNamesTask,
 )
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
@@ -207,7 +207,7 @@ async def test_deduplicate_sample_names(
         )
         await session.commit()
 
-    task = DeduplicateSampleNames(1, data_layer, {}, get_temp_dir())
+    task = DeduplicateSampleNamesTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 

@@ -37,7 +37,7 @@ class MoveSampleFilesTask(BaseTask):
         await self.data.samples.move_sample_files(self.create_progress_handler())
 
 
-class DeduplicateSampleNames(BaseTask):
+class DeduplicateSampleNamesTask(BaseTask):
     """
     Deduplicate sample names in the database. Will append a numbers to the end of the sample name
     in order of sample creation if duplicates are found.
