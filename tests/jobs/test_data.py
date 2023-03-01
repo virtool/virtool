@@ -159,7 +159,7 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                             "step_description": "Foo a bar",
                             "error": None,
                             "progress": 0.33,
-                            "timestamp": now.shift(minutes=-10).naive,
+                            "timestamp": now.shift(days=-10).naive,
                         },
                         {
                             "state": JobState.RUNNING.value,
