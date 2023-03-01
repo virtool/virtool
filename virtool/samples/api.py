@@ -156,8 +156,6 @@ class SampleView(PydanticView):
 
         try:
             sample = await get_data_from_req(self.request).samples.get(sample_id)
-            if sample is None:
-                raise ResourceNotFoundError()
 
         except ResourceNotFoundError:
             raise NotFound

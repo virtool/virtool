@@ -12,6 +12,7 @@ from virtool_core.models.samples import SampleSearchResult, Sample
 
 import virtool.utils
 from virtool.api.utils import compose_regex_query
+from virtool.caches.db import lookup_caches
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
@@ -34,7 +35,7 @@ from virtool.samples.db import (
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
-from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
@@ -158,32 +159,34 @@ class SamplesData(DataLayerPiece):
         )
 
     async def get(self, sample_id: str) -> Sample:
-        async for document in self._db.samples.aggregate(
+        documents = await self._db.samples.aggregate(
             [
                 {"$match": {"_id": sample_id}},
-                *lookup_nested_user_by_id(local_field="user.id")
+                *lookup_nested_user_by_id(local_field="user.id"),
+                *lookup_nested_subtractions(local_field="subtractions"),
+                *lookup_caches(local_field="_id"),
             ]
-        ):
-            if not document:
-                raise ResourceNotFoundError
+        ).to_list(length=1)
 
-            document["caches"] = [
-                base_processor(cache)
-                async for cache in self._db.caches.find({"sample.id": sample_id})
-            ]
+        document = None
 
-            document = await apply_transforms(
-                base_processor(document),
-                [
-                    ArtifactsAndReadsTransform(self._pg),
-                    AttachLabelsTransform(self._pg),
-                    AttachSubtractionTransform(self._db),
-                ],
-            )
+        if len(documents) == 0:
+            raise ResourceNotFoundError
+        else:
+            document = documents[0]
+            del documents
 
-            document["paired"] = len(document["reads"]) == 2
+        document = await apply_transforms(
+            base_processor(document),
+            [
+                ArtifactsAndReadsTransform(self._pg),
+                AttachLabelsTransform(self._pg),
+            ],
+        )
 
-            return Sample(**document)
+        document["paired"] = len(document["reads"]) == 2
+
+        return Sample(**document)
 
     async def create(
         self,

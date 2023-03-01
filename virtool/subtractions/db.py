@@ -164,3 +164,22 @@ async def unlink_default_subtractions(
         {"$pull": {"subtractions": subtraction_id}},
         session=session,
     )
+
+
+def lookup_nested_subtractions(
+    local_field: str = "subtractions", set_as: str = "subtractions"
+) -> list[dict]:
+    """ """
+    return [
+        {
+            "$lookup": {
+                "from": "subtraction",
+                "let": {"subtraction_ids": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$in": ["$_id", "$$subtraction_ids"]}}},
+                    {"$project": {"id": "$_id", "_id": False, "name": True}},
+                ],
+                "as": set_as,
+            }
+        },
+    ]

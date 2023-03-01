@@ -93,3 +93,17 @@ async def remove(app: App, cache_id: str):
         await to_thread(rm, path, True)
     except FileNotFoundError:
         pass
+
+
+def lookup_caches(local_field: str = "_id", set_as: str = "caches") -> list[dict]:
+    """ """
+    return [
+        {
+            "$lookup": {
+                "from": "caches",
+                "localField": local_field,
+                "foreignField": "sample.id",
+                "as": set_as,
+            }
+        },
+    ]
