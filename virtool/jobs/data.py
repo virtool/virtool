@@ -505,7 +505,7 @@ class JobsData:
                         {"ping.pinged_at": {"$lt": now.shift(minutes=-5).naive}},
                         {
                             "ping": None,
-                            "created_at": {"$lt": now.shift(days=-30).naive},
+                            "status.0.timestamp": {"$lt": now.shift(days=-30).naive},
                         },
                     ],
                 },
