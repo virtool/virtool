@@ -98,19 +98,81 @@
     <class 'dict'> {
       'ctx': <class 'dict'> {
         'enum_values': <class 'list'> [
+          'owner',
+          'member',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'owner', 'member'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'label_manager',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'label_manager'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'project_manager',
           'project_editor',
           'project_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'project_manager', 'project_editor', 'project_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'reference_manager',
           'reference_builder',
           'reference_editor',
           'reference_contributor',
           'reference_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'sample_manager',
           'sample_editor',
           'sample_analyzer',
           'sample_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'subtraction_manager',
           'subtraction_editor',
           'subtraction_viewer',
@@ -120,7 +182,21 @@
       'loc': <class 'list'> [
         'role',
       ],
-      'msg': "value is not a valid enumeration member; permitted: 'label_manager', 'project_manager', 'project_editor', 'project_viewer', 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer', 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer', 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
+      'msg': "value is not a valid enumeration member; permitted: 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'upload_manager',
+          'upload_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'upload_manager', 'upload_viewer'",
       'type': 'type_error.enum',
     },
   ]
@@ -355,19 +431,81 @@
     <class 'dict'> {
       'ctx': <class 'dict'> {
         'enum_values': <class 'list'> [
+          'owner',
+          'member',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'owner', 'member'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'label_manager',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'label_manager'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'project_manager',
           'project_editor',
           'project_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'project_manager', 'project_editor', 'project_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'reference_manager',
           'reference_builder',
           'reference_editor',
           'reference_contributor',
           'reference_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'sample_manager',
           'sample_editor',
           'sample_analyzer',
           'sample_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
           'subtraction_manager',
           'subtraction_editor',
           'subtraction_viewer',
@@ -377,7 +515,21 @@
       'loc': <class 'list'> [
         'role',
       ],
-      'msg': "value is not a valid enumeration member; permitted: 'label_manager', 'project_manager', 'project_editor', 'project_viewer', 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer', 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer', 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
+      'msg': "value is not a valid enumeration member; permitted: 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
+      'type': 'type_error.enum',
+    },
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'upload_manager',
+          'upload_viewer',
+        ],
+      },
+      'in': 'path',
+      'loc': <class 'list'> [
+        'role',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'upload_manager', 'upload_viewer'",
       'type': 'type_error.enum',
     },
   ]

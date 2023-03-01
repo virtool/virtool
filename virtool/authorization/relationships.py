@@ -8,8 +8,8 @@ from virtool.authorization.permissions import ResourceType
 from virtool_core.models.roles import (
     SpaceRole,
     AdministratorRole,
-    SpaceResourceRole,
     ReferenceRole,
+    SpaceRoleType,
 )
 
 
@@ -132,7 +132,7 @@ class SpaceMembership(AbstractRelationship):
 class SpaceRoleAssignment(AbstractRelationship):
     """Represents a space having the given base role."""
 
-    def __init__(self, space_id: int, role: SpaceResourceRole):
+    def __init__(self, space_id: int, role: SpaceRoleType):
         self._space_id = space_id
         self._role = role
 
@@ -163,7 +163,7 @@ class UserRoleAssignment(AbstractRelationship):
 
     """
 
-    def __init__(self, space_id: int, user_id: str, role: SpaceResourceRole):
+    def __init__(self, space_id: int, user_id: str, role: SpaceRoleType):
         self._space_id = space_id
         self._user_id = user_id
         self._role = role
