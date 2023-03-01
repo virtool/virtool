@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
-from virtool_core.models.roles import SpaceResourceRole
+from virtool_core.models.roles import SpaceSampleRole, SpaceReferenceRole
 
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.utils import get_data_from_app
@@ -247,8 +247,8 @@ async def test_list_permissions(spawn_client, user, snapshot):
     authorization_client = client.app["authorization"]
 
     await authorization_client.add(
-        UserRoleAssignment(0, "test", SpaceResourceRole.SAMPLE_EDITOR),
-        UserRoleAssignment(0, "test", SpaceResourceRole.REFERENCE_BUILDER),
+        UserRoleAssignment(0, "test", SpaceSampleRole.EDITOR),
+        UserRoleAssignment(0, "test", SpaceReferenceRole.BUILDER),
     )
 
     resp = await client.get(
@@ -262,7 +262,7 @@ async def test_list_permissions(spawn_client, user, snapshot):
 @pytest.mark.parametrize(
     "role, status",
     [
-        (SpaceResourceRole.SAMPLE_EDITOR, 200),
+        (SpaceSampleRole.MANAGER, 200),
         ("invalid", 400),
     ],
     ids=["valid_permission", "invalid_permission"],
@@ -279,7 +279,7 @@ async def test_add_permission(spawn_client, role, status, snapshot):
 @pytest.mark.parametrize(
     "role, status",
     [
-        (SpaceResourceRole.SAMPLE_EDITOR, 200),
+        (SpaceSampleRole.MANAGER, 200),
         ("invalid", 400),
     ],
     ids=["valid_permission", "invalid_permission"],
