@@ -294,6 +294,7 @@ class TestTasksFetcher:
                 "progress": 100,
                 "step": "download",
                 "type": "clone_reference",
+                "updated_at": None,
             },
         }
 
