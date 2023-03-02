@@ -1,5 +1,7 @@
 from typing import Dict, List, Optional, Sequence, Union
 
+from virtool_core.models.job import JobState
+
 import virtool.utils
 from virtool.http.rights import MODIFY, READ, REMOVE, Right
 from virtool.types import Document
@@ -133,7 +135,7 @@ class JobRights:
 
 
 def compose_status(
-    state: Optional[str],
+    state: Optional[JobState],
     stage: Optional[str],
     step_name: Optional[str] = None,
     step_description: Optional[str] = None,
@@ -152,7 +154,7 @@ def compose_status(
     :return: a status subdocument
     """
     return {
-        "state": state,
+        "state": state.value if state else None,
         "stage": stage,
         "step_name": step_name,
         "step_description": step_description,
