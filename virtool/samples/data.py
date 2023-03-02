@@ -420,6 +420,10 @@ class SamplesData(DataLayerPiece):
             await tracker.add(1)
 
     async def deduplicate_sample_names(self):
+        """
+        Find all samples with duplicate names in the same space and rename them with increasing
+        integers by order of creation.
+        """
         async with self._db.create_session() as session:
             async for duplicate_name in self._db.samples.aggregate(
                 [

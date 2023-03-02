@@ -39,8 +39,8 @@ class MoveSampleFilesTask(BaseTask):
 
 class DeduplicateSampleNamesTask(BaseTask):
     """
-    Deduplicate sample names in the database. Will append a numbers to the end of the sample name
-    in order of sample creation if duplicates are found.
+    Deduplicate sample names in the database. Will append a numbers to the end
+    of the sample name in order of sample creation if duplicates are found.
     """
 
     name = "deduplicate_sample_names"
