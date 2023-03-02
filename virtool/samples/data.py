@@ -31,7 +31,7 @@ from virtool.samples.db import (
     ArtifactsAndReadsTransform,
     validate_force_choice_group,
     define_initial_workflows,
-    increment_sample_names,
+    incrementing_sample_name_generator,
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
@@ -421,7 +421,7 @@ class SamplesData(DataLayerPiece):
 
     async def deduplicate_sample_names(self):
         async with self._db.create_session() as session:
-            async for duplicate_name_documents in self._db.samples.aggregate(
+            async for duplicate_name in self._db.samples.aggregate(
                 [
                     {
                         "$group": {
@@ -452,10 +452,17 @@ class SamplesData(DataLayerPiece):
                 ],
                 session=session,
             ):
-                await increment_sample_names(
+                name_generator = incrementing_sample_name_generator(
                     self._db,
-                    duplicate_name_documents["name"],
-                    duplicate_name_documents.get("space_id", None),
-                    duplicate_name_documents["sample_ids"],
+                    duplicate_name["name"],
+                    duplicate_name.get("space_id", None),
                     session,
                 )
+
+                for sample_id in duplicate_name["sample_ids"][1:]:
+                    new_name = await name_generator.asend(None)
+                    await self._db.samples.update_one(
+                        {"_id": sample_id},
+                        {"$set": {"name": new_name}},
+                        session=session,
+                    )

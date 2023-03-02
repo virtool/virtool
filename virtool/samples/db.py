@@ -15,6 +15,7 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.data.errors import ResourceError
 from virtool_core.models.settings import Settings
 from virtool_core.utils import compress_file, rm, file_stats
 
@@ -644,36 +645,7 @@ async def get_sample(app, sample_id: str):
     return document
 
 
-async def increment_sample_names(
-    mongo: "db",
-    base_name: str,
-    space_id: str,
-    sample_ids: List[str],
-    session: AsyncIOMotorClientSession,
-):
-    """
-    Increment the names of samples with duplicate names. The first sample in the
-    list will not be incremented.
-
-    :param mongo: the mongo database instance
-    :param base_name: the base name of the samples
-    :param space_id: the id of the space the samples belong to
-    :param sample_ids: an ordered list of samples ids to be incremented
-    :param session: the mongo session
-    :return: None
-    """
-
-    name_generator = next_sample_name_generator(mongo, base_name, space_id, session)
-    for sample_id in sample_ids[1:]:
-        new_name = await name_generator.asend(None)
-        await mongo.samples.update_one(
-            {"_id": sample_id},
-            {"$set": {"name": new_name}},
-            session=session,
-        )
-
-
-async def next_sample_name_generator(mongo, base_name, space_id, session):
+async def incrementing_sample_name_generator(mongo, base_name, space_id, session):
     """
     Get the next available sample name.
 
