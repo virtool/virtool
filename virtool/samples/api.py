@@ -488,7 +488,7 @@ class AnalysesView(PydanticView):
         rights.subtractions.can_read(*subtractions)
 
         await get_data_from_req(self.request).jobs.create(
-            document["workflow"], task_args, document["user"]["id"], rights
+            document["workflow"], task_args, document["user"]["id"], rights, job_id
         )
 
         await recalculate_workflow_tags(db, sample_id)
