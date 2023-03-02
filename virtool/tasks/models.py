@@ -17,3 +17,4 @@ class Task(Base):
     progress = Column(Integer, default=0)
     step = Column(String)
     type = Column(String, nullable=False)
+    updated_at = Column(DateTime, default=None)

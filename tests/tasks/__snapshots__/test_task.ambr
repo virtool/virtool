@@ -11,5 +11,6 @@
     'progress': 0,
     'step': 'dummy_task',
     'type': 'dummy_task',
+    'updated_at': None,
   }
 ---

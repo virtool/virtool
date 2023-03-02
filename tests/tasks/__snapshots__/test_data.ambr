@@ -11,6 +11,7 @@
     'progress': 0,
     'step': 'add_subtraction_files',
     'type': 'add_subtraction_files',
+    'updated_at': None,
   }
 ---
 # name: test_find[uvloop]

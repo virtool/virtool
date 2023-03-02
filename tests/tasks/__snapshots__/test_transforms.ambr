@@ -14,6 +14,7 @@
         'progress': 0,
         'step': 'ensure_index_files',
         'type': 'ensure_index_files',
+        'updated_at': None,
       },
     },
     <class 'dict'> {
@@ -30,6 +31,7 @@
         'progress': 0,
         'step': 'clone_reference',
         'type': 'clone_reference',
+        'updated_at': None,
       },
     },
     <class 'dict'> {
@@ -58,6 +60,7 @@
         'progress': 0,
         'step': 'clean_references',
         'type': 'clean_references',
+        'updated_at': None,
       },
     },
     <class 'dict'> {
