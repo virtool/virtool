@@ -5,7 +5,6 @@ Work with references in the database
 import asyncio
 from asyncio import to_thread
 import datetime
-import logging
 from pathlib import Path
 from typing import (
     Dict,
@@ -50,7 +49,7 @@ from virtool.references.utils import (
     get_owner_user,
     load_reference_file,
 )
-from virtool.types import App, Document
+from virtool.types import Document
 from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import AttachUserTransform, extend_user
 
@@ -374,7 +373,7 @@ async def edit_group_or_user(
 
 
 async def fetch_and_update_release(
-    app, ref_id: str, ignore_errors: bool = False
+    mongo: "DB", client, ref_id: str, ignore_errors: bool = False
 ) -> dict:
     """
     Get the latest release for the GitHub repository identified by the passed `slug`.
@@ -385,13 +384,13 @@ async def fetch_and_update_release(
     Exceptions can be ignored during the GitHub request. Error information will still
     be written to the reference document.
 
-    :param app: the application object
+    :param mongo: the application database client
+    :param client: the application client
     :param ref_id: the id of the reference to update
     :param ignore_errors: ignore exceptions raised during GitHub request
     :return: the latest release
 
     """
-    mongo: "DB" = app["db"]
 
     retrieved_at = virtool.utils.timestamp()
 
@@ -408,7 +407,7 @@ async def fetch_and_update_release(
 
     try:
         updated = await virtool.github.get_release(
-            app["client"], document["remotes_from"]["slug"], etag
+            client, document["remotes_from"]["slug"], etag
         )
 
         if updated:
@@ -856,25 +855,6 @@ async def insert_joined_otu(
         await mongo.sequences.insert_one(sequence, session=session, silent=True)
 
     return document["_id"]
-
-
-async def refresh_remotes(app: App):
-    mongo = app["db"]
-
-    try:
-        logging.debug("Started reference refresher")
-
-        while True:
-            for ref_id in await mongo.references.distinct(
-                "_id", {"remotes_from": {"$exists": True}}
-            ):
-                await fetch_and_update_release(app, ref_id, ignore_errors=True)
-
-            await asyncio.sleep(600)
-    except asyncio.CancelledError:
-        pass
-
-    logging.debug("Stopped reference refresher")
 
 
 async def update(

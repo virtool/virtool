@@ -40,9 +40,9 @@ from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.testing import create_test_database
-from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
+    RefreshReferencesTask,
 )
 from virtool.routes import setup_routes
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
@@ -274,21 +274,6 @@ async def startup_databases(app: Application):
     )
 
 
-async def startup_refresh(app: Application):
-    """
-    Start async jobs for checking for new remote reference and HMM releases.
-
-    :param app: the application object
-
-    """
-    if app["config"].no_fetching:
-        return logger.info("Running without automatic update checking")
-
-    scheduler = get_scheduler_from_app(app)
-
-    await scheduler.spawn(refresh_remotes(app))
-
-
 async def startup_routes(app: Application):
     logger.debug("Setting up routes")
     setup_routes(app, dev=app["config"].dev)
@@ -403,6 +388,7 @@ async def startup_tasks(app: Application):
 
     if not app["config"].no_fetching:
         await tasks_data.create_periodically(HMMRefreshTask, 600)
+        await tasks_data.create_periodically(RefreshReferencesTask, 600)
     else:
         logger.info("Running without automatic update checking")
 
