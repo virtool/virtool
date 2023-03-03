@@ -169,7 +169,13 @@ async def unlink_default_subtractions(
 def lookup_nested_subtractions(
     local_field: str = "subtractions", set_as: str = "subtractions"
 ) -> list[dict]:
-    """ """
+    """
+    Create a mongoDB aggregation pipeline step to look up nested subtractions.
+
+    :param local_field: subtractions field to look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
     return [
         {
             "$lookup": {
