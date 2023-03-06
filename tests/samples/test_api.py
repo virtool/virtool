@@ -11,7 +11,6 @@ from virtool_core.models.enums import Permission, LibraryType
 
 import virtool.caches.db
 import virtool.pg.utils
-from virtool import samples
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.config.cls import Config

@@ -174,7 +174,6 @@ class SamplesData(DataLayerPiece):
             raise ResourceNotFoundError
 
         document = documents[0]
-        del documents
 
         document = await apply_transforms(
             base_processor(document),
