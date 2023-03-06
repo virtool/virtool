@@ -15,10 +15,8 @@ from aiohttp import ClientSession
 import virtool.analyses.utils
 import virtool.errors
 import virtool.utils
-from virtool.data.utils import get_data_from_app
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
-from virtool.types import App
 from virtool.utils import base_processor
 
 logger = logging.getLogger(__name__)
