@@ -15,10 +15,8 @@ from aiohttp import ClientSession
 import virtool.analyses.utils
 import virtool.errors
 import virtool.utils
-from virtool.data.utils import get_data_from_app
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
-from virtool.types import App
 from virtool.utils import base_processor
 
 logger = logging.getLogger(__name__)
@@ -174,30 +172,6 @@ async def fetch_and_update_release(
         )
 
         return release
-
-
-async def refresh(app: App):
-    """
-    Periodically refreshes the release information for HMMs. Intended to be submitted as a job to
-    :class:`aiojobs.Scheduler`.
-
-    :param app: the application object
-
-    """
-    try:
-        while True:
-            settings = await get_data_from_app(app).settings.get_all()
-
-            await fetch_and_update_release(
-                app["client"],
-                app["db"],
-                settings.hmm_slug,
-            )
-            await asyncio.sleep(HMM_REFRESH_INTERVAL)
-    except asyncio.CancelledError:
-        pass
-
-    logging.debug("Stopped HMM refresher")
 
 
 async def generate_annotations_json_file(data_path: Path, mongo) -> Path:
