@@ -168,9 +168,7 @@ class SamplesData(DataLayerPiece):
             ]
         ).to_list(length=1)
 
-        document = None
-
-        if (documents is None) or (len(documents) == 0):
+        if len(documents) == 0:
             raise ResourceNotFoundError
 
         document = documents[0]
