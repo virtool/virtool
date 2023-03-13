@@ -72,7 +72,7 @@ def create_data_layer(
         SettingsData(mongo),
         TasksData(pg, TasksClient(redis)),
         UploadsData(config, mongo, pg),
-        UsersData(mongo, pg),
+        UsersData(authorization_client, mongo, pg),
     )
 
     return data_layer

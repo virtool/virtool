@@ -134,11 +134,12 @@ def spawn_client(
 
             await mongo.groups.insert_many(complete_groups, session=None)
 
-        user_document = create_user(
+        user_document = await create_user(
             user_id="test",
             administrator=administrator,
             groups=groups,
             permissions=permissions,
+            authorization_client=authorization_client if administrator else None,
         )
         await mongo.users.insert_one(user_document)
 

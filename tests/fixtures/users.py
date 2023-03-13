@@ -1,5 +1,8 @@
 import pytest
+from virtool_core.models.roles import AdministratorRole
 
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.users.utils import Permission
 
 
@@ -28,10 +31,20 @@ def bob(no_permissions, static_time):
 
 @pytest.fixture
 def create_user(static_time):
-    def func(
-        user_id="test", handle="bob", administrator=False, groups=None, permissions=None
+    async def func(
+        user_id="test",
+        handle="bob",
+        administrator=False,
+        groups=None,
+        permissions=None,
+        authorization_client: AuthorizationClient = None,
     ):
         permissions = permissions or []
+
+        if authorization_client and administrator:
+            await authorization_client.add(
+                AdministratorRoleAssignment("test", AdministratorRole.FULL)
+            )
 
         return {
             "_id": user_id,
