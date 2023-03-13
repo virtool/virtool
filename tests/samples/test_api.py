@@ -989,7 +989,7 @@ async def test_analyze(
     assert await resp.json() == snapshot
 
     m_create.assert_called_with(
-        client.db, "test", "foo", ["bar"], "test", "pathoscope_bowtie", "bf1b993c"
+        client.db, "test", "foo", ["bar"], "test", "pathoscope_bowtie", "bf1b993c", 0
     )
 
 

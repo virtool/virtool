@@ -85,6 +85,7 @@ async def create(
     user_id: str,
     workflow: str,
     job_id: str,
+    space_id: int,
     analysis_id: Optional[str] = None,
 ) -> dict:
     """
@@ -123,6 +124,7 @@ async def create(
         "ready": False,
         "results": None,
         "sample": {"id": sample_id},
+        "space": {"id": space_id},
         "subtractions": subtractions,
         "updated_at": created_at,
         "user": {"id": user_id},

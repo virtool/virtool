@@ -58,6 +58,9 @@
         ],
       },
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'state': 'waiting',
     'status': <class 'list'> [
       <class 'dict'> {

@@ -189,6 +189,7 @@ class SamplesData(DataLayerPiece):
         self,
         data: CreateSampleRequest,
         user_id: str,
+        space_id: int,
         _id: Optional[str] = None,
     ) -> Sample:
         """
@@ -255,6 +256,7 @@ class SamplesData(DataLayerPiece):
                         "quality": None,
                         "ready": False,
                         "results": None,
+                        "space": {"id": space_id},
                         "subtractions": data.subtractions,
                         "user": {"id": user_id},
                         "workflows": define_initial_workflows(data.library_type),
@@ -281,6 +283,7 @@ class SamplesData(DataLayerPiece):
             },
             user_id,
             JobRights(),
+            0,
         )
 
         return await self.get(sample_id)

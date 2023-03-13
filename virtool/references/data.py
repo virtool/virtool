@@ -506,6 +506,7 @@ class ReferencesData(DataLayerPiece):
             },
             user_id,
             rights,
+            0,
             job_id=job_id,
         )
 
