@@ -42,7 +42,7 @@ from virtool.oidc.utils import JWKArgs
 from virtool.pg.testing import create_test_database
 from virtool.references.tasks import (
     CleanReferencesTask,
-    RefreshReferencesTask,
+    RefreshReferenceReleasesTask,
 )
 from virtool.routes import setup_routes
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
@@ -388,7 +388,7 @@ async def startup_tasks(app: Application):
 
     if not app["config"].no_fetching:
         await tasks_data.create_periodically(HMMRefreshTask, 600)
-        await tasks_data.create_periodically(RefreshReferencesTask, 600)
+        await tasks_data.create_periodically(RefreshReferenceReleasesTask, 600)
     else:
         logger.info("Running without automatic update checking")
 

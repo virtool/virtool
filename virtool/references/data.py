@@ -986,7 +986,7 @@ class ReferencesData(DataLayerPiece):
                         session=session,
                     )
 
-    async def update_references(self):
+    async def fetch_and_update_reference_releases(self):
         for ref_id in await self._mongo.references.distinct(
             "_id", {"remotes_from": {"$exists": True}}
         ):

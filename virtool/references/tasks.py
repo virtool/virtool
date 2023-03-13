@@ -209,13 +209,13 @@ class CleanReferencesTask(BaseTask):
         await self.data.references.clean_all()
 
 
-class RefreshReferencesTask(BaseTask):
-    name = "refresh_references"
+class RefreshReferenceReleasesTask(BaseTask):
+    name = "refresh_reference_releases"
 
     def __init__(self, task_id: int, data: "DataLayer", context, temp_dir):
         super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [self.refresh_remotes]
+        self.steps = [self.refresh_remote_releases]
 
-    async def refresh_remotes(self):
-        await self.data.references.update_references()
+    async def refresh_remote_releases(self):
+        await self.data.references.fetch_and_update_reference_releases()
