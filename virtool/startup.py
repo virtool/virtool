@@ -30,7 +30,7 @@ from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
-from virtool.hmm.db import refresh
+from virtool.hmm.tasks import HMMRefreshTask
 from virtool.indexes.tasks import (
     EnsureIndexFilesTask,
 )
@@ -287,7 +287,6 @@ async def startup_refresh(app: Application):
     scheduler = get_scheduler_from_app(app)
 
     await scheduler.spawn(refresh_remotes(app))
-    await scheduler.spawn(refresh(app))
 
 
 async def startup_routes(app: Application):
@@ -401,6 +400,11 @@ async def startup_tasks(app: Application):
 
     if app["config"].no_check_db:
         return logger.info("Skipping subtraction FASTA files checks")
+
+    if not app["config"].no_fetching:
+        await tasks_data.create_periodically(HMMRefreshTask, 600)
+    else:
+        logger.info("Running without automatic update checking")
 
     scheduler = get_scheduler_from_app(app)
 

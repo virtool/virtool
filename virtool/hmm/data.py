@@ -32,6 +32,7 @@ from virtool.hmm.db import (
 )
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
+from virtool.hmm.db import fetch_and_update_release
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.progress import (
@@ -222,3 +223,12 @@ class HmmData(DataLayerPiece):
                 {"$set": {"installed": None, "task": None, "updates": []}},
                 session=session,
             )
+
+    async def update_release(self):
+        settings = await self.data.settings.get_all()
+
+        await fetch_and_update_release(
+            self._client,
+            self._mongo,
+            settings.hmm_slug,
+        )

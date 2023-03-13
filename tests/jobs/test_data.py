@@ -148,11 +148,19 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                     "_id": "ok_new",
                     "archived": False,
                     "args": {},
-                    "created_at": now.shift(days=-10).naive,
                     "ping": None,
                     "rights": {},
                     "state": JobState.RUNNING.value,
                     "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-10).naive,
+                        },
                         {
                             "state": JobState.RUNNING.value,
                             "stage": "foo",
@@ -161,7 +169,7 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                             "error": None,
                             "progress": 0.33,
                             "timestamp": now.shift(minutes=-1).naive,
-                        }
+                        },
                     ],
                     "user": {"id": user.id},
                     "workflow": "build_index",
@@ -171,11 +179,19 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                     "_id": "ok_ping",
                     "archived": False,
                     "args": {},
-                    "created_at": now.shift(days=-10).naive,
                     "ping": {"pinged_at": now.shift(minutes=-1).naive},
                     "rights": {},
                     "state": JobState.RUNNING.value,
                     "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-10).naive,
+                        },
                         {
                             "state": JobState.RUNNING.value,
                             "stage": "foo",
@@ -184,7 +200,7 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                             "error": None,
                             "progress": 0.33,
                             "timestamp": now.shift(minutes=-1).naive,
-                        }
+                        },
                     ],
                 },
                 # Ok: Not in running or preparing state.
@@ -192,11 +208,19 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                     "_id": "ok_state",
                     "archived": False,
                     "args": {},
-                    "created_at": now.shift(days=-10).naive,
                     "ping": {"pinged_at": now.shift(minutes=-1).naive},
                     "rights": {},
                     "state": JobState.COMPLETE.value,
                     "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-10).naive,
+                        },
                         {
                             "state": JobState.RUNNING.value,
                             "stage": "foo",
@@ -222,11 +246,19 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                     "_id": "bad_old",
                     "archived": False,
                     "args": {},
-                    "created_at": now.shift(days=-42).naive,
                     "ping": None,
                     "rights": {},
                     "state": JobState.RUNNING.value,
                     "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-42).naive,
+                        },
                         {
                             "state": JobState.RUNNING.value,
                             "stage": "foo",
@@ -235,7 +267,7 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                             "error": None,
                             "progress": 0.33,
                             "timestamp": now.shift(minutes=-1).naive,
-                        }
+                        },
                     ],
                     "user": {"id": user.id},
                     "workflow": "build_index",
@@ -245,11 +277,19 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                     "_id": "bad_ping",
                     "archived": False,
                     "args": {},
-                    "created_at": now.shift(days=-1).naive,
                     "ping": {"pinged_at": now.shift(minutes=-6).naive},
                     "rights": {},
                     "state": JobState.RUNNING.value,
                     "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-1).naive,
+                        },
                         {
                             "state": JobState.RUNNING.value,
                             "stage": "foo",
@@ -258,7 +298,7 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
                             "error": None,
                             "progress": 0.33,
                             "timestamp": now.shift(minutes=-10).naive,
-                        }
+                        },
                     ],
                     "user": {"id": user.id},
                     "workflow": "build_index",
