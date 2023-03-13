@@ -91,7 +91,9 @@ class UsersData:
                 session=session,
             )
 
-        await self._authorization_client.add(AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL))
+        await self._authorization_client.add(
+            AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL)
+        )
 
         return await fetch_complete_user(self._mongo, document["_id"])
 
@@ -154,16 +156,18 @@ class UsersData:
 
         update = {}
 
-        try:
+        if "administrator" in data:
+
             update["administrator"] = data["administrator"]
 
-            if data["administrator"]:
-                await self._authorization_client.add(AdministratorRoleAssignment(user_id, AdministratorRole.FULL))
-            else:
-                await self._authorization_client.remove(AdministratorRoleAssignment(user_id, AdministratorRole.FULL))
+            role_assignment = AdministratorRoleAssignment(
+                user_id, AdministratorRole.FULL
+            )
 
-        except KeyError:
-            pass
+            if data["administrator"]:
+                await self._authorization_client.add(role_assignment)
+            else:
+                await self._authorization_client.remove(role_assignment)
 
         if "force_reset" in data:
             update.update(
