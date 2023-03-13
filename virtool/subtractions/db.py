@@ -164,3 +164,28 @@ async def unlink_default_subtractions(
         {"$pull": {"subtractions": subtraction_id}},
         session=session,
     )
+
+
+def lookup_nested_subtractions(
+    local_field: str = "subtractions", set_as: str = "subtractions"
+) -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up nested subtractions.
+
+    :param local_field: subtractions field to look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "subtraction",
+                "let": {"subtraction_ids": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$in": ["$_id", "$$subtraction_ids"]}}},
+                    {"$project": {"id": "$_id", "_id": False, "name": True}},
+                ],
+                "as": set_as,
+            }
+        },
+    ]
