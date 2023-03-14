@@ -127,6 +127,8 @@ class SubtractionsData(DataLayerPiece):
         if upload is None:
             raise ResourceNotFoundError("Upload does not exist")
 
+        job_id = await get_new_id(self._mongo.jobs)
+
         document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
@@ -140,7 +142,7 @@ class SubtractionsData(DataLayerPiece):
                 },
                 "gc": None,
                 "job": {
-                    "id": await get_new_id(self._mongo.jobs)
+                    "id": job_id
                 },
                 "name": data.name,
                 "nickname": data.nickname,
@@ -162,6 +164,7 @@ class SubtractionsData(DataLayerPiece):
             user_id,
             JobRights(),
             0,
+            job_id
         )
 
         return subtraction
