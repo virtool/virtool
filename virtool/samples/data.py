@@ -245,6 +245,9 @@ class SamplesData(DataLayerPiece):
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
+                        "job": {
+                            "id": await get_new_id(self._db.jobs)
+                        },
                         "labels": data.labels,
                         "library_type": data.library_type,
                         "locale": data.locale,
