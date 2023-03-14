@@ -105,4 +105,4 @@ async def test_delete_administrator(spawn_client, fake2, snapshot, mongo):
 
     assert await get_one_field(mongo.users, "administrator", user.id) is False
 
-    assert await authorization_client.list_administrators() == []
+    assert await authorization_client.list_administrators() == [("test", AdministratorRole.FULL)]

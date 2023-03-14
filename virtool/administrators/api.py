@@ -94,14 +94,15 @@ class AdministratorView(PydanticView):
             400: Cannot modify own role
             404: User not found
         """
+        if user_id == self.request["client"].user_id:
+            raise HTTPBadRequest(text="Administrators cannot modify their own role.")
+
         try:
             administrator = await get_data_from_req(self.request).administrators.update(
-                user_id, data, self.request["client"].user_id
+                user_id, data
             )
         except ResourceNotFoundError:
             raise NotFound()
-        except ResourceConflictError:
-            raise HTTPBadRequest(text="Administrators cannot modify their own role.")
 
         return json_response(administrator)
 
@@ -114,6 +115,12 @@ class AdministratorView(PydanticView):
             204: Successful operation
             404: User not found
         """
+
+        if user_id == self.request["client"].user_id:
+            raise HTTPBadRequest(
+                text="Users cannot modify their own administrative status"
+            )
+
         try:
             await get_data_from_req(self.request).administrators.delete(user_id)
         except ResourceNotFoundError:

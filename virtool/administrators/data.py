@@ -1,10 +1,8 @@
-from enum import Enum
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from virtool_core.models.basemodel import BaseModel
 from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.administrator import Administrator
-from virtool_core.models.user import UserNested
+from virtool_core.models.administrator import Administrator, AdministratorSearch, AdministratorMinimal
+from virtool_core.utils import document_enum
 
 from virtool.administrators.oas import (
     CreateAdministratorRequest,
@@ -14,66 +12,16 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceConflictError,
 )
 
 if TYPE_CHECKING:
     from virtool.mongo.core import DB
 
 
-class AdministratorRole2(str, Enum):
-    def __new__(cls, value, doc=None):
-        self = str.__new__(cls, value)
-        self._value_ = value
-        if doc is not None:
-            self.__doc__ = doc
-        return self
-
-    """Roles that are assigned to administrators.
-
-    These roles are relations between users and the application object. The take the
-    following form in OpenFGA:
-    ```
-    (user:bob, full, app:virtool)
-    ```
-    """
-
-    FULL = "full", """Manage who is an administrator and what they can do."""
-
-    SETTINGS = "settings", """Manage instance settings and administrative messages."""
-
-    SPACES = "spaces", """Manage users in any space. Delete any space."""
-
-    USERS = "users", """Create user accounts. Control activation of user accounts."""
-
-    BASE = (
-        "base",
-        """Provides ability to:
-     - Create new spaces even if the `Free Spaces` setting is not enabled.
-     - Manage HMMs and common references.
-     - View all running jobs.
-     - Cancel any job.
-    """,
-    )
-
-
 AVAILABLE_ROLES = [
     {"id": role, "name": role.capitalize(), "description": role.__doc__}
-    for role in AdministratorRole2
+    for role in document_enum(AdministratorRole)
 ]
-
-
-class AdministratorMinimal(UserNested):
-    role: AdministratorRole
-
-
-class Administrator2(AdministratorMinimal):
-    available_roles: List[dict]
-
-
-class AdministratorSearch(BaseModel):
-    documents: List[Administrator]
-    available_roles: List[dict]
 
 
 class AdministratorsData:
@@ -93,7 +41,7 @@ class AdministratorsData:
         return AdministratorSearch(
             **{
                 "documents": [
-                    Administrator(
+                    AdministratorMinimal(
                         **{
                             **await self._db.users.find_one(admin_tuple[0]),
                             "role": AdministratorRole(admin_tuple[1]),
@@ -105,7 +53,7 @@ class AdministratorsData:
             }
         )
 
-    async def get(self, user_id: str) -> Administrator2:
+    async def get(self, user_id: str) -> Administrator:
         """
         Get an administrator.
 
@@ -117,7 +65,7 @@ class AdministratorsData:
             user_id
         ) and await self._authorization_client.get_administrator(user_id):
 
-            return Administrator2(
+            return Administrator(
                 **{
                     **await self._db.users.find_one(user_id),
                     "role": AdministratorRole(admin_tuple[1]),
@@ -127,7 +75,7 @@ class AdministratorsData:
 
         raise ResourceNotFoundError()
 
-    async def create(self, data: CreateAdministratorRequest) -> Administrator2:
+    async def create(self, data: CreateAdministratorRequest) -> Administrator:
         """
         Add a user as an administrator with a given role.
 
@@ -151,7 +99,7 @@ class AdministratorsData:
                 AdministratorRoleAssignment(data.user_id, AdministratorRole(data.role))
             )
 
-            return Administrator2(
+            return Administrator(
                 **{
                     **await self._db.users.find_one(data.user_id),
                     "role": AdministratorRole(data.role),
@@ -162,8 +110,8 @@ class AdministratorsData:
         raise ResourceNotFoundError()
 
     async def update(
-        self, user_id: str, data: UpdateAdministratorRequest, client_user_id: str
-    ) -> Administrator2:
+        self, user_id: str, data: UpdateAdministratorRequest
+    ) -> Administrator:
         """
         Update an administrator's role.
 
@@ -172,12 +120,9 @@ class AdministratorsData:
         Set the user's administrator flag to false if the full role is removed.
 
         :param user_id: the user ID of the administrator to update
-        :param client_user_id: the user ID of the requester
         :param data: updates to the administrator's current role
         :return: the administrator
         """
-        if user_id == client_user_id:
-            raise ResourceConflictError()
 
         if await self._db.users.find_one(
             user_id
@@ -200,7 +145,7 @@ class AdministratorsData:
                 AdministratorRoleAssignment(user_id, AdministratorRole(data.role))
             )
 
-            return Administrator2(
+            return Administrator(
                 **{
                     **await self._db.users.find_one(user_id),
                     "role": AdministratorRole(data.role),

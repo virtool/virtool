@@ -25,11 +25,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
@@ -67,11 +66,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
@@ -109,11 +107,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
@@ -151,11 +148,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
@@ -192,11 +188,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
@@ -213,6 +208,12 @@
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
+        'role': 'full',
+      },
+      <class 'dict'> {
+        'administrator': True,
+        'handle': 'bob',
+        'id': 'test',
         'role': 'full',
       },
     ],
@@ -245,11 +246,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
@@ -287,11 +287,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
@@ -329,11 +328,10 @@
       <class 'dict'> {
         'description': '
           Provides ability to:
-               - Create new spaces even if the `Free Spaces` setting is not enabled.
-               - Manage HMMs and common references.
-               - View all running jobs.
-               - Cancel any job.
-              
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
         ',
         'id': 'base',
         'name': 'Base',
