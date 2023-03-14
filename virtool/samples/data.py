@@ -228,6 +228,8 @@ class SamplesData(DataLayerPiece):
         elif settings.sample_group == "users_primary_group":
             group = await get_one_field(self._db.users, "primary_group", user_id)
 
+        job_id = await get_new_id(self._db.jobs)
+
         async with self._db.create_session() as session:
             document, _ = await asyncio.gather(
                 self._db.samples.insert_one(
@@ -246,7 +248,7 @@ class SamplesData(DataLayerPiece):
                         "is_legacy": False,
                         "isolate": data.isolate,
                         "job": {
-                            "id": await get_new_id(self._db.jobs)
+                            "id": job_id
                         },
                         "labels": data.labels,
                         "library_type": data.library_type,
@@ -287,6 +289,7 @@ class SamplesData(DataLayerPiece):
             user_id,
             JobRights(),
             0,
+            job_id
         )
 
         return await self.get(sample_id)
