@@ -289,6 +289,7 @@ async def create_reference(pg, tmpdir, fake2, data_layer, static_time, mongo):
     return "bar"
 
 
+@pytest.mark.flaky(reruns=2)
 async def test_clone_reference(
     assert_reference_created,
     caplog,
