@@ -166,28 +166,31 @@ async def test_deduplicate_sample_names(
             "_id": "test_id",
             "name": "test_name",
             "created_at": static_time.datetime,
+            "space_id": "0",
         },
         {
             "_id": "test_id_2",
             "name": "test_name (2)",
             "created_at": static_time.datetime + timedelta(days=3),
+            "space_id": "0",
         },
         {
             "_id": "test_id_3",
             "name": "test_name",
             "created_at": static_time.datetime + timedelta(days=2),
+            "space_id": "0",
         },
         {
             "_id": "test_id_4",
             "name": "test_name",
             "created_at": static_time.datetime + timedelta(days=1),
+            "space_id": "1",
         },
     ]
 
-    if spaces:
-        space_ids = ["0"] * 3 + ["1"] * 1
-        for index, sample in enumerate(samples):
-            sample["space_id"] = space_ids[index]
+    if not spaces:
+        for sample in samples:
+            sample.pop("space_id")
 
     async with mongo.create_session() as session:
         await mongo.samples.insert_many(samples, session)
