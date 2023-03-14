@@ -197,7 +197,7 @@
         'name': 'Base',
       },
     ],
-    'documents': <class 'list'> [
+    'items': <class 'list'> [
       <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',

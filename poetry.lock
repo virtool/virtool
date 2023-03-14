@@ -1210,7 +1210,7 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "mypy (>=0.800)", "psutil", "pyOp
 
 [[package]]
 name = "virtool-core"
-version = "4.7.0"
+version = "4.7.1"
 description = "Core utilities for Virtool."
 category = "main"
 optional = false
@@ -1274,7 +1274,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "ddc8e27296bb93e2cc823bd9191493c8fd991a282eb7435486659e6c88456ade"
+content-hash = "b56399a251716d64dd86745e938817c7841d9908bfe666d754a33bad14ccaa9e"
 
 [metadata.files]
 aiodns = [
@@ -2779,8 +2779,8 @@ uvloop = [
     {file = "uvloop-0.16.0.tar.gz", hash = "sha256:f74bc20c7b67d1c27c72601c78cf95be99d5c2cdd4514502b4f3eb0933ff1228"},
 ]
 virtool-core = [
-    {file = "virtool_core-4.7.0-py3-none-any.whl", hash = "sha256:3ac9af25102da47b0c5afff7c509ac0a44683a84e45e53f07c6b5541fd33cad3"},
-    {file = "virtool_core-4.7.0.tar.gz", hash = "sha256:87c10eecb78aadb9d011e742ea46aa7434841484445589d46e1b3e263a6c1fdf"},
+    {file = "virtool_core-4.7.1-py3-none-any.whl", hash = "sha256:df0b0ec90d33eba77104e8687adf4eee5fb98654d4bc0bfc41f326369f386bbf"},
+    {file = "virtool_core-4.7.1.tar.gz", hash = "sha256:d85d3b378560421da1befcfb268d63d476ed611cdd511716b6a27cb3049b654e"},
 ]
 virtualenv = [
     {file = "virtualenv-20.21.0-py3-none-any.whl", hash = "sha256:31712f8f2a17bd06234fa97fdf19609e789dd4e3e4bf108c3da71d710651adbc"},

@@ -46,7 +46,7 @@ class ListAdministratorResponse(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "documents": [
+                "items": [
                     {
                         "administrator": False,
                         "handle": "leeashley",

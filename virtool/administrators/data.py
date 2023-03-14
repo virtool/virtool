@@ -40,7 +40,7 @@ class AdministratorsData:
 
         return AdministratorSearch(
             **{
-                "documents": [
+                "items": [
                     AdministratorMinimal(
                         **{
                             **await self._db.users.find_one(admin_tuple[0]),
