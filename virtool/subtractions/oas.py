@@ -53,7 +53,6 @@ class CreateSubtractionResponse(Subtraction):
                 "created_at": "2015-10-06T20:00:00Z",
                 "deleted": False,
                 "file": {"id": 1234, "name": "test_upload"},
-                "has_file": True,
                 "files": [],
                 "id": "abc123",
                 "linked_samples": [],
@@ -82,7 +81,6 @@ class GetSubtractionResponse(SubtractionMinimal):
                     "count": 9,
                     "created_at": "2021-12-21T23:52:13.185000Z",
                     "file": {"id": 58, "name": "arabidopsis_thaliana_+_plastids.fa.gz"},
-                    "has_file": True,
                     "id": "q0ek30si",
                     "name": "Arabidopsis thaliana",
                     "nickname": "",
@@ -164,7 +162,6 @@ class SubtractionResponse(Subtraction):
                     },
                 ],
                 "gc": {"a": 0.319, "c": 0.18, "g": 0.18, "n": 0.002, "t": 0.319},
-                "has_file": True,
                 "id": "q0ek30si",
                 "linked_samples": [
                     {"id": "2izth91q", "name": "21BP074"},
