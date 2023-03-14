@@ -5,7 +5,7 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
 from virtool_core.models.user import User
-from virtool_core.models.roles import AdministratorRole, SpaceResourceRole
+from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 
 import virtool.http.authentication
 import virtool.users.db
@@ -231,7 +231,7 @@ class PermissionsView(PydanticView):
 class PermissionView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def put(
-        self, user_id: str, role: SpaceResourceRole, /
+        self, user_id: str, role: SpaceRoleType, /
     ) -> r200[PermissionResponse]:
         """
         Add a role for a user
@@ -247,7 +247,7 @@ class PermissionView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def delete(
-        self, user_id: str, role: SpaceResourceRole, /
+        self, user_id: str, role: SpaceRoleType, /
     ) -> r200[PermissionResponse]:
         """
         Delete a permission for a user

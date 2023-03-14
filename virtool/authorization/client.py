@@ -18,7 +18,7 @@ from virtool_core.models.enums import Permission
 from virtool_core.models.roles import (
     AdministratorRole,
     ReferenceRole,
-    SpaceResourceRole,
+    SpaceRoleType,
 )
 
 from virtool.authorization.permissions import (
@@ -125,9 +125,7 @@ class AuthorizationClient:
             ]
         )
 
-    async def list_user_roles(
-        self, user_id: str, space_id: int
-    ) -> List[SpaceResourceRole]:
+    async def list_user_roles(self, user_id: str, space_id: int) -> List[SpaceRoleType]:
         response = await self.open_fga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object=f"space:{space_id}")

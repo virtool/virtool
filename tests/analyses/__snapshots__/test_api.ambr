@@ -401,6 +401,9 @@
       'progress': 0,
       'rights': <class 'dict'> {
       },
+      'space': <class 'dict'> {
+        'id': 0,
+      },
       'stage': None,
       'state': 'waiting',
       'status': <class 'list'> [

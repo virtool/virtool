@@ -20,6 +20,9 @@
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'subtraction_1',
       'subtraction_2',
@@ -52,6 +55,9 @@
     'results': None,
     'sample': <class 'dict'> {
       'id': 'test_sample',
+    },
+    'space': <class 'dict'> {
+      'id': 0,
     },
     'subtractions': <class 'list'> [
       'subtraction_1',
@@ -86,6 +92,9 @@
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'subtraction_1',
       'subtraction_2',
@@ -118,6 +127,9 @@
     'results': None,
     'sample': <class 'dict'> {
       'id': 'test_sample',
+    },
+    'space': <class 'dict'> {
+      'id': 0,
     },
     'subtractions': <class 'list'> [
       'subtraction_1',

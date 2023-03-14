@@ -78,6 +78,9 @@
     'quality': None,
     'ready': False,
     'results': None,
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'apple',
     ],
@@ -171,6 +174,9 @@
     'quality': None,
     'ready': False,
     'results': None,
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'apple',
     ],
@@ -264,6 +270,9 @@
     'quality': None,
     'ready': False,
     'results': None,
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'apple',
     ],

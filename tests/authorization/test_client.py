@@ -15,10 +15,11 @@ from virtool.authorization.relationships import (
     ReferenceRoleAssignment,
 )
 from virtool_core.models.roles import (
-    SpaceResourceRole,
+    SpaceSubtractionRole,
     SpaceRole,
     AdministratorRole,
     ReferenceRole,
+    SpaceProjectRole,
 )
 
 
@@ -28,7 +29,7 @@ def spawn_auth_client(authorization_client, create_user, mongo):
         permissions=None,
     ) -> AuthorizationClient:
         await mongo.users.insert_one(
-            create_user(
+            await create_user(
                 user_id="test",
                 permissions=permissions,
             )
@@ -49,9 +50,9 @@ class TestCheck:
         client = await spawn_auth_client()
 
         permission = (
-            SpaceResourceRole.SUBTRACTION_EDITOR
+            SpaceSubtractionRole.EDITOR
             if has_permission
-            else SpaceResourceRole.SUBTRACTION_VIEWER
+            else SpaceSubtractionRole.VIEWER
         )
 
         await client.add(
@@ -71,8 +72,8 @@ class TestCheck:
 
         await client.add(
             SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-            SpaceRoleAssignment(0, SpaceResourceRole.SUBTRACTION_EDITOR),
-            SpaceRoleAssignment(0, SpaceResourceRole.PROJECT_MANAGER),
+            SpaceRoleAssignment(0, SpaceSubtractionRole.EDITOR),
+            SpaceRoleAssignment(0, SpaceProjectRole.MANAGER),
         )
 
         results = await asyncio.gather(
@@ -87,8 +88,8 @@ async def test_list_space_base_roles(spawn_auth_client):
     client = await spawn_auth_client()
 
     await client.add(
-        SpaceRoleAssignment(0, SpaceResourceRole.SUBTRACTION_EDITOR),
-        SpaceRoleAssignment(0, SpaceResourceRole.PROJECT_MANAGER),
+        SpaceRoleAssignment(0, SpaceSubtractionRole.EDITOR),
+        SpaceRoleAssignment(0, SpaceProjectRole.MANAGER),
     )
 
     assert await client.get_space_roles(0) == ["project_manager", "subtraction_editor"]
@@ -111,8 +112,8 @@ async def test_list_user_roles(snapshot, spawn_auth_client):
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
-        UserRoleAssignment(0, "ryanf", SpaceResourceRole.PROJECT_MANAGER),
+        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
+        UserRoleAssignment(0, "ryanf", SpaceProjectRole.MANAGER),
     )
 
     assert await client.list_user_roles("ryanf", 0) == [
@@ -127,13 +128,11 @@ async def test_add_and_remove_user_roles(spawn_auth_client):
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
-        UserRoleAssignment(0, "ryanf", SpaceResourceRole.PROJECT_MANAGER),
+        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
+        UserRoleAssignment(0, "ryanf", SpaceProjectRole.MANAGER),
     )
 
-    await client.remove(
-        UserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR)
-    )
+    await client.remove(UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR))
 
     assert await client.list_user_roles("ryanf", 0) == ["member", "project_manager"]
 
@@ -177,14 +176,14 @@ async def test_add_idempotent(fake2, spawn_auth_client):
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
+        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
     )
 
     assert await client.list_user_roles("ryanf", 0) == ["member", "subtraction_editor"]
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceResourceRole.SUBTRACTION_EDITOR),
+        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
     )
 
     assert await client.list_user_roles("ryanf", 0) == ["member", "subtraction_editor"]

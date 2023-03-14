@@ -123,7 +123,7 @@ class SamplesView(PydanticView):
         """
         try:
             sample = await get_data_from_req(self.request).samples.create(
-                data, self.request["client"].user_id
+                data, self.request["client"].user_id, 0
             )
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
@@ -156,6 +156,7 @@ class SampleView(PydanticView):
 
         try:
             sample = await get_data_from_req(self.request).samples.get(sample_id)
+
         except ResourceNotFoundError:
             raise NotFound
 
@@ -462,6 +463,7 @@ class AnalysesView(PydanticView):
             self.request["client"].user_id,
             data.workflow,
             job_id,
+            0,
         )
 
         analysis_id = document["id"]
@@ -488,7 +490,7 @@ class AnalysesView(PydanticView):
         rights.subtractions.can_read(*subtractions)
 
         await get_data_from_req(self.request).jobs.create(
-            document["workflow"], task_args, document["user"]["id"], rights
+            document["workflow"], task_args, document["user"]["id"], rights, 0, job_id
         )
 
         await recalculate_workflow_tags(db, sample_id)

@@ -275,11 +275,11 @@ class ReferenceUpdatesView(PydanticView):
 class ReferenceOTUsView(PydanticView):
     async def get(
         self,
+        ref_id: str,
+        /,
         find: Optional[str],
         verified: Optional[bool],
         names: Optional[Union[bool, str]],
-        ref_id: str,
-        /,
     ) -> Union[r200[FindOTUsResponse], r404]:
         """
         Find OTUs.

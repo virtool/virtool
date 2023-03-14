@@ -13,8 +13,8 @@ from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture
-def users_data(mongo, pg):
-    return UsersData(mongo, pg)
+def users_data(authorization_client, mongo, pg):
+    return UsersData(authorization_client, mongo, pg)
 
 
 class TestCreate:
@@ -109,6 +109,12 @@ class TestUpdate:
 
         assert await users_data.update(bob["_id"], update) == snapshot(name="obj")
         assert await mongo.users.find_one() == snapshot(name="db")
+
+        assert (
+            await users_data._authorization_client.list_administrators() == []
+            if not update.administrator
+            else [(bob["_id"], "full")]
+        )
 
     async def test_password(self, bob, mongo, snapshot, users_data):
         """

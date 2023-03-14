@@ -30,7 +30,7 @@ from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
-from virtool.hmm.db import refresh
+from virtool.hmm.tasks import HMMRefreshTask
 from virtool.indexes.tasks import (
     EnsureIndexFilesTask,
 )
@@ -40,9 +40,9 @@ from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.testing import create_test_database
-from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
+    RefreshReferenceReleasesTask,
 )
 from virtool.routes import setup_routes
 from virtool.samples.tasks import (
@@ -278,22 +278,6 @@ async def startup_databases(app: Application):
     )
 
 
-async def startup_refresh(app: Application):
-    """
-    Start async jobs for checking for new remote reference and HMM releases.
-
-    :param app: the application object
-
-    """
-    if app["config"].no_fetching:
-        return logger.info("Running without automatic update checking")
-
-    scheduler = get_scheduler_from_app(app)
-
-    await scheduler.spawn(refresh_remotes(app))
-    await scheduler.spawn(refresh(app))
-
-
 async def startup_routes(app: Application):
     logger.debug("Setting up routes")
     setup_routes(app, dev=app["config"].dev)
@@ -405,6 +389,12 @@ async def startup_tasks(app: Application):
 
     if app["config"].no_check_db:
         return logger.info("Skipping subtraction FASTA files checks")
+
+    if not app["config"].no_fetching:
+        await tasks_data.create_periodically(HMMRefreshTask, 600)
+        await tasks_data.create_periodically(RefreshReferenceReleasesTask, 600)
+    else:
+        logger.info("Running without automatic update checking")
 
     scheduler = get_scheduler_from_app(app)
 

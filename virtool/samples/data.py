@@ -12,6 +12,7 @@ from virtool_core.models.samples import SampleSearchResult, Sample
 
 import virtool.utils
 from virtool.api.utils import compose_regex_query
+from virtool.caches.db import lookup_caches
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
@@ -35,12 +36,12 @@ from virtool.samples.db import (
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
-from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
-from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
+from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import base_processor, wait_for_checks
 
 logger = logging.getLogger(__name__)
@@ -159,23 +160,25 @@ class SamplesData(DataLayerPiece):
         )
 
     async def get(self, sample_id: str) -> Sample:
-        document = await self._db.samples.find_one({"_id": sample_id})
+        documents = await self._db.samples.aggregate(
+            [
+                {"$match": {"_id": sample_id}},
+                *lookup_nested_user_by_id(local_field="user.id"),
+                *lookup_nested_subtractions(local_field="subtractions"),
+                *lookup_caches(local_field="_id"),
+            ]
+        ).to_list(length=1)
 
-        if not document:
+        if len(documents) == 0:
             raise ResourceNotFoundError
 
-        document["caches"] = [
-            base_processor(cache)
-            async for cache in self._db.caches.find({"sample.id": sample_id})
-        ]
+        document = documents[0]
 
         document = await apply_transforms(
             base_processor(document),
             [
                 ArtifactsAndReadsTransform(self._pg),
                 AttachLabelsTransform(self._pg),
-                AttachSubtractionTransform(self._db),
-                AttachUserTransform(self._db),
             ],
         )
 
@@ -187,6 +190,7 @@ class SamplesData(DataLayerPiece):
         self,
         data: CreateSampleRequest,
         user_id: str,
+        space_id: int,
         _id: Optional[str] = None,
     ) -> Sample:
         """
@@ -253,6 +257,7 @@ class SamplesData(DataLayerPiece):
                         "quality": None,
                         "ready": False,
                         "results": None,
+                        "space": {"id": space_id},
                         "subtractions": data.subtractions,
                         "user": {"id": user_id},
                         "workflows": define_initial_workflows(data.library_type),
@@ -279,6 +284,7 @@ class SamplesData(DataLayerPiece):
             },
             user_id,
             JobRights(),
+            0,
         )
 
         return await self.get(sample_id)

@@ -89,3 +89,25 @@ class HMMInstallTask(BaseTask):
 
     async def cleanup(self):
         await self.data.hmms.clean_status()
+
+
+class HMMRefreshTask(BaseTask):
+    """
+    Periodically refreshes the release information for HMMs.
+    """
+
+    name = "refresh_hmms"
+
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context,
+        temp_dir,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
+
+        self.steps = [self.refresh]
+
+    async def refresh(self):
+        await self.data.hmms.update_release()

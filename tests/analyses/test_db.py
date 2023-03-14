@@ -72,6 +72,7 @@ async def test_create(
         "test_user",
         "nuvs",
         "test_job",
+        0,
         analysis_id=analysis_id,
     )
 
