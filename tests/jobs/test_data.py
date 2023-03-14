@@ -140,7 +140,6 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
     now = arrow.utcnow()
 
     async with mongo.create_session() as session:
-
         await mongo.jobs.insert_many(
             [
                 # Ok: Newer than 30 days.

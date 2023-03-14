@@ -3,7 +3,7 @@ import logging
 from aiohttp import web
 
 import virtool.dispatcher.dispatcher
-from virtool.http.policy import policy, WebSocketRoutePolicy
+from virtool.http.policy import WebSocketRoutePolicy, policy
 
 logger = logging.getLogger(__name__)
 

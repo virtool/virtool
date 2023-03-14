@@ -3,7 +3,7 @@ import logging
 import os
 from asyncio import to_thread
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import aiohttp.web
 import pymongo.errors
@@ -11,7 +11,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
-from pydantic import constr, conint, Field
+from pydantic import Field, conint, constr
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.samples import SampleSearchResult
@@ -38,13 +38,12 @@ from virtool.caches.utils import join_cache_path
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
-from virtool.http.policy import policy, PermissionRoutePolicy
+from virtool.http.policy import PermissionRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_new_id
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     RIGHTS_PROJECTION,
@@ -59,16 +58,16 @@ from virtool.samples.files import (
 )
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
 from virtool.samples.oas import (
-    GetSampleResponse,
+    CreateAnalysisRequest,
+    CreateAnalysisResponse,
     CreateSampleRequest,
     CreateSampleResponse,
-    UpdateSampleRequest,
-    UpdateSampleResponse,
+    GetSampleAnalysesResponse,
+    GetSampleResponse,
     UpdateRightsRequest,
     UpdateRightsResponse,
-    CreateAnalysisRequest,
-    GetSampleAnalysesResponse,
-    CreateAnalysisResponse,
+    UpdateSampleRequest,
+    UpdateSampleResponse,
 )
 from virtool.samples.utils import SampleRight
 from virtool.subtractions.db import AttachSubtractionTransform

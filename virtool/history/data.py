@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Any
 
-from virtool_core.models.history import HistorySearchResult, History
+from virtool_core.models.history import History, HistorySearchResult
 
 import virtool.otus.utils
 import virtool.utils
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.errors import DatabaseError
-from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
+from virtool.history.db import PROJECTION, DiffTransform, patch_to_version
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.references.transforms import AttachReferenceTransform

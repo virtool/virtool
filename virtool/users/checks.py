@@ -1,5 +1,6 @@
-from virtool.data.utils import get_data_from_req
 from aiohttp.web import Request
+
+from virtool.data.utils import get_data_from_req
 
 
 async def check_password_length(req: Request, password: str) -> str:

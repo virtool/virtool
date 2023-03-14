@@ -2,21 +2,20 @@ from typing import List, Union
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
-
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import NotFound, json_response
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import (
     CreateGroupRequest,
-    UpdateGroupRequest,
     CreateGroupResponse,
-    GroupResponse,
     GetGroupResponse,
+    GroupResponse,
+    UpdateGroupRequest,
 )
-from virtool.http.policy import policy, AdministratorRoutePolicy
+from virtool.http.policy import AdministratorRoutePolicy, policy
 from virtool.http.routes import Routes
 
 routes = Routes()

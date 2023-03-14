@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from zipfile import BadZipFile
 
 from aiohttp import ClientSession
@@ -9,15 +9,16 @@ from virtool_core.models.blast import NuvsBlast
 
 import virtool.utils
 from virtool.analyses.utils import find_nuvs_sequence_by_index
-from virtool.blast.db import get_nuvs_blast, delete_nuvs_blast
+from virtool.blast.db import delete_nuvs_blast, get_nuvs_blast
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.utils import (
+    check_rid,
     extract_blast_info,
     fetch_ncbi_blast_html,
-    check_rid,
+    fetch_nuvs_blast_result,
+    format_blast_content,
 )
-from virtool.blast.utils import format_blast_content, fetch_nuvs_blast_result
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.types import Document

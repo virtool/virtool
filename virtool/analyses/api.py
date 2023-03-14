@@ -20,7 +20,7 @@ from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from pydantic import conint
 
 from virtool.analyses.models import AnalysisFormat
-from virtool.analyses.oas import FindAnalysesResponse, AnalysisResponse
+from virtool.analyses.oas import AnalysisResponse, FindAnalysesResponse
 from virtool.api.custom_json import datetime_to_isoformat
 from virtool.api.response import (
     InsufficientRights,
@@ -29,16 +29,15 @@ from virtool.api.response import (
     json_response,
 )
 from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceError,
     ResourceNotFoundError,
     ResourceNotModifiedError,
-    ResourceError,
-    ResourceConflictError,
 )
 from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.uploads.utils import naive_validator
-
 
 logger = getLogger("analyses")
 

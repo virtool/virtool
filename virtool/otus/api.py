@@ -1,9 +1,9 @@
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r404, r204, r401, r403, r400
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
 from virtool_core.models.otu import OTU, OTUIsolate, Sequence
 
 import virtool.otus.db
@@ -18,12 +18,12 @@ from virtool.http.routes import Routes
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
-    UpdateOTURequest,
     CreateIsolateRequest,
-    UpdateIsolateRequest,
     CreateSequenceRequest,
-    UpdateSequenceRequest,
     FindOTUsResponse,
+    UpdateIsolateRequest,
+    UpdateOTURequest,
+    UpdateSequenceRequest,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform

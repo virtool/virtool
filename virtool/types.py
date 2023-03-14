@@ -3,7 +3,7 @@ Custom Types for Virtool
 
 """
 from datetime import datetime
-from typing import Any, Awaitable, Callable, Dict, List, Sequence, Union, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
 
 from aiohttp.web import Application, Request, Response
 

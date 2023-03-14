@@ -1,7 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
 from virtool.history.db import patch_to_version
 from virtool.indexes.models import IndexType

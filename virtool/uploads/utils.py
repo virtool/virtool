@@ -1,15 +1,14 @@
-from asyncio import to_thread
 import os
 import pathlib
+from asyncio import to_thread
 from logging import getLogger
 from typing import Any, Callable, Optional
 
 import aiofiles
 from cerberus import Validator
 
-from virtool.data.errors import ResourceNotFoundError
-
 from virtool.config.cls import Config
+from virtool.data.errors import ResourceNotFoundError
 
 logger = getLogger(__name__)
 

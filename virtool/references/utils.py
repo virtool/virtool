@@ -2,7 +2,7 @@ import gzip
 import json
 from datetime import datetime
 from operator import itemgetter
-from typing import List, Set, Optional, Dict
+from typing import Dict, List, Optional, Set
 
 from cerberus import Validator
 from pydantic import BaseModel

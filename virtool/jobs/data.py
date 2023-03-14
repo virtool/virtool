@@ -1,25 +1,24 @@
 import math
 from asyncio import gather
 from collections import defaultdict
-from typing import List
-from typing import Optional, Dict
+from typing import Dict, List, Optional
 
 import arrow
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.job import (
-    JobMinimal,
-    JobSearchResult,
-    JobStatus,
     Job,
+    JobMinimal,
     JobPing,
+    JobSearchResult,
     JobState,
+    JobStatus,
 )
 from virtool_core.models.user import UserNested
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.jobs import is_running_or_waiting
-from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
+from virtool.jobs.client import JOB_REMOVED_FROM_QUEUE, AbstractJobsClient
 from virtool.jobs.db import PROJECTION, fetch_complete_job
 from virtool.jobs.utils import JobRights, compose_status
 from virtool.mongo.core import DB

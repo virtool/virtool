@@ -1,11 +1,10 @@
-from asyncio import to_thread
 import shutil
+from asyncio import to_thread
 from contextlib import suppress
 from pathlib import Path
 from typing import Optional
 
 from sqlalchemy.exc import IntegrityError
-
 from virtool_core.models.settings import Settings
 
 from virtool.example import example_path

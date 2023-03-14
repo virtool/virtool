@@ -1,9 +1,10 @@
 import datetime
 from datetime import datetime
+
 import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
-from virtool_core.models.roles import SpaceSampleRole, SpaceReferenceRole
+from virtool_core.models.roles import SpaceReferenceRole, SpaceSampleRole
 
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.utils import get_data_from_app

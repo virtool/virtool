@@ -1,7 +1,7 @@
 import asyncio
 from copy import deepcopy
 from pathlib import Path
-from typing import Optional, Tuple, Mapping
+from typing import Mapping, Optional, Tuple
 
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
@@ -21,7 +21,7 @@ from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
-from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
+from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceRequest
 from virtool.otus.utils import find_isolate, format_isolate_name
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document

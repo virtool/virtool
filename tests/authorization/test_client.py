@@ -1,25 +1,22 @@
 import asyncio
 
 import pytest
-
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.permissions import (
-    ResourceType,
-    Permission,
-)
-from virtool.authorization.relationships import (
-    UserRoleAssignment,
-    SpaceMembership,
-    AdministratorRoleAssignment,
-    SpaceRoleAssignment,
-    ReferenceRoleAssignment,
-)
 from virtool_core.models.roles import (
-    SpaceSubtractionRole,
-    SpaceRole,
     AdministratorRole,
     ReferenceRole,
     SpaceProjectRole,
+    SpaceRole,
+    SpaceSubtractionRole,
+)
+
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.permissions import Permission, ResourceType
+from virtool.authorization.relationships import (
+    AdministratorRoleAssignment,
+    ReferenceRoleAssignment,
+    SpaceMembership,
+    SpaceRoleAssignment,
+    UserRoleAssignment,
 )
 
 

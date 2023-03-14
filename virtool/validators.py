@@ -1,6 +1,6 @@
 import re
 
-from email_validator import validate_email, EmailSyntaxError
+from email_validator import EmailSyntaxError, validate_email
 
 from virtool.users.utils import Permission
 

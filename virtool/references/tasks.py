@@ -4,7 +4,7 @@ import json
 from asyncio import to_thread
 from logging import getLogger
 from pathlib import Path
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 
 from aiohttp import ClientConnectorError
 from humanfriendly.testing import TemporaryDirectory
@@ -13,9 +13,9 @@ from virtool.api.custom_json import dump_string
 from virtool.errors import WebError
 from virtool.http.utils import download_file
 from virtool.references.utils import (
+    ReferenceSourceData,
     check_import_data,
     load_reference_file,
-    ReferenceSourceData,
 )
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask

@@ -1,5 +1,5 @@
-import pytest
 import arrow
+import pytest
 
 
 @pytest.fixture

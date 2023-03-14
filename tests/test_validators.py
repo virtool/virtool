@@ -1,10 +1,10 @@
+from virtool.users.utils import Permission
 from virtool.validators import (
-    is_valid_email,
-    is_permission_dict,
     has_unique_segment_names,
+    is_permission_dict,
+    is_valid_email,
     is_valid_hex_color,
 )
-from virtool.users.utils import Permission
 
 
 async def test_is_permission_dict(mocker):

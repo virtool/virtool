@@ -2,7 +2,7 @@ import json
 import logging
 from asyncio import to_thread
 from tempfile import TemporaryDirectory
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 import aiofiles
 from virtool_core.utils import decompress_tgz

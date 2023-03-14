@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import Dict, List
 
 import virtool.users.utils
 from virtool.users.utils import Permission

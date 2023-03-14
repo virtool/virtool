@@ -1,29 +1,28 @@
-from typing import Union, Tuple, List
+from typing import List, Tuple, Union
 
 from aioredis import Redis
-from virtool_core.models.account import Account
-from virtool_core.models.account import AccountSettings, APIKey
+from virtool_core.models.account import Account, AccountSettings, APIKey
 from virtool_core.models.session import Session
 
 import virtool.utils
 from virtool.account.db import (
-    compose_password_update,
     API_KEY_PROJECTION,
+    compose_password_update,
     fetch_complete_api_key,
 )
 from virtool.account.oas import (
-    UpdateSettingsRequest,
     CreateKeysRequest,
-    UpdateKeyRequest,
-    ResetPasswordRequest,
     CreateLoginRequest,
+    ResetPasswordRequest,
     UpdateAccountRequest,
+    UpdateKeyRequest,
+    UpdateSettingsRequest,
 )
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
-from virtool.users.db import validate_credentials, fetch_complete_user
+from virtool.users.db import fetch_complete_user, validate_credentials
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import limit_permissions
 

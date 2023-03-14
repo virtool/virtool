@@ -1,7 +1,7 @@
-from typing import Optional, List
+from typing import List, Optional
 
-from pydantic import constr, BaseModel, Field
-from virtool_core.models.otu import OTUSegment, OTUSearchResult
+from pydantic import BaseModel, Field, constr
+from virtool_core.models.otu import OTUSearchResult, OTUSegment
 from virtool_core.models.validators import prevent_none
 
 

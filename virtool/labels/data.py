@@ -2,7 +2,7 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError

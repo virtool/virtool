@@ -18,11 +18,11 @@ from virtool_core.models.roles import AdministratorRole
 from virtool.authorization.permissions import LegacyPermission
 from virtool.errors import PolicyError
 from virtool.http.policy import (
-    policy,
-    PublicRoutePolicy,
-    DefaultRoutePolicy,
     AdministratorRoutePolicy,
+    DefaultRoutePolicy,
     PermissionRoutePolicy,
+    PublicRoutePolicy,
+    policy,
 )
 from virtool.http.routes import Routes
 

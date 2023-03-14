@@ -1,7 +1,7 @@
+import orjson
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import create_async_engine
-import orjson
 
 from virtool.api.custom_json import dump_string
 

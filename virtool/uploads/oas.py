@@ -1,4 +1,4 @@
-from virtool_core.models.upload import UploadMinimal, Upload
+from virtool_core.models.upload import Upload, UploadMinimal
 
 
 class GetUploadsResponse(UploadMinimal):

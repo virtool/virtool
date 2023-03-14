@@ -1,12 +1,12 @@
 import asyncio
+from asyncio import to_thread
 from logging import getLogger
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional
 
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.progress import TaskProgressHandler
-from asyncio import to_thread
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer

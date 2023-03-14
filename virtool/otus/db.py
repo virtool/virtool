@@ -4,7 +4,7 @@ Work with OTUs in the database.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union, Mapping, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 

@@ -11,8 +11,7 @@ from virtool.users.db import (
     update_sessions_and_keys,
     validate_credentials,
 )
-from virtool.users.utils import Permission
-from virtool.users.utils import hash_password
+from virtool.users.utils import Permission, hash_password
 from virtool.utils import random_alphanumeric
 
 

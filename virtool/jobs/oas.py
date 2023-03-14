@@ -1,7 +1,7 @@
 from typing import List
 
 from pydantic import BaseModel, validator
-from virtool_core.models.job import JobMinimal, Job
+from virtool_core.models.job import Job, JobMinimal
 
 
 class GetJobResponse(JobMinimal):

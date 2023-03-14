@@ -1,22 +1,26 @@
 import math
 import os
-
-from asyncio import gather, CancelledError, to_thread
-
+from asyncio import CancelledError, gather, to_thread
 from datetime import datetime
 from logging import getLogger
 from shutil import rmtree
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.analysis import AnalysisSearchResult, Analysis
+from virtool_core.models.analysis import Analysis, AnalysisSearchResult
 from virtool_core.utils import rm
 
 import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
-
+from virtool.analyses.checks import (
+    check_analysis_nuvs_sequence,
+    check_analysis_workflow,
+    check_if_analysis_modified,
+    check_if_analysis_ready,
+    check_if_analysis_running,
+)
 from virtool.analyses.db import TARGET_FILES
 from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
 from virtool.analyses.models import AnalysisFile
@@ -25,20 +29,13 @@ from virtool.analyses.utils import (
     join_analysis_path,
     move_nuvs_files,
 )
-from virtool.analyses.checks import (
-    check_analysis_workflow,
-    check_analysis_nuvs_sequence,
-    check_if_analysis_running,
-    check_if_analysis_ready,
-    check_if_analysis_modified,
-)
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
-    ResourceNotFoundError,
-    ResourceError,
     ResourceConflictError,
+    ResourceError,
+    ResourceNotFoundError,
 )
 from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import DB
@@ -48,11 +45,11 @@ from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.tasks.progress import (
-    AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
+    AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.utils import naive_writer
-from virtool.utils import wait_for_checks, base_processor
+from virtool.utils import base_processor, wait_for_checks
 
 logger = getLogger("analyses")
 

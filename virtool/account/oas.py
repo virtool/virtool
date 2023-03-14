@@ -1,7 +1,8 @@
-from typing import Union, Optional
-from pydantic import BaseModel, constr, Field, root_validator, validator
+from typing import Optional, Union
+
+from pydantic import BaseModel, Field, constr, root_validator, validator
+from virtool_core.models.account import Account, AccountSettings, APIKey, check_email
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
 from virtool_core.models.validators import prevent_none
 
 from virtool.groups.oas import UpdatePermissionsRequest

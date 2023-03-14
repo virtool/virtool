@@ -5,9 +5,9 @@ from pathlib import Path
 from aiohttp.test_utils import make_mocked_coro
 
 from virtool.hmm.db import (
+    generate_annotations_json_file,
     get_hmms_referenced_in_db,
     get_hmms_referenced_in_files,
-    generate_annotations_json_file,
     get_referenced_hmm_ids,
 )
 

@@ -7,7 +7,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import Permission, LibraryType
+from virtool_core.models.enums import LibraryType, Permission
 
 import virtool.caches.db
 import virtool.pg.utils

@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
@@ -9,18 +9,12 @@ from virtool_core.models.job import JobMinimal, JobSearchResult, JobState
 
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
-from virtool.data.errors import (
-    ResourceConflictError,
-    ResourceNotFoundError,
-)
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionRoutePolicy
+from virtool.http.policy import PermissionRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.jobs.oas import (
-    JobResponse,
-    ArchiveJobsRequest,
-)
+from virtool.jobs.oas import ArchiveJobsRequest, JobResponse
 
 logger = getLogger(__name__)
 

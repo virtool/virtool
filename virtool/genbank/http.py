@@ -9,7 +9,6 @@ from typing import Optional, Union
 import aiohttp
 import Bio.SeqIO
 
-
 logger = logging.getLogger(__name__)
 
 EMAIL = "dev@virtool.ca"

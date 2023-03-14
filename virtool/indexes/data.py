@@ -1,55 +1,46 @@
 import asyncio
-from asyncio import to_thread
 import logging
+from asyncio import to_thread
 from pathlib import Path
-from typing import List, Union, Optional, Dict
+from typing import Dict, List, Optional, Union
 
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index, IndexFile
+from virtool_core.models.index import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool_core.models.reference import ReferenceNested
 from virtool_core.utils import file_stats
 
-import virtool.indexes.db
 import virtool.history.db
+import virtool.indexes.db
 from virtool.api.custom_json import dump_bytes
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import (
-    ResourceNotFoundError,
     ResourceConflictError,
     ResourceError,
+    ResourceNotFoundError,
 )
 from virtool.history.db import LIST_PROJECTION
-from virtool.indexes.checks import (
-    check_fasta_file_uploaded,
-    check_index_files_uploaded,
-)
+from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
-    update_last_indexed_versions,
     IndexCountsTransform,
+    update_last_indexed_versions,
 )
 from virtool.indexes.models import SQLIndexFile
-from virtool.indexes.tasks import get_index_file_type_from_name, export_index
+from virtool.indexes.tasks import export_index, get_index_file_type_from_name
 from virtool.indexes.utils import join_index_path
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
-
-from virtool.mongo.utils import id_exists, get_one_field
-
+from virtool.mongo.utils import get_one_field, id_exists
 from virtool.pg.utils import get_rows
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-
 from virtool.utils import compress_json_with_gzip, wait_for_checks
-
-from virtool.utils import compress_json_with_gzip, wait_for_checks
-
 
 logger = logging.getLogger("indexes")
 

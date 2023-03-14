@@ -5,7 +5,7 @@ These endpoints modify and return data about the user account associated with th
 session or API key making the requests.
 
 """
-from typing import Union, List
+from typing import List, Union
 
 from aiohttp.web import HTTPNoContent, Response
 from aiohttp.web_exceptions import HTTPBadRequest
@@ -15,25 +15,25 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 import virtool.http.authentication
 import virtool.http.routes
 from virtool.account.oas import (
-    UpdateAccountRequest,
-    UpdateSettingsRequest,
-    CreateKeysRequest,
-    UpdateKeyRequest,
-    ResetPasswordRequest,
-    CreateLoginRequest,
-    AccountResponse,
-    UpdateAccountResponse,
-    AccountSettingsResponse,
-    CreateAPIKeyResponse,
-    APIKeyResponse,
-    LoginResponse,
     AccountResetPasswordResponse,
+    AccountResponse,
+    AccountSettingsResponse,
+    APIKeyResponse,
+    CreateAPIKeyResponse,
+    CreateKeysRequest,
+    CreateLoginRequest,
     ListAPIKeysResponse,
+    LoginResponse,
+    ResetPasswordRequest,
+    UpdateAccountRequest,
+    UpdateAccountResponse,
+    UpdateKeyRequest,
+    UpdateSettingsRequest,
 )
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PublicRoutePolicy
+from virtool.http.policy import PublicRoutePolicy, policy
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 

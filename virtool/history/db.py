@@ -4,7 +4,7 @@ Work with OTU history in the database.
 """
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import bson
 import dictdiffer
@@ -18,9 +18,9 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.history.utils import (
     calculate_diff,
+    compose_history_description,
     derive_otu_information,
     write_diff_file,
-    compose_history_description,
 )
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform

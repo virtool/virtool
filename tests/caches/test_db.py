@@ -1,6 +1,8 @@
-import pytest
-import virtool.caches.db
 import os
+
+import pytest
+
+import virtool.caches.db
 
 
 @pytest.fixture

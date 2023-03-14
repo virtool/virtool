@@ -2,12 +2,12 @@ import asyncio
 import math
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union, Mapping, Any
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from aiohttp.web import Request
 from multidict import MultiDictProxy
 
-from virtool.types import Projection, Document
+from virtool.types import Document, Projection
 from virtool.utils import coerce_list, to_bool
 
 

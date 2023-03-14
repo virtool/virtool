@@ -1,7 +1,6 @@
-import logging
-from typing import Type
-from typing import Union
 import asyncio
+import logging
+from typing import Type, Union
 
 import aiojobs
 from aiohttp.abc import Application
@@ -12,14 +11,8 @@ from virtool.config import Config
 from virtool.data.errors import ResourceError
 from virtool.dispatcher.client import DispatcherClient
 from virtool.sentry import setup
-from virtool.shutdown import (
-    shutdown_scheduler,
-    shutdown_redis,
-)
-from virtool.startup import (
-    get_scheduler_from_app,
-    startup_version,
-)
+from virtool.shutdown import shutdown_redis, shutdown_scheduler
+from virtool.startup import get_scheduler_from_app, startup_version
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.task import BaseTask

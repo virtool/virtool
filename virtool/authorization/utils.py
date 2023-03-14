@@ -8,13 +8,12 @@ from aiohttp.web_request import Request
 from openfga_sdk import (
     CreateStoreRequest,
     OpenFgaApi,
-    WriteRequest,
-    TupleKeys,
-    TupleKey,
     ReadRequest,
+    TupleKey,
+    TupleKeys,
+    WriteRequest,
 )
 from openfga_sdk.api import open_fga_api
-
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.authorization.client import AuthorizationClient

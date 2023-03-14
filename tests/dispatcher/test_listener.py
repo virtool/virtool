@@ -1,6 +1,6 @@
+import asyncio
 import json
 
-import asyncio
 from aioredis import Redis
 
 from virtool.dispatcher.change import Change

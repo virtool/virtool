@@ -3,36 +3,31 @@ import shutil
 from asyncio import to_thread
 from functools import cached_property
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.hmm import (
-    HMMSearchResult,
-    HMM,
-    HMMStatus,
-    HMMInstalled,
-)
+from virtool_core.models.hmm import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool_core.utils import compress_file_with_gzip
 
 import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config.cls import Config
 from virtool.data.errors import (
-    ResourceNotFoundError,
     ResourceConflictError,
     ResourceError,
+    ResourceNotFoundError,
 )
 from virtool.data.piece import DataLayerPiece
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
     PROJECTION,
+    fetch_and_update_release,
     generate_annotations_json_file,
 )
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
-from virtool.hmm.db import fetch_and_update_release
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.progress import (

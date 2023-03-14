@@ -6,7 +6,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Set
+from typing import Any, Dict, List, Set
 
 import aiofiles
 import aiohttp.client_exceptions

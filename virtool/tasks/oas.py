@@ -1,7 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel, conint
-from virtool_core.models.task import TaskMinimal, Task
+from virtool_core.models.task import Task, TaskMinimal
 
 
 class GetTasksResponse(TaskMinimal):

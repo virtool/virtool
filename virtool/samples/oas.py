@@ -1,10 +1,9 @@
 from typing import Any, Optional
 
-from pydantic import BaseModel, constr, Field, conlist
+from pydantic import BaseModel, Field, conlist, constr
 from virtool_core.models.analysis import AnalysisMinimal
-from virtool_core.models.enums import LibraryType
-from virtool_core.models.samples import SampleMinimal, Sample
-from virtool_core.models.enums import QuickAnalyzeWorkflow
+from virtool_core.models.enums import LibraryType, QuickAnalyzeWorkflow
+from virtool_core.models.samples import Sample, SampleMinimal
 from virtool_core.models.validators import prevent_none
 
 

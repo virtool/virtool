@@ -3,20 +3,20 @@ Code for working with samples in the database and filesystem.
 
 """
 import asyncio
-from asyncio import to_thread
 import logging
 import os
+from asyncio import to_thread
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.settings import Settings
-from virtool_core.utils import compress_file, rm, file_stats
+from virtool_core.utils import compress_file, file_stats, rm
 
 import virtool.errors
 import virtool.mongo.utils
@@ -25,9 +25,9 @@ import virtool.utils
 from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
-from virtool.mongo.utils import id_exists, get_one_field
+from virtool.mongo.utils import get_one_field, id_exists
 from virtool.samples.models import SampleArtifact, SampleReads
-from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
+from virtool.samples.utils import PATHOSCOPE_TASK_NAMES, join_legacy_read_paths
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
 from virtool.uploads.models import Upload

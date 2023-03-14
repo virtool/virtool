@@ -1,7 +1,7 @@
 import asyncio
 from logging import getLogger
 from tempfile import TemporaryDirectory
-from typing import Optional, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 
 from virtool.tasks.task import BaseTask
 

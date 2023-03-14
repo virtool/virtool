@@ -1,6 +1,6 @@
-import pytest
-
 import asyncio
+
+import pytest
 
 from virtool.data.utils import get_data_from_app
 

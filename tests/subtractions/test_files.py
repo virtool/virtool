@@ -1,5 +1,5 @@
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.subtractions.files
 from virtool.subtractions.models import SQLSubtractionFile

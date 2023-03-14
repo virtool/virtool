@@ -1,4 +1,4 @@
-from virtool_core.models.index import IndexSearchResult, Index, IndexMinimal
+from virtool_core.models.index import Index, IndexMinimal, IndexSearchResult
 
 
 class ListIndexesResponse(IndexSearchResult):

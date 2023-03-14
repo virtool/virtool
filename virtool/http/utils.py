@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Union, Awaitable
+from typing import Awaitable, Callable, Union
 
 import aiofiles
 from aiohttp import ClientSession

@@ -1,7 +1,6 @@
 import hashlib
 
 import bcrypt
-
 from virtool_core.models.enums import Permission
 
 

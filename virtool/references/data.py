@@ -5,41 +5,39 @@ from typing import List, Optional, Union
 import aiohttp
 import arrow
 from aiohttp import ClientSession
-from aiohttp.web_exceptions import (
-    HTTPNoContent,
-)
+from aiohttp.web_exceptions import HTTPNoContent
 from multidict import MultiDictProxy
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import IndexSearchResult, IndexMinimal
-from virtool_core.models.otu import OTUSearchResult, OTU
+from virtool_core.models.index import IndexMinimal, IndexSearchResult
+from virtool_core.models.otu import OTU, OTUSearchResult
 from virtool_core.models.reference import (
-    ReferenceSearchResult,
     Reference,
-    ReferenceUser,
-    ReferenceRelease,
-    ReferenceInstalled,
     ReferenceGroup,
+    ReferenceInstalled,
+    ReferenceRelease,
+    ReferenceSearchResult,
+    ReferenceUser,
 )
 
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
-from virtool.api.response import NotFound, InsufficientRights
+from virtool.api.response import InsufficientRights, NotFound
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import (
     ResourceConflictError,
+    ResourceError,
     ResourceNotFoundError,
     ResourceRemoteError,
-    ResourceError,
 )
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError, GitHubError
-from virtool.github import format_release, create_update_subdocument
+from virtool.github import create_update_subdocument, format_release
 from virtool.history.db import patch_to_version
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
@@ -48,19 +46,19 @@ from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
 from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
-    compose_base_find_query,
     attach_computed,
-    get_manifest,
-    insert_joined_otu,
-    insert_change,
+    compose_base_find_query,
     fetch_and_update_release,
+    get_manifest,
+    insert_change,
+    insert_joined_otu,
 )
 from virtool.references.oas import (
-    CreateReferenceRequest,
-    UpdateReferenceRequest,
     CreateReferenceGroupsSchema,
-    ReferenceRightsRequest,
+    CreateReferenceRequest,
     CreateReferenceUsersRequest,
+    ReferenceRightsRequest,
+    UpdateReferenceRequest,
 )
 from virtool.references.tasks import (
     CloneReferenceTask,
@@ -71,16 +69,13 @@ from virtool.references.tasks import (
 from virtool.references.transforms import ImportedFromTransform
 from virtool.references.utils import ReferenceSourceData
 from virtool.tasks.progress import (
-    TaskProgressHandler,
     AccumulatingProgressHandlerWrapper,
+    TaskProgressHandler,
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.models import Upload as SQLUpload
-from virtool.users.db import (
-    AttachUserTransform,
-    extend_user,
-)
+from virtool.users.db import AttachUserTransform, extend_user
 from virtool.utils import chunk_list
 
 

@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import List, Union
 
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400

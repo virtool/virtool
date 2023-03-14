@@ -18,6 +18,8 @@ from virtool.samples.db import (
     compose_sample_workflow_query,
     compress_sample_reads,
     create_sample,
+    define_initial_workflows,
+    derive_workflow_state,
     finalize,
     get_sample_owner,
     recalculate_workflow_tags,
@@ -26,7 +28,6 @@ from virtool.samples.db import (
 )
 from virtool.samples.models import SampleReads
 from virtool.samples.utils import calculate_workflow_tags
-from virtool.samples.db import define_initial_workflows, derive_workflow_state
 from virtool.uploads.models import Upload
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"

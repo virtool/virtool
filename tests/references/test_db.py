@@ -1,4 +1,5 @@
 import pytest
+
 import virtool.errors
 import virtool.references.db
 

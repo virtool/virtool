@@ -1,7 +1,6 @@
-from asyncio import to_thread
 import logging
-from typing import Optional
-from typing import Union, List
+from asyncio import to_thread
+from typing import List, Optional, Union
 
 from aiohttp.web import FileResponse, Request
 from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
@@ -12,14 +11,14 @@ from virtool_core.models.index import IndexSearchResult
 
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.config import get_config_from_req
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.oas import (
-    ListIndexesResponse,
     GetIndexResponse,
+    ListIndexesResponse,
     ReadyIndexesResponse,
 )
 from virtool.indexes.utils import check_index_file_type, join_index_path
