@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field, constr, root_validator, validator
+from pydantic import BaseModel, Field, constr, validator
 
 from virtool_core.models.roles import AdministratorRole
 

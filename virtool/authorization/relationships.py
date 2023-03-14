@@ -59,9 +59,7 @@ class AbstractRelationship(ABC):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.user_type}:{self.user_id} {self.relation} {self.object_id}:{self.object_type}>"
 
-    async def remove_tuples(
-        self, open_fga: OpenFgaApi, add_list: List
-    ) -> None:
+    async def remove_tuples(self, open_fga: OpenFgaApi, add_list: List) -> None:
 
         for request in add_list:
             relation_tuple = request.writes.tuple_keys[0]
@@ -74,7 +72,10 @@ class AbstractRelationship(ABC):
 
         response = await open_fga.read(
             ReadRequest(
-                tuple_key=TupleKey(user=f"{self.user_type}:{self.user_id}", object=f"{self.object_type}:{self.object_id}"),
+                tuple_key=TupleKey(
+                    user=f"{self.user_type}:{self.user_id}",
+                    object=f"{self.object_type}:{self.object_id}",
+                ),
             )
         )
 
@@ -86,6 +87,7 @@ class AbstractRelationship(ABC):
                     )
                 )
             )
+
 
 class AdministratorRoleAssignment(AbstractRelationship):
     """

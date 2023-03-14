@@ -133,9 +133,7 @@ class AdministratorsData:
                     {"_id": user_id},
                     {
                         "$set": {
-                            "administrator": True
-                            if data.role == AdministratorRole.FULL
-                            else False
+                            "administrator": data.role == AdministratorRole.FULL
                         }
                     },
                     session=session,
