@@ -372,10 +372,6 @@ class SubtractionsData(DataLayerPiece):
         await to_thread(compress_file, fasta_path, target_path)
         await to_thread(rm, fasta_path)
 
-        await self._mongo.subtraction.find_one_and_update(
-            {"_id": subtraction_id}, {"$set": {"has_file": True}}
-        )
-
     async def rename_and_track_files(self, progress_handler: AbstractProgressHandler):
         """
         Rename index files and add a ``files`` field to any legacy subtractions.
