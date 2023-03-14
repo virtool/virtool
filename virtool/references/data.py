@@ -53,6 +53,7 @@ from virtool.references.db import (
     get_manifest,
     insert_joined_otu,
     insert_change,
+    fetch_and_update_release,
 )
 from virtool.references.oas import (
     CreateReferenceRequest,
@@ -340,7 +341,9 @@ class ReferencesData(DataLayerPiece):
         ):
             raise ResourceConflictError("Not a remote reference")
         try:
-            release = await virtool.references.db.fetch_and_update_release(app, ref_id)
+            release = await virtool.references.db.fetch_and_update_release(
+                app["db"], app["client"], ref_id
+            )
         except aiohttp.ClientConnectorError:
             raise ResourceRemoteError("Could not reach GitHub")
 
@@ -983,3 +986,14 @@ class ReferencesData(DataLayerPiece):
                         {"$pop": {"updates": -1}, "$set": {"updating": False}},
                         session=session,
                     )
+
+    async def fetch_and_update_reference_releases(self):
+        for ref_id in await self._mongo.references.distinct(
+            "_id", {"remotes_from": {"$exists": True}}
+        ):
+            await fetch_and_update_release(
+                self._mongo,
+                self._client,
+                ref_id,
+                ignore_errors=True,
+            )

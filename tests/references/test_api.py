@@ -485,7 +485,9 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
 
     assert await resp.json() == snapshot
 
-    m_fetch_and_update_release.assert_called_with(client.app, "foo")
+    m_fetch_and_update_release.assert_called_with(
+        client.app["db"], client.app["client"], "foo"
+    )
 
 
 @pytest.mark.apitest
