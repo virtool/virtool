@@ -27,7 +27,7 @@ from virtool.data.file import FileDescriptor
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.utils import JobRights
 from virtool.mongo.transforms import apply_transforms
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
     attach_computed,
@@ -127,6 +127,8 @@ class SubtractionsData(DataLayerPiece):
         if upload is None:
             raise ResourceNotFoundError("Upload does not exist")
 
+        job_id = await get_new_id(self._mongo.jobs)
+
         document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
@@ -139,6 +141,9 @@ class SubtractionsData(DataLayerPiece):
                     "name": upload.name,
                 },
                 "gc": None,
+                "job": {
+                    "id": job_id
+                },
                 "name": data.name,
                 "nickname": data.nickname,
                 "ready": False,
@@ -159,6 +164,7 @@ class SubtractionsData(DataLayerPiece):
             user_id,
             JobRights(),
             0,
+            job_id
         )
 
         return subtraction
