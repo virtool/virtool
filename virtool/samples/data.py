@@ -196,6 +196,7 @@ class SamplesData(DataLayerPiece):
         Create a sample.
 
         """
+
         settings = await self.data.settings.get_all()
 
         await wait_for_checks(
@@ -223,17 +224,23 @@ class SamplesData(DataLayerPiece):
 
             group = data.group
 
+
+
         # Assign the user's primary group as the sample owner group if the
         # setting is ``users_primary_group``.
         elif settings.sample_group == "users_primary_group":
             group = await get_one_field(self._db.users, "primary_group", user_id)
 
+        job_id = None
+
         async with self._db.create_session() as session:
+            sample_id = await get_new_id(self._db.samples, session=session)
+            job_id = await get_new_id(self._db.jobs)
             document, _ = await asyncio.gather(
                 self._db.samples.insert_one(
                     {
                         "_id": _id
-                        or await get_new_id(self._db.samples, session=session),
+                        or sample_id,
                         "all_read": settings.sample_all_read,
                         "all_write": settings.sample_all_write,
                         "created_at": virtool.utils.timestamp(),
@@ -245,6 +252,9 @@ class SamplesData(DataLayerPiece):
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
+                        "job": {
+                            "id": job_id
+                        },
                         "labels": data.labels,
                         "library_type": data.library_type,
                         "locale": data.locale,
@@ -284,6 +294,7 @@ class SamplesData(DataLayerPiece):
             user_id,
             JobRights(),
             0,
+            job_id
         )
 
         return await self.get(sample_id)
