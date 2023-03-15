@@ -65,6 +65,9 @@
     'host': '',
     'is_legacy': False,
     'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'labels': <class 'list'> [
       1,
     ],
@@ -96,6 +99,7 @@
 ---
 # name: TestCreate.test[uvloop-none]
   '/samples/bf1b993c'
+  
 ---
 # name: TestCreate.test[uvloop-none].1
   <class 'dict'> {
@@ -161,6 +165,9 @@
     'host': '',
     'is_legacy': False,
     'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'labels': <class 'list'> [
       1,
     ],
@@ -257,6 +264,9 @@
     'host': '',
     'is_legacy': False,
     'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'labels': <class 'list'> [
       1,
     ],
