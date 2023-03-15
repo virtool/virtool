@@ -376,8 +376,6 @@ class TestCreate:
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
-    
-
         assert await client.db.samples.find_one() == snapshot
 
         assert data.jobs._client.enqueued == [("create_sample", "fb085f7f")]
