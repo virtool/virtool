@@ -15,6 +15,8 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
+
+from virtool.administrators.tasks import PromoteAdministratorsTask
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 
@@ -405,4 +407,5 @@ async def startup_tasks(app: Application):
     await tasks_data.create(CleanReferencesTask)
     await tasks_data.create(TimeoutJobsTask)
 
+    await tasks_data.create_periodically(PromoteAdministratorsTask, 600)
     await scheduler.spawn(tasks_data.create_periodically(MigrateFilesTask, 3600))

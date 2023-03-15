@@ -1,7 +1,11 @@
 from typing import TYPE_CHECKING
 
 from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.administrator import Administrator, AdministratorSearch, AdministratorMinimal
+from virtool_core.models.administrator import (
+    Administrator,
+    AdministratorSearch,
+    AdministratorMinimal,
+)
 from virtool_core.utils import document_enum
 
 from virtool.administrators.oas import (
@@ -131,11 +135,7 @@ class AdministratorsData:
             async with self._db.create_session() as session:
                 await self._db.users.update_one(
                     {"_id": user_id},
-                    {
-                        "$set": {
-                            "administrator": data.role == AdministratorRole.FULL
-                        }
-                    },
+                    {"$set": {"administrator": data.role == AdministratorRole.FULL}},
                     session=session,
                 )
 
@@ -177,3 +177,12 @@ class AdministratorsData:
             return
 
         raise ResourceNotFoundError()
+
+    async def promote_administrators(self):
+        async with self._db.create_session() as session:
+            async for user in self._db.users.find(
+                {"administrator": True}, session=session
+            ):
+                await self._authorization_client.add(
+                    AdministratorRoleAssignment(user["_id"], AdministratorRole.FULL)
+                )
