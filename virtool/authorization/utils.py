@@ -1232,7 +1232,6 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         "delete_reference": {"directly_related_user_types": []},
                         "delete_sample": {"directly_related_user_types": []},
                         "delete_subtraction": {"directly_related_user_types": []},
-                        "update_label": {"directly_related_user_types": []},
                         "update_project": {"directly_related_user_types": []},
                         "update_reference": {"directly_related_user_types": []},
                         "update_sample": {"directly_related_user_types": []},

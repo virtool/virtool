@@ -1,0 +1,344 @@
+# name: test_create_administrator[uvloop-None]
+  <class 'dict'> {
+    'administrator': False,
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'role': 'base',
+  }
+---
+# name: test_create_administrator[uvloop-full]
+  <class 'dict'> {
+    'administrator': True,
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'role': 'full',
+  }
+---
+# name: test_create_administrator[uvloop-users]
+  <class 'dict'> {
+    'administrator': False,
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'role': 'users',
+  }
+---
+# name: test_get_administrator[uvloop]
+  <class 'dict'> {
+    'administrator': False,
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'role': 'base',
+  }
+---
+# name: test_list_administrators[uvloop]
+  <class 'dict'> {
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'items': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+        'role': 'base',
+      },
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+        'role': 'full',
+      },
+      <class 'dict'> {
+        'administrator': True,
+        'handle': 'bob',
+        'id': 'test',
+        'role': 'full',
+      },
+    ],
+  }
+---
+# name: test_update_administrator[uvloop-base]
+  <class 'dict'> {
+    'administrator': False,
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'role': 'base',
+  }
+---
+# name: test_update_administrator[uvloop-full]
+  <class 'dict'> {
+    'administrator': True,
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'role': 'full',
+  }
+---
+# name: test_update_administrator[uvloop-users]
+  <class 'dict'> {
+    'administrator': False,
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': 'Manage who is an administrator and what they can do.',
+        'id': 'full',
+        'name': 'Full',
+      },
+      <class 'dict'> {
+        'description': 'Manage instance settings and administrative messages.',
+        'id': 'settings',
+        'name': 'Settings',
+      },
+      <class 'dict'> {
+        'description': 'Manage users in any space. Delete any space.',
+        'id': 'spaces',
+        'name': 'Spaces',
+      },
+      <class 'dict'> {
+        'description': 'Create user accounts. Control activation of user accounts.',
+        'id': 'users',
+        'name': 'Users',
+      },
+      <class 'dict'> {
+        'description': '
+          Provides ability to:
+          - Create new spaces even if the `Free Spaces` setting is not enabled.
+          - Manage HMMs and common references.
+          - View all running jobs.
+          - Cancel any job.
+        ',
+        'id': 'base',
+        'name': 'Base',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'role': 'users',
+  }
+---
