@@ -45,7 +45,11 @@ from virtool.references.tasks import (
     RefreshReferenceReleasesTask,
 )
 from virtool.routes import setup_routes
-from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
+from virtool.samples.tasks import (
+    CompressSamplesTask,
+    MoveSampleFilesTask,
+    DeduplicateSampleNamesTask,
+)
 from virtool.sentry import setup
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
@@ -403,6 +407,7 @@ async def startup_tasks(app: Application):
     await tasks_data.create(CompressSamplesTask)
     await tasks_data.create(MoveSampleFilesTask)
     await tasks_data.create(CleanReferencesTask)
+    await tasks_data.create(DeduplicateSampleNamesTask)
     await tasks_data.create(TimeoutJobsTask)
 
     await scheduler.spawn(tasks_data.create_periodically(MigrateFilesTask, 3600))

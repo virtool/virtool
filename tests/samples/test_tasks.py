@@ -1,8 +1,14 @@
+from datetime import timedelta
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.samples.models import SampleReads
-from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
+from virtool.samples.tasks import (
+    CompressSamplesTask,
+    MoveSampleFilesTask,
+    DeduplicateSampleNamesTask,
+)
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
 from virtool.data.layer import DataLayer
@@ -144,3 +150,68 @@ async def test_move_sample_files_task(
 
         assert sample_reads in upload.reads
         assert sample_reads.upload == upload.id
+
+
+@pytest.mark.parametrize("spaces", [True, False])
+async def test_deduplicate_sample_names(
+    data_layer: DataLayer,
+    mongo,
+    pg: AsyncEngine,
+    snapshot,
+    static_time,
+    spaces,
+):
+    samples = [
+        {
+            "_id": "test_id",
+            "name": "test_name",
+            "created_at": static_time.datetime,
+            "space_id": "0",
+        },
+        {
+            "_id": "test_id_2",
+            "name": "test_name (2)",
+            "created_at": static_time.datetime + timedelta(days=3),
+            "space_id": "0",
+        },
+        {
+            "_id": "test_id_3",
+            "name": "test_name",
+            "created_at": static_time.datetime + timedelta(days=2),
+            "space_id": "0",
+        },
+        {
+            "_id": "test_id_4",
+            "name": "test_name",
+            "created_at": static_time.datetime + timedelta(days=1),
+            "space_id": "1",
+        },
+    ]
+
+    if not spaces:
+        for sample in samples:
+            sample.pop("space_id")
+
+    async with mongo.create_session() as session:
+        await mongo.samples.insert_many(samples, session)
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            Task(
+                id=1,
+                complete=False,
+                context={},
+                count=0,
+                progress=0,
+                step="deduplicate_sample_names",
+                type="deduplicate_sample_names",
+                created_at=static_time.datetime,
+            )
+        )
+        await session.commit()
+
+    task = DeduplicateSampleNamesTask(1, data_layer, {}, get_temp_dir())
+
+    await task.run()
+
+    assert await mongo.samples.find().to_list(None) == snapshot

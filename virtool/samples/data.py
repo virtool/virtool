@@ -32,6 +32,7 @@ from virtool.samples.db import (
     ArtifactsAndReadsTransform,
     validate_force_choice_group,
     define_initial_workflows,
+    NameGenerator,
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
@@ -423,3 +424,53 @@ class SamplesData(DataLayerPiece):
 
             await virtool.samples.db.move_sample_files_to_pg(self._db, self._pg, sample)
             await tracker.add(1)
+
+    async def deduplicate_sample_names(self):
+        """
+        Find all samples with duplicate names in the same space and rename
+        them with increasing integers by order of creation.
+        """
+        async with self._db.create_session() as session:
+            async for duplicate_name_documents in self._db.samples.aggregate(
+                [
+                    {
+                        "$group": {
+                            "_id": {"name": "$name", "space_id": "$space_id"},
+                            "count": {"$sum": 1},
+                            "documents": {
+                                "$push": {"_id": "$_id", "created_at": "$created_at"}
+                            },
+                        }
+                    },
+                    {"$match": {"count": {"$gt": 1}}},
+                    {"$unwind": "$documents"},
+                    {"$sort": {"documents.created_at": 1}},
+                    {
+                        "$group": {
+                            "_id": "$_id",
+                            "sample_ids": {"$push": "$documents._id"},
+                        }
+                    },
+                    {
+                        "$project": {
+                            "name": "$_id.name",
+                            "space_id": "$_id.space_id",
+                            "_id": 0,
+                            "sample_ids": 1,
+                        }
+                    },
+                ],
+                session=session,
+            ):
+                name_generator = NameGenerator(
+                    self._db,
+                    duplicate_name_documents["name"],
+                    duplicate_name_documents.get("space_id", None),
+                )
+
+                for sample_id in duplicate_name_documents["sample_ids"][1:]:
+                    await self._db.samples.update_one(
+                        {"_id": sample_id},
+                        {"$set": {"name": await name_generator.get(session)}},
+                        session=session,
+                    )
