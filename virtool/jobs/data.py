@@ -22,7 +22,7 @@ from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import PROJECTION, fetch_complete_job
 from virtool.jobs.utils import JobRights, compose_status
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
@@ -30,7 +30,7 @@ from virtool.users.db import AttachUserTransform
 
 
 class JobsData:
-    def __init__(self, client: AbstractJobsClient, db: DB, pg: AsyncEngine):
+    def __init__(self, client: AbstractJobsClient, db: Mongo, pg: AsyncEngine):
         self._client = client
         self._db = db
         self._pg = pg

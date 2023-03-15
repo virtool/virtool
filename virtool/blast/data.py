@@ -23,7 +23,7 @@ from virtool.data.piece import DataLayerPiece
 from virtool.types import Document
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 logger = getLogger(__name__)
 
@@ -33,7 +33,7 @@ class BLASTData(DataLayerPiece):
     A data layer piece for BLAST data.
     """
 
-    def __init__(self, client: ClientSession, mongo: "DB", pg: AsyncEngine):
+    def __init__(self, client: ClientSession, mongo: "Mongo", pg: AsyncEngine):
         self._client = client
         self._mongo = mongo
         self._pg = pg

@@ -41,7 +41,7 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.piece import DataLayerPiece
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
@@ -70,7 +70,7 @@ EXCLUDED_FIELDS = {
 
 
 class AnalysisData(DataLayerPiece):
-    def __init__(self, db: DB, config, pg: AsyncEngine):
+    def __init__(self, db: Mongo, config, pg: AsyncEngine):
         self._db = db
         self._config = config
         self._pg = pg

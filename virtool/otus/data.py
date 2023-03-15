@@ -17,7 +17,7 @@ from virtool.history.utils import (
     compose_edit_description,
     compose_remove_description,
 )
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
@@ -30,7 +30,7 @@ from virtool.utils import base_processor
 
 
 class OTUData:
-    def __init__(self, mongo: DB, data_path: Path):
+    def __init__(self, mongo: Mongo, data_path: Path):
         self._mongo = mongo
         self._data_path = data_path
 

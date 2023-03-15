@@ -31,12 +31,12 @@ from virtool.users.data import UsersData
 from virtool.users.sessions import SessionData
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 
 def create_data_layer(
     authorization_client: AuthorizationClient,
-    mongo: "DB",
+    mongo: "Mongo",
     pg: AsyncEngine,
     config: Config,
     client,

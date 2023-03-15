@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.indexes.db
 import virtool.references.db
 import virtool.samples.db
-from virtool.mongo.core import Collection, DB
+from virtool.mongo.core import Collection, Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
@@ -148,7 +148,7 @@ class IndexesFetcher(AbstractFetcher):
 
 
 class LabelsFetcher(AbstractFetcher):
-    def __init__(self, pg: AsyncEngine, db: DB):
+    def __init__(self, pg: AsyncEngine, db: Mongo):
         self._pg = pg
         self._db = db
 
@@ -180,7 +180,7 @@ class LabelsFetcher(AbstractFetcher):
 
 
 class ReferencesFetcher(AbstractFetcher):
-    def __init__(self, db: DB):
+    def __init__(self, db: Mongo):
         self._db = db
 
     async def prepare(self, change: Change, connections: List[Connection]):
@@ -220,7 +220,7 @@ class ReferencesFetcher(AbstractFetcher):
 
 
 class SamplesFetcher(AbstractFetcher):
-    def __init__(self, pg: AsyncEngine, db: DB):
+    def __init__(self, pg: AsyncEngine, db: Mongo):
         self._pg = pg
         self._db = db
 

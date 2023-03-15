@@ -19,7 +19,7 @@ from virtool.types import Document
 from virtool.utils import base_processor, to_bool
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
 
@@ -69,7 +69,7 @@ async def check_name_and_abbreviation(
 
 
 async def find(
-    mongo: "DB",
+    mongo: "Mongo",
     names: Optional[Union[bool, str]],
     term: Optional[str],
     req_query: Mapping,
@@ -150,7 +150,7 @@ async def join(
 
 
 async def bulk_join_query(
-    mongo: "DB",
+    mongo: "Mongo",
     query: dict,
     session: Optional[AsyncIOMotorClientSession] = None,
 ) -> List[Dict[str, Any]]:

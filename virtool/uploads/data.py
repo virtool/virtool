@@ -12,7 +12,7 @@ from virtool_core.utils import rm
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
 from virtool.uploads.models import Upload as SQLUpload
@@ -24,7 +24,7 @@ logger = getLogger("uploads")
 class UploadsData(DataLayerPiece):
     def __init__(self, config, db, pg):
         self._config = config
-        self._db: DB = db
+        self._db: Mongo = db
         self._pg: AsyncEngine = pg
 
     async def find(

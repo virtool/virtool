@@ -14,7 +14,7 @@ from virtool.users.db import AttachUserTransform
 from virtool.utils import get_safely, base_processor
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 
 class ImportedFromTransform(AbstractTransform):
@@ -23,7 +23,7 @@ class ImportedFromTransform(AbstractTransform):
 
     """
 
-    def __init__(self, mongo: DB, pg: AsyncEngine):
+    def __init__(self, mongo: Mongo, pg: AsyncEngine):
         self._mongo = mongo
         self._pg = pg
 
@@ -50,7 +50,7 @@ PROJECTION = ["_id", "name", "data_type"]
 
 
 class AttachReferenceTransform(AbstractTransform):
-    def __init__(self, mongo: "DB"):
+    def __init__(self, mongo: "Mongo"):
         self._mongo = mongo
 
     async def prepare_one(self, document: Document) -> Any:

@@ -36,7 +36,7 @@ from virtool.indexes.db import (
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import get_index_file_type_from_name, export_index
 from virtool.indexes.utils import join_index_path
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 
 from virtool.mongo.utils import id_exists, get_one_field
@@ -72,7 +72,7 @@ FIND_PIPELINE = [
 
 
 class IndexData:
-    def __init__(self, mongo: DB, config: Config, pg: AsyncEngine):
+    def __init__(self, mongo: Mongo, config: Config, pg: AsyncEngine):
         self._config = config
         self._mongo = mongo
         self._pg = pg

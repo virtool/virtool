@@ -35,7 +35,7 @@ from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 logger = logging.getLogger(__name__)
 
@@ -463,7 +463,7 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
         )
 
 
-async def compress_sample_reads(db: "DB", config: Config, sample: Dict[str, Any]):
+async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, Any]):
     """
     Compress the reads for one legacy samples.
 
@@ -511,7 +511,7 @@ async def compress_sample_reads(db: "DB", config: Config, sample: Dict[str, Any]
         await to_thread(os.remove, path)
 
 
-async def move_sample_files_to_pg(db: "DB", pg: AsyncEngine, sample: Dict[str, any]):
+async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str, any]):
     """
     Creates a row in the `sample_reads` table for each file in a sample's `files` array.
 

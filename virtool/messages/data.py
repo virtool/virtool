@@ -6,13 +6,13 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 import virtool.utils
 from virtool.messages.models import SQLInstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
 
 
 class MessagesData:
-    def __init__(self, pg: AsyncEngine, mongo: DB):
+    def __init__(self, pg: AsyncEngine, mongo: Mongo):
         self._pg = pg
         self._mongo = mongo
 
