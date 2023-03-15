@@ -4,7 +4,7 @@ from asyncio import gather
 import pytest
 
 from virtool.data.errors import ResourceNotFoundError
-from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceRequest
+from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
 
 
 @pytest.mark.parametrize(

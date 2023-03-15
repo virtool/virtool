@@ -1,5 +1,4 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
 from virtool.indexes.models import SQLIndexFile
 from virtool.pg.utils import delete_row, get_row, get_row_by_id, get_rows
 

@@ -13,16 +13,16 @@ from virtool.jobs.routes import startup_routes
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.shutdown import drop_fake_postgres
 from virtool.startup import (
-    startup_data,
     startup_databases,
     startup_events,
     startup_executors,
     startup_fake,
     startup_fake_config,
-    startup_http_client,
-    startup_sentry,
     startup_settings,
+    startup_data,
+    startup_sentry,
     startup_version,
+    startup_http_client,
 )
 from virtool.types import App
 

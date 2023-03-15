@@ -4,7 +4,7 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Mapping
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession

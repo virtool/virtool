@@ -1,11 +1,11 @@
+from virtool.startup import get_scheduler_from_app
 from virtool.shutdown import (
     shutdown_client,
     shutdown_dispatcher,
     shutdown_executors,
-    shutdown_redis,
     shutdown_scheduler,
+    shutdown_redis,
 )
-from virtool.startup import get_scheduler_from_app
 
 
 async def test_shutdown_client(spawn_client):

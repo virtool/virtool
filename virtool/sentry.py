@@ -1,6 +1,6 @@
 import logging
 from logging import getLogger
-from typing import Dict, Optional
+from typing import Optional, Dict
 
 import sentry_sdk
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration

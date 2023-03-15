@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Iterable, Optional, Tuple, Dict
 
 import arrow
 

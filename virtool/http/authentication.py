@@ -4,13 +4,16 @@ from typing import Callable, Tuple
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
-from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
+from jose.exceptions import JWTError, JWTClaimsError, ExpiredSignatureError
 
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.http.client import UserClient
-from virtool.http.policy import PublicRoutePolicy, get_handler_policy
+from virtool.http.policy import (
+    get_handler_policy,
+    PublicRoutePolicy,
+)
 from virtool.http.utils import set_session_id_cookie
 from virtool.oidc.utils import validate_token
 from virtool.users.db import B2CUserAttributes

@@ -1,14 +1,20 @@
 from inspect import isclass
 from logging import getLogger
-from typing import Any, Callable, Type, Union
+from typing import Callable, Any, Type, Union
 
 from aiohttp import web
 from aiohttp.web import Request
-from aiohttp.web_exceptions import HTTPForbidden, HTTPUnauthorized
+from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
-from virtool_core.models.roles import AdministratorRole
 
-from virtool.authorization.permissions import LegacyPermission, ResourceType
+from virtool_core.models.roles import (
+    AdministratorRole,
+)
+
+from virtool.authorization.permissions import (
+    ResourceType,
+    LegacyPermission,
+)
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient

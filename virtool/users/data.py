@@ -1,8 +1,8 @@
 import random
 
 from pymongo.errors import DuplicateKeyError
-from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User
+from virtool_core.models.roles import AdministratorRole
 
 import virtool.users.utils
 import virtool.utils
@@ -12,10 +12,10 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.errors import DatabaseError
 from virtool.users.db import (
     B2CUserAttributes,
+    update_sessions_and_keys,
     compose_groups_update,
     compose_primary_group_update,
     fetch_complete_user,
-    update_sessions_and_keys,
 )
 from virtool.users.mongo import create_user
 from virtool.users.oas import UpdateUserRequest
@@ -157,6 +157,7 @@ class UsersData:
         update = {}
 
         if "administrator" in data:
+
             update["administrator"] = data["administrator"]
 
             role_assignment = AdministratorRoleAssignment(

@@ -4,14 +4,13 @@ Classes that represent relationships between users and other resources.
 from abc import ABC, abstractmethod
 from typing import Union
 
+from virtool.authorization.permissions import ResourceType
 from virtool_core.models.roles import (
+    SpaceRole,
     AdministratorRole,
     ReferenceRole,
-    SpaceRole,
     SpaceRoleType,
 )
-
-from virtool.authorization.permissions import ResourceType
 
 
 class AbstractRelationship(ABC):

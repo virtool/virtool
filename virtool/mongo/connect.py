@@ -1,7 +1,7 @@
 import sys
 from logging import getLogger
 
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorClient
 from pymongo.errors import ServerSelectionTimeoutError
 from semver import VersionInfo
 

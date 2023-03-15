@@ -1,20 +1,20 @@
-from typing import Optional, Union
+from typing import Union, Optional
 
 from aiohttp.web_exceptions import HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404, r409
 
 from virtool.api.response import NotFound, json_response
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.messages.oas import (
+    MessageResponse,
     CreateMessageRequest,
     CreateMessageResponse,
-    MessageResponse,
-    UpdateMessageRequest,
     UpdateMessageResponse,
+    UpdateMessageRequest,
 )
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 
 routes = Routes()
 

@@ -1,4 +1,4 @@
-from sqlalchemy import delete, select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.blast.models import SQLNuVsBlast

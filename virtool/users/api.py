@@ -1,11 +1,11 @@
-from typing import Optional, Union
+from typing import Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
-from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 from virtool_core.models.user import User
+from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 
 import virtool.http.authentication
 import virtool.users.db
@@ -15,16 +15,20 @@ from virtool.authorization.relationships import UserRoleAssignment
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import AdministratorRoutePolicy, PublicRoutePolicy, policy
+from virtool.http.policy import (
+    policy,
+    AdministratorRoutePolicy,
+    PublicRoutePolicy,
+)
 from virtool.http.routes import Routes
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.oas import (
-    CreateFirstUserRequest,
-    CreateUserRequest,
-    PermissionResponse,
-    PermissionsResponse,
     UpdateUserRequest,
+    CreateUserRequest,
+    CreateFirstUserRequest,
+    PermissionsResponse,
+    PermissionResponse,
 )
 
 routes = Routes()

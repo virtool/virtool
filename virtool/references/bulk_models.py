@@ -1,7 +1,7 @@
-from dataclasses import astuple, dataclass, field
-from typing import Any, Callable, Coroutine, List, Optional, Union
+from dataclasses import dataclass, astuple, field
+from typing import Optional, List, Union, Callable, Any, Coroutine
 
-from pymongo import DeleteMany, DeleteOne, UpdateOne
+from pymongo import UpdateOne, DeleteMany, DeleteOne
 from virtool_core.models.enums import HistoryMethod
 
 from virtool.types import Document

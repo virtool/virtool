@@ -1,5 +1,4 @@
 from faker import Faker
-
 from virtool.fake.wrapper import FakerWrapper
 
 

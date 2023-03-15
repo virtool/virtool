@@ -6,7 +6,6 @@ from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
 from virtool.config.cls import Config
 from virtool.labels.models import Label
 

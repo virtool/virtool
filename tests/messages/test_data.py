@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.data.errors import ResourceConflictError
 from virtool.messages.data import MessagesData

@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, TYPE_CHECKING
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.mongo.transforms import AbstractTransform
+from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor, get_safely
+from virtool.utils import get_safely, base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import DB

@@ -10,7 +10,8 @@ from virtool_core.models.session import (
 )
 
 import virtool.utils
-from virtool.api.custom_json import dump_string, isoformat_to_datetime, loads
+from virtool.api.custom_json import dump_string
+from virtool.api.custom_json import isoformat_to_datetime, loads
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.utils import hash_key

@@ -10,9 +10,16 @@ from virtool_core.models.user import User
 from virtool.errors import DatabaseError
 from virtool.groups.db import get_merged_permissions
 from virtool.mongo.transforms import AbstractTransform
-from virtool.mongo.utils import get_non_existent_ids, id_exists
+from virtool.mongo.utils import (
+    get_non_existent_ids,
+    id_exists,
+)
 from virtool.types import Document
-from virtool.users.utils import check_legacy_password, check_password, limit_permissions
+from virtool.users.utils import (
+    check_legacy_password,
+    check_password,
+    limit_permissions,
+)
 from virtool.utils import base_processor
 
 logger = Logger(__name__)

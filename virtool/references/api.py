@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Union, List, Optional
 
 from aiohttp.web_exceptions import (
     HTTPBadGateway,
@@ -11,38 +11,40 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.otu import OTU
 
-from virtool.api.response import InsufficientRights, NotFound, json_response
+from virtool.api.response import InsufficientRights
+from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
-    ResourceConflictError,
-    ResourceError,
     ResourceNotFoundError,
     ResourceRemoteError,
+    ResourceConflictError,
+    ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import PermissionRoutePolicy, policy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
-from virtool.otus.oas import CreateOTURequest, FindOTUsResponse
+from virtool.otus.oas import CreateOTURequest
+from virtool.otus.oas import FindOTUsResponse
 from virtool.references.db import check_right
 from virtool.references.oas import (
-    CreateReferenceGroupResponse,
-    CreateReferenceGroupsSchema,
-    CreateReferenceIndexesResponse,
     CreateReferenceRequest,
-    CreateReferenceResponse,
-    CreateReferenceUpdateResponse,
-    CreateReferenceUsersRequest,
-    FindReferencesResponse,
-    GetReferenceUpdateResponse,
-    ReferenceGroupResponse,
-    ReferenceGroupsResponse,
-    ReferenceHistoryResponse,
-    ReferenceReleaseResponse,
-    ReferenceResponse,
-    ReferenceRightsRequest,
-    ReferenceUsersResponse,
     UpdateReferenceRequest,
+    CreateReferenceGroupsSchema,
+    ReferenceRightsRequest,
+    CreateReferenceUsersRequest,
+    CreateReferenceResponse,
+    FindReferencesResponse,
+    ReferenceResponse,
+    ReferenceReleaseResponse,
+    CreateReferenceUpdateResponse,
+    GetReferenceUpdateResponse,
+    CreateReferenceIndexesResponse,
+    ReferenceGroupsResponse,
+    CreateReferenceGroupResponse,
+    ReferenceGroupResponse,
+    ReferenceUsersResponse,
+    ReferenceHistoryResponse,
 )
 
 routes = Routes()

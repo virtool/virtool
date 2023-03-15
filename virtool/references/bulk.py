@@ -1,8 +1,8 @@
 import asyncio
-from asyncio import FIRST_COMPLETED, CancelledError, Queue
+from asyncio import Queue, CancelledError, FIRST_COMPLETED
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, List
+from typing import List, TYPE_CHECKING, Callable
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
@@ -12,12 +12,12 @@ from virtool.otus.db import bulk_join_ids, bulk_join_query
 from virtool.references.bulk_models import (
     BufferData,
     DataChunk,
-    DBBufferData,
+    OTUUpdate,
+    OTUInsert,
+    OTUDelete,
     OTUChange,
     OTUData,
-    OTUDelete,
-    OTUInsert,
-    OTUUpdate,
+    DBBufferData,
     OTUUpdateBufferData,
 )
 from virtool.references.db import (

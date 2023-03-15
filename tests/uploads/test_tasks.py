@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.data.layer import DataLayer
 from virtool.tasks.models import Task

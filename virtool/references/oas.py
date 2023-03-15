@@ -1,15 +1,15 @@
-from typing import List, Optional, Union
+from typing import Optional, Union, List
 
-from pydantic import BaseModel, Field, constr, root_validator, validator
+from pydantic import BaseModel, constr, Field, root_validator, validator
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexMinimal
 from virtool_core.models.reference import (
-    Reference,
-    ReferenceGroup,
     ReferenceInstalled,
-    ReferenceRelease,
+    Reference,
     ReferenceSearchResult,
     ReferenceUser,
+    ReferenceRelease,
+    ReferenceGroup,
 )
 from virtool_core.models.validators import prevent_none
 

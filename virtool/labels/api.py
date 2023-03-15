@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
@@ -11,10 +11,10 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.labels.oas import (
     CreateLabelRequest,
+    UpdateLabelRequest,
     CreateLabelResponse,
     GetLabelResponse,
     LabelResponse,
-    UpdateLabelRequest,
 )
 
 routes = virtool.http.routes.Routes()

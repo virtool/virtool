@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
+from sqlalchemy import Column, Integer, Boolean, Enum, String, DateTime
 from virtool_core.models.enums import MessageColor
 
 from virtool.pg.base import Base

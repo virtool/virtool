@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, constr, Field
 from virtool_core.models.validators import prevent_none
 
 

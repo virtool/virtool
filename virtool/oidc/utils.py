@@ -1,6 +1,6 @@
-import json
 from asyncio import to_thread
-from dataclasses import asdict, dataclass
+import json
+from dataclasses import dataclass, asdict
 
 import jwt
 from aiohttp.web import Application

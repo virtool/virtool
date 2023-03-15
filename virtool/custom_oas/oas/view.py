@@ -2,7 +2,7 @@ import copy
 import typing
 from inspect import getdoc
 from itertools import count
-from typing import List, Optional, Type, get_type_hints
+from typing import List, Type, Optional, get_type_hints
 
 from aiohttp.web import Response, json_response
 from aiohttp.web_app import Application

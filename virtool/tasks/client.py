@@ -3,7 +3,10 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
-from aioredis import ConnectionClosedError, Redis
+from aioredis import (
+    Redis,
+    ConnectionClosedError,
+)
 
 REDIS_TASKS_LIST_KEY = "tasks"
 logging.getLogger("tasks")

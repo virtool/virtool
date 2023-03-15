@@ -7,6 +7,7 @@ import aiohttp
 import virtool.errors
 import virtool.utils
 
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.github.com/repos"

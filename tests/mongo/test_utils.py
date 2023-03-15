@@ -1,5 +1,4 @@
 import pytest
-
 import virtool.mongo.utils
 
 

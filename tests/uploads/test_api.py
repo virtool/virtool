@@ -2,10 +2,10 @@ import os
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import Permission
 
 import virtool.utils
 from virtool.uploads.models import Upload, UploadType
+from virtool_core.models.enums import Permission
 
 
 @pytest.fixture

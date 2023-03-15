@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from virtool.history.utils import (
     calculate_diff,
     compose_create_description,

@@ -1,5 +1,5 @@
 from virtool.api.response import json_response
-from virtool.http.policy import PublicRoutePolicy, policy
+from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.routes import Routes
 
 API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"

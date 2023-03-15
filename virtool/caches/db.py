@@ -97,11 +97,11 @@ async def remove(app: App, cache_id: str):
 
 def lookup_caches(local_field: str = "_id", set_as: str = "caches") -> list[dict]:
     """
-    Create a mongoDB aggregation pipeline step to look up nested caches.
+        Create a mongoDB aggregation pipeline step to look up nested caches.
 
-    :param local_field: cache id field to look up
-    :param set_as: desired name of the returned record
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
+        :param local_field: cache id field to look up
+        :param set_as: desired name of the returned record
+        :return: mongoDB aggregation steps for use in an aggregation pipeline
     """
     return [
         {

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List, Optional, Type
+from typing import List, Type, Optional, Dict
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession

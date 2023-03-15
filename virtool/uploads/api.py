@@ -1,6 +1,6 @@
 from asyncio import CancelledError
 from logging import getLogger
-from typing import List, Optional, Union
+from typing import List, Union, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
@@ -9,16 +9,16 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
 from pydantic import Field, conint
 
-from virtool.api.response import InvalidQuery, NotFound, json_response
+from virtool.api.response import InvalidQuery, json_response, NotFound
 from virtool.authorization.permissions import LegacyPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import PermissionRoutePolicy, policy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.uploads.models import UploadType
-from virtool.uploads.oas import CreateUploadResponse, GetUploadsResponse
-from virtool.uploads.utils import get_upload_path, naive_validator, naive_writer
+from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
+from virtool.uploads.utils import naive_validator, naive_writer, get_upload_path
 
 logger = getLogger(__name__)
 

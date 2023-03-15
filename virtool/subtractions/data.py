@@ -1,28 +1,28 @@
 import asyncio
-import os
 import shutil
 from asyncio import CancelledError, to_thread
 from logging import getLogger
 from typing import Optional
 
 from aiohttp import MultipartReader
+import os
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.subtraction import (
     Subtraction,
-    SubtractionFile,
     SubtractionSearchResult,
+    SubtractionFile,
 )
-from virtool_core.utils import compress_file, rm
+from virtool_core.utils import rm, compress_file
 
 import virtool.mongo.utils
 import virtool.subtractions.files
 import virtool.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.file import FileDescriptor
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.utils import JobRights
@@ -30,22 +30,22 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
-    PROJECTION,
     attach_computed,
-    check_subtraction_fasta_files,
+    PROJECTION,
     unlink_default_subtractions,
+    check_subtraction_fasta_files,
 )
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
-    FinalizeSubtractionRequest,
     UpdateSubtractionRequest,
+    FinalizeSubtractionRequest,
 )
 from virtool.subtractions.utils import (
+    join_subtraction_path,
     FILES,
     check_subtraction_file_type,
     join_subtraction_index_path,
-    join_subtraction_path,
 )
 from virtool.tasks.progress import (
     AbstractProgressHandler,
@@ -141,7 +141,9 @@ class SubtractionsData(DataLayerPiece):
                     "name": upload.name,
                 },
                 "gc": None,
-                "job": {"id": job_id},
+                "job": {
+                    "id": job_id
+                },
                 "name": data.name,
                 "nickname": data.nickname,
                 "ready": False,
@@ -162,7 +164,7 @@ class SubtractionsData(DataLayerPiece):
             user_id,
             JobRights(),
             0,
-            job_id,
+            job_id
         )
 
         return subtraction

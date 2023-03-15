@@ -12,13 +12,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.indexes.db
 import virtool.references.db
 import virtool.samples.db
+from virtool.mongo.core import Collection, DB
+from virtool.mongo.transforms import apply_transforms
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.operations import DELETE
 from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
 from virtool.labels.models import Label
-from virtool.mongo.core import DB, Collection
-from virtool.mongo.transforms import apply_transforms
 from virtool.tasks.models import Task
 from virtool.types import Projection
 from virtool.uploads.models import Upload

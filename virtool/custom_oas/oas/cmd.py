@@ -2,7 +2,7 @@ import argparse
 import importlib
 import json
 import sys
-from typing import Callable, Dict, Optional, Protocol
+from typing import Dict, Protocol, Optional, Callable
 
 from virtool.custom_oas.oas.view import generate_oas
 

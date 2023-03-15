@@ -3,16 +3,22 @@ Work with references in the database
 
 """
 import asyncio
-import datetime
 from asyncio import to_thread
+import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Union,
+    TYPE_CHECKING,
+)
 
 import pymongo
 from aiohttp import ClientConnectorError
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo import DeleteMany, DeleteOne, UpdateOne
+from pymongo import UpdateOne, DeleteMany, DeleteOne
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
@@ -30,12 +36,13 @@ from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
 from virtool.references.bulk_models import (
-    OTUData,
-    OTUDelete,
-    OTUInsert,
     OTUUpdate,
     SequenceChanges,
+    OTUData,
+    OTUInsert,
+    OTUDelete,
 )
+
 from virtool.references.utils import (
     RIGHTS,
     check_will_change,

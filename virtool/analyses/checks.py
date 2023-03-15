@@ -4,8 +4,8 @@ from typing import Optional
 from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceNotFoundError,
     ResourceNotModifiedError,
+    ResourceNotFoundError,
 )
 
 

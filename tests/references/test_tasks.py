@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import shutil
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional, Dict
 
 import arrow
 import pytest
@@ -13,9 +13,9 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
 from virtool.references.tasks import (
     CleanReferencesTask,
-    CloneReferenceTask,
     ImportReferenceTask,
     RemoteReferenceTask,
+    CloneReferenceTask,
 )
 from virtool.tasks.models import Task
 from virtool.uploads.models import UploadType

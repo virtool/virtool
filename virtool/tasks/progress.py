@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Awaitable, Callable
+from typing import Callable, Awaitable
 
 
 class AbstractProgressHandler(ABC):

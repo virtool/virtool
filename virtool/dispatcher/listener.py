@@ -1,12 +1,14 @@
 import asyncio
 import sys
-from logging import getLogger
-from typing import AsyncGenerator, AsyncIterable
+from typing import AsyncIterable, AsyncGenerator
 
 from aioredis import Channel, ChannelClosedError, Redis
-from virtool_core.redis import resubscribe
 
 from virtool.dispatcher.change import Change
+
+from virtool_core.redis import resubscribe
+
+from logging import getLogger
 
 logger = getLogger(__name__)
 

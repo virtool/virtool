@@ -1,12 +1,11 @@
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
-from virtool.data.layer import DataLayer
 from virtool.samples.models import SampleReads
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
+from virtool.data.layer import DataLayer
 from virtool.utils import get_temp_dir
 
 

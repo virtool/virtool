@@ -7,9 +7,21 @@ collection.
 
 """
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Optional,
+    Sequence,
+    Union,
+    List,
+)
 
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorClientSession
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorClientSession,
+)
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 from pymongo.results import DeleteResult, UpdateResult

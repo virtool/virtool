@@ -1,5 +1,5 @@
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy import select
 
 import virtool.indexes.files
 from virtool.indexes.models import SQLIndexFile

@@ -21,6 +21,7 @@ from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.otus.utils import format_isolate_name
 
+
 CSV_HEADERS = (
     "OTU",
     "Isolate",

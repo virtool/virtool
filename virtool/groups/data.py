@@ -1,11 +1,17 @@
-from typing import TYPE_CHECKING, List
+from typing import List, TYPE_CHECKING
 
 from pymongo.errors import DuplicateKeyError
-from virtool_core.models.group import Group, GroupMinimal
+from virtool_core.models.group import GroupMinimal, Group
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.groups.db import fetch_complete_group, update_member_users
+from virtool.data.errors import (
+    ResourceNotFoundError,
+    ResourceConflictError,
+)
+from virtool.groups.db import (
+    update_member_users,
+    fetch_complete_group,
+)
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.utils import generate_base_permissions

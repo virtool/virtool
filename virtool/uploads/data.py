@@ -4,9 +4,9 @@ from asyncio import to_thread
 from logging import getLogger
 from typing import List, Optional, Union
 
-from sqlalchemy import func, select, update
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.upload import Upload, UploadMinimal, UploadSearchResult
+from sqlalchemy import select, update, func
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from virtool_core.models.upload import Upload, UploadSearchResult, UploadMinimal
 from virtool_core.utils import rm
 
 import virtool.utils

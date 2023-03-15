@@ -3,16 +3,16 @@ from datetime import datetime
 import pytest
 
 from virtool.analyses.checks import (
-    check_analysis_nuvs_sequence,
-    check_analysis_workflow,
     check_if_analysis_modified,
     check_if_analysis_ready,
+    check_analysis_workflow,
     check_if_analysis_running,
+    check_analysis_nuvs_sequence,
 )
 from virtool.data.errors import (
+    ResourceNotModifiedError,
     ResourceConflictError,
     ResourceNotFoundError,
-    ResourceNotModifiedError,
 )
 
 

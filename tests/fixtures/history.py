@@ -1,6 +1,5 @@
-import datetime
-
 import pytest
+import datetime
 
 
 @pytest.fixture

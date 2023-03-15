@@ -3,7 +3,6 @@ import os
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized
-
 from virtool.http.client import JobClient
 from virtool.jobs.utils import JobRights
 from virtool.types import RouteHandler

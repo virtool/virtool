@@ -2,9 +2,9 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, constr
 from virtool_core.models.subtraction import (
-    NucleotideComposition,
-    Subtraction,
     SubtractionMinimal,
+    Subtraction,
+    NucleotideComposition,
 )
 from virtool_core.models.validators import prevent_none
 

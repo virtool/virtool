@@ -14,7 +14,6 @@ import virtool.http.ws
 import virtool.indexes.api
 import virtool.jobs.api
 import virtool.labels.api
-import virtool.messages.api
 import virtool.oidc.api
 import virtool.otus.api
 import virtool.references.api
@@ -24,6 +23,8 @@ import virtool.subtractions.api
 import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
+import virtool.messages.api
+
 
 logger = logging.getLogger(__name__)
 

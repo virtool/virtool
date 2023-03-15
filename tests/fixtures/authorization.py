@@ -3,11 +3,11 @@ from enum import Enum
 
 import openfga_sdk
 import pytest
-from openfga_sdk import ApiException, TupleKey, TupleKeys, WriteRequest
+from openfga_sdk import TupleKey, WriteRequest, TupleKeys, ApiException
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.permissions import ResourceType
-from virtool.authorization.utils import delete_tuples, write_openfga_authorization_model
+from virtool.authorization.utils import write_openfga_authorization_model, delete_tuples
 
 
 @pytest.fixture

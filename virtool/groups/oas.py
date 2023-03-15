@@ -1,5 +1,4 @@
 from typing import Optional
-
 from pydantic import BaseModel, Field, constr, root_validator
 from virtool_core.models.group import Group, GroupMinimal
 

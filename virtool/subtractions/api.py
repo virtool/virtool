@@ -1,26 +1,26 @@
 import logging
-from typing import Optional, Union
+from typing import Union, Optional
 
 import aiohttp.web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
 from virtool_core.models.subtraction import SubtractionSearchResult
 
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import PermissionRoutePolicy, policy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
-    CreateSubtractionResponse,
-    FinalizeSubtractionRequest,
-    SubtractionResponse,
     UpdateSubtractionRequest,
+    CreateSubtractionResponse,
+    SubtractionResponse,
+    FinalizeSubtractionRequest,
 )
 
 logger = logging.getLogger("subtractions")

@@ -2,13 +2,14 @@ import asyncio
 import logging
 
 from aiohttp.abc import Application
-from sentry_sdk import capture_exception
 
 from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask
+
+from sentry_sdk import capture_exception
 
 
 class TaskRunner:

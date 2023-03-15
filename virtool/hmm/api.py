@@ -5,22 +5,26 @@ API request handlers for managing and querying HMM data.
 from typing import Union
 
 from aiohttp.web import Response
-from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPConflict
+from aiohttp.web_exceptions import (
+    HTTPBadGateway,
+    HTTPBadRequest,
+    HTTPConflict,
+)
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
-from virtool_core.models.hmm import HMM, HMMInstalled, HMMSearchResult
+from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
-    ResourceConflictError,
-    ResourceError,
     ResourceNotFoundError,
     ResourceRemoteError,
+    ResourceConflictError,
+    ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import AdministratorRoutePolicy, policy
+from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
 from virtool.mongo.utils import get_one_field
 

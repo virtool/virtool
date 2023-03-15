@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Optional, Dict, Any
 
 from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound, HTTPUnprocessableEntity

@@ -9,6 +9,7 @@ from virtool_core.utils import compress_file
 
 from virtool.analyses.models import AnalysisFile
 
+
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 
 

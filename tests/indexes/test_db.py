@@ -1,8 +1,8 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.indexes.db
+from aiohttp.test_utils import make_mocked_coro
 from virtool.indexes.db import (
     attach_files,
     get_current_id_and_version,

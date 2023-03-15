@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.data.layer import DataLayer
 from virtool.indexes.models import SQLIndexFile

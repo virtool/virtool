@@ -1,4 +1,4 @@
-from aioredis import Channel, Redis
+from aioredis import Redis, Channel
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.dispatcher.dispatcher import Dispatcher

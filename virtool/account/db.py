@@ -2,7 +2,7 @@
 Work with the current user account and its API keys.
 
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional, List
 
 from virtool_core.models.account import APIKey
 
