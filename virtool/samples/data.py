@@ -32,7 +32,7 @@ from virtool.samples.db import (
     ArtifactsAndReadsTransform,
     validate_force_choice_group,
     define_initial_workflows,
-    incrementing_sample_name_generator,
+    NameGenerator,
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
@@ -462,17 +462,15 @@ class SamplesData(DataLayerPiece):
                 ],
                 session=session,
             ):
-                name_generator = incrementing_sample_name_generator(
+                name_generator = NameGenerator(
                     self._db,
                     duplicate_name_documents["name"],
                     duplicate_name_documents.get("space_id", None),
-                    session,
                 )
 
                 for sample_id in duplicate_name_documents["sample_ids"][1:]:
-                    new_name = await name_generator.asend(None)
                     await self._db.samples.update_one(
                         {"_id": sample_id},
-                        {"$set": {"name": new_name}},
+                        {"$set": {"name": await name_generator.get(session)}},
                         session=session,
                     )

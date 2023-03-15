@@ -643,25 +643,28 @@ async def get_sample(app, sample_id: str):
     return document
 
 
-async def incrementing_sample_name_generator(mongo, base_name, space_id, session):
+class NameGenerator:
     """
-    Get the next available sample name.
+    Generates unique incrementing sample names based on a base name and a space id.
+    """
 
-    :param mongo: the mongo database instance
-    :param base_name: the base name of the sample
-    :param space_id: the id of the space the sample belongs to
-    :param session: the mongo session
-    :return: the next available sample name
-    """
-    sample_number = 2
-    while True:
-        if not await mongo.samples.find_one(
+    def __init__(self, db: "DB", base_name: str, space_id: str):
+        self.base_name = base_name
+        self.space_id = space_id
+        self.db = db
+        self.sample_number = 1
+
+    async def get(self, session: AsyncIOMotorClientSession):
+        self.sample_number += 1
+
+        while await self.db.samples.count_documents(
             {
-                "name": f"{base_name} ({sample_number})",
-                "space_id": space_id,
+                "name": f"{self.base_name} ({self.sample_number})",
+                "space_id": self.space_id,
             },
+            limit=1,
             session=session,
         ):
-            yield f"{base_name} ({sample_number})"
+            self.sample_number += 1
 
-        sample_number += 1
+        return f"{self.base_name} ({self.sample_number})"
