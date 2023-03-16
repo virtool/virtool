@@ -16,7 +16,6 @@ from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
 
-from virtool.administrators.tasks import PromoteAdministratorsTask
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 
