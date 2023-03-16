@@ -20,12 +20,10 @@ async def test_promote_administrators(
 
     user = await fake2.users.create()
 
-    async with mongo.create_session() as session:
-        await mongo.users.update_one(
-            {"_id": user.id},
-            {"$set": {"administrator": True}},
-            session=session,
-        )
+    await mongo.users.update_one(
+        {"_id": user.id},
+        {"$set": {"administrator": True}},
+    )
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -50,6 +48,6 @@ async def test_promote_administrators(
     assert row.complete is True
 
     assert (
-        await data_layer.administrators._authorization_client.list_administrators()
-        == [(user.id, "full")]
+        await data_layer.administrators.find()
+        == snapshot
     )

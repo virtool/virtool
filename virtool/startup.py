@@ -407,5 +407,4 @@ async def startup_tasks(app: Application):
     await tasks_data.create(CleanReferencesTask)
     await tasks_data.create(TimeoutJobsTask)
 
-    await tasks_data.create_periodically(PromoteAdministratorsTask, 600)
     await scheduler.spawn(tasks_data.create_periodically(MigrateFilesTask, 3600))

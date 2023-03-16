@@ -179,10 +179,8 @@ class AdministratorsData:
         raise ResourceNotFoundError()
 
     async def promote_administrators(self):
-        async with self._db.create_session() as session:
-            async for user in self._db.users.find(
-                {"administrator": True}, session=session
-            ):
-                await self._authorization_client.add(
-                    AdministratorRoleAssignment(user["_id"], AdministratorRole.FULL)
+
+        for user_id in await self._db.users.distinct("_id", {"administrator": True}):
+            await self._authorization_client.add(
+                    AdministratorRoleAssignment(user_id, AdministratorRole.FULL)
                 )
