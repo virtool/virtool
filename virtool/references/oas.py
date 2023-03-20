@@ -336,7 +336,7 @@ class UpdateReferenceRequest(BaseModel):
     source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
         description="source types"
     )
-    targets: List[ReferenceTargetRequest] = Field(description="targets")
+    targets: Optional[List[ReferenceTargetRequest]] = Field(description="targets")
 
     _prevent_none = prevent_none(
         "name",
