@@ -247,8 +247,8 @@ async def test_list_permissions(spawn_client, user, snapshot):
     authorization_client = client.app["authorization"]
 
     await authorization_client.add(
-        UserRoleAssignment(0, "test", SpaceSampleRole.EDITOR),
-        UserRoleAssignment(0, "test", SpaceReferenceRole.BUILDER),
+        UserRoleAssignment("test", 0, SpaceSampleRole.EDITOR),
+        UserRoleAssignment("test", 0, SpaceReferenceRole.BUILDER),
     )
 
     resp = await client.get(

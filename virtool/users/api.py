@@ -240,7 +240,7 @@ class PermissionView(PydanticView):
             200: Successful operation
         """
         await get_authorization_client_from_req(self.request).add(
-            UserRoleAssignment(0, user_id, role)
+            UserRoleAssignment(user_id, 0, role)
         )
 
         return json_response(True)
@@ -256,7 +256,7 @@ class PermissionView(PydanticView):
             200: Successful operation
         """
         await get_authorization_client_from_req(self.request).remove(
-            UserRoleAssignment(0, user_id, role)
+            UserRoleAssignment(user_id, 0, role)
         )
 
         return json_response(True)

@@ -58,7 +58,7 @@ class TestCheck:
 
         await client.add(
             SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-            UserRoleAssignment(0, "ryanf", permission),
+            UserRoleAssignment("ryanf", 0, permission),
         )
 
         assert (
@@ -113,8 +113,8 @@ async def test_list_user_roles(snapshot, spawn_auth_client):
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
-        UserRoleAssignment(0, "ryanf", SpaceProjectRole.MANAGER),
+        UserRoleAssignment("ryanf", 0, SpaceSubtractionRole.EDITOR),
+        UserRoleAssignment("ryanf", 0, SpaceProjectRole.MANAGER),
     )
 
     assert await client.list_user_roles("ryanf", 0) == [
@@ -129,11 +129,11 @@ async def test_add_and_remove_user_roles(spawn_auth_client):
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
-        UserRoleAssignment(0, "ryanf", SpaceProjectRole.MANAGER),
+        UserRoleAssignment("ryanf", 0, SpaceSubtractionRole.EDITOR),
+        UserRoleAssignment("ryanf", 0, SpaceProjectRole.MANAGER),
     )
 
-    await client.remove(UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR))
+    await client.remove(UserRoleAssignment("ryanf", 0, SpaceSubtractionRole.EDITOR))
 
     assert await client.list_user_roles("ryanf", 0) == ["member", "project_manager"]
 
@@ -177,14 +177,14 @@ async def test_add_idempotent(fake2, spawn_auth_client):
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
+        UserRoleAssignment("ryanf", 0, SpaceSubtractionRole.EDITOR),
     )
 
     assert await client.list_user_roles("ryanf", 0) == ["member", "subtraction_editor"]
 
     await client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-        UserRoleAssignment(0, "ryanf", SpaceSubtractionRole.EDITOR),
+        UserRoleAssignment("ryanf", 0, SpaceSubtractionRole.EDITOR),
     )
 
     assert await client.list_user_roles("ryanf", 0) == ["member", "subtraction_editor"]
@@ -198,7 +198,7 @@ async def test_list_space_users(spawn_auth_client):
         SpaceMembership("test", 0, SpaceRole.OWNER),
     )
 
-    assert await client.list_space_users(0) == [("ryanf", "member"), ("test", "owner")]
+    assert await client.list_space_users(0) == [("ryanf", ["member"]), ("test", ["owner"])]
 
 
 async def test_exclusive(spawn_auth_client):
