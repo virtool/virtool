@@ -15,6 +15,7 @@ import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
+
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 

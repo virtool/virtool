@@ -42,7 +42,7 @@ def entry():
 )
 @click.option(
     "--db-connection-string",
-    default="mongodb://localhost:27017",
+    default="mongodb://root:virtool@localhost:27017",
     help="The MongoDB connection string",
     type=str,
 )
@@ -91,7 +91,7 @@ def entry():
     help="The Redis connection string",
     type=str,
     required=True,
-    default="redis://localhost:6379",
+    default="redis://root:virtool@localhost:6379",
 )
 @click.option("--verbose", help="Log debug messages", is_flag=True)
 @click.option(
