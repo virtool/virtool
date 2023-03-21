@@ -191,11 +191,10 @@ class SpacesData:
             if space is None or not await self._db.users.find_one(member_id):
                 raise ResourceNotFoundError()
 
-        if "role" in data:
-            if data["role"]:
-                await self._authorization_client.add(
-                    SpaceMembership(member_id, space_id, SpaceRole(data["role"]))
-                )
+        if "role" in data and data["role"]:
+            await self._authorization_client.add(
+                SpaceMembership(member_id, space_id, SpaceRole(data["role"]))
+            )
 
         if "label" in data:
             await remove_user_roles(

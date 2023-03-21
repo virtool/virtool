@@ -86,7 +86,7 @@ async def test_get_space(spawn_client, fake2, snapshot, pg, static_time):
         UserRoleAssignment(user.id, 0, SpaceProjectRole.MANAGER),
     )
 
-    resp = await client.get(f"/spaces/{0}")
+    resp = await client.get("/spaces/0")
 
     assert resp.status == 200
 
@@ -112,7 +112,7 @@ async def test_update_space(spawn_client, fake2, snapshot, static_time, pg):
         await session.commit()
 
     resp = await client.patch(
-        f"/spaces/0", {"name": "New Name", "description": "New description"}
+        "/spaces/0", {"name": "New Name", "description": "New description"}
     )
 
     assert resp.status == 200
@@ -151,7 +151,7 @@ async def test_list_space_members(spawn_client, fake2, snapshot, static_time, pg
         UserRoleAssignment(user_1.id, 0, SpaceSampleRole.EDITOR),
     )
 
-    resp = await client.get(f"/spaces/0/members")
+    resp = await client.get("/spaces/0/members")
 
     assert resp.status == 200
 

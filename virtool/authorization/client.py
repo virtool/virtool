@@ -212,7 +212,7 @@ class AuthorizationClient:
             else:
                 relation_dict[user_id].append(relation_tuple.key.relation)
 
-        relation_list = [(user_id, roles) for user_id, roles in relation_dict.items()]
+        relation_list = list((user_id, roles) for user_id, roles in relation_dict.items())
 
         return sorted(
             [

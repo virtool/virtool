@@ -100,7 +100,7 @@ class SpaceMembersView(PydanticView):
 
 
 @routes.view("/spaces/{space_id}/members/{member_id}")
-class SpaceMembersView(PydanticView):
+class SpaceMemberView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
     async def patch(
         self, space_id: int, member_id: Union[int, str], /, data: UpdateMemberRequest
