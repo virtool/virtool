@@ -1,0 +1,227 @@
+# name: test_get_space[uvloop]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'created_by': 'test',
+    'description': '',
+    'id': 0,
+    'members': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+        'label': None,
+        'project': 'project_manager',
+        'reference': None,
+        'role': 'member',
+        'sample': None,
+        'subtraction': None,
+        'upload': None,
+      },
+      <class 'dict'> {
+        'administrator': True,
+        'handle': 'bob',
+        'id': 'test',
+        'label': None,
+        'project': None,
+        'reference': None,
+        'role': 'owner',
+        'sample': 'sample_editor',
+        'subtraction': None,
+        'upload': None,
+      },
+    ],
+    'name': 'Space 0',
+    'updated_at': '2015-10-06T20:00:00Z',
+  }
+---
+# name: test_list_space_members[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+      'label': None,
+      'project': None,
+      'reference': None,
+      'role': 'member',
+      'sample': 'sample_editor',
+      'subtraction': None,
+      'upload': None,
+    },
+    <class 'dict'> {
+      'administrator': False,
+      'handle': 'zclark',
+      'id': 'fb085f7f',
+      'label': None,
+      'project': None,
+      'reference': None,
+      'role': 'member',
+      'sample': None,
+      'subtraction': None,
+      'upload': None,
+    },
+    <class 'dict'> {
+      'administrator': True,
+      'handle': 'bob',
+      'id': 'test',
+      'label': None,
+      'project': None,
+      'reference': None,
+      'role': 'owner',
+      'sample': None,
+      'subtraction': None,
+      'upload': None,
+    },
+  ]
+---
+# name: test_list_spaces[uvloop]
+  <class 'dict'> {
+    'available_roles': <class 'list'> [
+      <class 'dict'> {
+        'description': '
+          Full control over space a and all resources and members.
+          - Remove or add members.
+          - Cancel any job.
+        ',
+        'id': 'owner',
+        'name': 'Owner',
+      },
+      <class 'dict'> {
+        'description': 'Access a space.',
+        'id': 'member',
+        'name': 'Member',
+      },
+      <class 'dict'> {
+        'description': 'Create, edit, or delete labels.',
+        'id': 'label_manager',
+        'name': 'Label_manager',
+      },
+      <class 'dict'> {
+        'description': 'Create, edit, or delete projects.',
+        'id': 'project_manager',
+        'name': 'Project_manager',
+      },
+      <class 'dict'> {
+        'description': 'Create or edit projects.',
+        'id': 'project_editor',
+        'name': 'Project_editor',
+      },
+      <class 'dict'> {
+        'description': 'View projects.',
+        'id': 'project_viewer',
+        'name': 'Project_viewer',
+      },
+      <class 'dict'> {
+        'description': '
+          Edit, build, contribute to (modify otus), or delete any reference. Modify access
+          control and settings for any reference.
+        ',
+        'id': 'reference_manager',
+        'name': 'Reference_manager',
+      },
+      <class 'dict'> {
+        'description': 'Edit, build, and contribute to any reference.',
+        'id': 'reference_builder',
+        'name': 'Reference_builder',
+      },
+      <class 'dict'> {
+        'description': 'Edit or contribute to any reference.',
+        'id': 'reference_editor',
+        'name': 'Reference_editor',
+      },
+      <class 'dict'> {
+        'description': 'Create, edit, or delete (modify) OTUs in any reference.',
+        'id': 'reference_contributor',
+        'name': 'Reference_contributor',
+      },
+      <class 'dict'> {
+        'description': 'View any and use any reference.',
+        'id': 'reference_viewer',
+        'name': 'Reference_viewer',
+      },
+      <class 'dict'> {
+        'description': 'Create, edit, or delete samples.',
+        'id': 'sample_manager',
+        'name': 'Sample_manager',
+      },
+      <class 'dict'> {
+        'description': 'Create or edit samples.',
+        'id': 'sample_editor',
+        'name': 'Sample_editor',
+      },
+      <class 'dict'> {
+        'description': 'Analyze samples.',
+        'id': 'sample_analyzer',
+        'name': 'Sample_analyzer',
+      },
+      <class 'dict'> {
+        'description': 'View samples.',
+        'id': 'sample_viewer',
+        'name': 'Sample_viewer',
+      },
+      <class 'dict'> {
+        'description': 'Create, edit, or delete subtractions.',
+        'id': 'subtraction_manager',
+        'name': 'Subtraction_manager',
+      },
+      <class 'dict'> {
+        'description': 'Edit subtractions.',
+        'id': 'subtraction_editor',
+        'name': 'Subtraction_editor',
+      },
+      <class 'dict'> {
+        'description': 'View or use subtractions.',
+        'id': 'subtraction_viewer',
+        'name': 'Subtraction_viewer',
+      },
+      <class 'dict'> {
+        'description': 'Create, use, or delete uploads.',
+        'id': 'upload_manager',
+        'name': 'Upload_manager',
+      },
+      <class 'dict'> {
+        'description': 'View or use uploads.',
+        'id': 'upload_viewer',
+        'name': 'Upload_viewer',
+      },
+    ],
+    'items': <class 'list'> [
+      <class 'dict'> {
+        'description': '',
+        'id': 0,
+        'name': 'Space 0',
+      },
+      <class 'dict'> {
+        'description': '',
+        'id': 1,
+        'name': 'Space 1',
+      },
+    ],
+  }
+---
+# name: test_update_member_roles[uvloop]
+  <class 'dict'> {
+    'administrator': False,
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'label': 'label_manager',
+    'project': 'project_editor',
+    'reference': None,
+    'role': 'member',
+    'sample': None,
+    'subtraction': None,
+    'upload': None,
+  }
+---
+# name: test_update_space[uvloop]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'created_by': 'test',
+    'description': 'New description',
+    'id': 0,
+    'members': <class 'list'> [
+    ],
+    'name': 'New Name',
+    'updated_at': '2015-10-06T20:00:00Z',
+  }
+---

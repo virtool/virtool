@@ -19,6 +19,7 @@ from virtool_core.models.roles import (
     AdministratorRole,
     ReferenceRole,
     SpaceRoleType,
+    SpaceRole,
 )
 
 from virtool.authorization.permissions import (
@@ -129,12 +130,25 @@ class AuthorizationClient:
             )
         )
 
-        return sorted(
-            [
-                int(relation_tuple.key.object.split(":")[1])
-                for relation_tuple in response.tuples
-            ]
+        test = [
+            int(relation_tuple.key.object.split(":")[1])
+            for relation_tuple in response.tuples
+        ]
+
+        response = await self.openfga.read(
+            ReadRequest(
+                tuple_key=TupleKey(
+                    user=f"user:{user_id}", relation="owner", object="space:"
+                ),
+            )
         )
+
+        test2 = [
+            int(relation_tuple.key.object.split(":")[1])
+            for relation_tuple in response.tuples
+        ]
+
+        return sorted([*test, *test2])
 
     async def list_user_roles(self, user_id: str, space_id: int) -> List[SpaceRoleType]:
         response = await self.openfga.read(
@@ -170,6 +184,41 @@ class AuthorizationClient:
             [
                 (relation_tuple.key.user.split(":")[1], relation_tuple.key.relation)
                 for relation_tuple in response.tuples
+            ]
+        )
+
+    async def list_space_users(
+        self, space_id: int
+    ) -> List[Tuple[str, List[SpaceRole]]]:
+        """
+        List members of a space
+        """
+
+        response = await self.openfga.read(
+            ReadRequest(
+                tuple_key=TupleKey(object=f"space:{space_id}"),
+            )
+        )
+
+        relation_dict = {}
+
+        for relation_tuple in response.tuples:
+
+            user_id = relation_tuple.key.user.split(":")[1]
+
+            if user_id not in relation_dict:
+                relation_dict[user_id] = [relation_tuple.key.relation]
+
+            else:
+                relation_dict[user_id].append(relation_tuple.key.relation)
+
+        relation_list = [(user_id, roles) for user_id, roles in relation_dict.items()]
+
+        return sorted(
+            [
+                relation_tuple
+                for relation_tuple in relation_list
+                if "member" in relation_tuple[1] or "owner" in relation_tuple[1]
             ]
         )
 

@@ -19,6 +19,7 @@ from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.settings.data import SettingsData
+from virtool.spaces.data import SpacesData
 from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
@@ -52,6 +53,7 @@ class DataLayer:
     subtractions: SubtractionsData
     sessions: SessionData
     settings: SettingsData
+    spaces: SpacesData
     tasks: TasksData
     uploads: UploadsData
     users: UsersData
