@@ -21,7 +21,7 @@ from virtool.account.oas import (
 )
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
 from virtool.users.oas import UpdateUserRequest
@@ -42,7 +42,7 @@ PROJECTION = (
 
 
 class AccountData(DataLayerPiece):
-    def __init__(self, db: DB, redis: Redis):
+    def __init__(self, db: Mongo, redis: Redis):
         self._db = db
         self._redis = redis
 

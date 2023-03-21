@@ -29,7 +29,7 @@ from virtool.dispatcher.fetchers import (
 )
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 
 logger = getLogger(__name__)
 
@@ -57,7 +57,7 @@ class Fetchers:
 
 
 class Dispatcher:
-    def __init__(self, pg: AsyncEngine, db: DB, listener: RedisDispatcherListener):
+    def __init__(self, pg: AsyncEngine, db: Mongo, listener: RedisDispatcherListener):
         #: A dict of all active connections.
         self.db = db
         self._listener = listener

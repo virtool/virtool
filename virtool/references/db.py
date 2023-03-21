@@ -54,7 +54,7 @@ from virtool.uploads.models import Upload as SQLUpload
 from virtool.users.db import AttachUserTransform, extend_user
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 PROJECTION = [
     "_id",
@@ -80,7 +80,7 @@ PROJECTION = [
 ]
 
 
-async def processor(mongo: "DB", document: Document) -> Document:
+async def processor(mongo: "Mongo", document: Document) -> Document:
     """
     Process a reference document to a form that can be dispatched or returned in a list.
 
@@ -124,7 +124,7 @@ async def processor(mongo: "DB", document: Document) -> Document:
     return document
 
 
-async def attach_computed(mongo: "DB", document: Document) -> Document:
+async def attach_computed(mongo: "Mongo", document: Document) -> Document:
     """
     Get all computed data for the specified reference and attach it to the passed
     ``document``.
@@ -172,7 +172,7 @@ async def attach_computed(mongo: "DB", document: Document) -> Document:
     return await apply_transforms(processed, [AttachUserTransform(mongo)])
 
 
-async def get_reference_users(mongo: "DB", document: Document) -> List[Document]:
+async def get_reference_users(mongo: "Mongo", document: Document) -> List[Document]:
     """
     Get a detailed list of users that have access to the specified reference.
 
@@ -255,7 +255,7 @@ async def check_right(req: Request, reference: Union[Dict, str], right: str) -> 
     return False
 
 
-async def check_source_type(mongo: "DB", ref_id: str, source_type: str) -> bool:
+async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bool:
     """
     Check if the provided `source_type` is valid based on the current reference source
     type configuration.
@@ -310,7 +310,7 @@ def compose_base_find_query(user_id: str, administrator: bool, groups: list) -> 
 
 
 async def delete_group_or_user(
-    mongo: "DB", ref_id: str, subdocument_id: str, field: str
+    mongo: "Mongo", ref_id: str, subdocument_id: str, field: str
 ) -> Optional[str]:
     """
     Delete an existing group or user as decided by the `field` argument.
@@ -338,7 +338,7 @@ async def delete_group_or_user(
 
 
 async def edit_group_or_user(
-    mongo: "DB", ref_id: str, subdocument_id: str, field: str, data: Document
+    mongo: "Mongo", ref_id: str, subdocument_id: str, field: str, data: Document
 ) -> Optional[Document]:
     """
     Edit an existing group or user as decided by the `field` argument.
@@ -373,7 +373,7 @@ async def edit_group_or_user(
 
 
 async def fetch_and_update_release(
-    mongo: "DB", client, ref_id: str, ignore_errors: bool = False
+    mongo: "Mongo", client, ref_id: str, ignore_errors: bool = False
 ) -> dict:
     """
     Get the latest release for the GitHub repository identified by the passed `slug`.
@@ -444,7 +444,7 @@ async def fetch_and_update_release(
     return release
 
 
-async def get_contributors(mongo: "DB", ref_id: str) -> Optional[List[Document]]:
+async def get_contributors(mongo: "Mongo", ref_id: str) -> Optional[List[Document]]:
     """
     Return an list of contributors and their contribution count for a specific ref.
 
@@ -457,7 +457,7 @@ async def get_contributors(mongo: "DB", ref_id: str) -> Optional[List[Document]]
 
 
 async def get_internal_control(
-    mongo: "DB", internal_control_id: Optional[str], ref_id: str
+    mongo: "Mongo", internal_control_id: Optional[str], ref_id: str
 ) -> Optional[Document]:
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
@@ -481,7 +481,7 @@ async def get_internal_control(
     return {"id": internal_control_id, "name": name}
 
 
-async def get_latest_build(mongo: "DB", ref_id: str) -> Optional[Document]:
+async def get_latest_build(mongo: "Mongo", ref_id: str) -> Optional[Document]:
     """
     Return the latest index build for the ref.
 
@@ -502,7 +502,7 @@ async def get_latest_build(mongo: "DB", ref_id: str) -> Optional[Document]:
         )
 
 
-async def get_official_installed(mongo: "DB") -> bool:
+async def get_official_installed(mongo: "Mongo") -> bool:
     """
     Return a boolean indicating whether the official plant virus reference is installed.
 
@@ -517,7 +517,7 @@ async def get_official_installed(mongo: "DB") -> bool:
     )
 
 
-async def get_manifest(mongo: "DB", ref_id: str) -> Document:
+async def get_manifest(mongo: "Mongo", ref_id: str) -> Document:
     """
     Generate a dict of otu document version numbers keyed by the document id.
 
@@ -537,7 +537,7 @@ async def get_manifest(mongo: "DB", ref_id: str) -> Document:
     return manifest
 
 
-async def get_otu_count(mongo: "DB", ref_id: str) -> int:
+async def get_otu_count(mongo: "Mongo", ref_id: str) -> int:
     """
     Get the number of OTUs associated with the given `ref_id`.
 
@@ -549,7 +549,7 @@ async def get_otu_count(mongo: "DB", ref_id: str) -> int:
     return await mongo.otus.count_documents({"reference.id": ref_id})
 
 
-async def get_unbuilt_count(mongo: "DB", ref_id: str) -> int:
+async def get_unbuilt_count(mongo: "Mongo", ref_id: str) -> int:
     """
     Return a count of unbuilt history changes associated with a given `ref_id`.
 
@@ -564,7 +564,7 @@ async def get_unbuilt_count(mongo: "DB", ref_id: str) -> int:
 
 
 async def create_clone(
-    mongo: "DB",
+    mongo: "Mongo",
     settings: Settings,
     name: str,
     clone_from: str,
@@ -592,7 +592,7 @@ async def create_clone(
 
 
 async def create_document(
-    mongo: "DB",
+    mongo: "Mongo",
     settings: Settings,
     name: str,
     organism: Optional[str],
@@ -639,7 +639,7 @@ async def create_document(
 
 
 async def create_import(
-    mongo: "DB",
+    mongo: "Mongo",
     pg: AsyncEngine,
     settings: Settings,
     name: str,
@@ -749,7 +749,7 @@ async def download_and_parse_release(
 
 async def insert_change(
     data_path: Path,
-    mongo: "DB",
+    mongo: "Mongo",
     otu_id: str,
     verb: HistoryMethod,
     user_id: str,
@@ -794,7 +794,7 @@ async def insert_change(
 
 
 async def insert_joined_otu(
-    mongo: "DB",
+    mongo: "Mongo",
     otu: dict,
     created_at: datetime.datetime,
     ref_id: str,
@@ -884,7 +884,7 @@ async def update(
 
 
 async def prepare_update_joined_otu(
-    mongo: "DB", old, otu: Document, ref_id: str
+    mongo: "Mongo", old, otu: Document, ref_id: str
 ) -> Optional[OTUUpdate]:
     if not check_will_change(old, otu):
         return None
@@ -946,7 +946,7 @@ async def prepare_update_joined_otu(
 
 
 async def bulk_prepare_update_joined_otu(
-    mongo: "DB", otu_data: List[OTUData], ref_id: str, session
+    mongo: "Mongo", otu_data: List[OTUData], ref_id: str, session
 ) -> List[OTUUpdate]:
     sequence_ids = []
     for otu_item in otu_data:
@@ -1077,7 +1077,7 @@ def prepare_insert_otu(
     )
 
 
-async def prepare_remove_otu(mongo: "DB", otu_id: str, session) -> Optional[OTUDelete]:
+async def prepare_remove_otu(mongo: "Mongo", otu_id: str, session) -> Optional[OTUDelete]:
     """
     Remove an OTU.
 

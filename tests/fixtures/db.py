@@ -55,7 +55,7 @@ async def test_motor(test_db_connection_string, test_db_name, loop, request):
 
 @pytest.fixture
 def mongo(test_motor, mocker):
-    return virtool.mongo.core.DB(test_motor, mocker.stub(), FakeIdProvider())
+    return virtool.mongo.core.Mongo(test_motor, mocker.stub(), FakeIdProvider())
 
 
 @pytest.fixture(params=[True, False])

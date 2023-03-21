@@ -28,7 +28,7 @@ from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -86,7 +86,7 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def add(
-    db: "DB",
+    db: "Mongo",
     data_path: Path,
     method_name: HistoryMethod,
     old: Optional[dict],

@@ -9,13 +9,13 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import Label as LabelSQL
 from virtool.labels.oas import UpdateLabelRequest
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_generic
 
 
 class LabelsData:
-    def __init__(self, db: DB, pg: AsyncEngine):
+    def __init__(self, db: Mongo, pg: AsyncEngine):
         self._db = db
         self._pg = pg
 

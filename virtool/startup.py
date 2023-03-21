@@ -36,7 +36,7 @@ from virtool.indexes.tasks import (
     EnsureIndexFilesTask,
 )
 from virtool.jobs.tasks import TimeoutJobsTask
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
@@ -271,7 +271,7 @@ async def startup_databases(app: Application):
 
     app.update(
         {
-            "db": DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
+            "db": Mongo(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
             "authorization": AuthorizationClient(openfga_instance),

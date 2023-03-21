@@ -8,14 +8,14 @@ import virtool.utils
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.errors import DatabaseError
 from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.users.db import AttachUserTransform
 
 
 class HistoryData:
-    def __init__(self, data_path: Path, db: DB):
+    def __init__(self, data_path: Path, db: Mongo):
         self.data_path = data_path
         self._db = db
 

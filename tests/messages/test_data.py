@@ -5,11 +5,11 @@ from virtool.data.errors import ResourceConflictError
 from virtool.messages.data import MessagesData
 from virtool.messages.models import SQLInstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 
 
 @pytest.fixture
-async def messages_data(pg: AsyncEngine, mongo: DB) -> MessagesData:
+async def messages_data(pg: AsyncEngine, mongo: Mongo) -> MessagesData:
     return MessagesData(pg, mongo)
 
 

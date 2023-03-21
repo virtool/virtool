@@ -18,11 +18,11 @@ from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 
 class GroupsData:
-    def __init__(self, authorization_client: AuthorizationClient, db: "DB"):
+    def __init__(self, authorization_client: AuthorizationClient, db: "Mongo"):
         self._authorization_client = authorization_client
         self._db = db
 
