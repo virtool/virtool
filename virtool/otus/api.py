@@ -23,7 +23,6 @@ from virtool.otus.oas import (
     UpdateIsolateRequest,
     CreateSequenceRequest,
     UpdateSequenceRequest,
-    FindOTUsResponse,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform

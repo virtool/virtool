@@ -16,7 +16,7 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.utils import base_processor, to_bool
+from virtool.utils import to_bool
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -80,8 +80,8 @@ async def find(
     if term:
         db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
 
-    if verified:
-        db_query["verified"] = verified
+    if verified is not None:
+        db_query["verified"] = to_bool(verified)
 
     base_query = None
 
