@@ -70,7 +70,6 @@ async def check_name_and_abbreviation(
 
 async def find(
     mongo: "Mongo",
-    names: Optional[Union[bool, str]],
     term: Optional[str],
     req_query: Mapping,
     verified: Optional[bool],
@@ -81,19 +80,13 @@ async def find(
     if term:
         db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
 
-    if verified is not None:
-        db_query["verified"] = to_bool(verified)
+    if verified:
+        db_query["verified"] = verified
 
     base_query = None
 
     if ref_id is not None:
         base_query = {"reference.id": ref_id}
-
-    if names is True or names == "true":
-        cursor = mongo.otus.find(
-            {**db_query, **base_query}, ["name"], sort=[("name", 1)]
-        )
-        return [base_processor(d) async for d in cursor]
 
     data = await paginate(
         mongo.otus,
