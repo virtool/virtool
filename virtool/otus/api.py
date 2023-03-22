@@ -32,25 +32,6 @@ from virtool.utils import base_processor
 routes = Routes()
 
 
-@routes.view("/otus")
-class OTUsView(PydanticView):
-    async def get(
-        self,
-        find: Optional[str] = None,
-        names: bool = False,
-        verified: Optional[bool] = None,
-    ) -> r200[FindOTUsResponse]:
-        """
-        Find OTUs.
-
-        """
-        search_result = await get_data_from_req(self.request).otus.find(
-            names, self.request.query, find, verified
-        )
-
-        return json_response(search_result)
-
-
 @routes.view("/otus/{otu_id}")
 class OTUView(PydanticView):
     async def get(self, otu_id: str, /) -> Union[r200[OTU], r403, r404]:
