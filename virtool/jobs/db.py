@@ -71,7 +71,7 @@ async def fetch_complete_job(db, document, key=None) -> Job:
     return Job(**document)
 
 
-def lookup_minimal_jobs_by_id(
+def lookup_minimal_job_by_id(
     local_field: str = "job.id", set_as: str = "job"
 ) -> list[dict]:
     """
