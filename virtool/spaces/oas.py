@@ -15,9 +15,101 @@ from virtool_core.models.roles import (
 class ListSpacesResponse(BaseModel):
     class Config:
         schema_extra = {
+            "example": [
+                {"id": 0, "name": "Space 0", "description": "The default space."}
+            ],
+        }
+
+
+class GetSpaceResponse(BaseModel):
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 0,
+                "name": "Space 0",
+                "description": "",
+                "created_at": "2015-10-06T20:00:00Z",
+                "updated_at": "2015-10-06T20:00:00Z",
+                "created_by": "test",
+                "members": [
+                    {
+                        "id": "test",
+                        "administrator": True,
+                        "handle": "bob",
+                        "label": None,
+                        "project": None,
+                        "reference": None,
+                        "role": "owner",
+                        "sample": None,
+                        "subtraction": None,
+                        "upload": None,
+                    }
+                ],
+            }
+        }
+
+
+class UpdateSpaceRequest(BaseModel):
+    """
+    Used when updating the name or description of the space.
+    """
+
+    name: Optional[constr(strip_whitespace=True)] = Field(
+        description="the unique display name for the space"
+    )
+    description: Optional[constr(strip_whitespace=True)] = Field(
+        description="the description for the space"
+    )
+
+    class Config:
+        schema_extra = {"example": {"name": "My Space"}}
+
+
+class UpdateSpaceResponse(BaseModel):
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 0,
+                "name": "My Space",
+                "description": "",
+                "created_at": "2015-10-06T20:00:00Z",
+                "updated_at": "2015-10-06T20:00:00Z",
+                "created_by": "test",
+                "members": [
+                    {
+                        "id": "test",
+                        "administrator": True,
+                        "handle": "bob",
+                        "label": None,
+                        "project": None,
+                        "reference": None,
+                        "role": "owner",
+                        "sample": None,
+                        "subtraction": None,
+                        "upload": None,
+                    }
+                ],
+            }
+        }
+
+
+class ListMembersResponse(BaseModel):
+    class Config:
+        schema_extra = {
             "example": {
                 "items": [
-                    {"id": 0, "name": "Space 0", "description": "The default space."},
+                    {
+                        "id": "test",
+                        "administrator": True,
+                        "handle": "bob",
+                        "label": None,
+                        "project": None,
+                        "reference": None,
+                        "role": "owner",
+                        "sample": None,
+                        "subtraction": None,
+                        "upload": None,
+                    }
                 ],
                 "available_roles": [
                     {
@@ -123,98 +215,6 @@ class ListSpacesResponse(BaseModel):
                     },
                 ],
             }
-        }
-
-
-class GetSpaceResponse(BaseModel):
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": 0,
-                "name": "Space 0",
-                "description": "",
-                "created_at": "2015-10-06T20:00:00Z",
-                "updated_at": "2015-10-06T20:00:00Z",
-                "created_by": "test",
-                "members": [
-                    {
-                        "id": "test",
-                        "administrator": True,
-                        "handle": "bob",
-                        "label": None,
-                        "project": None,
-                        "reference": None,
-                        "role": "owner",
-                        "sample": None,
-                        "subtraction": None,
-                        "upload": None,
-                    }
-                ],
-            }
-        }
-
-
-class UpdateSpaceRequest(BaseModel):
-    """
-    Used when updating the name or description of the space.
-    """
-
-    name: Optional[constr(strip_whitespace=True)] = Field(
-        description="the unique display name for the space"
-    )
-    description: Optional[constr(strip_whitespace=True)] = Field(
-        description="the description for the space"
-    )
-
-    class Config:
-        schema_extra = {"example": {"name": "My Space"}}
-
-
-class UpdateSpaceResponse(BaseModel):
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": 0,
-                "name": "My Space",
-                "description": "",
-                "created_at": "2015-10-06T20:00:00Z",
-                "updated_at": "2015-10-06T20:00:00Z",
-                "created_by": "test",
-                "members": [
-                    {
-                        "id": "test",
-                        "administrator": True,
-                        "handle": "bob",
-                        "label": None,
-                        "project": None,
-                        "reference": None,
-                        "role": "owner",
-                        "sample": None,
-                        "subtraction": None,
-                        "upload": None,
-                    }
-                ],
-            }
-        }
-
-
-class ListMembersResponse(BaseModel):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "id": "test",
-                    "administrator": True,
-                    "handle": "bob",
-                    "label": None,
-                    "project": None,
-                    "reference": None,
-                    "role": "owner",
-                    "sample": None,
-                    "subtraction": None,
-                    "upload": None,
-                }
-            ]
         }
 
 

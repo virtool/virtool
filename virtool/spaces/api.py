@@ -29,6 +29,8 @@ class SpacesView(PydanticView):
         """
         List spaces.
 
+        Get a list of all spaces that the requesting user is a member or owner of.
+
         Status Codes:
             200: Successful operation
         """
@@ -44,7 +46,9 @@ class SpacesView(PydanticView):
 class SpaceView(PydanticView):
     async def get(self, space_id: int, /) -> Union[r200[GetSpaceResponse], r404]:
         """
-        Get the complete representation of a space.
+        Get a space.
+
+        Fetches the complete representation of a space.
 
         Status Codes:
             200: Successful operation
@@ -54,7 +58,7 @@ class SpaceView(PydanticView):
         try:
             space = await get_data_from_req(self.request).spaces.get(space_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(space)
 
@@ -65,6 +69,8 @@ class SpaceView(PydanticView):
         """
         Update a space.
 
+        Changes the name or description of a space.
+
         Status Codes:
             200: Successful operation
             400: Invalid input
@@ -73,9 +79,9 @@ class SpaceView(PydanticView):
         try:
             space = await get_data_from_req(self.request).spaces.update(space_id, data)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError:
-            raise HTTPBadRequest()
+            raise HTTPBadRequest(text="Space name already exists.")
 
         return json_response(space)
 
@@ -84,7 +90,9 @@ class SpaceView(PydanticView):
 class SpaceMembersView(PydanticView):
     async def get(self, space_id: int, /) -> r200[ListMembersResponse]:
         """
-        List members of a space.
+        List members.
+
+        Lists the members of a space and their roles.
 
         Status Codes:
             200: Successful operation
@@ -94,7 +102,7 @@ class SpaceMembersView(PydanticView):
                 space_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(members)
 
@@ -106,7 +114,9 @@ class SpaceMemberView(PydanticView):
         self, space_id: int, member_id: Union[int, str], /, data: UpdateMemberRequest
     ) -> Union[r200[UpdateMemberResponse], r404]:
         """
-        Change the roles of a space member.
+        Update a member.
+
+        Changes the roles of the space member.
 
         Status Codes:
             200: Successful operation
@@ -117,7 +127,7 @@ class SpaceMemberView(PydanticView):
                 space_id, member_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(member)
 
@@ -126,7 +136,9 @@ class SpaceMemberView(PydanticView):
         self, space_id: int, member_id: Union[int, str], /
     ) -> Union[r204, r404]:
         """
-        Remove a member from the space.
+        Remove a member.
+
+        Removes a member from the space. They will no longer have access to any data in the space.
 
         Status Codes:
             204: Successful operation
@@ -137,6 +149,6 @@ class SpaceMemberView(PydanticView):
                 space_id, member_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         raise HTTPNoContent

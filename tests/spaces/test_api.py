@@ -11,7 +11,7 @@ from virtool.authorization.relationships import (
     SpaceMembership,
     UserRoleAssignment,
 )
-from virtool.spaces.models import SpaceModel
+from virtool.spaces.models import SQLSpace
 
 
 @pytest.mark.apitest
@@ -23,7 +23,7 @@ async def test_list_spaces(spawn_client, fake2, snapshot, pg, static_time):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                SpaceModel(
+                SQLSpace(
                     id=0,
                     name="Space 0",
                     description="",
@@ -31,7 +31,7 @@ async def test_list_spaces(spawn_client, fake2, snapshot, pg, static_time):
                     updated_at=static_time.datetime,
                     created_by="test",
                 ),
-                SpaceModel(
+                SQLSpace(
                     id=1,
                     name="Space 1",
                     description="",
@@ -67,7 +67,7 @@ async def test_get_space(spawn_client, fake2, snapshot, pg, static_time):
 
     async with AsyncSession(pg) as session:
         session.add(
-            SpaceModel(
+            SQLSpace(
                 id=0,
                 name="Space 0",
                 description="",
@@ -99,7 +99,7 @@ async def test_update_space(spawn_client, fake2, snapshot, static_time, pg):
 
     async with AsyncSession(pg) as session:
         session.add(
-            SpaceModel(
+            SQLSpace(
                 id=0,
                 name="Space 0",
                 description="",
@@ -132,7 +132,7 @@ async def test_list_space_members(spawn_client, fake2, snapshot, static_time, pg
 
     async with AsyncSession(pg) as session:
         session.add(
-            SpaceModel(
+            SQLSpace(
                 id=0,
                 name="Space 0",
                 description="",
@@ -168,7 +168,7 @@ async def test_update_member_roles(spawn_client, fake2, snapshot, static_time, p
 
     async with AsyncSession(pg) as session:
         session.add(
-            SpaceModel(
+            SQLSpace(
                 id=0,
                 name="Space 0",
                 description="",
@@ -205,7 +205,7 @@ async def test_remove_space_member(spawn_client, fake2, snapshot, static_time, p
 
     async with AsyncSession(pg) as session:
         session.add(
-            SpaceModel(
+            SQLSpace(
                 id=0,
                 name="Space 0",
                 description="",

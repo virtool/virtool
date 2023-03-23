@@ -1,9 +1,11 @@
+import asyncio
 from datetime import datetime
+from enum import EnumMeta
+from logging import getLogger
 from typing import List, Union, Optional
 
 from virtool_core.models.basemodel import BaseModel
 from virtool_core.models.roles import (
-    SpaceRoleType,
     SpaceRole,
     SpaceLabelRole,
     SpaceProjectRole,
@@ -17,16 +19,19 @@ from virtool_core.utils import document_enum
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import UserRoleAssignment
+from virtool.mongo.core import Mongo
+
+logger = getLogger(__name__)
 
 
 class SpaceMember(UserNested):
     role: SpaceRole
-    label: Optional[SpaceLabelRole]
-    project: Optional[SpaceProjectRole]
-    reference: Optional[SpaceReferenceRole]
-    sample: Optional[SpaceSampleRole]
-    subtraction: Optional[SpaceSubtractionRole]
-    upload: Optional[SpaceUploadRole]
+    label_role: Optional[SpaceLabelRole]
+    project_role: Optional[SpaceProjectRole]
+    reference_role: Optional[SpaceReferenceRole]
+    sample_role: Optional[SpaceSampleRole]
+    subtraction_role: Optional[SpaceSubtractionRole]
+    upload_role: Optional[SpaceUploadRole]
 
 
 class SpaceNested(BaseModel):
@@ -45,24 +50,22 @@ class Space(SpaceMinimal):
     members: List[SpaceMember]
 
 
-class SpaceSearchResult(BaseModel):
-    items: List[SpaceMinimal]
+class MemberSearchResult(BaseModel):
+    items: List[SpaceMember]
     available_roles: List[dict]
 
 
-ENUM_LIST = [
-    SpaceRole,
-    SpaceLabelRole,
-    SpaceProjectRole,
-    SpaceReferenceRole,
-    SpaceSampleRole,
-    SpaceSubtractionRole,
-    SpaceUploadRole,
-]
-
 AVAILABLE_ROLES = [
     {"id": role, "name": role.capitalize(), "description": role.__doc__}
-    for enum in ENUM_LIST
+    for enum in [
+        SpaceRole,
+        SpaceLabelRole,
+        SpaceProjectRole,
+        SpaceReferenceRole,
+        SpaceSampleRole,
+        SpaceSubtractionRole,
+        SpaceUploadRole,
+    ]
     for role in document_enum(enum)
 ]
 
@@ -71,25 +74,29 @@ async def remove_user_roles(
     authorization_client: AuthorizationClient,
     user_id: Union[str, int],
     space_id: int,
-    enum_list: List[SpaceRoleType],
+    enums: List[EnumMeta],
 ):
 
-    for enum_type in enum_list:
-        for role in enum_type:
-            await authorization_client.remove(
+    await asyncio.gather(
+        *[
+            authorization_client.remove(
                 UserRoleAssignment(user_id, space_id, enum_type(role))
             )
+            for enum_type in enums
+            for role in enum_type
+        ]
+    )
 
 
 def format_user(user: dict, role_list: List):
     user = {
         **user,
-        "label": None,
-        "project": None,
-        "reference": None,
-        "sample": None,
-        "subtraction": None,
-        "upload": None,
+        "label_role": None,
+        "project_role": None,
+        "reference_role": None,
+        "sample_role": None,
+        "subtraction_role": None,
+        "upload_role": None,
     }
 
     for role in role_list:
@@ -97,21 +104,39 @@ def format_user(user: dict, role_list: List):
             user["role"] = SpaceRole(role)
 
         if role in iter(SpaceLabelRole):
-            user["label"] = SpaceLabelRole(role)
+            user["label_role"] = SpaceLabelRole(role)
 
         if role in iter(SpaceProjectRole):
-            user["project"] = SpaceProjectRole(role)
+            user["project_role"] = SpaceProjectRole(role)
 
         if role in iter(SpaceReferenceRole):
-            user["reference"] = SpaceReferenceRole(role)
+            user["reference_role"] = SpaceReferenceRole(role)
 
         if role in iter(SpaceSampleRole):
-            user["sample"] = SpaceSampleRole(role)
+            user["sample_role"] = SpaceSampleRole(role)
 
         if role in iter(SpaceSubtractionRole):
-            user["subtraction"] = SpaceSubtractionRole(role)
+            user["subtraction_role"] = SpaceSubtractionRole(role)
 
         if role in iter(SpaceUploadRole):
-            user["upload"] = SpaceUploadRole(role)
+            user["upload_role"] = SpaceUploadRole(role)
 
     return SpaceMember(**user)
+
+
+async def format_users(
+    authorization_client: AuthorizationClient, mongo: Mongo, space_id: int
+) -> List[SpaceMember]:
+
+    member_ids = await authorization_client.list_space_users(space_id)
+
+    users = await mongo.users.find(
+        {"_id": {"$in": [member[0] for member in member_ids]}}
+    ).to_list(None)
+
+    if len(users) != len(member_ids):
+        logger.warning("Missing users.")
+
+    member_ids = {member[0]: member[1] for member in member_ids}
+
+    return [format_user(user, member_ids[user["_id"]]) for user in users]

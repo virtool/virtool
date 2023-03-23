@@ -9,25 +9,25 @@
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-        'label': None,
-        'project': 'project_manager',
-        'reference': None,
+        'label_role': None,
+        'project_role': 'project_manager',
+        'reference_role': None,
         'role': 'member',
-        'sample': None,
-        'subtraction': None,
-        'upload': None,
+        'sample_role': None,
+        'subtraction_role': None,
+        'upload_role': None,
       },
       <class 'dict'> {
         'administrator': True,
         'handle': 'bob',
         'id': 'test',
-        'label': None,
-        'project': None,
-        'reference': None,
+        'label_role': None,
+        'project_role': None,
+        'reference_role': None,
         'role': 'owner',
-        'sample': 'sample_editor',
-        'subtraction': None,
-        'upload': None,
+        'sample_role': 'sample_editor',
+        'subtraction_role': None,
+        'upload_role': None,
       },
     ],
     'name': 'Space 0',
@@ -35,46 +35,6 @@
   }
 ---
 # name: test_list_space_members[uvloop]
-  <class 'list'> [
-    <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-      'label': None,
-      'project': None,
-      'reference': None,
-      'role': 'member',
-      'sample': 'sample_editor',
-      'subtraction': None,
-      'upload': None,
-    },
-    <class 'dict'> {
-      'administrator': False,
-      'handle': 'zclark',
-      'id': 'fb085f7f',
-      'label': None,
-      'project': None,
-      'reference': None,
-      'role': 'member',
-      'sample': None,
-      'subtraction': None,
-      'upload': None,
-    },
-    <class 'dict'> {
-      'administrator': True,
-      'handle': 'bob',
-      'id': 'test',
-      'label': None,
-      'project': None,
-      'reference': None,
-      'role': 'owner',
-      'sample': None,
-      'subtraction': None,
-      'upload': None,
-    },
-  ]
----
-# name: test_list_spaces[uvloop]
   <class 'dict'> {
     'available_roles': <class 'list'> [
       <class 'dict'> {
@@ -187,30 +147,70 @@
     ],
     'items': <class 'list'> [
       <class 'dict'> {
-        'description': '',
-        'id': 0,
-        'name': 'Space 0',
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+        'label_role': None,
+        'project_role': None,
+        'reference_role': None,
+        'role': 'member',
+        'sample_role': 'sample_editor',
+        'subtraction_role': None,
+        'upload_role': None,
       },
       <class 'dict'> {
-        'description': '',
-        'id': 1,
-        'name': 'Space 1',
+        'administrator': False,
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+        'label_role': None,
+        'project_role': None,
+        'reference_role': None,
+        'role': 'member',
+        'sample_role': None,
+        'subtraction_role': None,
+        'upload_role': None,
+      },
+      <class 'dict'> {
+        'administrator': True,
+        'handle': 'bob',
+        'id': 'test',
+        'label_role': None,
+        'project_role': None,
+        'reference_role': None,
+        'role': 'owner',
+        'sample_role': None,
+        'subtraction_role': None,
+        'upload_role': None,
       },
     ],
   }
+---
+# name: test_list_spaces[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'description': '',
+      'id': 0,
+      'name': 'Space 0',
+    },
+    <class 'dict'> {
+      'description': '',
+      'id': 1,
+      'name': 'Space 1',
+    },
+  ]
 ---
 # name: test_update_member_roles[uvloop]
   <class 'dict'> {
     'administrator': False,
     'handle': 'leeashley',
     'id': 'bf1b993c',
-    'label': 'label_manager',
-    'project': 'project_editor',
-    'reference': None,
+    'label_role': 'label_manager',
+    'project_role': 'project_editor',
+    'reference_role': None,
     'role': 'member',
-    'sample': None,
-    'subtraction': None,
-    'upload': None,
+    'sample_role': None,
+    'subtraction_role': None,
+    'upload_role': None,
   }
 ---
 # name: test_update_space[uvloop]

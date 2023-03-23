@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Union, List
 
 from sqlalchemy import select
@@ -14,6 +15,7 @@ from virtool_core.models.roles import (
 )
 
 from virtool.mongo.core import Mongo
+from virtool.mongo.utils import id_exists
 from virtool.spaces.oas import (
     UpdateSpaceRequest,
     UpdateMemberRequest,
@@ -27,18 +29,21 @@ from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceConflictError,
 )
-from virtool.spaces.models import SpaceModel
+from virtool.spaces.models import SQLSpace
 from virtool.spaces.utils import (
     remove_user_roles,
     format_user,
-    SpaceSearchResult,
     AVAILABLE_ROLES,
     Space,
-    ENUM_LIST,
     SpaceMember,
+    format_users,
+    SpaceMinimal,
+    MemberSearchResult,
 )
 
 import virtool.utils
+
+logger = getLogger(__name__)
 
 
 class SpacesData:
@@ -49,7 +54,7 @@ class SpacesData:
         self._db = db
         self._pg = pg
 
-    async def find(self, user_id: str) -> SpaceSearchResult:
+    async def find(self, user_id: str) -> List[SpaceMinimal]:
         """
         Find all spaces that the user is a member of.
 
@@ -57,23 +62,18 @@ class SpacesData:
         :return: a list of spaces.
 
         """
-        space_list = await self._authorization_client.list_user_spaces(user_id)
+        space_ids = await self._authorization_client.list_user_spaces(user_id)
 
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SpaceModel).filter(SpaceModel.id.in_(space_list))
+                select(SQLSpace).filter(SQLSpace.id.in_(space_ids))
             )
 
             spaces = result.scalars().all()
 
-        return SpaceSearchResult(
-            **{
-                "items": [space.to_dict() for space in spaces],
-                "available_roles": AVAILABLE_ROLES,
-            }
-        )
+        return [SpaceMinimal(**space.to_dict()) for space in spaces]
 
-    async def get(self, space_id: int):
+    async def get(self, space_id: int) -> Space:
         """
         Get the complete representation of a space.
 
@@ -82,24 +82,21 @@ class SpacesData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SpaceModel).filter_by(id=space_id))
+            result = await session.execute(select(SQLSpace).filter_by(id=space_id))
 
             space = result.scalar()
 
-            members = await self._authorization_client.list_space_users(space.id)
+            if space is None:
+                raise ResourceNotFoundError
 
-            space = {**space.to_dict(), "members": []}
-
-            for member in members:
-
-                if user := await self._db.users.find_one({"_id": member[0]}):
-
-                    space["members"].append(format_user(user, member[1]))
-
-                else:
-                    raise ResourceNotFoundError()
-
-            return Space(**space)
+        return Space(
+            **{
+                **space.to_dict(),
+                "members": await format_users(
+                    self._authorization_client, self._db, space_id
+                ),
+            }
+        )
 
     async def update(self, space_id: int, data: UpdateSpaceRequest) -> Space:
         """
@@ -112,11 +109,11 @@ class SpacesData:
         data = data.dict(exclude_unset=True)
 
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SpaceModel).filter_by(id=space_id))
+            result = await session.execute(select(SQLSpace).filter_by(id=space_id))
             space = result.scalar()
 
             if space is None:
-                raise ResourceNotFoundError()
+                raise ResourceNotFoundError
 
             if "name" in data:
                 space.name = data["name"]
@@ -131,24 +128,18 @@ class SpacesData:
             try:
                 await session.commit()
             except IntegrityError:
-                raise ResourceConflictError()
+                raise ResourceConflictError("Space name already exists.")
 
-        space = {**row, "members": []}
+        return Space(
+            **{
+                **row,
+                "members": await format_users(
+                    self._authorization_client, self._db, space_id
+                ),
+            }
+        )
 
-        members = await self._authorization_client.list_space_users(space_id)
-
-        for member in members:
-
-            if user := await self._db.users.find_one({"_id": member[0]}):
-
-                space["members"].append(format_user(user, member[1]))
-
-            else:
-                raise ResourceNotFoundError()
-
-        return Space(**space)
-
-    async def find_members(self, space_id: int) -> List[SpaceMember]:
+    async def find_members(self, space_id: int) -> MemberSearchResult:
         """
         Find members of a space.
 
@@ -156,20 +147,19 @@ class SpacesData:
         :return: a list of space members.
 
         """
-        members = await self._authorization_client.list_space_users(space_id)
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(select(SQLSpace).filter_by(id=space_id))
+            space = result.scalar()
 
-        member_list = []
+            if space is None:
+                raise ResourceNotFoundError
 
-        for member in members:
-
-            if user := await self._db.users.find_one({"_id": member[0]}):
-
-                member_list.append(format_user(user, member[1]))
-
-            else:
-                raise ResourceNotFoundError()
-
-        return member_list
+        return MemberSearchResult(
+            **{
+                "items": await format_users(self._authorization_client, self._db, space_id),
+                "available_roles": AVAILABLE_ROLES,
+            }
+        )
 
     async def update_member(
         self, space_id: int, member_id: Union[str, int], data: UpdateMemberRequest
@@ -185,11 +175,11 @@ class SpacesData:
         data = data.dict(exclude_unset=True)
 
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SpaceModel).filter_by(id=space_id))
+            result = await session.execute(select(SQLSpace).filter_by(id=space_id))
             space = result.scalar()
 
-            if space is None or not await self._db.users.find_one(member_id):
-                raise ResourceNotFoundError()
+            if space is None or not await id_exists(self._db.users, member_id):
+                raise ResourceNotFoundError
 
         if "role" in data and data["role"]:
             await self._authorization_client.add(
@@ -267,7 +257,7 @@ class SpacesData:
 
                 return format_user(await self._db.users.find_one(member_id), member[1])
 
-        raise ResourceNotFoundError()
+        raise ResourceNotFoundError
 
     async def remove_member(self, space_id: int, member_id: Union[str, int]):
         """
@@ -281,12 +271,23 @@ class SpacesData:
         """
 
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SpaceModel).filter_by(id=space_id))
+            result = await session.execute(select(SQLSpace).filter_by(id=space_id))
             space = result.scalar()
 
-            if space is None or not await self._db.users.find_one(member_id):
-                raise ResourceNotFoundError()
+            if space is None or not await id_exists(self._db.users, member_id):
+                raise ResourceNotFoundError
 
         await remove_user_roles(
-            self._authorization_client, member_id, space_id, ENUM_LIST
+            self._authorization_client,
+            member_id,
+            space_id,
+            [
+                SpaceRole,
+                SpaceLabelRole,
+                SpaceProjectRole,
+                SpaceReferenceRole,
+                SpaceSampleRole,
+                SpaceSubtractionRole,
+                SpaceUploadRole,
+            ],
         )
