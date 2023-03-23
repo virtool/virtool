@@ -69,3 +69,41 @@ async def fetch_complete_job(db, document, key=None) -> Job:
         return JobAcquired(**document, key=key)
 
     return Job(**document)
+
+
+def lookup_minimal_jobs_by_id(
+    local_field: str = "job.id", set_as: str = "job"
+) -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up a job by id.
+
+    :param local_field: job id field to look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+
+    return [
+        {
+            "$lookup": {
+                "from": "jobs",
+                "let": {"job_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$_id", "$$job_id"]}}},
+                    {"$project": {
+                        "id": "$_id",
+                        "_id": False,
+                        "archived": True,
+                        "created_at": True,
+                        "progress": True,
+                        "stage": True,
+                        "state": True,
+                        "user": True,
+                        "workflow": True,
+                    }},
+                ],
+                "as": set_as,
+            }
+        },
+        {"$set": {set_as: {"$first": f"${set_as}"}}},
+    ]
+
