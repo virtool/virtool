@@ -106,4 +106,3 @@ def lookup_minimal_job_by_id(
         },
         {"$set": {set_as: {"$first": f"${set_as}"}}},
     ]
-
