@@ -6,7 +6,7 @@ application database.
 from virtool_core.models.job import Job, JobAcquired
 
 from virtool.mongo.transforms import apply_transforms
-from virtool.users.db import AttachUserTransform
+from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.utils import base_processor
 
 OR_COMPLETE = [{"status.state": "complete"}]
@@ -89,16 +89,27 @@ def lookup_minimal_job_by_id(
                 "let": {"job_id": f"${local_field}"},
                 "pipeline": [
                     {"$match": {"$expr": {"$eq": ["$_id", "$$job_id"]}}},
+                    {"$set": {
+                        "first_status": {"$first": "$status"},
+                        "last_status": {"$last": "$status"},
+                    }},
+                    {"$set": {
+                        "created_at": "$first_status.timestamp",
+                        "progress": "$last_status.progress",
+                        "state": "$last_status.state",
+                        "stage": "$last_status.stage",
+                    }},
+                    *lookup_nested_user_by_id(local_field="user.id"),
                     {"$project": {
                         "id": "$_id",
                         "_id": False,
                         "archived": True,
+                        "user": True,
+                        "workflow": True,
                         "created_at": True,
                         "progress": True,
                         "stage": True,
                         "state": True,
-                        "user": True,
-                        "workflow": True,
                     }},
                 ],
                 "as": set_as,
@@ -106,3 +117,9 @@ def lookup_minimal_job_by_id(
         },
         {"$set": {set_as: {"$first": f"${set_as}"}}},
     ]
+
+
+# "timestamp"]},
+# "progress"]},
+# "stage"]},
+# "state"]},
