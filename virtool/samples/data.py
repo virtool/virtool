@@ -32,6 +32,7 @@ from virtool.samples.db import (
     ArtifactsAndReadsTransform,
     validate_force_choice_group,
     define_initial_workflows,
+    derive_workflow_state,
     NameGenerator,
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
@@ -474,3 +475,23 @@ class SamplesData(DataLayerPiece):
                         {"$set": {"name": await name_generator.get(session)}},
                         session=session,
                     )
+
+    async def populate_workflows_field(self):
+        cursor = self._db.samples.find({"workflows": {"$exists": False}})
+        samples = await cursor.to_list(length=None)
+
+        sample_ids = [samples["_id"] for sample in samples]
+
+        if sample_ids:
+            for sample_id in sample_ids:
+                library_type = await get_one_field(
+                    self._db.samples, "library_type", sample_id
+                )
+                analyses = await self._db.analyses.find(
+                    {"sample.id": sample_id}, ["ready", "workflow"]
+                ).to_list(None)
+
+                workflow_states = derive_workflow_state(analyses, library_type)
+                await self._db.samples.find_one_and_update(
+                    {"_id": sample_id}, {"$set": {"workflows": workflow_states}}
+                )
