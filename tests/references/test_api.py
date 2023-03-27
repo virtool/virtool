@@ -966,3 +966,62 @@ async def test_delete_group_or_user(
     await resp_is.no_content(resp)
 
     assert await client.db.references.find_one() == snapshot
+
+
+@pytest.mark.apitest
+@pytest.mark.parametrize("find", [None, "Prunus", "virus", "PVF", "VF"])
+@pytest.mark.parametrize("verified", [None, True, False])
+async def test_find_otus(find, verified, spawn_client, snapshot):
+    """Test to check that the api returns the correct OTUs based on how the results are filtered"""
+
+    client = await spawn_client(authorize=True)
+
+    await client.db.references.insert_one(
+        {"_id": "foo", "name": "Foo", "data_type": "genome"}
+    )
+
+    await client.db.otus.insert_many(
+        [
+            {
+                "_id": "6116cba1",
+                "name": "Prunus virus F",
+                "abbreviation": "PVF",
+                "last_indexed_version": None,
+                "verified": True,
+                "lower_name": 'prunus virus f',
+                "isolates": [],
+                "version": 0,
+                "reference": {"id": "foo"},
+                "schema": [],
+            },
+            {
+                "_id": "5316cbz2",
+                "name": "Papaya virus q",
+                "abbreviation": "P",
+                "last_indexed_version": None,
+                "verified": False,
+                "lower_name": 'papaya virus q',
+                "isolates": [],
+                "version": 0,
+                "reference": {"id": "foo"},
+                "schema": [],
+            },
+        ],
+        session=None,
+    )
+
+    path = f"/refs/foo/otus"
+    query = []
+
+    if find is not None:
+        query.append(f"find={find}")
+
+    if verified is not None:
+        query.append(f"verified={verified}")
+
+    if query:
+        path += f"?{'&'.join(query)}"
+
+    resp = await client.get(path)
+    assert resp.status == 200
+    assert await resp.json() == snapshot
