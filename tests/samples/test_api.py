@@ -185,12 +185,12 @@ async def setup_find_samples_client(fake2, spawn_client, static_time):
 
 @pytest.mark.apitest
 class TestFindSamples:
+    @pytest.mark.parametrize("path", ["/samples", "/space/test_id/samples"])
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
     async def test_term(
-        self, find, fake2, spawn_client, snapshot, setup_find_samples_client
+        self, find, fake2, path, spawn_client, snapshot, setup_find_samples_client
     ):
         client = await setup_find_samples_client
-        path = "/samples"
 
         if find is not None:
             path += f"?find={find}"
@@ -385,8 +385,15 @@ class TestCreate:
 
         assert upload.reserved is True
 
+    @pytest.mark.parametrize("path", ["/samples", "/space/test_id/samples"])
     async def test_name_exists(
-        self, pg, spawn_client, static_time, resp_is, test_upload
+        self,
+        pg,
+        spawn_client,
+        static_time,
+        resp_is,
+        test_upload,
+        path,
     ):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
@@ -412,7 +419,7 @@ class TestCreate:
             )
 
         resp = await client.post(
-            "/samples", {"name": "Foobar", "files": [1], "subtractions": ["apple"]}
+            path, {"name": "Foobar", "files": [1], "subtractions": ["apple"]}
         )
 
         await resp_is.bad_request(resp, "Sample name is already in use")
