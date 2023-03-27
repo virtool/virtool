@@ -55,7 +55,7 @@ class DeduplicateSampleNamesTask(BaseTask):
 
 class PopulateWorkflowsFieldTask(BaseTask):
     """
-    Updates sample workflows field
+    Populates workflows field for samples without a pre-existing workflows field
     """
 
     name = "populate_workflows_field"

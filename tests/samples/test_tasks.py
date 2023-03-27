@@ -8,6 +8,7 @@ from virtool.samples.tasks import (
     CompressSamplesTask,
     MoveSampleFilesTask,
     DeduplicateSampleNamesTask,
+    PopulateWorkflowsFieldTask,
 )
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
@@ -211,6 +212,79 @@ async def test_deduplicate_sample_names(
         await session.commit()
 
     task = DeduplicateSampleNamesTask(1, data_layer, {}, get_temp_dir())
+
+    await task.run()
+
+    assert await mongo.samples.find().to_list(None) == snapshot
+
+
+async def test_populate_workflows_field(
+    data_layer: DataLayer,
+    mongo,
+    pg: AsyncEngine,
+    static_time,
+    snapshot,
+):
+    samples = [
+        {
+            "_id": "test_id",
+            "library_type": "amplicon",
+        },
+        {
+            "_id": "test_id_1",
+            "library_type": "other",
+        },
+        {
+            "_id": "test_id_2",
+            "library_type": "normal",
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "none",
+                "pathoscope": "none",
+            },
+        },
+    ]
+
+    analyses = [
+        {
+            "_id": "test",
+            "sample": {"id": "test_id_1"},
+            "ready": True,
+            "workflow": "pathoscope_bowtie",
+        },
+        {
+            "_id": "test1",
+            "sample": {"id": "test_id_1"},
+            "ready": False,
+            "workflow": "nuvs",
+        },
+        {
+            "_id": "test2",
+            "sample": {"id": "test_id_2"},
+            "ready": False,
+            "workflow": "nuvs",
+        },
+    ]
+
+    await mongo.samples.insert_many(samples, session=None)
+    await mongo.analyses.insert_many(analyses, session=None)
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            Task(
+                id=1,
+                complete=False,
+                context={},
+                count=0,
+                progress=0,
+                step="populate_workflows_field",
+                type="populate_workflows_field",
+                created_at=static_time.datetime,
+            )
+        )
+        await session.commit()
+
+    task = PopulateWorkflowsFieldTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 
