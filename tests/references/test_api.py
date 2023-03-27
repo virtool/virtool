@@ -1010,7 +1010,7 @@ async def test_find_otus(find, verified, spawn_client, snapshot):
         session=None,
     )
 
-    path = f"/refs/foo/otus"
+    path = "/refs/foo/otus"
     query = []
 
     if find is not None:
