@@ -41,8 +41,6 @@ async def test_find(fake2, spawn_client, snapshot, static_time):
 
     resp = await client.get("/subtractions")
 
-    data = await resp.json()
-
     assert resp.status == 200
     assert await resp.json() == snapshot
 
