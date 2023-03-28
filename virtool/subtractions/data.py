@@ -26,6 +26,8 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.file import FileDescriptor
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.utils import JobRights
+from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.users.db import lookup_nested_user_by_id
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
@@ -83,33 +85,84 @@ class SubtractionsData(DataLayerPiece):
                 ).sort("name")
             ]
 
-        data = await paginate(
-            self._mongo.subtraction,
-            db_query,
-            query,
-            base_query={"deleted": False},
-            sort="name",
-            projection=PROJECTION,
-        )
+        data = await self._mongo.subtraction.aggregate(
+            [
+                {
+                    "$facet": {
+                        "total_count": [
+                            {"$count": "total_count"},
+                        ],
+                        "found_count": [
+                            {"$count": "found_count"},
+                        ],
+                        "page_count": [
+                            {"$count": "page_count"},
+                        ],
+                        "per_page": [
+                            {"$count": "per_page"},
+                        ],
+                        "page": [
+                            {"$count": "page"},
+                        ],
+                        "documents": [
+                            {
+                                "$match": query,
+                            },
+                            {"$sort": {"name": 1}},
+                            *lookup_nested_user_by_id(local_field="user.id"),
+                            *lookup_minimal_job_by_id(),
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "documents": {
+                            "_id": True,
+                            "count": True,
+                            "created_at": True,
+                            "file": True,
+                            "ready": True,
+                            "job": True,
+                            "name": True,
+                            "nickname": True,
+                            "user": True,
+                        },
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0]
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0]
+                        },
+                        "page_count": {
+                            "$arrayElemAt": ["$page_count.page_count", 0]
+                        },
+                        "per_page": {
+                            "$arrayElemAt": ["$per_page.per_page", 0]
+                        },
+                        "page": {
+                            "$arrayElemAt": ["$page.page", 0]
+                        },
+                    }
+                },
+            ]
+        ).to_list(length=1)
 
-        documents, ready_count = await asyncio.gather(
-            apply_transforms(
-                data["documents"],
-                [AttachUserTransform(self._mongo, ignore_errors=True)],
-            ),
-            self._mongo.subtraction.count_documents({"ready": True}),
-        )
+        data = data[0]
+
+        documents = data["documents"]
+
+        ready_count = await self._mongo.subtraction.count_documents({"ready": True})
 
         return SubtractionSearchResult(
             **{**data, "documents": documents, "ready_count": ready_count}
         )
 
     async def create(
-        self,
-        data: CreateSubtractionRequest,
-        user_id: str,
-        space_id: int,
-        subtraction_id: Optional[str] = None,
+            self,
+            data: CreateSubtractionRequest,
+            user_id: str,
+            space_id: int,
+            subtraction_id: Optional[str] = None,
     ) -> Subtraction:
         """
         Create a new subtraction.
@@ -132,7 +185,7 @@ class SubtractionsData(DataLayerPiece):
         document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
-                or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
+                       or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
@@ -153,12 +206,10 @@ class SubtractionsData(DataLayerPiece):
             }
         )
 
-        subtraction = await self.get(document["_id"])
-
         await self.data.jobs.create(
             "create_subtraction",
             {
-                "subtraction_id": subtraction.id,
+                "subtraction_id": subtraction_id,
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
@@ -167,10 +218,20 @@ class SubtractionsData(DataLayerPiece):
             job_id
         )
 
+        subtraction = await self.get(document["_id"])
+
         return subtraction
 
     async def get(self, subtraction_id: str) -> Subtraction:
-        document = await self._mongo.subtraction.find_one(subtraction_id)
+        document = await self._mongo.subtraction.aggregate(
+            [
+                {"$match": {"_id": subtraction_id}},
+                *lookup_nested_user_by_id(local_field="user.id"),
+                *lookup_minimal_job_by_id(local_field="job.id"),
+            ]
+        ).to_list(length=1)
+
+        document = document[0]
 
         if document:
             document = await attach_computed(
@@ -180,17 +241,14 @@ class SubtractionsData(DataLayerPiece):
                 document,
             )
 
-            document = await apply_transforms(
-                base_processor(document),
-                [AttachUserTransform(self._mongo, ignore_errors=True)],
-            )
+            document = base_processor(document)
 
             return Subtraction(**document)
 
         raise ResourceNotFoundError
 
     async def update(
-        self, subtraction_id: str, data: UpdateSubtractionRequest
+            self, subtraction_id: str, data: UpdateSubtractionRequest
     ) -> Subtraction:
         data = data.dict(exclude_unset=True)
 
@@ -259,7 +317,7 @@ class SubtractionsData(DataLayerPiece):
         raise ResourceNotFoundError
 
     async def upload_file(
-        self, subtraction_id: str, filename: str, reader: MultipartReader
+            self, subtraction_id: str, filename: str, reader: MultipartReader
     ) -> SubtractionFile:
         """
         Handle a subtraction file upload.
@@ -360,7 +418,7 @@ class SubtractionsData(DataLayerPiece):
         index_path = join_subtraction_index_path(self._config, subtraction_id)
 
         fasta_path = (
-            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa"
+                join_subtraction_path(self._config, subtraction_id) / "subtraction.fa"
         )
 
         proc = await asyncio.create_subprocess_shell(
@@ -372,7 +430,7 @@ class SubtractionsData(DataLayerPiece):
         await proc.communicate()
 
         target_path = (
-            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
+                join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
         )
 
         await to_thread(compress_file, fasta_path, target_path)

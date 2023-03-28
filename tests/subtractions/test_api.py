@@ -15,6 +15,7 @@ async def test_find(fake2, spawn_client, snapshot, static_time):
     client = await spawn_client(authorize=True, administrator=True)
 
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user)
 
     await client.db.subtraction.insert_many(
         [
@@ -31,6 +32,7 @@ async def test_find(fake2, spawn_client, snapshot, static_time):
                 "deleted": False,
                 "ready": True,
                 "user": {"id": user.id},
+                "job": {"id": job.id}
             }
             for number in range(0, 5)
         ],
@@ -38,6 +40,8 @@ async def test_find(fake2, spawn_client, snapshot, static_time):
     )
 
     resp = await client.get("/subtractions")
+
+    data = await resp.json()
 
     assert resp.status == 200
     assert await resp.json() == snapshot
