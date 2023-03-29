@@ -42,7 +42,6 @@
       't': 0.319,
     },
     'id': 'apple',
-    'job': None,
     'linked_samples': <class 'list'> [
     ],
     'name': 'Malus',

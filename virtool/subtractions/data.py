@@ -20,7 +20,7 @@ from virtool_core.utils import rm, compress_file
 import virtool.mongo.utils
 import virtool.subtractions.files
 import virtool.utils
-from virtool.api.utils import compose_regex_query, paginate
+from virtool.api.utils import compose_regex_query
 from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.file import FileDescriptor
@@ -28,12 +28,10 @@ from virtool.data.piece import DataLayerPiece
 from virtool.jobs.utils import JobRights
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.users.db import lookup_nested_user_by_id
-from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
     attach_computed,
-    PROJECTION,
     unlink_default_subtractions,
     check_subtraction_fasta_files,
 )
@@ -55,7 +53,6 @@ from virtool.tasks.progress import (
 )
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = getLogger(__name__)

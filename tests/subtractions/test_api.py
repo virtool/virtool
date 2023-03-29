@@ -128,6 +128,7 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
 
     if exists:
         user = await fake2.users.create()
+        job = await fake2.jobs.create(user)
 
         await client.db.subtraction.insert_one(
             {
@@ -137,6 +138,7 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
                 "ready": False,
                 "nickname": "Foo Subtraction",
                 "user": {"id": user.id},
+                "job": {"id": job.id}
             }
         )
 
@@ -203,6 +205,7 @@ async def test_finalize_subtraction(
     static_time,
 ):
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user)
 
     subtraction = {
         "_id": "foo",
@@ -214,6 +217,7 @@ async def test_finalize_subtraction(
         "name": "Foo",
         "nickname": "Foo Subtraction",
         "user": {"id": user.id},
+        "job": {"id": job.id}
     }
 
     data = {
