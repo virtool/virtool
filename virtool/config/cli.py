@@ -139,9 +139,6 @@ def cli(
     is_flag=True,
 )
 @click.option(
-    "--no-fetching", help="Start with automatic fetching disabled", is_flag=True
-)
-@click.option(
     "--b2c-client-id", help="Azure AD B2C client ID, required for --use-b2c", type=str
 )
 @click.option(
@@ -163,7 +160,6 @@ def start_server(
     port,
     no_check_db,
     no_check_files,
-    no_fetching,
     b2c_client_id,
     b2c_client_secret,
     b2c_tenant,
@@ -183,7 +179,6 @@ def start_server(
         host=host,
         no_check_db=no_check_db,
         no_check_files=no_check_files,
-        no_fetching=no_fetching,
         port=port,
         use_b2c=use_b2c,
         sentry_dsn=sentry_dsn,
