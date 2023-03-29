@@ -148,12 +148,10 @@ class SubtractionsData(DataLayerPiece):
 
         data["page_count"] = int(math.ceil(data["found_count"] / per_page))
 
-        documents = data["documents"]
-
         ready_count = await self._mongo.subtraction.count_documents({"ready": True})
 
         return SubtractionSearchResult(
-            **{**data, "documents": documents, "ready_count": ready_count}
+            **{**data, "documents": data["documents"], "ready_count": ready_count}
         )
 
     async def create(
