@@ -1,7 +1,6 @@
-import logging
-from typing import Type
-from typing import Union
 import asyncio
+import logging
+from typing import Type, Union
 
 import aiojobs
 from aiohttp.abc import Application
@@ -12,17 +11,12 @@ from virtool.config import Config
 from virtool.data.errors import ResourceError
 from virtool.dispatcher.client import DispatcherClient
 from virtool.sentry import setup
-from virtool.shutdown import (
-    shutdown_scheduler,
-    shutdown_redis,
-)
-from virtool.startup import (
-    get_scheduler_from_app,
-    startup_version,
-)
+from virtool.shutdown import shutdown_redis, shutdown_scheduler
+from virtool.startup import get_scheduler_from_app, startup_version
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.task import BaseTask
+from virtool.types import App
 
 logger = logging.getLogger("task_spawner")
 
@@ -59,12 +53,8 @@ async def startup_tasks_datalayer(app: Application):
     app["tasks_datalayer"] = TasksData(app["pg"], TasksClient(app["redis"]))
 
 
-async def startup_sentry(app: Union[dict, Application]):
-    if (
-        not app["config"].no_sentry
-        and app["config"].sentry_dsn
-        and not app["config"].dev
-    ):
+async def startup_sentry(app: App):
+    if app["config"].sentry_dsn and not app["config"].dev:
         logger.info("Configuring Sentry")
         setup(app["version"], app["config"].sentry_dsn)
 

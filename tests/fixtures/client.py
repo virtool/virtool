@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import json
 from typing import Optional
 
 import aiohttp
 import pytest
 from aiohttp.web_routedef import RouteTableDef
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.session import Session
 
 import virtool.app
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes
+from virtool.authorization.client import AuthorizationClient
 from virtool.config.cls import Config
+from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import hash_key
@@ -63,12 +68,12 @@ class VirtoolTestClient:
 @pytest.fixture
 def create_app(
     create_user,
-    mongo,
-    pg_connection_string,
-    redis_connection_string,
-    test_db_connection_string,
-    test_db_name,
-    openfga_store_name,
+    mongo: "Mongo",
+    pg_connection_string: str,
+    redis_connection_string: str,
+    test_db_connection_string: str,
+    test_db_name: str,
+    openfga_store_name: str,
 ):
     def _create_app(dev: bool = False, base_url: str = "", no_tasks: bool = True):
         config = Config(
@@ -82,7 +87,6 @@ def create_app(
             no_fetching=True,
             no_revision_check=True,
             no_tasks=no_tasks,
-            no_sentry=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
             openfga_store_name=openfga_store_name,
@@ -187,15 +191,15 @@ def spawn_client(
 
 @pytest.fixture
 def spawn_job_client(
-    mongo,
+    mongo: "Mongo",
     aiohttp_client,
-    test_db_connection_string,
-    redis_connection_string,
-    pg_connection_string,
-    pg,
-    test_db_name,
-    openfga_store_name,
-    authorization_client,
+    test_db_connection_string: str,
+    redis_connection_string: str,
+    pg_connection_string: str,
+    pg: AsyncEngine,
+    test_db_name: str,
+    openfga_store_name: str,
+    authorization_client: AuthorizationClient,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
@@ -228,7 +232,6 @@ def spawn_job_client(
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
                 no_revision_check=True,
-                no_sentry=True,
                 openfga_host="localhost:8080",
                 openfga_scheme="http",
                 openfga_store_name=openfga_store_name,

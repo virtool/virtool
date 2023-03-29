@@ -16,12 +16,11 @@ from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
 
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.utils import connect_openfga
-
 import virtool.mongo.connect
 import virtool.pg.utils
 from virtool.analyses.tasks import StoreNuvsFilesTask
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.utils import connect_openfga
 from virtool.config import get_config_from_app
 from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
@@ -32,24 +31,19 @@ from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.tasks import HMMRefreshTask
-from virtool.indexes.tasks import (
-    EnsureIndexFilesTask,
-)
+from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.tasks import TimeoutJobsTask
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.testing import create_test_database
-from virtool.references.tasks import (
-    CleanReferencesTask,
-    RefreshReferenceReleasesTask,
-)
+from virtool.references.tasks import CleanReferencesTask, RefreshReferenceReleasesTask
 from virtool.routes import setup_routes
 from virtool.samples.tasks import (
     CompressSamplesTask,
-    MoveSampleFilesTask,
     DeduplicateSampleNamesTask,
+    MoveSampleFilesTask,
 )
 from virtool.sentry import setup
 from virtool.subtractions.tasks import (
@@ -284,11 +278,10 @@ async def startup_routes(app: Application):
     setup_routes(app, dev=app["config"].dev)
 
 
-async def startup_sentry(app: typing.Union[dict, Application]):
+async def startup_sentry(app: App):
     settings = await get_data_from_app(app).settings.get_all()
     if (
-        not app["config"].no_sentry
-        and settings.enable_sentry is not False
+        settings.enable_sentry is not False
         and app["config"].sentry_dsn
         and not app["config"].dev
     ):
