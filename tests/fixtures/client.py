@@ -75,7 +75,7 @@ def create_app(
     test_db_name: str,
     openfga_store_name: str,
 ):
-    def _create_app(dev: bool = False, base_url: str = "", no_tasks: bool = True):
+    def _create_app(dev: bool = False, base_url: str = ""):
         config = Config(
             base_url=base_url,
             db_connection_string=test_db_connection_string,
@@ -86,7 +86,6 @@ def create_app(
             no_check_files=True,
             no_fetching=True,
             no_revision_check=True,
-            no_tasks=no_tasks,
             openfga_host="localhost:8080",
             openfga_scheme="http",
             openfga_store_name=openfga_store_name,
@@ -120,11 +119,10 @@ def spawn_client(
         dev=False,
         enable_api=False,
         groups=None,
-        no_tasks=True,
         permissions=None,
         use_b2c=False,
     ):
-        app = create_app(dev, base_url, no_tasks)
+        app = create_app(dev, base_url)
 
         if groups is not None:
             complete_groups = [

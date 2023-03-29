@@ -59,9 +59,6 @@ def entry():
     "--no-revision-check", help="Disable the MongoDB revision check", is_flag=True
 )
 @click.option(
-    "--no-tasks", help="Disable the server's built-in task runner", is_flag=True
-)
-@click.option(
     "--openfga-host",
     help="The OpenFGA API host",
     type=str,
@@ -108,7 +105,6 @@ def cli(
     dev,
     force_version,
     no_revision_check,
-    no_tasks,
     openfga_host,
     openfga_scheme,
     openfga_store_name,
@@ -127,7 +123,6 @@ def cli(
             "dev": dev,
             "force_version": force_version,
             "no_revision_check": no_revision_check,
-            "no_tasks": no_tasks,
             "openfga_host": openfga_host,
             "openfga_scheme": openfga_scheme,
             "openfga_store_name": openfga_store_name,
