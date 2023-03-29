@@ -131,14 +131,13 @@ class SubtractionsData(DataLayerPiece):
             data = data[0]
         except IndexError:
             raise ResourceNotFoundError()
-        
-        try:
-            page = int(query["page"])
-        except (KeyError, ValueError):
-            page = 1
-        finally:
-            data["page"] = page
 
+        try:
+            data["page"] = int(query["page"])
+        except (KeyError, ValueError):
+            data["page"] = 1
+
+        per_page = None
         try:
             per_page = int(query["per_page"])
         except (KeyError, ValueError):
@@ -182,13 +181,13 @@ class SubtractionsData(DataLayerPiece):
         document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
-                       or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
+                    or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
                 "file": {
                     "id": upload.id,
-                    "name": upload.name,
+                    "name": upload.name
                 },
                 "gc": None,
                 "job": {
@@ -199,7 +198,7 @@ class SubtractionsData(DataLayerPiece):
                 "ready": False,
                 "space": {"id": space_id},
                 "upload": data.upload_id,
-                "user": {"id": user_id},
+                "user": {"id": user_id}
             }
         )
 
