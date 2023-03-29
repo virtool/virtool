@@ -82,7 +82,7 @@ routes = Routes()
 
 
 @routes.view("/samples")
-@routes.view("/space/{space_id}/samples")
+@routes.view("/spaces/{space_id}/samples")
 class SamplesView(PydanticView):
     async def get(
         self,

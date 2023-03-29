@@ -880,7 +880,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-None-/space/test_id/samples]
+# name: TestFindSamples.test_term[uvloop-None-/spaces/0/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1039,7 +1039,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-gv-/space/test_id/samples]
+# name: TestFindSamples.test_term[uvloop-gv-/spaces/0/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1142,7 +1142,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-sp-/space/test_id/samples]
+# name: TestFindSamples.test_term[uvloop-sp-/spaces/0/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {

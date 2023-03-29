@@ -185,7 +185,7 @@ async def setup_find_samples_client(fake2, spawn_client, static_time):
 
 @pytest.mark.apitest
 class TestFindSamples:
-    @pytest.mark.parametrize("path", ["/samples", "/space/test_id/samples"])
+    @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
     async def test_term(
         self, find, fake2, path, spawn_client, snapshot, setup_find_samples_client
@@ -385,7 +385,7 @@ class TestCreate:
 
         assert upload.reserved is True
 
-    @pytest.mark.parametrize("path", ["/samples", "/space/test_id/samples"])
+    @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     async def test_name_exists(
         self,
         pg,
