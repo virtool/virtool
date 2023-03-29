@@ -79,7 +79,8 @@ async def test_get_from_job(fake, spawn_job_client, snapshot):
     ],
 )
 @pytest.mark.parametrize("has_user", [True, False])
-async def test_edit(data, fake2, has_user, mocker, snapshot, spawn_client, static_time):
+@pytest.mark.parametrize("has_job", [True, False])
+async def test_edit(data, fake2, has_user, has_job, mocker, snapshot, spawn_client, static_time):
     mocker.patch(
         "virtool.subtractions.db.get_linked_samples",
         make_mocked_coro(
@@ -104,6 +105,11 @@ async def test_edit(data, fake2, has_user, mocker, snapshot, spawn_client, stati
     if has_user:
         user = await fake2.users.create()
         document["user"] = {"id": user.id}
+        
+        if has_job:
+            job = await fake2.jobs.create(user)
+            document["job"] = {"id": job.id}
+
 
     client = await spawn_client(
         authorize=True, permissions=[Permission.modify_subtraction]
@@ -267,6 +273,7 @@ async def test_job_remove(
     client.app["config"].data_path = tmp_path
 
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user)
 
     if exists:
         await asyncio.gather(
@@ -283,6 +290,7 @@ async def test_job_remove(
                     "deleted": False,
                     "ready": ready,
                     "user": {"id": user.id},
+                    "job": {"job": job.id}
                 }
             ),
             client.db.samples.insert_one(
@@ -362,6 +370,7 @@ async def test_download_subtraction_files(
 @pytest.mark.apitest
 async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user)
 
     async with AsyncSession(pg) as session:
         upload = Upload(
@@ -375,6 +384,7 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
             type="subtraction",
             user=user.id,
             uploaded_at=static_time.datetime,
+            job=job.id
         )
 
         session.add(upload)

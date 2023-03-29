@@ -131,7 +131,11 @@ class SubtractionsData(DataLayerPiece):
             data = data[0]
         except IndexError:
             raise ResourceNotFoundError()
-
+        
+        data["documents"] = [
+            base_processor(document) for document in data["documents"]
+        ]
+    
         try:
             data["page"] = int(query["page"])
         except (KeyError, ValueError):

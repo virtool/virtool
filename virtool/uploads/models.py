@@ -38,3 +38,4 @@ class Upload(Base):
     type: Column = Column(Enum(UploadType))
     user: Column = Column(String)
     uploaded_at: Column = Column(DateTime)
+    job: Column = Column(String)
