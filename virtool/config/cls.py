@@ -20,7 +20,6 @@ class Config:
     data_path: Path = None
     fake: bool = False
     fake_path: Path = None
-    force_version: str = None
     host: str = None
     no_check_files: bool = False
     no_check_db: bool = False
