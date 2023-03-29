@@ -150,7 +150,6 @@ def task_spawner(
             dev=True,
             no_check_db=True,
             no_check_files=True,
-            no_fetching=True,
             no_revision_check=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",

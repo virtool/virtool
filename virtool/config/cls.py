@@ -21,9 +21,8 @@ class Config:
     fake: bool = False
     fake_path: Path = None
     host: str = None
-    no_check_files: bool = False
     no_check_db: bool = False
-    no_fetching: bool = False
+    no_check_files: bool = False
     no_revision_check: bool = False
     port: int = 9950
     use_b2c: bool = False
