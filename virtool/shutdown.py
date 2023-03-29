@@ -3,10 +3,9 @@ import logging
 from aiohttp.web import Application
 
 from virtool.authorization.utils import get_authorization_client_from_app
-from virtool.pg.base import Base
 from virtool.startup import get_scheduler_from_app
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("shutdown")
 
 
 async def shutdown_client(app: Application):
@@ -82,16 +81,3 @@ async def shutdown_redis(app: Application):
         await app["redis"].wait_closed()
     except KeyError:
         pass
-
-
-async def drop_fake_postgres(app: Application):
-    """
-    Drop a fake PostgreSQL database if the instance was run with the ``--fake`` option.
-
-    :param app: the application object
-
-    """
-    if app["config"].fake and "fake_" in app["config"].postgres_connection_string:
-        async with app["pg"].begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-            logger.debug("Dropped fake PostgreSQL database.")
