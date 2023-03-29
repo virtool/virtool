@@ -19,6 +19,7 @@ from virtool.data.piece import DataLayerPiece
 from virtool.http.client import UserClient
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
+from virtool.mongo.migrate import recalculate_all_workflow_tags
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
@@ -32,7 +33,6 @@ from virtool.samples.db import (
     ArtifactsAndReadsTransform,
     validate_force_choice_group,
     define_initial_workflows,
-    derive_workflow_state,
     NameGenerator,
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
@@ -476,18 +476,5 @@ class SamplesData(DataLayerPiece):
                         session=session,
                     )
 
-    async def populate_workflows_field(self):
-        async for sample in self._db.samples.find(
-            {"workflows": {"$exists": False}}, ["_id", "library_type"]
-        ):
-            sample_id = sample["_id"]
-
-            analyses = await self._db.analyses.find(
-                {"sample.id": sample_id}, ["ready", "workflow"]
-            ).to_list(None)
-
-            workflow_states = derive_workflow_state(analyses, sample["library_type"])
-
-            await self._db.samples.update_one(
-                {"_id": sample_id}, {"$set": {"workflows": workflow_states}}
-            )
+    async def update_workflows_field(self):
+        await recalculate_all_workflow_tags(self._db)

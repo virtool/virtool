@@ -181,3 +181,33 @@
     },
   ]
 ---
+# name: test_update_workflows_fields[uvloop-ready0]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'library_type': 'normal',
+      'nuvs': 'ip',
+      'pathoscope': True,
+      'workflows': <class 'dict'> {
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'complete',
+      },
+    },
+  ]
+---
+# name: test_update_workflows_fields[uvloop-ready1]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'library_type': 'normal',
+      'nuvs': 'ip',
+      'pathoscope': 'ip',
+      'workflows': <class 'dict'> {
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'pending',
+      },
+    },
+  ]
+---

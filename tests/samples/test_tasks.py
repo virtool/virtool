@@ -8,7 +8,7 @@ from virtool.samples.tasks import (
     CompressSamplesTask,
     MoveSampleFilesTask,
     DeduplicateSampleNamesTask,
-    PopulateWorkflowsFieldTask,
+    UpdateWorkflowsFieldsTask,
 )
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
@@ -218,25 +218,21 @@ async def test_deduplicate_sample_names(
     assert await mongo.samples.find().to_list(None) == snapshot
 
 
-async def test_populate_workflows_field(
+@pytest.mark.parametrize("ready", [[True, False], [False, False]])
+async def test_update_workflows_fields(
     data_layer: DataLayer,
     mongo,
     pg: AsyncEngine,
+    ready,
     static_time,
     snapshot,
 ):
     samples = [
         {
             "_id": "test_id",
-            "library_type": "amplicon",
-        },
-        {
-            "_id": "test_id_1",
-            "library_type": "other",
-        },
-        {
-            "_id": "test_id_2",
             "library_type": "normal",
+            "nuvs": False,
+            "pathoscope": True,
             "workflows": {
                 "aodp": "incompatible",
                 "nuvs": "none",
@@ -244,24 +240,18 @@ async def test_populate_workflows_field(
             },
         },
     ]
-
+    ready_1, ready_2 = ready
     analyses = [
         {
             "_id": "test",
-            "sample": {"id": "test_id_1"},
-            "ready": True,
+            "sample": {"id": "test_id"},
+            "ready": ready_1,
             "workflow": "pathoscope_bowtie",
         },
         {
             "_id": "test1",
-            "sample": {"id": "test_id_1"},
-            "ready": False,
-            "workflow": "nuvs",
-        },
-        {
-            "_id": "test2",
-            "sample": {"id": "test_id_2"},
-            "ready": False,
+            "sample": {"id": "test_id"},
+            "ready": ready_2,
             "workflow": "nuvs",
         },
     ]
@@ -284,7 +274,7 @@ async def test_populate_workflows_field(
         )
         await session.commit()
 
-    task = PopulateWorkflowsFieldTask(1, data_layer, {}, get_temp_dir())
+    task = UpdateWorkflowsFieldsTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 
