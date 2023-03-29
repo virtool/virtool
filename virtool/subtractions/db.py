@@ -4,11 +4,13 @@ Work with subtractions in the database.
 """
 import asyncio
 import glob
+import math
 from typing import Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.subtraction import Subtraction
+from virtool.data.errors import ResourceNotFoundError
 
 import virtool.utils
 from virtool.config.cls import Config
@@ -181,3 +183,31 @@ def lookup_nested_subtractions(
             }
         },
     ]
+
+
+def subtraction_processor(data: dict = {}, query: dict = {}) -> dict:
+    try:
+        data = data[0]
+    except IndexError:
+        raise ResourceNotFoundError()
+    
+    data["documents"] = [
+            base_processor(document) for document in data["documents"]
+    ]
+
+    try:
+        data["page"] = int(query["page"])
+    except (KeyError, ValueError):
+        data["page"] = 1
+
+    per_page = None
+    try:
+        per_page = int(query["per_page"])
+    except (KeyError, ValueError):
+        per_page = 25
+    finally:
+        data["per_page"] = per_page
+
+    data["page_count"] = int(math.ceil(data["found_count"] / per_page))
+
+    return data

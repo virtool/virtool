@@ -1,5 +1,4 @@
 import asyncio
-import math
 import shutil
 from asyncio import CancelledError, to_thread
 from logging import getLogger
@@ -33,6 +32,7 @@ from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
     attach_computed,
+    subtraction_processor,
     unlink_default_subtractions,
     check_subtraction_fasta_files,
 )
@@ -127,31 +127,9 @@ class SubtractionsData(DataLayerPiece):
             ]
         ).to_list(length=1)
 
-        try:
-            data = data[0]
-        except IndexError:
-            raise ResourceNotFoundError()
+        data: dict = subtraction_processor(data=data, query=query)
         
-        data["documents"] = [
-            base_processor(document) for document in data["documents"]
-        ]
-    
-        try:
-            data["page"] = int(query["page"])
-        except (KeyError, ValueError):
-            data["page"] = 1
-
-        per_page = None
-        try:
-            per_page = int(query["per_page"])
-        except (KeyError, ValueError):
-            per_page = 25
-        finally:
-            data["per_page"] = per_page
-
-        data["page_count"] = int(math.ceil(data["found_count"] / per_page))
-
-        ready_count = await self._mongo.subtraction.count_documents({"ready": True})
+        ready_count: int = sum(1 for document in data["documents"] if document["ready"]) | 0
 
         return SubtractionSearchResult(
             **{**data, "documents": data["documents"], "ready_count": ready_count}
