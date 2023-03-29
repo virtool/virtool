@@ -1,8 +1,9 @@
+import asyncio
+
 import aiojobs
 import aiojobs.aiohttp
 from aiohttp import web
 from aiohttp.web import Application
-import asyncio
 
 import virtool.http.accept
 import virtool.http.errors
@@ -10,24 +11,24 @@ from virtool.config import Config
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.shutdown import (
+    shutdown_authorization_client,
     shutdown_client,
     shutdown_executors,
-    shutdown_scheduler,
     shutdown_redis,
-    shutdown_authorization_client,
+    shutdown_scheduler,
 )
 from virtool.startup import (
-    startup_events,
-    startup_http_client,
-    startup_databases,
-    startup_paths,
-    startup_executors,
     startup_data,
-    startup_task_runner,
-    startup_sentry,
-    startup_version,
+    startup_databases,
+    startup_events,
+    startup_executors,
     startup_fake,
     startup_fake_config,
+    startup_http_client,
+    startup_paths,
+    startup_sentry,
+    startup_task_runner,
+    startup_version,
 )
 from virtool.tasks.api import TasksRunnerView
 
@@ -95,6 +96,7 @@ async def create_app(config: Config):
 async def run(config: Config):
     app = await create_app(config)
     runner = await create_app_runner(app, config.host, config.port)
+
     await asyncio.wait(
         [
             wait_for_restart(runner, app["events"]),

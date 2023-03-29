@@ -26,7 +26,6 @@ class Config:
     no_check_db: bool = False
     no_fetching: bool = False
     no_revision_check: bool = False
-    no_tasks: bool = False
     port: int = 9950
     use_b2c: bool = False
     verbose: bool = False
