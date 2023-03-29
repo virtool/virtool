@@ -288,20 +288,12 @@ async def startup_settings(app: App):
 
 async def startup_version(app: App):
     """
-    Bind the application version to the application state `dict`.
-
-    The value will come by checking `--force-version`, the `VERSION` file, or the
-    current Git tag if the containing folder is a Git repository.
+    Store and log the Virtool version.
 
     :param app: the application object
 
     """
-    force_version = app["config"].force_version
-
-    if force_version:
-        version = force_version
-    else:
-        version = await determine_server_version()
+    version = await determine_server_version()
 
     logger.info("Virtool %s", version)
     logger.info("Mode: %s", app["mode"])

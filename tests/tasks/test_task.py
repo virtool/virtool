@@ -148,7 +148,6 @@ def task_spawner(
             db_connection_string=test_db_connection_string,
             db_name=test_db_name,
             dev=True,
-            force_version="v0.0.0",
             no_check_db=True,
             no_check_files=True,
             no_fetching=True,

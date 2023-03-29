@@ -51,11 +51,6 @@ def entry():
 )
 @click.option("--dev", help="Run in development mode", is_flag=True)
 @click.option(
-    "--force-version",
-    help="Make the instance think it is a different version",
-    type=str,
-)
-@click.option(
     "--no-revision-check", help="Disable the MongoDB revision check", is_flag=True
 )
 @click.option(
@@ -103,7 +98,6 @@ def cli(
     db_connection_string,
     db_name,
     dev,
-    force_version,
     no_revision_check,
     openfga_host,
     openfga_scheme,
@@ -121,7 +115,6 @@ def cli(
             "db_connection_string": db_connection_string,
             "db_name": db_name,
             "dev": dev,
-            "force_version": force_version,
             "no_revision_check": no_revision_check,
             "openfga_host": openfga_host,
             "openfga_scheme": openfga_scheme,
