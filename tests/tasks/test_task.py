@@ -156,7 +156,6 @@ def task_spawner(
             openfga_store_name=openfga_store_name,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
-            fake=False,
         )
         await spawn(config, task_name)
 

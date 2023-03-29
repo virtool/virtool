@@ -8,21 +8,17 @@ import virtool.http.accept
 import virtool.http.errors
 import virtool.jobs.auth
 from virtool.config.cls import Config
-from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.jobs.routes import startup_routes
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
-from virtool.shutdown import drop_fake_postgres
 from virtool.startup import (
+    startup_data,
     startup_databases,
     startup_events,
     startup_executors,
-    startup_fake,
-    startup_fake_config,
-    startup_settings,
-    startup_data,
-    startup_sentry,
-    startup_version,
     startup_http_client,
+    startup_sentry,
+    startup_settings,
+    startup_version,
 )
 from virtool.types import App
 
@@ -47,10 +43,8 @@ async def create_app(config: Config):
         [
             startup_version,
             startup_http_client,
-            startup_fake_config,
             startup_databases,
             startup_executors,
-            startup_fake,
             startup_data,
             startup_events,
             startup_routes,
@@ -62,9 +56,6 @@ async def create_app(config: Config):
     app.on_shutdown.extend(
         [
             shutdown,
-            drop_fake_mongo,
-            drop_fake_postgres,
-            remove_fake_data_path,
         ]
     )
 

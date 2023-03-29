@@ -5,7 +5,6 @@ import signal
 import sys
 from dataclasses import dataclass
 from typing import Dict
-from urllib.parse import urlparse, urlunparse
 
 import aiohttp.client
 import aiojobs
@@ -20,23 +19,20 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
-from virtool.dev.fake import create_fake_data_path
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
-from virtool.fake.wrapper import FakerWrapper
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
-from virtool.pg.testing import create_test_database
 from virtool.routes import setup_routes
 from virtool.sentry import setup
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
-from virtool.utils import ensure_data_dir, random_alphanumeric
+from virtool.utils import ensure_data_dir
 from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
@@ -155,35 +151,6 @@ async def startup_executors(app: App):
 
     app["run_in_process"] = run_in_process
     app["process_executor"] = process_executor
-
-
-async def startup_fake(app: App):
-    if app["config"].fake:
-        app["fake"] = FakerWrapper()
-
-
-async def startup_fake_config(app: App):
-    """
-    If the ``fake`` config flag is set, patch the config so that the MongoDB and
-    Postgres databases and the data directory are faked.
-
-    :param app:
-
-    """
-    suffix = random_alphanumeric()
-
-    if app["config"].fake:
-        url = urlparse(app["config"].postgres_connection_string)
-
-        base_connection_string = urlunparse((url.scheme, url.netloc, "", "", "", ""))
-
-        name = f"fake_{suffix}"
-
-        await create_test_database(base_connection_string, name)
-
-        app["config"].db_name = f"fake-{suffix}"
-        app["config"].data_path = create_fake_data_path()
-        app["config"].postgres_connection_string = f"{base_connection_string}/{name}"
 
 
 async def startup_http_client(app: App):

@@ -89,7 +89,6 @@ def create_app(
             openfga_store_name=openfga_store_name,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
-            fake=False,
         )
 
         return virtool.app.create_app(config)
@@ -224,7 +223,6 @@ def spawn_job_client(
                 db_connection_string=test_db_connection_string,
                 db_name=test_db_name,
                 dev=dev,
-                fake=False,
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
                 no_revision_check=True,
