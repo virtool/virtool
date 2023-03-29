@@ -1,4 +1,5 @@
 import asyncio
+import math
 import shutil
 from asyncio import CancelledError, to_thread
 from logging import getLogger
@@ -92,22 +93,13 @@ class SubtractionsData(DataLayerPiece):
                         "found_count": [
                             {"$count": "found_count"},
                         ],
-                        "page_count": [
-                            {"$count": "page_count"},
-                        ],
-                        "per_page": [
-                            {"$count": "per_page"},
-                        ],
-                        "page": [
-                            {"$count": "page"},
-                        ],
                         "documents": [
                             {
                                 "$match": query,
                             },
                             {"$sort": {"name": 1}},
                             *lookup_nested_user_by_id(local_field="user.id"),
-                            *lookup_minimal_job_by_id(),
+                            *lookup_minimal_job_by_id(local_field="job.id"),
                         ],
                     }
                 },
@@ -130,21 +122,31 @@ class SubtractionsData(DataLayerPiece):
                         "found_count": {
                             "$arrayElemAt": ["$found_count.found_count", 0]
                         },
-                        "page_count": {
-                            "$arrayElemAt": ["$page_count.page_count", 0]
-                        },
-                        "per_page": {
-                            "$arrayElemAt": ["$per_page.per_page", 0]
-                        },
-                        "page": {
-                            "$arrayElemAt": ["$page.page", 0]
-                        },
                     }
                 },
             ]
         ).to_list(length=1)
 
-        data = data[0]
+        try:
+            data = data[0]
+        except IndexError:
+            raise ResourceNotFoundError()
+        
+        try:
+            page = int(query["page"])
+        except (KeyError, ValueError):
+            page = 1
+        finally:
+            data["page"] = page
+
+        try:
+            per_page = int(query["per_page"])
+        except (KeyError, ValueError):
+            per_page = 25
+        finally:
+            data["per_page"] = per_page
+
+        data["page_count"] = int(math.ceil(data["found_count"] / per_page))
 
         documents = data["documents"]
 
@@ -228,9 +230,8 @@ class SubtractionsData(DataLayerPiece):
             ]
         ).to_list(length=1)
 
-        document = document[0]
-
-        if document:
+        if len(document) != 0:
+            document = document[0]
             document = await attach_computed(
                 self._mongo,
                 self._pg,
