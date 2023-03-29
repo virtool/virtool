@@ -370,7 +370,6 @@ async def test_download_subtraction_files(
 @pytest.mark.apitest
 async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
     user = await fake2.users.create()
-    job = await fake2.jobs.create(user)
 
     async with AsyncSession(pg) as session:
         upload = Upload(
@@ -383,8 +382,7 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
             size=12345,
             type="subtraction",
             user=user.id,
-            uploaded_at=static_time.datetime,
-            job=job.id
+            uploaded_at=static_time.datetime
         )
 
         session.add(upload)
