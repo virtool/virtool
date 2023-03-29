@@ -133,13 +133,13 @@ def test_channel():
 
 @pytest.fixture
 def task_spawner(
-    test_db_connection_string,
-    test_db_name,
-    pg_connection_string,
-    redis_connection_string,
+    test_db_connection_string: str,
+    test_db_name: str,
+    pg_connection_string: str,
+    redis_connection_string: str,
     mocker,
     test_channel,
-    openfga_store_name,
+    openfga_store_name: str,
 ):
     async def func(task_name: str):
         mocker.patch("virtool.tasks.client.REDIS_TASKS_LIST_KEY", test_channel)
@@ -149,7 +149,6 @@ def task_spawner(
             db_name=test_db_name,
             dev=True,
             force_version="v0.0.0",
-            no_sentry=True,
             no_check_db=True,
             no_check_files=True,
             no_fetching=True,
