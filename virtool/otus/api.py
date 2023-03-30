@@ -23,32 +23,12 @@ from virtool.otus.oas import (
     UpdateIsolateRequest,
     CreateSequenceRequest,
     UpdateSequenceRequest,
-    FindOTUsResponse,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 routes = Routes()
-
-
-@routes.view("/otus")
-class OTUsView(PydanticView):
-    async def get(
-        self,
-        find: Optional[str] = None,
-        names: bool = False,
-        verified: Optional[bool] = None,
-    ) -> r200[FindOTUsResponse]:
-        """
-        Find OTUs.
-
-        """
-        search_result = await get_data_from_req(self.request).otus.find(
-            names, self.request.query, find, verified
-        )
-
-        return json_response(search_result)
 
 
 @routes.view("/otus/{otu_id}")
