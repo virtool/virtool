@@ -7,7 +7,7 @@ from aiohttp.web import Application
 
 import virtool.http.accept
 import virtool.http.errors
-from virtool.config import Config
+from virtool.config.cls import TaskRunnerConfig
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.shutdown import (
@@ -42,7 +42,7 @@ async def startup_dispatcher_sql_listener(app: Application):
     DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
 
 
-async def create_app(config: Config):
+async def create_task_runner_app(config: TaskRunnerConfig):
     """
     Creates task runner application
 
@@ -89,8 +89,8 @@ async def create_app(config: Config):
     return app
 
 
-async def run(config: Config):
-    app = await create_app(config)
+async def run(config: TaskRunnerConfig):
+    app = await create_task_runner_app(config)
     runner = await create_app_runner(app, config.host, config.port)
 
     await asyncio.wait(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Optional
 
 import aiohttp
@@ -13,7 +14,7 @@ import virtool.app
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes
 from virtool.authorization.client import AuthorizationClient
-from virtool.config.cls import Config
+from virtool.config.cls import Config, ServerConfig
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
@@ -75,25 +76,37 @@ def create_app(
     test_db_name: str,
     openfga_store_name: str,
 ):
-    def _create_app(dev: bool = False, base_url: str = ""):
-        config = Config(
+    mongodb_connection_string = (
+        f"{test_db_connection_string}/{test_db_name}?authSource=admin"
+    )
+
+    def func(base_url: str = "", use_b2c: bool = False):
+        config = ServerConfig(
             base_url=base_url,
-            db_connection_string=test_db_connection_string,
-            db_name=test_db_name,
-            dev=dev,
+            b2c_client_id="",
+            b2c_client_secret="",
+            b2c_tenant="",
+            b2c_user_flow="",
+            data_path=Path("data"),
+            dev=False,
+            host="localhost",
+            mongodb_connection_string=mongodb_connection_string,
             no_check_db=True,
             no_check_files=True,
             no_revision_check=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
             openfga_store_name=openfga_store_name,
+            port=9950,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
+            sentry_dsn="",
+            use_b2c=use_b2c,
         )
 
         return virtool.app.create_app(config)
 
-    return _create_app
+    return func
 
 
 @pytest.fixture
@@ -113,25 +126,24 @@ def spawn_client(
         authorize=False,
         administrator=False,
         base_url="",
-        dev=False,
-        enable_api=False,
         groups=None,
         permissions=None,
         use_b2c=False,
     ):
-        app = create_app(dev, base_url)
+        app = create_app(base_url, use_b2c)
 
         if groups is not None:
-            complete_groups = [
-                {
-                    "_id": group,
-                    "name": group,
-                    "permissions": generate_base_permissions(),
-                }
-                for group in groups
-            ]
-
-            await mongo.groups.insert_many(complete_groups, session=None)
+            await mongo.groups.insert_many(
+                [
+                    {
+                        "_id": group,
+                        "name": group,
+                        "permissions": generate_base_permissions(),
+                    }
+                    for group in groups
+                ],
+                session=None,
+            )
 
         user_document = await create_user(
             user_id="test",
