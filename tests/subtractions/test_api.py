@@ -409,4 +409,6 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
 
     assert await resp.json() == snapshot
 
-    assert await client.db.jobs.find_one() == snapshot(name="job")
+    test_job = await client.db.jobs.find_one()
+
+    assert test_job == snapshot(name="job")

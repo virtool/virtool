@@ -48,7 +48,7 @@
           'name': 'palm.fa.gz',
         },
       ],
-      'subtraction_id': None,
+      'subtraction_id': 'abc123',
     },
     'key': None,
     'ping': None,

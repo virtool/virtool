@@ -115,6 +115,7 @@ class SubtractionsData(DataLayerPiece):
                             "name": True,
                             "nickname": True,
                             "user": True,
+                            "subtraction_id": True
                         },
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0]
@@ -160,10 +161,12 @@ class SubtractionsData(DataLayerPiece):
 
         job_id = await get_new_id(self._mongo.jobs)
 
+        default_subtraction_id = await virtool.mongo.utils.get_new_id(self._mongo.subtraction)
+
         document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
-                    or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
+                    or default_subtraction_id,
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
@@ -187,7 +190,7 @@ class SubtractionsData(DataLayerPiece):
         await self.data.jobs.create(
             "create_subtraction",
             {
-                "subtraction_id": subtraction_id,
+                "subtraction_id": subtraction_id or default_subtraction_id,
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
