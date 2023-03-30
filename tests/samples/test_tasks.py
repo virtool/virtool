@@ -8,7 +8,7 @@ from virtool.samples.tasks import (
     CompressSamplesTask,
     MoveSampleFilesTask,
     DeduplicateSampleNamesTask,
-    UpdateWorkflowsFieldsTask,
+    UpdateSampleWorkflowsTask,
 )
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
@@ -218,7 +218,7 @@ async def test_deduplicate_sample_names(
     assert await mongo.samples.find().to_list(None) == snapshot
 
 
-@pytest.mark.parametrize("ready", [[True, False], [False, False]])
+@pytest.mark.parametrize("ready", [True, False])
 async def test_update_workflows_fields(
     data_layer: DataLayer,
     mongo,
@@ -227,7 +227,7 @@ async def test_update_workflows_fields(
     static_time,
     snapshot,
 ):
-    samples = [
+    await mongo.samples.insert_one(
         {
             "_id": "test_id",
             "library_type": "normal",
@@ -239,25 +239,26 @@ async def test_update_workflows_fields(
                 "pathoscope": "none",
             },
         },
-    ]
-    ready_1, ready_2 = ready
-    analyses = [
-        {
-            "_id": "test",
-            "sample": {"id": "test_id"},
-            "ready": ready_1,
-            "workflow": "pathoscope_bowtie",
-        },
-        {
-            "_id": "test1",
-            "sample": {"id": "test_id"},
-            "ready": ready_2,
-            "workflow": "nuvs",
-        },
-    ]
+        session=None,
+    )
 
-    await mongo.samples.insert_many(samples, session=None)
-    await mongo.analyses.insert_many(analyses, session=None)
+    await mongo.analyses.insert_many(
+        [
+            {
+                "_id": "test",
+                "sample": {"id": "test_id"},
+                "ready": ready,
+                "workflow": "pathoscope_bowtie",
+            },
+            {
+                "_id": "test1",
+                "sample": {"id": "test_id"},
+                "ready": False,
+                "workflow": "nuvs",
+            },
+        ],
+        session=None,
+    )
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -274,7 +275,7 @@ async def test_update_workflows_fields(
         )
         await session.commit()
 
-    task = UpdateWorkflowsFieldsTask(1, data_layer, {}, get_temp_dir())
+    task = UpdateSampleWorkflowsTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 

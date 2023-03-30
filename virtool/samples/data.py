@@ -476,5 +476,5 @@ class SamplesData(DataLayerPiece):
                         session=session,
                     )
 
-    async def update_workflows_field(self):
+    async def update_sample_workflows(self):
         await recalculate_all_workflow_tags(self._db)

@@ -53,16 +53,16 @@ class DeduplicateSampleNamesTask(BaseTask):
         await self.data.samples.deduplicate_sample_names()
 
 
-class UpdateWorkflowsFieldsTask(BaseTask):
+class UpdateSampleWorkflowsTask(BaseTask):
     """
     Updates workflows, nuvs, and pathoscoope fields for samples
     """
 
-    name = "populate_workflows_field"
+    name = "update_sample_workflows"
 
     def __init__(self, task_id, data, context, temp_dir):
         super().__init__(task_id, data, context, temp_dir)
-        self.steps = [self.update_workflows_field]
+        self.steps = [self.update_sample_workflows]
 
-    async def update_workflows_field(self):
-        await self.data.samples.update_workflows_field()
+    async def update_sample_workflows(self):
+        await self.data.samples.update_sample_workflows()

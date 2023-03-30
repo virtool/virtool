@@ -146,57 +146,7 @@
     'is_legacy': True,
   }
 ---
-# name: test_populate_workflows_field[uvloop]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test_id',
-      'library_type': 'amplicon',
-      'workflows': <class 'dict'> {
-        'workflows': <class 'dict'> {
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        },
-      },
-    },
-    <class 'dict'> {
-      '_id': 'test_id_1',
-      'library_type': 'other',
-      'workflows': <class 'dict'> {
-        'workflows': <class 'dict'> {
-          'aodp': 'incompatible',
-          'nuvs': 'pending',
-          'pathoscope': 'complete',
-        },
-      },
-    },
-    <class 'dict'> {
-      '_id': 'test_id_2',
-      'library_type': 'normal',
-      'workflows': <class 'dict'> {
-        'aodp': 'incompatible',
-        'nuvs': 'none',
-        'pathoscope': 'none',
-      },
-    },
-  ]
----
-# name: test_update_workflows_fields[uvloop-ready0]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test_id',
-      'library_type': 'normal',
-      'nuvs': 'ip',
-      'pathoscope': True,
-      'workflows': <class 'dict'> {
-        'aodp': 'incompatible',
-        'nuvs': 'pending',
-        'pathoscope': 'complete',
-      },
-    },
-  ]
----
-# name: test_update_workflows_fields[uvloop-ready1]
+# name: test_update_workflows_fields[uvloop-False]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test_id',
@@ -207,6 +157,21 @@
         'aodp': 'incompatible',
         'nuvs': 'pending',
         'pathoscope': 'pending',
+      },
+    },
+  ]
+---
+# name: test_update_workflows_fields[uvloop-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'library_type': 'normal',
+      'nuvs': 'ip',
+      'pathoscope': True,
+      'workflows': <class 'dict'> {
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'complete',
       },
     },
   ]
