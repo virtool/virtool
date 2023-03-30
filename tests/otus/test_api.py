@@ -8,38 +8,6 @@ import virtool.otus.db
 
 
 @pytest.mark.apitest
-@pytest.mark.parametrize("find", [None, "tobacco"])
-@pytest.mark.parametrize("verified", [None, True, False])
-@pytest.mark.parametrize("names", [None, True, False])
-async def test_find(find, verified, names, mocker, snapshot, spawn_client, test_otu):
-    """
-    Test that OTUs can be found be `find` and `verified` fields. Ensure names returns a list of names and ids.
-
-    """
-    client = await spawn_client(authorize=True)
-
-    m = mocker.patch(
-        "virtool.otus.db.find", make_mocked_coro({"documents": [test_otu]})
-    )
-
-    params = {}
-
-    if find is not None:
-        params["find"] = find
-
-    for key, value in [("names", names), ("verified", verified)]:
-        if value is not None:
-            params[key] = str(value)
-
-    resp = await client.get("/otus", params=params)
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-
-    m.assert_called_with(client.db, names or False, find, mocker.ANY, verified)
-
-
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error,

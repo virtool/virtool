@@ -1153,6 +1153,354 @@
     'total_count': 2,
   }
 ---
+# name: test_find_otus[uvloop-False-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'P',
+        'id': '5316cbz2',
+        'name': 'Papaya virus q',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': False,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-False-PVF]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-False-Prunus]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-False-VF]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-False-virus]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'P',
+        'id': '5316cbz2',
+        'name': 'Papaya virus q',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': False,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'P',
+        'id': '5316cbz2',
+        'name': 'Papaya virus q',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': False,
+        'version': 0,
+      },
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 2,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-None-PVF]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-None-Prunus]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-None-VF]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-None-virus]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'P',
+        'id': '5316cbz2',
+        'name': 'Papaya virus q',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': False,
+        'version': 0,
+      },
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 2,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-True-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-True-PVF]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-True-Prunus]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-True-VF]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
+# name: test_find_otus[uvloop-True-virus]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'abbreviation': 'PVF',
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'reference': <class 'dict'> {
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'verified': True,
+        'version': 0,
+      },
+    ],
+    'found_count': 1,
+    'modified_count': 0,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  }
+---
 # name: test_get[uvloop-None]
   <class 'dict'> {
     'cloned_from': None,
