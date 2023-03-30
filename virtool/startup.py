@@ -17,6 +17,7 @@ import virtool.mongo.connect
 import virtool.pg.utils
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
+from virtool.config import get_config_from_app
 from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
 from virtool.dispatcher.client import DispatcherClient
@@ -187,37 +188,34 @@ async def startup_databases(app: App):
     :param app: the app object
 
     """
-    db_connection_string = app["config"].db_connection_string
-    db_name = app["config"].db_name
-    postgres_connection_string = app["config"].postgres_connection_string
-    redis_connection_string = app["config"].redis_connection_string
-    openfga_host = app["config"].openfga_host
-    openfga_scheme = app["config"].openfga_scheme
-    openfga_store_name = app["config"].openfga_store_name
-    skip_revision_check = app["config"].no_revision_check
+    config = get_config_from_app(app)
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
         virtool.mongo.connect.connect(
-            db_connection_string, db_name, skip_revision_check
+            config.mongodb_connection_string,
+            config.mongodb_database,
+            config.no_revision_check,
         ),
-        virtool.pg.utils.connect(postgres_connection_string),
-        connect(redis_connection_string),
-        connect_openfga(openfga_host, openfga_scheme, openfga_store_name),
+        virtool.pg.utils.connect(config.postgres_connection_string),
+        connect(config.redis_connection_string),
+        connect_openfga(
+            config.openfga_host, config.openfga_scheme, config.openfga_store_name
+        ),
     )
 
     scheduler = get_scheduler_from_app(app)
     await scheduler.spawn(periodically_ping_redis(redis))
 
-    app["redis"] = redis
-    dispatcher_interface = DispatcherClient(app["redis"])
+    dispatcher_interface = DispatcherClient(redis)
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
     app.update(
         {
+            "authorization": AuthorizationClient(openfga_instance),
             "db": Mongo(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
             "dispatcher_interface": dispatcher_interface,
             "pg": pg,
-            "authorization": AuthorizationClient(openfga_instance),
+            "redis": redis,
         }
     )
 
