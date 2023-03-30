@@ -185,12 +185,12 @@ def lookup_nested_subtractions(
     ]
 
 
-def subtraction_processor(data: dict = {}, query: dict = {}) -> dict:
+def subtraction_processor(data: list, query: dict) -> dict:
     try:
         data = data[0]
     except IndexError:
         raise ResourceNotFoundError()
-    
+
     data["documents"] = [
             base_processor(document) for document in data["documents"]
     ]
