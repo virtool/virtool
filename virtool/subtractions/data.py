@@ -129,7 +129,7 @@ class SubtractionsData(DataLayerPiece):
 
         data: dict = subtraction_processor(data=data, query=query)
         
-        ready_count: int = sum(1 for document in data["documents"] if document["ready"]) | 0
+        ready_count: int = sum(1 for document in data["documents"] if document["ready"]) or 0
 
         return SubtractionSearchResult(
             **{**data, "documents": data["documents"], "ready_count": ready_count}
