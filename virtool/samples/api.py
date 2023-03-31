@@ -14,7 +14,6 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import constr, conint, Field
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.analysis import AnalysisSearchResult
 from virtool_core.models.job import JobMinimal
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
@@ -26,14 +25,12 @@ import virtool.samples.db
 import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
-from virtool.analyses.db import PROJECTION
 from virtool.api.response import (
     InsufficientRights,
     InvalidQuery,
     NotFound,
     json_response,
 )
-from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.permissions import LegacyPermission
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -44,7 +41,6 @@ from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
@@ -73,9 +69,7 @@ from virtool.samples.oas import (
     CreateAnalysisResponse,
 )
 from virtool.samples.utils import SampleRight
-from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
-from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = logging.getLogger("samples")

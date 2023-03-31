@@ -844,7 +844,7 @@ async def test_find_analyses(
             {"_id": "baz", "data_type": "genome", "name": "Baz"},
         ],
         session=None,
-    ),
+    )
 
     await client.db.analyses.insert_many(
         [

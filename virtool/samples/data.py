@@ -169,7 +169,7 @@ class SamplesData(DataLayerPiece):
         :param page: the page number
         :param per_page: the number of documents per page
         :param sample_id: the id of the sample
-        :param term: the text to filter by partial matches to the reference name or user id in the sample
+        :param term: the text to filter by reference name or user id in the sample
         :return: a list of all analysis documents
         """
         sort = {"created_at": -1}
