@@ -834,6 +834,18 @@ async def test_find_analyses(
         {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
     )
 
+    job_1 = await fake2.jobs.create(user=user_1)
+
+    job_2 = await fake2.jobs.create(user=user_2)
+
+    await client.db.references.insert_many(
+        [
+            {"_id": "foo", "data_type": "genome", "name": "Foo"},
+            {"_id": "baz", "data_type": "genome", "name": "Baz"},
+        ],
+        session=None,
+    ),
+
     await client.db.analyses.insert_many(
         [
             {
@@ -841,7 +853,7 @@ async def test_find_analyses(
                 "workflow": "pathoscope_bowtie",
                 "created_at": static_time.datetime,
                 "ready": True,
-                "job": {"id": "test"},
+                "job": {"id": job_1.id},
                 "index": {"version": 2, "id": "foo"},
                 "reference": {"id": "baz", "name": "Baz"},
                 "sample": {"id": "test"},
@@ -854,7 +866,7 @@ async def test_find_analyses(
                 "workflow": "pathoscope_bowtie",
                 "created_at": static_time.datetime,
                 "ready": True,
-                "job": {"id": "test"},
+                "job": {"id": job_2.id},
                 "index": {"version": 2, "id": "foo"},
                 "user": {"id": user_1.id},
                 "reference": {"id": "baz", "name": "Baz"},
@@ -867,7 +879,7 @@ async def test_find_analyses(
                 "workflow": "pathoscope_bowtie",
                 "created_at": static_time.datetime,
                 "ready": True,
-                "job": {"id": "test"},
+                "job": None,
                 "index": {"version": 2, "id": "foo"},
                 "reference": {"id": "foo", "name": "Foo"},
                 "sample": {"id": "test"},

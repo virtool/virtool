@@ -14,6 +14,8 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import constr, conint, Field
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from virtool_core.models.analysis import AnalysisSearchResult
+from virtool_core.models.job import JobMinimal
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
@@ -356,6 +358,8 @@ class AnalysesView(PydanticView):
         self,
         sample_id: str,
         /,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
         term: Optional[str] = Field(
             description="Provide text to filter by partial matches to the reference name or user id in the sample."
         ),
@@ -381,28 +385,10 @@ class AnalysesView(PydanticView):
 
             raise
 
-        db_query = {}
-
-        if term:
-            db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
-
-        data = await paginate(
-            db.analyses,
-            db_query,
-            self.request.query,
-            base_query={"sample.id": sample_id},
-            projection=PROJECTION,
-            sort=[("created_at", -1)],
-        )
-
         return json_response(
-            {
-                **data,
-                "documents": await apply_transforms(
-                    data["documents"],
-                    [AttachSubtractionTransform(db), AttachUserTransform(db)],
-                ),
-            }
+            await get_data_from_req(self.request).samples.find_analyses(
+                page, per_page, sample_id, term
+            )
         )
 
     async def post(
@@ -489,9 +475,11 @@ class AnalysesView(PydanticView):
         rights.references.can_read(ref_id)
         rights.subtractions.can_read(*subtractions)
 
-        await get_data_from_req(self.request).jobs.create(
+        job = await get_data_from_req(self.request).jobs.create(
             document["workflow"], task_args, document["user"]["id"], rights, 0, job_id
         )
+
+        document["job"] = JobMinimal(**job.dict())
 
         await recalculate_workflow_tags(db, sample_id)
 
