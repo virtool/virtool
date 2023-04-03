@@ -50,7 +50,13 @@ def cli():
     ...
 
 
-@cli.command("server", help="Start a Virtool API and websocket server")
+@cli.group("server")
+def server():
+    """Run Virtool HTTP services."""
+    ...
+
+
+@server.command("api")
 @address_options
 @b2c_options
 @base_url_option
@@ -64,16 +70,14 @@ def cli():
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_server(
-    **kwargs,
-):
+def start_api_server(**kwargs):
+    """Start a Virtool public API server."""
     configure_logs(kwargs["dev"])
-
-    logger.info("Starting in server mode")
+    logger.info("Starting the public api service")
     asyncio.get_event_loop().run_until_complete(run_app(ServerConfig(**kwargs)))
 
 
-@cli.command("jobsAPI")
+@server.command("jobs")
 @address_options
 @data_path_option
 @dev_option
@@ -86,10 +90,10 @@ def start_server(
 @redis_connection_string_option
 @sentry_dsn_option
 def start_jobs_api(**kwargs):
-    """Start a Virtool Jobs API server"""
+    """Start a Virtool jobs API server"""
     configure_logs(kwargs["dev"])
 
-    logger.info("Starting jobs API process")
+    logger.info("Starting the jobs api service")
 
     asyncio.get_event_loop().run_until_complete(
         virtool.jobs.main.run(

@@ -8,7 +8,7 @@ def show_oas():
     """
     Display Open API Specification on the stdout.
     """
-    app = getattr(importlib.import_module("virtool.oas.app"), "app")
+    app = importlib.import_module("virtool.oas.app").app
     spec = generate_oas(app)
 
     for path in spec["paths"].values():

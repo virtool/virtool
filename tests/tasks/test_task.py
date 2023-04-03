@@ -9,7 +9,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.matchers import path_type
 
-from virtool.config import Config
 from virtool.config.cls import TaskSpawnerConfig
 from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id

@@ -21,24 +21,19 @@ async def test_create_api_key(
     permissions.
 
     """
-    m_get_alternate_id = mocker.patch(
-        "virtool.account.db.get_alternate_id", make_mocked_coro("foo_0")
-    )
+    mocker.patch("virtool.account.db.get_alternate_id", make_mocked_coro("foo_0"))
 
-    m_generate_key = mocker.patch(
-        "virtool.utils.generate_key", return_value=("bar", "baz")
-    )
+    mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
-    group1, group2 = await fake2.groups.create(), await fake2.groups.create()
-
-    groups = [group1.id, group2.id]
+    group_1 = await fake2.groups.create()
+    group_2 = await fake2.groups.create()
 
     # Vary the key owner's administrator status and permissions.
     await mongo.users.insert_one(
         {
             "_id": "bob",
             "administrator": administrator,
-            "groups": groups,
+            "groups": [group_1.id, group_2.id],
             "permissions": {
                 Permission.create_sample.value: True,
                 "modify_subtraction": has_permission,
