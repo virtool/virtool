@@ -8,6 +8,7 @@ import virtool_core.utils
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.models.analysis import AnalysisSearchResult
 from virtool_core.models.samples import SampleSearchResult, Sample
 
 import virtool.utils
@@ -153,6 +154,190 @@ class SamplesData(DataLayerPiece):
 
         return SampleSearchResult(
             documents=documents,
+            found_count=found_count,
+            total_count=total_count,
+            page=page,
+            page_count=int(math.ceil(found_count / per_page)),
+            per_page=per_page,
+        )
+
+    async def find_analyses(
+        self, page: int, per_page: int, sample_id: str, term: Optional[str]
+    ) -> AnalysisSearchResult:
+        """
+        Find all analyses with the given sample id.
+
+        :param page: the page number
+        :param per_page: the number of documents per page
+        :param sample_id: the id of the sample
+        :param term: the text to filter by reference name or user id in the sample
+        :return: a list of all analysis documents
+        """
+        sort = {"created_at": -1}
+
+        skip_count = 0
+
+        if page > 1:
+            skip_count = (page - 1) * per_page
+
+        match_query = {
+            "$and": [
+                {
+                    "$or": [
+                        {
+                            "reference.name": {
+                                "$regex": term,
+                                "$options": "i",
+                            }
+                        }
+                        if term
+                        else {},
+                        {
+                            "user.id": {
+                                "$regex": term,
+                                "$options": "i",
+                            }
+                        }
+                        if term
+                        else {},
+                    ]
+                },
+                {"sample.id": sample_id},
+            ]
+        }
+
+        async for paginate_dict in self._db.analyses.aggregate(
+            [
+                {
+                    "$facet": {
+                        "total_count": [
+                            {"$count": "total_count"},
+                        ],
+                        "found_count": [
+                            {"$match": match_query},
+                            {"$count": "found_count"},
+                        ],
+                        "data": [
+                            {
+                                "$match": match_query,
+                            },
+                            {
+                                "$lookup": {
+                                    "from": "jobs",
+                                    "localField": "job.id",
+                                    "foreignField": "_id",
+                                    "as": "job",
+                                }
+                            },
+                            {
+                                "$unwind": {
+                                    "path": "$job",
+                                    "preserveNullAndEmptyArrays": True,
+                                }
+                            },
+                            {
+                                "$lookup": {
+                                    "from": "subtraction",
+                                    "localField": "subtractions",
+                                    "foreignField": "_id",
+                                    "as": "subtractions",
+                                }
+                            },
+                            {
+                                "$lookup": {
+                                    "from": "references",
+                                    "localField": "reference.id",
+                                    "foreignField": "_id",
+                                    "as": "reference",
+                                }
+                            },
+                            {"$unwind": {"path": "$reference"}},
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "localField": "user.id",
+                                    "foreignField": "_id",
+                                    "as": "user",
+                                }
+                            },
+                            {"$unwind": {"path": "$user"}},
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "localField": "job.user.id",
+                                    "foreignField": "_id",
+                                    "as": "job.user",
+                                }
+                            },
+                            {
+                                "$unwind": {
+                                    "path": "$job.user",
+                                    "preserveNullAndEmptyArrays": True,
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "last_status": {"$last": "$job.status"},
+                                    "first_status": {"$first": "$job.status"},
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "job.created_at": "$first_status.timestamp",
+                                    "job.progress": "$last_status.progress",
+                                    "job.state": "$last_status.state",
+                                    "job.stage": "$last_status.stage",
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "job.id": "$job._id",
+                                }
+                            },
+                            {"$unset": "job.key"},
+                            {"$sort": sort},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "data": {
+                            "_id": True,
+                            "workflow": True,
+                            "created_at": True,
+                            "index": True,
+                            "job": True,
+                            "ready": True,
+                            "reference": True,
+                            "sample": True,
+                            "subtractions": True,
+                            "updated_at": True,
+                            "user._id": True,
+                            "user.handle": True,
+                            "user.administrator": True,
+                        },
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0]
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0]
+                        },
+                    }
+                },
+            ],
+        ):
+            data = paginate_dict["data"]
+            found_count = paginate_dict.get("found_count", 0)
+            total_count = paginate_dict.get("total_count", 0)
+
+        for document in data:
+            if not document["job"]:
+                document["job"] = None
+
+        return AnalysisSearchResult(
+            documents=data,
             found_count=found_count,
             total_count=total_count,
             page=page,
