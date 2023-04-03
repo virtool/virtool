@@ -99,6 +99,16 @@ mongodb_connection_string_option = click.option(
     type=str,
 )
 
+no_check_db_option = click.option(
+    "--no-check-db", help="Start without checking and repairing database", is_flag=True
+)
+
+no_check_files_option = click.option(
+    "--no-check-files",
+    help="Start without ensuring data directory is valid",
+    is_flag=True,
+)
+
 no_revision_check_option = click.option(
     "--no-revision-check",
     default=get_from_environment("no_revision_check", False),
@@ -158,14 +168,4 @@ sentry_dsn_option = click.option(
     default=get_from_environment("sentry_dsn", ""),
     help="A Sentry DSN to report errors to",
     type=str,
-)
-
-no_check_db_option = click.option(
-    "--no-check-db", help="Start without checking and repairing database", is_flag=True
-)
-
-no_check_files_option = click.option(
-    "--no-check-files",
-    help="Start without ensuring data directory is valid",
-    is_flag=True,
 )

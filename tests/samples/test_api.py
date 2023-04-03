@@ -7,13 +7,13 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import Permission, LibraryType
+from virtool_core.models.enums import LibraryType, Permission
 
 import virtool.caches.db
 import virtool.pg.utils
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
-from virtool.config.cls import Config
+from virtool.config import get_config_from_app
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_app
 from virtool.jobs.client import DummyJobsClient
@@ -732,7 +732,7 @@ async def test_finalize(
 async def test_remove(spawn_client, create_delete_result, tmpdir):
     client = await spawn_client(authorize=True)
 
-    config: Config = client.app["config"]
+    config = get_config_from_app(client.app)
     config.data_path = Path(tmpdir)
 
     sample_path = config.data_path / "samples/test"

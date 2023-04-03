@@ -62,7 +62,6 @@ async def create_spawner_app(config: Config):
         startup_version,
         startup_databases_for_spawner,
         startup_datalayer_for_spawner,
-        startup_sentry,
     ]
 
     for step in on_startup:

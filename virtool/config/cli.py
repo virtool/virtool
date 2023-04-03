@@ -105,7 +105,13 @@ def start_jobs_api(**kwargs):
     )
 
 
-@cli.command("tasks")
+@cli.group("tasks")
+def tasks():
+    """Manage Virtool tasks."""
+    ...
+
+
+@tasks.command("runner")
 @address_options
 @data_path_option
 @mongodb_connection_string_option
@@ -115,24 +121,23 @@ def start_jobs_api(**kwargs):
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_task_runner(
-    **kwargs,
-):
+def start_task_runner(**kwargs):
+    """Start a service that pulls tasks queued in Redis and runs them."""
     configure_logs(False)
 
-    logger.info("Starting tasks worker")
+    logger.info("Starting tasks runner")
 
     asyncio.get_event_loop().run_until_complete(
         virtool.tasks.main.run(TaskRunnerConfig(**kwargs, base_url=""))
     )
 
 
-@cli.command("spawn_task")
+@tasks.command("spawn")
 @postgres_connection_string_option
 @redis_connection_string_option
-@sentry_dsn_option
 @click.option("--task-name", help="Name of the task to spawn", type=str)
-def spawn_task(task_name, **kwargs):
+def spawn_task(task_name: str, **kwargs):
+    """Create and queue a task instance of the given name."""
     configure_logs(False)
 
     logger.info("Spawning task")

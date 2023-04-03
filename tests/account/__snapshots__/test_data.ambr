@@ -1,0 +1,216 @@
+# name: test_create_api_key[uvloop-has permission-administrator][dl]
+  <class 'dict'> {
+    'administrator': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+      },
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: test_create_api_key[uvloop-has permission-administrator][mongo]
+  <class 'dict'> {
+    '_id': 'baz',
+    'administrator': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      'bf1b993c',
+      'fb085f7f',
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_create_api_key[uvloop-has permission-limited][dl]
+  <class 'dict'> {
+    'administrator': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+      },
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: test_create_api_key[uvloop-has permission-limited][mongo]
+  <class 'dict'> {
+    '_id': 'baz',
+    'administrator': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      'bf1b993c',
+      'fb085f7f',
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_create_api_key[uvloop-missing permission-administrator][dl]
+  <class 'dict'> {
+    'administrator': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+      },
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: test_create_api_key[uvloop-missing permission-administrator][mongo]
+  <class 'dict'> {
+    '_id': 'baz',
+    'administrator': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      'bf1b993c',
+      'fb085f7f',
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_create_api_key[uvloop-missing permission-limited][dl]
+  <class 'dict'> {
+    'administrator': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+      },
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: test_create_api_key[uvloop-missing permission-limited][mongo]
+  <class 'dict'> {
+    '_id': 'baz',
+    'administrator': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      'bf1b993c',
+      'fb085f7f',
+    ],
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---

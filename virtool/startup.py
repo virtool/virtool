@@ -227,6 +227,7 @@ async def startup_routes(app: App):
 
 async def startup_sentry(app: App):
     settings = await get_data_from_app(app).settings.get_all()
+
     if (
         settings.enable_sentry is not False
         and app["config"].sentry_dsn
@@ -272,15 +273,17 @@ async def startup_b2c(app: App):
 
     :param app: Application object
     """
-    b2c_tenant = app["config"].b2c_tenant
-    b2c_user_flow = app["config"].b2c_user_flow
+    config = get_config_from_app(app)
+
+    if not config.use_b2c:
+        return
 
     if not all(
         [
-            app["config"].b2c_client_id,
-            app["config"].b2c_client_secret,
-            b2c_tenant,
-            b2c_user_flow,
+            config.b2c_client_id,
+            config.b2c_client_secret,
+            config.b2c_tenant,
+            config.b2c_user_flow,
         ]
     ):
         logger.critical(
@@ -288,7 +291,7 @@ async def startup_b2c(app: App):
         )
         sys.exit(1)
 
-    authority = f"https://{b2c_tenant}.b2clogin.com/{b2c_tenant}.onmicrosoft.com/{b2c_user_flow}"
+    authority = f"https://{config.b2c_tenant}.b2clogin.com/{config.b2c_tenant}.onmicrosoft.com/{config.b2c_user_flow}"
 
     msal = ClientApplication(
         client_id=app["config"].b2c_client_id,

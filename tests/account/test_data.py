@@ -14,7 +14,7 @@ from virtool.groups.oas import UpdatePermissionsRequest
     "has_permission", [True, False], ids=["has permission", "missing permission"]
 )
 async def test_create_api_key(
-    administrator, has_permission, mocker, mongo, redis, static_time, fake2
+    administrator, has_permission, mocker, mongo, redis, snapshot, static_time, fake2
 ):
     """
     Test that an API key is created correctly with varying key owner administrator status and
@@ -47,46 +47,16 @@ async def test_create_api_key(
     )
 
     account_data = AccountData(mongo, redis)
-    data = CreateKeysRequest(
-        name="Foo",
-        permissions=UpdatePermissionsRequest(
-            create_sample=True, modify_subtraction=True
+
+    _, api_key = await account_data.create_key(
+        CreateKeysRequest(
+            name="Foo",
+            permissions=UpdatePermissionsRequest(
+                create_sample=True, modify_subtraction=True
+            ),
         ),
+        "bob",
     )
 
-    _, document = await account_data.create_key(data, "bob")
-    document = document.dict()
-
-    permissions = {p.value: False for p in Permission}
-    permissions[Permission.create_sample.value] = True
-    permissions["modify_subtraction"] = False
-
-    expected = {
-        "administrator": administrator,
-        "id": "foo_0",
-        "name": "Foo",
-        "created_at": static_time.datetime,
-        "groups": [
-            {"id": group1.id, "name": group1.name},
-            {"id": group2.id, "name": group2.name},
-        ],
-        "permissions": permissions,
-    }
-
-    # The key should not have the `create_subtraction` permission set unless the key
-    # owner is and administrator or has the `create_subtraction` permission themselves.
-    if administrator or has_permission:
-        expected["permissions"]["modify_subtraction"] = True
-
-    # Check that expected functions were called.
-    m_get_alternate_id.assert_called_with(mongo, "Foo")
-    m_generate_key.assert_called()
-
-    assert document == expected
-
-    # Modify expected document to check what we expect to have been inserted in the database.
-    expected["groups"] = groups
-
-    expected.update({"_id": "baz", "user": {"id": "bob"}})
-
-    assert await mongo.keys.find_one() == expected
+    assert api_key == snapshot(name="dl")
+    assert await mongo.keys.find_one() == snapshot(name="mongo")

@@ -97,11 +97,9 @@ def create_app(config: Config):
             startup_settings,
             startup_sentry,
             startup_check_db,
+            startup_b2c,
         ]
     )
-
-    if config.use_b2c:
-        app.on_startup.append(startup_b2c)
 
     app.on_response_prepare.append(on_prepare_location)
 

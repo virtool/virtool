@@ -9,7 +9,7 @@ from virtool.pg.utils import Base
 
 
 @pytest.fixture
-def pg_base_connection_string(request, pg_db_name):
+def pg_base_connection_string(request, pg_db_name: str):
     """
     A Postgres connection string without the database name at the end.
 
@@ -20,7 +20,7 @@ def pg_base_connection_string(request, pg_db_name):
 
 
 @pytest.fixture
-def pg_db_name(worker_id):
+def pg_db_name(worker_id: str):
     """
     An auto-generated Postgres database name. One database is generated for each xdist worker.
 
@@ -52,7 +52,7 @@ async def pg(
 
     """
     engine = create_async_engine(
-        pg_connection_string,
+        pg_base_connection_string,
         isolation_level="AUTOCOMMIT",
         json_serializer=dump_string,
         json_deserializer=orjson.loads,

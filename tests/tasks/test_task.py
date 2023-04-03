@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.matchers import path_type
 
 from virtool.config import Config
+from virtool.config.cls import TaskSpawnerConfig
 from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import TasksClient
@@ -143,21 +144,14 @@ def task_spawner(
 ):
     async def func(task_name: str):
         mocker.patch("virtool.tasks.client.REDIS_TASKS_LIST_KEY", test_channel)
-        config = Config(
-            base_url="",
-            db_connection_string=test_db_connection_string,
-            db_name=test_db_name,
-            dev=True,
-            no_check_db=True,
-            no_check_files=True,
-            no_revision_check=True,
-            openfga_host="localhost:8080",
-            openfga_scheme="http",
-            openfga_store_name=openfga_store_name,
-            postgres_connection_string=pg_connection_string,
-            redis_connection_string=redis_connection_string,
+
+        await spawn(
+            TaskSpawnerConfig(
+                postgres_connection_string=pg_connection_string,
+                redis_connection_string=redis_connection_string,
+            ),
+            task_name,
         )
-        await spawn(config, task_name)
 
     return func
 
