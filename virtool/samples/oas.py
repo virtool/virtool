@@ -30,6 +30,11 @@ class GetSamplesResponse(SampleMinimal):
                         "handle": "mrott",
                         "id": "ihvze2u9",
                     },
+                    "workflows": {
+                        "aodp": "incompatible",
+                        "nuvs": "none",
+                        "pathoscope": "none",
+                    },
                 }
             ]
         }
@@ -115,6 +120,11 @@ class GetSampleResponse(Sample):
                 "ready": True,
                 "subtractions": [{"id": "0nhpi36p", "name": "Malus domestica"}],
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
+                "workflows": {
+                    "aodp": "incompatible",
+                    "nuvs": "none",
+                    "pathoscope": "none",
+                },
             }
         }
 
@@ -212,6 +222,11 @@ class CreateSampleResponse(Sample):
                 "ready": True,
                 "subtractions": [{"id": "0nhpi36p", "name": "Malus domestica"}],
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
+                "workflows": {
+                    "aodp": "incompatible",
+                    "nuvs": "none",
+                    "pathoscope": "none",
+                },
             }
         }
 
@@ -317,6 +332,11 @@ class UpdateSampleResponse(Sample):
                 "ready": True,
                 "subtractions": [{"id": "0nhpi36p", "name": "Malus domestica"}],
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
+                "workflows": {
+                    "aodp": "incompatible",
+                    "nuvs": "none",
+                    "pathoscope": "none",
+                },
             }
         }
 
@@ -420,6 +440,11 @@ class UpdateRightsResponse(Sample):
                 "ready": True,
                 "subtractions": [{"id": "0nhpi36p", "name": "Malus domestica"}],
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
+                "workflows": {
+                    "aodp": "incompatible",
+                    "nuvs": "none",
+                    "pathoscope": "none",
+                },
             }
         }
 
