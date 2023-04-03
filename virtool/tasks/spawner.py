@@ -11,7 +11,7 @@ from virtool.config.cls import TaskSpawnerConfig
 from virtool.data.errors import ResourceError
 from virtool.dispatcher.client import DispatcherClient
 from virtool.shutdown import shutdown_redis, shutdown_scheduler
-from virtool.startup import get_scheduler_from_app, startup_sentry, startup_version
+from virtool.startup import get_scheduler_from_app, startup_version
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.task import BaseTask
