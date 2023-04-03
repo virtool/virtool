@@ -2,7 +2,7 @@ import sys
 from logging import getLogger
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
 from semver import VersionInfo
 
 MINIMUM_MONGO_VERSION = "3.6.0"
@@ -29,8 +29,8 @@ async def connect(
 
     try:
         await mongo_client.list_database_names()
-    except ServerSelectionTimeoutError:
-        logger.critical("Could not connect to MongoDB server")
+    except (OperationFailure, ServerSelectionTimeoutError) as err:
+        logger.critical("Could not connect to MongoDB server: %s", err.details)
         sys.exit(1)
 
     await check_mongo_version(mongo_client)
