@@ -157,12 +157,6 @@ class AnalysisData(DataLayerPiece):
                                 }
                             },
                             {
-                                "$unwind": {
-                                    "path": "$job.user",
-                                    "preserveNullAndEmptyArrays": True,
-                                }
-                            },
-                            {
                                 "$set": {
                                     "last_status": {"$last": "$job.status"},
                                     "first_status": {"$first": "$job.status"},
@@ -181,6 +175,7 @@ class AnalysisData(DataLayerPiece):
                                     "job.id": "$job._id",
                                 }
                             },
+                            {"$unset": "job.key"},
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
@@ -194,22 +189,7 @@ class AnalysisData(DataLayerPiece):
                             "workflow": True,
                             "created_at": True,
                             "index": True,
-                            "job._id": True,
-                            "job.acquired": True,
-                            "job.workflow": True,
-                            "job.args": True,
-                            "job.rights": True,
-                            "job.state": True,
-                            "job.status": True,
-                            "job.user._id": True,
-                            "job.user.handle": True,
-                            "job.user.administrator": True,
-                            "job.ping": True,
-                            "job.created_at": True,
-                            "job.progress": True,
-                            "job.stage": True,
-                            "job.id": True,
-                            "job.archived": True,
+                            "job": True,
                             "ready": True,
                             "reference": True,
                             "sample": True,

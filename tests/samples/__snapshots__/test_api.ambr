@@ -1724,20 +1724,7 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': <class 'dict'> {
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '3cbb22cc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
-          'user': <class 'dict'> {
-            'administrator': False,
-            'handle': 'zclark',
-            'id': 'fb085f7f',
-          },
-          'workflow': 'jobs_aodp',
-        },
+        'job': None,
         'ready': True,
         'reference': <class 'dict'> {
           'data_type': 'genome',
@@ -1819,20 +1806,7 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': <class 'dict'> {
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '3cbb22cc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
-          'user': <class 'dict'> {
-            'administrator': False,
-            'handle': 'zclark',
-            'id': 'fb085f7f',
-          },
-          'workflow': 'jobs_aodp',
-        },
+        'job': None,
         'ready': True,
         'reference': <class 'dict'> {
           'data_type': 'genome',

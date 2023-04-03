@@ -836,8 +836,6 @@ async def test_find_analyses(
 
     job_1 = await fake2.jobs.create(user=user_1)
 
-    job_2 = await fake2.jobs.create(user=user_2)
-
     await client.db.references.insert_many(
         [
             {"_id": "foo", "data_type": "genome", "name": "Foo"},
@@ -866,7 +864,7 @@ async def test_find_analyses(
                 "workflow": "pathoscope_bowtie",
                 "created_at": static_time.datetime,
                 "ready": True,
-                "job": {"id": job_2.id},
+                "job": {"id": "foo"},
                 "index": {"version": 2, "id": "foo"},
                 "user": {"id": user_1.id},
                 "reference": {"id": "baz", "name": "Baz"},
