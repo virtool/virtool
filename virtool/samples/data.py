@@ -19,6 +19,7 @@ from virtool.data.piece import DataLayerPiece
 from virtool.http.client import UserClient
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
+from virtool.mongo.migrate import recalculate_all_workflow_tags
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
@@ -474,3 +475,6 @@ class SamplesData(DataLayerPiece):
                         {"$set": {"name": await name_generator.get(session)}},
                         session=session,
                     )
+
+    async def update_sample_workflows(self):
+        await recalculate_all_workflow_tags(self._db)
