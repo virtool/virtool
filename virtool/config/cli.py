@@ -26,6 +26,7 @@ from virtool.config.options import (
     redis_connection_string_option,
     sentry_dsn_option,
 )
+from virtool.oas.cmd import show_oas
 
 logger = getLogger("config")
 
@@ -103,6 +104,12 @@ def start_jobs_api(**kwargs):
             )
         )
     )
+
+
+@cli.command
+def oas():
+    """Work with the Virtool OpenAPI specification."""
+    show_oas()
 
 
 @cli.group("tasks")
