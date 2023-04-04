@@ -271,12 +271,12 @@
     },
     'subtractions': <class 'list'> [
       <class 'dict'> {
-        'id': 'plum',
-        'name': 'Plum',
-      },
-      <class 'dict'> {
         'id': 'apple',
         'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'plum',
+        'name': 'Plum',
       },
     ],
     'updated_at': '2015-10-06T20:00:00Z',
@@ -403,12 +403,12 @@
     },
     'subtractions': <class 'list'> [
       <class 'dict'> {
-        'id': 'plum',
-        'name': 'Plum',
-      },
-      <class 'dict'> {
         'id': 'apple',
         'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'plum',
+        'name': 'Plum',
       },
     ],
     'user': <class 'dict'> {
