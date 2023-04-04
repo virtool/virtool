@@ -4,13 +4,11 @@ Work with subtractions in the database.
 """
 import asyncio
 import glob
-import math
 from typing import Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.subtraction import Subtraction
-from virtool.data.errors import ResourceNotFoundError
 
 import virtool.utils
 from virtool.config.cls import Config

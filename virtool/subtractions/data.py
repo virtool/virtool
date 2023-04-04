@@ -191,8 +191,7 @@ class SubtractionsData(DataLayerPiece):
 
         document = await self._mongo.subtraction.insert_one(
             {
-                "_id": subtraction_id
-                       or default_subtraction_id,
+                "_id": subtraction_id or default_subtraction_id,
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
