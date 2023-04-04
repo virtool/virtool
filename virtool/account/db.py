@@ -8,6 +8,7 @@ from virtool_core.models.account import APIKey
 
 import virtool.users.utils
 import virtool.utils
+from virtool.groups.db import lookup_minimal_groups
 
 ACCOUNT_PROJECTION = (
     "_id",
@@ -75,14 +76,7 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
     async for key in mongo.keys.aggregate(
         [
             {"$match": {"id": key_id}},
-            {
-                "$lookup": {
-                    "from": "groups",
-                    "localField": "groups",
-                    "foreignField": "_id",
-                    "as": "groups",
-                }
-            },
+            *lookup_minimal_groups(),
             {
                 "$project": {
                     "_id": False,

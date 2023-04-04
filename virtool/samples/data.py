@@ -18,11 +18,13 @@ from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.http.client import UserClient
+from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.migrate import recalculate_all_workflow_tags
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
+from virtool.references.db import lookup_nested_reference_by_id
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_subtractions_do_not_exist,
@@ -221,80 +223,10 @@ class SamplesData(DataLayerPiece):
                             {
                                 "$match": match_query,
                             },
-                            {
-                                "$lookup": {
-                                    "from": "jobs",
-                                    "localField": "job.id",
-                                    "foreignField": "_id",
-                                    "as": "job",
-                                }
-                            },
-                            {
-                                "$unwind": {
-                                    "path": "$job",
-                                    "preserveNullAndEmptyArrays": True,
-                                }
-                            },
-                            {
-                                "$lookup": {
-                                    "from": "subtraction",
-                                    "localField": "subtractions",
-                                    "foreignField": "_id",
-                                    "as": "subtractions",
-                                }
-                            },
-                            {
-                                "$lookup": {
-                                    "from": "references",
-                                    "localField": "reference.id",
-                                    "foreignField": "_id",
-                                    "as": "reference",
-                                }
-                            },
-                            {"$unwind": {"path": "$reference"}},
-                            {
-                                "$lookup": {
-                                    "from": "users",
-                                    "localField": "user.id",
-                                    "foreignField": "_id",
-                                    "as": "user",
-                                }
-                            },
-                            {"$unwind": {"path": "$user"}},
-                            {
-                                "$lookup": {
-                                    "from": "users",
-                                    "localField": "job.user.id",
-                                    "foreignField": "_id",
-                                    "as": "job.user",
-                                }
-                            },
-                            {
-                                "$unwind": {
-                                    "path": "$job.user",
-                                    "preserveNullAndEmptyArrays": True,
-                                }
-                            },
-                            {
-                                "$set": {
-                                    "last_status": {"$last": "$job.status"},
-                                    "first_status": {"$first": "$job.status"},
-                                }
-                            },
-                            {
-                                "$set": {
-                                    "job.created_at": "$first_status.timestamp",
-                                    "job.progress": "$last_status.progress",
-                                    "job.state": "$last_status.state",
-                                    "job.stage": "$last_status.stage",
-                                }
-                            },
-                            {
-                                "$set": {
-                                    "job.id": "$job._id",
-                                }
-                            },
-                            {"$unset": "job.key"},
+                            *lookup_minimal_job_by_id(),
+                            *lookup_nested_subtractions(),
+                            *lookup_nested_reference_by_id(),
+                            *lookup_nested_user_by_id(),
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
@@ -314,9 +246,7 @@ class SamplesData(DataLayerPiece):
                             "sample": True,
                             "subtractions": True,
                             "updated_at": True,
-                            "user._id": True,
-                            "user.handle": True,
-                            "user.administrator": True,
+                            "user": True,
                         },
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0]
@@ -331,10 +261,6 @@ class SamplesData(DataLayerPiece):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
-
-        for document in data:
-            if not document["job"]:
-                document["job"] = None
 
         return AnalysisSearchResult(
             documents=data,

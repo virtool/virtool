@@ -97,3 +97,54 @@ async def fetch_group_users(db, group_id: str) -> List[UserNested]:
         UserNested(**base_processor(user))
         async for user in db.users.find({"groups": group_id})
     ]
+
+
+def lookup_minimal_groups(
+    local_field: str = "groups", set_as: str = "groups"
+) -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up minimal groups.
+
+    :param local_field: groups field to look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "groups",
+                "let": {"group_ids": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$in": ["$_id", "$$group_ids"]}}},
+                    {"$project": {"name": True}},
+                ],
+                "as": set_as,
+            }
+        },
+    ]
+
+
+def lookup_minimal_group_by_id(
+    local_field: str = "group", set_as: str = "group"
+) -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up a minimal group by id.
+
+    :param local_field: groups field to look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "groups",
+                "let": {"group_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$_id", "$$group_id"]}}},
+                    {"$project": {"name": True}},
+                ],
+                "as": set_as,
+            }
+        },
+        {"$set": {set_as: {"$ifNull": [{"$first": f"${set_as}"}, None]}}},
+    ]
