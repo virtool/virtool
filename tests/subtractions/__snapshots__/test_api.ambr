@@ -569,7 +569,20 @@
       't': 0.26,
     },
     'id': 'apple',
-    'job': None,
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -602,6 +615,9 @@
       'n': 0.2,
       't': 0.26,
     },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'name': 'Bar',
     'nickname': 'Apple',
     'ready': True,
@@ -625,7 +641,20 @@
       't': 0.26,
     },
     'id': 'apple',
-    'job': None,
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -658,6 +687,9 @@
       'n': 0.2,
       't': 0.26,
     },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'name': 'Malus domestica',
     'nickname': 'Bar Subtraction',
     'ready': True,
@@ -681,7 +713,20 @@
       't': 0.26,
     },
     'id': 'apple',
-    'job': None,
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -714,6 +759,9 @@
       'n': 0.2,
       't': 0.26,
     },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'name': 'Malus domestica',
     'nickname': '',
     'ready': True,
@@ -737,7 +785,20 @@
       't': 0.26,
     },
     'id': 'apple',
-    'job': None,
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -769,6 +830,9 @@
       'g': 0.19,
       'n': 0.2,
       't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
     },
     'name': 'Bar',
     'nickname': 'Bar Subtraction',

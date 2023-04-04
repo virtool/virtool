@@ -88,6 +88,8 @@ async def test_edit(data, fake2, has_user, has_job, mocker, snapshot, spawn_clie
         ),
     )
 
+    user = await fake2.users.create()
+
     document = {
         "_id": "apple",
         "count": 11,
@@ -103,12 +105,11 @@ async def test_edit(data, fake2, has_user, has_job, mocker, snapshot, spawn_clie
     }
 
     if has_user:
-        user = await fake2.users.create()
         document["user"] = {"id": user.id}
         
-        if has_job:
-            job = await fake2.jobs.create(user)
-            document["job"] = {"id": job.id}
+    if has_job:
+        job = await fake2.jobs.create(user)
+        document["job"] = {"id": job.id}
 
 
     client = await spawn_client(
@@ -120,7 +121,13 @@ async def test_edit(data, fake2, has_user, has_job, mocker, snapshot, spawn_clie
     resp = await client.patch("/subtractions/apple", data)
 
     assert resp.status == 200
-    assert await resp.json() == snapshot
+
+
+
+    test_resp = await resp.json()
+
+    assert test_resp == snapshot
+
     assert await client.db.subtraction.find_one() == snapshot
 
 
@@ -409,6 +416,4 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
 
     assert await resp.json() == snapshot
 
-    test_job = await client.db.jobs.find_one()
-
-    assert test_job == snapshot(name="job")
+    assert await client.db.jobs.find_one() == snapshot(name="job")

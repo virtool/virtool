@@ -1,4 +1,5 @@
 import asyncio
+import math
 import shutil
 from asyncio import CancelledError, to_thread
 from logging import getLogger
@@ -32,7 +33,6 @@ from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
     attach_computed,
-    subtraction_processor,
     unlink_default_subtractions,
     check_subtraction_fasta_files,
 )
@@ -83,57 +83,83 @@ class SubtractionsData(DataLayerPiece):
                 ).sort("name")
             ]
 
+        page = query.get("page", 1)
+
+        per_page = query.get("per_page", 25)
+
         data = await self._mongo.subtraction.aggregate(
             [
+                {"$match": {"deleted": False}},
                 {
                     "$facet": {
                         "total_count": [
-                            {"$count": "total_count"},
+                            {"$count": "total_count"}
+                        ],
+                        "ready_count": [
+                            {
+                                "$match": {
+                                    "ready": True
+                                }
+                            },
+                            {"$count": "ready_count"}
                         ],
                         "found_count": [
+                            {"$match": query},
                             {"$count": "found_count"},
                         ],
                         "documents": [
-                            {
-                                "$match": query,
-                            },
+                            {"$match": query},
                             {"$sort": {"name": 1}},
+                            {"$skip": per_page * (page - 1)},
+                            {"$limit": per_page},
                             *lookup_nested_user_by_id(local_field="user.id"),
                             *lookup_minimal_job_by_id(local_field="job.id"),
+                            {
+                                "$project": {
+                                    "id": "$_id",
+                                    "_id": False,
+                                    "count": True,
+                                    "created_at": True,
+                                    "file": True,
+                                    "ready": True,
+                                    "job": True,
+                                    "name": True,
+                                    "nickname": True,
+                                    "user": True,
+                                    "subtraction_id": True,
+                                    "gc": True
+                                }
+                            },
                         ],
                     }
                 },
                 {
                     "$project": {
-                        "documents": {
-                            "_id": True,
-                            "count": True,
-                            "created_at": True,
-                            "file": True,
-                            "ready": True,
-                            "job": True,
-                            "name": True,
-                            "nickname": True,
-                            "user": True,
-                            "subtraction_id": True
-                        },
+                        "documents": True,
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0]
                         },
                         "found_count": {
                             "$arrayElemAt": ["$found_count.found_count", 0]
                         },
-                    }
+                        "ready_count": {
+                            "$ifNull": [{"$arrayElemAt": ["$ready_count.ready_count", 0]}, 0]
+                        },
+                    },
                 },
             ]
         ).to_list(length=1)
 
-        data: dict = subtraction_processor(data=data, query=query)
-        
-        ready_count: int = sum(1 for document in data["documents"] if document["ready"]) or 0
+        if len(data) == 0:
+            raise ResourceNotFoundError
+
+        data = data[0]
 
         return SubtractionSearchResult(
-            **{**data, "documents": data["documents"], "ready_count": ready_count}
+            **data,
+            page=page,
+            per_page=per_page,
+            page_count=math.ceil(data["found_count"] / per_page)
         )
 
     async def create(
@@ -166,7 +192,7 @@ class SubtractionsData(DataLayerPiece):
         document = await self._mongo.subtraction.insert_one(
             {
                 "_id": subtraction_id
-                    or default_subtraction_id,
+                       or default_subtraction_id,
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
@@ -190,7 +216,7 @@ class SubtractionsData(DataLayerPiece):
         await self.data.jobs.create(
             "create_subtraction",
             {
-                "subtraction_id": subtraction_id or default_subtraction_id,
+                "subtraction_id": document["_id"],
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
@@ -206,19 +232,37 @@ class SubtractionsData(DataLayerPiece):
     async def get(self, subtraction_id: str) -> Subtraction:
         document = await self._mongo.subtraction.aggregate(
             [
-                {"$match": {"_id": subtraction_id}},
+                {
+                    "$match": {
+                        "_id": subtraction_id
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": True,
+                        "count": True,
+                        "created_at": True,
+                        "file": True,
+                        "ready": True,
+                        "job": True,
+                        "name": True,
+                        "nickname": True,
+                        "user": True,
+                        "subtraction_id": True,
+                        "gc": True
+                    }
+                },
                 *lookup_nested_user_by_id(local_field="user.id"),
                 *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
 
         if len(document) != 0:
-            document = document[0]
             document = await attach_computed(
                 self._mongo,
                 self._pg,
                 self._base_url,
-                document,
+                document[0]
             )
 
             document = base_processor(document)

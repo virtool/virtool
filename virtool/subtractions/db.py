@@ -183,31 +183,3 @@ def lookup_nested_subtractions(
             }
         },
     ]
-
-
-def subtraction_processor(data: list, query: dict) -> dict:
-    try:
-        data = data[0]
-    except IndexError:
-        raise ResourceNotFoundError()
-
-    data["documents"] = [
-            base_processor(document) for document in data["documents"]
-    ]
-
-    try:
-        data["page"] = int(query["page"])
-    except (KeyError, ValueError):
-        data["page"] = 1
-
-    per_page = None
-    try:
-        per_page = int(query["per_page"])
-    except (KeyError, ValueError):
-        per_page = 25
-    finally:
-        data["per_page"] = per_page
-
-    data["page_count"] = int(math.ceil(data["found_count"] / per_page))
-
-    return data
