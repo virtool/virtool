@@ -226,16 +226,14 @@ async def startup_routes(app: App):
 
 
 async def startup_sentry(app: App):
-    settings = await get_data_from_app(app).settings.get_all()
+    """
+    Create a Sentry client and attach it to the application if a DSN was configured.
 
-    if (
-        settings.enable_sentry is not False
-        and app["config"].sentry_dsn
-        and not app["config"].dev
-    ):
+    :param app: the application object
+    """
+    if app["config"].sentry_dsn:
         logger.info("Configuring Sentry")
         setup(app["version"], app["config"].sentry_dsn)
-
     else:
         logger.info("Skipped configuring Sentry")
 
