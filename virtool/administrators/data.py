@@ -123,7 +123,7 @@ class AdministratorsData(DataLayerPiece):
         )
 
         if not user:
-            raise ResourceNotFoundError
+            raise ResourceNotFoundError("User does not exist")
 
         user.administrator_role = role
 
@@ -231,7 +231,7 @@ class AdministratorsData(DataLayerPiece):
 
             return user
 
-        raise ResourceNotFoundError()
+        raise ResourceNotFoundError("User does not exist")
 
     async def _delete(self, user_id: str) -> None:
         """
