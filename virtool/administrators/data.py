@@ -111,7 +111,7 @@ class AdministratorsData:
                 }
             )
 
-        raise ResourceNotFoundError()
+        raise ResourceNotFoundError("User not found")
 
     async def update(
         self, user_id: str, data: UpdateAdministratorRequest

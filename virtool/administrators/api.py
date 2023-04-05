@@ -46,15 +46,16 @@ class AdministratorsView(PydanticView):
 
         Status Codes:
             201: Successful operation
-            404: User not found
+            400: User not found
         """
 
         try:
             administrator = await get_data_from_req(self.request).administrators.create(
                 data
             )
-        except ResourceNotFoundError:
-            raise NotFound()
+        except ResourceNotFoundError as err:
+            if "User not found" in str(err):
+                raise HTTPBadRequest(text=str(err))
 
         return json_response(administrator, status=201)
 

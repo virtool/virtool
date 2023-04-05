@@ -99,7 +99,7 @@ class ReferencesView(PydanticView):
             if "Source reference does not exist" in str(err):
                 raise HTTPBadRequest(text=str(err))
             if "File not found" in str(err):
-                raise NotFound(str(err))
+                raise HTTPBadRequest(text=str(err))
 
             raise
         except ResourceRemoteError as err:
