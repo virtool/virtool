@@ -72,12 +72,12 @@ def create_app(
     mongo: "Mongo",
     pg_connection_string: str,
     redis_connection_string: str,
-    test_db_connection_string: str,
-    test_db_name: str,
+        mongo_connection_string,
+        mongo_name,
     openfga_store_name: str,
 ):
     mongodb_connection_string = (
-        f"{test_db_connection_string}/{test_db_name}?authSource=admin"
+        f"{mongo_connection_string}/{mongo_name}?authSource=admin"
     )
 
     def func(
@@ -212,11 +212,11 @@ def spawn_client(
 def spawn_job_client(
     mongo: "Mongo",
     aiohttp_client,
-    test_db_connection_string: str,
+        mongo_connection_string,
     redis_connection_string: str,
     pg_connection_string: str,
     pg: AsyncEngine,
-    test_db_name: str,
+        mongo_name,
     openfga_store_name: str,
     authorization_client: AuthorizationClient,
 ):
@@ -252,7 +252,7 @@ def spawn_job_client(
                 data_path=Path("data"),
                 dev=dev,
                 host="localhost",
-                mongodb_connection_string=f"{test_db_connection_string}/{test_db_name}?authSource=admin",
+                mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
                 no_check_db=True,
                 no_check_files=True,
                 no_revision_check=True,
