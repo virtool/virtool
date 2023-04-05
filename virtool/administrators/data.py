@@ -2,11 +2,8 @@ import asyncio
 from typing import TYPE_CHECKING, Optional, Union, Dict
 
 from multidict import MultiDictProxy
-from virtool_core.models.administrator import (
-    Administrator,
-    AdministratorSearch,
-)
 from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.user import User, UserSearchResult
 
 import virtool
 from virtool.administrators.db import update_legacy_administrator
@@ -60,19 +57,23 @@ class AdministratorsData(DataLayerPiece):
         self._authorization_client = authorization_client
         self._mongo = mongo
 
-    # TODO add type hints for return values
     async def find_users(
         self,
         url_query: Union[Dict, MultiDictProxy[str]],
         administrator: Optional[bool] = None,
         term: Optional[str] = None,
-    ) -> AdministratorSearch:
+    ) -> UserSearchResult:
+        """
+        Find users.
 
-        test = await self._authorization_client.list_administrators()
+        :param url_query: the query parameters from the URL
+        :param administrator: whether to filter by administrator status
+        :param term: a search term to filter by user handle
+        """
 
         admin_dict = {
-            admin[0]: admin[1]
-            for admin in await self._authorization_client.list_administrators()
+            user_id: role
+            for user_id, role in await self._authorization_client.list_administrators()
         }
 
         administrator_query = {}
@@ -101,13 +102,14 @@ class AdministratorsData(DataLayerPiece):
             projection={field: True for field in PROJECTION},
         )
 
-        for user in result["documents"]:
-            user["role"] = admin_dict.get(user["_id"], None)
+        result["documents"] = [
+            User(**user, administrator_role=admin_dict.get(user["_id"], None))
+            for user in result["documents"]
+        ]
 
-        return result
+        return UserSearchResult(**result)
 
-    # TODO add type hints for return values
-    async def get_user(self, user_id: str):
+    async def get_user(self, user_id: str) -> User:
         """
         Get a user.
 
@@ -115,7 +117,7 @@ class AdministratorsData(DataLayerPiece):
         :return: the user
         """
 
-        user, admin_tuple = await asyncio.gather(
+        user, (user_id, role) = await asyncio.gather(
             fetch_complete_user(self._mongo, user_id),
             self._authorization_client.get_administrator(user_id),
         )
@@ -123,13 +125,11 @@ class AdministratorsData(DataLayerPiece):
         if not user:
             raise ResourceNotFoundError
 
-        return {
-            **base_processor(user),
-            "role": admin_tuple[1],
-        }
+        user.administrator_role = role
 
-    # TODO add type hints for return values
-    async def update_user(self, user_id: str, data: UpdateUserRequest):
+        return user
+
+    async def update_user(self, user_id: str, data: UpdateUserRequest) -> User:
         """
         Update a user.
 
@@ -194,25 +194,18 @@ class AdministratorsData(DataLayerPiece):
                 document["permissions"],
             )
 
-        user = await fetch_complete_user(self._mongo, user_id)
+        return await self.get_user(user_id)
 
-        if user is None:
-            raise ResourceNotFoundError
-
-        admin_tuple = await self._authorization_client.get_administrator(user_id)
-
-        return {**user.dict(), "role": admin_tuple[1]}
-
-    # TODO add type hints for return values
     async def update_role(
         self, user_id: str, /, data: UpdateAdministratorRoleRequest
-    ) -> Administrator:
+    ) -> User:
         """
         Update a user's administrator role.
 
         Set the user's administrator flag to true if given the full role and false otherwise.
 
         :param data: fields to add a user as an administrator
+        :param user_id: the user's id to add as an administrator
         :return: the administrator
         """
 
@@ -230,17 +223,15 @@ class AdministratorsData(DataLayerPiece):
 
             await update_keys(
                 self._mongo,
-                user["id"],
-                user["administrator"],
-                user["groups"],
-                user["permissions"],
+                user.id,
+                user.administrator,
+                user.groups,
+                user.permissions.dict(),
             )
 
             return user
 
         raise ResourceNotFoundError()
-
-    # TODO add type hints for return values
 
     async def _delete(self, user_id: str) -> None:
         """

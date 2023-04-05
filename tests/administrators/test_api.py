@@ -22,7 +22,7 @@ async def test_get_roles(spawn_client, snapshot):
 
 
 @pytest.mark.apitest
-async def test_list_users(spawn_client, fake2, snapshot):
+async def test_list_users(spawn_client, fake2, snapshot, authorization_client):
     client = await spawn_client(authorize=True, administrator=True)
 
     user_1 = await fake2.users.create()

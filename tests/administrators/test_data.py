@@ -61,9 +61,7 @@ async def test_get_user(
             AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
         )
 
-    result = data_layer.administrators.get_user(user_1.id)
-
-    assert await result == snapshot
+    assert await data_layer.administrators.get_user(user_1.id) == snapshot
 
 
 class TestUpdate:

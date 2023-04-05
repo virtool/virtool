@@ -308,8 +308,6 @@ async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
     ):
         return User(**user)
 
-    return None
-
 
 def lookup_nested_user_by_id(
     local_field: str = "user.id", set_as: str = "user"
