@@ -6,7 +6,7 @@ from virtool_core.models.user import User
 
 import virtool.users.utils
 import virtool.utils
-from virtool.administrators.oas import UpdateUserRequest
+from virtool.users.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError

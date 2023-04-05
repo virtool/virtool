@@ -9,7 +9,7 @@ from virtool_core.models.user import User
 
 import virtool.http.authentication
 import virtool.users.db
-from virtool.administrators.oas import UpdateUserRequest
+from virtool.users.oas import UpdateUserRequest
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.relationships import UserRoleAssignment

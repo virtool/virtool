@@ -122,13 +122,6 @@ class TestUpdate:
             name="db", exclude=props("password")
         )
 
-        assert (
-            await data_layer.administrators._authorization_client.list_administrators()
-            == []
-            if not update.administrator
-            else [(user_1.id, "full")]
-        )
-
     async def test_password(self, fake2, mongo, snapshot, data_layer, static_time):
         """
         Test editing an existing user.

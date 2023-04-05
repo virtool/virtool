@@ -5,7 +5,7 @@ import pytest
 from syrupy.filters import props
 from syrupy.matchers import path_type
 
-from virtool.administrators.oas import UpdateUserRequest
+from virtool.users.oas import UpdateUserRequest
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.users.data import UsersData
 from virtool.users.db import validate_credentials, B2CUserAttributes

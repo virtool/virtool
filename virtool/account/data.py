@@ -355,7 +355,7 @@ class AccountData(DataLayerPiece):
 
         await self.data.sessions.delete(session_id)
 
-        await self.data.users.update(
+        await self.data.administrators.update_user(
             reset.user_id,
             UpdateUserRequest(force_reset=False, password=data.password),
         )
