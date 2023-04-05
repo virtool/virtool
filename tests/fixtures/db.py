@@ -15,20 +15,20 @@ class MockDeleteResult:
 
 
 @pytest.fixture
-def test_db_connection_string(request):
+def mongo_connection_string(request):
     return request.config.getoption("db_connection_string")
 
 
 @pytest.fixture
-def test_db_name(worker_id):
+def mongo_name(worker_id):
     return f"vt-test-{worker_id}"
 
 
 @pytest.fixture
-async def test_motor(test_db_connection_string, test_db_name, loop, request):
-    client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string)
-    await client.drop_database(test_db_name)
-    db: AsyncIOMotorDatabase = client[test_db_name]
+async def test_motor(mongo_connection_string, mongo_name, loop, request):
+    client = motor.motor_asyncio.AsyncIOMotorClient(mongo_connection_string)
+    await client.drop_database(mongo_name)
+    db: AsyncIOMotorDatabase = client[mongo_name]
 
     await asyncio.gather(
         *[
@@ -50,7 +50,7 @@ async def test_motor(test_db_connection_string, test_db_name, loop, request):
     )
 
     yield db
-    await client.drop_database(test_db_name)
+    await client.drop_database(mongo_name)
 
 
 @pytest.fixture

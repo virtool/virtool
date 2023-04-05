@@ -133,8 +133,8 @@ def test_channel():
 
 @pytest.fixture
 def task_spawner(
-    test_db_connection_string: str,
-    test_db_name: str,
+        mongo_connection_string,
+        mongo_name,
     pg_connection_string: str,
     redis_connection_string: str,
     mocker,
