@@ -405,13 +405,12 @@ class ReferencesData(DataLayerPiece):
         self,
         term: Optional[str],
         verified: Optional[bool],
-        names: Optional[Union[bool, str]],
         ref_id: Optional[str],
         query,
     ) -> OTUSearchResult:
         if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             data = await virtool.otus.db.find(
-                self._mongo, names, term, query, verified, ref_id
+                self._mongo, term, query, verified, ref_id
             )
 
             return OTUSearchResult(**data)

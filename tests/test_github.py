@@ -1,9 +1,10 @@
 import pytest
+
 import virtool.github
 
 
 @pytest.fixture
-def fake_release():
+def release():
     class Release:
         raw = {
             "id": 0,
@@ -38,9 +39,9 @@ def fake_release():
     return Release()
 
 
-def test_format_release(fake_release):
-    result = virtool.github.format_release(fake_release.raw)
-    assert result == fake_release.formatted
+def test_format_release(release):
+    result = virtool.github.format_release(release.raw)
+    assert result == release.formatted
 
 
 @pytest.mark.parametrize("release", [None, {"etag": "foobar"}, {"hello": "world"}])

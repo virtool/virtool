@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.matchers import path_type
 
-from virtool.config import Config
+from virtool.config.cls import TaskSpawnerConfig
 from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import TasksClient
@@ -133,35 +133,24 @@ def test_channel():
 
 @pytest.fixture
 def task_spawner(
-    test_db_connection_string,
-    test_db_name,
-    pg_connection_string,
-    redis_connection_string,
+    test_db_connection_string: str,
+    test_db_name: str,
+    pg_connection_string: str,
+    redis_connection_string: str,
     mocker,
     test_channel,
-    openfga_store_name,
+    openfga_store_name: str,
 ):
     async def func(task_name: str):
         mocker.patch("virtool.tasks.client.REDIS_TASKS_LIST_KEY", test_channel)
-        config = Config(
-            base_url="",
-            db_connection_string=test_db_connection_string,
-            db_name=test_db_name,
-            dev=True,
-            force_version="v0.0.0",
-            no_sentry=True,
-            no_check_db=True,
-            no_check_files=True,
-            no_fetching=True,
-            no_revision_check=True,
-            openfga_host="localhost:8080",
-            openfga_scheme="http",
-            openfga_store_name=openfga_store_name,
-            postgres_connection_string=pg_connection_string,
-            redis_connection_string=redis_connection_string,
-            fake=False,
+
+        await spawn(
+            TaskSpawnerConfig(
+                postgres_connection_string=pg_connection_string,
+                redis_connection_string=redis_connection_string,
+            ),
+            task_name,
         )
-        await spawn(config, task_name)
 
     return func
 

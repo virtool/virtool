@@ -50,6 +50,7 @@ async def migrate_status(mongo):
         await mongo.status.insert_one(
             {
                 "_id": "hmm",
+                "errors": [],
                 "installed": None,
                 "task": None,
                 "updates": [],

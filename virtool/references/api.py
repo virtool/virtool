@@ -279,7 +279,6 @@ class ReferenceOTUsView(PydanticView):
         /,
         find: Optional[str],
         verified: Optional[bool],
-        names: Optional[Union[bool, str]],
     ) -> Union[r200[FindOTUsResponse], r404]:
         """
         Find OTUs.
@@ -292,7 +291,7 @@ class ReferenceOTUsView(PydanticView):
         """
         try:
             data = await get_data_from_req(self.request).references.find_otus(
-                find, verified, names, ref_id, self.request.query
+                find, verified, ref_id, self.request.query
             )
         except ResourceNotFoundError:
             raise NotFound

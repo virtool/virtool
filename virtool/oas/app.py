@@ -1,5 +1,5 @@
 """
-Generate api-doc using: python3 -m virtool.custom_oas.oas virtool.oas:app
+App stand-in used to generate API docs.
 """
 
 from virtool.app import create_app_without_startup

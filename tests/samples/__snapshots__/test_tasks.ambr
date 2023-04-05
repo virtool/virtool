@@ -146,3 +146,33 @@
     'is_legacy': True,
   }
 ---
+# name: test_update_workflows_fields[uvloop-False]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'library_type': 'normal',
+      'nuvs': 'ip',
+      'pathoscope': 'ip',
+      'workflows': <class 'dict'> {
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'pending',
+      },
+    },
+  ]
+---
+# name: test_update_workflows_fields[uvloop-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'library_type': 'normal',
+      'nuvs': 'ip',
+      'pathoscope': True,
+      'workflows': <class 'dict'> {
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'complete',
+      },
+    },
+  ]
+---

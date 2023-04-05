@@ -34,10 +34,8 @@ class OTUData:
         self._mongo = mongo
         self._data_path = data_path
 
-    async def find(
-        self, names: bool, query: Mapping, term: Optional[str], verified: Optional[bool]
-    ):
-        return await virtool.otus.db.find(self._mongo, names, term, query, verified)
+    async def find(self, query: Mapping, term: Optional[str], verified: Optional[bool]):
+        return await virtool.otus.db.find(self._mongo, term, query, verified)
 
     async def get(self, otu_id: str) -> OTU:
         """

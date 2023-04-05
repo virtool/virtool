@@ -201,7 +201,7 @@ jobs:
       - name: Write OAS
         run: |
           mkdir -p virtool/spec
-          poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/openapi.json
+          poetry run python run.py oas > virtool/spec/openapi.json
       - name: Upload OAS
         uses: actions/upload-artifact@v3
         with:
