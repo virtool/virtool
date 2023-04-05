@@ -1,4 +1,5 @@
 import pytest
+from syrupy.matchers import path_type
 
 
 @pytest.mark.parametrize("dev", [True, False])
@@ -12,4 +13,7 @@ async def test_get(dev, first_user, spawn_client, snapshot):
 
     resp = await client.get("/")
 
-    assert await resp.json() == snapshot
+    as_json = await resp.json()
+
+    assert as_json == snapshot(matcher=path_type({"version": (str,)}))
+    assert as_json["version"] == client.app["version"]

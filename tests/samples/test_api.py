@@ -7,13 +7,13 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import Permission, LibraryType
+from virtool_core.models.enums import LibraryType, Permission
 
 import virtool.caches.db
 import virtool.pg.utils
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
-from virtool.config.cls import Config
+from virtool.config import get_config_from_app
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_app
 from virtool.jobs.client import DummyJobsClient
@@ -185,12 +185,12 @@ async def setup_find_samples_client(fake2, spawn_client, static_time):
 
 @pytest.mark.apitest
 class TestFindSamples:
+    @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
     async def test_term(
-        self, find, fake2, spawn_client, snapshot, setup_find_samples_client
+        self, find, fake2, path, spawn_client, snapshot, setup_find_samples_client
     ):
         client = await setup_find_samples_client
-        path = "/samples"
 
         if find is not None:
             path += f"?find={find}"
@@ -385,8 +385,15 @@ class TestCreate:
 
         assert upload.reserved is True
 
+    @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     async def test_name_exists(
-        self, pg, spawn_client, static_time, resp_is, test_upload
+        self,
+        pg,
+        spawn_client,
+        static_time,
+        resp_is,
+        test_upload,
+        path,
     ):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
@@ -412,7 +419,7 @@ class TestCreate:
             )
 
         resp = await client.post(
-            "/samples", {"name": "Foobar", "files": [1], "subtractions": ["apple"]}
+            path, {"name": "Foobar", "files": [1], "subtractions": ["apple"]}
         )
 
         await resp_is.bad_request(resp, "Sample name is already in use")
@@ -725,7 +732,7 @@ async def test_finalize(
 async def test_remove(spawn_client, create_delete_result, tmpdir):
     client = await spawn_client(authorize=True)
 
-    config: Config = client.app["config"]
+    config = get_config_from_app(client.app)
     config.data_path = Path(tmpdir)
 
     sample_path = config.data_path / "samples/test"
@@ -834,6 +841,16 @@ async def test_find_analyses(
         {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
     )
 
+    job_1 = await fake2.jobs.create(user=user_1)
+
+    await client.db.references.insert_many(
+        [
+            {"_id": "foo", "data_type": "genome", "name": "Foo"},
+            {"_id": "baz", "data_type": "genome", "name": "Baz"},
+        ],
+        session=None,
+    )
+
     await client.db.analyses.insert_many(
         [
             {
@@ -841,7 +858,7 @@ async def test_find_analyses(
                 "workflow": "pathoscope_bowtie",
                 "created_at": static_time.datetime,
                 "ready": True,
-                "job": {"id": "test"},
+                "job": {"id": job_1.id},
                 "index": {"version": 2, "id": "foo"},
                 "reference": {"id": "baz", "name": "Baz"},
                 "sample": {"id": "test"},
@@ -854,7 +871,7 @@ async def test_find_analyses(
                 "workflow": "pathoscope_bowtie",
                 "created_at": static_time.datetime,
                 "ready": True,
-                "job": {"id": "test"},
+                "job": {"id": "foo"},
                 "index": {"version": 2, "id": "foo"},
                 "user": {"id": user_1.id},
                 "reference": {"id": "baz", "name": "Baz"},
@@ -867,7 +884,7 @@ async def test_find_analyses(
                 "workflow": "pathoscope_bowtie",
                 "created_at": static_time.datetime,
                 "ready": True,
-                "job": {"id": "test"},
+                "job": None,
                 "index": {"version": 2, "id": "foo"},
                 "reference": {"id": "foo", "name": "Foo"},
                 "sample": {"id": "test"},

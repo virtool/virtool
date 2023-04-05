@@ -16,20 +16,18 @@ from virtool.http.policy import route_policy_middleware
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.routes import setup_routes
 from virtool.shutdown import (
+    shutdown_authorization_client,
     shutdown_client,
     shutdown_dispatcher,
     shutdown_executors,
     shutdown_redis,
     shutdown_scheduler,
-    shutdown_authorization_client,
 )
 from virtool.startup import (
     startup_b2c,
     startup_check_db,
-    startup_task_runner,
-    startup_tasks,
-    startup_databases,
     startup_data,
+    startup_databases,
     startup_dispatcher,
     startup_events,
     startup_executors,
@@ -96,16 +94,12 @@ def create_app(config: Config):
             startup_routes,
             startup_executors,
             startup_data,
-            startup_task_runner,
-            startup_tasks,
             startup_settings,
             startup_sentry,
             startup_check_db,
+            startup_b2c,
         ]
     )
-
-    if config.use_b2c:
-        app.on_startup.append(startup_b2c)
 
     app.on_response_prepare.append(on_prepare_location)
 

@@ -1,15 +1,21 @@
+from __future__ import annotations
+
 import json
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 import aiohttp
 import pytest
 from aiohttp.web_routedef import RouteTableDef
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.session import Session
 
 import virtool.app
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes
-from virtool.config.cls import Config
+from virtool.authorization.client import AuthorizationClient
+from virtool.config.cls import ServerConfig
+from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import hash_key
@@ -63,49 +69,65 @@ class VirtoolTestClient:
 @pytest.fixture
 def create_app(
     create_user,
-    mongo,
-    pg_connection_string,
-    redis_connection_string,
-    test_db_connection_string,
-    test_db_name,
-    openfga_store_name,
+    mongo: "Mongo",
+    pg_connection_string: str,
+    redis_connection_string: str,
+        mongo_connection_string,
+        mongo_name,
+    openfga_store_name: str,
 ):
-    def _create_app(dev: bool = False, base_url: str = "", no_tasks: bool = True):
-        config = Config(
+    mongodb_connection_string = (
+        f"{mongo_connection_string}/{mongo_name}?authSource=admin"
+    )
+
+    def func(
+        base_url: str = "",
+        dev: bool = False,
+        use_b2c: bool = False,
+        config_overrides: Optional[dict[str, Any]] = None,
+    ):
+        config = ServerConfig(
             base_url=base_url,
-            db_connection_string=test_db_connection_string,
-            db_name=test_db_name,
+            b2c_client_id="",
+            b2c_client_secret="",
+            b2c_tenant="",
+            b2c_user_flow="",
+            data_path=Path("data"),
             dev=dev,
-            force_version="v0.0.0",
+            host="localhost",
+            mongodb_connection_string=mongodb_connection_string,
             no_check_db=True,
             no_check_files=True,
-            no_fetching=True,
             no_revision_check=True,
-            no_tasks=no_tasks,
-            no_sentry=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
             openfga_store_name=openfga_store_name,
+            port=9950,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
-            fake=False,
+            sentry_dsn="",
+            use_b2c=use_b2c,
         )
+
+        if config_overrides:
+            for key, value in config_overrides.items():
+                setattr(config, key, value)
 
         return virtool.app.create_app(config)
 
-    return _create_app
+    return func
 
 
 @pytest.fixture
 def spawn_client(
-    pg,
-    redis,
     aiohttp_client,
-    test_motor,
-    mongo,
+    authorization_client,
     create_app,
     create_user,
-    authorization_client,
+    mongo,
+    pg,
+    redis,
+    test_motor,
 ):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
@@ -114,34 +136,35 @@ def spawn_client(
         administrator=False,
         base_url="",
         dev=False,
-        enable_api=False,
         groups=None,
-        no_tasks=True,
         permissions=None,
         use_b2c=False,
+        config_overrides: Optional[dict[str, Any]] = None,
     ):
-        app = create_app(dev, base_url, no_tasks)
+        app = create_app(base_url, dev, use_b2c)
 
         if groups is not None:
-            complete_groups = [
-                {
-                    "_id": group,
-                    "name": group,
-                    "permissions": generate_base_permissions(),
-                }
-                for group in groups
-            ]
+            await mongo.groups.insert_many(
+                [
+                    {
+                        "_id": group,
+                        "name": group,
+                        "permissions": generate_base_permissions(),
+                    }
+                    for group in groups
+                ],
+                session=None,
+            )
 
-            await mongo.groups.insert_many(complete_groups, session=None)
-
-        user_document = await create_user(
-            user_id="test",
-            administrator=administrator,
-            groups=groups,
-            permissions=permissions,
-            authorization_client=authorization_client if administrator else None,
+        await mongo.users.insert_one(
+            await create_user(
+                user_id="test",
+                administrator=administrator,
+                groups=groups,
+                permissions=permissions,
+                authorization_client=authorization_client if administrator else None,
+            )
         )
-        await mongo.users.insert_one(user_document)
 
         if addon_route_table:
             app.add_routes(addon_route_table)
@@ -187,15 +210,15 @@ def spawn_client(
 
 @pytest.fixture
 def spawn_job_client(
-    mongo,
+    mongo: "Mongo",
     aiohttp_client,
-    test_db_connection_string,
-    redis_connection_string,
-    pg_connection_string,
-    pg,
-    test_db_name,
-    openfga_store_name,
-    authorization_client,
+        mongo_connection_string,
+    redis_connection_string: str,
+    pg_connection_string: str,
+    pg: AsyncEngine,
+        mongo_name,
+    openfga_store_name: str,
+    authorization_client: AuthorizationClient,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
@@ -220,18 +243,27 @@ def spawn_job_client(
             auth = None
 
         app = await virtool.jobs.main.create_app(
-            Config(
-                db_connection_string=test_db_connection_string,
-                db_name=test_db_name,
+            ServerConfig(
+                base_url="",
+                b2c_client_id="",
+                b2c_client_secret="",
+                b2c_tenant="",
+                b2c_user_flow="",
+                data_path=Path("data"),
                 dev=dev,
-                fake=False,
-                postgres_connection_string=pg_connection_string,
-                redis_connection_string=redis_connection_string,
+                host="localhost",
+                mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
+                no_check_db=True,
+                no_check_files=True,
                 no_revision_check=True,
-                no_sentry=True,
                 openfga_host="localhost:8080",
                 openfga_scheme="http",
                 openfga_store_name=openfga_store_name,
+                port=9950,
+                postgres_connection_string=pg_connection_string,
+                redis_connection_string=redis_connection_string,
+                sentry_dsn="",
+                use_b2c=False,
             )
         )
 

@@ -2,7 +2,7 @@
 Work with the current user account and its API keys.
 
 """
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from virtool_core.models.account import APIKey
 
@@ -90,7 +90,9 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
             },
         ]
     ):
-        return APIKey(**key)
+        return APIKey(
+            **{**key, "groups": sorted(key["groups"], key=lambda g: g["name"])}
+        )
 
     return None
 

@@ -1,33 +1,28 @@
 import asyncio
-from typing import Tuple
 
 import aiojobs.aiohttp
-from aiohttp.web import Application, AppRunner
+from aiohttp.web import Application
 
 import virtool.http.accept
 import virtool.http.errors
 import virtool.jobs.auth
-from virtool.config.cls import Config
-from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
+from virtool.config.cls import ServerConfig
 from virtool.jobs.routes import startup_routes
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
-from virtool.shutdown import drop_fake_postgres
 from virtool.startup import (
+    startup_data,
     startup_databases,
     startup_events,
     startup_executors,
-    startup_fake,
-    startup_fake_config,
-    startup_settings,
-    startup_data,
-    startup_sentry,
-    startup_version,
     startup_http_client,
+    startup_sentry,
+    startup_settings,
+    startup_version,
 )
 from virtool.types import App
 
 
-async def create_app(config: Config):
+async def create_app(config: ServerConfig):
     """Create the :class:`aiohttp.web.Application` for the jobs API process."""
     app = Application(
         client_max_size=1024**2 * 50,
@@ -47,10 +42,8 @@ async def create_app(config: Config):
         [
             startup_version,
             startup_http_client,
-            startup_fake_config,
             startup_databases,
             startup_executors,
-            startup_fake,
             startup_data,
             startup_events,
             startup_routes,
@@ -62,9 +55,6 @@ async def create_app(config: Config):
     app.on_shutdown.extend(
         [
             shutdown,
-            drop_fake_mongo,
-            drop_fake_postgres,
-            remove_fake_data_path,
         ]
     )
 
@@ -79,24 +69,14 @@ async def shutdown(app: App):
         pass
 
 
-async def start_aiohttp_server(config: Config) -> Tuple[Application, AppRunner]:
-    """
-    Create the :class:`aiohttp.web.Application` and start the aiohttp server
-    for the jobs API process.
-    """
-    app = await create_app(config)
-    runner = await create_app_runner(app, config.host, config.port)
-
-    return app, runner
-
-
-async def run(config: Config):
+async def run(config: ServerConfig):
     """
     Run the jobs API server.
 
     :param config: Any other configuration options as keyword arguments
     """
-    app, runner = await start_aiohttp_server(config)
+    app = await create_app(config)
+    runner = await create_app_runner(app, config.host, config.port)
 
     _, pending = await asyncio.wait(
         [

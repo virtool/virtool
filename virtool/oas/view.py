@@ -2,9 +2,8 @@ import copy
 import typing
 from inspect import getdoc
 from itertools import count
-from typing import List, Type, Optional, get_type_hints
+from typing import Optional, Type, get_type_hints
 
-from aiohttp.web import Response, json_response
 from aiohttp.web_app import Application
 from aiohttp_pydantic.injectors import _parse_func_signature
 from aiohttp_pydantic.oas import docstring_parser
@@ -170,7 +169,7 @@ def _add_http_method_to_oas(
 
 
 def generate_oas(
-    apps: List[Application],
+    app: Application,
     version_spec: Optional[str] = None,
     title_spec: Optional[str] = None,
 ) -> dict:
@@ -185,51 +184,18 @@ def generate_oas(
     if title_spec is not None:
         oas.info.title = title_spec
 
-    for app in apps:
-        for resources in app.router.resources():
-            for resource_route in resources:
-                if not is_pydantic_view(resource_route.handler):
-                    continue
+    for resources in app.router.resources():
+        for resource_route in resources:
+            if not is_pydantic_view(resource_route.handler):
+                continue
 
-                view: Type[PydanticView] = resource_route.handler
-                info = resource_route.get_info()
-                path = oas.paths[info.get("path", info.get("formatter"))]
-                if resource_route.method == "*":
-                    for method_name in view.allowed_methods:
-                        _add_http_method_to_oas(oas, path, method_name, view)
-                else:
-                    _add_http_method_to_oas(oas, path, resource_route.method, view)
+            view: Type[PydanticView] = resource_route.handler
+            info = resource_route.get_info()
+            path = oas.paths[info.get("path", info.get("formatter"))]
+            if resource_route.method == "*":
+                for method_name in view.allowed_methods:
+                    _add_http_method_to_oas(oas, path, method_name, view)
+            else:
+                _add_http_method_to_oas(oas, path, resource_route.method, view)
 
     return oas.spec
-
-
-async def get_oas(request):
-    """
-    View to generate the Open Api Specification from PydanticView in application.
-    """
-    apps = request.app["apps to expose"]
-    version_spec = request.app["version_spec"]
-    title_spec = request.app["title_spec"]
-    return json_response(generate_oas(apps, version_spec, title_spec))
-
-
-async def oas_ui(request):
-    """
-    View to serve the swagger-ui to read open api specification of application.
-    """
-    template = request.app["index template"]
-
-    static_url = request.app.router["static"].url_for(filename="")
-    spec_url = request.app.router["spec"].url_for()
-    host = request.url.origin()
-
-    return Response(
-        text=template.render(
-            {
-                "openapi_spec_url": host.with_path(str(spec_url)),
-                "static_url": host.with_path(str(static_url)),
-            }
-        ),
-        content_type="text/html",
-        charset="utf-8",
-    )
