@@ -19,6 +19,7 @@ from virtool_core.models.label import Label
 from virtool_core.models.task import Task
 from virtool_core.models.user import User
 
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.layer import DataLayer
 from virtool.groups.oas import UpdatePermissionsRequest, UpdateGroupRequest
 from virtool.indexes.tasks import EnsureIndexFilesTask
@@ -29,7 +30,6 @@ from virtool.references.tasks import (
 )
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
-from virtool.users.oas import UpdateUserRequest
 
 
 class VirtoolProvider(BaseProvider):

@@ -1,24 +1,24 @@
 import random
 
 from pymongo.errors import DuplicateKeyError
-from virtool_core.models.user import User
 from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.user import User
 
 import virtool.users.utils
 import virtool.utils
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.errors import DatabaseError
 from virtool.users.db import (
     B2CUserAttributes,
-    update_sessions_and_keys,
+    update_keys,
     compose_groups_update,
     compose_primary_group_update,
     fetch_complete_user,
 )
 from virtool.users.mongo import create_user
-from virtool.users.oas import UpdateUserRequest
 from virtool.utils import base_processor
 
 
@@ -207,7 +207,7 @@ class UsersData:
                 {"_id": user_id}, {"$set": update}
             )
 
-            await update_sessions_and_keys(
+            await update_keys(
                 self._mongo,
                 user_id,
                 document["administrator"],

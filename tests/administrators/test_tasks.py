@@ -48,6 +48,6 @@ async def test_promote_administrators(
     assert row.complete is True
 
     assert (
-        await data_layer.administrators.find()
+        await data_layer.administrators.find_users({"page": 1, "per_page": 25})
         == snapshot
     )

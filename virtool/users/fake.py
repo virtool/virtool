@@ -2,8 +2,8 @@ from logging import getLogger
 
 from virtool_core.models.user import User
 
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.users.data import UsersData
-from virtool.users.oas import UpdateUserRequest
 
 logger = getLogger(__name__)
 

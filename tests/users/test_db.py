@@ -8,7 +8,7 @@ from virtool.users.db import (
     AttachUserTransform,
     compose_groups_update,
     compose_primary_group_update,
-    update_sessions_and_keys,
+    update_keys,
     validate_credentials,
 )
 from virtool.users.utils import Permission
@@ -128,7 +128,7 @@ async def test_validate_credentials(legacy, user_id, password, result, mongo):
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("elevate", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_update_sessions_and_keys(
+async def test_update_keys(
     administrator, elevate, missing, snapshot, mongo, all_permissions, no_permissions
 ):
     """
@@ -157,21 +157,11 @@ async def test_update_sessions_and_keys(
         }
     )
 
-    await mongo.sessions.insert_one(
-        {
-            "_id": "foobar",
-            "administrator": False,
-            "groups": ["peasants"],
-            "permissions": permissions,
-            "user": {"id": "bob"},
-        }
-    )
-
     target_permissions = all_permissions if elevate else no_permissions
 
-    await update_sessions_and_keys(
+
+    await update_keys(
         mongo, "bob", administrator, ["peasants", "kings"], target_permissions
     )
 
-    assert await mongo.sessions.find_one() == snapshot
     assert await mongo.keys.find_one() == snapshot

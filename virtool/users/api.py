@@ -4,11 +4,12 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
-from virtool_core.models.user import User
 from virtool_core.models.roles import AdministratorRole, SpaceRoleType
+from virtool_core.models.user import User
 
 import virtool.http.authentication
 import virtool.users.db
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.relationships import UserRoleAssignment
@@ -24,7 +25,6 @@ from virtool.http.routes import Routes
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.oas import (
-    UpdateUserRequest,
     CreateUserRequest,
     CreateFirstUserRequest,
     PermissionsResponse,

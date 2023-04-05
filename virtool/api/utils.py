@@ -149,10 +149,12 @@ async def paginate(
 
 async def paginate_aggregate(
     collection,
-    db_query: Union[Dict, MultiDictProxy[str]],
+    client_query: Union[Dict, MultiDictProxy[str]],
     url_query: Union[Dict, MultiDictProxy[str]],
-    sort: Optional[Union[List[Tuple[str, int]], str]] = None,
     base_query: Optional[Dict] = None,
+    transforms: Optional[List[Dict]] = None,
+    projection: Optional[Projection] = None,
+    sort: Optional[Union[List[Tuple[str, int]], str]] = None,
     reverse: bool = False,
 ):
     """
@@ -181,10 +183,12 @@ async def paginate_aggregate(
     'skip_count': number of documents to skip
 
     :param collection: the database collection
-    :param db_query: a query derived from user supplied - affects found count
+    :param client_query: a query derived from user supplied - affects found count
     :param url_query: the raw URL query; used to get the `page` and `page_count` values
-    :param sort: a field to sort by
     :param base_query: a query always applied to the search
+    :param transforms: a list of transforms to apply to the query
+    :param projection: the projection to apply to the returned documents
+    :param sort: a field to sort by
     :param reverse: reverse the sort order
 
     """
@@ -200,30 +204,63 @@ async def paginate_aggregate(
 
     base_query = base_query or {}
 
+    client_query = client_query or {}
+
+    transforms = transforms or []
+
+    projection = projection or True
+
     if isinstance(sort, str):
         sort = {sort: -1 if reverse else 1}
 
-    db_query = {"$and": [base_query, db_query]}
-
-    found_count = await collection.count_documents(db_query)
-
-    page_count = int(math.ceil(found_count / per_page))
-
-    total_count = await collection.count_documents(base_query)
-
     skip_count = 0
 
-    if found_count and page > 1:
+    if page > 1:
         skip_count = (page - 1) * per_page
 
+    async for paginate_dict in collection.aggregate(
+        [
+            {"$match": base_query},
+            {
+                "$facet": {
+                    "total_count": [
+                        {"$count": "total_count"},
+                    ],
+                    "found_count": [
+                        {"$match": client_query},
+                        {"$count": "found_count"},
+                    ],
+                    "data": [
+                        {
+                            "$match": client_query,
+                        },
+                        {"$sort": sort},
+                        {"$skip": skip_count},
+                        {"$limit": per_page},
+                        *transforms,
+                    ],
+                }
+            },
+            {
+                "$project": {
+                    "data": projection,
+                    "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
+                    "found_count": {"$arrayElemAt": ["$found_count.found_count", 0]},
+                }
+            },
+        ]
+    ):
+        data = paginate_dict["data"]
+        total_count = paginate_dict.get("total_count", 0)
+        found_count = paginate_dict.get("found_count", 0)
+
     return {
-        "sort": sort,
+        "documents": data,
         "total_count": total_count,
         "found_count": found_count,
-        "page_count": page_count,
+        "page_count": math.ceil(found_count / per_page),
         "per_page": per_page,
         "page": page,
-        "skip_count": skip_count,
     }
 
 

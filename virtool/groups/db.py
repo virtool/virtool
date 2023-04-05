@@ -82,7 +82,7 @@ async def update_member_users(
             session=session,
         )
 
-        await virtool.users.db.update_sessions_and_keys(
+        await virtool.users.db.update_keys(
             db,
             user["administrator"],
             user["_id"],
@@ -96,4 +96,53 @@ async def fetch_group_users(db, group_id: str) -> List[UserNested]:
     return [
         UserNested(**base_processor(user))
         async for user in db.users.find({"groups": group_id})
+    ]
+
+
+def lookup_group_minimal_by_id(
+    local_field: str = "group", set_as: str = "group"
+) -> List[dict]:
+    """
+    Return a list of aggregation pipeline stages to lookup a group by its id and return only the ``_id`` and ``name``
+    fields.
+
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "groups",
+                "let": {"group_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$_id", "$$group_id"]}}},
+                    {"$project": {"_id": False, "id": "$_id", "name": True}},
+                ],
+                "as": set_as,
+            },
+        },
+        {"$set": {set_as: {"$first": f"${set_as}"}}},
+    ]
+
+
+def lookup_groups_minimal_by_id(
+    local_field: str = "groups",
+    set_as: str = "groups",
+) -> List[dict]:
+    """
+    Return a list of aggregation pipeline stages to lookup a group by its id and return only the ``_id`` and ``name``
+    fields.
+
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "groups",
+                "let": {"group_ids": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$in": ["$_id", "$$group_ids"]}}},
+                    {"$project": {"_id": False, "id": "$_id", "name": True}},
+                    {"$sort": {"name": 1}},
+                ],
+                "as": set_as,
+            },
+        },
     ]

@@ -1,45 +1,53 @@
 # name: test_promote_administrators[uvloop]
   <class 'dict'> {
-    'available_roles': <class 'list'> [
+    'documents': <class 'list'> [
       <class 'dict'> {
-        'description': 'Manage who is an administrator and what they can do.',
-        'id': <AdministratorRole.FULL: 'full'>,
-        'name': 'Full',
+        '_id': 'bf1b993c',
+        'active': True,
+        'administrator': False,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'leeashley',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'role': None,
       },
       <class 'dict'> {
-        'description': 'Manage instance settings and administrative messages.',
-        'id': <AdministratorRole.SETTINGS: 'settings'>,
-        'name': 'Settings',
-      },
-      <class 'dict'> {
-        'description': 'Manage users in any space. Delete any space.',
-        'id': <AdministratorRole.SPACES: 'spaces'>,
-        'name': 'Spaces',
-      },
-      <class 'dict'> {
-        'description': 'Create user accounts. Control activation of user accounts.',
-        'id': <AdministratorRole.USERS: 'users'>,
-        'name': 'Users',
-      },
-      <class 'dict'> {
-        'description': '
-          Provides ability to:
-          - Create new spaces even if the `Free Spaces` setting is not enabled.
-          - Manage HMMs and common references.
-          - View all running jobs.
-          - Cancel any job.
-        ',
-        'id': <AdministratorRole.BASE: 'base'>,
-        'name': 'Base',
-      },
-    ],
-    'items': <class 'list'> [
-      <class 'dict'> {
+        '_id': 'fb085f7f',
+        'active': True,
         'administrator': True,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
         'handle': 'zclark',
-        'id': 'fb085f7f',
-        'role': <AdministratorRole.FULL: 'full'>,
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'role': 'full',
       },
     ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
   }
 ---

@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import Permission
@@ -29,7 +31,7 @@ async def test_create_api_key(
         "virtool.utils.generate_key", return_value=("bar", "baz")
     )
 
-    group1, group2 = await fake2.groups.create(), await fake2.groups.create()
+    group1, group2 = await asyncio.gather(fake2.groups.create(), fake2.groups.create())
 
     groups = [group1.id, group2.id]
 
@@ -81,6 +83,8 @@ async def test_create_api_key(
     # Check that expected functions were called.
     m_get_alternate_id.assert_called_with(mongo, "Foo")
     m_generate_key.assert_called()
+
+    expected["groups"].sort(key=lambda x: x["name"])
 
     assert document == expected
 

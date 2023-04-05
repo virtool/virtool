@@ -19,12 +19,12 @@ from virtool.account.oas import (
     CreateLoginRequest,
     UpdateAccountRequest,
 )
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
-from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import limit_permissions
 
 PROJECTION = (
