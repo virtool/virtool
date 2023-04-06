@@ -163,21 +163,19 @@ class SubtractionsData(DataLayerPiece):
         )
 
     async def create(
-            self,
-            data: CreateSubtractionRequest,
-            user_id: str,
-            space_id: int,
-            subtraction_id: Optional[str] = None,
+        self,
+        data: CreateSubtractionRequest,
+        user_id: str,
+        space_id: int,
+        subtraction_id: Optional[str] = None,
     ) -> Subtraction:
         """
         Create a new subtraction.
-
         :param data: a subtraction creation request
         :param user_id: the id of the creating user
         :param space_id: the id of the subtraction's parent space
         :param subtraction_id: the id of the subtraction
         :return: the subtraction
-
         """
 
         upload = await get_row_by_id(self._pg, Upload, data.upload_id)
@@ -187,17 +185,16 @@ class SubtractionsData(DataLayerPiece):
 
         job_id = await get_new_id(self._mongo.jobs)
 
-        default_subtraction_id = await virtool.mongo.utils.get_new_id(self._mongo.subtraction)
-
         document = await self._mongo.subtraction.insert_one(
             {
-                "_id": subtraction_id or default_subtraction_id,
+                "_id": subtraction_id
+                or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
                 "file": {
                     "id": upload.id,
-                    "name": upload.name
+                    "name": upload.name,
                 },
                 "gc": None,
                 "job": {
@@ -208,14 +205,16 @@ class SubtractionsData(DataLayerPiece):
                 "ready": False,
                 "space": {"id": space_id},
                 "upload": data.upload_id,
-                "user": {"id": user_id}
+                "user": {"id": user_id},
             }
         )
+
+        subtraction = await self.get(document["_id"])
 
         await self.data.jobs.create(
             "create_subtraction",
             {
-                "subtraction_id": document["_id"],
+                "subtraction_id": subtraction.id,
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
@@ -224,9 +223,8 @@ class SubtractionsData(DataLayerPiece):
             job_id
         )
 
-        subtraction = await self.get(document["_id"])
-
         return subtraction
+    
 
     async def get(self, subtraction_id: str) -> Subtraction:
         document = await self._mongo.subtraction.aggregate(
