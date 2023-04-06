@@ -10,6 +10,7 @@
     ],
     'gc': None,
     'id': 'abc123',
+    'job': None,
     'linked_samples': <class 'list'> [
     ],
     'name': 'Calamus',

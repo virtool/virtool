@@ -19,6 +19,7 @@
     'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -115,6 +116,7 @@
     'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -211,6 +213,7 @@
     'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
