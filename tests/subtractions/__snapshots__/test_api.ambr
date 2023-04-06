@@ -10,20 +10,6 @@
     ],
     'gc': None,
     'id': 'abc123',
-    'job': <class 'dict'> {
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
-      'user': <class 'dict'> {
-        'administrator': False,
-        'handle': 'bob',
-        'id': 'test',
-      },
-      'workflow': 'create_subtraction',
-    },
     'linked_samples': <class 'list'> [
     ],
     'name': 'Calamus',
