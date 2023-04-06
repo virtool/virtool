@@ -1,7 +1,6 @@
 # name: test_get_space[uvloop]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
-    'created_by': 'test',
     'description': '',
     'id': 0,
     'members': <class 'list'> [
@@ -216,7 +215,6 @@
 # name: test_update_space[uvloop]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
-    'created_by': 'test',
     'description': 'New description',
     'id': 0,
     'members': <class 'list'> [

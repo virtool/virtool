@@ -13,6 +13,8 @@ from virtool_core.models.roles import (
     SpaceSubtractionRole,
     SpaceUploadRole,
 )
+from virtool_core.models.spaces import SpaceMinimal, Space, MemberSearchResult
+from virtool_core.utils import document_enum
 
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import id_exists
@@ -33,17 +35,27 @@ from virtool.spaces.models import SQLSpace
 from virtool.spaces.utils import (
     remove_user_roles,
     format_user,
-    AVAILABLE_ROLES,
-    Space,
-    SpaceMember,
     format_users,
-    SpaceMinimal,
-    MemberSearchResult,
 )
 
 import virtool.utils
 
 logger = getLogger(__name__)
+
+
+AVAILABLE_ROLES = [
+    {"id": role, "name": role.capitalize(), "description": role.__doc__}
+    for enum in [
+        SpaceRole,
+        SpaceLabelRole,
+        SpaceProjectRole,
+        SpaceReferenceRole,
+        SpaceSampleRole,
+        SpaceSubtractionRole,
+        SpaceUploadRole,
+    ]
+    for role in document_enum(enum)
+]
 
 
 class SpacesData:
@@ -156,7 +168,9 @@ class SpacesData:
 
         return MemberSearchResult(
             **{
-                "items": await format_users(self._authorization_client, self._db, space_id),
+                "items": await format_users(
+                    self._authorization_client, self._db, space_id
+                ),
                 "available_roles": AVAILABLE_ROLES,
             }
         )

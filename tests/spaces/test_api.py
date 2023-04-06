@@ -29,7 +29,6 @@ async def test_list_spaces(spawn_client, fake2, snapshot, pg, static_time):
                     description="",
                     created_at=static_time.datetime,
                     updated_at=static_time.datetime,
-                    created_by="test",
                 ),
                 SQLSpace(
                     id=1,
@@ -37,7 +36,6 @@ async def test_list_spaces(spawn_client, fake2, snapshot, pg, static_time):
                     description="",
                     created_at=static_time.datetime,
                     updated_at=static_time.datetime,
-                    created_by="foo",
                 ),
             ]
         )
@@ -73,7 +71,6 @@ async def test_get_space(spawn_client, fake2, snapshot, pg, static_time):
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-                created_by="test",
             )
         )
 
@@ -105,7 +102,6 @@ async def test_update_space(spawn_client, fake2, snapshot, static_time, pg):
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-                created_by="test",
             )
         )
 
@@ -138,7 +134,6 @@ async def test_list_space_members(spawn_client, fake2, snapshot, static_time, pg
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-                created_by="test",
             )
         )
 
@@ -174,7 +169,6 @@ async def test_update_member_roles(spawn_client, fake2, snapshot, static_time, p
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-                created_by="test",
             )
         )
 
@@ -211,7 +205,6 @@ async def test_remove_space_member(spawn_client, fake2, snapshot, static_time, p
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-                created_by="test",
             )
         )
 
