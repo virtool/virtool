@@ -25,6 +25,7 @@ logger = getLogger(__name__)
 routes = Routes()
 
 
+@routes.view("/spaces/{space_id}/uploads")
 @routes.view("/uploads")
 class UploadsView(PydanticView):
     async def get(
@@ -111,6 +112,7 @@ class UploadsView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/uploads/{upload_id}")
 @routes.view("/uploads/{upload_id}")
 class UploadView(PydanticView):
     async def get(self, upload_id: int, /) -> Union[r200[FileResponse], r404]:
