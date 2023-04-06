@@ -46,14 +46,36 @@ async def test_find(fake2, spawn_client, snapshot, static_time):
 
 
 @pytest.mark.apitest
-async def test_get(fake, spawn_client):
-    subtraction = await fake.subtractions.insert()
+async def test_get(fake2, spawn_client, static_time, snapshot):
+    user = await fake2.users.create()
+
+    job = await fake2.jobs.create(user)
 
     client = await spawn_client(authorize=True)
+
+    subtraction = {
+        "_id": "apple",
+        "count": 11,
+        "created_at": static_time.datetime,
+        "file": {
+            "id": 642,
+            "name": "Apis_mellifera.1.fa.gz",
+        },
+        "gc": {"a": 0.21, "t": 0.26, "g": 0.19, "c": 0.29, "n": 0.2},
+        "name": "Malus domestica",
+        "nickname": "Apple",
+        "ready": True,
+        "user": {"id": user.id},
+        "job": {"id": job.id}
+    }
+
+    await client.db.subtraction.insert_one(subtraction)
 
     resp = await client.get(f"/subtractions/{subtraction['_id']}")
 
     assert resp.status == 200
+
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest

@@ -1001,18 +1001,18 @@ text-unidecode = "1.3"
 
 [[package]]
 name = "filelock"
-version = "3.10.7"
+version = "3.11.0"
 description = "A platform independent file lock."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "filelock-3.10.7-py3-none-any.whl", hash = "sha256:bde48477b15fde2c7e5a0713cbe72721cb5a5ad32ee0b8f419907960b9d75536"},
-    {file = "filelock-3.10.7.tar.gz", hash = "sha256:892be14aa8efc01673b5ed6589dbccb95f9a8596f0507e232626155495c18105"},
+    {file = "filelock-3.11.0-py3-none-any.whl", hash = "sha256:f08a52314748335c6460fc8fe40cd5638b85001225db78c2aa01c8c0db83b318"},
+    {file = "filelock-3.11.0.tar.gz", hash = "sha256:3618c0da67adcc0506b015fd11ef7faf1b493f0b40d87728e19986b536890c37"},
 ]
 
 [package.extras]
-docs = ["furo (>=2022.12.7)", "sphinx (>=6.1.3)", "sphinx-autodoc-typehints (>=1.22,!=1.23.4)"]
+docs = ["furo (>=2023.3.27)", "sphinx (>=6.1.3)", "sphinx-autodoc-typehints (>=1.22,!=1.23.4)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.2.2)", "diff-cover (>=7.5)", "pytest (>=7.2.2)", "pytest-cov (>=4)", "pytest-mock (>=3.10)", "pytest-timeout (>=2.1)"]
 
 [[package]]
@@ -2712,14 +2712,14 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "mypy (>=0.800)", "psutil", "pyOp
 
 [[package]]
 name = "virtool-core"
-version = "4.11.0"
+version = "4.9.0"
 description = "Core utilities for Virtool."
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "virtool_core-4.11.0-py3-none-any.whl", hash = "sha256:d4d3fd3d502447a036e62b64d671ed9eb14d8959c9f9411c21de2d43dca4e4b4"},
-    {file = "virtool_core-4.11.0.tar.gz", hash = "sha256:b0ab77a6a5395a181545b6c36ce7f19e73344ab9c57feb8d9117e91768e0ae8f"},
+    {file = "virtool_core-4.9.0-py3-none-any.whl", hash = "sha256:45c6022ab9f6562f3491de2affe3118ef4b0bfcef2f67da7ea9bc568a3d265db"},
+    {file = "virtool_core-4.9.0.tar.gz", hash = "sha256:60be97a560a13ec0aaf819191b8003a861b8de11b538039b582c65ee015d87aa"},
 ]
 
 [package.dependencies]
@@ -2864,4 +2864,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "09012ea069f5ca255a7585d3d433723e245e971dcef169918d57e13be23fd11a"
+content-hash = "af3a652b9618bd4358d0411d939a3ba16cd0e52feae80dcb19fd07f1f5efe5b9"

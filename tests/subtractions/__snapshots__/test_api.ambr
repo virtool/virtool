@@ -1404,6 +1404,50 @@
     'total_count': 5,
   }
 ---
+# name: test_get[uvloop]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+    ],
+    'name': 'Malus domestica',
+    'nickname': 'Apple',
+    'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
 # name: test_get_from_job[uvloop]
   <class 'dict'> {
     'count': None,
