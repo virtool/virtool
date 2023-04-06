@@ -224,7 +224,6 @@ class SubtractionsData(DataLayerPiece):
         )
 
         return subtraction
-    
 
     async def get(self, subtraction_id: str) -> Subtraction:
         document = await self._mongo.subtraction.aggregate(
