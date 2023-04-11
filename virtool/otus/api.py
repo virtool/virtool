@@ -11,8 +11,6 @@ import virtool.references.db
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.downloads.db import generate_isolate_fasta, generate_sequence_fasta
-from virtool.errors import DatabaseError
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.routes import Routes
 from virtool.mongo.transforms import apply_transforms
@@ -221,8 +219,10 @@ class IsolateView(PydanticView):
 
         if self.request.path.endswith(".fa"):
             try:
-                filename, fasta = await generate_isolate_fasta(db, otu_id, isolate_id)
-            except DatabaseError as err:
+                filename, fasta = await get_data_from_req(
+                    self.request
+                ).otus.get_isolate_fasta(otu_id, isolate_id)
+            except ResourceNotFoundError as err:
                 if "does not exist" in str(err):
                     raise NotFound
 
@@ -427,10 +427,10 @@ class SequenceView(PydanticView):
             sequence_id = sequence_id.rstrip(".fa")
 
             try:
-                filename, fasta = await generate_sequence_fasta(
-                    self.request.app["db"], sequence_id
-                )
-            except DatabaseError as err:
+                filename, fasta = await get_data_from_req(
+                    self.request
+                ).otus.get_sequence_fasta(sequence_id)
+            except ResourceNotFoundError as err:
                 if "does not exist" in str(err):
                     raise NotFound
 

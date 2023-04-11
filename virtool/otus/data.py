@@ -96,6 +96,92 @@ class OTUData:
 
         return format_fasta_filename(otu["name"]), "\n".join(fasta)
 
+    async def get_otu_and_isolate_names(
+        self, otu_id: str, isolate_id: str
+    ) -> Tuple[str, str]:
+        """
+        Get the OTU name and isolate name for a OTU-isolate combination specified by `otu_id` and `isolate_id`.
+
+        :param otu_id: the OTU ID
+        :param isolate_id: the isolate ID
+        :return: an OTU name and isolate name
+
+        """
+        otu = await self._mongo.otus.find_one(
+            {"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"]
+        )
+
+        if not otu:
+            raise ResourceNotFoundError("OTU does not exist")
+
+        isolate = virtool.otus.utils.find_isolate(otu["isolates"], isolate_id)
+
+        if not isolate:
+            raise ResourceNotFoundError("Isolate does not exist")
+
+        return otu["name"], virtool.otus.utils.format_isolate_name(isolate)
+
+    async def get_isolate_fasta(self, otu_id: str, isolate_id: str) -> Tuple[str, str]:
+        """
+        Generate a FASTA filename and body for the sequences associated with the isolate identified by the passed
+        ``otu_id`` and ``isolate_id``.
+
+        :param otu_id: the id of the isolates' parent otu
+        :param isolate_id: the id of the isolate to FASTA
+        :return: as FASTA filename and body
+
+        """
+        _, isolate_name = await self.get_otu_and_isolate_names(otu_id, isolate_id)
+
+        otu = await self._mongo.otus.find_one(
+            {"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"]
+        )
+
+        fasta = []
+
+        async for sequence in self._mongo.sequences.find(
+            {"otu_id": otu_id, "isolate_id": isolate_id}, ["sequence"]
+        ):
+            fasta.append(
+                virtool.downloads.utils.format_fasta_entry(
+                    otu["name"], isolate_name, sequence["_id"], sequence["sequence"]
+                )
+            )
+
+        return virtool.downloads.utils.format_fasta_filename(
+            otu["name"], isolate_name
+        ), "\n".join(fasta)
+
+    async def get_sequence_fasta(self, sequence_id: str) -> Tuple[str, str]:
+        """
+        Generate a FASTA filename and body for the sequence associated with the passed ``sequence_id``.
+
+        :param sequence_id: the id sequence of the sequence to FASTAfy
+        :return: as FASTA filename and body
+
+        """
+        sequence = await self._mongo.sequences.find_one(
+            sequence_id, ["sequence", "otu_id", "isolate_id"]
+        )
+
+        if not sequence:
+            raise ResourceNotFoundError("Sequence does not exist")
+
+        otu_name, isolate_name = await self.get_otu_and_isolate_names(
+            sequence["otu_id"], sequence["isolate_id"]
+        )
+
+        fasta = virtool.downloads.utils.format_fasta_entry(
+            otu_name, isolate_name, sequence_id, sequence["sequence"]
+        )
+
+        return (
+            virtool.downloads.utils.format_fasta_filename(
+                otu_name, isolate_name, sequence["_id"]
+            ),
+            fasta,
+        )
+
     async def create(
         self,
         ref_id: str,
