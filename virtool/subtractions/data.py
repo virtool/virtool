@@ -83,9 +83,8 @@ class SubtractionsData(DataLayerPiece):
                 ).sort("name")
             ]
 
-        page = query.get("page", 1)
-
-        per_page = query.get("per_page", 25)
+        page = int(query.get("page", 1))
+        per_page = int(query.get("per_page", 25))
 
         data = await self._mongo.subtraction.aggregate(
             [
@@ -104,11 +103,11 @@ class SubtractionsData(DataLayerPiece):
                             {"$count": "ready_count"}
                         ],
                         "found_count": [
-                            {"$match": query},
+                            {"$match": db_query},
                             {"$count": "found_count"},
                         ],
                         "documents": [
-                            {"$match": query},
+                            {"$match": db_query},
                             {"$sort": {"name": 1}},
                             {"$skip": per_page * (page - 1)},
                             {"$limit": per_page},

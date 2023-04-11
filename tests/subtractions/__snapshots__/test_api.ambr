@@ -1237,7 +1237,155 @@
     },
   }
 ---
-# name: test_find[uvloop]
+# name: test_find[uvloop-2-1]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.0.fa.gz',
+        },
+        'id': 'id_0',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 0',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.1.fa.gz',
+        },
+        'id': 'id_1',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 1',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+    ],
+    'found_count': 5,
+    'page': 1,
+    'page_count': 3,
+    'per_page': 2,
+    'ready_count': 5,
+    'total_count': 5,
+  }
+---
+# name: test_find[uvloop-2-2]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.2.fa.gz',
+        },
+        'id': 'id_2',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 2',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.3.fa.gz',
+        },
+        'id': 'id_3',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 3',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+    ],
+    'found_count': 5,
+    'page': 2,
+    'page_count': 3,
+    'per_page': 2,
+    'ready_count': 5,
+    'total_count': 5,
+  }
+---
+# name: test_find[uvloop-None-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
