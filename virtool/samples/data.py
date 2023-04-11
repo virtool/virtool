@@ -381,7 +381,6 @@ class SamplesData(DataLayerPiece):
     ) -> Sample:
         """
         Create a sample.
-
         """
         settings = await self.data.settings.get_all()
 
