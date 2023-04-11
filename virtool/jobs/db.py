@@ -89,31 +89,37 @@ def lookup_minimal_job_by_id(
                 "let": {"job_id": f"${local_field}"},
                 "pipeline": [
                     {"$match": {"$expr": {"$eq": ["$_id", "$$job_id"]}}},
-                    {"$set": {
-                        "first_status": {"$first": "$status"},
-                        "last_status": {"$last": "$status"},
-                    }},
-                    {"$set": {
-                        "created_at": "$first_status.timestamp",
-                        "progress": "$last_status.progress",
-                        "state": "$last_status.state",
-                        "stage": "$last_status.stage",
-                    }},
+                    {
+                        "$set": {
+                            "first_status": {"$first": "$status"},
+                            "last_status": {"$last": "$status"},
+                        }
+                    },
+                    {
+                        "$set": {
+                            "created_at": "$first_status.timestamp",
+                            "progress": "$last_status.progress",
+                            "state": "$last_status.state",
+                            "stage": "$last_status.stage",
+                        }
+                    },
                     *lookup_nested_user_by_id(local_field="user.id"),
-                    {"$project": {
-                        "id": "$_id",
-                        "_id": False,
-                        "archived": True,
-                        "user": True,
-                        "workflow": True,
-                        "created_at": True,
-                        "progress": True,
-                        "stage": True,
-                        "state": True,
-                    }},
+                    {
+                        "$project": {
+                            "id": "$_id",
+                            "_id": False,
+                            "archived": True,
+                            "user": True,
+                            "workflow": True,
+                            "created_at": True,
+                            "progress": True,
+                            "stage": True,
+                            "state": True,
+                        }
+                    },
                 ],
                 "as": set_as,
             }
         },
-        {"$set": {set_as: {"$first": f"${set_as}"}}},
+        {"$set": {set_as: {"$ifNull": [{"$first": f"${set_as}"}, None]}}},
     ]
