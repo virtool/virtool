@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from virtool_core.models.roles import AdministratorRole
 
@@ -163,7 +161,7 @@ class TestUpdateUser:
         target_administrator,
         status,
     ):
-        client, group_1, _, user = await setup_admin_update_user(False)
+        client, _, _, user = await setup_admin_update_user(False)
 
         authorization_client = client.app["authorization"]
 

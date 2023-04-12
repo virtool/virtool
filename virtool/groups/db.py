@@ -103,8 +103,8 @@ def lookup_group_minimal_by_id(
     local_field: str = "group", set_as: str = "group"
 ) -> List[dict]:
     """
-    Return a list of aggregation pipeline stages to lookup a group by its id and return only the ``_id`` and ``name``
-    fields.
+    Return a list of aggregation pipeline stages to lookup a group by its id and return
+    only the ``_id`` and ``name`` fields.
 
     """
     return [
@@ -128,8 +128,8 @@ def lookup_groups_minimal_by_id(
     set_as: str = "groups",
 ) -> List[dict]:
     """
-    Return a list of aggregation pipeline stages to lookup a group by its id and return only the ``_id`` and ``name``
-    fields.
+    Return a list of aggregation pipeline stages to lookup a group by its id and return
+    only the ``_id`` and ``name`` fields.
 
     """
     return [

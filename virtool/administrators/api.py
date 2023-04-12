@@ -30,7 +30,7 @@ AVAILABLE_ROLES = [
 
 
 @routes.view("/admin/roles")
-class AdministratorsView(PydanticView):
+class RolesView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def get(self) -> r200[ListRolesResponse]:
         """
@@ -43,7 +43,7 @@ class AdministratorsView(PydanticView):
 
 
 @routes.view("/admin/users")
-class AdministratorsView(PydanticView):
+class AdminUsersView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
         self, administrator: Optional[bool] = None, term: Optional[str] = None
@@ -65,7 +65,7 @@ class AdministratorsView(PydanticView):
 
 
 @routes.view("/admin/users/{user_id}")
-class AdministratorView(PydanticView):
+class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(self, user_id: str, /) -> Union[r200[UserResponse], r404]:
         """
@@ -120,7 +120,7 @@ async def can_edit_user(authorization_client, req_user_id, user_id):
         authorization_client.get_administrator(req_user_id),
     )
 
-    if admin_tuple[1] == None:
+    if admin_tuple[1] is None:
         return True
 
     if req_admin_tuple[1] == AdministratorRole.FULL:
@@ -130,7 +130,7 @@ async def can_edit_user(authorization_client, req_user_id, user_id):
 
 
 @routes.view("/admin/users/{user_id}/role")
-class AdministratorsView(PydanticView):
+class AdminRoleView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
     async def post(
         self, user_id: str, /, data: UpdateAdministratorRoleRequest

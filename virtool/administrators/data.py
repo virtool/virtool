@@ -71,10 +71,7 @@ class AdministratorsData(DataLayerPiece):
         :param term: a search term to filter by user handle
         """
 
-        admin_dict = {
-            user_id: role
-            for user_id, role in await self._authorization_client.list_administrators()
-        }
+        admin_dict = dict(await self._authorization_client.list_administrators())
 
         administrator_query = {}
         if administrator is not None:
@@ -202,7 +199,9 @@ class AdministratorsData(DataLayerPiece):
         """
         Update a user's administrator role.
 
-        Set the user's legacy administrator flag to true if given the full role and false otherwise.
+        Set the user's legacy administrator flag to true if given the full role and
+        false otherwise.
+
 
         :param data: fields to add a user as an administrator
         :param user_id: the user's id to add as an administrator
