@@ -91,7 +91,7 @@ jobs:
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Run
         run: >-
-          poetry run
+          poetry -vvv run
           pytest
           -x
           -m apitest
@@ -163,7 +163,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run
         run: >-
-          poetry run
+          poetry -vvv run
           pytest
           -x
           -m "not apitest"
@@ -197,11 +197,11 @@ jobs:
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install Packages
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
       - name: Write OAS
         run: |
           mkdir -p virtool/spec
-          poetry run python run.py oas > virtool/spec/openapi.json
+          poetry run virtool oas > virtool/spec/openapi.json
       - name: Upload OAS
         uses: actions/upload-artifact@v3
         with:
