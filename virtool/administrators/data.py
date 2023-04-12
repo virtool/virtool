@@ -64,7 +64,7 @@ class AdministratorsData(DataLayerPiece):
         term: Optional[str] = None,
     ) -> UserSearchResult:
         """
-        Find users.
+        Find users. Optionally filter by administrator status and/or search term.
 
         :param url_query: the query parameters from the URL
         :param administrator: whether to filter by administrator status
@@ -117,7 +117,7 @@ class AdministratorsData(DataLayerPiece):
         :return: the user
         """
 
-        user, (user_id, role) = await asyncio.gather(
+        user, (_, role) = await asyncio.gather(
             fetch_complete_user(self._mongo, user_id),
             self._authorization_client.get_administrator(user_id),
         )
@@ -133,7 +133,7 @@ class AdministratorsData(DataLayerPiece):
         """
         Update a user.
 
-        Sessions and API keys are updated as well.
+        API keys are updated as well.
 
         :param user_id: the ID of the user to update
         :param data: the update data object
@@ -202,7 +202,7 @@ class AdministratorsData(DataLayerPiece):
         """
         Update a user's administrator role.
 
-        Set the user's administrator flag to true if given the full role and false otherwise.
+        Set the user's legacy administrator flag to true if given the full role and false otherwise.
 
         :param data: fields to add a user as an administrator
         :param user_id: the user's id to add as an administrator
@@ -248,6 +248,9 @@ class AdministratorsData(DataLayerPiece):
         return
 
     async def promote_administrators(self):
+        """
+        Promote all users with the legacy administrator flag to administrators.
+        """
 
         for user_id in await self._mongo.users.distinct("_id", {"administrator": True}):
             await self._authorization_client.add(

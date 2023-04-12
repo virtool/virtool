@@ -131,39 +131,7 @@ class ListAdministratorResponse(BaseModel):
         }
 
 
-class GetUserResponse(BaseModel):
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": "TxWalSSn",
-                "administrator": False,
-                "handle": "user_handle",
-                "active": True,
-                "b2c": None,
-                "b2c_display_name": None,
-                "b2c_family_name": None,
-                "b2c_given_name": None,
-                "b2c_oid": None,
-                "force_reset": False,
-                "groups": [],
-                "last_password_change": "2023-03-20T22:46:26.151000Z",
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": False,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False,
-                },
-                "primary_group": None,
-                "administrator_role": "base",
-            }
-        }
-
-
-class UpdateUserResponse(BaseModel):
+class UserResponse(BaseModel):
     class Config:
         schema_extra = {
             "example": {

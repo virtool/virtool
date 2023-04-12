@@ -10,10 +10,9 @@ from virtool_core.utils import document_enum
 from virtool.administrators.oas import (
     UpdateAdministratorRoleRequest,
     ListAdministratorResponse,
-    GetUserResponse,
     ListRolesResponse,
-    UpdateUserResponse,
     UpdateUserRequest,
+    UserResponse,
 )
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.utils import get_authorization_client_from_req
@@ -21,7 +20,6 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
-
 
 routes = Routes()
 
@@ -51,7 +49,7 @@ class AdministratorsView(PydanticView):
         self, administrator: Optional[bool] = None, term: Optional[str] = None
     ) -> r200[ListAdministratorResponse]:
         """
-        List all administrators.
+        Get a paginated list of users
 
         Status Codes:
             200: Successful operation
@@ -69,9 +67,9 @@ class AdministratorsView(PydanticView):
 @routes.view("/admin/users/{user_id}")
 class AdministratorView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def get(self, user_id: str, /) -> Union[r200[GetUserResponse], r404]:
+    async def get(self, user_id: str, /) -> Union[r200[UserResponse], r404]:
         """
-        Get the complete representation of an administrator
+        Get the complete representation of a user
 
         Status Codes:
             200: Successful operation
@@ -90,9 +88,9 @@ class AdministratorView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
         self, user_id: str, /, data: UpdateUserRequest
-    ) -> Union[r200[UpdateUserResponse], r404]:
+    ) -> Union[r200[UserResponse], r404]:
         """
-        Get the complete representation of an administrator
+        Update a user
 
         Status Codes:
             200: Successful operation
@@ -136,9 +134,9 @@ class AdministratorsView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
     async def post(
         self, user_id: str, /, data: UpdateAdministratorRoleRequest
-    ) -> Union[r201[UpdateUserResponse], r404]:
+    ) -> Union[r201[UserResponse], r404]:
         """
-        Add a user as an administrator.
+        Change a users administrator role
 
         Status Codes:
             201: Successful operation
