@@ -27,7 +27,6 @@ from virtool.users.db import (
     update_keys,
     compose_groups_update,
 )
-from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import DB
@@ -100,7 +99,7 @@ class AdministratorsData(DataLayerPiece):
         )
 
         result["items"] = [
-            User(**user, administrator_role=admin_dict.get(user["_id"], None))
+            User(**user, administrator_role=admin_dict.get(user["_id"]))
             for user in result["items"]
         ]
 
