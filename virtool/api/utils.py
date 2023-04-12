@@ -255,7 +255,7 @@ async def paginate_aggregate(
         found_count = paginate_dict.get("found_count", 0)
 
     return {
-        "documents": data,
+        "items": data,
         "total_count": total_count,
         "found_count": found_count,
         "page_count": math.ceil(found_count / per_page),

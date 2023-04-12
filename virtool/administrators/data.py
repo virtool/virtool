@@ -102,9 +102,9 @@ class AdministratorsData(DataLayerPiece):
             projection={field: True for field in PROJECTION},
         )
 
-        result["documents"] = [
+        result["items"] = [
             User(**user, administrator_role=admin_dict.get(user["_id"], None))
-            for user in result["documents"]
+            for user in result["items"]
         ]
 
         return UserSearchResult(**result)

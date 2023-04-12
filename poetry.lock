@@ -2710,14 +2710,14 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "mypy (>=0.800)", "psutil", "pyOp
 
 [[package]]
 name = "virtool-core"
-version = "4.10.0"
+version = "4.11.0"
 description = "Core utilities for Virtool."
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "virtool_core-4.10.0-py3-none-any.whl", hash = "sha256:beba3c86757733ec8e8115d48d54babbd73b64507f3a8f3e43fe4e4eaf79a189"},
-    {file = "virtool_core-4.10.0.tar.gz", hash = "sha256:dc33ca70a8b9d52b24433ed66071f09cb1af72d55d6aa05579df29a3ce5fc08b"},
+    {file = "virtool_core-4.11.0-py3-none-any.whl", hash = "sha256:d4d3fd3d502447a036e62b64d671ed9eb14d8959c9f9411c21de2d43dca4e4b4"},
+    {file = "virtool_core-4.11.0.tar.gz", hash = "sha256:b0ab77a6a5395a181545b6c36ce7f19e73344ab9c57feb8d9117e91768e0ae8f"},
 ]
 
 [package.dependencies]
@@ -2862,4 +2862,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "b56399a251716d64dd86745e938817c7841d9908bfe666d754a33bad14ccaa9e"
+content-hash = "1e82d8a6d679b6cb6feb43c6deab302c8810497b63c96b71344af2ec4bf75f56"

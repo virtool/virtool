@@ -195,7 +195,8 @@
 ---
 # name: test_find_users[uvloop-False-None]
   <class 'dict'> {
-    'documents': <class 'list'> [
+    'found_count': 1,
+    'items': <class 'list'> [
       <class 'dict'> {
         'active': True,
         'administrator': False,
@@ -224,7 +225,6 @@
         'primary_group': None,
       },
     ],
-    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -233,9 +233,9 @@
 ---
 # name: test_find_users[uvloop-False-missing-handle]
   <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
     'found_count': 0,
+    'items': <class 'list'> [
+    ],
     'page': 1,
     'page_count': 0,
     'per_page': 25,
@@ -244,9 +244,9 @@
 ---
 # name: test_find_users[uvloop-False-test_user]
   <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
     'found_count': 0,
+    'items': <class 'list'> [
+    ],
     'page': 1,
     'page_count': 0,
     'per_page': 25,
@@ -255,7 +255,8 @@
 ---
 # name: test_find_users[uvloop-None-None]
   <class 'dict'> {
-    'documents': <class 'list'> [
+    'found_count': 3,
+    'items': <class 'list'> [
       <class 'dict'> {
         'active': True,
         'administrator': False,
@@ -349,7 +350,6 @@
         },
       },
     ],
-    'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -358,9 +358,9 @@
 ---
 # name: test_find_users[uvloop-None-missing-handle]
   <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
     'found_count': 0,
+    'items': <class 'list'> [
+    ],
     'page': 1,
     'page_count': 0,
     'per_page': 25,
@@ -369,7 +369,8 @@
 ---
 # name: test_find_users[uvloop-None-test_user]
   <class 'dict'> {
-    'documents': <class 'list'> [
+    'found_count': 1,
+    'items': <class 'list'> [
       <class 'dict'> {
         'active': True,
         'administrator': False,
@@ -409,7 +410,6 @@
         },
       },
     ],
-    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -418,7 +418,8 @@
 ---
 # name: test_find_users[uvloop-True-None]
   <class 'dict'> {
-    'documents': <class 'list'> [
+    'found_count': 2,
+    'items': <class 'list'> [
       <class 'dict'> {
         'active': True,
         'administrator': False,
@@ -485,7 +486,6 @@
         },
       },
     ],
-    'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -494,9 +494,9 @@
 ---
 # name: test_find_users[uvloop-True-missing-handle]
   <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
     'found_count': 0,
+    'items': <class 'list'> [
+    ],
     'page': 1,
     'page_count': 0,
     'per_page': 25,
@@ -505,7 +505,8 @@
 ---
 # name: test_find_users[uvloop-True-test_user]
   <class 'dict'> {
-    'documents': <class 'list'> [
+    'found_count': 1,
+    'items': <class 'list'> [
       <class 'dict'> {
         'active': True,
         'administrator': False,
@@ -545,7 +546,6 @@
         },
       },
     ],
-    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,

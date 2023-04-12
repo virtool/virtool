@@ -1,14 +1,21 @@
 # name: test_promote_administrators[uvloop]
   <class 'dict'> {
-    'documents': <class 'list'> [
+    'found_count': 2,
+    'items': <class 'list'> [
       <class 'dict'> {
-        '_id': 'bf1b993c',
         'active': True,
         'administrator': False,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
         'force_reset': False,
         'groups': <class 'list'> [
         ],
         'handle': 'leeashley',
+        'id': 'bf1b993c',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
         'permissions': <class 'dict'> {
           'cancel_job': False,
@@ -20,16 +27,22 @@
           'remove_job': False,
           'upload_file': False,
         },
-        'role': None,
+        'primary_group': None,
       },
       <class 'dict'> {
-        '_id': 'fb085f7f',
         'active': True,
         'administrator': True,
+        'administrator_role': <AdministratorRole.FULL: 'full'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
         'force_reset': False,
         'groups': <class 'list'> [
         ],
         'handle': 'zclark',
+        'id': 'fb085f7f',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
         'permissions': <class 'dict'> {
           'cancel_job': False,
@@ -41,10 +54,9 @@
           'remove_job': False,
           'upload_file': False,
         },
-        'role': 'full',
+        'primary_group': None,
       },
     ],
-    'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
