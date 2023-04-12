@@ -11,10 +11,10 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 from msal import ClientApplication
-from virtool_core.redis import connect, periodically_ping_redis
+from virtool_core.redis import connect as connect_redis, periodically_ping_redis
 
-import virtool.mongo.connect
-import virtool.pg.utils
+from virtool.mongo.connect import connect as connect_mongo
+from virtool.pg.utils import connect as connect_pg_utils
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 from virtool.config import get_config_from_app
@@ -191,13 +191,13 @@ async def startup_databases(app: App):
     config = get_config_from_app(app)
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
-        virtool.mongo.connect.connect(
+        connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_database,
             config.no_revision_check,
         ),
-        virtool.pg.utils.connect(config.postgres_connection_string),
-        connect(config.redis_connection_string),
+        connect_pg_utils(config.postgres_connection_string),
+        connect_redis(config.redis_connection_string),
         connect_openfga(
             config.openfga_host, config.openfga_scheme, config.openfga_store_name
         ),
