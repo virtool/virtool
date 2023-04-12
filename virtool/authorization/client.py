@@ -81,7 +81,7 @@ class AuthorizationClient:
         )
 
         return sorted(
-            [relation_tuple.key.relation for relation_tuple in response.tuples]
+            [relation.key.relation for relation in response.tuples]
         )
 
     async def get_administrator(self, user_id: str) -> Tuple[str, AdministratorRole]:
@@ -91,9 +91,9 @@ class AuthorizationClient:
             )
         )
 
-        relation_tuple = response.tuples[0]
+        relation = response.tuples[0]
 
-        return relation_tuple.key.user.split(":")[1], relation_tuple.key.relation
+        return relation.key.user.split(":")[1], relation.key.relation
 
     async def list_administrators(self) -> List[Tuple[str, AdministratorRole]]:
         """
@@ -110,8 +110,8 @@ class AuthorizationClient:
 
         return sorted(
             [
-                (relation_tuple.key.user.split(":")[1], relation_tuple.key.relation)
-                for relation_tuple in response.tuples
+                (relation.key.user.split(":")[1], relation.key.relation)
+                for relation in response.tuples
             ]
         )
 
@@ -131,8 +131,8 @@ class AuthorizationClient:
         )
 
         test = [
-            int(relation_tuple.key.object.split(":")[1])
-            for relation_tuple in response.tuples
+            int(relation.key.object.split(":")[1])
+            for relation in response.tuples
         ]
 
         response = await self.openfga.read(
@@ -144,8 +144,8 @@ class AuthorizationClient:
         )
 
         test2 = [
-            int(relation_tuple.key.object.split(":")[1])
-            for relation_tuple in response.tuples
+            int(relation.key.object.split(":")[1])
+            for relation in response.tuples
         ]
 
         return sorted([*test, *test2])
@@ -158,7 +158,7 @@ class AuthorizationClient:
         )
 
         return sorted(
-            [relation_tuple.key.relation for relation_tuple in response.tuples]
+            [relation.key.relation for relation in response.tuples]
         )
 
     async def list_reference_users(
@@ -182,8 +182,8 @@ class AuthorizationClient:
 
         return sorted(
             [
-                (relation_tuple.key.user.split(":")[1], relation_tuple.key.relation)
-                for relation_tuple in response.tuples
+                (relation.key.user.split(":")[1], relation.key.relation)
+                for relation in response.tuples
             ]
         )
 
@@ -200,25 +200,25 @@ class AuthorizationClient:
             )
         )
 
-        relation_dict = {}
+        relations = {}
 
-        for relation_tuple in response.tuples:
+        for relation in response.tuples:
 
-            user_id = relation_tuple.key.user.split(":")[1]
+            user_id = relation.key.user.split(":")[1]
 
-            if user_id not in relation_dict:
-                relation_dict[user_id] = [relation_tuple.key.relation]
+            if user_id not in relations:
+                relations[user_id] = [relation.key.relation]
 
             else:
-                relation_dict[user_id].append(relation_tuple.key.relation)
+                relations[user_id].append(relation.key.relation)
 
-        relation_list = [(user_id, roles) for user_id, roles in relation_dict.items()]
+        relations = [(user_id, roles) for user_id, roles in relations.items()]
 
         return sorted(
             [
-                relation_tuple
-                for relation_tuple in relation_list
-                if "member" in relation_tuple[1] or "owner" in relation_tuple[1]
+                relation
+                for relation in relations
+                if "member" in relation[1] or "owner" in relation[1]
             ]
         )
 

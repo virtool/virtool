@@ -138,7 +138,8 @@ class SpaceMemberView(PydanticView):
         """
         Remove a member.
 
-        Removes a member from the space. They will no longer have access to any data in the space.
+        Removes a member from the space.
+        They will no longer have access to any data in the space.
 
         Status Codes:
             204: Successful operation
