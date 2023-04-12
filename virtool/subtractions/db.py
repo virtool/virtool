@@ -175,6 +175,7 @@ def lookup_nested_subtractions(
                 "let": {"subtraction_ids": f"${local_field}"},
                 "pipeline": [
                     {"$match": {"$expr": {"$in": ["$_id", "$$subtraction_ids"]}}},
+                    {"$sort": {"_id": 1}},
                     {"$project": {"id": "$_id", "_id": False, "name": True}},
                 ],
                 "as": set_as,

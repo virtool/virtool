@@ -22,6 +22,7 @@ from virtool.account.oas import (
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
+from virtool.groups.db import lookup_minimal_groups
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
@@ -140,14 +141,7 @@ class AccountData(DataLayerPiece):
             async for key in self._db.keys.aggregate(
                 [
                     {"$match": {"user.id": user_id}},
-                    {
-                        "$lookup": {
-                            "from": "groups",
-                            "localField": "groups",
-                            "foreignField": "_id",
-                            "as": "groups",
-                        }
-                    },
+                    *lookup_minimal_groups(),
                     {
                         "$project": {
                             "_id": False,

@@ -57,6 +57,7 @@ RIGHTS_SCHEMA = {
 }
 
 
+@routes.view("/spaces/{space_id}/refs")
 @routes.view("/refs")
 class ReferencesView(PydanticView):
     async def get(self, find: Optional[str]) -> r200[FindReferencesResponse]:
@@ -117,6 +118,7 @@ class ReferencesView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}")
 @routes.view("/refs/{ref_id}")
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
@@ -224,6 +226,7 @@ class ReferenceReleaseView(PydanticView):
         return json_response(release)
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/updates")
 @routes.view("/refs/{ref_id}/updates")
 class ReferenceUpdatesView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[GetReferenceUpdateResponse]:
@@ -271,6 +274,7 @@ class ReferenceUpdatesView(PydanticView):
         return json_response(sub_document, status=201)
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/otus")
 @routes.view("/refs/{ref_id}/otus")
 class ReferenceOTUsView(PydanticView):
     async def get(
@@ -316,6 +320,7 @@ class ReferenceOTUsView(PydanticView):
         return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/history")
 @routes.view("/refs/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
     async def get(
@@ -340,6 +345,7 @@ class ReferenceHistoryView(PydanticView):
         return json_response(data)
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/indexes")
 @routes.view("/refs/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
     async def get(self, ref_id: str, /) -> Union[r200[ListIndexesResponse], r404]:
@@ -517,6 +523,7 @@ class ReferenceGroupView(PydanticView):
         raise HTTPNoContent
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/users")
 @routes.view("/refs/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
     async def post(
@@ -547,6 +554,7 @@ class ReferenceUsersView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/users/{user_id}")
 @routes.view("/refs/{ref_id}/users/{user_id}")
 class ReferenceUserView(PydanticView):
     async def patch(
