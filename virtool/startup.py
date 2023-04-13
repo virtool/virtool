@@ -11,10 +11,9 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 from msal import ClientApplication
-from virtool_core.redis import connect as connect_redis, periodically_ping_redis
-
-from virtool.mongo.connect import connect as connect_mongo
-from virtool.pg.utils import connect as connect_pg_utils
+from virtool_core.redis import connect_redis, periodically_ping_redis
+from virtool.mongo.connect import connect_mongo
+from virtool.pg.utils import connect_pg_utils
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 from virtool.config import get_config_from_app
