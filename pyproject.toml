@@ -59,6 +59,7 @@ orjson = "^3.8.0"
 openfga-sdk = "^0.1.1"
 python-jose = "^3.3.0"
 virtool-core = "^4.12.0"
+alembic = "^1.10.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
@@ -73,7 +74,7 @@ black = "^21.12b0"
 pytest-rerunfailures = "^10.2"
 
 [tool.poetry.scripts]
-virtool = "virtool.config:entry"
+virtool = "virtool.config.cli:entry"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"

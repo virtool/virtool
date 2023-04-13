@@ -8,7 +8,15 @@ import uvloop
 from virtool_core.logging import configure_logs
 
 from virtool.app import run_api_server
-from virtool.config.cls import ServerConfig, TaskRunnerConfig, TaskSpawnerConfig
+import virtool.jobs.main
+import virtool.tasks.main
+import virtool.tasks.spawner
+from virtool.config.cls import (
+    MigrationConfig,
+    ServerConfig,
+    TaskRunnerConfig,
+    TaskSpawnerConfig,
+)
 from virtool.config.options import (
     address_options,
     b2c_options,
@@ -26,6 +34,8 @@ from virtool.config.options import (
 )
 from virtool.jobs.main import run_jobs_server
 import virtool.tasks.main
+from virtool.migration.apply import apply_to
+from virtool.migration.create import create_revision
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 
@@ -114,6 +124,34 @@ def start_jobs_api(**kwargs):
 def oas():
     """Work with the Virtool OpenAPI specification."""
     show_oas()
+
+
+@cli.group("migration")
+def migration():
+    """Run and manage Virtool data migrations."""
+    ...
+
+
+@migration.command("apply")
+@data_path_option
+@mongodb_connection_string_option
+@openfga_options
+@postgres_connection_string_option
+@redis_connection_string_option
+def migration_apply(**kwargs):
+    """Apply all pending migrations."""
+    configure_logs(False)
+
+    logger.info("Applying migrations")
+
+    asyncio.run(apply_to(MigrationConfig(**kwargs)))
+
+
+@migration.command("create")
+@click.option("--name", help="Name of the migration", required=True, type=str)
+def migration_create(name: str):
+    """Create a new migration revision."""
+    create_revision(name)
 
 
 @cli.group("tasks")
