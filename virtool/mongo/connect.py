@@ -11,7 +11,7 @@ REQUIRED_MONGODB_REVISION = "l20h8fsbbb28"
 logger = getLogger("mongo")
 
 
-async def connect(
+async def connect_mongo(
     connection_string: str, db_name: str, skip_revision_check: bool
 ) -> AsyncIOMotorDatabase:
     """
