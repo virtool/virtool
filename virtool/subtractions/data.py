@@ -153,15 +153,14 @@ class SubtractionsData(DataLayerPiece):
             raise ResourceNotFoundError
 
         data = data[0]
-        
+
         return SubtractionSearchResult(
             **data,
             page=page,
             per_page=per_page,
             page_count=math.ceil(data["found_count"] / per_page)
         )
-
-        
+ 
     async def create(
         self,
         data: CreateSubtractionRequest,
