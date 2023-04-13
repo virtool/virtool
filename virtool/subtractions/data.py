@@ -160,7 +160,7 @@ class SubtractionsData(DataLayerPiece):
             per_page=per_page,
             page_count=math.ceil(data["found_count"] / per_page)
         )
- 
+
     async def create(
         self,
         data: CreateSubtractionRequest,
