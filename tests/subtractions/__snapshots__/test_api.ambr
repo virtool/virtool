@@ -1552,6 +1552,18 @@
     'total_count': 5,
   }
 ---
+# name: test_find_empty_subtractions[uvloop]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'ready_count': 0,
+    'total_count': 0,
+  }
+---
 # name: test_get[uvloop]
   <class 'dict'> {
     'count': 11,

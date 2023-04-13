@@ -136,10 +136,10 @@ class SubtractionsData(DataLayerPiece):
                     "$project": {
                         "documents": True,
                         "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0]
+                            "$ifNull": [{"$arrayElemAt": ["$total_count.total_count", 0]}, 0]
                         },
                         "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0]
+                            "$ifNull": [{"$arrayElemAt": ["$found_count.found_count", 0]}, 0]
                         },
                         "ready_count": {
                             "$ifNull": [{"$arrayElemAt": ["$ready_count.ready_count", 0]}, 0]
@@ -154,12 +154,19 @@ class SubtractionsData(DataLayerPiece):
 
         data = data[0]
 
-        return SubtractionSearchResult(
-            **data,
-            page=page,
-            per_page=per_page,
-            page_count=math.ceil(data["found_count"] / per_page)
-        )
+        try:
+
+            test = SubtractionSearchResult(
+                **data,
+                page=page,
+                per_page=per_page,
+                page_count=math.ceil(data["found_count"] / per_page)
+            )
+
+        except Exception as e:
+            pass
+
+        return test
 
     async def create(
         self,
