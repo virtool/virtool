@@ -11,7 +11,7 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 from msal import ClientApplication
-from virtool_core.redis import connect as connect_redis, periodically_ping_redis
+from virtool_core.redis import connect, periodically_ping_redis
 from virtool.mongo.connect import connect_mongo
 from virtool.pg.utils import connect_postgres
 from virtool.authorization.client import AuthorizationClient
@@ -196,7 +196,7 @@ async def startup_databases(app: App):
             config.no_revision_check,
         ),
         connect_postgres(config.postgres_connection_string),
-        connect_redis(config.redis_connection_string),
+        connect(config.redis_connection_string),
         connect_openfga(
             config.openfga_host, config.openfga_scheme, config.openfga_store_name
         ),
