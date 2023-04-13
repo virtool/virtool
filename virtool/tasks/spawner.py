@@ -3,7 +3,7 @@ import logging
 from typing import Type
 
 import aiojobs
-from virtool_core.redis import connect_redis
+from virtool_core.redis import connect as connect_redis
 
 from virtool.pg.utils import connect_postgres
 from virtool.config import Config, get_config_from_app
