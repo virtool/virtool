@@ -149,8 +149,9 @@ async def paginate(
 
 async def paginate_aggregate(
     collection,
+    page: int,
+    per_page: int,
     client_query: Union[Dict, MultiDictProxy[str]],
-    url_query: Union[Dict, MultiDictProxy[str]],
     base_query: Optional[Dict] = None,
     transforms: Optional[List[Dict]] = None,
     projection: Optional[Projection] = None,
@@ -182,9 +183,10 @@ async def paginate_aggregate(
     'sort': field to sort by
     'skip_count': number of documents to skip
 
-    :param collection: the database collection
+    :param collection: the database collection\
+    :param page: the page number to return (starts at one)
+    :param per_page: the number of items to return per page
     :param client_query: a query derived from user supplied - affects found count
-    :param url_query: the raw URL query; used to get the `page` and `page_count` values
     :param base_query: a query always applied to the search
     :param transforms: a list of transforms to apply to the query
     :param projection: the projection to apply to the returned documents
@@ -192,15 +194,6 @@ async def paginate_aggregate(
     :param reverse: reverse the sort order
 
     """
-    try:
-        page = int(url_query["page"])
-    except (KeyError, ValueError):
-        page = 1
-
-    try:
-        per_page = int(url_query["per_page"])
-    except (KeyError, ValueError):
-        per_page = 25
 
     base_query = base_query or {}
 

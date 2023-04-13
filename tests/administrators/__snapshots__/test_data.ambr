@@ -624,7 +624,7 @@
     },
   }
 ---
-# name: test_update_role[uvloop-None][obj]
+# name: test_set_admin_role[uvloop-None][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -653,7 +653,7 @@
     'primary_group': None,
   }
 ---
-# name: test_update_role[uvloop-base][obj]
+# name: test_set_admin_role[uvloop-base][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -682,7 +682,7 @@
     'primary_group': None,
   }
 ---
-# name: test_update_role[uvloop-full][obj]
+# name: test_set_admin_role[uvloop-full][obj]
   <class 'dict'> {
     'active': True,
     'administrator': True,

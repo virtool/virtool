@@ -34,7 +34,7 @@
     },
   }
 ---
-# name: TestUpdateUser.test_admin_roles[uvloop-full-base-200]
+# name: TestUpdateUser.test_set_admin_roles[uvloop-full-base-200]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -67,7 +67,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdateUser.test_admin_roles[uvloop-users-None-200]
+# name: TestUpdateUser.test_set_admin_roles[uvloop-users-None-200]
   <class 'dict'> {
     'active': True,
     'administrator': False,

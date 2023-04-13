@@ -2,6 +2,7 @@ import pytest
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.authorization.relationships import AdministratorRoleAssignment
+from virtool.authorization.utils import get_authorization_client_from_app
 from virtool.data.utils import get_data_from_app
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.mongo.utils import get_one_field
@@ -153,7 +154,7 @@ class TestUpdateUser:
             (AdministratorRole.FULL, AdministratorRole.BASE, 200),
         ],
     )
-    async def test_admin_roles(
+    async def test_set_admin_roles(
         self,
         setup_admin_update_user,
         snapshot,
@@ -163,7 +164,7 @@ class TestUpdateUser:
     ):
         client, _, _, user = await setup_admin_update_user(False)
 
-        authorization_client = client.app["authorization"]
+        authorization_client = get_authorization_client_from_app(client.app)
 
         if administrator is not None:
             await authorization_client.add(

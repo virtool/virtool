@@ -15,6 +15,7 @@ from virtool.administrators.oas import (
     UserResponse,
 )
 from virtool.api.response import NotFound, json_response
+from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import get_authorization_client_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
@@ -55,9 +56,22 @@ class AdminUsersView(PydanticView):
             200: Successful operation
         """
 
+        url_query = self.request.query
+
+        try:
+            page = int(url_query["page"])
+        except (KeyError, ValueError):
+            page = 1
+
+        try:
+            per_page = int(url_query["per_page"])
+        except (KeyError, ValueError):
+            per_page = 25
+
         return json_response(
             await get_data_from_req(self.request).administrators.find_users(
-                self.request.query,
+                page,
+                per_page,
                 administrator,
                 term,
             )
@@ -97,7 +111,7 @@ class AdminUserView(PydanticView):
             404: User not found
         """
 
-        if not await can_edit_user(
+        if not await check_can_edit_user(
             get_authorization_client_from_req(self.request),
             self.request["client"].user_id,
             user_id,
@@ -114,7 +128,20 @@ class AdminUserView(PydanticView):
         return json_response(user)
 
 
-async def can_edit_user(authorization_client, req_user_id, user_id):
+async def check_can_edit_user(
+    authorization_client: AuthorizationClient, req_user_id: str, user_id: str
+):
+    """
+    Check if an administrator user has sufficient permissions to update another user
+
+    Returns True if the user to be edited is not an administrator or if the requesting
+    user is a full administrator.
+
+    :param authorization_client: the authorization client
+    :param req_user_id: the requesting user id
+    :param user_id: the id of the user being updated
+
+    """
     admin_tuple, req_admin_tuple = await asyncio.gather(
         authorization_client.get_administrator(user_id),
         authorization_client.get_administrator(req_user_id),
@@ -149,7 +176,7 @@ class AdminRoleView(PydanticView):
         try:
             administrator = await get_data_from_req(
                 self.request
-            ).administrators.update_role(user_id, data)
+            ).administrators.set_administrator_role(user_id, data.role)
         except ResourceNotFoundError:
             raise NotFound()
 

@@ -58,14 +58,16 @@ class AdministratorsData(DataLayerPiece):
 
     async def find_users(
         self,
-        url_query: Union[Dict, MultiDictProxy[str]],
+        page: int,
+        per_page: int,
         administrator: Optional[bool] = None,
         term: Optional[str] = None,
     ) -> UserSearchResult:
         """
         Find users. Optionally filter by administrator status and/or search term.
 
-        :param url_query: the query parameters from the URL
+        :param page: the page number
+        :param per_page: the number of items per page
         :param administrator: whether to filter by administrator status
         :param term: a search term to filter by user handle
         """
@@ -86,8 +88,9 @@ class AdministratorsData(DataLayerPiece):
 
         result = await paginate_aggregate(
             self._mongo.users,
+            page,
+            per_page,
             client_query,
-            url_query,
             sort="handle",
             transforms=[
                 *lookup_groups_minimal_by_id(local_field="groups"),
@@ -107,10 +110,10 @@ class AdministratorsData(DataLayerPiece):
 
     async def get_user(self, user_id: str) -> User:
         """
-        Get a user.
+        Fetch a complete User including administrator role.
 
         :param user_id: the user ID
-        :return: the user
+        :return: The complete User
         """
 
         user, (_, role) = await asyncio.gather(
@@ -192,8 +195,8 @@ class AdministratorsData(DataLayerPiece):
 
         return await self.get_user(user_id)
 
-    async def update_role(
-        self, user_id: str, /, data: UpdateAdministratorRoleRequest
+    async def set_administrator_role(
+        self, user_id: str, role: AdministratorRole
     ) -> User:
         """
         Update a user's administrator role.
@@ -201,20 +204,19 @@ class AdministratorsData(DataLayerPiece):
         Set the user's legacy administrator flag to true if given the full role and
         false otherwise.
 
-
-        :param data: fields to add a user as an administrator
-        :param user_id: the user's id to add as an administrator
+        :param user_id: the id of the user to set the role of
+        :param role: the administrator role
         :return: the administrator
         """
 
         if await self._mongo.users.find_one(user_id):
-            await update_legacy_administrator(self._mongo, user_id, data.role)
+            await update_legacy_administrator(self._mongo, user_id, role)
 
-            if data.role is None:
-                await self._delete(user_id)
+            if role is None:
+                await self._clear_administrator_role(user_id)
             else:
                 await self._authorization_client.add(
-                    AdministratorRoleAssignment(user_id, AdministratorRole(data.role))
+                    AdministratorRoleAssignment(user_id, AdministratorRole(role))
                 )
 
             user = await self.get_user(user_id)
@@ -231,11 +233,11 @@ class AdministratorsData(DataLayerPiece):
 
         raise ResourceNotFoundError("User does not exist")
 
-    async def _delete(self, user_id: str) -> None:
+    async def _clear_administrator_role(self, user_id: str) -> None:
         """
         Remove an administrator.
 
-        :param user_id: the user ID
+        :param user_id: the user id of the administrator to remove
         """
         admin_tuple = await self._authorization_client.get_administrator(user_id)
         if admin_tuple[1] is not None:
