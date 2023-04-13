@@ -91,7 +91,7 @@ def write_openfga_tuple(authorization_client):
 
     async def func(user_type, user_id, relations, object_type, object_name):
         try:
-            await authorization_client.open_fga.write(
+            await authorization_client.openfga.write(
                 WriteRequest(
                     writes=TupleKeys(
                         tuple_keys=[
