@@ -5,7 +5,7 @@ from typing import Type
 import aiojobs
 from virtool_core.redis import connect_redis
 
-import virtool.pg.utils
+from virtool.pg.utils import connect_postgres
 from virtool.config import Config, get_config_from_app
 from virtool.config.cls import TaskSpawnerConfig
 from virtool.data.errors import ResourceError
@@ -30,7 +30,7 @@ async def startup_databases_for_spawner(app: App):
     config = get_config_from_app(app)
 
     pg, redis = await asyncio.gather(
-        virtool.pg.utils.connect(config.postgres_connection_string),
+        connect_postgres(config.postgres_connection_string),
         connect_redis(config.redis_connection_string),
     )
 
