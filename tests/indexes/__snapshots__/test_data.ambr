@@ -65,7 +65,7 @@
     'has_files': True,
     'id': 'foo',
     'job': <class 'dict'> {
-      'id': 'abc12345',
+      'id': 'fb085f7f',
     },
     'manifest': <class 'dict'> {
     },
@@ -92,7 +92,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'job': <class 'dict'> {
-      'id': 'abc12345',
+      'id': 'fb085f7f',
     },
     'manifest': <class 'dict'> {
     },

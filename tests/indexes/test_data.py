@@ -17,6 +17,8 @@ async def test_finalize(
 ):
     user = await fake2.users.create()
 
+    job = await fake2.jobs.create(user=user)
+
     await asyncio.gather(
         mongo.references.insert_one(
             {"_id": "bar", "name": "Bar", "data_type": "genome"}
@@ -28,7 +30,7 @@ async def test_finalize(
                 "user": {"id": user.id},
                 "version": 2,
                 "created_at": static_time.datetime,
-                "job": {"id": "abc12345"},
+                "job": {"id": job.id},
                 "has_files": True,
                 "manifest": {},
             }
