@@ -27,13 +27,14 @@ from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.samples.checks import (
     check_labels_do_not_exist,
-    check_name_is_in_use,
     check_subtractions_do_not_exist,
+    check_name_is_in_use,
 )
 from virtool.samples.db import (
+    compose_sample_workflow_query,
     LIST_PROJECTION,
     ArtifactsAndReadsTransform,
-    compose_sample_workflow_query,
+    validate_force_choice_group,
     define_initial_workflows,
     NameGenerator,
 )
@@ -307,7 +308,6 @@ class SamplesData(DataLayerPiece):
         """
         Create a sample.
         """
-
         settings = await self.data.settings.get_all()
 
         await wait_for_checks(
@@ -340,15 +340,12 @@ class SamplesData(DataLayerPiece):
         elif settings.sample_group == "users_primary_group":
             group = await get_one_field(self._db.users, "primary_group", user_id)
 
-        job_id = None
-
         async with self._db.create_session() as session:
-            sample_id = await get_new_id(self._db.samples, session=session)
-            job_id = await get_new_id(self._db.jobs)
             document, _ = await asyncio.gather(
                 self._db.samples.insert_one(
                     {
-                        "_id": _id or sample_id,
+                        "_id": _id
+                        or await get_new_id(self._db.samples, session=session),
                         "all_read": settings.sample_all_read,
                         "all_write": settings.sample_all_write,
                         "created_at": virtool.utils.timestamp(),
@@ -360,7 +357,6 @@ class SamplesData(DataLayerPiece):
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
-                        "job": {"id": job_id},
                         "labels": data.labels,
                         "library_type": data.library_type,
                         "locale": data.locale,
@@ -400,7 +396,6 @@ class SamplesData(DataLayerPiece):
             user_id,
             JobRights(),
             0,
-            job_id,
         )
 
         return await self.get(sample_id)
