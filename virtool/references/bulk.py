@@ -29,7 +29,7 @@ from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.types import Document
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB, Collection
+    from virtool.mongo.core import Mongo, Collection
 
 WORKER_COUNT = 25
 
@@ -194,7 +194,7 @@ async def generate_bulk_id_buffer(
 class OTUDBBulkUpdater:
     def __init__(
         self,
-        mongo: "DB",
+        mongo: "Mongo",
         user_id: str,
         progress_tracker: AccumulatingProgressHandlerWrapper,
         task_queue: Queue,
@@ -314,7 +314,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
         task_queue: Queue,
         update_db: OTUDBBulkUpdater,
         prepare_otu_update_buffer: BaseDataBuffer,
-        mongo: "DB",
+        mongo: "Mongo",
         ref_id: str,
         user_id: str,
         created_at: datetime,
@@ -345,7 +345,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
         cls,
         task_queue: Queue,
         bulk_db_updater: OTUDBBulkUpdater,
-        mongo: "DB",
+        mongo: "Mongo",
         ref_id: str,
     ):
         async def func(otu_data: List[OTUData], session):
@@ -362,7 +362,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
         cls,
         task_queue: Queue,
         bulk_db_updater: OTUDBBulkUpdater,
-        mongo: "DB",
+        mongo: "Mongo",
         user_id: str,
         data_path: Path,
     ):
@@ -403,7 +403,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
 class BulkOTUUpdater:
     def __init__(
         self,
-        mongo: "DB",
+        mongo: "Mongo",
         ref_id: str,
         user_id: str,
         created_at: datetime,

@@ -187,3 +187,21 @@ async def test_add_idempotent(fake2, spawn_auth_client):
     )
 
     assert await client.list_user_roles("ryanf", 0) == ["member", "subtraction_editor"]
+
+
+async def test_exclusive(spawn_auth_client):
+
+    client = await spawn_auth_client()
+
+    await client.add(
+        AdministratorRoleAssignment("test", AdministratorRole.BASE),
+        AdministratorRoleAssignment("test", AdministratorRole.USERS),
+        AdministratorRoleAssignment("test", AdministratorRole.FULL),
+        SpaceMembership("test", 0, SpaceRole.MEMBER),
+        SpaceMembership("test", 0, SpaceRole.OWNER),
+        SpaceMembership("test", 0, SpaceRole.MEMBER),
+    )
+
+    assert await client.list_administrators() == [("test", AdministratorRole.FULL)]
+
+    assert await client.list_user_roles("test", 0) == [SpaceRole.MEMBER]

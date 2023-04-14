@@ -64,7 +64,7 @@
       },
     },
     'first_user': False,
-    'version': 'v0.0.0',
+    'version': <class 'str'>,
   }
 ---
 # name: test_get[uvloop-False-True]
@@ -133,7 +133,7 @@
       },
     },
     'first_user': False,
-    'version': 'v0.0.0',
+    'version': <class 'str'>,
   }
 ---
 # name: test_get[uvloop-True-False]
@@ -202,7 +202,7 @@
       },
     },
     'first_user': True,
-    'version': 'v0.0.0',
+    'version': <class 'str'>,
   }
 ---
 # name: test_get[uvloop-True-True]
@@ -271,6 +271,6 @@
       },
     },
     'first_user': True,
-    'version': 'v0.0.0',
+    'version': <class 'str'>,
   }
 ---

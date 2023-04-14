@@ -3,6 +3,7 @@ from virtool.subtractions.oas import FinalizeSubtractionRequest
 
 async def test_finalize(mongo, data_layer, fake2, snapshot, static_time):
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user)
 
     await mongo.subtraction.insert_one(
         {
@@ -20,6 +21,7 @@ async def test_finalize(mongo, data_layer, fake2, snapshot, static_time):
             "deleted": False,
             "ready": False,
             "user": {"id": user.id},
+            "job": {"id": job.id}
         }
     )
 

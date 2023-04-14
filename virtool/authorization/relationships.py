@@ -2,7 +2,9 @@
 Classes that represent relationships between users and other resources.
 """
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, List
+
+from openfga_sdk import OpenFgaApi, ReadRequest, TupleKey, WriteRequest, TupleKeys
 
 from virtool.authorization.permissions import ResourceType
 from virtool_core.models.roles import (
@@ -56,6 +58,35 @@ class AbstractRelationship(ABC):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.user_type}:{self.user_id} {self.relation} {self.object_id}:{self.object_type}>"
+
+    async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
+
+        for request in add_list:
+            relation_tuple = request.writes.tuple_keys[0]
+
+            if (
+                relation_tuple.object == f"{self.object_type}:{self.object_id}"
+                and relation_tuple.user == f"{self.user_type}:{self.user_id}"
+            ):
+                add_list.remove(request)
+
+        response = await openfga.read(
+            ReadRequest(
+                tuple_key=TupleKey(
+                    user=f"{self.user_type}:{self.user_id}",
+                    object=f"{self.object_type}:{self.object_id}",
+                ),
+            )
+        )
+
+        if response.tuples:
+            await openfga.write(
+                WriteRequest(
+                    deletes=TupleKeys(
+                        [response_tuple.key for response_tuple in response.tuples]
+                    )
+                )
+            )
 
 
 class AdministratorRoleAssignment(AbstractRelationship):

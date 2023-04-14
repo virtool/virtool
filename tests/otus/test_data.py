@@ -363,3 +363,37 @@ async def test_update_sequence(
     assert await asyncio.gather(
         mongo.otus.find_one(), mongo.history.find_one(), mongo.sequences.find_one()
     ) == snapshot(name="db")
+
+
+async def test_get_sequence_fasta(mongo, data_layer, test_otu, test_sequence):
+    await mongo.otus.insert_one(test_otu)
+    await mongo.sequences.insert_one(test_sequence)
+
+    expected = (
+        "prunus_virus_f.isolate_8816-v2.abcd1234.fa",
+        ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC",
+    )
+
+    assert await data_layer.otus.get_sequence_fasta(test_sequence["_id"]) == expected
+
+
+async def test_get_isolate_fasta(mongo, data_layer, test_otu, test_sequence):
+    await mongo.otus.insert_one(test_otu)
+
+    await mongo.sequences.insert_many(
+        [test_sequence, dict(test_sequence, _id="AX12345", sequence="ATAGAGGAGTTA")],
+        session=None,
+    )
+
+    expected = (
+        "prunus_virus_f.isolate_8816-v2.fa",
+        ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
+        ">Prunus virus F|Isolate 8816-v2|AX12345|12\nATAGAGGAGTTA",
+    )
+
+    assert (
+        await data_layer.otus.get_isolate_fasta(
+            test_otu["_id"], test_otu["isolates"][0]["id"]
+        )
+        == expected
+    )

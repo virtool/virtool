@@ -16,10 +16,10 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.utils import base_processor, to_bool
+from virtool.utils import to_bool
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
 
@@ -69,8 +69,7 @@ async def check_name_and_abbreviation(
 
 
 async def find(
-    mongo: "DB",
-    names: Optional[Union[bool, str]],
+    mongo: "Mongo",
     term: Optional[str],
     req_query: Mapping,
     verified: Optional[bool],
@@ -88,12 +87,6 @@ async def find(
 
     if ref_id is not None:
         base_query = {"reference.id": ref_id}
-
-    if names is True or names == "true":
-        cursor = mongo.otus.find(
-            {**db_query, **base_query}, ["name"], sort=[("name", 1)]
-        )
-        return [base_processor(d) async for d in cursor]
 
     data = await paginate(
         mongo.otus,
@@ -150,7 +143,7 @@ async def join(
 
 
 async def bulk_join_query(
-    mongo: "DB",
+    mongo: "Mongo",
     query: dict,
     session: Optional[AsyncIOMotorClientSession] = None,
 ) -> List[Dict[str, Any]]:

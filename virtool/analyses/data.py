@@ -41,36 +41,28 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.piece import DataLayerPiece
-from virtool.mongo.core import DB
+from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
+from virtool.references.db import lookup_nested_reference_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
+from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
 from virtool.uploads.utils import naive_writer
+from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import wait_for_checks, base_processor
 
 logger = getLogger("analyses")
 
-EXCLUDED_FIELDS = {
-    "user.settings": False,
-    "user.password": False,
-    "user.active": False,
-    "user.invalidate_session": False,
-    "job.key": False,
-    "job.user.settings": False,
-    "job.user.password": False,
-    "job.user.active": False,
-    "job.user.invalidate_session": False,
-}
-
 
 class AnalysisData(DataLayerPiece):
-    def __init__(self, db: DB, config, pg: AsyncEngine):
+    def __init__(self, db: Mongo, config, pg: AsyncEngine):
         self._db = db
         self._config = config
         self._pg = pg
@@ -102,85 +94,10 @@ class AnalysisData(DataLayerPiece):
                             {"$count": "found_count"},
                         ],
                         "data": [
-                            {
-                                "$lookup": {
-                                    "from": "jobs",
-                                    "localField": "job.id",
-                                    "foreignField": "_id",
-                                    "as": "job",
-                                }
-                            },
-                            {
-                                "$unwind": {
-                                    "path": "$job",
-                                    "preserveNullAndEmptyArrays": True,
-                                }
-                            },
-                            {
-                                "$lookup": {
-                                    "from": "subtraction",
-                                    "localField": "subtractions",
-                                    "foreignField": "_id",
-                                    "as": "subtractions",
-                                }
-                            },
-                            {
-                                "$lookup": {
-                                    "from": "references",
-                                    "localField": "reference.id",
-                                    "foreignField": "_id",
-                                    "as": "reference",
-                                }
-                            },
-                            {"$unwind": {"path": "$reference"}},
-                            {
-                                "$lookup": {
-                                    "from": "users",
-                                    "localField": "user.id",
-                                    "foreignField": "_id",
-                                    "as": "user",
-                                }
-                            },
-                            {"$unwind": {"path": "$user"}},
-                            {
-                                "$lookup": {
-                                    "from": "users",
-                                    "localField": "job.user.id",
-                                    "foreignField": "_id",
-                                    "as": "job.user",
-                                }
-                            },
-                            {
-                                "$unwind": {
-                                    "path": "$job.user",
-                                    "preserveNullAndEmptyArrays": True,
-                                }
-                            },
-                            {
-                                "$unwind": {
-                                    "path": "$job.user",
-                                    "preserveNullAndEmptyArrays": True,
-                                }
-                            },
-                            {
-                                "$set": {
-                                    "last_status": {"$last": "$job.status"},
-                                    "first_status": {"$first": "$job.status"},
-                                }
-                            },
-                            {
-                                "$set": {
-                                    "job.created_at": "$first_status.timestamp",
-                                    "job.progress": "$last_status.progress",
-                                    "job.state": "$last_status.state",
-                                    "job.stage": "$last_status.stage",
-                                }
-                            },
-                            {
-                                "$set": {
-                                    "job.id": "$job._id",
-                                }
-                            },
+                            *lookup_minimal_job_by_id(),
+                            *lookup_nested_subtractions(),
+                            *lookup_nested_reference_by_id(),
+                            *lookup_nested_user_by_id(),
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
@@ -194,30 +111,13 @@ class AnalysisData(DataLayerPiece):
                             "workflow": True,
                             "created_at": True,
                             "index": True,
-                            "job._id": True,
-                            "job.acquired": True,
-                            "job.workflow": True,
-                            "job.args": True,
-                            "job.rights": True,
-                            "job.state": True,
-                            "job.status": True,
-                            "job.user._id": True,
-                            "job.user.handle": True,
-                            "job.user.administrator": True,
-                            "job.ping": True,
-                            "job.created_at": True,
-                            "job.progress": True,
-                            "job.stage": True,
-                            "job.id": True,
-                            "job.archived": True,
+                            "job": True,
                             "ready": True,
                             "reference": True,
                             "sample": True,
                             "subtractions": True,
                             "updated_at": True,
-                            "user._id": True,
-                            "user.handle": True,
-                            "user.administrator": True,
+                            "user": True,
                         },
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0]
@@ -232,10 +132,6 @@ class AnalysisData(DataLayerPiece):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
-
-        for document in data:
-            if not document["job"]:
-                document["job"] = None
 
         per_document_can_read = await gather(
             *[
@@ -274,70 +170,10 @@ class AnalysisData(DataLayerPiece):
         result = await self._db.analyses.aggregate(
             [
                 {"$match": {"_id": analysis_id}},
-                {
-                    "$lookup": {
-                        "from": "jobs",
-                        "localField": "job.id",
-                        "foreignField": "_id",
-                        "as": "job",
-                    }
-                },
-                {"$unwind": {"path": "$job", "preserveNullAndEmptyArrays": True}},
-                {
-                    "$lookup": {
-                        "from": "subtraction",
-                        "localField": "subtractions",
-                        "foreignField": "_id",
-                        "as": "subtractions",
-                    }
-                },
-                {
-                    "$lookup": {
-                        "from": "references",
-                        "localField": "reference.id",
-                        "foreignField": "_id",
-                        "as": "reference",
-                    }
-                },
-                {"$unwind": {"path": "$reference"}},
-                {
-                    "$lookup": {
-                        "from": "users",
-                        "localField": "user.id",
-                        "foreignField": "_id",
-                        "as": "user",
-                    }
-                },
-                {"$unwind": {"path": "$user"}},
-                {
-                    "$lookup": {
-                        "from": "users",
-                        "localField": "job.user.id",
-                        "foreignField": "_id",
-                        "as": "job.user",
-                    }
-                },
-                {"$unwind": {"path": "$job.user", "preserveNullAndEmptyArrays": True}},
-                {
-                    "$set": {
-                        "last_status": {"$last": "$job.status"},
-                        "first_status": {"$first": "$job.status"},
-                    }
-                },
-                {
-                    "$set": {
-                        "job.created_at": "$first_status.timestamp",
-                        "job.progress": "$last_status.progress",
-                        "job.state": "$last_status.state",
-                        "job.stage": "$last_status.stage",
-                    }
-                },
-                {
-                    "$set": {
-                        "job.id": "$job._id",
-                    }
-                },
-                {"$project": EXCLUDED_FIELDS},
+                *lookup_minimal_job_by_id(),
+                *lookup_nested_subtractions(),
+                *lookup_nested_reference_by_id(),
+                *lookup_nested_user_by_id(),
             ]
         ).to_list(length=1)
 

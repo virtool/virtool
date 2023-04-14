@@ -5,8 +5,8 @@ Provides request handlers for file downloads.
 from aiohttp import web
 
 from virtool.api.response import NotFound
-from virtool.downloads.db import generate_isolate_fasta, generate_sequence_fasta
-from virtool.errors import DatabaseError
+from virtool.data.errors import ResourceNotFoundError
+from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 
 routes = Routes()
@@ -18,14 +18,15 @@ async def download_isolate(req):
     Download a FASTA file containing the sequences for a single Virtool isolate.
 
     """
-    db = req.app["db"]
 
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
     try:
-        filename, fasta = await generate_isolate_fasta(db, otu_id, isolate_id)
-    except DatabaseError as err:
+        filename, fasta = await get_data_from_req(req).otus.get_isolate_fasta(
+            otu_id, isolate_id
+        )
+    except ResourceNotFoundError as err:
         if "OTU does not exist" in str(err):
             raise NotFound("OTU not found")
 
@@ -45,13 +46,14 @@ async def download_sequence(req):
     Download a FASTA file containing a single Virtool sequence.
 
     """
-    db = req.app["db"]
 
     sequence_id = req.match_info["sequence_id"]
 
     try:
-        filename, fasta = await generate_sequence_fasta(db, sequence_id)
-    except DatabaseError as err:
+        filename, fasta = await get_data_from_req(req).otus.get_sequence_fasta(
+            sequence_id
+        )
+    except ResourceNotFoundError as err:
         if "Sequence does not exist" in str(err):
             raise NotFound("Sequence not found")
 

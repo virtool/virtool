@@ -56,7 +56,7 @@ class Collection:
 
     def __init__(
         self,
-        mongo: "DB",
+        mongo: "Mongo",
         name: str,
         processor: Callable[[Any, Document], Awaitable[Document]],
         projection: Optional[Projection],
@@ -354,7 +354,7 @@ class Collection:
         return update_result
 
 
-class DB:
+class Mongo:
     def __init__(
         self,
         motor_client: AsyncIOMotorClient,

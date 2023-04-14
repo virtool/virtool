@@ -121,6 +121,9 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
     """
     response = await api_instance.read_authorization_models()
 
+    if response.authorization_models:
+        return
+
     model = {
         "type_definitions": [
             {
@@ -1232,7 +1235,6 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
                         "delete_reference": {"directly_related_user_types": []},
                         "delete_sample": {"directly_related_user_types": []},
                         "delete_subtraction": {"directly_related_user_types": []},
-                        "update_label": {"directly_related_user_types": []},
                         "update_project": {"directly_related_user_types": []},
                         "update_reference": {"directly_related_user_types": []},
                         "update_sample": {"directly_related_user_types": []},
@@ -1364,14 +1366,6 @@ async def write_openfga_authorization_model(api_instance: OpenFgaApi):
         ],
         "schema_version": "1.1",
     }
-
-    if (
-        response.authorization_models
-        and response.authorization_models[0].type_definitions
-        == model["type_definitions"]
-    ):
-        logger.info("OpenFGA authorization model is up-to-date.")
-        return
 
     await api_instance.write_authorization_model(model)
 

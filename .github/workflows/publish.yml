@@ -15,26 +15,6 @@ jobs:
     steps:
       - name: Trigger Cloudflare
         run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
-  dockerhub:
-    runs-on: ubuntu-22.04
-    if: github.repository_owner == 'Virtool'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Write VERSION
-        run: echo ${{ github.event.release.tag_name }} > VERSION
-      - name: Update pyproject.toml
-        run: sed -i 's/0\.0\.0/${{ github.event.release.tag_name }}/' pyproject.toml
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and Push
-        uses: docker/build-push-action@v4
-        with:
-          push: true
-          tags: virtool/virtool:${{ github.event.release.tag_name }}
   ghcr:
     runs-on: ubuntu-22.04
     permissions:

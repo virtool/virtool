@@ -1,3 +1,55 @@
+# name: test_deduplicate_sample_names[uvloop-False]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'name': 'test_name',
+    },
+    <class 'dict'> {
+      '_id': 'test_id_2',
+      'created_at': datetime.datetime(2015, 10, 9, 20, 0),
+      'name': 'test_name (2)',
+    },
+    <class 'dict'> {
+      '_id': 'test_id_3',
+      'created_at': datetime.datetime(2015, 10, 8, 20, 0),
+      'name': 'test_name (4)',
+    },
+    <class 'dict'> {
+      '_id': 'test_id_4',
+      'created_at': datetime.datetime(2015, 10, 7, 20, 0),
+      'name': 'test_name (3)',
+    },
+  ]
+---
+# name: test_deduplicate_sample_names[uvloop-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'name': 'test_name',
+      'space_id': '0',
+    },
+    <class 'dict'> {
+      '_id': 'test_id_2',
+      'created_at': datetime.datetime(2015, 10, 9, 20, 0),
+      'name': 'test_name (2)',
+      'space_id': '0',
+    },
+    <class 'dict'> {
+      '_id': 'test_id_3',
+      'created_at': datetime.datetime(2015, 10, 8, 20, 0),
+      'name': 'test_name (3)',
+      'space_id': '0',
+    },
+    <class 'dict'> {
+      '_id': 'test_id_4',
+      'created_at': datetime.datetime(2015, 10, 7, 20, 0),
+      'name': 'test_name',
+      'space_id': '1',
+    },
+  ]
+---
 # name: test_move_sample_files_task[uvloop-False-False-False]
   <class 'dict'> {
     '_id': 'foo',
@@ -93,4 +145,34 @@
     'is_compressed': True,
     'is_legacy': True,
   }
+---
+# name: test_update_workflows_fields[uvloop-False]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'library_type': 'normal',
+      'nuvs': 'ip',
+      'pathoscope': 'ip',
+      'workflows': <class 'dict'> {
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'pending',
+      },
+    },
+  ]
+---
+# name: test_update_workflows_fields[uvloop-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_id',
+      'library_type': 'normal',
+      'nuvs': 'ip',
+      'pathoscope': True,
+      'workflows': <class 'dict'> {
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'complete',
+      },
+    },
+  ]
 ---

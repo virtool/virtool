@@ -19,6 +19,7 @@
     'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -119,6 +120,7 @@
     'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -218,6 +220,7 @@
     'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -343,6 +346,7 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -405,6 +409,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -430,6 +435,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -461,6 +467,7 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -497,6 +504,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -533,6 +541,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -558,6 +567,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -611,6 +621,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -636,6 +647,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -678,6 +690,7 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -714,6 +727,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -739,6 +753,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -770,6 +785,7 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -798,7 +814,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-None]
+# name: TestFindSamples.test_term[uvloop-None-/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -806,6 +822,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -831,6 +848,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -862,6 +880,7 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -890,14 +909,41 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-gv]
+# name: TestFindSamples.test_term[uvloop-None-/spaces/0/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'job': None,
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -929,6 +975,76 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_term[uvloop-gv-/samples]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'job': None,
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -957,7 +1073,76 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-sp]
+# name: TestFindSamples.test_term[uvloop-gv-/spaces/0/samples]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'job': None,
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+          <class 'dict'> {
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          },
+        ],
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          },
+        ],
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_term[uvloop-sp-/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -965,6 +1150,44 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          },
+        ],
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: TestFindSamples.test_term[uvloop-sp-/spaces/0/samples]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -1001,6 +1224,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -1026,6 +1250,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -1057,6 +1282,7 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -1093,6 +1319,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -1135,6 +1362,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -1160,6 +1388,7 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -1191,6 +1420,7 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -1227,6 +1457,7 @@
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#47e7f6',
@@ -1252,6 +1483,7 @@
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
+        'job': None,
         'labels': <class 'list'> [
           <class 'dict'> {
             'color': '#ae686a',
@@ -1308,6 +1540,7 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -1382,6 +1615,7 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -1456,6 +1690,7 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -1536,6 +1771,7 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -1602,7 +1838,18 @@
       'version': 3,
     },
     'job': <class 'dict'> {
-      'id': 'baz',
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'pathoscope_bowtie',
     },
     'ready': False,
     'reference': <class 'dict'> {
@@ -1684,10 +1931,22 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'id': 'test',
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_aodp',
         },
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -1696,6 +1955,7 @@
         },
         'subtractions': <class 'list'> [
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -1710,11 +1970,10 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': <class 'dict'> {
-          'id': 'test',
-        },
+        'job': None,
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -1727,6 +1986,7 @@
             'name': 'Malus domestica',
           },
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -1753,10 +2013,22 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'id': 'test',
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_aodp',
         },
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -1765,6 +2037,7 @@
         },
         'subtractions': <class 'list'> [
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -1779,11 +2052,10 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': <class 'dict'> {
-          'id': 'test',
-        },
+        'job': None,
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -1796,6 +2068,7 @@
             'name': 'Malus domestica',
           },
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -1810,11 +2083,10 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': <class 'dict'> {
-          'id': 'test',
-        },
+        'job': None,
         'ready': True,
         'reference': <class 'dict'> {
+          'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
         },
@@ -1827,6 +2099,7 @@
             'name': 'Malus domestica',
           },
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'zclark',

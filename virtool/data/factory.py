@@ -6,6 +6,7 @@ from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
+from virtool.administrators.data import AdministratorsData
 from virtool.analyses.data import AnalysisData
 from virtool.authorization.client import AuthorizationClient
 from virtool.blast.data import BLASTData
@@ -31,12 +32,12 @@ from virtool.users.data import UsersData
 from virtool.users.sessions import SessionData
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 
 def create_data_layer(
     authorization_client: AuthorizationClient,
-    mongo: "DB",
+    mongo: "Mongo",
     pg: AsyncEngine,
     config: Config,
     client,
@@ -55,6 +56,7 @@ def create_data_layer(
     """
     data_layer = DataLayer(
         AccountData(mongo, redis),
+        AdministratorsData(authorization_client, mongo),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
         GroupsData(authorization_client, mongo),

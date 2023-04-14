@@ -3,25 +3,22 @@ Code for working with samples in the database and filesystem.
 
 """
 import asyncio
-from asyncio import to_thread
 import logging
 import os
+from asyncio import to_thread
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo.results import DeleteResult
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.settings import Settings
-from virtool_core.utils import compress_file, rm, file_stats
-
 import virtool.errors
 import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
+from motor.motor_asyncio import AsyncIOMotorClientSession
+from pymongo.results import DeleteResult
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
@@ -33,9 +30,11 @@ from virtool.types import Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
+from virtool_core.models.settings import Settings
+from virtool_core.utils import compress_file, rm, file_stats
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 logger = logging.getLogger(__name__)
 
@@ -463,7 +462,7 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
         )
 
 
-async def compress_sample_reads(db: "DB", config: Config, sample: Dict[str, Any]):
+async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, Any]):
     """
     Compress the reads for one legacy samples.
 
@@ -511,7 +510,7 @@ async def compress_sample_reads(db: "DB", config: Config, sample: Dict[str, Any]
         await to_thread(os.remove, path)
 
 
-async def move_sample_files_to_pg(db: "DB", pg: AsyncEngine, sample: Dict[str, any]):
+async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str, any]):
     """
     Creates a row in the `sample_reads` table for each file in a sample's `files` array.
 
@@ -642,3 +641,30 @@ async def get_sample(app, sample_id: str):
     document["paired"] = len(document["reads"]) == 2
 
     return document
+
+
+class NameGenerator:
+    """
+    Generates unique incrementing sample names based on a base name and a space id.
+    """
+
+    def __init__(self, db: "DB", base_name: str, space_id: str):
+        self.base_name = base_name
+        self.space_id = space_id
+        self.db = db
+        self.sample_number = 1
+
+    async def get(self, session: AsyncIOMotorClientSession):
+        self.sample_number += 1
+
+        while await self.db.samples.count_documents(
+            {
+                "name": f"{self.base_name} ({self.sample_number})",
+                "space_id": self.space_id,
+            },
+            limit=1,
+            session=session,
+        ):
+            self.sample_number += 1
+
+        return f"{self.base_name} ({self.sample_number})"

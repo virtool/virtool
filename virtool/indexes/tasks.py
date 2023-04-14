@@ -10,7 +10,7 @@ from virtool.types import Document
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 
 class EnsureIndexFilesTask(BaseTask):
@@ -106,7 +106,7 @@ def format_otu_for_export(otu: Document) -> Document:
 
 
 async def export_index(
-    data_path: Path, mongo: "DB", manifest: Dict[str, int]
+    data_path: Path, mongo: "Mongo", manifest: Dict[str, int]
 ) -> List[Document]:
     """
     Dump OTUs to a JSON-serializable data structure based on an index manifest.

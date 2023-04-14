@@ -10,6 +10,7 @@
     ],
     'gc': None,
     'id': 'abc123',
+    'job': None,
     'linked_samples': <class 'list'> [
     ],
     'name': 'Calamus',
@@ -61,7 +62,7 @@
     'workflow': 'create_subtraction',
   }
 ---
-# name: test_edit[uvloop-False-data0]
+# name: test_edit[uvloop-False-False-data0]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -79,6 +80,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -95,7 +97,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-data0].1
+# name: test_edit[uvloop-False-False-data0].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -116,7 +118,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-False-data1]
+# name: test_edit[uvloop-False-False-data1]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -134,6 +136,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -150,7 +153,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-data1].1
+# name: test_edit[uvloop-False-False-data1].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -171,7 +174,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-False-data2]
+# name: test_edit[uvloop-False-False-data2]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -189,6 +192,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -205,7 +209,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-data2].1
+# name: test_edit[uvloop-False-False-data2].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -226,7 +230,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-False-data3]
+# name: test_edit[uvloop-False-False-data3]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -244,6 +248,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -260,7 +265,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-data3].1
+# name: test_edit[uvloop-False-False-data3].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -281,7 +286,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-True-data0]
+# name: test_edit[uvloop-False-True-data0]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -299,6 +304,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -319,7 +325,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-data0].1
+# name: test_edit[uvloop-False-True-data0].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -343,7 +349,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-data1]
+# name: test_edit[uvloop-False-True-data1]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -361,6 +367,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -381,7 +388,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-data1].1
+# name: test_edit[uvloop-False-True-data1].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -405,7 +412,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-data2]
+# name: test_edit[uvloop-False-True-data2]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -423,6 +430,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -443,7 +451,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-data2].1
+# name: test_edit[uvloop-False-True-data2].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -467,7 +475,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-data3]
+# name: test_edit[uvloop-False-True-data3]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -485,6 +493,7 @@
       't': 0.26,
     },
     'id': 'apple',
+    'job': None,
     'linked_samples': <class 'list'> [
       <class 'dict'> {
         'id': '12',
@@ -505,7 +514,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-data3].1
+# name: test_edit[uvloop-False-True-data3].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -520,6 +529,610 @@
       'g': 0.19,
       'n': 0.2,
       't': 0.26,
+    },
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-False-data0]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Bar',
+    'nickname': 'Apple',
+    'ready': True,
+    'user': None,
+  }
+---
+# name: test_edit[uvloop-True-False-data0].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'name': 'Bar',
+    'nickname': 'Apple',
+    'ready': True,
+  }
+---
+# name: test_edit[uvloop-True-False-data1]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Malus domestica',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': None,
+  }
+---
+# name: test_edit[uvloop-True-False-data1].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'name': 'Malus domestica',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+  }
+---
+# name: test_edit[uvloop-True-False-data2]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Malus domestica',
+    'nickname': '',
+    'ready': True,
+    'user': None,
+  }
+---
+# name: test_edit[uvloop-True-False-data2].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'name': 'Malus domestica',
+    'nickname': '',
+    'ready': True,
+  }
+---
+# name: test_edit[uvloop-True-False-data3]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': None,
+  }
+---
+# name: test_edit[uvloop-True-False-data3].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+  }
+---
+# name: test_edit[uvloop-True-True-data0]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Bar',
+    'nickname': 'Apple',
+    'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-True-data0].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'name': 'Bar',
+    'nickname': 'Apple',
+    'ready': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-True-data1]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Malus domestica',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-True-data1].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'name': 'Malus domestica',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-True-data2]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Malus domestica',
+    'nickname': '',
+    'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-True-data2].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'name': 'Malus domestica',
+    'nickname': '',
+    'ready': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-True-data3]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+      <class 'dict'> {
+        'id': '12',
+        'name': 'Sample 12',
+      },
+      <class 'dict'> {
+        'id': '22',
+        'name': 'Sample 22',
+      },
+    ],
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_edit[uvloop-True-True-data3].1
+  <class 'dict'> {
+    '_id': 'apple',
+    'count': 11,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
     },
     'name': 'Bar',
     'nickname': 'Bar Subtraction',
@@ -571,6 +1184,20 @@
       't': 0.319,
     },
     'id': 'foo',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
     'linked_samples': <class 'list'> [
     ],
     'name': 'Foo',
@@ -599,6 +1226,9 @@
       'n': 0.002,
       't': 0.319,
     },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'name': 'Foo',
     'nickname': 'Foo Subtraction',
     'ready': True,
@@ -607,7 +1237,7 @@
     },
   }
 ---
-# name: test_find[uvloop]
+# name: test_find[uvloop-2-1]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -618,6 +1248,20 @@
           'name': 'Apis_mellifera.0.fa.gz',
         },
         'id': 'id_0',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
         'name': 'Test 0',
         'nickname': '',
         'ready': True,
@@ -635,6 +1279,20 @@
           'name': 'Apis_mellifera.1.fa.gz',
         },
         'id': 'id_1',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
         'name': 'Test 1',
         'nickname': '',
         'ready': True,
@@ -644,6 +1302,18 @@
           'id': 'bf1b993c',
         },
       },
+    ],
+    'found_count': 5,
+    'page': 1,
+    'page_count': 3,
+    'per_page': 2,
+    'ready_count': 5,
+    'total_count': 5,
+  }
+---
+# name: test_find[uvloop-2-2]
+  <class 'dict'> {
+    'documents': <class 'list'> [
       <class 'dict'> {
         'count': None,
         'created_at': '2015-10-06T20:00:00Z',
@@ -652,6 +1322,20 @@
           'name': 'Apis_mellifera.2.fa.gz',
         },
         'id': 'id_2',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
         'name': 'Test 2',
         'nickname': '',
         'ready': True,
@@ -669,6 +1353,156 @@
           'name': 'Apis_mellifera.3.fa.gz',
         },
         'id': 'id_3',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 3',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+    ],
+    'found_count': 5,
+    'page': 2,
+    'page_count': 3,
+    'per_page': 2,
+    'ready_count': 5,
+    'total_count': 5,
+  }
+---
+# name: test_find[uvloop-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.0.fa.gz',
+        },
+        'id': 'id_0',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 0',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.1.fa.gz',
+        },
+        'id': 'id_1',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 1',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.2.fa.gz',
+        },
+        'id': 'id_2',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
+        'name': 'Test 2',
+        'nickname': '',
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'count': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'file': <class 'dict'> {
+          'id': 642,
+          'name': 'Apis_mellifera.3.fa.gz',
+        },
+        'id': 'id_3',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
         'name': 'Test 3',
         'nickname': '',
         'ready': True,
@@ -686,6 +1520,20 @@
           'name': 'Apis_mellifera.4.fa.gz',
         },
         'id': 'id_4',
+        'job': <class 'dict'> {
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'jobs_pathoscope_bowtie',
+        },
         'name': 'Test 4',
         'nickname': '',
         'ready': True,
@@ -702,6 +1550,62 @@
     'per_page': 25,
     'ready_count': 5,
     'total_count': 5,
+  }
+---
+# name: test_find_empty_subtractions[uvloop]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'ready_count': 0,
+    'total_count': 0,
+  }
+---
+# name: test_get[uvloop]
+  <class 'dict'> {
+    'count': 11,
+    'created_at': '2015-10-06T20:00:00Z',
+    'file': <class 'dict'> {
+      'id': 642,
+      'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'files': <class 'list'> [
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.21,
+      'c': 0.29,
+      'g': 0.19,
+      'n': 0.2,
+      't': 0.26,
+    },
+    'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
+    'linked_samples': <class 'list'> [
+    ],
+    'name': 'Malus domestica',
+    'nickname': 'Apple',
+    'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
   }
 ---
 # name: test_get_from_job[uvloop]
@@ -740,6 +1644,7 @@
     ],
     'gc': None,
     'id': '2x6YnyMt',
+    'job': None,
     'linked_samples': <class 'list'> [
     ],
     'name': 'tree',
@@ -760,6 +1665,9 @@
     'file': <class 'dict'> {
       'id': 642,
       'name': 'Apis_mellifera.1.fa.gz',
+    },
+    'job': <class 'dict'> {
+      'job': 'fb085f7f',
     },
     'name': 'Foo',
     'nickname': 'Foo Subtraction',

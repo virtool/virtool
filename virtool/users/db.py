@@ -8,7 +8,11 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.user import User
 
 from virtool.errors import DatabaseError
-from virtool.groups.db import get_merged_permissions
+from virtool.groups.db import (
+    get_merged_permissions,
+    lookup_minimal_groups,
+    lookup_minimal_group_by_id,
+)
 from virtool.mongo.transforms import AbstractTransform
 from virtool.mongo.utils import (
     get_non_existent_ids,
@@ -308,32 +312,13 @@ async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
     async for user in mongo.users.aggregate(
         [
             {"$match": {"_id": user_id}},
-            {
-                "$lookup": {
-                    "from": "groups",
-                    "localField": "groups",
-                    "foreignField": "_id",
-                    "as": "groups",
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "groups",
-                    "localField": "primary_group",
-                    "foreignField": "_id",
-                    "as": "primary_group",
-                }
-            },
+            *lookup_minimal_groups(),
+            *lookup_minimal_group_by_id(
+                local_field="primary_group", set_as="primary_group"
+            ),
         ]
     ):
-        return User(
-            **{
-                **user,
-                "primary_group": user["primary_group"][0]
-                if user["primary_group"]
-                else None,
-            }
-        )
+        return User(**user)
 
     return None
 

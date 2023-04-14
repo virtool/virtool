@@ -16,6 +16,9 @@
       't': 0.319,
     },
     'has_file': True,
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'name': 'Malus',
     'nickname': 'Apple',
     'ready': True,
@@ -42,6 +45,20 @@
       't': 0.319,
     },
     'id': 'apple',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.WAITING: 'waiting'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
+    },
     'linked_samples': <class 'list'> [
     ],
     'name': 'Malus',

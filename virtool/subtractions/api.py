@@ -28,6 +28,7 @@ logger = logging.getLogger("subtractions")
 routes = Routes()
 
 
+@routes.view("/spaces/{space_id}/subtractions")
 @routes.view("/subtractions")
 class SubtractionsView(PydanticView):
     async def get(
@@ -87,6 +88,7 @@ class SubtractionsView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/subtractions/{subtraction_id}")
 @routes.view("/subtractions/{subtraction_id}")
 @routes.jobs_api.get("/subtractions/{subtraction_id}")
 class SubtractionView(PydanticView):
