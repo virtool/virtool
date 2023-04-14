@@ -18,7 +18,7 @@ from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.http.client import UserClient
-from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.jobs.db import lookup_minimal_job_by_id, create_job
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.migrate import recalculate_all_workflow_tags
@@ -278,6 +278,7 @@ class SamplesData(DataLayerPiece):
                 *lookup_nested_user_by_id(local_field="user.id"),
                 *lookup_nested_subtractions(local_field="subtractions"),
                 *lookup_caches(local_field="_id"),
+                *lookup_minimal_job_by_id(local_field="job.id")
             ]
         ).to_list(length=1)
 
@@ -340,65 +341,78 @@ class SamplesData(DataLayerPiece):
         elif settings.sample_group == "users_primary_group":
             group = await get_one_field(self._db.users, "primary_group", user_id)
 
-        async with self._db.create_session() as session:
-            document, _ = await asyncio.gather(
-                self._db.samples.insert_one(
+        try:
+
+            async with self._db.create_session() as session:
+                job_id = await get_new_id(self._db.jobs, session=session)
+
+                document, _ = await asyncio.gather(
+                    self._db.samples.insert_one(
+                        {
+                            "_id": _id
+                            or await get_new_id(self._db.samples, session=session),
+                            "all_read": settings.sample_all_read,
+                            "all_write": settings.sample_all_write,
+                            "created_at": virtool.utils.timestamp(),
+                            "format": "fastq",
+                            "group": group,
+                            "hold": True,
+                            "group_read": settings.sample_group_read,
+                            "group_write": settings.sample_group_write,
+                            "host": data.host,
+                            "is_legacy": False,
+                            "isolate": data.isolate,
+                            "job": {
+                                "id": job_id
+                            },
+                            "labels": data.labels,
+                            "library_type": data.library_type,
+                            "locale": data.locale,
+                            "name": data.name,
+                            "notes": data.notes,
+                            "nuvs": False,
+                            "paired": len(uploads) == 2,
+                            "pathoscope": False,
+                            "quality": None,
+                            "ready": False,
+                            "results": None,
+                            "space": {"id": space_id},
+                            "subtractions": data.subtractions,
+                            "user": {"id": user_id},
+                            "workflows": define_initial_workflows(data.library_type),
+                        },
+                        session=session,
+                    ),
+                    self.data.uploads.reserve(data.files),
+                )
+
+                sample_id = document["_id"]
+
+                await create_job(
+                    self.data.jobs,
+                    "create_sample",
                     {
-                        "_id": _id
-                        or await get_new_id(self._db.samples, session=session),
-                        "all_read": settings.sample_all_read,
-                        "all_write": settings.sample_all_write,
-                        "created_at": virtool.utils.timestamp(),
-                        "format": "fastq",
-                        "group": group,
-                        "hold": True,
-                        "group_read": settings.sample_group_read,
-                        "group_write": settings.sample_group_write,
-                        "host": data.host,
-                        "is_legacy": False,
-                        "isolate": data.isolate,
-                        "labels": data.labels,
-                        "library_type": data.library_type,
-                        "locale": data.locale,
-                        "name": data.name,
-                        "notes": data.notes,
-                        "nuvs": False,
-                        "paired": len(uploads) == 2,
-                        "pathoscope": False,
-                        "quality": None,
-                        "ready": False,
-                        "results": None,
-                        "space": {"id": space_id},
-                        "subtractions": data.subtractions,
-                        "user": {"id": user_id},
-                        "workflows": define_initial_workflows(data.library_type),
+                        "sample_id": sample_id,
+                        "files": [
+                            {
+                                "id": upload["id"],
+                                "name": upload["name"],
+                                "size": upload["size"],
+                            }
+                            for upload in uploads
+                        ],
                     },
-                    session=session,
-                ),
-                self.data.uploads.reserve(data.files),
-            )
+                    user_id,
+                    JobRights(),
+                    0,
+                    job_id,
+                    session
+                )
 
-            sample_id = document["_id"]
+            return await self.get(sample_id)
 
-        await self.data.jobs.create(
-            "create_sample",
-            {
-                "sample_id": sample_id,
-                "files": [
-                    {
-                        "id": upload["id"],
-                        "name": upload["name"],
-                        "size": upload["size"],
-                    }
-                    for upload in uploads
-                ],
-            },
-            user_id,
-            JobRights(),
-            0,
-        )
-
-        return await self.get(sample_id)
+        except Exception as e:
+            pass
 
     async def _update_with_session(
         self,

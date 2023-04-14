@@ -20,7 +20,7 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
-from virtool.jobs.db import PROJECTION, fetch_complete_job
+from virtool.jobs.db import PROJECTION, fetch_complete_job, create_job
 from virtool.jobs.utils import JobRights, compose_status
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
@@ -201,27 +201,16 @@ class JobsData:
         :param job_id: an optional ID to use for the new job
 
         """
-        document = {
-            "acquired": False,
-            "archived": False,
-            "workflow": workflow,
-            "args": job_args,
-            "key": None,
-            "rights": rights.as_dict(),
-            "space": {"id": space_id},
-            "state": JobState.WAITING.value,
-            "status": [compose_status(JobState.WAITING, None)],
-            "user": {"id": user_id},
-            "ping": None,
-        }
 
-        if job_id:
-            document["_id"] = job_id
-
-        document = await self._db.jobs.insert_one(document)
-        await self._client.enqueue(workflow, document["_id"])
-
-        return await fetch_complete_job(self._db, document)
+        return await create_job(
+            self,
+            workflow,
+            job_args,
+            user_id,
+            rights,
+            space_id,
+            job_id,
+        )
 
     async def get(self, job_id: str) -> Job:
         """

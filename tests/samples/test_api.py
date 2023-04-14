@@ -378,7 +378,7 @@ class TestCreate:
 
         assert await client.db.samples.find_one() == snapshot
 
-        assert data.jobs._client.enqueued == [("create_sample", "fb085f7f")]
+        assert data.jobs._client.enqueued == [("create_sample", "bf1b993c")]
 
         async with pg.begin() as conn:
             upload = await get_row_by_id(conn, Upload, 1)
