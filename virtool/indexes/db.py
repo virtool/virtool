@@ -405,7 +405,7 @@ def lookup_index_otu_counts(local_field: str = "index.id") -> list[dict]:
                     {
                         "$group": {
                             "_id": None,
-                            "change_count": {"$count": {}},
+                            "change_count": {"$sum": 1},
                             "modified_otu_count": {"$addToSet": "$otu.id"},
                         }
                     },
