@@ -26,7 +26,9 @@ def join_index_path(data_path: Path, reference_id: str, index_id: str) -> Path:
     :param index_id: the ID of the index
     :return: the index path
     """
-    return data_path / "references" / reference_id / index_id
+    index_path = data_path / "references" / reference_id / index_id
+    index_path.mkdir(parents=True, exist_ok=True)
+    return index_path
 
 
 OTU_KEYS = ["name", "abbreviation", "schema"]

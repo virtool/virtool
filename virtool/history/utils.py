@@ -178,6 +178,8 @@ def join_diff_path(data_path: Path, otu_id: str, otu_version: Union[int, str]) -
     :return: the change path
 
     """
+    history_path = data_path / "history"
+    history_path.mkdir(parents=True, exist_ok=True)
     return data_path / "history" / f"{otu_id}_{otu_version}.json"
 
 

@@ -72,8 +72,8 @@ def create_app(
     mongo: "Mongo",
     pg_connection_string: str,
     redis_connection_string: str,
-        mongo_connection_string,
-        mongo_name,
+    mongo_connection_string,
+    mongo_name,
     openfga_store_name: str,
 ):
     mongodb_connection_string = (
@@ -97,7 +97,6 @@ def create_app(
             host="localhost",
             mongodb_connection_string=mongodb_connection_string,
             no_check_db=True,
-            no_check_files=True,
             no_revision_check=True,
             openfga_host="localhost:8080",
             openfga_scheme="http",
@@ -212,11 +211,11 @@ def spawn_client(
 def spawn_job_client(
     mongo: "Mongo",
     aiohttp_client,
-        mongo_connection_string,
+    mongo_connection_string,
     redis_connection_string: str,
     pg_connection_string: str,
     pg: AsyncEngine,
-        mongo_name,
+    mongo_name,
     openfga_store_name: str,
     authorization_client: AuthorizationClient,
 ):
@@ -254,7 +253,6 @@ def spawn_job_client(
                 host="localhost",
                 mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
                 no_check_db=True,
-                no_check_files=True,
                 no_revision_check=True,
                 openfga_host="localhost:8080",
                 openfga_scheme="http",

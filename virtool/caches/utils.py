@@ -16,4 +16,6 @@ def join_cache_path(config: Config, cache_id: str) -> Path:
     :return: a cache path
 
     """
-    return config.data_path / "caches" / cache_id
+    path = config.data_path / "caches" / cache_id
+    path.mkdir(parents=True, exist_ok=True)
+    return path

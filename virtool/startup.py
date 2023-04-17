@@ -32,7 +32,6 @@ from virtool.sentry import setup
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
-from virtool.utils import ensure_data_dir
 from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
@@ -175,9 +174,8 @@ async def startup_http_client(app: App):
 
 
 async def startup_paths(app: App):
-    if app["config"].no_check_files is False:
-        logger.info("Checking files")
-        ensure_data_dir(app["config"].data_path)
+    path = app["config"].data_path / "logs/jobs"
+    path.mkdir(parents=True, exist_ok=True)
 
 
 async def startup_databases(app: App):
