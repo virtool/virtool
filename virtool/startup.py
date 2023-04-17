@@ -120,14 +120,7 @@ async def startup_dispatcher(app: App):
 
 
 async def startup_events(app: App):
-    events = create_events()
-
-    loop = asyncio.get_event_loop()
-
-    loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
-    loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
-
-    app["events"] = events
+    app["events"] = create_events()
 
 
 async def startup_executors(app: App):
