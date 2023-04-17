@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from virtool.mongo.connect import check_mongo_version, check_revision
+from virtool.mongo.connect import check_data_revision, check_mongo_version
 
 
 @pytest.mark.parametrize("version", ["3.5.9", "3.6.0", "3.6.1"])
@@ -31,7 +31,7 @@ async def test_check_revision(mongo, spawn_client):
     )
 
     try:
-        await check_revision(mongo)
+        await check_data_revision(mongo)
 
     except SystemExit as e:
         assert e.code == 1

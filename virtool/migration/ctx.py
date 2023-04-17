@@ -1,7 +1,9 @@
 import asyncio
 import sys
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from logging import getLogger
+from pprint import pprint
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -14,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 
 import virtool.mongo.connect
 from virtool.api.custom_json import dump_string
+from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 from virtool.config.cls import MigrationConfig
 
@@ -24,32 +27,59 @@ logger = getLogger("migration")
 class MigrationContextMongo:
     client: AsyncIOMotorClient
     database: AsyncIOMotorDatabase
+    session: AsyncIOMotorClientSession
 
 
 @dataclass
 class RevisionContext:
+    """A context for a specific revision upgrade or downgrade."""
+
+    authorization: AuthorizationClient
     """
-    A context for a specific revision upgrade or downgrade.
-
-
+    An authorization client instance.
+    
+    Use this to effect changes in OpenFGA.    
     """
 
-    mongo: AsyncIOMotorClientSession
-    openfga: OpenFgaApi
+    mongo: MigrationContextMongo
+    """
+    A Motor database utility class.
+    
+    Use this to read or change documents in MongoDB. This client does not trigger websocket dispatches.
+    """
+
     pg: AsyncSession
+    """
+    A SQLAlchemy database client.
+    """
 
 
 @dataclass
 class MigrationContext:
-    mongo: MigrationContextMongo
-    openfga: OpenFgaApi
+    authorization: AuthorizationClient
+    mongo: AsyncIOMotorDatabase
     pg: AsyncEngine
 
-    async def with_revision_context(self):
+    @asynccontextmanager
+    async def revision_context(self):
+        """
+
+
+        :return:
+        """
         async with AsyncSession(
             self.pg
-        ) as pg, self.mongo.client.start_session() as mongo:
-            yield RevisionContext(mongo, self.openfga, pg)
+        ) as pg, await self.mongo.client.start_session() as mongo_session:
+            async with mongo_session.start_transaction():
+                yield RevisionContext(
+                    self.authorization,
+                    MigrationContextMongo(
+                        self.mongo.client,
+                        self.mongo,
+                        mongo_session,
+                    ),
+                    pg,
+                )
 
 
 async def create_migration_context(config: MigrationConfig) -> MigrationContext:
@@ -91,12 +121,7 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
     )
 
     return MigrationContext(
-        mongo=MigrationContextMongo(
-            client=mongo_database.mongo_client,
-            database=AsyncIOMotorClient(
-                config.mongodb_connection_string
-            ).get_default_database(),
-        ),
-        openfga=openfga,
+        authorization=AuthorizationClient(openfga),
+        mongo=mongo_database,
         pg=pg,
     )

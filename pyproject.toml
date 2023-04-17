@@ -59,7 +59,7 @@ orjson = "^3.8.0"
 openfga-sdk = "^0.1.1"
 python-jose = "^3.3.0"
 virtool-core = "4.9.0"
-alembic = "^1.10.2"
+alembic = {extras = ["tz"], version = "^1.10.3"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

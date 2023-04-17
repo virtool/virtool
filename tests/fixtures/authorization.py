@@ -3,21 +3,39 @@ from enum import Enum
 
 import openfga_sdk
 import pytest
-from openfga_sdk import TupleKey, WriteRequest, TupleKeys, ApiException
+from openfga_sdk import ApiException, TupleKey, TupleKeys, WriteRequest
 
 from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.openfga import OpenfgaScheme
 from virtool.authorization.permissions import ResourceType
 from virtool.authorization.utils import (
-    write_openfga_authorization_model,
     delete_tuples,
     get_or_create_openfga_store,
+    write_openfga_authorization_model,
 )
 
 
 @pytest.fixture
-async def authorization_client(openfga_store_name: str) -> AuthorizationClient:
+def openfga_host():
+    return "localhost:8080"
+
+
+@pytest.fixture
+def openfga_scheme() -> OpenfgaScheme:
+    return OpenfgaScheme.HTTP
+
+
+@pytest.fixture
+async def openfga_store_name(worker_id, loop):
+    return f"vt-test-{worker_id}"
+
+
+@pytest.fixture
+async def authorization_client(
+    openfga_host: str, openfga_scheme, openfga_store_name: str
+) -> AuthorizationClient:
     configuration = openfga_sdk.Configuration(
-        api_scheme="http", api_host="localhost:8080"
+        api_scheme=openfga_scheme.value, api_host=openfga_host
     )
 
     api_instance = openfga_sdk.OpenFgaApi(openfga_sdk.ApiClient(configuration))
@@ -76,11 +94,6 @@ async def setup_auth_update_user(spawn_auth_client, fake2, mongo):
     await fake2.users.create(groups=[group1])
 
     return abs_client, group1, group2, await fake2.users.create(groups=[group1])
-
-
-@pytest.fixture
-async def openfga_store_name(worker_id):
-    return f"vt-test-{worker_id}"
 
 
 @pytest.fixture

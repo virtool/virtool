@@ -36,12 +36,12 @@ async def connect(
     await check_mongo_version(mongo_client)
 
     if not skip_revision_check:
-        await check_revision(mongo_client[db_name])
+        await check_data_revision(mongo_client[db_name])
 
     return mongo_client[db_name]
 
 
-async def check_revision(mongo: AsyncIOMotorDatabase):
+async def check_data_revision(mongo: AsyncIOMotorDatabase):
     """
     Check if the required MongoDB revision has been applied.
 

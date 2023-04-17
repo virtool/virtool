@@ -1,26 +1,20 @@
 from logging import getLogger
 from pathlib import Path
-from typing import Optional
 
 import arrow
 from alembic.util import load_python_file
-from motor.motor_asyncio import AsyncIOMotorClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.config.cls import MigrationConfig
-from virtool.migration.cls import AppliedRevision, Revision
+from virtool.migration.cls import Revision
 from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.model import SQLRevision
+from virtool.migration.pg import fetch_last_applied_revision
 from virtool.migration.utils import get_revisions_path
 
 logger = getLogger("migration")
 
 
-async def apply_to(
-    config: MigrationConfig,
-    revision_id: str = "latest",
-):
+async def apply(config: MigrationConfig):
     """
     Apply revisions up to a given revision_id, ``to``.
 
@@ -32,13 +26,13 @@ async def apply_to(
     :param config: the configuration values for migration
     :param revision_id: the revision_id to update to or 'latest'
     """
-    logger.info("Applying revisions up to '%s'", revision_id)
+    logger.info("Applying all revisions")
 
-    ctx = create_migration_context(config)
+    ctx = await create_migration_context(config)
 
     last_applied_revision = await fetch_last_applied_revision(ctx.pg)
 
-    for revision in _load_revisions(get_revisions_path()):
+    for revision in load_revisions(get_revisions_path()):
         if last_applied_revision is None or (
             revision.created_at > last_applied_revision.created_at
         ):
@@ -57,18 +51,19 @@ async def apply_one_revision(ctx: MigrationContext, revision):
     """
     logger.info("Applying revision '%s'", revision.id)
 
-    async with ctx.with_revision_context() as revision_ctx:
+    async with ctx.revision_context() as revision_ctx:
         await revision.upgrade(revision_ctx)
-
-        await revision_ctx.pg.add(
+        revision_ctx.pg.add(
             SQLRevision(
                 applied_at=arrow.utcnow().naive,
+                name=revision.name,
                 revision=revision.id,
             )
         )
+        await revision_ctx.pg.commit()
 
 
-def _load_revisions(revisions_path: Path) -> list[Revision]:
+def load_revisions(revisions_path: Path) -> list[Revision]:
     """
     Load revision modules and sort by creation date.
 
@@ -97,28 +92,3 @@ def _load_revisions(revisions_path: Path) -> list[Revision]:
     logger.info("Found %s revisions", len(revisions))
 
     return revisions
-
-
-async def fetch_last_applied_revision(
-    pg: AsyncEngine,
-) -> Optional[AppliedRevision]:
-    """
-    Pull the most recent revision applied to the MongoDB database.
-    """
-    async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(SQLRevision).order_by(SQLRevision.applied_at)
-        )
-
-        revision = await result.first()
-
-        return (
-            AppliedRevision(
-                id=revision.id,
-                applied_at=arrow.get(revision.applied_at).floor("second").naive,
-                name=revision.name,
-                revision=revision.revision,
-            )
-            if revision
-            else None
-        )

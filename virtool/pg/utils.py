@@ -1,6 +1,6 @@
-import logging
 import sys
 from enum import Enum
+from logging import getLogger
 from typing import Optional, Type, Union
 
 import orjson
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base
 
-logger = logging.getLogger(__name__)
+logger = getLogger("pg")
 
 
 class SQLEnum(Enum):

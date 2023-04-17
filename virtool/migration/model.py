@@ -11,5 +11,10 @@ class SQLRevision(Base):
     __tablename__ = "revisions"
 
     id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
     revision = Column(String, unique=True)
-    applied_at = Column(DateTime, default=datetime.utcnow)
+    applied_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )

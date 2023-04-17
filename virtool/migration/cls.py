@@ -9,10 +9,9 @@ from virtool.migration.ctx import MigrationContext
 class Revision:
     """A Virtool data revision loaded from the filesystem."""
 
-    id: int
+    id: str
     created_at: datetime
     name: str
-    revision: str
     upgrade: Callable[[MigrationContext], Awaitable[None]]
 
 
