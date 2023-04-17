@@ -212,7 +212,7 @@ class AuthorizationClient:
             else:
                 relations[user_id].append(relation.key.relation)
 
-        relations = [(user_id, roles) for user_id, roles in relations.items()]
+        relations = list(relations.items())
 
         return sorted(
             [
