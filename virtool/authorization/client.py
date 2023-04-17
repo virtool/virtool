@@ -3,32 +3,25 @@ Authorization clients.
 
 """
 import asyncio
-from typing import Union, List, Tuple
+from typing import List, Tuple, Union
 
 from openfga_sdk import (
-    OpenFgaApi,
-    WriteRequest,
-    TupleKeys,
-    TupleKey,
     ApiException,
-    ReadRequest,
     CheckRequest,
+    OpenFgaApi,
+    ReadRequest,
+    TupleKey,
+    TupleKeys,
+    WriteRequest,
 )
 from virtool_core.models.enums import Permission
-from virtool_core.models.roles import (
-    AdministratorRole,
-    ReferenceRole,
-    SpaceRoleType,
-)
+from virtool_core.models.roles import AdministratorRole, ReferenceRole, SpaceRoleType
 
-from virtool.authorization.permissions import (
-    ResourceType,
-    ReferencePermission,
-)
+from virtool.authorization.permissions import ReferencePermission, ResourceType
 from virtool.authorization.relationships import AbstractRelationship
 from virtool.authorization.results import (
-    RemoveRelationshipResult,
     AddRelationshipResult,
+    RemoveRelationshipResult,
 )
 
 

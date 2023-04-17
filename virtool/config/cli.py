@@ -34,8 +34,9 @@ from virtool.config.options import (
 )
 from virtool.jobs.main import run_jobs_server
 import virtool.tasks.main
-from virtool.migration.apply import apply_to
+from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
+from virtool.migration.show import show_revisions
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 
@@ -144,7 +145,7 @@ def migration_apply(**kwargs):
 
     logger.info("Applying migrations")
 
-    asyncio.run(apply_to(MigrationConfig(**kwargs)))
+    asyncio.run(apply(MigrationConfig(**kwargs)))
 
 
 @migration.command("create")
@@ -152,6 +153,14 @@ def migration_apply(**kwargs):
 def migration_create(name: str):
     """Create a new migration revision."""
     create_revision(name)
+
+
+@migration.command("show")
+def migration_apply(**kwargs):
+    """Apply all pending migrations."""
+    configure_logs(False)
+
+    show_revisions()
 
 
 @cli.group("tasks")

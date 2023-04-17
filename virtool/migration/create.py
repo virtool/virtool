@@ -25,15 +25,17 @@ def create_revision(name: str):
 
     revision_id = _generate_revision_id(_get_existing_revisions(revisions_path))
 
+    now = arrow.utcnow()
+
     transformed_name = name.lower().replace(" ", "_")
 
     template_to_file(
         "virtool/migration/templates/revision.py.mako",
-        str(revisions_path / f"rev_{revision_id}_{transformed_name}.py"),
+        str(revisions_path / f"rev_{now.format('YYMMDDHHmm')}_{transformed_name}.py"),
         "utf-8",
         name=name,
         revision_id=revision_id,
-        created_at=arrow.utcnow().naive,
+        created_at=now.naive,
     )
 
     print(f"Created empty revision '{name}' with id '{revision_id}'")

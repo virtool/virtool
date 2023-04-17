@@ -4,6 +4,8 @@ from typing import Optional, Union
 
 from pymongo.uri_parser import parse_uri
 
+from virtool.authorization.openfga import OpenfgaScheme
+
 
 @dataclass
 class MigrationConfig:
@@ -15,7 +17,7 @@ class MigrationConfig:
     data_path: Path
     mongodb_connection_string: str
     openfga_host: str
-    openfga_scheme: str
+    openfga_scheme: OpenfgaScheme
     openfga_store_name: str
     postgres_connection_string: str
 
