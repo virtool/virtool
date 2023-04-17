@@ -1,7 +1,6 @@
 import asyncio
 import concurrent.futures
 import logging
-import signal
 import sys
 from dataclasses import dataclass
 from typing import Dict
