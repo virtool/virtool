@@ -97,6 +97,8 @@ class TestFind:
 
         user = await fake2.users.create()
 
+        job = await fake2.jobs.create(user=user)
+
         await asyncio.gather(
             client.db.indexes.insert_many(
                 [
@@ -107,7 +109,7 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": True,
                         "has_files": True,
-                        "job": {"id": "bar"},
+                        "job": {"id": job.id},
                         "reference": {"id": "bar"},
                         "user": {"id": user.id},
                     },
@@ -118,7 +120,7 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": True,
                         "has_files": True,
-                        "job": {"id": "foo"},
+                        "job": {"id": job.id},
                         "reference": {"id": "foo"},
                         "user": {"id": user.id},
                     },
@@ -163,6 +165,8 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
         ),
     )
 
+    job = await fake2.jobs.create(user=user)
+
     if not error:
         await client.db.indexes.insert_one(
             {
@@ -174,7 +178,7 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
                 "manifest": {"foo": 2},
                 "has_files": True,
                 "user": {"id": user.id},
-                "job": {"id": "sj82la"},
+                "job": {"id": job.id},
             }
         )
 
@@ -544,6 +548,8 @@ async def test_finalize(
 
     user = await fake2.users.create()
 
+    job = await fake2.jobs.create(user=user)
+
     if error == "409_genome":
         files = ["reference.fa.gz"]
     elif error == "409_fasta":
@@ -566,7 +572,7 @@ async def test_finalize(
                 "version": 2,
                 "created_at": static_time.datetime,
                 "has_files": True,
-                "job": {"id": "sj82la"},
+                "job": {"id": job.id},
             }
         ),
         # change `version` that should be reflected in `last_indexed_version` after calling

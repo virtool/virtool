@@ -385,3 +385,46 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
         )
 
     return {**document, "files": files}
+
+
+def lookup_index_otu_counts(local_field: str = "index.id") -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up index otu counts.
+
+    :param local_field: index id field to look up
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "history",
+                "let": {"index_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$index.id", "$$index_id"]}}},
+                    {"$sort": {"_id": 1}},
+                    {
+                        "$group": {
+                            "_id": None,
+                            "change_count": {"$sum": 1},
+                            "modified_otu_count": {"$addToSet": "$otu.id"},
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": False,
+                            "change_count": True,
+                            "modified_otu_count": {"$size": "$modified_otu_count"},
+                        }
+                    },
+                ],
+                "as": "counts",
+            }
+        },
+        {"$set": {"counts": {"$first": "$counts"}}},
+        {"$set": {"change_count": {"$ifNull": ["$counts.change_count", 0]}}},
+        {
+            "$set": {
+                "modified_otu_count": {"$ifNull": ["$counts.modified_otu_count", 0]}
+            }
+        },
+    ]

@@ -31,44 +31,27 @@ from virtool.indexes.checks import (
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
     update_last_indexed_versions,
-    IndexCountsTransform,
+    lookup_index_otu_counts,
 )
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import get_index_file_type_from_name, export_index
 from virtool.indexes.utils import join_index_path
+from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 
-from virtool.mongo.utils import id_exists, get_one_field
+from virtool.mongo.utils import get_one_field
 
 from virtool.pg.utils import get_rows
+from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import AttachUserTransform
-
-from virtool.utils import compress_json_with_gzip, wait_for_checks
+from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
 
 logger = logging.getLogger("indexes")
-
-FIND_PIPELINE = [
-    {"$match": {"ready": True}},
-    {"$sort": {"version": -1}},
-    {
-        "$group": {
-            "_id": "$reference.id",
-            "index_id": {"$first": "$_id"},
-            "version": {"$first": "$version"},
-            "created_at": {"$first": "$created_at"},
-            "has_files": {"$first": "$has_files"},
-            "user": {"$first": "$user"},
-            "ready": {"$first": "$ready"},
-            "job": {"$first": "$job"},
-        }
-    },
-]
 
 
 class IndexData:
@@ -91,53 +74,20 @@ class IndexData:
             data = await virtool.indexes.db.find(self._mongo, query)
             return IndexSearchResult(**data)
 
-        pipeline = [
-            {"$match": {"ready": True}},
-            {
-                "$group": {
-                    "_id": "$reference.id",
-                    "index_id": {"$first": "$_id"},
-                    "version": {"$first": "$version"},
-                    "change_count": {"$first": "$change_count"},
-                    "created_at": {"$first": "$created_at"},
-                    "has_files": {"$first": "$has_files"},
-                    "modified_otu_count": {"$first": "$modified_otu_count"},
-                    "user": {"$first": "$user"},
-                    "ready": {"$first": "$ready"},
-                    "job": {"$first": "$job"},
-                }
-            },
-            {"$sort": {"created_at": 1}},
+        return [
+            IndexMinimal(**index)
+            async for index in self._mongo.indexes.aggregate(
+                [
+                    {"$match": {"ready": True}},
+                    *lookup_minimal_job_by_id(),
+                    *lookup_nested_reference_by_id(local_field="reference.id"),
+                    *lookup_nested_user_by_id(),
+                    *lookup_index_otu_counts(local_field="_id"),
+                    {"$sort": {"created_at": 1}},
+                    {"$project": {"counts": False}},
+                ]
+            )
         ]
-
-        items = [
-            {
-                "id": agg["index_id"],
-                "version": agg["version"],
-                "reference": {
-                    "id": agg["_id"],
-                },
-                "change_count": agg["change_count"],
-                "created_at": agg["created_at"],
-                "has_files": agg["has_files"],
-                "modified_otu_count": agg["modified_otu_count"],
-                "user": agg["user"],
-                "ready": agg["ready"],
-                "job": agg["job"],
-            }
-            async for agg in self._mongo.indexes.aggregate(pipeline)
-        ]
-
-        items = await apply_transforms(
-            items,
-            [
-                AttachReferenceTransform(self._mongo),
-                AttachUserTransform(self._mongo),
-                IndexCountsTransform(self._mongo),
-            ],
-        )
-
-        return [IndexMinimal(**index) for index in items]
 
     async def get(self, index_id: str) -> Index:
         """
@@ -146,10 +96,23 @@ class IndexData:
         :param index_id: the index ID
         :return: the index
         """
-        document = await self._mongo.indexes.find_one(index_id)
 
-        if not document:
+        result = await self._mongo.indexes.aggregate(
+            [
+                {"$match": {"_id": index_id}},
+                *lookup_minimal_job_by_id(),
+                *lookup_nested_reference_by_id(local_field="reference.id"),
+                *lookup_nested_user_by_id(),
+                *lookup_index_otu_counts(local_field="_id"),
+                {"$sort": {"created_at": 1}},
+                {"$project": {"counts": False}},
+            ]
+        ).to_list(length=1)
+
+        if not result:
             raise ResourceNotFoundError()
+
+        document = result[0]
 
         contributors, otus = await asyncio.gather(
             virtool.history.db.get_contributors(self._mongo, {"index.id": index_id}),
@@ -158,7 +121,6 @@ class IndexData:
 
         document.update(
             {
-                "change_count": sum(v["change_count"] for v in otus),
                 "contributors": contributors,
                 "otus": otus,
             }
@@ -167,12 +129,6 @@ class IndexData:
         document = await virtool.indexes.db.attach_files(
             self._pg, self._config.base_url, document
         )
-
-        document = await apply_transforms(
-            document, [AttachReferenceTransform(self._mongo)]
-        )
-
-        document = await virtool.indexes.db.processor(self._mongo, document)
 
         return Index(**document)
 

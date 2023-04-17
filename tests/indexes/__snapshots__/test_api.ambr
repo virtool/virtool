@@ -188,7 +188,7 @@
       'has_files': True,
       'id': 'daz',
       'job': <class 'dict'> {
-        'id': 'foo',
+        'id': 'fb085f7f',
       },
       'modified_otu_count': 0,
       'ready': True,
@@ -210,7 +210,7 @@
       'has_files': True,
       'id': 'bot',
       'job': <class 'dict'> {
-        'id': 'bar',
+        'id': 'fb085f7f',
       },
       'modified_otu_count': 0,
       'ready': True,
@@ -321,7 +321,7 @@
     'has_files': True,
     'id': 'test_index',
     'job': <class 'dict'> {
-      'id': 'sj82la',
+      'id': 'fb085f7f',
     },
     'manifest': <class 'dict'> {
       'foo': 4,
@@ -502,7 +502,7 @@
     'has_files': True,
     'id': 'foobar',
     'job': <class 'dict'> {
-      'id': 'sj82la',
+      'id': 'fb085f7f',
     },
     'manifest': <class 'dict'> {
       'foo': 2,
