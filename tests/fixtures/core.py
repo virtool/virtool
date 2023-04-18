@@ -1,9 +1,6 @@
-import shutil
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import arrow
-import multidict
 import pytest
 
 from virtool.example import example_path as virtool_example_path

@@ -1,7 +1,5 @@
 import pytest
 
-import virtool.users.utils
-
 
 @pytest.fixture
 def hmm_document():

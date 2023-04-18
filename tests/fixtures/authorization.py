@@ -1,9 +1,5 @@
-import asyncio
-from enum import Enum
-
 import openfga_sdk
 import pytest
-from openfga_sdk import TupleKey, WriteRequest, TupleKeys, ApiException
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.permissions import ResourceType
