@@ -105,7 +105,7 @@ async def startup_dispatcher(app: App):
     )
 
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
-    
+
 
 async def startup_executors(app: App):
     """

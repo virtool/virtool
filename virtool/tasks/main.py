@@ -1,9 +1,12 @@
 import asyncio
+
 import aiohttp
-import aiojobs
 import aiojobs.aiohttp
 import aiohttp.web
 from aiohttp.web import Application
+
+import aiojobs
+
 from virtool.app import create_app
 
 import virtool.http.accept
