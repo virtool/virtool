@@ -13,7 +13,6 @@ import virtool.http.query
 from virtool.config.cls import Config
 from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.http.policy import route_policy_middleware
-from virtool.process_utils import create_app_runner
 from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_authorization_client,
@@ -115,6 +114,6 @@ def create_app(config: Config):
     return app
 
 
-async def run_app(config: Config):
+def run_app(config: Config, loop: asyncio.AbstractEventLoop = None):
     app = create_app(config)
-    await create_app_runner(app, config.host, config.port)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop)

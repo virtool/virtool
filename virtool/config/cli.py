@@ -7,7 +7,6 @@ import uvloop
 from virtool_core.logging import configure_logs
 
 import virtool.jobs.main
-from virtool.process_utils import add_signal_handlers
 import virtool.tasks.main
 import virtool.tasks.spawner
 from virtool.app import run_app
@@ -76,9 +75,7 @@ def start_api_server(**kwargs):
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
 
-    asyncio.get_event_loop().create_task(run_app(ServerConfig(**kwargs)))
-    add_signal_handlers()
-    asyncio.get_event_loop().run_forever()
+    run_app(ServerConfig(**kwargs), loop=asyncio.new_event_loop())
 
 
 @server.command("jobs")
@@ -99,7 +96,7 @@ def start_jobs_api(**kwargs):
 
     logger.info("Starting the jobs api service")
 
-    asyncio.get_event_loop().create_task(virtool.jobs.main.run(
+    virtool.jobs.main.run(
             ServerConfig(
                 **kwargs,
                 base_url="",
@@ -108,10 +105,9 @@ def start_jobs_api(**kwargs):
                 b2c_tenant="",
                 b2c_user_flow="",
                 use_b2c=False,
-            )
-        ))
-    add_signal_handlers()
-    asyncio.get_event_loop().run_forever()
+            ),
+            loop=asyncio.new_event_loop()
+        )
 
 
 @cli.command
@@ -142,9 +138,7 @@ def start_task_runner(**kwargs):
 
     logger.info("Starting tasks runner")
 
-    asyncio.get_event_loop().create_task(virtool.tasks.main.run(TaskRunnerConfig(**kwargs, base_url="")))
-    add_signal_handlers()
-    asyncio.get_event_loop().run_forever()
+    virtool.tasks.main.run(TaskRunnerConfig(**kwargs, base_url=""), loop=asyncio.new_event_loop())
 
 
 @tasks.command("spawn")
@@ -157,8 +151,6 @@ def spawn_task(task_name: str, **kwargs):
 
     logger.info("Spawning task")
 
-    asyncio.get_event_loop().create_task(
+    asyncio.get_event_loop().run_until_complete(
         virtool.tasks.spawner.spawn(TaskSpawnerConfig(**kwargs), task_name)
     )
-    add_signal_handlers()
-    asyncio.get_event_loop().run_forever()

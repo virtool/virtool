@@ -1,12 +1,13 @@
+import asyncio
+import aiohttp
 import aiojobs.aiohttp
 from aiohttp.web import Application
-
+import aiohttp.web
 import virtool.http.accept
 import virtool.http.errors
 import virtool.jobs.auth
 from virtool.config.cls import ServerConfig
 from virtool.jobs.routes import startup_routes
-from virtool.process_utils import create_app_runner
 from virtool.startup import (
     startup_data,
     startup_databases,
@@ -65,11 +66,6 @@ async def shutdown(app: App):
         pass
 
 
-async def run(config: ServerConfig):
-    """
-    Run the jobs API server.
-
-    :param config: Any other configuration options as keyword arguments
-    """
-    app = await create_app(config)
-    await create_app_runner(app, config.host, config.port)
+def run(config: ServerConfig, loop: asyncio.AbstractEventLoop = None):
+    app = create_app(config)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop)

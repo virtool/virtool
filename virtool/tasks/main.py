@@ -1,13 +1,15 @@
+import asyncio
+import aiohttp
 import aiojobs
 import aiojobs.aiohttp
-from aiohttp import web
+import aiohttp.web
 from aiohttp.web import Application
+from virtool.app import create_app
 
 import virtool.http.accept
 import virtool.http.errors
 from virtool.config.cls import TaskRunnerConfig
 from virtool.dispatcher.events import DispatcherSQLEvents
-from virtool.process_utils import create_app_runner
 from virtool.shutdown import (
     shutdown_authorization_client,
     shutdown_client,
@@ -56,7 +58,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
     aiojobs.aiohttp.setup(app)
 
-    app.add_routes([web.view("/", TasksRunnerView)])
+    app.add_routes([aiohttp.web.view("/", TasksRunnerView)])
 
     app.on_startup.extend(
         [
@@ -85,6 +87,6 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     return app
 
 
-async def run(config: TaskRunnerConfig):
-    app = await create_task_runner_app(config)
-    await create_app_runner(app, config.host, config.port)
+def run(config: TaskRunnerConfig, loop: asyncio.AbstractEventLoop = None):
+    app = create_app(config)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop)
