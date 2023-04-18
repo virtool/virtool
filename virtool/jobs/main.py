@@ -1,5 +1,3 @@
-import asyncio
-
 import aiojobs.aiohttp
 from aiohttp.web import Application
 
@@ -8,11 +6,10 @@ import virtool.http.errors
 import virtool.jobs.auth
 from virtool.config.cls import ServerConfig
 from virtool.jobs.routes import startup_routes
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.process_utils import create_app_runner
 from virtool.startup import (
     startup_data,
     startup_databases,
-    startup_events,
     startup_executors,
     startup_http_client,
     startup_sentry,
@@ -45,7 +42,6 @@ async def create_app(config: ServerConfig):
             startup_databases,
             startup_executors,
             startup_data,
-            startup_events,
             startup_routes,
             startup_settings,
             startup_sentry,
@@ -76,15 +72,4 @@ async def run(config: ServerConfig):
     :param config: Any other configuration options as keyword arguments
     """
     app = await create_app(config)
-    runner = await create_app_runner(app, config.host, config.port)
-
-    _, pending = await asyncio.wait(
-        [
-            wait_for_restart(runner, app["events"]),
-            wait_for_shutdown(runner, app["events"]),
-        ],
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-
-    for job in pending:
-        job.cancel()
+    await create_app_runner(app, config.host, config.port)

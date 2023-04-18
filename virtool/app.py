@@ -13,7 +13,7 @@ import virtool.http.query
 from virtool.config.cls import Config
 from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.http.policy import route_policy_middleware
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.process_utils import create_app_runner
 from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_authorization_client,
@@ -29,7 +29,6 @@ from virtool.startup import (
     startup_data,
     startup_databases,
     startup_dispatcher,
-    startup_events,
     startup_executors,
     startup_http_client,
     startup_paths,
@@ -86,7 +85,6 @@ def create_app(config: Config):
     app.on_startup.extend(
         [
             startup_version,
-            startup_events,
             startup_http_client,
             startup_databases,
             startup_dispatcher,
@@ -119,16 +117,4 @@ def create_app(config: Config):
 
 async def run_app(config: Config):
     app = create_app(config)
-
-    runner = await create_app_runner(app, config.host, config.port)
-
-    _, pending = await asyncio.wait(
-        [
-            wait_for_restart(runner, app["events"]),
-            wait_for_shutdown(runner, app["events"]),
-        ],
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-
-    for task in pending:
-        task.cancel()
+    await create_app_runner(app, config.host, config.port)

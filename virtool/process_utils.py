@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import os
+import signal
 import sys
 
 import aiohttp.web
@@ -44,41 +44,22 @@ async def create_app_runner(
     return runner
 
 
-async def wait_for_restart(runner: aiohttp.web.AppRunner, events: dict):
-    """
-    Wait for the shutdown event and restart if it is encountered.
+def add_signal_handlers():
+    loop = asyncio.get_event_loop()
 
-    Restart is accomplished using :func:`os.execl` or :func:`os.execv` after cleaning up the `runner`.
+    async def shutdown(sig: signal.Signals) -> None:
+        """
+        Cancel all running async tasks (other than this one) when called.
+        By catching asyncio.CancelledError, any running task can perform
+        any necessary cleanup when it's cancelled.
+        """
+        tasks = []
+        for task in asyncio.all_tasks(loop):
+            if task is not asyncio.current_task(loop):
+                task.cancel()
+                tasks.append(task)
+                
+        loop.stop()
 
-    :param runner: the :class:`~aiohttp.web.AppRunner` returned by :func:`.create_app_runner`
-    :param events: a dict containing the `restart` and `shutdown` :class:`~asyncio.Event` objects
-
-    """
-    await events["restart"].wait()
-    await asyncio.sleep(0.5)
-    await runner.cleanup()
-
-    exe = sys.executable
-
-    if exe.endswith("python") or "python3" in exe:
-        os.execl(exe, exe, *sys.argv)
-        return
-
-    if exe.endswith("run"):
-        os.execv(exe, sys.argv)
-        return
-
-    raise SystemError("Could not determine executable type")
-
-
-async def wait_for_shutdown(runner: aiohttp.web.AppRunner, events: dict):
-    """
-    Wait for the shutdown event and terminate if it is encountered.
-
-    :param runner: the :class:`~aiohttp.web.AppRunner` returned by :func:`.create_app_runner`
-    :param events: a dict containing the `restart` and `shutdown` :class:`~asyncio.Event` objects
-
-    """
-    await events["shutdown"].wait()
-    await asyncio.sleep(0.5)
-    await runner.cleanup()
+    for sig in [signal.SIGINT, signal.SIGTERM]:
+        loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown(sig)))
