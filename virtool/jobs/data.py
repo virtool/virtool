@@ -203,9 +203,12 @@ class JobsData:
 
         """
 
+        job_mongo = copy.copy(self._db)
+        job_client = copy.copy(self._client)
+
         return await create_job(
-            copy.copy(self._db),
-            copy.copy(self._client),
+            job_mongo,
+            job_client,
             workflow,
             job_args,
             user_id,

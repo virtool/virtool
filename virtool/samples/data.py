@@ -387,9 +387,12 @@ class SamplesData(DataLayerPiece):
 
             sample_id = document["_id"]
 
+            job_mongo = copy.copy(self.data.jobs._db)
+            job_client = copy.copy(self.data.jobs._client)
+
             await create_job(
-                mongo=copy.copy(self.data.jobs._db),
-                client=copy.copy(self.data.jobs._client),
+                mongo=job_mongo,
+                client=job_client,
                 workflow="create_sample",
                 job_args={
                     "sample_id": sample_id,
