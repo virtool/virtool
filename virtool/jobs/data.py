@@ -1,3 +1,4 @@
+import copy
 import math
 from asyncio import gather
 from collections import defaultdict
@@ -203,7 +204,8 @@ class JobsData:
         """
 
         return await create_job(
-            self,
+            copy.copy(self._db),
+            copy.copy(self._client),
             workflow,
             job_args,
             user_id,

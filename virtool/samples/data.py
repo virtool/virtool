@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import logging
 import math
 from asyncio import to_thread
@@ -387,9 +388,10 @@ class SamplesData(DataLayerPiece):
             sample_id = document["_id"]
 
             await create_job(
-                self.data.jobs,
-                "create_sample",
-                {
+                mongo=copy.copy(self.data.jobs._db),
+                client=copy.copy(self.data.jobs._client),
+                workflow="create_sample",
+                job_args={
                     "sample_id": sample_id,
                     "files": [
                         {
@@ -400,11 +402,11 @@ class SamplesData(DataLayerPiece):
                         for upload in uploads
                     ],
                 },
-                user_id,
-                JobRights(),
-                0,
-                job_id,
-                session
+                user_id=user_id,
+                rights=JobRights(),
+                space_id=0,
+                job_id=job_id,
+                session=session
             )
 
         return await self.get(sample_id)

@@ -6,8 +6,10 @@ application database.
 from typing import Optional
 
 from virtool_core.models.job import Job, JobAcquired, JobState
+from virtool.jobs.client import AbstractJobsClient
 
 from virtool.jobs.utils import compose_status, JobRights
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
@@ -130,7 +132,8 @@ def lookup_minimal_job_by_id(
 
 
 async def create_job(
-        jobs_data,
+        mongo: Mongo,
+        client: AbstractJobsClient,
         workflow: str,
         job_args: Document,
         user_id: str,
@@ -175,7 +178,7 @@ async def create_job(
     if job_id:
         document["_id"] = job_id
 
-    document = await jobs_data._db.jobs.insert_one(document, session=session)
-    await jobs_data._client.enqueue(workflow, document["_id"])
+    document = await mongo.jobs.insert_one(document, session=session)
+    await client.enqueue(workflow, document["_id"])
 
-    return await fetch_complete_job(jobs_data._db, document)
+    return await fetch_complete_job(mongo, document)
