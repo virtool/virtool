@@ -55,7 +55,7 @@ class AnalysesView(PydanticView):
         """
         Find analyses.
 
-        Finds analyses based on a search `term`.
+        Fetches analyses based on a search `term`.
 
         The response will only list analyses on which the user agent has read rights.
 
@@ -80,7 +80,7 @@ class AnalysisView(PydanticView):
         """
         Get analysis.
 
-        Retrieves the details of an analysis.
+        Fetches the details of an analysis.
 
         Status Codes:
             200: Successful operation
@@ -124,7 +124,7 @@ class AnalysisView(PydanticView):
         """
         Delete an analysis.
 
-        Permanently deletes and analysis.
+        Permanently deletes an analysis.
 
         Status Codes:
             204: Successful operation
@@ -158,7 +158,9 @@ class AnalysisView(PydanticView):
 @routes.jobs_api.get("/analyses/{analysis_id}")
 async def get_for_jobs_api(req: Request) -> Response:
     """
-    Get a complete analysis document.
+    Get analysis document.
+
+    Fetches the complete analysis document.
 
     """
     if_modified_since = req.headers.get("If-Modified-Since")
@@ -189,6 +191,11 @@ async def get_for_jobs_api(req: Request) -> Response:
 
 @routes.jobs_api.delete("/analyses/{analysis_id}")
 async def delete_analysis(req):
+    """
+    Delete analysis.
+
+    Deletes an analysis using its 'analysis id'.
+    """
     try:
         await get_data_from_req(req).analyses.delete(
             req.match_info["analysis_id"], True
@@ -204,7 +211,9 @@ async def delete_analysis(req):
 @routes.jobs_api.put("/analyses/{id}/files")
 async def upload(req: Request) -> Response:
     """
-    Upload a new analysis result file to the `analysis_files` SQL table and the
+    Upload a new analysis result file.
+
+    Uploads a new analysis result file to the `analysis_files` SQL table and the
     `analyses` folder in the Virtool data path.
 
     """
@@ -242,7 +251,7 @@ class AnalysisFileView(PydanticView):
         """
         Download a file.
 
-        Downloads a file associated with an analysis. Some workflows retain key files
+        Fetches the file linked to an analysis. Some workflows retain key files
         after the complete.
 
         Status Codes:
@@ -274,7 +283,7 @@ class DocumentDownloadView(PydanticView):
         """
         Download an analysis.
 
-        Downloads analysis data in CSV or XSLX format. The returned format depends on
+        Fetches analysis data in CSV or XSLX format. The returned format depends on
         the extension included in the request path.
 
         Status Codes:
@@ -350,7 +359,11 @@ class BlastView(PydanticView):
 @routes.jobs_api.patch("/analyses/{analysis_id}")
 @schema({"results": {"type": "dict", "required": True}})
 async def finalize(req: Request):
-    """Sets the result for an analysis and marks it as ready."""
+    """
+    Finalize.
+
+    Sets the result for an analysis and marks it as ready.
+    """
     analysis_id = req.match_info["analysis_id"]
     data = await req.json()
 

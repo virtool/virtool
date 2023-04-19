@@ -40,7 +40,7 @@ class JobsView(PydanticView):
         """
         Find jobs.
 
-        Finds jobs on the instance.
+        Fetches jobs on the instance.
 
         Jobs can be filtered by their current ``state`` by providing desired states as
         query parameters.
@@ -61,6 +61,8 @@ class JobsView(PydanticView):
         self, data: ArchiveJobsRequest
     ) -> Union[r200[List[JobMinimal]], r400]:
         """
+        Update archived field.
+
         Sets the archived field on job documents.
 
         Status Codes:
@@ -85,7 +87,7 @@ class JobView(PydanticView):
         """
         Get a job.
 
-        Retrieves the details for a job.
+        Fetches the details for a job.
 
         Status Codes:
             200: Successful operation
@@ -104,6 +106,7 @@ async def get(req):
     """
     Get a job.
 
+    Fetches a job using the 'job id'.
     """
     try:
         document = await get_data_from_req(req).jobs.get(req.match_info["job_id"])
@@ -138,6 +141,8 @@ async def acquire(req):
 @routes.jobs_api.patch("/jobs/{job_id}/archive")
 async def archive(req):
     """
+    Update archived field.
+
     Sets the archived field on the job document.
     """
     try:
@@ -156,6 +161,8 @@ class CancelJobView(PydanticView):
     async def put(self, job_id: str, /) -> Union[r200[JobResponse], r403, r404, r409]:
         """
         Cancel a job.
+
+        Cancels a job using its 'job id'.
 
         Status Codes:
             200: Successful operation
@@ -235,7 +242,11 @@ async def ping(req):
     }
 )
 async def push_status(req):
-    """Push a status update to a job."""
+    """
+    Push status.
+
+    Push a status update to a job.
+    """
     data = req["data"]
 
     if data["state"] == "error" and not data["error"]:

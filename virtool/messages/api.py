@@ -23,7 +23,9 @@ routes = Routes()
 class MessagesView(PydanticView):
     async def get(self) -> r200[Optional[MessageResponse]]:
         """
-        Retrieve the active administrative instance message.
+        Get the administrative instance message
+
+        Fetches the active administrative instance message.
 
         Status Codes:
             200: Successful operation
@@ -37,7 +39,9 @@ class MessagesView(PydanticView):
 
     async def put(self, data: CreateMessageRequest) -> r200[CreateMessageResponse]:
         """
-        Create a new administrative instance message.
+        Create administrative instance message.
+
+        Creates a new administrative instance message.
 
         Status Codes:
             200: Successful operation
@@ -56,7 +60,9 @@ class MessagesView(PydanticView):
         self, data: UpdateMessageRequest
     ) -> Union[r200[UpdateMessageResponse], r404, r409]:
         """
-        Update the existing active administrative instance message.
+        Update administrative instance message.
+
+        Updates the existing active administrative instance message.
 
         Status Codes:
             200: Successful operation

@@ -28,7 +28,7 @@ class GroupsView(PydanticView):
         """
         List groups.
 
-        Lists all user groups. The group IDs and names are included in the response.
+        Fetches all user groups. The group IDs and names are included in the response.
 
         Status Codes:
             200: Successful operation
@@ -117,7 +117,9 @@ class GroupView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def delete(self, group_id: str, /) -> Union[r204, r404]:
         """
-        Delete a group.
+        Delete group.
+
+        Deletes a group by its 'group id'.
 
         Status Codes:
             204: No content

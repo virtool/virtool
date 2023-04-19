@@ -46,7 +46,7 @@ class UsersView(PydanticView):
         """
         List all users.
 
-        Returns a paginated list of all users in the instance.
+        Fetches a paginated list of all users in the instance.
 
         Status Codes:
             200: Successful operation
@@ -157,7 +157,7 @@ class UserView(PydanticView):
         """
         Retrieve a user.
 
-        Returns the details for a user.
+        Fetches the details for a user.
 
         Status Codes:
             200: Success
@@ -214,7 +214,9 @@ class UserView(PydanticView):
 class PermissionsView(PydanticView):
     async def get(self, user_id: str, /) -> r200[PermissionsResponse]:
         """
-        List all roles that a user has on the space.
+        List user roles.
+
+        Fetches all roles that a user has on the space.
 
         Status Codes:
             200: Successful operation
@@ -234,7 +236,9 @@ class PermissionView(PydanticView):
         self, user_id: str, role: SpaceRoleType, /
     ) -> r200[PermissionResponse]:
         """
-        Add a role for a user
+        Add user role.
+
+        Adds a role for a user.
 
         Status Codes:
             200: Successful operation
@@ -250,7 +254,9 @@ class PermissionView(PydanticView):
         self, user_id: str, role: SpaceRoleType, /
     ) -> r200[PermissionResponse]:
         """
-        Delete a permission for a user
+        Delete user permission.
+
+        Removes a permission for a user.
 
         Status Codes:
             200: Successful operation

@@ -41,11 +41,10 @@ class IndexesView(PydanticView):
         """
         Find indexes.
 
-        Retrieves a list of indexes.
+        Fetches a list of indexes.
 
         Status Codes:
             200: Successful operation
-
         """
         data = await get_data_from_req(self.request).index.find(
             ready, self.request.query
@@ -64,7 +63,7 @@ class IndexView(PydanticView):
         """
         Get an index.
 
-        Retrieves the details for an index.
+        Fetches the details for an index.
 
         Status Codes:
             200: Successful operation
@@ -82,7 +81,9 @@ class IndexView(PydanticView):
 @routes.jobs_api.get("/indexes/{index_id}/files/otus.json.gz")
 async def download_otus_json(req):
     """
-    Download a complete compressed JSON representation of the index OTUs.
+    Download OTUs json.
+
+    Downloads a complete compressed JSON representation of the index OTUs.
 
     """
     try:
@@ -105,7 +106,9 @@ async def download_otus_json(req):
 class IndexFileView(PydanticView):
     async def get(self, index_id: str, filename: str, /) -> Union[r200, r404]:
         """
-        Download files relating to a given index.
+        Download index files
+
+        Fetches files relating to a given index.
 
         Status Codes:
             200: Successful operation
@@ -145,7 +148,12 @@ class IndexFileView(PydanticView):
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
 async def download_index_file_for_jobs(req: Request):
-    """Download files relating to a given index for jobs."""
+    """
+    Download index file for jobs
+
+    Downloads files relating to a given index for jobs.
+
+    """
     index_id = req.match_info["index_id"]
     filename = req.match_info["filename"]
 
@@ -170,7 +178,11 @@ async def download_index_file_for_jobs(req: Request):
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
 async def upload(req):
-    """Upload a new index file."""
+    """
+    Upload
+
+    Uploads a new index file.
+    """
     index_id = req.match_info["index_id"]
     name = req.match_info["filename"]
 
@@ -224,7 +236,7 @@ class IndexHistoryView(PydanticView):
         """
         List history.
 
-        Find history changes for a specific index.
+        Fetches history changes for a specific index.
 
         Status Codes:
             200: Successful operation
@@ -243,7 +255,11 @@ class IndexHistoryView(PydanticView):
 
 @routes.jobs_api.delete("/indexes/{index_id}")
 async def delete_index(req: Request):
-    """Delete the index with the given id and reset history relating to that index."""
+    """
+    Delete index.
+
+    Delete the index with the given id and reset history relating to that index.
+    """
     index_id = req.match_info["index_id"]
 
     try:

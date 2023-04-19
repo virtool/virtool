@@ -37,7 +37,7 @@ class SubtractionsView(PydanticView):
         """
         Find subtractions.
 
-        Finds subtractions by their `name` or `nickname` by providing a `term` as a
+        Fetches subtractions by their `name` or `nickname` by providing a `term` as a
         query parameter. Partial matches are supported.
 
         Supports pagination unless the `short` query parameter is set. In this case, an
@@ -98,7 +98,7 @@ class SubtractionView(PydanticView):
         """
         Get a subtraction.
 
-        Retrieves the details of a subtraction.
+        Fetches the details of a subtraction.
 
         Status Codes:
             200: Operation Successful
@@ -162,7 +162,11 @@ class SubtractionView(PydanticView):
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
 async def upload(req):
-    """Upload a new subtraction file."""
+    """
+    Upload subtraction file.
+
+    Uploads a new subtraction file.
+    """
     subtraction_id = req.match_info["subtraction_id"]
     filename = req.match_info["filename"]
 
@@ -193,6 +197,8 @@ async def upload(req):
 )
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
+    Finalize subtraction.
+
     Sets the GC field for a subtraction and marks it as ready.
 
     """
@@ -243,9 +249,9 @@ class SubtractionFileView(PydanticView):
         self, subtraction_id: str, filename: str, /
     ) -> Union[r200, r400, r404]:
         """
-        Download a file.
+        Download a subtraction file.
 
-        Downloads a Bowtie2 index or FASTA file for the given subtraction.
+        Fetches a Bowtie2 index or FASTA file for the given subtraction.
 
         Files are attached to the subtraction as part of the creation job. They aren't
         available for download until the job has completed and the `ready` field is

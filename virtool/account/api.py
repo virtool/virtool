@@ -49,7 +49,7 @@ class AccountView(PydanticView):
         """
         Get account.
 
-        Retrieves the details for the account associated with the user agent.
+        Fetches the details for the account associated with the user agent.
 
         Status Codes:
             200: Successful Operation
@@ -105,7 +105,7 @@ class SettingsView(PydanticView):
         """
         Get account settings.
 
-        Retrieves the settings for the account associated with the user agent.
+        Fetches the settings for the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -143,7 +143,7 @@ class KeysView(PydanticView):
         """
         List API keys.
 
-        Lists all API keys registered on the account associated with the user agent.
+        Fetches all API keys registered on the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -210,7 +210,7 @@ class KeyView(PydanticView):
         """
         Get an API key.
 
-        Retrieves the details for an API key registered on the account associated with
+        Fetches the details for an API key registered on the account associated with
         the user agent.
 
         Status Codes:
@@ -254,8 +254,9 @@ class KeyView(PydanticView):
 
     async def delete(self, key_id: str, /) -> Union[r204, r401, r404]:
         """
-        Delete
-        Remove an API key by its ID.
+        Delete API key.
+
+        Removes an API key by its 'key id'.
 
         Status Codes:
             204: Successful operation
@@ -340,7 +341,7 @@ class LogoutView(PydanticView):
         """
         Logout.
 
-        Logout the user by invalidating the session associated with the user agent. A
+        Logs out the user by invalidating the session associated with the user agent. A
         new unauthenticated session ID is returned in cookies.
 
         Status Codes:
@@ -368,7 +369,7 @@ class ResetView(PydanticView):
         """
         Reset password.
 
-        Reset the password for the account associated with the requesting session.
+        Resets the password for the account associated with the requesting session.
 
         Status Codes:
             200: Successful operation

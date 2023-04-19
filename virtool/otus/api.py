@@ -35,7 +35,7 @@ class OTUView(PydanticView):
         """
         Get an OTU.
 
-        Retrieves the details of an OTU.
+        Fetches the details of an OTU.
 
         A FASTA file containing all sequences in the OTU can be downloaded by appending
         `.fa` to the path.
@@ -144,7 +144,7 @@ class IsolatesView(PydanticView):
         """
         List isolates.
 
-        Lists all the isolates and sequences for an OTU.
+        Fetches all the isolates and sequences for an OTU.
 
         """
         db = self.request.app["db"]
@@ -208,7 +208,7 @@ class IsolateView(PydanticView):
         """
         Get an isolate.
 
-        Retrieves the details of an isolate.
+        Fetches the details of an isolate.
 
         A FASTA file containing all sequences in the isolate can be downloaded by
         appending `.fa` to the path.
@@ -256,7 +256,7 @@ class IsolateView(PydanticView):
         self, otu_id: str, isolate_id: str, /, data: UpdateIsolateRequest
     ) -> Union[r200[OTUIsolate], r401, r404]:
         """
-        Update an isolate.
+        Update isolate.
 
         Updates an isolate.
 
@@ -302,9 +302,9 @@ class IsolateView(PydanticView):
 
     async def delete(self, otu_id: str, isolate_id: str, /):
         """
-        Delete an isolate.
+        Delete isolate.
 
-        Deletes and isolate.
+        Deletes an isolate using its 'otu id' and 'isolate id'.
 
         """
         db = self.request.app["db"]
@@ -336,7 +336,7 @@ class SequencesView(PydanticView):
         """
         List sequences.
 
-        Lists the sequences for an isolate.
+        Fetches the sequences for an isolate.
 
         """
         db = self.request.app["db"]
@@ -417,7 +417,7 @@ class SequenceView(PydanticView):
         """
         Get a sequence.
 
-        Retrieves the details for a sequence.
+        Fetches the details for a sequence.
 
         A FASTA file containing the nucelotide sequence can be downloaded by appending
         `.fa` to the path.
@@ -464,7 +464,9 @@ class SequenceView(PydanticView):
         data: UpdateSequenceRequest,
     ) -> Union[r200[Sequence], r400, r401, r403, r404]:
         """
-        Update a sequence.
+        Update sequence.
+
+        Updates a sequence using its 'otu id', 'isolate id' and 'sequence id'.
 
         """
         db = self.request.app["db"]
@@ -505,7 +507,9 @@ class SequenceView(PydanticView):
 
     async def delete(self, otu_id: str, isolate_id: str, sequence_id: str, /):
         """
-        Delete a sequence.
+        Delete sequence.
+
+        Deletes the specified sequence.
 
         """
         db = self.request.app["db"]
@@ -534,6 +538,11 @@ class SequenceView(PydanticView):
 
 @routes.get("/otus/{otu_id}/history")
 async def list_history(req):
+    """
+    List history.
+
+    Lists an OTU's history.
+    """
     db = req.app["db"]
 
     otu_id = req.match_info["otu_id"]
