@@ -53,10 +53,12 @@ logger = logging.getLogger(__name__)
 
 
 class SamplesData(DataLayerPiece):
-    def __init__(self, config: Config, db, pg: AsyncEngine):
+    def __init__(self, config: Config, db, pg: AsyncEngine, jobs_data = None):
         self._config = config
         self._db = db
         self._pg = pg
+        if jobs_data is not None:
+            self.jobs_data = jobs_data
 
     async def find(
         self,
@@ -387,12 +389,9 @@ class SamplesData(DataLayerPiece):
 
             sample_id = document["_id"]
 
-            job_mongo = copy.copy(self.data.jobs._db)
-            job_client = copy.copy(self.data.jobs._client)
-
             await create_job(
-                mongo=job_mongo,
-                client=job_client,
+                mongo=self.jobs_data.get_mongo(),
+                client=self.jobs_data.get_client(),
                 workflow="create_sample",
                 job_args={
                     "sample_id": sample_id,
