@@ -114,6 +114,6 @@ def create_app(config: Config):
     return app
 
 
-def run_app(config: Config, loop: asyncio.AbstractEventLoop = None):
+def run_api_server(config: Config):
     app = create_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)

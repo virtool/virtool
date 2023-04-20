@@ -90,6 +90,6 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     return app
 
 
-def run(config: TaskRunnerConfig, loop: asyncio.AbstractEventLoop = None):
+def run_task_runner(config: TaskRunnerConfig):
     app = create_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)

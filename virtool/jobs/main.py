@@ -66,6 +66,6 @@ async def shutdown(app: App):
         pass
 
 
-def run(config: ServerConfig, loop: asyncio.AbstractEventLoop = None):
+def run_jobs_server(config: ServerConfig):
     app = create_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)

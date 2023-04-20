@@ -9,7 +9,7 @@ from virtool_core.logging import configure_logs
 import virtool.jobs.main
 import virtool.tasks.main
 import virtool.tasks.spawner
-from virtool.app import run_app
+from virtool.app import run_api_server
 from virtool.config.cls import ServerConfig, TaskRunnerConfig, TaskSpawnerConfig
 from virtool.config.options import (
     address_options,
@@ -75,7 +75,7 @@ def start_api_server(**kwargs):
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
 
-    run_app(ServerConfig(**kwargs), loop=asyncio.new_event_loop())
+    run_api_server(ServerConfig(**kwargs))
 
 
 @server.command("jobs")
@@ -96,7 +96,7 @@ def start_jobs_api(**kwargs):
 
     logger.info("Starting the jobs api service")
 
-    virtool.jobs.main.run(
+    virtool.jobs.main.run_jobs_server(
             ServerConfig(
                 **kwargs,
                 base_url="",
@@ -105,8 +105,7 @@ def start_jobs_api(**kwargs):
                 b2c_tenant="",
                 b2c_user_flow="",
                 use_b2c=False,
-            ),
-            loop=asyncio.new_event_loop()
+            )
         )
 
 
@@ -138,7 +137,7 @@ def start_task_runner(**kwargs):
 
     logger.info("Starting tasks runner")
 
-    virtool.tasks.main.run(TaskRunnerConfig(**kwargs, base_url=""), loop=asyncio.new_event_loop())
+    virtool.tasks.main.run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
 
 
 @tasks.command("spawn")
