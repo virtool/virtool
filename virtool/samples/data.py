@@ -1,5 +1,4 @@
 import asyncio
-import copy
 import logging
 import math
 from asyncio import to_thread
