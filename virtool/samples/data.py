@@ -11,6 +11,7 @@ from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.analysis import AnalysisSearchResult
 from virtool_core.models.samples import SampleSearchResult, Sample
+from virtool.mongo.core import Mongo
 
 import virtool.utils
 from virtool.api.utils import compose_regex_query
@@ -54,7 +55,7 @@ logger = logging.getLogger(__name__)
 
 
 class SamplesData(DataLayerPiece):
-    def __init__(self, config: Config, mongo, pg: AsyncEngine, jobs_client: JobsClient):
+    def __init__(self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient):
         self._config = config
         self._mongo = mongo
         self._pg = pg
