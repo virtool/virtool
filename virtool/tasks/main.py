@@ -1,5 +1,3 @@
-import asyncio
-
 import aiohttp
 import aiojobs.aiohttp
 import aiohttp.web

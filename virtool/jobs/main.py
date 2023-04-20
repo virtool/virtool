@@ -1,4 +1,3 @@
-import asyncio
 import aiohttp
 import aiojobs.aiohttp
 from aiohttp.web import Application
