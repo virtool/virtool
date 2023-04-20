@@ -157,10 +157,6 @@ async def create_job(
     :param session: MongoDB session to use
 
     """
-
-    # call db function to do the real work
-    #  assume db function named create_job(**params, session=None)
-    # createjob(**params, session=None)
     document = {
         "acquired": False,
         "archived": False,

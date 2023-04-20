@@ -346,7 +346,9 @@ class TestCreate:
         )
 
         data = get_data_from_app(client.app)
-        data.jobs._client = DummyJobsClient()
+        dummy_jobs_client = DummyJobsClient()
+        data.jobs._client = dummy_jobs_client
+        data.samples.jobs_client = dummy_jobs_client
 
         label = await fake2.labels.create()
 

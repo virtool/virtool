@@ -36,12 +36,6 @@ class JobsData:
         self._db = db
         self._pg = pg
 
-    def get_client(self):
-        return self._client
-    
-    def get_mongo(self):
-        return self._db
-
     async def _get_counts(
         self,
     ) -> Dict[str, Dict[str, int]]:
