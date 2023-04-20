@@ -184,26 +184,9 @@ class SamplesData(DataLayerPiece):
 
         match_query = {
             "$and": [
-                {
-                    "$or": [
-                        {
-                            "reference.name": {
-                                "$regex": term,
-                                "$options": "i",
-                            }
-                        }
-                        if term
-                        else {},
-                        {
-                            "user.id": {
-                                "$regex": term,
-                                "$options": "i",
-                            }
-                        }
-                        if term
-                        else {},
-                    ]
-                },
+                compose_regex_query(term, ["reference.name", "user.id"])
+                if term
+                else {},
                 {"sample.id": sample_id},
             ]
         }
@@ -220,16 +203,14 @@ class SamplesData(DataLayerPiece):
                             {"$count": "found_count"},
                         ],
                         "data": [
-                            {
-                                "$match": match_query,
-                            },
+                            {"$match": match_query},
+                            {"$sort": sort},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
                             *lookup_minimal_job_by_id(),
                             *lookup_nested_subtractions(),
                             *lookup_nested_reference_by_id(),
                             *lookup_nested_user_by_id(),
-                            {"$sort": sort},
-                            {"$skip": skip_count},
-                            {"$limit": per_page},
                         ],
                     }
                 },
