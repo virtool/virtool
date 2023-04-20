@@ -1,4 +1,3 @@
-import copy
 import math
 from asyncio import gather
 from collections import defaultdict
