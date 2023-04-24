@@ -3,17 +3,18 @@ Constants and utility functions for interacting with the jobs collection in the
 application database.
 
 """
+from __future__ import annotations
+
 from typing import Optional
 
 from virtool_core.models.job import Job, JobAcquired, JobState
-from virtool.jobs.client import AbstractJobsClient
 
-from virtool.jobs.utils import compose_status, JobRights
-from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.jobs.client import AbstractJobsClient
+from virtool.jobs.utils import JobRights, compose_status
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
-from virtool.utils import base_processor
+from virtool.utils import base_processor, get_safely
 
 OR_COMPLETE = [{"status.state": "complete"}]
 
@@ -31,6 +32,35 @@ LIST_PROJECTION = [
 
 #: A projection for full job details. Excludes the secure key field.
 PROJECTION = {"key": False}
+
+
+class AttachJobsTransform(AbstractTransform):
+    def __init__(self, mongo: "Mongo"):
+        self.mongo = mongo
+
+    async def prepare_one(self, document: Document) -> Document:
+        job_id = get_safely(document, "job", "id")
+
+        if job_id:
+            job = await self.mongo.jobs.find_one(
+                job_id, ["archived", "status", "user", "workflow"]
+            )
+
+            last_status = job["status"][-1]
+
+            return await apply_transforms(
+                {
+                    **job,
+                    "created_at": job["status"][0]["timestamp"],
+                    "progress": last_status["progress"],
+                    "state": last_status["state"],
+                    "stage": last_status["stage"],
+                },
+                [AttachUserTransform(self.mongo)],
+            )
+
+    async def attach_one(self, document: Document, prepared: Document) -> Document:
+        return {**document, "job": prepared}
 
 
 async def processor(db, document: dict) -> dict:
@@ -78,7 +108,7 @@ async def fetch_complete_job(db, document, key=None) -> Job:
 
 
 def lookup_minimal_job_by_id(
-        local_field: str = "job.id", set_as: str = "job"
+    local_field: str = "job.id", set_as: str = "job"
 ) -> list[dict]:
     """
     Create a mongoDB aggregation pipeline step to look up a job by id.
@@ -132,15 +162,15 @@ def lookup_minimal_job_by_id(
 
 
 async def create_job(
-        mongo: Mongo,
-        client: AbstractJobsClient,
-        workflow: str,
-        job_args: Document,
-        user_id: str,
-        rights: JobRights,
-        space_id: int,
-        job_id: Optional[str] = None,
-        session=None
+    mongo: "Mongo",
+    client: AbstractJobsClient,
+    workflow: str,
+    job_args: Document,
+    user_id: str,
+    rights: JobRights,
+    space_id: int,
+    job_id: Optional[str] = None,
+    session=None,
 ) -> Job:
     """
     Create a job record and queue it.
