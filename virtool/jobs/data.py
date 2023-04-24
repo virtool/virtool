@@ -20,7 +20,7 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
-from virtool.jobs.db import PROJECTION, fetch_complete_job
+from virtool.jobs.db import PROJECTION, fetch_complete_job, create_job
 from virtool.jobs.utils import JobRights, compose_status
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
@@ -30,9 +30,9 @@ from virtool.users.db import AttachUserTransform
 
 
 class JobsData:
-    def __init__(self, client: AbstractJobsClient, db: Mongo, pg: AsyncEngine):
+    def __init__(self, client: AbstractJobsClient, mongo: Mongo, pg: AsyncEngine):
         self._client = client
-        self._db = db
+        self._mongo = mongo
         self._pg = pg
 
     async def _get_counts(
@@ -40,7 +40,7 @@ class JobsData:
     ) -> Dict[str, Dict[str, int]]:
         counts = defaultdict(dict)
 
-        async for a in self._db.jobs.aggregate(
+        async for a in self._mongo.jobs.aggregate(
             [
                 {"$match": {"archived": False}},
                 {"$addFields": {"last_status": {"$last": "$status"}}},
@@ -90,7 +90,7 @@ class JobsData:
         total_count = 0
         page_count = 0
 
-        async for paginate_dict in self._db.jobs.aggregate(
+        async for paginate_dict in self._mongo.jobs.aggregate(
             [
                 {
                     "$facet": {
@@ -164,7 +164,7 @@ class JobsData:
             total_count = paginate_dict.get("total_count", 0)
             page_count = int(math.ceil(found_count / per_page))
 
-        documents = await apply_transforms(data, [AttachUserTransform(self._db)])
+        documents = await apply_transforms(data, [AttachUserTransform(self._mongo)])
 
         for document in documents:
             document["user"] = UserNested(**document["user"])
@@ -201,27 +201,17 @@ class JobsData:
         :param job_id: an optional ID to use for the new job
 
         """
-        document = {
-            "acquired": False,
-            "archived": False,
-            "workflow": workflow,
-            "args": job_args,
-            "key": None,
-            "rights": rights.as_dict(),
-            "space": {"id": space_id},
-            "state": JobState.WAITING.value,
-            "status": [compose_status(JobState.WAITING, None)],
-            "user": {"id": user_id},
-            "ping": None,
-        }
 
-        if job_id:
-            document["_id"] = job_id
-
-        document = await self._db.jobs.insert_one(document)
-        await self._client.enqueue(workflow, document["_id"])
-
-        return await fetch_complete_job(self._db, document)
+        return await create_job(
+            self._mongo,
+            self._client,
+            workflow,
+            job_args,
+            user_id,
+            rights,
+            space_id,
+            job_id,
+        )
 
     async def get(self, job_id: str) -> Job:
         """
@@ -230,12 +220,12 @@ class JobsData:
         :param job_id: the ID of the job document to get.
         :return: the job document
         """
-        document = await self._db.jobs.find_one(job_id, projection=PROJECTION)
+        document = await self._mongo.jobs.find_one(job_id, projection=PROJECTION)
 
         if document is None:
             raise ResourceNotFoundError
 
-        return await fetch_complete_job(self._db, document)
+        return await fetch_complete_job(self._mongo, document)
 
     async def acquire(self, job_id: str):
         """
@@ -245,7 +235,7 @@ class JobsData:
         :return: the complete job document
 
         """
-        acquired = await get_one_field(self._db.jobs, "acquired", job_id)
+        acquired = await get_one_field(self._mongo.jobs, "acquired", job_id)
 
         if acquired is None:
             raise ResourceNotFoundError("Job not found")
@@ -255,7 +245,7 @@ class JobsData:
 
         key, hashed = virtool.utils.generate_key()
 
-        document = await self._db.jobs.find_one_and_update(
+        document = await self._mongo.jobs.find_one_and_update(
             {"_id": job_id},
             {
                 "$set": {"acquired": True, "key": hashed},
@@ -266,7 +256,7 @@ class JobsData:
             projection=PROJECTION,
         )
 
-        return await fetch_complete_job(self._db, document, key=key)
+        return await fetch_complete_job(self._mongo, document, key=key)
 
     async def archive(self, job_id: str) -> Job:
         """
@@ -277,7 +267,7 @@ class JobsData:
 
         """
 
-        archived = await get_one_field(self._db.jobs, "archived", job_id)
+        archived = await get_one_field(self._mongo.jobs, "archived", job_id)
 
         if archived is None:
             raise ResourceNotFoundError("Job not found")
@@ -285,13 +275,13 @@ class JobsData:
         if archived is True:
             raise ResourceConflictError("Job already archived")
 
-        document = await self._db.jobs.find_one_and_update(
+        document = await self._mongo.jobs.find_one_and_update(
             {"_id": job_id},
             {"$set": {"archived": True}},
             projection=PROJECTION,
         )
 
-        return await fetch_complete_job(self._db, document)
+        return await fetch_complete_job(self._mongo, document)
 
     async def bulk_archive(self, job_ids: List[str]) -> List[JobMinimal]:
         """
@@ -301,15 +291,15 @@ class JobsData:
         :return: the archived jobs
         """
 
-        existing_jobs = await self._db.jobs.distinct("_id")
+        existing_jobs = await self._mongo.jobs.distinct("_id")
 
         jobs_not_found = [job for job in job_ids if job not in existing_jobs]
 
         if len(jobs_not_found) != 0:
             raise ResourceNotFoundError(f"Jobs not found: {jobs_not_found}")
 
-        async with self._db.create_session() as session:
-            await self._db.jobs.update_many(
+        async with self._mongo.create_session() as session:
+            await self._mongo.jobs.update_many(
                 {"_id": {"$in": job_ids}},
                 {"$set": {"archived": True}},
                 session=session,
@@ -333,8 +323,8 @@ class JobsData:
 
         archived_jobs = []
 
-        async for agg in self._db.jobs.aggregate(pipeline):
-            user = await self._db.users.find_one(agg["user"]["id"])
+        async for agg in self._mongo.jobs.aggregate(pipeline):
+            user = await self._mongo.users.find_one(agg["user"]["id"])
             archived_jobs.append(
                 {
                     "id": agg["_id"],
@@ -365,7 +355,7 @@ class JobsData:
 
         ping = {"pinged_at": virtool.utils.timestamp()}
 
-        document = await self._db.jobs.find_one_and_update(
+        document = await self._mongo.jobs.find_one_and_update(
             {"_id": job_id},
             {"$set": {"ping": ping}},
             projection=PROJECTION,
@@ -384,7 +374,7 @@ class JobsData:
         :return: the updated job document
 
         """
-        document = await self._db.jobs.find_one({"_id": job_id}, projection=PROJECTION)
+        document = await self._mongo.jobs.find_one({"_id": job_id}, projection=PROJECTION)
 
         if document is None:
             raise ResourceNotFoundError
@@ -397,7 +387,7 @@ class JobsData:
         if result == JOB_REMOVED_FROM_QUEUE:
             latest = document["status"][-1]
 
-            document = await self._db.jobs.find_one_and_update(
+            document = await self._mongo.jobs.find_one_and_update(
                 {"_id": job_id},
                 {
                     "$push": {
@@ -414,7 +404,7 @@ class JobsData:
             if document is None:
                 raise ResourceNotFoundError
 
-        return await fetch_complete_job(self._db, document)
+        return await fetch_complete_job(self._mongo, document)
 
     async def push_status(
         self,
@@ -426,7 +416,7 @@ class JobsData:
         error: Optional[dict] = None,
         progress: Optional[int] = None,
     ):
-        status = await get_one_field(self._db.jobs, "status", job_id)
+        status = await get_one_field(self._mongo.jobs, "status", job_id)
 
         if status is None:
             raise ResourceNotFoundError
@@ -440,7 +430,7 @@ class JobsData:
         ):
             raise ResourceConflictError("Job is finished")
 
-        document = await self._db.jobs.find_one_and_update(
+        document = await self._mongo.jobs.find_one_and_update(
             {"_id": job_id},
             {
                 "$set": {"state": state.value},
@@ -460,7 +450,7 @@ class JobsData:
 
         :param job_id: the ID of the job to delete
         """
-        document = await self._db.jobs.find_one({"_id": job_id}, ["status"])
+        document = await self._mongo.jobs.find_one({"_id": job_id}, ["status"])
 
         if document is None:
             raise ResourceNotFoundError
@@ -470,7 +460,7 @@ class JobsData:
                 "Job is running or waiting and cannot be removed."
             )
 
-        delete_result = await self._db.jobs.delete_one({"_id": job_id})
+        delete_result = await self._mongo.jobs.delete_one({"_id": job_id})
 
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError
@@ -480,9 +470,9 @@ class JobsData:
         Force the deletion of all jobs.
 
         """
-        job_ids = await self._db.jobs.distinct("_id")
+        job_ids = await self._mongo.jobs.distinct("_id")
         await gather(*[self._client.cancel(job_id) for job_id in job_ids])
-        await self._db.jobs.delete_many({"_id": {"$in": job_ids}})
+        await self._mongo.jobs.delete_many({"_id": {"$in": job_ids}})
 
     async def timeout(self):
         """
@@ -497,8 +487,8 @@ class JobsData:
         """
         now = arrow.utcnow()
 
-        async with self._db.create_session() as session:
-            async for document in self._db.jobs.find(
+        async with self._mongo.create_session() as session:
+            async for document in self._mongo.jobs.find(
                 {
                     "state": {
                         "$in": [JobState.PREPARING.value, JobState.RUNNING.value]
@@ -515,7 +505,7 @@ class JobsData:
             ):
                 latest = document["status"][-1]
 
-                await self._db.jobs.update_one(
+                await self._mongo.jobs.update_one(
                     {"_id": document["_id"]},
                     {
                         "$set": {"state": JobState.TIMEOUT.value},

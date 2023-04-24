@@ -54,6 +54,8 @@ def create_data_layer(
     :param redis: the redis object
     :return: the application data layer
     """
+    jobs_client = JobsClient(redis)
+
     data_layer = DataLayer(
         AccountData(mongo, redis),
         AdministratorsData(authorization_client, mongo),
@@ -63,12 +65,12 @@ def create_data_layer(
         HistoryData(config.data_path, mongo),
         HmmData(client, config, mongo, pg),
         IndexData(mongo, config, pg),
-        JobsData(JobsClient(redis), mongo, pg),
+        JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
         MessagesData(pg, mongo),
         OTUData(mongo, config.data_path),
         ReferencesData(mongo, pg, config, client),
-        SamplesData(config, mongo, pg),
+        SamplesData(config, mongo, pg, jobs_client),
         SubtractionsData(config.base_url, config, mongo, pg),
         SessionData(redis),
         SettingsData(mongo),

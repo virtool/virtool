@@ -346,7 +346,9 @@ class TestCreate:
         )
 
         data = get_data_from_app(client.app)
-        data.jobs._client = DummyJobsClient()
+        dummy_jobs_client = DummyJobsClient()
+        data.jobs._client = dummy_jobs_client
+        data.samples.jobs_client = dummy_jobs_client
 
         label = await fake2.labels.create()
 
@@ -378,7 +380,7 @@ class TestCreate:
 
         assert await client.db.samples.find_one() == snapshot
 
-        assert data.jobs._client.enqueued == [("create_sample", "fb085f7f")]
+        assert data.jobs._client.enqueued == [("create_sample", "bf1b993c")]
 
         async with pg.begin() as conn:
             upload = await get_row_by_id(conn, Upload, 1)
