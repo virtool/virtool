@@ -41,7 +41,7 @@ class IndexesView(PydanticView):
         """
         Find indexes.
 
-        Fetches a list of indexes.
+        Lists all existing indexes.
 
         Status Codes:
             200: Successful operation
@@ -106,9 +106,9 @@ async def download_otus_json(req):
 class IndexFileView(PydanticView):
     async def get(self, index_id: str, filename: str, /) -> Union[r200, r404]:
         """
-        Download index files
+        Download index files.
 
-        Fetches files relating to a given index.
+        Downloads files relating to a given index.
 
         Status Codes:
             200: Successful operation
@@ -149,7 +149,7 @@ class IndexFileView(PydanticView):
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
 async def download_index_file_for_jobs(req: Request):
     """
-    Download index file for jobs
+    Download index files for jobs.
 
     Downloads files relating to a given index for jobs.
 
@@ -179,7 +179,7 @@ async def download_index_file_for_jobs(req: Request):
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
 async def upload(req):
     """
-    Upload
+    Upload an index file.
 
     Uploads a new index file.
     """
@@ -236,7 +236,7 @@ class IndexHistoryView(PydanticView):
         """
         List history.
 
-        Fetches history changes for a specific index.
+        Lists history changes for a specific index.
 
         Status Codes:
             200: Successful operation
@@ -256,9 +256,9 @@ class IndexHistoryView(PydanticView):
 @routes.jobs_api.delete("/indexes/{index_id}")
 async def delete_index(req: Request):
     """
-    Delete index.
+    Delete an index.
 
-    Delete the index with the given id and reset history relating to that index.
+    Deletes the index with the given id and reset history relating to that index.
     """
     index_id = req.match_info["index_id"]
 

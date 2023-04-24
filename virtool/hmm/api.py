@@ -37,7 +37,7 @@ class HmmsView(PydanticView):
         """
         Find HMMs.
 
-        Fetches profile hidden Markov model (HMM) annotations that are used in Virtool for
+        Lists profile hidden Markov model (HMM) annotations that are used in Virtool for
         novel virus prediction.
 
         Providing a search term will return HMMs with full or partial matches in the
@@ -63,7 +63,7 @@ class StatusView(PydanticView):
         """
         Get HMM status.
 
-        Fetches the installation status of the HMM data. Contains the following
+        Lists the installation status of the HMM data. Contains the following
         fields:
 
         | Field      | Type          | Description                                               |
@@ -112,7 +112,7 @@ class UpdatesView(PydanticView):
         """
         List updates.
 
-        Fetches all updates applied to the HMM collection.
+        Lists all updates applied to the HMM collection.
 
         Status Codes:
             200: Successful operation
@@ -207,7 +207,7 @@ async def get_hmm_profiles(req):
     """
     Get HMM profiles.
 
-    Fetches the HMM profiles file if HMM data is available.
+    Downloads the HMM profiles file if HMM data is available.
 
     """
     try:

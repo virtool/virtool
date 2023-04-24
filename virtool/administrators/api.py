@@ -28,9 +28,9 @@ class AdministratorsView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
     async def get(self) -> r200[ListAdministratorResponse]:
         """
-        List all administrators.
+        List administrators.
 
-        Fetches all administrators.
+        Lists all administrators.
 
         Status Codes:
             200: Successful operation
@@ -44,7 +44,7 @@ class AdministratorsView(PydanticView):
         self, data: CreateAdministratorRequest
     ) -> Union[r201[CreateAdministratorResponse], r404]:
         """
-        Add a user as an administrator.
+        Add an administrator.
 
         Adds a user as an administrator using their user id.
 
@@ -69,9 +69,9 @@ class AdministratorView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
     async def get(self, user_id: str, /) -> Union[r200[GetAdministratorResponse], r404]:
         """
-        Get an administrator
+        Get an administrator.
 
-        Fetches the complete representation of an administrator
+        Fetches the complete representation of an administrator.
 
         Status Codes:
             200: Successful operation
@@ -118,7 +118,7 @@ class AdministratorView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
     async def delete(self, user_id: str, /) -> Union[r204, r404]:
         """
-        Remove administrator.
+        Remove an administrator.
 
         Removes a user as an administrator.
 

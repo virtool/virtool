@@ -21,7 +21,7 @@ class ChangesView(PydanticView):
         """
         List history.
 
-        Fetches a list of change documents.
+        Returns a list of change documents.
 
         Status Codes:
             200: Successful Operation
@@ -55,7 +55,7 @@ class ChangeView(PydanticView):
 
     async def delete(self, change_id: str, /) -> Union[r204, r403, r404, r409]:
         """
-        Delete change document.
+        Delete a change document.
 
         Removes the change document with the given ``change_id`` and
         any subsequent changes.

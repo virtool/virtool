@@ -91,7 +91,7 @@ class SamplesView(PydanticView):
         """
         Find samples.
 
-        Fetches samples, filtering by data passed as URL parameters
+        Lists samples, filtering by data passed as URL parameters.
 
         Status Codes:
             200: Successful operation
@@ -108,7 +108,7 @@ class SamplesView(PydanticView):
         self, data: CreateSampleRequest
     ) -> Union[r201[CreateSampleResponse], r400, r403]:
         """
-        Create sample.
+        Create a sample.
 
         Creates a new sample with the given name, labels and subtractions.
 
@@ -168,7 +168,7 @@ class SampleView(PydanticView):
         self, sample_id: str, /, data: UpdateSampleRequest
     ) -> Union[r200[UpdateSampleResponse], r400, r403, r404]:
         """
-        Update sample.
+        Update a sample.
 
         Updates a sample using its 'sample id'.
 
@@ -197,7 +197,7 @@ class SampleView(PydanticView):
 
     async def delete(self, sample_id: str, /) -> Union[r204, r403, r404]:
         """
-        Delete sample.
+        Delete a sample.
 
         Removes a sample document and all associated analyses.
 
@@ -222,7 +222,7 @@ class SampleView(PydanticView):
 @routes.jobs_api.get("/samples/{sample_id}")
 async def get_sample(req):
     """
-    Get sample.
+    Get a sample.
 
     Fetches a complete sample document from a job.
 
@@ -336,7 +336,7 @@ class RightsView(PydanticView):
 @routes.jobs_api.delete("/samples/{sample_id}")
 async def job_remove(req):
     """
-    Remove job.
+    Remove a job.
 
     Removes a sample document and all associated analyses.
 
@@ -379,7 +379,7 @@ class AnalysesView(PydanticView):
         """
         Get analyses.
 
-        Fetches the analyses associated with the given `sample_id`.
+        Lists the analyses associated with the given `sample_id`.
 
         Status Codes:
             200: Successful operation
@@ -535,7 +535,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
 @routes.jobs_api.post("/samples/{sample_id}/artifacts")
 async def upload_artifact(req):
     """
-    Upload artifact.
+    Upload an artifact.
 
     Uploads artifact created during sample creation using the Jobs API.
     """

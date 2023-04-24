@@ -34,7 +34,7 @@ class TasksView(PydanticView):
         """
         List all tasks.
 
-        Fetches a list of all tasks active on the instance. Pagination is not
+        Lists all tasks active on the instance. Pagination is not
         supported.
 
         Status Codes:

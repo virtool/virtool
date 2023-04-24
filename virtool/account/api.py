@@ -47,7 +47,7 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 class AccountView(PydanticView):
     async def get(self) -> Union[r200[AccountResponse], r401]:
         """
-        Get account.
+        Get an account.
 
         Fetches the details for the account associated with the user agent.
 
@@ -66,7 +66,7 @@ class AccountView(PydanticView):
         self, data: UpdateAccountRequest
     ) -> Union[r200[UpdateAccountResponse], r400, r401]:
         """
-        Update account.
+        Update an account.
 
         Updates the account associated with the user agent.
 
@@ -143,7 +143,7 @@ class KeysView(PydanticView):
         """
         List API keys.
 
-        Fetches all API keys registered on the account associated with the user agent.
+        Lists all API keys registered on the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -189,7 +189,7 @@ class KeysView(PydanticView):
 
     async def delete(self) -> Union[r204, r401]:
         """
-        Purge API keys
+        Purge API keys.
 
         Deletes all API keys registered for the account associated with the user agent.
 
@@ -254,7 +254,7 @@ class KeyView(PydanticView):
 
     async def delete(self, key_id: str, /) -> Union[r204, r401, r404]:
         """
-        Delete API key.
+        Delete an API key.
 
         Removes an API key by its 'key id'.
 

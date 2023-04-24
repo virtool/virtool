@@ -40,7 +40,7 @@ class JobsView(PydanticView):
         """
         Find jobs.
 
-        Fetches jobs on the instance.
+        Lists jobs on the instance.
 
         Jobs can be filtered by their current ``state`` by providing desired states as
         query parameters.

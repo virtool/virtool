@@ -37,7 +37,7 @@ class SubtractionsView(PydanticView):
         """
         Find subtractions.
 
-        Fetches subtractions by their `name` or `nickname` by providing a `term` as a
+        Lists subtractions by their `name` or `nickname` by providing a `term` as a
         query parameter. Partial matches are supported.
 
         Supports pagination unless the `short` query parameter is set. In this case, an
@@ -197,7 +197,7 @@ async def upload(req):
 )
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
-    Finalize subtraction.
+    Finalize a subtraction.
 
     Sets the GC field for a subtraction and marks it as ready.
 
@@ -251,7 +251,7 @@ class SubtractionFileView(PydanticView):
         """
         Download a subtraction file.
 
-        Fetches a Bowtie2 index or FASTA file for the given subtraction.
+        Downloads a Bowtie2 index or FASTA file for the given subtraction.
 
         Files are attached to the subtraction as part of the creation job. They aren't
         available for download until the job has completed and the `ready` field is

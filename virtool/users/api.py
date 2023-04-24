@@ -46,7 +46,7 @@ class UsersView(PydanticView):
         """
         List all users.
 
-        Fetches a paginated list of all users in the instance.
+        Lists all users in the instance.
 
         Status Codes:
             200: Successful operation
@@ -216,7 +216,7 @@ class PermissionsView(PydanticView):
         """
         List user roles.
 
-        Fetches all roles that a user has on the space.
+        Lists all roles that a user has on the space.
 
         Status Codes:
             200: Successful operation

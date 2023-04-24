@@ -23,7 +23,7 @@ routes = Routes()
 class MessagesView(PydanticView):
     async def get(self) -> r200[Optional[MessageResponse]]:
         """
-        Get the administrative instance message
+        Get the administrative instance message.
 
         Fetches the active administrative instance message.
 
@@ -39,7 +39,7 @@ class MessagesView(PydanticView):
 
     async def put(self, data: CreateMessageRequest) -> r200[CreateMessageResponse]:
         """
-        Create administrative instance message.
+        Create an administrative instance message.
 
         Creates a new administrative instance message.
 
@@ -60,7 +60,7 @@ class MessagesView(PydanticView):
         self, data: UpdateMessageRequest
     ) -> Union[r200[UpdateMessageResponse], r404, r409]:
         """
-        Update administrative instance message.
+        Update the administrative instance message.
 
         Updates the existing active administrative instance message.
 

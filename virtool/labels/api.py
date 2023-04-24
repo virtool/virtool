@@ -32,7 +32,7 @@ class LabelsView(PydanticView):
         """
         List labels.
 
-        Fetches a list of all sample labels on the instance. Pagination is not supported; all labels
+        Lists all sample labels on the instance. Pagination is not supported; all labels
         are included in the response.
 
         Status Codes:

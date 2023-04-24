@@ -64,7 +64,7 @@ class ReferencesView(PydanticView):
         """
         Find references.
 
-        Fetches references that match the find term.
+        Lists references that match the find term.
 
         Status Codes:
             200: Successful operation
@@ -235,7 +235,7 @@ class ReferenceUpdatesView(PydanticView):
         """
         List updates.
 
-        Fetches all updates made to the reference.
+        Lists all updates made to the reference.
 
         Status Codes:
             200: Successful operation
@@ -289,7 +289,7 @@ class ReferenceOTUsView(PydanticView):
         """
         Find OTUs.
 
-        Fetches OTUs by name or abbreviation. Results are paginated.
+        Lists OTUs by name or abbreviation. Results are paginated.
 
         Status Codes:
             200: Successful operation
@@ -332,7 +332,7 @@ class ReferenceHistoryView(PydanticView):
         """
         List history.
 
-        Fetches a paginated list of changes made to OTUs in the reference.
+        Lists changes made to OTUs in the reference.
 
         Status Codes:
             200: Successful operation
@@ -355,7 +355,7 @@ class ReferenceIndexesView(PydanticView):
         """
         List indexes.
 
-        Fetches a paginated list of indexes that have been created for the reference.
+        Lists indexes that have been created for the reference.
 
         Status Codes:
             200: Successful operation
@@ -411,7 +411,7 @@ class ReferenceGroupsView(PydanticView):
         """
         List groups.
 
-        Fetches all groups that have access to the reference.
+        Lists all groups that have access to the reference.
 
         Status Codes:
             200: Successful operation

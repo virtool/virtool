@@ -144,7 +144,7 @@ class IsolatesView(PydanticView):
         """
         List isolates.
 
-        Fetches all the isolates and sequences for an OTU.
+        Lists all the isolates and sequences for an OTU.
 
         """
         db = self.request.app["db"]
@@ -256,9 +256,9 @@ class IsolateView(PydanticView):
         self, otu_id: str, isolate_id: str, /, data: UpdateIsolateRequest
     ) -> Union[r200[OTUIsolate], r401, r404]:
         """
-        Update isolate.
+        Update an isolate.
 
-        Updates an isolate.
+        Updates an isolate using 'otu_id' and 'isolate_id'.
 
         """
         db = self.request.app["db"]
@@ -302,7 +302,7 @@ class IsolateView(PydanticView):
 
     async def delete(self, otu_id: str, isolate_id: str, /):
         """
-        Delete isolate.
+        Delete an isolate.
 
         Deletes an isolate using its 'otu id' and 'isolate id'.
 
@@ -336,7 +336,7 @@ class SequencesView(PydanticView):
         """
         List sequences.
 
-        Fetches the sequences for an isolate.
+        Lists the sequences for an isolate.
 
         """
         db = self.request.app["db"]
@@ -464,7 +464,7 @@ class SequenceView(PydanticView):
         data: UpdateSequenceRequest,
     ) -> Union[r200[Sequence], r400, r401, r403, r404]:
         """
-        Update sequence.
+        Update a sequence.
 
         Updates a sequence using its 'otu id', 'isolate id' and 'sequence id'.
 
@@ -507,7 +507,7 @@ class SequenceView(PydanticView):
 
     async def delete(self, otu_id: str, isolate_id: str, sequence_id: str, /):
         """
-        Delete sequence.
+        Delete a sequence.
 
         Deletes the specified sequence.
 
