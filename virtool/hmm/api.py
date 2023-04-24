@@ -37,7 +37,7 @@ class HmmsView(PydanticView):
         """
         Find HMMs.
 
-        Finds profile hidden Markov model (HMM) annotations that are used in Virtool for
+        Lists profile hidden Markov model (HMM) annotations that are used in Virtool for
         novel virus prediction.
 
         Providing a search term will return HMMs with full or partial matches in the
@@ -63,7 +63,7 @@ class StatusView(PydanticView):
         """
         Get HMM status.
 
-        Retrieves the installation status of the HMM data. Contains the following
+        Lists the installation status of the HMM data. Contains the following
         fields:
 
         | Field      | Type          | Description                                               |
@@ -89,7 +89,7 @@ class ReleaseView(PydanticView):
         """
         Get the latest HMM release.
 
-        Retrieves the latest release for the HMM data.
+        Fetches the latest release for the HMM data.
 
         Status Codes:
             200: Successful operation
@@ -154,7 +154,7 @@ class HMMView(PydanticView):
         """
         Get an HMM.
 
-        Retrieves the details for an HMM annotation.
+        Fetches the details for an HMM annotation.
 
         Status Codes:
             200: Successful operation
@@ -171,8 +171,9 @@ class HMMView(PydanticView):
 @routes.jobs_api.get("/hmms/{hmm_id}")
 async def get(req):
     """
-    Get a complete individual HMM annotation document.
+    Get a HMM annotation document.
 
+    Fetches a complete individual HMM annotation document.
     """
     try:
         hmm = await get_data_from_req(req).hmms.get(req.match_info["hmm_id"])
@@ -185,7 +186,11 @@ async def get(req):
 @routes.jobs_api.get("/hmms/files/annotations.json.gz")
 @routes.get("/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(req):
-    """Get a compressed json file containing the database documents for all HMMs."""
+    """
+    Get HMM annotations.
+
+    Fetches a compressed json file containing the database documents for all HMMs.
+    """
     path = await get_data_from_req(req).hmms.get_annotations_path()
 
     return FileResponse(
@@ -200,7 +205,9 @@ async def get_hmm_annotations(req):
 @routes.jobs_api.get("/hmms/files/profiles.hmm")
 async def get_hmm_profiles(req):
     """
-    Download the HMM profiles file if HMM data is available.
+    Get HMM profiles.
+
+    Downloads the HMM profiles file if HMM data is available.
 
     """
     try:

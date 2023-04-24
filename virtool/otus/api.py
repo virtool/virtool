@@ -35,7 +35,7 @@ class OTUView(PydanticView):
         """
         Get an OTU.
 
-        Retrieves the details of an OTU.
+        Fetches the details of an OTU.
 
         A FASTA file containing all sequences in the OTU can be downloaded by appending
         `.fa` to the path.
@@ -208,7 +208,7 @@ class IsolateView(PydanticView):
         """
         Get an isolate.
 
-        Retrieves the details of an isolate.
+        Fetches the details of an isolate.
 
         A FASTA file containing all sequences in the isolate can be downloaded by
         appending `.fa` to the path.
@@ -258,7 +258,7 @@ class IsolateView(PydanticView):
         """
         Update an isolate.
 
-        Updates an isolate.
+        Updates an isolate using 'otu_id' and 'isolate_id'.
 
         """
         db = self.request.app["db"]
@@ -304,7 +304,7 @@ class IsolateView(PydanticView):
         """
         Delete an isolate.
 
-        Deletes and isolate.
+        Deletes an isolate using its 'otu id' and 'isolate id'.
 
         """
         db = self.request.app["db"]
@@ -417,7 +417,7 @@ class SequenceView(PydanticView):
         """
         Get a sequence.
 
-        Retrieves the details for a sequence.
+        Fetches the details for a sequence.
 
         A FASTA file containing the nucelotide sequence can be downloaded by appending
         `.fa` to the path.
@@ -466,6 +466,8 @@ class SequenceView(PydanticView):
         """
         Update a sequence.
 
+        Updates a sequence using its 'otu id', 'isolate id' and 'sequence id'.
+
         """
         db = self.request.app["db"]
 
@@ -507,6 +509,8 @@ class SequenceView(PydanticView):
         """
         Delete a sequence.
 
+        Deletes the specified sequence.
+
         """
         db = self.request.app["db"]
 
@@ -534,6 +538,11 @@ class SequenceView(PydanticView):
 
 @routes.get("/otus/{otu_id}/history")
 async def list_history(req):
+    """
+    List history.
+
+    Lists an OTU's history.
+    """
     db = req.app["db"]
 
     otu_id = req.match_info["otu_id"]

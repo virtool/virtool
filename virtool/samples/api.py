@@ -94,7 +94,9 @@ class SamplesView(PydanticView):
         workflows: List[str] = Field(default_factory=lambda: []),
     ) -> Union[r200[SampleSearchResult], r400]:
         """
-        Find samples, filtering by data passed as URL parameters
+        Find samples.
+
+        Lists samples, filtering by data passed as URL parameters.
 
         Status Codes:
             200: Successful operation
@@ -112,6 +114,8 @@ class SamplesView(PydanticView):
     ) -> Union[r201[CreateSampleResponse], r400, r403]:
         """
         Create a sample.
+
+        Creates a new sample with the given name, labels and subtractions.
 
         Status Codes:
             201: Operation successful
@@ -146,7 +150,7 @@ class SampleView(PydanticView):
         """
         Get a sample.
 
-        Retrieve the details for a sample.
+        Fetches the details for a sample.
 
         Status Codes:
             200: Successful operation
@@ -170,6 +174,8 @@ class SampleView(PydanticView):
     ) -> Union[r200[UpdateSampleResponse], r400, r403, r404]:
         """
         Update a sample.
+
+        Updates a sample using its 'sample id'.
 
         Status Codes:
             200: Successful operation
@@ -196,7 +202,9 @@ class SampleView(PydanticView):
 
     async def delete(self, sample_id: str, /) -> Union[r204, r403, r404]:
         """
-        Remove a sample document and all associated analyses.
+        Delete a sample.
+
+        Removes a sample document and all associated analyses.
 
         Status Codes:
             204: Operation successful
@@ -219,7 +227,9 @@ class SampleView(PydanticView):
 @routes.jobs_api.get("/samples/{sample_id}")
 async def get_sample(req):
     """
-    Get a complete sample document from a job.
+    Get a sample.
+
+    Fetches a complete sample document from a job.
 
     """
     sample_id = req.match_info["sample_id"]
@@ -235,7 +245,9 @@ async def get_sample(req):
 @routes.jobs_api.get("/samples/{sample_id}/caches/{cache_key}")
 async def get_cache(req):
     """
-    Get a cache document by key using the Jobs API.
+    Get cache.
+
+    Fetches a cache document by key using the Jobs API.
 
     """
     db = req.app["db"]
@@ -282,7 +294,9 @@ class RightsView(PydanticView):
         self, sample_id: str, /, data: UpdateRightsRequest
     ) -> Union[r200[UpdateRightsResponse], r400, r403, r404]:
         """
-        Change rights settings for the specified sample document.
+        Update rights settings.
+
+        Updates rights settings for the specified sample document.
 
         Status Codes:
             200: Successful operation
@@ -327,7 +341,9 @@ class RightsView(PydanticView):
 @routes.jobs_api.delete("/samples/{sample_id}")
 async def job_remove(req):
     """
-    Remove a sample document and all associated analyses.
+    Remove a job.
+
+    Removes a sample document and all associated analyses.
 
     Only usable in the Jobs API and when samples are unfinalized.
 
@@ -364,7 +380,9 @@ class AnalysesView(PydanticView):
         ),
     ) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
         """
-        List the analyses associated with the given ``sample_id``.
+        Get analyses.
+
+        Lists the analyses associated with the given `sample_id`.
 
         Status Codes:
             200: Successful operation
@@ -412,6 +430,8 @@ class AnalysesView(PydanticView):
         self, sample_id: str, /, data: CreateAnalysisRequest
     ) -> Union[r201[CreateAnalysisResponse], r400, r403, r404]:
         """
+        Start analysis job.
+
         Starts an analysis job for a given sample.
 
         Status Codes:
@@ -510,7 +530,9 @@ class AnalysesView(PydanticView):
 @routes.jobs_api.delete("/samples/{sample_id}/caches/{cache_key}")
 async def cache_job_remove(req: aiohttp.web.Request):
     """
-    Remove a cache document. Only usable in the Jobs API and when caches are
+    Remove cache document.
+
+    Removes a cache document. Only usable in the Jobs API and when caches are
     unfinalized.
 
     """
@@ -534,8 +556,9 @@ async def cache_job_remove(req: aiohttp.web.Request):
 @routes.jobs_api.post("/samples/{sample_id}/artifacts")
 async def upload_artifact(req):
     """
-    Upload artifact created during sample creation using the Jobs API.
+    Upload an artifact.
 
+    Uploads artifact created during sample creation using the Jobs API.
     """
     db = req.app["db"]
     pg = req.app["pg"]
@@ -589,8 +612,9 @@ async def upload_artifact(req):
 @routes.jobs_api.put("/samples/{sample_id}/reads/{filename}")
 async def upload_reads(req):
     """
-    Upload sample reads using the Jobs API.
+    Upload reads.
 
+    Uploads sample reads using the Jobs API.
     """
     db = req.app["db"]
     pg = req.app["pg"]
@@ -638,7 +662,9 @@ async def upload_reads(req):
 @schema({"key": {"type": "string", "required": True}})
 async def create_cache(req):
     """
-    Create a new cache document using the Jobs API.
+    Create cache document.
+
+    Creates a new cache document using the Jobs API.
 
     """
     db = req.app["db"]
@@ -664,6 +690,8 @@ async def create_cache(req):
 @routes.jobs_api.put("/samples/{sample_id}/caches/{key}/reads/{filename}")
 async def upload_cache_reads(req):
     """
+    Upload reads files to cache.
+
     Upload reads files to cache using the Jobs API.
 
     """
@@ -708,7 +736,9 @@ async def upload_cache_reads(req):
 @routes.jobs_api.post("/samples/{sample_id}/caches/{key}/artifacts")
 async def upload_cache_artifact(req):
     """
-    Upload sample artifacts to cache using the Jobs API.
+    Upload artifacts to cache.
+
+    Uploads sample artifacts to cache using the Jobs API.
 
     """
     db = req.app["db"]
@@ -766,6 +796,11 @@ async def upload_cache_artifact(req):
 @routes.jobs_api.patch("/samples/{sample_id}/caches/{key}")
 @schema({"quality": {"type": "dict", "required": True}})
 async def finalize_cache(req):
+    """
+    Finalize cache.
+
+    Finalizes cache documents.
+    """
     db = req.app["db"]
     data = req["data"]
     key = req.match_info["key"]
@@ -781,8 +816,9 @@ async def finalize_cache(req):
 @routes.jobs_api.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 async def download_reads(req: aiohttp.web.Request):
     """
-    Download the sample reads file.
+    Download reads.
 
+    Downloads the sample reads file.
     """
     db = req.app["db"]
     pg = req.app["pg"]
@@ -815,7 +851,9 @@ async def download_reads(req: aiohttp.web.Request):
 @routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
 async def download_artifact(req: aiohttp.web.Request):
     """
-    Download the sample artifact.
+    Download artifact.
+
+    Downloads the sample artifact.
 
     """
     db = req.app["db"]
@@ -856,7 +894,9 @@ async def download_artifact(req: aiohttp.web.Request):
 @routes.jobs_api.get("/samples/{sample_id}/caches/{key}/reads/reads_{suffix}.fq.gz")
 async def download_cache_reads(req):
     """
-    Download sample reads cache for a given key.
+    Download reads cache.
+
+    Downloads sample reads cache for a given key.
 
     """
     db = req.app["db"]
@@ -893,7 +933,9 @@ async def download_cache_reads(req):
 @routes.jobs_api.get("/samples/{sample_id}/caches/{key}/artifacts/{filename}")
 async def download_cache_artifact(req):
     """
-    Download sample artifact cache for a given key.
+    Download artifact cache.
+
+    Downloads sample artifact cache for a given key.
 
     """
     db = req.app["db"]
