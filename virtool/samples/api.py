@@ -1,7 +1,7 @@
 import asyncio
+from asyncio import to_thread
 import logging
 import os
-from asyncio import to_thread
 from pathlib import Path
 from typing import List, Union, Optional
 
