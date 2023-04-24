@@ -4,11 +4,9 @@ from logging import getLogger
 
 import click
 import uvloop
+
 from virtool_core.logging import configure_logs
 
-import virtool.jobs.main
-import virtool.tasks.main
-import virtool.tasks.spawner
 from virtool.app import run_api_server
 from virtool.config.cls import ServerConfig, TaskRunnerConfig, TaskSpawnerConfig
 from virtool.config.options import (
@@ -26,7 +24,12 @@ from virtool.config.options import (
     redis_connection_string_option,
     sentry_dsn_option,
 )
+import virtool.jobs.main
+from virtool.jobs.main import run_jobs_server
+import virtool.tasks.main
+import virtool.tasks.spawner
 from virtool.oas.cmd import show_oas
+from virtool.tasks.main import run_task_runner
 
 logger = getLogger("config")
 
@@ -96,7 +99,7 @@ def start_jobs_api(**kwargs):
 
     logger.info("Starting the jobs api service")
 
-    virtool.jobs.main.run_jobs_server(
+    run_jobs_server(
             ServerConfig(
                 **kwargs,
                 base_url="",
@@ -137,7 +140,7 @@ def start_task_runner(**kwargs):
 
     logger.info("Starting tasks runner")
 
-    virtool.tasks.main.run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
+    run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
 
 
 @tasks.command("spawn")
