@@ -94,13 +94,13 @@ class AnalysisData(DataLayerPiece):
                             {"$count": "found_count"},
                         ],
                         "data": [
+                            {"$sort": sort},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
                             *lookup_minimal_job_by_id(),
                             *lookup_nested_subtractions(),
                             *lookup_nested_reference_by_id(),
                             *lookup_nested_user_by_id(),
-                            {"$sort": sort},
-                            {"$skip": skip_count},
-                            {"$limit": per_page},
                         ],
                     }
                 },
