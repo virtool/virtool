@@ -24,10 +24,8 @@ from virtool.config.options import (
     redis_connection_string_option,
     sentry_dsn_option,
 )
-import virtool.jobs.main
 from virtool.jobs.main import run_jobs_server
 import virtool.tasks.main
-import virtool.tasks.spawner
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 
