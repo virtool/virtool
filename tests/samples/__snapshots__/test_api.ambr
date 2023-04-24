@@ -1,5 +1,5 @@
 # name: TestCreate.test[uvloop-force_choice]
-  '/samples/bf1b993c'
+  '/samples/fb085f7f'
 ---
 # name: TestCreate.test[uvloop-force_choice].1
   <class 'dict'> {
@@ -16,10 +16,23 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'create_sample',
+    },
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -54,7 +67,7 @@
 ---
 # name: TestCreate.test[uvloop-force_choice].2
   <class 'dict'> {
-    '_id': 'bf1b993c',
+    '_id': 'fb085f7f',
     'all_read': True,
     'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -66,6 +79,9 @@
     'host': '',
     'is_legacy': False,
     'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
     'labels': <class 'list'> [
       1,
     ],
@@ -96,7 +112,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-none]
-  '/samples/bf1b993c'
+  '/samples/fb085f7f'
 ---
 # name: TestCreate.test[uvloop-none].1
   <class 'dict'> {
@@ -113,10 +129,23 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'create_sample',
+    },
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -151,7 +180,7 @@
 ---
 # name: TestCreate.test[uvloop-none].2
   <class 'dict'> {
-    '_id': 'bf1b993c',
+    '_id': 'fb085f7f',
     'all_read': True,
     'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -163,6 +192,9 @@
     'host': '',
     'is_legacy': False,
     'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
     'labels': <class 'list'> [
       1,
     ],
@@ -193,7 +225,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-users_primary_group]
-  '/samples/bf1b993c'
+  '/samples/fb085f7f'
 ---
 # name: TestCreate.test[uvloop-users_primary_group].1
   <class 'dict'> {
@@ -210,10 +242,23 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'create_sample',
+    },
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#629f70',
@@ -248,7 +293,7 @@
 ---
 # name: TestCreate.test[uvloop-users_primary_group].2
   <class 'dict'> {
-    '_id': 'bf1b993c',
+    '_id': 'fb085f7f',
     'all_read': True,
     'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -260,6 +305,9 @@
     'host': '',
     'is_legacy': False,
     'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
     'labels': <class 'list'> [
       1,
     ],
