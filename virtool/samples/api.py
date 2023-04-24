@@ -25,12 +25,14 @@ import virtool.samples.db
 import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
+from virtool.analyses.db import PROJECTION
 from virtool.api.response import (
     InsufficientRights,
     InvalidQuery,
     NotFound,
     json_response,
 )
+from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.permissions import LegacyPermission
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -41,6 +43,7 @@ from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
@@ -69,7 +72,9 @@ from virtool.samples.oas import (
     CreateAnalysisResponse,
 )
 from virtool.samples.utils import SampleRight
+from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
+from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = logging.getLogger("samples")
@@ -354,8 +359,6 @@ class AnalysesView(PydanticView):
         self,
         sample_id: str,
         /,
-        page: conint(ge=1) = 1,
-        per_page: conint(ge=1, le=100) = 25,
         term: Optional[str] = Field(
             description="Provide text to filter by partial matches to the reference name or user id in the sample."
         ),
@@ -381,10 +384,28 @@ class AnalysesView(PydanticView):
 
             raise
 
+        db_query = {}
+
+        if term:
+            db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+
+        data = await paginate(
+            db.analyses,
+            db_query,
+            self.request.query,
+            base_query={"sample.id": sample_id},
+            projection=PROJECTION,
+            sort=[("created_at", -1)],
+        )
+
         return json_response(
-            await get_data_from_req(self.request).samples.find_analyses(
-                page, per_page, sample_id, term
-            )
+            {
+                **data,
+                "documents": await apply_transforms(
+                    data["documents"],
+                    [AttachSubtractionTransform(db), AttachUserTransform(db)],
+                ),
+            }
         )
 
     async def post(

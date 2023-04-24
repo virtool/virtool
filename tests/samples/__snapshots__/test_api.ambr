@@ -1969,22 +1969,10 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
-          'user': <class 'dict'> {
-            'administrator': False,
-            'handle': 'leeashley',
-            'id': 'bf1b993c',
-          },
-          'workflow': 'jobs_aodp',
         },
         'ready': True,
         'reference': <class 'dict'> {
-          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -1993,7 +1981,6 @@
         },
         'subtractions': <class 'list'> [
         ],
-        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -2008,10 +1995,11 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': None,
+        'job': <class 'dict'> {
+          'id': 'foo',
+        },
         'ready': True,
         'reference': <class 'dict'> {
-          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -2024,7 +2012,6 @@
             'name': 'Malus domestica',
           },
         ],
-        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -2051,22 +2038,10 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
-          'user': <class 'dict'> {
-            'administrator': False,
-            'handle': 'leeashley',
-            'id': 'bf1b993c',
-          },
-          'workflow': 'jobs_aodp',
         },
         'ready': True,
         'reference': <class 'dict'> {
-          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -2075,7 +2050,6 @@
         },
         'subtractions': <class 'list'> [
         ],
-        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -2090,10 +2064,11 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': None,
+        'job': <class 'dict'> {
+          'id': 'foo',
+        },
         'ready': True,
         'reference': <class 'dict'> {
-          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         },
@@ -2106,7 +2081,6 @@
             'name': 'Malus domestica',
           },
         ],
-        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
@@ -2124,7 +2098,6 @@
         'job': None,
         'ready': True,
         'reference': <class 'dict'> {
-          'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
         },
@@ -2137,7 +2110,6 @@
             'name': 'Malus domestica',
           },
         ],
-        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'zclark',
