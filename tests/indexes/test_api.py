@@ -30,11 +30,18 @@ class TestFind:
 
         user = await fake2.users.create()
 
+        job_1 = await fake2.jobs.create(user=user, workflow="build_index")
+        job_2 = await fake2.jobs.create(user=user, workflow="build_index")
+
         await asyncio.gather(
-            client.db.references.insert_many(
+            client.db.history.insert_many(
                 [
-                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
-                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                    {"_id": "0", "index": {"id": "bar"}, "otu": {"id": "baz"}},
+                    {"_id": "1", "index": {"id": "foo"}, "otu": {"id": "baz"}},
+                    {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
+                    {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
+                    {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
+                    {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
                 ],
                 session=None,
             ),
@@ -47,7 +54,7 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": False,
                         "has_files": True,
-                        "job": {"id": "bar"},
+                        "job": {"id": job_1.id},
                         "reference": {"id": "bar"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"foo": "bar_otu"},
@@ -59,7 +66,7 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": False,
                         "has_files": True,
-                        "job": {"id": "foo"},
+                        "job": {"id": job_2.id},
                         "reference": {"id": "foo"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"foo": "foo_otu"},
@@ -67,14 +74,10 @@ class TestFind:
                 ],
                 session=None,
             ),
-            client.db.history.insert_many(
+            client.db.references.insert_many(
                 [
-                    {"_id": "0", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                    {"_id": "1", "index": {"id": "foo"}, "otu": {"id": "baz"}},
-                    {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-                    {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                    {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
-                    {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
+                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
+                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
                 ],
                 session=None,
             ),
@@ -147,8 +150,9 @@ class TestFind:
 async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    user, _, _ = await asyncio.gather(
-        fake2.users.create(),
+    user = await fake2.users.create()
+
+    await asyncio.gather(
         client.db.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
@@ -165,7 +169,7 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
         ),
     )
 
-    job = await fake2.jobs.create(user=user)
+    job = await fake2.jobs.create(user=user, workflow="build_index")
 
     if not error:
         await client.db.indexes.insert_one(
@@ -547,8 +551,7 @@ async def test_finalize(
     client = await spawn_job_client(authorize=True)
 
     user = await fake2.users.create()
-
-    job = await fake2.jobs.create(user=user)
+    job = await fake2.jobs.create(user=user, workflow="build_index")
 
     if error == "409_genome":
         files = ["reference.fa.gz"]

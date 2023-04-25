@@ -39,7 +39,7 @@ class UploadsView(PydanticView):
         """
         List uploads.
 
-        Returns JSON details of all files uploaded to the instance.
+        Lists JSON details of all files uploaded to the instance.
 
         Status Codes:
             200: Successful operation
@@ -121,7 +121,7 @@ class UploadView(PydanticView):
         """
         Download an upload.
 
-        Returns a previously uploaded file.
+        Downloads a previously uploaded file.
 
         Headers:
             Content-Disposition: attachment; filename=<name>
@@ -153,7 +153,7 @@ class UploadView(PydanticView):
         """
         Delete an upload.
 
-        Deletes an upload.
+        Deletes an upload using its 'upload id'.
 
         Status Codes:
             204: Successful operation
@@ -173,8 +173,9 @@ class UploadView(PydanticView):
 @routes.jobs_api.get("/uploads/{id}")
 async def download(req):
     """
-    Downloads an upload.
+    Download an upload.
 
+    Downloads an upload using its 'upload id'.
     """
     upload_id = int(req.match_info["id"])
 

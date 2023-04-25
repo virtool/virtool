@@ -25,7 +25,7 @@ class SettingsView(PydanticView):
         """
         Get settings.
 
-        Returns the complete application settings.
+        Fetches the complete application settings.
 
         Status Codes:
             200: Successful operation
@@ -55,8 +55,9 @@ class SettingsView(PydanticView):
 @routes.jobs_api.get("/settings")
 async def get(req: Request) -> Response:
     """
-    Get a complete document of the application settings.
+    Get settings.
 
+    Fetches a complete document of the application settings.
     """
     settings = await get_data_from_req(req).settings.get_all()
 

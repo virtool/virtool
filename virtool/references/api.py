@@ -64,6 +64,8 @@ class ReferencesView(PydanticView):
         """
         Find references.
 
+        Lists references that match the find term.
+
         Status Codes:
             200: Successful operation
         """
@@ -126,7 +128,7 @@ class ReferenceView(PydanticView):
         """
         Get a reference.
 
-        Retrieves the details of a reference.
+        Fetches the details of a reference.
 
         Status Codes:
             200: Successful operation
@@ -203,7 +205,7 @@ class ReferenceReleaseView(PydanticView):
         """
         Get latest update.
 
-        Retrieves the latest remote reference update from GitHub.
+        Fetches the latest remote reference update from GitHub.
 
         Also updates the reference document. This is the only way of doing so without
         waiting for an automatic refresh every 10 minutes.
@@ -287,7 +289,7 @@ class ReferenceOTUsView(PydanticView):
         """
         Find OTUs.
 
-        Finds OTUs by name or abbreviation. Results are paginated.
+        Lists OTUs by name or abbreviation. Results are paginated.
 
         Status Codes:
             200: Successful operation
@@ -305,8 +307,9 @@ class ReferenceOTUsView(PydanticView):
         self, ref_id: str, /, data: CreateOTURequest
     ) -> Union[r201[OTU], r400, r403, r404]:
         """
-        Create an OTU.
+        Create OTU.
 
+        Creates an OTU.
         """
         try:
             otu = await get_data_from_req(self.request).references.create_otu(
@@ -329,7 +332,7 @@ class ReferenceHistoryView(PydanticView):
         """
         List history.
 
-        Retrieves a paginated list of changes made to OTUs in the reference.
+        Lists changes made to OTUs in the reference.
 
         Status Codes:
             200: Successful operation
@@ -352,7 +355,7 @@ class ReferenceIndexesView(PydanticView):
         """
         List indexes.
 
-        Retrieves a paginated list of indexes that have been created for the reference.
+        Lists indexes that have been created for the reference.
 
         Status Codes:
             200: Successful operation
@@ -461,7 +464,7 @@ class ReferenceGroupView(PydanticView):
         """
         Get a group.
 
-        Retrieves the details of a group that has access to the reference.
+        Fetches the details of a group that has access to the reference.
 
         Status Codes:
             200: Successful operation

@@ -1,7 +1,6 @@
 import asyncio
 import concurrent.futures
 import logging
-import signal
 import sys
 from dataclasses import dataclass
 from typing import Dict
@@ -43,17 +42,6 @@ class B2C:
     authority: str
     jwk_args: JWKArgs = None
     auth_code_flow: dict = None
-
-
-def create_events() -> Dict[str, asyncio.Event]:
-    """
-    Create and store :class:`asyncio.Event` objects for triggering an application
-    restart or shutdown.
-
-    :return: a `dict` with :class:`~asyncio.Event` objects for restart and shutdown
-
-    """
-    return {"restart": asyncio.Event(), "shutdown": asyncio.Event()}
 
 
 def get_scheduler_from_app(app: App) -> aiojobs.Scheduler:
@@ -116,17 +104,6 @@ async def startup_dispatcher(app: App):
     )
 
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
-
-
-async def startup_events(app: App):
-    events = create_events()
-
-    loop = asyncio.get_event_loop()
-
-    loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
-    loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
-
-    app["events"] = events
 
 
 async def startup_executors(app: App):
