@@ -36,7 +36,9 @@ class UsersData:
         :return: the user
         """
 
-        if document := await fetch_complete_user(self._mongo, user_id):
+        if document := await fetch_complete_user(
+            self._mongo, self._authorization_client, user_id
+        ):
             return User(**base_processor(document))
 
         raise ResourceNotFoundError
@@ -64,7 +66,9 @@ class UsersData:
             force_reset,
         )
 
-        return await fetch_complete_user(self._mongo, document["_id"])
+        return await fetch_complete_user(
+            self._mongo, self._authorization_client, document["_id"]
+        )
 
     async def create_first(self, handle: str, password: str) -> User:
         """
@@ -95,7 +99,9 @@ class UsersData:
             AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL)
         )
 
-        return await fetch_complete_user(self._mongo, document["_id"])
+        return await fetch_complete_user(
+            self._mongo, self._authorization_client, document["_id"]
+        )
 
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes
@@ -112,7 +118,9 @@ class UsersData:
         if document := await self._mongo.users.find_one(
             {"b2c_oid": b2c_user_attributes.oid}
         ):
-            return await fetch_complete_user(self._mongo, document["_id"])
+            return await fetch_complete_user(
+                self._mongo, self._authorization_client, document["_id"]
+            )
 
         handle = "-".join(
             [
@@ -133,7 +141,9 @@ class UsersData:
         except DuplicateKeyError:
             return await self.find_or_create_b2c_user(b2c_user_attributes)
 
-        user = await fetch_complete_user(self._mongo, document["_id"])
+        user = await fetch_complete_user(
+            self._mongo, self._authorization_client, document["_id"]
+        )
 
         return user
 
@@ -215,7 +225,9 @@ class UsersData:
                 document["permissions"],
             )
 
-        user = await fetch_complete_user(self._mongo, user_id)
+        user = await fetch_complete_user(
+            self._mongo, self._authorization_client, user_id
+        )
 
         if user is None:
             raise ResourceNotFoundError

@@ -20,6 +20,7 @@ from virtool.account.oas import (
     UpdateAccountRequest,
 )
 from virtool.administrators.oas import UpdateUserRequest
+from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.groups.db import lookup_groups_minimal_by_id
@@ -43,7 +44,10 @@ PROJECTION = (
 
 
 class AccountData(DataLayerPiece):
-    def __init__(self, db: Mongo, redis: Redis):
+    def __init__(
+        self, db: Mongo, redis: Redis, authorization_client: AuthorizationClient
+    ):
+        self._authorization_client = authorization_client
         self._db = db
         self._redis = redis
 
@@ -56,7 +60,11 @@ class AccountData(DataLayerPiece):
         """
         return Account(
             **{
-                **(await fetch_complete_user(self._db, user_id)).dict(),
+                **(
+                    await fetch_complete_user(
+                        self._db, self._authorization_client, user_id
+                    )
+                ).dict(),
                 "settings": {
                     "quick_analyze_workflow": "nuvs",
                     "show_ids": False,

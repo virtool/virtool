@@ -1,18 +1,12 @@
-import asyncio
-from typing import TYPE_CHECKING, Optional, Union, Dict
+from typing import TYPE_CHECKING, Optional
 
-from multidict import MultiDictProxy
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User, UserSearchResult
 
 import virtool
 from virtool.administrators.db import update_legacy_administrator
-from virtool.administrators.oas import (
-    UpdateAdministratorRoleRequest,
-)
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.api.utils import paginate_aggregate, compose_regex_query
-from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -28,8 +22,7 @@ from virtool.users.db import (
     compose_groups_update,
 )
 
-if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+from virtool.authorization.client import AuthorizationClient
 
 
 PROJECTION = [
@@ -116,15 +109,12 @@ class AdministratorsData(DataLayerPiece):
         :return: The complete User
         """
 
-        user, (_, role) = await asyncio.gather(
-            fetch_complete_user(self._mongo, user_id),
-            self._authorization_client.get_administrator(user_id),
+        user = await fetch_complete_user(
+            self._mongo, self._authorization_client, user_id
         )
 
         if not user:
             raise ResourceNotFoundError("User does not exist")
-
-        user.administrator_role = role
 
         return user
 

@@ -2,7 +2,7 @@ import random
 from asyncio import gather
 from dataclasses import dataclass
 from logging import Logger
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.user import User
@@ -25,6 +25,10 @@ from virtool.users.utils import (
     limit_permissions,
 )
 from virtool.utils import base_processor
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
+    from virtool.authorization.client import AuthorizationClient
 
 logger = Logger(__name__)
 
@@ -296,17 +300,27 @@ async def update_keys(
     )
 
 
-async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
-    async for user in mongo.users.aggregate(
-        [
-            {"$match": {"_id": user_id}},
-            *lookup_groups_minimal_by_id(),
-            *lookup_group_minimal_by_id(
-                local_field="primary_group", set_as="primary_group"
-            ),
-        ]
-    ):
-        return User(**user)
+async def fetch_complete_user(
+    mongo: "Mongo", authorization_client: "AuthorizationClient", user_id: str
+) -> Optional[User]:
+
+    user, (user_id, role) = await gather(
+        mongo.users.aggregate(
+            [
+                {"$match": {"_id": user_id}},
+                *lookup_groups_minimal_by_id(),
+                *lookup_group_minimal_by_id(
+                    local_field="primary_group", set_as="primary_group"
+                ),
+            ]
+        ).to_list(1),
+        authorization_client.get_administrator(user_id),
+    )
+
+    if len(user) == 0:
+        return None
+
+    return User(**user[0], administrator_role=role)
 
 
 def lookup_nested_user_by_id(
