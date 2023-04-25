@@ -4,7 +4,7 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Any, Dict, List, Optional, Tuple, Mapping
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -17,6 +17,7 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.indexes.models import SQLIndexFile
+from virtool.jobs.db import AttachJobsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -170,10 +171,10 @@ async def find(mongo, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
     :return: the index document
 
     """
-    base_query = None
-
     if ref_id:
         base_query = {"reference.id": ref_id}
+    else:
+        base_query = {"reference.id": {"$in": await mongo.references.distinct("_id")}}
 
     data = await paginate(
         mongo.indexes,
@@ -193,6 +194,7 @@ async def find(mongo, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
         "documents": await apply_transforms(
             data["documents"],
             [
+                AttachJobsTransform(mongo),
                 AttachReferenceTransform(mongo),
                 AttachUserTransform(mongo),
                 IndexCountsTransform(mongo),

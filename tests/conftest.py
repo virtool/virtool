@@ -44,3 +44,11 @@ def pytest_addoption(parser):
         action="store",
         default="postgresql+asyncpg://virtool:virtool@localhost",
     )
+
+    parser.getgroup("syrupy").addoption(
+        "--su",
+        action="store_true",
+        default=False,
+        dest="update_snapshots",
+        help="Update snapshots (alias)",
+    )
