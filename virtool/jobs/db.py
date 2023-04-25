@@ -38,26 +38,31 @@ class AttachJobsTransform(AbstractTransform):
     def __init__(self, mongo: "Mongo"):
         self.mongo = mongo
 
-    async def prepare_one(self, document: Document) -> Document:
+    async def prepare_one(self, document: Document) -> Optional[Document]:
         job_id = get_safely(document, "job", "id")
 
-        if job_id:
-            job = await self.mongo.jobs.find_one(
-                job_id, ["archived", "status", "user", "workflow"]
-            )
+        if job_id is None:
+            return None
 
-            last_status = job["status"][-1]
+        job = await self.mongo.jobs.find_one(
+            job_id, ["archived", "status", "user", "workflow"]
+        )
 
-            return await apply_transforms(
-                {
-                    **job,
-                    "created_at": job["status"][0]["timestamp"],
-                    "progress": last_status["progress"],
-                    "state": last_status["state"],
-                    "stage": last_status["stage"],
-                },
-                [AttachUserTransform(self.mongo)],
-            )
+        if job is None:
+            return None
+
+        last_status = job["status"][-1]
+
+        return await apply_transforms(
+            {
+                **job,
+                "created_at": job["status"][0]["timestamp"],
+                "progress": last_status["progress"],
+                "state": last_status["state"],
+                "stage": last_status["stage"],
+            },
+            [AttachUserTransform(self.mongo)],
+        )
 
     async def attach_one(self, document: Document, prepared: Document) -> Document:
         return {**document, "job": prepared}
