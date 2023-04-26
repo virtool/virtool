@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import Permission

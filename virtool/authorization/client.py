@@ -86,7 +86,7 @@ class AuthorizationClient:
     async def get_administrator(
         self, user_id: str
     ) -> Tuple[str, Optional[AdministratorRole]]:
-        response = await self.open_fga.read(
+        response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object="app:virtool"),
             )

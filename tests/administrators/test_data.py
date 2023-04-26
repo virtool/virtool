@@ -2,11 +2,10 @@ import asyncio
 from asyncio import gather
 
 import pytest
-
 from syrupy.filters import props
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.administrators.oas import UpdateUserRequest, UpdateAdministratorRoleRequest
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceNotFoundError
 from virtool.users.db import validate_credentials

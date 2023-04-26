@@ -118,7 +118,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': True,
-    'administrator_role': None,
+    'administrator_role': <AdministratorRole.FULL: 'full'>,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,

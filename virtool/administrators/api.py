@@ -3,7 +3,7 @@ from typing import Union, Optional
 
 from aiohttp.web_exceptions import HTTPForbidden, HTTPBadRequest
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r201, r200, r404
+from aiohttp_pydantic.oas.typing import r200, r404
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.utils import document_enum
 

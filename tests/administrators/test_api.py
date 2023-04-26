@@ -70,9 +70,9 @@ async def test_update_admin_role(spawn_client, fake2, snapshot, role, mongo):
 
     user = await fake2.users.create()
 
-    resp = await client.post(f"/admin/users/{user.id}/role", {"role": role})
+    resp = await client.put(f"/admin/users/{user.id}/role", {"role": role})
 
-    assert resp.status == 201
+    assert resp.status == 200
 
     if role == AdministratorRole.FULL:
         assert await get_one_field(mongo.users, "administrator", user.id) is True
