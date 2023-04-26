@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import CancelledError
 from logging import getLogger
 from typing import List, Union, Optional
@@ -90,7 +91,7 @@ class UploadsView(PydanticView):
 
         file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
         files_path = self.request.app["config"].data_path / "files"
-        files_path.mkdir(parents=True, exist_ok=True)
+        await asyncio.to_thread(files_path.mkdir, parents=True, exist_ok=True)
 
         try:
             size = await naive_writer(await self.request.multipart(), file_path)

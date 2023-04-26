@@ -205,6 +205,8 @@ class IndexData:
             except IntegrityError:
                 raise ResourceConflictError()
 
+            references_path = self._config.data_path / "references" / index_id
+            await asyncio.to_thread(references_path.mkdir, parents=True, exist_ok=True)
             path = (
                 join_index_path(self._config.data_path, reference_id, index_id) / name
             )

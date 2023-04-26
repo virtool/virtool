@@ -120,6 +120,4 @@ def join_legacy_read_paths(config: Config, sample):
 
 
 def join_sample_path(config: Config, sample_id) -> Path:
-    path = config.data_path / "samples" / sample_id
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    return config.data_path / "samples" / sample_id

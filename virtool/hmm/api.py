@@ -2,6 +2,7 @@
 API request handlers for managing and querying HMM data.
 
 """
+import asyncio
 from typing import Union
 
 from aiohttp.web import Response
@@ -191,6 +192,9 @@ async def get_hmm_annotations(req):
 
     Fetches a compressed json file containing the database documents for all HMMs.
     """
+    hmm_path = req.app["config"].data_path / "hmm"
+    await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
+
     path = await get_data_from_req(req).hmms.get_annotations_path()
 
     return FileResponse(
@@ -210,6 +214,9 @@ async def get_hmm_profiles(req):
     Downloads the HMM profiles file if HMM data is available.
 
     """
+    hmm_path = req.app["config"].data_path / "hmm"
+    await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
+
     try:
         path = await get_data_from_req(req).hmms.get_profiles_path()
     except ResourceNotFoundError:

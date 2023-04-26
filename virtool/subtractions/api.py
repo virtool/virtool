@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Union, Optional
 
@@ -169,6 +170,9 @@ async def upload(req):
     """
     subtraction_id = req.match_info["subtraction_id"]
     filename = req.match_info["filename"]
+
+    subtraction_path = req.app["config"].data_path / "subtractions" / subtraction_id
+    await asyncio.to_thread(subtraction_path.mkdir, parents=True, exist_ok=True)
 
     try:
         subtraction_file = await get_data_from_req(req).subtractions.upload_file(

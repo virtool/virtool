@@ -150,11 +150,6 @@ async def startup_http_client(app: App):
     app["client"] = aiohttp.client.ClientSession(headers=headers)
 
 
-async def startup_paths(app: App):
-    path = app["config"].data_path / "logs/jobs"
-    path.mkdir(parents=True, exist_ok=True)
-
-
 async def startup_databases(app: App):
     """
     Connects to MongoDB, Redis and Postgres concurrently

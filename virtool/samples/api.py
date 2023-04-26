@@ -576,6 +576,9 @@ async def upload_artifact(req):
 
     name = req.query.get("name")
 
+    samples_file_path = req.app["config"].data_path / "samples"
+    await asyncio.to_thread(samples_file_path.mkdir, parents=True, exist_ok=True)
+
     artifact_file_path = (
         virtool.samples.utils.join_sample_path(req.app["config"], sample_id) / name
     )
@@ -629,6 +632,9 @@ async def upload_reads(req):
 
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
+
+    samples_file_path = req.app["config"].data_path / "samples" / sample_id
+    await asyncio.to_thread(samples_file_path.mkdir, parents=True, exist_ok=True)
 
     reads_path = (
         virtool.samples.utils.join_sample_path(req.app["config"], sample_id) / name
@@ -705,6 +711,9 @@ async def upload_cache_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
+    caches_path = req.app["config"].data_path / "caches"
+    await asyncio.to_thread(caches_path.mkdir, parents=True, exist_ok=True)
+
     cache_path = (
         Path(virtool.caches.utils.join_cache_path(req.app["config"], key)) / name
     )
@@ -757,6 +766,9 @@ async def upload_cache_artifact(req):
         raise InvalidQuery(errors)
 
     name = req.query.get("name")
+
+    caches_path = req.app["config"].data_path / "caches"
+    await asyncio.to_thread(caches_path.mkdir, parents=True, exist_ok=True)
 
     cache_path = join_cache_path(req.app["config"], key) / name
 

@@ -53,9 +53,7 @@ class HmmData(DataLayerPiece):
     @cached_property
     def profiles_path(self) -> Path:
         """The path to the HMM profiles file in the application data."""
-        path = self._config.data_path / "hmm" / "profiles.hmm"
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self._config.data_path / "hmm" / "profiles.hmm"
 
     async def find(self, query: MultiDictProxy):
         db_query = {}
