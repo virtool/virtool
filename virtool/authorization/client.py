@@ -38,8 +38,8 @@ class AuthorizationClient:
 
     """
 
-    def __init__(self, open_fga: OpenFgaApi):
-        self.open_fga = open_fga
+    def __init__(self, openfga: OpenFgaApi):
+        self.openfga = openfga
 
     async def check(
         self,
@@ -52,7 +52,7 @@ class AuthorizationClient:
         Check whether a user has the given role on a resource.
         """
 
-        response = await self.open_fga.check(
+        response = await self.openfga.check(
             CheckRequest(
                 tuple_key=TupleKey(
                     user=f"user:{user_id}",
@@ -71,7 +71,7 @@ class AuthorizationClient:
         :param space_id: the id of the space
         :return: a list of roles
         """
-        response = await self.open_fga.read(
+        response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(
                     user=f"space:{space_id}#member", object=f"space:{space_id}"
@@ -106,7 +106,7 @@ class AuthorizationClient:
         :return: a list of tuples containing user ids and their roles
 
         """
-        response = await self.open_fga.read(
+        response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(object="app:virtool"),
             )
@@ -126,7 +126,7 @@ class AuthorizationClient:
         :param user_id: the id of the user
         :return: a list of space ids
         """
-        response = await self.open_fga.read(
+        response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(
                     user=f"user:{user_id}", relation="member", object="space:"
@@ -142,7 +142,7 @@ class AuthorizationClient:
         )
 
     async def list_user_roles(self, user_id: str, space_id: int) -> List[SpaceRoleType]:
-        response = await self.open_fga.read(
+        response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object=f"space:{space_id}")
             )
@@ -165,7 +165,7 @@ class AuthorizationClient:
         :param ref_id: the id of the reference
         :return: a list of user ids and their roles
         """
-        response = await self.open_fga.read(
+        response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(object=f"reference:{ref_id}"),
             )
@@ -189,7 +189,7 @@ class AuthorizationClient:
 
         for relationship in relationships:
             if relationship.exclusive:
-                await relationship.remove_tuples(self.open_fga, requests)
+                await relationship.remove_tuples(self.openfga, requests)
 
             requests.append(
                 WriteRequest(
@@ -206,7 +206,7 @@ class AuthorizationClient:
             )
 
         done, _ = await asyncio.wait(
-            [self.open_fga.write(request) for request in requests]
+            [self.openfga.write(request) for request in requests]
         )
 
         result = AddRelationshipResult(0, 0)
@@ -241,7 +241,7 @@ class AuthorizationClient:
         ]
 
         done, _ = await asyncio.wait(
-            [self.open_fga.write(request) for request in requests]
+            [self.openfga.write(request) for request in requests]
         )
 
         result = RemoveRelationshipResult(0, 0)

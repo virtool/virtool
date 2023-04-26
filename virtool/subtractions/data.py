@@ -136,10 +136,10 @@ class SubtractionsData(DataLayerPiece):
                     "$project": {
                         "documents": True,
                         "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0]
+                            "$ifNull": [{"$arrayElemAt": ["$total_count.total_count", 0]}, 0]
                         },
                         "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0]
+                            "$ifNull": [{"$arrayElemAt": ["$found_count.found_count", 0]}, 0]
                         },
                         "ready_count": {
                             "$ifNull": [{"$arrayElemAt": ["$ready_count.ready_count", 0]}, 0]

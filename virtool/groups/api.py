@@ -119,6 +119,8 @@ class GroupView(PydanticView):
         """
         Delete a group.
 
+        Deletes a group by its 'group id'.
+
         Status Codes:
             204: No content
             404: Group not found

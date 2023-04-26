@@ -29,7 +29,7 @@ async def shutdown_authorization_client(app: Application):
     :param app: The application object
     """
     logger.info("Stopping OpenFGA client")
-    await get_authorization_client_from_app(app).open_fga.close()
+    await get_authorization_client_from_app(app).openfga.close()
 
 
 async def shutdown_dispatcher(app: Application):

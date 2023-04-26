@@ -10,6 +10,15 @@ from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import Upload
 
 
+@pytest.mark.apitest
+async def test_find_empty_subtractions(fake2, spawn_client, snapshot, static_time):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    resp = await client.get("/subtractions")
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
 @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
 @pytest.mark.apitest
 async def test_find(fake2, spawn_client, snapshot, static_time, per_page, page):

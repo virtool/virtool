@@ -1,9 +1,6 @@
-import shutil
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import arrow
-import multidict
 import pytest
 
 from virtool.example import example_path as virtool_example_path
@@ -29,15 +26,6 @@ class StaticTime:
 @pytest.fixture
 def mock_req():
     return MockRequest()
-
-
-@pytest.fixture(scope="session")
-def md_proxy():
-    def func(data_dict=None):
-        md = multidict.MultiDict(data_dict or {})
-        return multidict.MultiDictProxy(md)
-
-    return func
 
 
 @pytest.fixture
@@ -91,11 +79,6 @@ def test_random_alphanumeric(mocker):
     )
 
 
-@pytest.fixture
-def static_nonce(mocker):
-    mocker.patch("virtool.http.csp.generate_nonce", return_value="foo1bar2baz3")
-
-
 @pytest.fixture(scope="session")
 def static_time_obj():
     return StaticTime()
@@ -107,17 +90,6 @@ def static_time(mocker, static_time_obj):
     return static_time_obj
 
 
-@pytest.fixture
-def test_sam_path(test_files_path, tmp_path):
-    src_path = test_files_path / "test_al.sam"
-    dst_path = tmp_path / "test_sam_file"
-    dst_path.mkdir()
-    dst_path = dst_path / "test_al.sam"
-    shutil.copy(src_path, dst_path)
-
-    return dst_path
-
-
 def get_sam_lines():
     path = Path(__file__).parent.parent / "test_files" / "sam_50.sam"
 
@@ -125,16 +97,6 @@ def get_sam_lines():
         return handle.read().split("\n")[0:-1]
 
 
-@pytest.fixture(params=get_sam_lines(), ids=lambda x: x.split("\t")[0])
-def sam_line(request):
-    return request.param.split("\t")
-
-
 @pytest.fixture
 def example_path():
     return virtool_example_path
-
-
-@pytest.fixture
-def thread_pool_executor():
-    return ThreadPoolExecutor(thread_name_prefix="vt_pytest_")

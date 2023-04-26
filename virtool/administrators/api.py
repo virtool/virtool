@@ -37,6 +37,8 @@ class RolesView(PydanticView):
         """
         List administrator roles.
 
+        Lists all administrators.
+
         Status Codes:
             200: Successful operation
         """
@@ -166,6 +168,8 @@ class AdminRoleView(PydanticView):
     ) -> Union[r200[UserResponse], r404]:
         """
         Change a users administrator role.
+
+        Removes a user as an administrator.
 
         Status Codes:
             201: Successful operation

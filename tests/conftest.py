@@ -1,28 +1,29 @@
-from tests.fixtures.client import *
-from tests.fixtures.core import *
-from tests.fixtures.db import *
-from tests.fixtures.dispatcher import *
-from tests.fixtures.documents import *
-from tests.fixtures.fake import *
-from tests.fixtures.groups import *
-from tests.fixtures.history import *
-from tests.fixtures.indexes import *
-from tests.fixtures.jobs import *
-from tests.fixtures.postgres import *
-from tests.fixtures.redis import *
-from tests.fixtures.references import *
-from tests.fixtures.response import *
-from tests.fixtures.setup import *
-from tests.fixtures.users import *
-from tests.fixtures.otus import *
-from tests.fixtures.uploads import *
-from tests.fixtures.tasks import *
-from tests.fixtures.samples import *
-from tests.fixtures.settings import *
-from tests.fixtures.subtractions import *
-from tests.fixtures.config import *
-from tests.fixtures.data import *
-from tests.fixtures.authorization import *
+pytest_plugins = (
+    "tests.fixtures.client",
+    "tests.fixtures.core",
+    "tests.fixtures.db",
+    "tests.fixtures.dispatcher",
+    "tests.fixtures.documents",
+    "tests.fixtures.fake",
+    "tests.fixtures.groups",
+    "tests.fixtures.history",
+    "tests.fixtures.indexes",
+    "tests.fixtures.jobs",
+    "tests.fixtures.postgres",
+    "tests.fixtures.redis",
+    "tests.fixtures.references",
+    "tests.fixtures.response",
+    "tests.fixtures.users",
+    "tests.fixtures.otus",
+    "tests.fixtures.uploads",
+    "tests.fixtures.tasks",
+    "tests.fixtures.samples",
+    "tests.fixtures.settings",
+    "tests.fixtures.subtractions",
+    "tests.fixtures.config",
+    "tests.fixtures.data",
+    "tests.fixtures.authorization",
+)
 
 
 def pytest_addoption(parser):
@@ -42,4 +43,12 @@ def pytest_addoption(parser):
         "--postgres-connection-string",
         action="store",
         default="postgresql+asyncpg://virtool:virtool@localhost",
+    )
+
+    parser.getgroup("syrupy").addoption(
+        "--su",
+        action="store_true",
+        default=False,
+        dest="update_snapshots",
+        help="Update snapshots (alias)",
     )

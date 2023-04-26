@@ -80,7 +80,7 @@ class LabelView(PydanticView):
         """
         Get a label.
 
-        Retrieve the details for a sample label.
+        Fetches the details for a sample label.
 
         Status Codes:
             200: Successful operation

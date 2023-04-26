@@ -4,7 +4,7 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Any, Dict, List, Optional, Tuple, Mapping
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -17,6 +17,7 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.indexes.models import SQLIndexFile
+from virtool.jobs.db import AttachJobsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -170,10 +171,10 @@ async def find(mongo, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
     :return: the index document
 
     """
-    base_query = None
-
     if ref_id:
         base_query = {"reference.id": ref_id}
+    else:
+        base_query = {"reference.id": {"$in": await mongo.references.distinct("_id")}}
 
     data = await paginate(
         mongo.indexes,
@@ -193,6 +194,7 @@ async def find(mongo, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
         "documents": await apply_transforms(
             data["documents"],
             [
+                AttachJobsTransform(mongo),
                 AttachReferenceTransform(mongo),
                 AttachUserTransform(mongo),
                 IndexCountsTransform(mongo),
@@ -385,3 +387,46 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
         )
 
     return {**document, "files": files}
+
+
+def lookup_index_otu_counts(local_field: str = "index.id") -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up index otu counts.
+
+    :param local_field: index id field to look up
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "history",
+                "let": {"index_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$index.id", "$$index_id"]}}},
+                    {"$sort": {"_id": 1}},
+                    {
+                        "$group": {
+                            "_id": None,
+                            "change_count": {"$sum": 1},
+                            "modified_otu_count": {"$addToSet": "$otu.id"},
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": False,
+                            "change_count": True,
+                            "modified_otu_count": {"$size": "$modified_otu_count"},
+                        }
+                    },
+                ],
+                "as": "counts",
+            }
+        },
+        {"$set": {"counts": {"$first": "$counts"}}},
+        {"$set": {"change_count": {"$ifNull": ["$counts.change_count", 0]}}},
+        {
+            "$set": {
+                "modified_otu_count": {"$ifNull": ["$counts.modified_otu_count", 0]}
+            }
+        },
+    ]
