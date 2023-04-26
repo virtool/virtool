@@ -569,7 +569,7 @@
         'name': 'musicians',
       },
     ],
-    'handle': 'test_user',
+    'handle': 'laura56',
     'id': 'fb085f7f',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': <class 'dict'> {
@@ -605,7 +605,7 @@
         'name': 'musicians',
       },
     ],
-    'handle': 'test_user',
+    'handle': 'laura56',
     'id': 'fb085f7f',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': <class 'dict'> {

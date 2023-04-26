@@ -147,12 +147,12 @@ class UsersFakerPiece(DataFakerPiece):
 
         if groups or primary_group:
             if groups:
-                await self.layer.administrators.update_user(
+                await self.layer.administrators.update(
                     user.id, UpdateUserRequest(groups=[group.id for group in groups])
                 )
 
             if primary_group:
-                await self.layer.administrators.update_user(
+                await self.layer.administrators.update(
                     user.id, UpdateUserRequest(primary_group=primary_group.id)
                 )
 

@@ -35,7 +35,7 @@ class RolesView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def get(self) -> r200[ListRolesResponse]:
         """
-        List all available administrator roles.
+        List administrator roles.
 
         Status Codes:
             200: Successful operation
@@ -50,7 +50,9 @@ class AdminUsersView(PydanticView):
         self, administrator: Optional[bool] = None, term: Optional[str] = None
     ) -> r200[ListAdministratorResponse]:
         """
-        Get a paginated list of users
+        Find users.
+
+        Returns a paginated list of users
 
         Status Codes:
             200: Successful operation
@@ -69,7 +71,7 @@ class AdminUsersView(PydanticView):
             per_page = 25
 
         return json_response(
-            await get_data_from_req(self.request).administrators.find_users(
+            await get_data_from_req(self.request).administrators.find(
                 page,
                 per_page,
                 administrator,
@@ -83,7 +85,9 @@ class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(self, user_id: str, /) -> Union[r200[UserResponse], r404]:
         """
-        Get the complete representation of a user
+        Get a user.
+
+        Returns a complete representation of a user
 
         Status Codes:
             200: Successful operation
@@ -91,9 +95,7 @@ class AdminUserView(PydanticView):
         """
 
         try:
-            user = await get_data_from_req(self.request).administrators.get_user(
-                user_id
-            )
+            user = await get_data_from_req(self.request).administrators.get(user_id)
         except ResourceNotFoundError:
             raise NotFound()
 
@@ -104,7 +106,7 @@ class AdminUserView(PydanticView):
         self, user_id: str, /, data: UpdateUserRequest
     ) -> Union[r200[UserResponse], r404]:
         """
-        Update a user
+        Update a user.
 
         Status Codes:
             200: Successful operation
@@ -119,7 +121,7 @@ class AdminUserView(PydanticView):
             raise HTTPForbidden(text="Insufficient privileges")
 
         try:
-            user = await get_data_from_req(self.request).administrators.update_user(
+            user = await get_data_from_req(self.request).administrators.update(
                 user_id, data
             )
         except ResourceNotFoundError:
@@ -159,11 +161,11 @@ async def check_can_edit_user(
 @routes.view("/admin/users/{user_id}/role")
 class AdminRoleView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
-    async def post(
+    async def put(
         self, user_id: str, /, data: UpdateAdministratorRoleRequest
-    ) -> Union[r201[UserResponse], r404]:
+    ) -> Union[r200[UserResponse], r404]:
         """
-        Change a users administrator role
+        Change a users administrator role.
 
         Status Codes:
             201: Successful operation
@@ -180,4 +182,4 @@ class AdminRoleView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(administrator, status=201)
+        return json_response(administrator, status=200)

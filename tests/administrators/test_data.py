@@ -41,7 +41,7 @@ async def test_find_users(
     )
 
     assert (
-        await data_layer.administrators.find_users(
+        await data_layer.administrators.find(
             1, 25, term=term, administrator=administrator
         )
         == snapshot
@@ -53,16 +53,14 @@ async def test_get_user(
     spawn_client, authorization_client, fake2, snapshot, data_layer, administrator
 ):
     group = await fake2.groups.create()
-    user = await fake2.users.create(
-        handle="test_user", groups=[group], primary_group=group
-    )
+    user = await fake2.users.create(groups=[group], primary_group=group)
 
     if administrator:
         await authorization_client.add(
             AdministratorRoleAssignment(user.id, AdministratorRole.BASE),
         )
 
-    assert await data_layer.administrators.get_user(user.id) == snapshot
+    assert await data_layer.administrators.get(user.id) == snapshot
 
 
 class TestUpdate:
@@ -114,7 +112,7 @@ class TestUpdate:
             ),
         )
 
-        assert await data_layer.administrators.update_user(user.id, update) == snapshot(
+        assert await data_layer.administrators.update(user.id, update) == snapshot(
             name="obj"
         )
 
@@ -129,7 +127,7 @@ class TestUpdate:
         """
         user = await fake2.users.create()
 
-        assert await data_layer.administrators.update_user(
+        assert await data_layer.administrators.update(
             user.id, UpdateUserRequest(password="hello_world")
         ) == snapshot(name="obj")
 
@@ -142,7 +140,7 @@ class TestUpdate:
 
     async def test_does_not_exist(self, data_layer):
         with pytest.raises(ResourceNotFoundError) as err:
-            await data_layer.administrators.update_user(
+            await data_layer.administrators.update(
                 "user_id", UpdateUserRequest(administrator=False)
             )
             assert "User does not exist" == str(err)

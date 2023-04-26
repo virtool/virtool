@@ -49,7 +49,7 @@ class AdministratorsData(DataLayerPiece):
         self._authorization_client = authorization_client
         self._mongo = mongo
 
-    async def find_users(
+    async def find(
         self,
         page: int,
         per_page: int,
@@ -65,12 +65,12 @@ class AdministratorsData(DataLayerPiece):
         :param term: a search term to filter by user handle
         """
 
-        admin_dict = dict(await self._authorization_client.list_administrators())
+        administrators = dict(await self._authorization_client.list_administrators())
 
         administrator_query = {}
         if administrator is not None:
             operator = "$in" if administrator else "$nin"
-            administrator_query = {"_id": {operator: list(admin_dict.keys())}}
+            administrator_query = {"_id": {operator: list(administrators.keys())}}
 
         term_query = compose_regex_query(term, ["handle"]) if term else {}
 
@@ -85,7 +85,7 @@ class AdministratorsData(DataLayerPiece):
             per_page,
             client_query,
             sort="handle",
-            transforms=[
+            lookup_steps=[
                 *lookup_groups_minimal_by_id(local_field="groups"),
                 *lookup_group_minimal_by_id(
                     local_field="primary_group", set_as="primary_group"
@@ -95,13 +95,13 @@ class AdministratorsData(DataLayerPiece):
         )
 
         result["items"] = [
-            User(**user, administrator_role=admin_dict.get(user["_id"]))
+            User(**user, administrator_role=administrators.get(user["_id"]))
             for user in result["items"]
         ]
 
         return UserSearchResult(**result)
 
-    async def get_user(self, user_id: str) -> User:
+    async def get(self, user_id: str) -> User:
         """
         Fetch a complete User including administrator role.
 
@@ -118,7 +118,7 @@ class AdministratorsData(DataLayerPiece):
 
         return user
 
-    async def update_user(self, user_id: str, data: UpdateUserRequest) -> User:
+    async def update(self, user_id: str, data: UpdateUserRequest) -> User:
         """
         Update a user.
 
@@ -183,7 +183,7 @@ class AdministratorsData(DataLayerPiece):
                 document["permissions"],
             )
 
-        return await self.get_user(user_id)
+        return await self.get(user_id)
 
     async def set_administrator_role(
         self, user_id: str, role: AdministratorRole
@@ -209,7 +209,7 @@ class AdministratorsData(DataLayerPiece):
                     AdministratorRoleAssignment(user_id, AdministratorRole(role))
                 )
 
-            user = await self.get_user(user_id)
+            user = await self.get(user_id)
 
             await update_keys(
                 self._mongo,

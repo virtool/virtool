@@ -153,7 +153,7 @@ async def paginate_aggregate(
     per_page: int,
     client_query: Union[Dict, MultiDictProxy[str]],
     base_query: Optional[Dict] = None,
-    transforms: Optional[List[Dict]] = None,
+    lookup_steps: Optional[List[Dict]] = None,
     projection: Optional[Projection] = None,
     sort: Optional[Union[List[Tuple[str, int]], str]] = None,
     reverse: bool = False,
@@ -188,7 +188,7 @@ async def paginate_aggregate(
     :param per_page: the number of items to return per page
     :param client_query: a query derived from user supplied - affects found count
     :param base_query: a query always applied to the search
-    :param transforms: a list of transforms to apply to the query
+    :param lookup_steps: a list of transforms to apply to the query
     :param projection: the projection to apply to the returned documents
     :param sort: a field to sort by
     :param reverse: reverse the sort order
@@ -199,7 +199,7 @@ async def paginate_aggregate(
 
     client_query = client_query or {}
 
-    transforms = transforms or []
+    lookup_steps = lookup_steps or []
 
     projection = projection or True
 
@@ -230,7 +230,7 @@ async def paginate_aggregate(
                         {"$sort": sort},
                         {"$skip": skip_count},
                         {"$limit": per_page},
-                        *transforms,
+                        *lookup_steps,
                     ],
                 }
             },
