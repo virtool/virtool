@@ -42,11 +42,3 @@ async def test_get_status(config, data_layer, fake2, mongo, snapshot, static_tim
     )
 
     assert await data_layer.hmms.get_status() == snapshot
-
-
-async def test_create_fake_hmm(fake2, spawn_client, snapshot):
-    client = await spawn_client(authorize=True)
-
-    hmm = await fake2.hmm.create(fake2.mongo)
-
-    assert hmm == snapshot
