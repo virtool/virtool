@@ -55,7 +55,10 @@ def get_scheduler_from_app(app: App) -> aiojobs.Scheduler:
 
 
 async def startup_check_db(app: App):
-    if app["config"].no_check_db:
+
+    config = app["config"]
+
+    if (config.no_check_db if hasattr(config, "no_check_db") else False):
         return logger.info("Skipping database checks")
 
     db = app["db"]
@@ -198,7 +201,10 @@ async def startup_databases(app: App):
 
 async def startup_routes(app: App):
     logger.debug("Setting up routes")
-    setup_routes(app, dev=app["config"].dev)
+
+    config = app["config"]
+
+    setup_routes(app, dev=config.dev if hasattr(config, "dev") else False)
 
 
 async def startup_sentry(app: App):
@@ -249,7 +255,7 @@ async def startup_b2c(app: App):
     """
     config = get_config_from_app(app)
 
-    if not config.use_b2c:
+    if not (config.use_b2c if hasattr(config, "use_b2c") else False):
         return
 
     if not all(
