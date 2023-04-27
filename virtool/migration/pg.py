@@ -44,9 +44,26 @@ async def list_applied_revisions(pg: AsyncEngine) -> list[AppliedRevision]:
                 applied_at=arrow.get(revision.applied_at).floor("second").naive,
                 name=revision.name,
                 revision=revision.revision,
+                created_at=revision.created_at,
             )
             for revision in result.scalars()
         ]
+
+
+async def list_applied_revision_ids(pg: AsyncEngine) -> list[str]:
+    """
+    List all applied data revision ids.
+
+    :param pg: the SQLAlchemy database engine
+    :return: a list of applied revision ids
+
+    """
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLRevision).order_by(SQLRevision.applied_at)
+        )
+
+        return [revision.id for revision in result.scalars()]
 
 
 async def fetch_last_applied_revision(
@@ -74,6 +91,7 @@ async def fetch_last_applied_revision(
             AppliedRevision(
                 id=revision.id,
                 applied_at=arrow.get(revision.applied_at).floor("second").naive,
+                created_at=revision.created_at,
                 name=revision.name,
                 revision=revision.revision,
             )

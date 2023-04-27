@@ -42,6 +42,7 @@ async def upgrade(ctx: RevisionContext):
 
 
 async def test_upgrade(ctx, snapshot):
+
     await gather(
         ctx.mongo.database.samples.insert_many(
             [
@@ -59,9 +60,11 @@ async def test_upgrade(ctx, snapshot):
         ),
     )
 
-    async with await mongo.client.start_session() as session:
+    async with await ctx.mongo.client.start_session() as session:
         async with session.start_transaction():
-            await upgrade(mongo, session)
+            await upgrade(ctx)
 
-    assert await mongo.analyses.find().to_list(None) == snapshot(name="analyses")
-    assert await mongo.samples.find().to_list(None) == snapshot(name="samples")
+
+
+    assert await ctx.mongo.database.analyses.find().to_list(None) == snapshot(name="analyses")
+    assert await ctx.mongo.database.samples.find().to_list(None) == snapshot(name="samples")

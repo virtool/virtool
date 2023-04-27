@@ -2,12 +2,14 @@
   <class 'list'> [
     <class 'dict'> {
       'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
       'id': 1,
       'name': 'Test 1',
       'revision': 'test_1',
     },
     <class 'dict'> {
       'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
       'id': 2,
       'name': 'Test 2',
       'revision': 'test_2',

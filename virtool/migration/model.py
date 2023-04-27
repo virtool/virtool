@@ -13,6 +13,10 @@ class SQLRevision(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     revision = Column(String, unique=True)
+    created_at = Column(
+        DateTime,
+        nullable=False,
+    )
     applied_at = Column(
         DateTime,
         default=datetime.utcnow,

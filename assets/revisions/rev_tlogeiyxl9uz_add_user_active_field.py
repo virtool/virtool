@@ -6,7 +6,8 @@ Date: 2022-09-29 21:56:37.130137
 
 """
 import arrow
-from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorDatabase
+
+from virtool.migration.ctx import RevisionContext
 
 # Revision identifiers.
 name = "Add user active field"
@@ -15,7 +16,7 @@ revision_id = "tlogeiyxl9uz"
 required_alembic_revision = None
 
 
-async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSession):
+async def upgrade(ctx: RevisionContext):
     """
     Set the ``active`` field to ``True`` for users that do not have the field.
 
@@ -23,13 +24,13 @@ async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSes
     in order to deactivate the user account.
 
     """
-    await motor_db.users.update_many(
-        {"active": {"$exists": False}}, {"$set": {"active": True}}, session=session
+    await ctx.mongo.database.users.update_many(
+        {"active": {"$exists": False}}, {"$set": {"active": True}}, session=ctx.mongo.session
     )
 
 
-async def test_upgrade(mongo, snapshot):
-    await mongo.users.insert_many(
+async def test_upgrade(ctx, snapshot):
+    await ctx.mongo.database.users.insert_many(
         [
             {
                 "_id": "bob",
@@ -48,8 +49,6 @@ async def test_upgrade(mongo, snapshot):
         ]
     )
 
-    async with await mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(mongo, session)
+    await upgrade(ctx)
 
-    assert await mongo.users.find().to_list(None) == snapshot
+    assert await ctx.mongo.database.users.find().to_list(None) == snapshot

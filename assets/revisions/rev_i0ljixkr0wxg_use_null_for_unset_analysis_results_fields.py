@@ -6,7 +6,8 @@ Date: 2022-10-03 19:29:47.077288
 
 """
 import arrow
-from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorDatabase
+
+from virtool.migration.ctx import RevisionContext
 
 # Revision identifiers.
 name = "Use null for unset analysis results fields"
@@ -15,16 +16,17 @@ revision_id = "i0ljixkr0wxg"
 required_alembic_revision = None
 
 
-async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSession):
-    await motor_db.analyses.update_many(
+async def upgrade(ctx: RevisionContext):
+    await ctx.mongo.database.analyses.update_many(
         {"results": {"$exists": False}},
         {"$set": {"results": None}},
-        session=session,
+        session=ctx.mongo.session,
     )
 
 
-async def test_upgrade(mongo: AsyncIOMotorDatabase, snapshot):
-    await mongo.analyses.insert_many(
+async def test_upgrade(ctx, snapshot):
+    await ctx.mongo.database.analyses.delete_many({})
+    await ctx.mongo.database.analyses.insert_many(
         [
             {
                 "_id": "bat",
@@ -55,8 +57,6 @@ async def test_upgrade(mongo: AsyncIOMotorDatabase, snapshot):
         ]
     )
 
-    async with await mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(mongo, session)
+    await upgrade(ctx)
 
-    assert await mongo.analyses.find().to_list(None) == snapshot
+    assert await ctx.mongo.database.analyses.find().to_list(None) == snapshot

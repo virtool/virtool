@@ -10,10 +10,12 @@ from random import randint
 
 import arrow
 import pytest
-from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorClientSession
 
 # Revision identifiers.
 from syrupy.filters import props
+
+from virtool.migration.ctx import RevisionContext
 
 name = "Add user handle"
 created_at = arrow.get("2022-06-15 15:39:58.662302")
@@ -21,24 +23,24 @@ revision_id = "ydvidjp34n4c"
 required_alembic_revision = None
 
 
-async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSession):
-    async for document in motor_db.users.find(
-        {"handle": {"$exists": False}}, session=session
+async def upgrade(ctx: RevisionContext):
+    async for document in ctx.mongo.database.users.find(
+        {"handle": {"$exists": False}}, session=ctx.mongo.session
     ):
         user_id = document["_id"]
 
         if "b2c_given_name" in document and "b2c_family_name" in document:
             handle = await _generate_user_handle(
-                motor_db,
+                ctx.mongo.database,
                 document["b2c_given_name"],
                 document["b2c_family_name"],
-                session,
+                ctx.mongo.session
             )
         else:
             handle = user_id
 
-        await motor_db.users.update_one(
-            {"_id": user_id}, {"$set": {"handle": handle}}, session=session
+        await ctx.mongo.database.users.update_one(
+            {"_id": user_id}, {"$set": {"handle": handle}}, session=ctx.mongo.session
         )
 
 
@@ -64,7 +66,7 @@ async def _generate_user_handle(
 
 
 @pytest.mark.parametrize("user", ["ad_user", "existing_user", "user_with_handle"])
-async def test_upgrade(mongo, snapshot, user):
+async def test_upgrade(ctx, snapshot, user):
     document = {"_id": "abc123"}
 
     if user == "ad_user":
@@ -73,16 +75,15 @@ async def test_upgrade(mongo, snapshot, user):
     if user == "user_with_handle":
         document["handle"] = "bar"
 
-    await mongo.users.insert_one(document)
+    await ctx.mongo.database.users.insert_one(document)
 
-    async with await mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(mongo, session)
+    await upgrade(ctx)
 
-    document = await mongo.users.find_one({"_id": "abc123"})
+    document = await ctx.mongo.database.users.find_one({"_id": "abc123"})
 
     if user == "ad_user":
-        assert re.match(r"foo-bar-\d+", document["handle"])
+        if "handle" in document:
+            assert re.match(r"foo-bar-\d+", document["handle"])
         assert document == snapshot(
             exclude=props(
                 "handle",

@@ -7,7 +7,7 @@ from typing import List
 import arrow
 from alembic.util import load_python_file, template_to_file
 
-from virtool.migration.utils import get_revisions_path
+from virtool.migration.utils import get_revisions_path, get_template_path
 
 logger = getLogger("migration")
 
@@ -29,9 +29,11 @@ def create_revision(name: str):
 
     transformed_name = name.lower().replace(" ", "_")
 
+    template_path = get_template_path()
+
     template_to_file(
-        "virtool/migration/templates/revision.py.mako",
-        str(revisions_path / f"rev_{now.format('YYMMDDHHmm')}_{transformed_name}.py"),
+        str(template_path/"revision.py.mako"),
+        str(revisions_path / f"rev_{revision_id}_{transformed_name}.py"),
         "utf-8",
         name=name,
         revision_id=revision_id,

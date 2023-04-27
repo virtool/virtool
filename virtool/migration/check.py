@@ -1,3 +1,12 @@
+import sys
+from logging import getLogger
+
+from motor.motor_asyncio import AsyncIOMotorDatabase
+
+REQUIRED_MONGODB_REVISION = "l20h8fsbbb28"
+
+logger = getLogger("mongo")
+
 async def check_data_revision_version(mongo: AsyncIOMotorDatabase):
     """
     Check if the required MongoDB revision has been applied.
