@@ -37,8 +37,6 @@ class RolesView(PydanticView):
         """
         List administrator roles.
 
-        Lists all administrators.
-
         Status Codes:
             200: Successful operation
         """
@@ -54,7 +52,7 @@ class AdminUsersView(PydanticView):
         """
         Find users.
 
-        Returns a paginated list of users
+        Returns a paginated list of users.
 
         Status Codes:
             200: Successful operation
@@ -89,7 +87,7 @@ class AdminUserView(PydanticView):
         """
         Get a user.
 
-        Returns a complete representation of a user
+        Fetches the details of a user.
 
         Status Codes:
             200: Successful operation
@@ -167,9 +165,9 @@ class AdminRoleView(PydanticView):
         self, user_id: str, /, data: UpdateAdministratorRoleRequest
     ) -> Union[r200[UserResponse], r404]:
         """
-        Change a users administrator role.
+        Set administrator role.
 
-        Removes a user as an administrator.
+        Updates the user's administrator role.
 
         Status Codes:
             201: Successful operation
