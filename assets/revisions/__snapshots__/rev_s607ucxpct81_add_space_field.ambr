@@ -1,0 +1,104 @@
+# name: test_upgrade[uvloop]
+  <class 'list'> [
+    <class 'list'> [
+      <class 'dict'> {
+        '_id': 'foo',
+        'space': <class 'dict'> {
+          'id': 2,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'bar',
+      },
+      <class 'dict'> {
+        '_id': 'baz',
+        'space': <class 'dict'> {
+          'id': 15,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'noo',
+      },
+    ],
+    <class 'list'> [
+      <class 'dict'> {
+        '_id': 'foo',
+        'space': <class 'dict'> {
+          'id': 2,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'bar',
+      },
+      <class 'dict'> {
+        '_id': 'baz',
+        'space': <class 'dict'> {
+          'id': 15,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'noo',
+      },
+    ],
+    <class 'list'> [
+      <class 'dict'> {
+        '_id': 'foo',
+        'space': <class 'dict'> {
+          'id': 2,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'bar',
+      },
+      <class 'dict'> {
+        '_id': 'baz',
+        'space': <class 'dict'> {
+          'id': 15,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'noo',
+      },
+    ],
+    <class 'list'> [
+      <class 'dict'> {
+        '_id': 'foo',
+        'space': <class 'dict'> {
+          'id': 2,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'bar',
+      },
+      <class 'dict'> {
+        '_id': 'baz',
+        'space': <class 'dict'> {
+          'id': 15,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'noo',
+      },
+    ],
+    <class 'list'> [
+      <class 'dict'> {
+        '_id': 'foo',
+        'space': <class 'dict'> {
+          'id': 2,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'bar',
+      },
+      <class 'dict'> {
+        '_id': 'baz',
+        'space': <class 'dict'> {
+          'id': 15,
+        },
+      },
+      <class 'dict'> {
+        '_id': 'noo',
+      },
+    ],
+  ]
+---

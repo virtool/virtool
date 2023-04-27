@@ -6,11 +6,12 @@ Date: 2022-06-09 20:38:11.017655
 
 """
 import arrow
-from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorDatabase
 
 # Revision identifiers.
 from pymongo import UpdateOne
 from virtool_core.mongo import buffered_bulk_writer
+
+from virtool.migration.ctx import RevisionContext
 
 name = "Nest analysis results field"
 created_at = arrow.get("2022-06-09 20:38:11.017655")
@@ -18,7 +19,7 @@ revision_id = "7emq1brv0zz6"
 required_alembic_revision = None
 
 
-async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSession):
+async def upgrade(ctx: RevisionContext):
     """
     Move the ``subtracted_count`` and ``read_count`` fields from the document to the
     ``results`` subdocument.
@@ -27,8 +28,8 @@ async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSes
     the analysis document by a workflow job.
 
     """
-    async with buffered_bulk_writer(motor_db.analyses) as writer:
-        async for document in motor_db.analyses.find(
+    async with buffered_bulk_writer(ctx.mongo.database.analyses) as writer:
+        async for document in ctx.mongo.database.analyses.find(
             {
                 "results": {"$ne": None, "$exists": True},
                 "results.hits": {"$exists": False},
@@ -87,8 +88,9 @@ async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSes
                 )
 
 
-async def test_upgrade(mongo, snapshot):
-    await mongo.analyses.insert_many(
+async def test_upgrade(ctx, snapshot):
+    await ctx.mongo.database.analyses.delete_many({})
+    await ctx.mongo.database.analyses.insert_many(
         [
             {
                 "_id": "foo",
@@ -144,8 +146,6 @@ async def test_upgrade(mongo, snapshot):
         ]
     )
 
-    async with await mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(mongo, session)
+    await upgrade(ctx)
 
-    assert await mongo.analyses.find().to_list(None) == snapshot
+    assert await ctx.mongo.database.analyses.find().to_list(None) == snapshot

@@ -6,7 +6,8 @@ Date: 2022-06-09 22:20:48.591743
 
 """
 import arrow
-from motor.motor_asyncio import AsyncIOMotorDatabase
+
+from virtool.migration.ctx import RevisionContext
 
 # Revision identifiers.
 name = "Remove software_update status document"
@@ -15,14 +16,14 @@ revision_id = "gr5j6jx8ap7f"
 required_alembic_revision = None
 
 
-async def upgrade(motor_db: AsyncIOMotorDatabase, _):
-    await motor_db.status.delete_many(
+async def upgrade(ctx: RevisionContext):
+    await ctx.mongo.database.status.delete_many(
         {"_id": {"$in": ["software", "software_update", "version"]}}
     )
 
 
-async def test_upgrade(mongo, snapshot):
-    await mongo.status.insert_many(
+async def test_upgrade(ctx, snapshot):
+    await ctx.mongo.database.status.insert_many(
         [
             {"_id": "software_update", "foo": "bar"},
             {"_id": "version", "foo": "bar"},
@@ -30,8 +31,7 @@ async def test_upgrade(mongo, snapshot):
         ]
     )
 
-    async with await mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(mongo, session)
 
-    assert await mongo.status.find().to_list(None) == []
+    await upgrade(ctx)
+
+    assert await ctx.mongo.database.status.find().to_list(None) == []

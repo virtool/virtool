@@ -5,8 +5,9 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
 from semver import VersionInfo
 
+from virtool.migration.check import check_data_revision_version
+
 MINIMUM_MONGO_VERSION = "3.6.0"
-REQUIRED_MONGODB_REVISION = "l20h8fsbbb28"
 
 logger = getLogger("mongo")
 
@@ -36,26 +37,9 @@ async def connect(
     await check_mongo_version(mongo_client)
 
     if not skip_revision_check:
-        await check_data_revision(mongo_client[db_name])
+        await check_data_revision_version(mongo_client[db_name])
 
     return mongo_client[db_name]
-
-
-async def check_data_revision(mongo: AsyncIOMotorDatabase):
-    """
-    Check if the required MongoDB revision has been applied.
-
-    Log a fatal error and exit if the required revision
-    has not been applied.
-
-    :param mongo: the application database object
-    """
-    if not await mongo.migrations.find_one({"revision_id": REQUIRED_MONGODB_REVISION}):
-        logger.fatal(
-            "The required MongoDB revision has not been applied: %s.",
-            REQUIRED_MONGODB_REVISION,
-        )
-        sys.exit(1)
 
 
 async def check_mongo_version(mongo: AsyncIOMotorClient) -> str:

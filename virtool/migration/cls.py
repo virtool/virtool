@@ -13,6 +13,7 @@ class Revision:
     created_at: datetime
     name: str
     upgrade: Callable[[MigrationContext], Awaitable[None]]
+    depends_on: str
 
 
 @dataclass
@@ -21,5 +22,6 @@ class AppliedRevision:
 
     id: int
     applied_at: datetime
+    created_at: datetime
     name: str
     revision: str

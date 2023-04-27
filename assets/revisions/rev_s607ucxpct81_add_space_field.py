@@ -8,7 +8,8 @@ Date: 2023-02-08 00:06:52.287448
 import asyncio
 
 import arrow
-from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorDatabase
+
+from virtool.migration.ctx import RevisionContext
 
 # Revision identifiers.
 name = "Add space field"
@@ -17,29 +18,30 @@ revision_id = "s607ucxpct81"
 required_alembic_revision = None
 
 
-async def upgrade(motor_db: AsyncIOMotorDatabase, session: AsyncIOMotorClientSession):
+async def upgrade(ctx: RevisionContext):
     for collection in (
-        motor_db.analyses,
-        motor_db.jobs,
-        motor_db.references,
-        motor_db.samples,
-        motor_db.subtractions,
+        ctx.mongo.database.analyses,
+        ctx.mongo.database.jobs,
+        ctx.mongo.database.references,
+        ctx.mongo.database.samples,
+        ctx.mongo.database.subtractions,
     ):
         await collection.update_many(
-            {"space": {"$exists": False}}, {"$set": {"space": 0}}, session=session
+            {"space": {"$exists": False}}, {"$set": {"space": 0}}, session=ctx.mongo.session
         )
 
 
-async def test_upgrade(mongo, snapshot):
+async def test_upgrade(ctx, snapshot):
     collections = (
-        mongo.analyses,
-        mongo.jobs,
-        mongo.references,
-        mongo.samples,
-        mongo.subtractions,
+        ctx.mongo.database.analyses,
+        ctx.mongo.database.jobs,
+        ctx.mongo.database.references,
+        ctx.mongo.database.samples,
+        ctx.mongo.database.subtractions,
     )
 
     for collection in collections:
+        await collection.delete_many({})
         await collection.insert_many(
             [
                 {
@@ -59,9 +61,7 @@ async def test_upgrade(mongo, snapshot):
             ]
         )
 
-    async with await mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(mongo, session)
+    await upgrade(ctx)
 
     assert (
         await asyncio.gather(

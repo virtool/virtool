@@ -6,7 +6,8 @@ Date: 2022-06-09 22:12:49.222586
 
 """
 import arrow
-from motor.motor_asyncio import AsyncIOMotorDatabase
+
+from virtool.migration.ctx import RevisionContext
 
 # Revision identifiers.
 name = "Rename cache hash field to key"
@@ -15,12 +16,13 @@ revision_id = "jhqn47cauoea"
 required_alembic_revision = None
 
 
-async def upgrade(motor_db: AsyncIOMotorDatabase, _):
-    await motor_db.caches.update_many({}, {"$rename": {"hash": "key"}})
+async def upgrade(ctx: RevisionContext):
+    await ctx.mongo.database.caches.update_many({}, {"$rename": {"hash": "key"}})
 
 
-async def test_upgrade(mongo, snapshot):
-    await mongo.caches.insert_many(
+async def test_upgrade(ctx, snapshot):
+
+    await ctx.mongo.database.caches.insert_many(
         [
             {
                 "_id": "foo",
@@ -35,8 +37,6 @@ async def test_upgrade(mongo, snapshot):
         ]
     )
 
-    async with await mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(mongo, session)
+    await upgrade(ctx)
 
-    assert await mongo.caches.find().to_list(None) == snapshot
+    assert await ctx.mongo.database.caches.find().to_list(None) == snapshot

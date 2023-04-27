@@ -2,12 +2,16 @@ import datetime
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from pprint import pprint
+from subprocess import call
+from typing import Callable, Awaitable
 
 import arrow
 from alembic.util import load_python_file
 
-from virtool.migration.apply import load_revisions
+from virtool.config.cls import MigrationConfig
+from virtool.migration.apply import apply_one_revision, load_revisions
+from virtool.migration.ctx import create_migration_context, MigrationContext
+from virtool.migration.pg import fetch_last_applied_revision, list_applied_revision_ids
 
 
 class RevisionSource(str, Enum):
@@ -23,6 +27,8 @@ class GenericRevision:
     created_at: datetime.datetime
     name: str
     source: RevisionSource
+    depends_on: str
+    upgrade: Callable[[MigrationContext], Awaitable[None]]
 
 
 def get_alembic_path() -> Path:
@@ -61,10 +67,44 @@ def load_alembic_revisions() -> list[GenericRevision]:
                     created_at=get_revision_create_date(path),
                     name=get_revision_name(path),
                     source=RevisionSource.ALEMBIC,
+                    depends_on=None,
+                    upgrade=None,
                 )
             )
 
     return revisions
+
+
+async def apply(config: MigrationConfig, revision_id: str):
+
+    all_revisions = sorted(
+        [*load_alembic_revisions(), *load_virtool_revisions()],
+        key=lambda r: r.created_at,
+    )
+
+    ctx = await create_migration_context(config)
+
+    last_applied_revision = await fetch_last_applied_revision(ctx.pg)
+
+    for revision in all_revisions:
+
+        if revision.id in await list_applied_revision_ids(ctx.pg):
+            continue
+
+        if last_applied_revision is None or (
+            revision.created_at > last_applied_revision.created_at
+        ):
+
+            if revision.source == RevisionSource.VIRTOOL:
+
+                await apply_one_revision(ctx, revision)
+
+            else:
+
+                call(["alembic", "upgrade", revision.id])
+
+        if revision_id != "latest" and revision.id == revision_id:
+            break
 
 
 def load_virtool_revisions() -> list[GenericRevision]:
@@ -83,6 +123,8 @@ def load_virtool_revisions() -> list[GenericRevision]:
             created_at=revision.created_at,
             name=revision.name,
             source=RevisionSource.VIRTOOL,
+            depends_on=revision.depends_on,
+            upgrade=revision.upgrade,
         )
         for revision in revisions
     ]

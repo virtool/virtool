@@ -16,6 +16,8 @@ name = "Give admins full administrator role"
 created_at = arrow.get("2023-04-13 21:18:34.804157")
 revision_id = "okicpu9cagyu"
 
+required_alembic_revision = None
+
 
 async def upgrade(ctx: RevisionContext):
     """Give all users with the legacy administrator flag the full administrator role."""

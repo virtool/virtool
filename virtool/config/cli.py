@@ -31,10 +31,8 @@ from virtool.config.options import (
     redis_connection_string_option,
     sentry_dsn_option,
 )
-from virtool.migration import show
-from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
-from virtool.migration.show import show_revisions
+from virtool.migration.show import show_revisions, apply
 from virtool.oas.cmd import show_oas
 
 logger = getLogger("config")
@@ -136,14 +134,13 @@ def migration():
 @mongodb_connection_string_option
 @openfga_options
 @postgres_connection_string_option
-@redis_connection_string_option
 def migration_apply(**kwargs):
     """Apply all pending migrations."""
     configure_logs(False)
 
     logger.info("Applying migrations")
 
-    asyncio.run(apply(MigrationConfig(**kwargs)))
+    asyncio.run(apply(MigrationConfig(**kwargs), "latest"))
 
 
 @migration.command("create")
@@ -154,7 +151,7 @@ def migration_create(name: str):
 
 
 @migration.command("show")
-def migration_apply(**kwargs):
+def migration_show(**kwargs):
     """Apply all pending migrations."""
     configure_logs(False)
 

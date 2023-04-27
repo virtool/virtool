@@ -20,6 +20,7 @@ async def applied_revisions(pg: AsyncEngine):
         session.add(
             SQLRevision(
                 applied_at=arrow.utcnow().naive,
+                created_at=arrow.utcnow().naive,
                 name="Test 1",
                 revision="test_1",
             )
@@ -27,6 +28,7 @@ async def applied_revisions(pg: AsyncEngine):
         session.add(
             SQLRevision(
                 applied_at=arrow.utcnow().shift(minutes=23).naive,
+                created_at=arrow.utcnow().naive,
                 name="Test 2",
                 revision="test_2",
             )
@@ -58,7 +60,7 @@ async def test_list_applied_revisions(applied_revisions, pg: AsyncEngine, snapsh
     revisions = await list_applied_revisions(pg)
 
     assert [asdict(revision) for revision in revisions] == snapshot(
-        matcher=path_type({".*applied_at": (datetime.datetime,)}, regex=True)
+        matcher=path_type({".*applied_at": (datetime.datetime,), ".*created_at": (datetime.datetime,)}, regex=True)
     )
 
 
