@@ -44,7 +44,7 @@ class VirtoolProvider(BaseProvider):
 
 
 class DataFaker:
-    def __init__(self, layer: DataLayer, mongo = None):
+    def __init__(self, layer: DataLayer, mongo):
         self.layer = layer
 
         self.faker = Faker()
@@ -166,7 +166,7 @@ class HMMFakerPiece(DataFakerPiece):
     model = HMM
 
     async def create(self, mongo):
-        
+
         hmm_id = self.faker.pystr()
         faker = self.faker
 
