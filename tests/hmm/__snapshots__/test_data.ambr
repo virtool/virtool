@@ -1,3 +1,30 @@
+# name: test_create_fake_hmm[uvloop]
+  <class 'dict'> {
+    '_id': 'RNvnAvOpyEVAoNGnVZQU',
+    'cluster': 7851,
+    'count': 3450,
+    'entries': <class 'list'> [
+      <class 'dict'> {
+        'accession': 'qLUJyfwFVYySnPCaLuQI',
+        'gi': 'azTmqTjDmYPxeqAWfCKC',
+        'name': 'QCYFExFuDpjjFIyeNTWR',
+        'organism': 'UWCuKoQSUEXExIZVPeFz',
+      },
+    ],
+    'families': <class 'dict'> {
+      'LdJCGRddpwdyFKunVyUD': 3332,
+    },
+    'genera': <class 'dict'> {
+      'GRmMglPrQfhKcDVBJbHF': 9436,
+    },
+    'length': 1961,
+    'mean_entropy': 49679341.1946931,
+    'names': <class 'list'> [
+      'YdJRrnFxjyvDAqsRnDaM',
+    ],
+    'total_entropy': 26035965871101.1,
+  }
+---
 # name: test_get_status[uvloop]
   <class 'dict'> {
     'errors': <class 'list'> [

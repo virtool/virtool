@@ -18,6 +18,7 @@ from virtool_core.models.job import Job
 from virtool_core.models.label import Label
 from virtool_core.models.task import Task
 from virtool_core.models.user import User
+from virtool_core.models.hmm import HMM
 
 from virtool.data.layer import DataLayer
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
@@ -43,7 +44,7 @@ class VirtoolProvider(BaseProvider):
 
 
 class DataFaker:
-    def __init__(self, layer: DataLayer):
+    def __init__(self, layer: DataLayer, mongo = None):
         self.layer = layer
 
         self.faker = Faker()
@@ -58,6 +59,9 @@ class DataFaker:
         self.jobs = JobsFakerPiece(self)
         self.tasks = TasksFakerPiece(self)
         self.users = UsersFakerPiece(self)
+        self.hmm = HMMFakerPiece(self)
+
+        self.mongo = mongo
 
 
 class DataFakerPiece:
@@ -156,3 +160,36 @@ class UsersFakerPiece(DataFakerPiece):
             return await self.layer.users.get(user.id)
 
         return user
+
+
+class HMMFakerPiece(DataFakerPiece):
+    model = HMM
+
+    async def create(self, mongo):
+        
+        hmm_id = self.faker.pystr()
+        faker = self.faker
+
+        await mongo.hmm.insert_one(
+            {
+                "entries": [
+                    {
+                        "accession": faker.pystr(),
+                        "gi": faker.pystr(),
+                        "name": faker.pystr(),
+                        "organism": faker.pystr()
+                    }
+                ],
+                "genera": {faker.pystr(): faker.pyint()},
+                "length": faker.pyint(),
+                "mean_entropy": faker.pyfloat(),
+                "total_entropy": faker.pyfloat(),
+                "_id": hmm_id,
+                "cluster": faker.pyint(),
+                "count": faker.pyint(),
+                "families": {faker.pystr(): faker.pyint()},
+                "names": [faker.pystr()]
+            }
+        )
+
+        return await mongo.hmm.find_one({"_id": hmm_id})
