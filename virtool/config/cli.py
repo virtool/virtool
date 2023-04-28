@@ -133,6 +133,9 @@ def tasks():
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
+@no_check_db_option
+@b2c_options
+@dev_option
 def start_task_runner(**kwargs):
     """Start a service that pulls tasks queued in Redis and runs them."""
     configure_logs(False)
