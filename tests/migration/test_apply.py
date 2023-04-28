@@ -9,7 +9,7 @@ from syrupy.matchers import path_type
 
 from virtool.config.cls import MigrationConfig
 from virtool.migration.pg import list_applied_revisions
-from virtool.migration.show import apply
+from virtool.migration.apply import apply
 
 
 @pytest.fixture

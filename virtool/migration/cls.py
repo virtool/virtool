@@ -1,8 +1,16 @@
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from typing import Awaitable, Callable
 
 from virtool.migration.ctx import MigrationContext
+
+
+class RevisionSource(str, Enum):
+    """The source of a revision."""
+
+    ALEMBIC = "alembic"
+    VIRTOOL = "virtool"
 
 
 @dataclass
@@ -25,3 +33,13 @@ class AppliedRevision:
     created_at: datetime
     name: str
     revision: str
+
+
+@dataclass
+class GenericRevision:
+    id: str
+    created_at: datetime
+    name: str
+    source: RevisionSource
+    depends_on: str
+    upgrade: Callable[[MigrationContext], Awaitable[None]]

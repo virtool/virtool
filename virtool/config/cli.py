@@ -28,8 +28,9 @@ from virtool.config.options import (
     redis_connection_string_option,
     sentry_dsn_option,
 )
+from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
-from virtool.migration.show import show_revisions, apply
+from virtool.migration.show import show_revisions
 from virtool.jobs.main import run_jobs_server
 import virtool.tasks.main
 from virtool.oas.cmd import show_oas

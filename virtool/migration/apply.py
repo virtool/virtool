@@ -1,43 +1,60 @@
 from logging import getLogger
-from pathlib import Path
 from subprocess import call
 
 import arrow
-from alembic.util import load_python_file
 
-from virtool.migration.cls import Revision
-from virtool.migration.ctx import MigrationContext
+from virtool.config.cls import MigrationConfig
+from virtool.migration.cls import RevisionSource
+from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.model import SQLRevision
+from virtool.migration.pg import fetch_last_applied_revision, list_applied_revision_ids
+from virtool.migration.show import load_alembic_revisions, load_virtool_revisions
+
 
 logger = getLogger("migration")
 
 
-# async def apply(config: MigrationConfig, revision_id: str):
-#     """
-#     Apply revisions up to a given revision_id, ``to``.
-#
-#     Providing ``'latest'`` as for ``to`` will apply all required revisions up to latest.
-#
-#     Applied revisions are recorded in the target database so already applied revisions
-#     are not reapplied in subsequent migrations.
-#
-#     :param config: the configuration values for migration
-#     :param revision_id: the revision_id to update to or 'latest'
-#     """
-#     logger.info("Applying all revisions")
-#
-#     ctx = await create_migration_context(config)
-#
-#     last_applied_revision = await fetch_last_applied_revision(ctx.pg)
-#
-#     for revision in load_revisions(get_revisions_path()):
-#         if last_applied_revision is None or (
-#             revision.created_at > last_applied_revision.created_at
-#         ):
-#             await apply_one_revision(ctx, revision)
-#
-#         if revision_id != "latest" and revision.id == revision_id:
-#             break
+async def apply(config: MigrationConfig, revision_id: str):
+    """
+    Apply revisions up to a given revision_id, ``to``.
+
+    Providing ``'latest'`` as for ``to`` will apply all required revisions up to latest.
+
+    Applied revisions are recorded in the target database so already applied revisions
+    are not reapplied in subsequent migrations.
+
+    :param config: the configuration values for migration
+    :param revision_id: the revision_id to update to or 'latest'
+    """
+
+    all_revisions = sorted(
+        [*load_alembic_revisions(), *load_virtool_revisions()],
+        key=lambda r: r.created_at,
+    )
+
+    ctx = await create_migration_context(config)
+
+    last_applied_revision = await fetch_last_applied_revision(ctx.pg)
+
+    for revision in all_revisions:
+
+        if revision.id in await list_applied_revision_ids(ctx.pg):
+            continue
+
+        if last_applied_revision is None or (
+            revision.created_at > last_applied_revision.created_at
+        ):
+
+            if revision.source == RevisionSource.VIRTOOL:
+
+                await apply_one_revision(ctx, revision)
+
+            else:
+
+                call(["alembic", "upgrade", revision.id])
+
+        if revision_id != "latest" and revision.id == revision_id:
+            break
 
 
 async def apply_one_revision(ctx: MigrationContext, revision):
@@ -63,35 +80,3 @@ async def apply_one_revision(ctx: MigrationContext, revision):
             )
         )
         await revision_ctx.pg.commit()
-
-
-def load_revisions(revisions_path: Path) -> list[Revision]:
-    """
-    Load revision modules and sort by creation date.
-
-    :param revisions_path: the path to the revisions directory
-    :returns: a list of revisions sorted by creation date
-    """
-    revisions = []
-
-    for module_path in revisions_path.iterdir():
-        if module_path.suffix == ".py":
-            module = load_python_file(str(module_path.parent), str(module_path.name))
-
-            revisions.append(
-                Revision(
-                    id=getattr(module, "revision_id"),
-                    created_at=arrow.get(getattr(module, "created_at"))
-                    .floor("second")
-                    .naive,
-                    name=getattr(module, "name"),
-                    upgrade=getattr(module, "upgrade"),
-                    depends_on=getattr(module, "required_alembic_revision"),
-                )
-            )
-
-    revisions.sort(key=lambda r: r.created_at)
-
-    logger.info("Found %s revisions", len(revisions))
-
-    return revisions

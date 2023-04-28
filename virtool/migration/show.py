@@ -1,34 +1,13 @@
 import datetime
-from dataclasses import dataclass
-from enum import Enum
+from logging import getLogger
 from pathlib import Path
-from subprocess import call
-from typing import Callable, Awaitable
 
 import arrow
 from alembic.util import load_python_file
 
-from virtool.config.cls import MigrationConfig
-from virtool.migration.apply import apply_one_revision, load_revisions
-from virtool.migration.ctx import create_migration_context, MigrationContext
-from virtool.migration.pg import fetch_last_applied_revision, list_applied_revision_ids
+from virtool.migration.cls import Revision, GenericRevision, RevisionSource
 
-
-class RevisionSource(str, Enum):
-    """The source of a revision."""
-
-    ALEMBIC = "alembic"
-    VIRTOOL = "virtool"
-
-
-@dataclass
-class GenericRevision:
-    id: str
-    created_at: datetime.datetime
-    name: str
-    source: RevisionSource
-    depends_on: str
-    upgrade: Callable[[MigrationContext], Awaitable[None]]
+logger = getLogger("migration")
 
 
 def get_alembic_path() -> Path:
@@ -75,38 +54,6 @@ def load_alembic_revisions() -> list[GenericRevision]:
     return revisions
 
 
-async def apply(config: MigrationConfig, revision_id: str):
-
-    all_revisions = sorted(
-        [*load_alembic_revisions(), *load_virtool_revisions()],
-        key=lambda r: r.created_at,
-    )
-
-    ctx = await create_migration_context(config)
-
-    last_applied_revision = await fetch_last_applied_revision(ctx.pg)
-
-    for revision in all_revisions:
-
-        if revision.id in await list_applied_revision_ids(ctx.pg):
-            continue
-
-        if last_applied_revision is None or (
-            revision.created_at > last_applied_revision.created_at
-        ):
-
-            if revision.source == RevisionSource.VIRTOOL:
-
-                await apply_one_revision(ctx, revision)
-
-            else:
-
-                call(["alembic", "upgrade", revision.id])
-
-        if revision_id != "latest" and revision.id == revision_id:
-            break
-
-
 def load_virtool_revisions() -> list[GenericRevision]:
     """
     Load all virtool revisions as generic revisions.
@@ -128,6 +75,38 @@ def load_virtool_revisions() -> list[GenericRevision]:
         )
         for revision in revisions
     ]
+
+
+def load_revisions(revisions_path: Path) -> list[Revision]:
+    """
+    Load revision modules and sort by creation date.
+
+    :param revisions_path: the path to the revisions directory
+    :returns: a list of revisions sorted by creation date
+    """
+    revisions = []
+
+    for module_path in revisions_path.iterdir():
+        if module_path.suffix == ".py":
+            module = load_python_file(str(module_path.parent), str(module_path.name))
+
+            revisions.append(
+                Revision(
+                    id=getattr(module, "revision_id"),
+                    created_at=arrow.get(getattr(module, "created_at"))
+                    .floor("second")
+                    .naive,
+                    name=getattr(module, "name"),
+                    upgrade=getattr(module, "upgrade"),
+                    depends_on=getattr(module, "required_alembic_revision"),
+                )
+            )
+
+    revisions.sort(key=lambda r: r.created_at)
+
+    logger.info("Found %s revisions", len(revisions))
+
+    return revisions
 
 
 def show_revisions():
