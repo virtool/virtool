@@ -110,7 +110,7 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
         sys.exit(1)
 
     mongo_database, openfga = await asyncio.gather(
-        virtool.mongo.connect.connect(
+        virtool.mongo.connect.connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_name,
             skip_revision_check=True,
