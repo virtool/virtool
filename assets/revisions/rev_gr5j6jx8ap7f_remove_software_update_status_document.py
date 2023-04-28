@@ -22,7 +22,7 @@ async def upgrade(ctx: RevisionContext):
     )
 
 
-async def test_upgrade(ctx, snapshot):
+async def test_upgrade(ctx):
     await ctx.mongo.database.status.insert_many(
         [
             {"_id": "software_update", "foo": "bar"},
@@ -30,7 +30,6 @@ async def test_upgrade(ctx, snapshot):
             {"_id": "software"},
         ]
     )
-
 
     await upgrade(ctx)
 

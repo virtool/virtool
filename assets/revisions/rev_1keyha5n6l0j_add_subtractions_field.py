@@ -28,7 +28,7 @@ async def upgrade(ctx: RevisionContext):
             try:
                 subtractions = [document["subtraction"]["id"]]
             except TypeError:
-                subtractions = list()
+                subtractions = []
 
             update = UpdateOne(
                 {"_id": document["_id"]},
@@ -42,7 +42,6 @@ async def upgrade(ctx: RevisionContext):
 
 
 async def test_upgrade(ctx, snapshot):
-
     await gather(
         ctx.mongo.database.samples.insert_many(
             [
@@ -60,11 +59,7 @@ async def test_upgrade(ctx, snapshot):
         ),
     )
 
-    async with await ctx.mongo.client.start_session() as session:
-        async with session.start_transaction():
-            await upgrade(ctx)
-
-
+    await upgrade(ctx)
 
     assert await ctx.mongo.database.analyses.find().to_list(None) == snapshot(name="analyses")
     assert await ctx.mongo.database.samples.find().to_list(None) == snapshot(name="samples")

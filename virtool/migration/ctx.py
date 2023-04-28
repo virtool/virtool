@@ -3,14 +3,12 @@ import sys
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from logging import getLogger
-from pprint import pprint
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorClientSession,
     AsyncIOMotorDatabase,
 )
-from openfga_sdk import OpenFgaApi
 from orjson import orjson
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
@@ -37,15 +35,16 @@ class RevisionContext:
     authorization: AuthorizationClient
     """
     An authorization client instance.
-    
-    Use this to effect changes in OpenFGA.    
+
+    Use this to affect changes in OpenFGA.
     """
 
     mongo: MigrationContextMongo
     """
     A Motor database utility class.
-    
-    Use this to read or change documents in MongoDB. This client does not trigger websocket dispatches.
+
+    Use this to read or change documents in MongoDB. 
+    This client does not trigger websocket dispatches.
     """
 
     pg: AsyncSession
@@ -86,7 +85,8 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
     """
     Create a migration context that provides access to MongoDB, OpenFGA, and PostgreSQL.
 
-    Connect to all data services and expose their clients in the returned context object.
+    Connect to all data services and expose their clients
+    in the returned context object.
 
     :param config: the migration configuration
     :return: the migration context
@@ -110,7 +110,7 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
         sys.exit(1)
 
     mongo_database, openfga = await asyncio.gather(
-        virtool.mongo.connect.connect(
+        virtool.mongo.connect.connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_name,
             skip_revision_check=True,
