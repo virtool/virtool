@@ -2,6 +2,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -29,6 +30,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -56,6 +58,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -115,6 +118,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': True,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -179,6 +183,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -244,6 +249,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -314,6 +320,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -342,6 +349,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': 'Fred',
     'b2c_family_name': 'Smith',
@@ -370,6 +378,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': 'Bilbo',
     'b2c_family_name': 'Baggins',

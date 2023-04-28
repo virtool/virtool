@@ -38,7 +38,6 @@ class TaskRunner:
         except Exception as err:
             logging.fatal("Task runner shutting down due to exception %s", err)
             capture_exception(err)
-            self.app["events"]["shutdown"].set()
 
     async def run_task(self, task_id: int):
         """

@@ -3,11 +3,18 @@ Constants and utility functions for interacting with the jobs collection in the
 application database.
 
 """
-from virtool_core.models.job import Job, JobAcquired
+from __future__ import annotations
 
-from virtool.mongo.transforms import apply_transforms
+from typing import Optional
+
+from virtool_core.models.job import Job, JobAcquired, JobState
+
+from virtool.jobs.client import AbstractJobsClient
+from virtool.jobs.utils import JobRights, compose_status
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.types import Document
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
-from virtool.utils import base_processor
+from virtool.utils import base_processor, get_safely
 
 OR_COMPLETE = [{"status.state": "complete"}]
 
@@ -25,6 +32,40 @@ LIST_PROJECTION = [
 
 #: A projection for full job details. Excludes the secure key field.
 PROJECTION = {"key": False}
+
+
+class AttachJobsTransform(AbstractTransform):
+    def __init__(self, mongo: "Mongo"):
+        self.mongo = mongo
+
+    async def prepare_one(self, document: Document) -> Optional[Document]:
+        job_id = get_safely(document, "job", "id")
+
+        if job_id is None:
+            return None
+
+        job = await self.mongo.jobs.find_one(
+            job_id, ["archived", "status", "user", "workflow"]
+        )
+
+        if job is None:
+            return None
+
+        last_status = job["status"][-1]
+
+        return await apply_transforms(
+            {
+                **job,
+                "created_at": job["status"][0]["timestamp"],
+                "progress": last_status["progress"],
+                "state": last_status["state"],
+                "stage": last_status["stage"],
+            },
+            [AttachUserTransform(self.mongo)],
+        )
+
+    async def attach_one(self, document: Document, prepared: Document) -> Document:
+        return {**document, "job": prepared}
 
 
 async def processor(db, document: dict) -> dict:
@@ -123,3 +164,52 @@ def lookup_minimal_job_by_id(
         },
         {"$set": {set_as: {"$ifNull": [{"$first": f"${set_as}"}, None]}}},
     ]
+
+
+async def create_job(
+    mongo: "Mongo",
+    client: AbstractJobsClient,
+    workflow: str,
+    job_args: Document,
+    user_id: str,
+    rights: JobRights,
+    space_id: int,
+    job_id: Optional[str] = None,
+    session=None,
+) -> Job:
+    """
+    Create a job record and queue it.
+
+    Create job record in MongoDB and get an ID. Queue the ID using the JobsClient so
+    that it is picked up by a workflow runner.
+
+    :param jobsData: job data layer
+    :param workflow: the name of the workflow to run
+    :param job_args: the arguments required to run the job
+    :param user_id: the user that started the job
+    :param rights: the rights the job will have on Virtool resources
+    :param job_id: an optional ID to use for the new job
+    :param session: MongoDB session to use
+
+    """
+    document = {
+        "acquired": False,
+        "archived": False,
+        "workflow": workflow,
+        "args": job_args,
+        "key": None,
+        "rights": rights.as_dict(),
+        "space": {"id": space_id},
+        "state": JobState.WAITING.value,
+        "status": [compose_status(JobState.WAITING, None)],
+        "user": {"id": user_id},
+        "ping": None,
+    }
+
+    if job_id:
+        document["_id"] = job_id
+
+    document = await mongo.jobs.insert_one(document, session=session)
+    await client.enqueue(workflow, document["_id"])
+
+    return await fetch_complete_job(mongo, document)

@@ -1,7 +1,6 @@
 import asyncio
 import concurrent.futures
 import logging
-import signal
 import sys
 from dataclasses import dataclass
 from typing import Dict
@@ -12,9 +11,8 @@ import aiojobs.aiohttp
 import pymongo.errors
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
-
-import virtool.mongo.connect
-import virtool.pg.utils
+from virtool.mongo.connect import connect_mongo
+from virtool.pg.utils import connect_pg
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 from virtool.config import get_config_from_app
@@ -45,17 +43,6 @@ class B2C:
     authority: str
     jwk_args: JWKArgs = None
     auth_code_flow: dict = None
-
-
-def create_events() -> Dict[str, asyncio.Event]:
-    """
-    Create and store :class:`asyncio.Event` objects for triggering an application
-    restart or shutdown.
-
-    :return: a `dict` with :class:`~asyncio.Event` objects for restart and shutdown
-
-    """
-    return {"restart": asyncio.Event(), "shutdown": asyncio.Event()}
 
 
 def get_scheduler_from_app(app: App) -> aiojobs.Scheduler:
@@ -120,17 +107,6 @@ async def startup_dispatcher(app: App):
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
 
 
-async def startup_events(app: App):
-    events = create_events()
-
-    loop = asyncio.get_event_loop()
-
-    loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
-    loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
-
-    app["events"] = events
-
-
 async def startup_executors(app: App):
     """
     An application ``on_startup`` callback that initializes a
@@ -191,12 +167,12 @@ async def startup_databases(app: App):
     config = get_config_from_app(app)
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
-        virtool.mongo.connect.connect(
+        connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_database,
             config.no_revision_check,
         ),
-        virtool.pg.utils.connect(config.postgres_connection_string),
+        connect_pg(config.postgres_connection_string),
         connect(config.redis_connection_string),
         connect_openfga(
             config.openfga_host, config.openfga_scheme, config.openfga_store_name

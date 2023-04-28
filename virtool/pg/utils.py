@@ -20,7 +20,7 @@ class SQLEnum(Enum):
         return [e.value for e in cls]
 
 
-async def connect(postgres_connection_string: str) -> AsyncEngine:
+async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
     """
     Create a connection of Postgres.
 

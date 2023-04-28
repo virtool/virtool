@@ -9,10 +9,10 @@ A sample needs a user and upload to exist.
 ```
 
 """
-from typing import List, Optional, Type, Dict
+from typing import Dict, List, Optional, Type
 
 from faker import Faker
-from faker.providers import BaseProvider, python, color, lorem
+from faker.providers import BaseProvider, color, lorem, python
 from virtool_core.models.group import Group
 from virtool_core.models.job import Job
 from virtool_core.models.label import Label
@@ -20,13 +20,10 @@ from virtool_core.models.task import Task
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
-from virtool.groups.oas import UpdatePermissionsRequest, UpdateGroupRequest
+from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
-from virtool.references.tasks import (
-    CloneReferenceTask,
-    CleanReferencesTask,
-)
+from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
 from virtool.users.oas import UpdateUserRequest
@@ -73,9 +70,9 @@ class DataFakerPiece:
 class JobsFakerPiece(DataFakerPiece):
     model = Job
 
-    async def create(self, user: User) -> Job:
+    async def create(self, user: User, workflow: Optional[str] = None) -> Job:
         return await self.layer.jobs.create(
-            self.faker.workflow(),
+            workflow or self.faker.workflow(),
             self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
             JobRights(),

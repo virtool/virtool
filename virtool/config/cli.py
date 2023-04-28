@@ -4,12 +4,9 @@ from logging import getLogger
 
 import click
 import uvloop
-from virtool_core.logging import configure_logs
 
-import virtool.jobs.main
-import virtool.tasks.main
-import virtool.tasks.spawner
-from virtool.app import run_app
+from virtool_core.logging import configure_logs
+from virtool.app import run_api_server
 from virtool.config.cls import (
     MigrationConfig,
     ServerConfig,
@@ -33,7 +30,10 @@ from virtool.config.options import (
 )
 from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions, apply
+from virtool.jobs.main import run_jobs_server
+import virtool.tasks.main
 from virtool.oas.cmd import show_oas
+from virtool.tasks.main import run_task_runner
 
 logger = getLogger("config")
 
@@ -81,7 +81,8 @@ def start_api_server(**kwargs):
     """Start a Virtool public API server."""
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
-    asyncio.get_event_loop().run_until_complete(run_app(ServerConfig(**kwargs)))
+
+    run_api_server(ServerConfig(**kwargs))
 
 
 @server.command("jobs")
@@ -102,8 +103,7 @@ def start_jobs_api(**kwargs):
 
     logger.info("Starting the jobs api service")
 
-    asyncio.get_event_loop().run_until_complete(
-        virtool.jobs.main.run(
+    run_jobs_server(
             ServerConfig(
                 **kwargs,
                 base_url="",
@@ -114,7 +114,6 @@ def start_jobs_api(**kwargs):
                 use_b2c=False,
             )
         )
-    )
 
 
 @cli.command
@@ -180,9 +179,7 @@ def start_task_runner(**kwargs):
 
     logger.info("Starting tasks runner")
 
-    asyncio.get_event_loop().run_until_complete(
-        virtool.tasks.main.run(TaskRunnerConfig(**kwargs, base_url=""))
-    )
+    run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
 
 
 @tasks.command("spawn")

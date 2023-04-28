@@ -12,7 +12,7 @@ MINIMUM_MONGO_VERSION = "3.6.0"
 logger = getLogger("mongo")
 
 
-async def connect(
+async def connect_mongo(
     connection_string: str, db_name: str, skip_revision_check: bool
 ) -> AsyncIOMotorDatabase:
     """

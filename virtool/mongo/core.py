@@ -7,21 +7,9 @@ collection.
 
 """
 from contextlib import asynccontextmanager
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Optional,
-    Sequence,
-    Union,
-    List,
-)
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
 
-from motor.motor_asyncio import (
-    AsyncIOMotorClient,
-    AsyncIOMotorClientSession,
-)
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorClientSession
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 from pymongo.results import DeleteResult, UpdateResult
@@ -299,7 +287,7 @@ class Collection:
 
     async def update_many(
         self,
-        query: Union[str, Dict],
+        query: str | Dict,
         update: Dict,
         silent: bool = False,
         session: Optional[AsyncIOMotorClientSession] = None,

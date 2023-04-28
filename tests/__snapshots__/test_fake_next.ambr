@@ -20,6 +20,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -48,6 +49,7 @@
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
