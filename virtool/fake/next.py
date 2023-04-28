@@ -19,6 +19,7 @@ from virtool_core.models.label import Label
 from virtool_core.models.task import Task
 from virtool_core.models.user import User
 
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.layer import DataLayer
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.indexes.tasks import EnsureIndexFilesTask
@@ -26,7 +27,6 @@ from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
 from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
-from virtool.users.oas import UpdateUserRequest
 
 
 class VirtoolProvider(BaseProvider):
@@ -144,12 +144,12 @@ class UsersFakerPiece(DataFakerPiece):
 
         if groups or primary_group:
             if groups:
-                await self.layer.users.update(
+                await self.layer.administrators.update(
                     user.id, UpdateUserRequest(groups=[group.id for group in groups])
                 )
 
             if primary_group:
-                await self.layer.users.update(
+                await self.layer.administrators.update(
                     user.id, UpdateUserRequest(primary_group=primary_group.id)
                 )
 

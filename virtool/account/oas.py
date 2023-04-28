@@ -80,6 +80,7 @@ class UpdateAccountResponse(Account):
                     "skip_quick_analyze_dialog": True,
                 },
                 "email": "dev@virtool.ca",
+                "administrator_role": None,
             }
         }
 
@@ -259,6 +260,7 @@ class AccountResponse(Account):
                     "show_versions": True,
                     "skip_quick_analyze_dialog": True,
                 },
+                "administrator_role": None,
             }
         }
 

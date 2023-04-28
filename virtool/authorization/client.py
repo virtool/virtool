@@ -3,7 +3,7 @@ Authorization clients.
 
 """
 import asyncio
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 
 from openfga_sdk import (
     OpenFgaApi,
@@ -83,16 +83,21 @@ class AuthorizationClient:
             [relation_tuple.key.relation for relation_tuple in response.tuples]
         )
 
-    async def get_administrator(self, user_id: str) -> Tuple[str, AdministratorRole]:
+    async def get_administrator(
+        self, user_id: str
+    ) -> Tuple[str, Optional[AdministratorRole]]:
         response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object="app:virtool"),
             )
         )
 
-        relation_tuple = response.tuples[0]
+        role = None
+        if response.tuples:
+            role = AdministratorRole(response.tuples[0].key.relation)
+            user_id = response.tuples[0].key.user.split(":")[1]
 
-        return relation_tuple.key.user.split(":")[1], relation_tuple.key.relation
+        return user_id, role
 
     async def list_administrators(self) -> List[Tuple[str, AdministratorRole]]:
         """

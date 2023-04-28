@@ -47,7 +47,4 @@ async def test_promote_administrators(
     row = await get_row_by_id(pg, Task, 1)
     assert row.complete is True
 
-    assert (
-        await data_layer.administrators.find()
-        == snapshot
-    )
+    assert await data_layer.administrators.find(page=1, per_page=25) == snapshot

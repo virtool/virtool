@@ -82,7 +82,7 @@ async def update_member_users(
             session=session,
         )
 
-        await virtool.users.db.update_sessions_and_keys(
+        await virtool.users.db.update_keys(
             db,
             user["administrator"],
             user["_id"],
@@ -99,41 +99,13 @@ async def fetch_group_users(db, group_id: str) -> List[UserNested]:
     ]
 
 
-def lookup_minimal_groups(
-    local_field: str = "groups", set_as: str = "groups"
-) -> list[dict]:
-    """
-    Create a mongoDB aggregation pipeline step to look up minimal groups.
-
-    :param local_field: groups field to look up
-    :param set_as: desired name of the returned record
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
-    """
-    return [
-        {
-            "$lookup": {
-                "from": "groups",
-                "let": {"group_ids": f"${local_field}"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$in": ["$_id", "$$group_ids"]}}},
-                    {"$sort": {"_id": 1}},
-                    {"$project": {"name": True}},
-                ],
-                "as": set_as,
-            }
-        },
-    ]
-
-
-def lookup_minimal_group_by_id(
+def lookup_group_minimal_by_id(
     local_field: str = "group", set_as: str = "group"
-) -> list[dict]:
+) -> List[dict]:
     """
-    Create a mongoDB aggregation pipeline step to look up a minimal group by id.
+    Return a list of aggregation pipeline stages to lookup a group by its id and return
+    only the ``_id`` and ``name`` fields.
 
-    :param local_field: groups field to look up
-    :param set_as: desired name of the returned record
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
     """
     return [
         {
@@ -142,10 +114,35 @@ def lookup_minimal_group_by_id(
                 "let": {"group_id": f"${local_field}"},
                 "pipeline": [
                     {"$match": {"$expr": {"$eq": ["$_id", "$$group_id"]}}},
-                    {"$project": {"name": True}},
+                    {"$project": {"_id": False, "id": "$_id", "name": True}},
                 ],
                 "as": set_as,
-            }
+            },
         },
-        {"$set": {set_as: {"$ifNull": [{"$first": f"${set_as}"}, None]}}},
+        {"$set": {set_as: {"$first": f"${set_as}"}}},
+    ]
+
+
+def lookup_groups_minimal_by_id(
+    local_field: str = "groups",
+    set_as: str = "groups",
+) -> List[dict]:
+    """
+    Return a list of aggregation pipeline stages to lookup a group by its id and return
+    only the ``_id`` and ``name`` fields.
+
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "groups",
+                "let": {"group_ids": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$in": ["$_id", "$$group_ids"]}}},
+                    {"$project": {"_id": False, "id": "$_id", "name": True}},
+                    {"$sort": {"name": 1}},
+                ],
+                "as": set_as,
+            },
+        },
     ]
