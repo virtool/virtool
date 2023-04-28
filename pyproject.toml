@@ -55,7 +55,7 @@ PyJWT = "^2.3.0"
 msal = "^1.16.0"
 aiojobs = "^1.0.0"
 aiohttp-pydantic = "^1.12.1"
-orjson = "^3.8.0"
+orjson = "3.8.10"
 openfga-sdk = "^0.1.1"
 python-jose = "^3.3.0"
 alembic = {extras = ["tz"], version = "^1.10.3"}
