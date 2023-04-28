@@ -57,7 +57,7 @@ def create_data_layer(
     jobs_client = JobsClient(redis)
 
     data_layer = DataLayer(
-        AccountData(mongo, redis),
+        AccountData(mongo, redis, authorization_client),
         AdministratorsData(authorization_client, mongo),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
