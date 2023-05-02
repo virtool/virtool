@@ -19,6 +19,7 @@ from aiohttp import ClientConnectorError
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo import UpdateOne, DeleteMany, DeleteOne
+import requests
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
@@ -399,19 +400,37 @@ async def fetch_and_update_release(
     )
 
     release = document.get("release")
-    etag = virtool.github.get_etag(release)
+
+    # change below here
+
+
+    # EXPERIMENT
+    # async with client.get(
+    #     "https://www.virtool.ca/virtool-core"
+    # ) as resp:
+    #     pass
+    #     temp = await resp.json()
+    #     pass
+
+    etag = release.get("etag", None)
 
     # Variables that will be used when trying to fetch release from GitHub.
     errors = []
     updated = None
 
     try:
+        # get updated version from url directly
+
         updated = await virtool.github.get_release(
             client, document["remotes_from"]["slug"], etag
         )
 
+        # ditto
+
         if updated:
             updated = virtool.github.format_release(updated)
+
+    # remove references to github in error exception handling
 
     except (ClientConnectorError, virtool.errors.GitHubError) as err:
         if "ClientConnectorError" in str(err):
@@ -422,6 +441,11 @@ async def fetch_and_update_release(
 
         if errors and not ignore_errors:
             raise
+
+
+
+
+    # change above here
 
     if updated:
         release = updated

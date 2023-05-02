@@ -1,6 +1,21 @@
 import pytest
 import virtool.errors
 import virtool.references.db
+from virtool.startup import startup_http_client
+
+@pytest.fixture
+async def fake_app():
+    version = "v1.2.3"
+
+    app = {"version": version}
+
+    yield app
+
+    # Close real session created in `test_startup_executors()`.
+    try:
+        await app["client"].close()
+    except TypeError:
+        pass
 
 RIGHTS = {"build": False, "modify": False, "modify_otu": False, "remove": False}
 
@@ -177,3 +192,36 @@ async def test_delete_member(field, snapshot, mongo):
 
     assert subdocument_id == snapshot
     assert await mongo.references.find_one() == snapshot
+
+@pytest.mark.parametrize("status", [200, 304])
+async def test_fetch_and_update_release(spawn_client, mongo, status, fake_app, snapshot):
+    await startup_http_client(fake_app)
+
+    match status:
+        case 200:
+            etag = None
+        
+        case 304:
+            etag = 'W/"409d3d915cefec6a8d2004c44c9e5456961777ca3b7e4310458dd8707d6a8d08"'
+
+    slug = "virtool/virtool-core"
+
+    await mongo.references.insert_one(
+            {
+                "_id": "fake_ref_id",
+                "installed": {
+                    "name": "1.0.0-fake-install"
+                },
+                "release": {
+                    "etag": etag,
+                    "name": "1.0.0-fake-release"
+                },
+                "remotes_from": {
+                    "slug": slug
+                }
+            }
+        )
+
+    release = await virtool.references.db.fetch_and_update_release(mongo, fake_app["client"], ref_id="fake_ref_id")
+
+    assert release == snapshot
