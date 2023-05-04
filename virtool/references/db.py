@@ -5,6 +5,7 @@ Work with references in the database
 import asyncio
 from asyncio import to_thread
 import datetime
+import logging
 from pathlib import Path
 from typing import (
     Dict,
@@ -13,13 +14,13 @@ from typing import (
     Union,
     TYPE_CHECKING,
 )
+import aiohttp
 
 import pymongo
 from aiohttp import ClientConnectorError
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo import UpdateOne, DeleteMany, DeleteOne
-import requests
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
@@ -373,6 +374,82 @@ async def edit_group_or_user(
             return subdocument
 
 
+async def get_releases_from_virtool(
+    session: aiohttp.ClientSession,
+    slug: str,
+    etag: Optional[str] = None,
+    release_id: Optional[str] = "latest",
+) -> Optional[dict]:
+    """
+    GET data from Virtool.ca.
+
+    :param config: the application config object
+    :param session: the application HTTP client session
+    :param slug: the slug for the GitHub repo
+    :param etag: an ETag for the resource to be used with the `If-None-Match` header
+    :param release_id: the id of the Virtool release to get
+
+    :return: the latest release
+    """
+
+    # future repos will be added; currently it is only virtool/virtool
+    url = "https://www.virtool.ca/releases"
+
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    
+    if etag:
+        headers["If-None-Match"] = etag
+
+        logger = logging.getLogger(__name__)
+
+        logger.debug("Making request to %s", url)
+
+        async with session.get(
+            url,
+            headers=headers
+        ) as resp:
+            logger.debug("Fetched release: %s/%s (%s)", slug, release_id, resp.status)
+
+            if resp.status == 200:
+                data = await resp.json(content_type=None)
+
+                if len(data["software"]) == 0:
+                    return None
+
+                return dict(data, etag=resp.headers["etag"])
+
+            elif resp.status == 304:
+                return None
+
+            else:
+                warning = f"Encountered error {resp.status} {await resp.json()}"
+                logger.warning(warning)
+                raise Exception
+
+
+def format_latest_release(releases: dict) -> dict:
+    """
+    Format a raw release record from Virtool.ca into a release usable by Virtool.
+
+    :param release: the Virtool.ca release record
+    :return: a release for use within Virtool
+
+    """
+    latest_release = releases["software"][0]
+
+    return {
+        "name": latest_release["name"],
+        "body": latest_release["body"],
+        "etag": releases["etag"],
+        "filename": latest_release["name"],
+        "size": latest_release["size"],
+        "html_url": latest_release["html_url"],
+        "download_url": latest_release["download_url"],
+        "published_at": latest_release["published_at"],
+        "content_type": latest_release["content_type"],
+    }
+
+
 async def fetch_and_update_release(
     mongo: "Mongo", client, ref_id: str, ignore_errors: bool = False
 ) -> dict:
@@ -388,7 +465,7 @@ async def fetch_and_update_release(
     :param mongo: the application database client
     :param client: the application client
     :param ref_id: the id of the reference to update
-    :param ignore_errors: ignore exceptions raised during GitHub request
+    :param ignore_errors: ignore exceptions raised during the request
     :return: the latest release
 
     """
@@ -403,15 +480,6 @@ async def fetch_and_update_release(
 
     # change below here
 
-
-    # EXPERIMENT
-    # async with client.get(
-    #     "https://www.virtool.ca/virtool-core"
-    # ) as resp:
-    #     pass
-    #     temp = await resp.json()
-    #     pass
-
     etag = release.get("etag", None)
 
     # Variables that will be used when trying to fetch release from GitHub.
@@ -421,28 +489,26 @@ async def fetch_and_update_release(
     try:
         # get updated version from url directly
 
-        updated = await virtool.github.get_release(
+        updated = await get_releases_from_virtool(
             client, document["remotes_from"]["slug"], etag
         )
 
         # ditto
 
         if updated:
-            updated = virtool.github.format_release(updated)
+            updated = format_latest_release(updated)
 
     # remove references to github in error exception handling
 
-    except (ClientConnectorError, virtool.errors.GitHubError) as err:
+    except (ClientConnectorError, Exception) as err:
         if "ClientConnectorError" in str(err):
-            errors = ["Could not reach GitHub"]
+            errors = ["Could not reach Virtool.ca"]
 
         if "404" in str(err):
-            errors = ["GitHub repository or release does not exist"]
+            errors = ["Release does not exist"]
 
         if errors and not ignore_errors:
             raise
-
-
 
 
     # change above here

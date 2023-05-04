@@ -193,18 +193,26 @@ async def test_delete_member(field, snapshot, mongo):
     assert subdocument_id == snapshot
     assert await mongo.references.find_one() == snapshot
 
-@pytest.mark.parametrize("status", [200, 304])
-async def test_fetch_and_update_release(spawn_client, mongo, status, fake_app, snapshot):
+
+@pytest.mark.parametrize("status", [200, 304, 404])
+async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, static_time):
     await startup_http_client(fake_app)
 
     match status:
+        # fetches and updates
         case 200:
+            slug = "virtool/virtool-core"
             etag = None
         
+        # fetches; does not update
         case 304:
+            slug = "virtool/virtool-core"
             etag = 'W/"409d3d915cefec6a8d2004c44c9e5456961777ca3b7e4310458dd8707d6a8d08"'
 
-    slug = "virtool/virtool-core"
+        # requested repo does not exist
+        case 404:
+            slug = "repo_dne"
+            etag = None
 
     await mongo.references.insert_one(
             {
@@ -222,6 +230,16 @@ async def test_fetch_and_update_release(spawn_client, mongo, status, fake_app, s
             }
         )
 
-    release = await virtool.references.db.fetch_and_update_release(mongo, fake_app["client"], ref_id="fake_ref_id")
+    try:
+        release = await virtool.references.db.fetch_and_update_release(mongo, fake_app["client"], ref_id="fake_ref_id")
+        
+        assert release == snapshot
 
-    assert release == snapshot
+    # only to catch status 404; any other exceptions are failures
+    except Exception as e:
+        match status:
+            case 404:
+                return
+            
+            case other:
+                raise e

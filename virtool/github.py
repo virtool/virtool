@@ -92,46 +92,39 @@ async def get_release(
 
     headers = dict(HEADERS)
 
-    try:
+    if etag:
+        headers["If-None-Match"] = etag
 
-        if etag:
-            headers["If-None-Match"] = etag
+    logger.debug("Making GitHub request to %s", url)
 
-        logger.debug("Making GitHub request to %s", url)
+    async with session.get(
+        url,
+        headers=headers,
+    ) as resp:
+        rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
+        rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
 
-        async with session.get(
-            url,
-            headers=headers,
-        ) as resp:
-            rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
-            rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
+        if int(rate_limit) / int(rate_limit_remaining) > 2.0:
+            logger.warning(
+                "Less than half of GitHub remaining (%s of %s)",
+                rate_limit_remaining,
+                rate_limit,
+            )
 
-            if int(rate_limit) / int(rate_limit_remaining) > 2.0:
-                logger.warning(
-                    "Less than half of GitHub remaining (%s of %s)",
-                    rate_limit_remaining,
-                    rate_limit,
-                )
+        logger.debug("Fetched release: %s/%s (%s)", slug, release_id, resp.status)
 
-            logger.debug("Fetched release: %s/%s (%s)", slug, release_id, resp.status)
+        if resp.status == 200:
+            data = await resp.json()
 
-            if resp.status == 200:
-                data = await resp.json()
-
-                real_etag = resp.headers["etag"]
-
-                if len(data["assets"]) == 0:
-                    return None
-
-                return dict(data, etag=resp.headers["etag"])
-
-            elif resp.status == 304:
+            if len(data["assets"]) == 0:
                 return None
 
-            else:
-                warning = f"Encountered error {resp.status} {await resp.json()}"
-                logger.warning(warning)
-                raise virtool.errors.GitHubError(warning)
-            
-    except Exception as e:
-        pass
+            return dict(data, etag=resp.headers["etag"])
+
+        elif resp.status == 304:
+            return None
+
+        else:
+            warning = f"Encountered error {resp.status} {await resp.json()}"
+            logger.warning(warning)
+            raise virtool.errors.GitHubError(warning)
