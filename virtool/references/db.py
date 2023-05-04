@@ -374,6 +374,10 @@ async def edit_group_or_user(
             return subdocument
 
 
+class GetReleaseError(Exception):
+    pass
+
+
 async def get_releases_from_virtool(
     session: aiohttp.ClientSession,
     slug: str,
@@ -415,8 +419,9 @@ async def get_releases_from_virtool(
 
                 if len(data["software"]) == 0:
                     return None
-
-                return dict(data, etag=resp.headers["etag"])
+                
+                else:
+                    return dict(data, etag=resp.headers["etag"])
 
             elif resp.status == 304:
                 return None
@@ -424,7 +429,7 @@ async def get_releases_from_virtool(
             else:
                 warning = f"Encountered error {resp.status} {await resp.json()}"
                 logger.warning(warning)
-                raise Exception
+                raise GetReleaseError
 
 
 def format_latest_release(releases: dict) -> dict:
@@ -500,7 +505,7 @@ async def fetch_and_update_release(
 
     # remove references to github in error exception handling
 
-    except (ClientConnectorError, Exception) as err:
+    except (ClientConnectorError, GetReleaseError) as err:
         if "ClientConnectorError" in str(err):
             errors = ["Could not reach Virtool.ca"]
 
@@ -509,7 +514,6 @@ async def fetch_and_update_release(
 
         if errors and not ignore_errors:
             raise
-
 
     # change above here
 

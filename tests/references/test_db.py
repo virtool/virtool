@@ -240,6 +240,6 @@ async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, stati
         match status:
             case 404:
                 return
-            
-            case other:
+
+            case _:
                 raise e
