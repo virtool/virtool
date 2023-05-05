@@ -5,8 +5,6 @@ from aiohttp.web import Application
 
 import aiojobs
 
-from virtool.app import create_app
-
 import virtool.http.accept
 import virtool.http.errors
 from virtool.config.cls import TaskRunnerConfig
