@@ -417,7 +417,7 @@ async def get_releases_from_virtool(
             if resp.status == 200:
                 data = await resp.json(content_type=None)
 
-                if len(data["software"]) == 0:
+                if len(data["ref_plant_viruses"]) == 0:
                     return None
                 
                 else:
@@ -440,7 +440,7 @@ def format_latest_release(releases: dict) -> dict:
     :return: a release for use within Virtool
 
     """
-    latest_release = releases["software"][0]
+    latest_release = releases["ref_plant_viruses"][0]
 
     return {
         "name": latest_release["name"],

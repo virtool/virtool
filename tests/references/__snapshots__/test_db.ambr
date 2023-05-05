@@ -234,24 +234,17 @@
 ---
 # name: test_fetch_and_update_release[uvloop-304]
   <class 'dict'> {
-    'body': '
-      #### Changed
-      - make versions prior to `v3.0.0` update to `v3.0.0` before updating further
-      
-      #### Fixed
-      - fix bug where owner of sample is prevented from analyzing it (#1234)
-      - use correct noun (not _OTU_) for sample removal dialog title (#1222)
-    ',
+    'body': '- add 1 isolate for Tobacco mosaic virus',
     'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/virtool/releases/download/v3.1.0/virtool.tar.gz',
+    'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.2/reference.json.gz',
     'etag': '"f1a3f4d9330494be0ea4bb8de666cb21"',
-    'filename': 'v3.1.0',
-    'html_url': 'https://github.com/virtool/virtool/releases/tag/v3.1.0',
-    'name': 'v3.1.0',
+    'filename': 'v1.0.2',
+    'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.2',
+    'name': 'v1.0.2',
     'newer': True,
-    'published_at': '2018-12-14T21:16:24Z',
+    'published_at': '2018-11-29T22:57:49Z',
     'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'size': 44815711,
+    'size': 3448888,
   }
 ---
 # name: test_fetch_and_update_release[uvloop-404]
