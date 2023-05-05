@@ -198,6 +198,7 @@ async def startup_databases(app: App):
 
 async def startup_routes(app: App):
     logger.debug("Setting up routes")
+
     setup_routes(app, dev=app["config"].dev)
 
 
