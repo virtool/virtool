@@ -145,7 +145,7 @@ def start_task_runner(**kwargs):
 @tasks.command("spawn")
 @postgres_connection_string_option
 @redis_connection_string_option
-@click.argument("task_name", type=str)
+@click.option("--task-name", help="Name of the task to spawn", type=str, required=True)
 def spawn_task(task_name: str, **kwargs):
 
     """Create and queue a task instance of the given name."""
