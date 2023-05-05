@@ -89,5 +89,5 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
 
 def run_task_runner(config: TaskRunnerConfig):
-    app = create_app(config)
+    app = create_task_runner_app(config)
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)

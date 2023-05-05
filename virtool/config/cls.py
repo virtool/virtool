@@ -45,12 +45,10 @@ class TaskRunnerConfig:
 
     base_url: str
     data_path: Path
-    dev: bool
     host: str
     mongodb_connection_string: str
     no_check_files: bool
     no_revision_check: bool
-    no_check_db: bool
     openfga_host: str
     openfga_scheme: str
     openfga_store_name: str
@@ -58,13 +56,6 @@ class TaskRunnerConfig:
     postgres_connection_string: str
     redis_connection_string: str
     sentry_dsn: str
-    b2c_client_id: str
-    b2c_client_secret: str
-    b2c_tenant: str
-    b2c_user_flow: str
-    postgres_connection_string: str
-    redis_connection_string: str
-    use_b2c: bool
 
     @property
     def mongodb_database(self) -> str:
