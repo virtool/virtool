@@ -81,9 +81,6 @@ async def shutdown_spawner_app(app):
 
 
 def get_task_from_name(task_name: str) -> Type[BaseTask]:
-
-    logger.info(task_name)
-
     matching_task = [cls for cls in BaseTask.__subclasses__() if cls.name == task_name]
 
     if len(matching_task) != 1:
