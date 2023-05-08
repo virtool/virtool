@@ -47,7 +47,6 @@ class ServerConfig:
     host: str
     mongodb_connection_string: str
     no_check_db: bool
-    no_check_files: bool
     no_revision_check: bool
     openfga_host: str
     openfga_scheme: str
@@ -77,7 +76,6 @@ class TaskRunnerConfig:
     data_path: Path
     host: str
     mongodb_connection_string: str
-    no_check_files: bool
     no_revision_check: bool
     openfga_host: str
     openfga_scheme: str
