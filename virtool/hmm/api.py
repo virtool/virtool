@@ -193,8 +193,8 @@ async def get_hmm_annotations(req):
 
     Fetches a compressed json file containing the database documents for all HMMs.
     """
-    config = get_config_from_req(req)
-    hmm_path = config.data_path / "hmm"
+
+    hmm_path = get_config_from_req(req).data_path / "hmm"
     await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
 
     path = await get_data_from_req(req).hmms.get_annotations_path()

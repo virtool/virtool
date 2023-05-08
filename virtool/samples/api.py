@@ -575,7 +575,7 @@ async def upload_artifact(req):
 
     name = req.query.get("name")
 
-    sample_path = join_sample_path(req.app["config"], sample_id)
+    sample_path = join_sample_path(get_config_from_req(req), sample_id)
     await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
 
     artifact_file_path = sample_path / name
@@ -630,7 +630,7 @@ async def upload_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
-    sample_path = join_sample_path(req.app["config"], sample_id)
+    sample_path = join_sample_path(get_config_from_req(req), sample_id)
     await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
 
     reads_path = sample_path / name
@@ -702,22 +702,21 @@ async def upload_cache_reads(req):
     name = req.match_info["filename"]
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
-    config = get_config_from_req(req)
 
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
-    caches_path = join_cache_path(config, key)
-    await asyncio.to_thread(caches_path.mkdir, parents=True, exist_ok=True)
+    cache_path = join_cache_path(get_config_from_req(req), key) / name
+    await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
 
-    cache_path = caches_path / name
+    cache_file_path = cache_path / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise NotFound("Cache doesn't exist with given key")
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_path, is_gzip_compressed
+            await req.multipart(), cache_file_path, is_gzip_compressed
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")

@@ -172,9 +172,7 @@ async def upload(req):
     subtraction_id = req.match_info["subtraction_id"]
     filename = req.match_info["filename"]
 
-    config = get_config_from_req(req)
-
-    subtraction_path = config.data_path / "subtractions" / subtraction_id
+    subtraction_path = get_config_from_req(req).data_path / "subtractions" / subtraction_id
     await asyncio.to_thread(subtraction_path.mkdir, parents=True, exist_ok=True)
 
     try:
