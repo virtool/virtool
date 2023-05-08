@@ -261,5 +261,5 @@ def fake(mongo, pg):
 
 
 @pytest.fixture
-def fake2(data_layer):
-    return DataFaker(data_layer)
+def fake2(data_layer, mongo):
+    return DataFaker(data_layer, mongo)
