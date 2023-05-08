@@ -18,6 +18,7 @@ from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import NotFound, json_response
+from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
@@ -192,7 +193,8 @@ async def get_hmm_annotations(req):
 
     Fetches a compressed json file containing the database documents for all HMMs.
     """
-    hmm_path = req.app["config"].data_path / "hmm"
+    config = get_config_from_req(req)
+    hmm_path = config.data_path / "hmm"
     await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
 
     path = await get_data_from_req(req).hmms.get_annotations_path()
