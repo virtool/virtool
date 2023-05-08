@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, constr, Field
 from virtool_core.models.validators import prevent_none

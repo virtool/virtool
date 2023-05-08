@@ -14,7 +14,15 @@ from virtool.groups.oas import UpdatePermissionsRequest
     "has_permission", [True, False], ids=["has permission", "missing permission"]
 )
 async def test_create_api_key(
-    administrator, has_permission, mocker, mongo, redis, snapshot, static_time, fake2
+    administrator,
+    has_permission,
+    mocker,
+    mongo,
+    redis,
+    snapshot,
+    static_time,
+    authorization_client,
+    fake2,
 ):
     """
     Test that an API key is created correctly with varying key owner administrator status and
@@ -41,7 +49,7 @@ async def test_create_api_key(
         }
     )
 
-    account_data = AccountData(mongo, redis)
+    account_data = AccountData(mongo, redis, authorization_client)
 
     _, api_key = await account_data.create_key(
         CreateKeysRequest(

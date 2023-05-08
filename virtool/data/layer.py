@@ -65,3 +65,4 @@ class DataLayer:
         self.references.bind_layer(self)
         self.sessions.bind_layer(self)
         self.account.bind_layer(self)
+        self.administrators.bind_layer(self)
