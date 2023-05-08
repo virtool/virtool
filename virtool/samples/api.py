@@ -2,7 +2,6 @@ import asyncio
 from asyncio import to_thread
 import logging
 import os
-from pathlib import Path
 from typing import List, Union, Optional
 
 import aiohttp.web
@@ -22,7 +21,6 @@ import virtool.analyses.db
 import virtool.caches.db
 import virtool.mongo.utils
 import virtool.samples.db
-import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
 from virtool.analyses.db import PROJECTION
@@ -36,6 +34,7 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.permissions import LegacyPermission
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
@@ -71,7 +70,7 @@ from virtool.samples.oas import (
     GetSampleAnalysesResponse,
     CreateAnalysisResponse,
 )
-from virtool.samples.utils import SampleRight
+from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.db import AttachUserTransform
@@ -576,9 +575,10 @@ async def upload_artifact(req):
 
     name = req.query.get("name")
 
-    artifact_file_path = (
-        virtool.samples.utils.join_sample_path(req.app["config"], sample_id) / name
-    )
+    sample_path = join_sample_path(get_config_from_req(req), sample_id)
+    await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
+
+    artifact_file_path = sample_path / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
         raise HTTPBadRequest(text="Unsupported sample artifact type")
@@ -630,9 +630,10 @@ async def upload_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
-    reads_path = (
-        virtool.samples.utils.join_sample_path(req.app["config"], sample_id) / name
-    )
+    sample_path = join_sample_path(get_config_from_req(req), sample_id)
+    await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
+
+    reads_path = sample_path / name
 
     if not await db.samples.find_one(sample_id):
         raise NotFound()
@@ -705,16 +706,17 @@ async def upload_cache_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
-    cache_path = (
-        Path(virtool.caches.utils.join_cache_path(req.app["config"], key)) / name
-    )
+    cache_path = join_cache_path(get_config_from_req(req), key) / name
+    await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
+
+    cache_file_path = cache_path / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise NotFound("Cache doesn't exist with given key")
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_path, is_gzip_compressed
+            await req.multipart(), cache_file_path, is_gzip_compressed
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -757,6 +759,9 @@ async def upload_cache_artifact(req):
         raise InvalidQuery(errors)
 
     name = req.query.get("name")
+
+    caches_path = req.app["config"].data_path / "caches"
+    await asyncio.to_thread(caches_path.mkdir, parents=True, exist_ok=True)
 
     cache_path = join_cache_path(req.app["config"], key) / name
 
