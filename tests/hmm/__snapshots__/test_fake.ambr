@@ -1,27 +1,27 @@
 # name: test_create_fake_hmm[uvloop]
   <class 'dict'> {
-    '_id': 'RNvnAvOpyEVAoNGnVZQU',
-    'cluster': 7851,
-    'count': 3450,
+    'cluster': 3088,
+    'count': 9934,
     'entries': <class 'list'> [
       <class 'dict'> {
-        'accession': 'qLUJyfwFVYySnPCaLuQI',
-        'gi': 'azTmqTjDmYPxeqAWfCKC',
-        'name': 'QCYFExFuDpjjFIyeNTWR',
-        'organism': 'UWCuKoQSUEXExIZVPeFz',
+        'accession': 'yEVAoNGnVZQUqLUJyfwF',
+        'gi': 'VYySnPCaLuQIazTmqTjD',
+        'name': 'mYPxeqAWfCKCQCYFExFu',
+        'organism': 'DpjjFIyeNTWRUWCuKoQS',
       },
     ],
     'families': <class 'dict'> {
-      'LdJCGRddpwdyFKunVyUD': 3332,
+      'RgeRgFkYLyLdJCGRddpw': 1000,
     },
     'genera': <class 'dict'> {
-      'GRmMglPrQfhKcDVBJbHF': 9436,
+      'UEXExIZVPeFzGRmMglPr': 1018,
     },
-    'length': 1961,
-    'mean_entropy': 49679341.1946931,
+    'id': 'RNvnAvOp',
+    'length': 1648,
+    'mean_entropy': 89.795508575047,
     'names': <class 'list'> [
-      'YdJRrnFxjyvDAqsRnDaM',
+      'AcfZksMRViIYdJRrnFxj',
     ],
-    'total_entropy': 26035965871101.1,
+    'total_entropy': 0.89365919009586,
   }
 ---

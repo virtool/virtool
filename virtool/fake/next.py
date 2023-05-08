@@ -167,10 +167,10 @@ class HMMFakerPiece(DataFakerPiece):
 
     async def create(self, mongo):
 
-        hmm_id = self.faker.pystr()
+        hmm_id = "".join(self.faker.mongo_id())
         faker = self.faker
 
-        await mongo.hmm.insert_one(
+        document = await mongo.hmm.insert_one(
             {
                 "entries": [
                     {
@@ -192,4 +192,4 @@ class HMMFakerPiece(DataFakerPiece):
             }
         )
 
-        return await mongo.hmm.find_one({"_id": hmm_id})
+        return HMM(**document)
