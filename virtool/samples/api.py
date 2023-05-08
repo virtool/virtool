@@ -2,7 +2,6 @@ import asyncio
 from asyncio import to_thread
 import logging
 import os
-from pathlib import Path
 from typing import List, Union, Optional
 
 import aiohttp.web
@@ -22,7 +21,6 @@ import virtool.analyses.db
 import virtool.caches.db
 import virtool.mongo.utils
 import virtool.samples.db
-import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
 from virtool.analyses.db import PROJECTION
