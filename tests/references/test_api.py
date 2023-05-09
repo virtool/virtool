@@ -781,8 +781,8 @@ async def test_create_index(
         return
 
     assert resp.status == 201
-    assert await resp.json() == snapshot(name="json")
-    assert await client.db.indexes.find_one() == snapshot(name="index")
+    assert await resp.json() == snapshot
+    assert await client.db.indexes.find_one() == snapshot
 
     m_create_manifest.assert_called_with(client.db, "foo")
 

@@ -681,30 +681,7 @@
     ],
   }
 ---
-# name: test_create_index[True-uvloop][index]
-  <class 'dict'> {
-    '_id': 'fb085f7f',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
-    'job': <class 'dict'> {
-      'id': 'bf1b993c',
-    },
-    'manifest': <class 'dict'> {
-      'bar': 5,
-      'foo': 2,
-    },
-    'ready': False,
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-    'version': 0,
-  }
----
-# name: test_create_index[True-uvloop][json]
+# name: test_create_index[True-uvloop]
   <class 'dict'> {
     'change_count': 1,
     'contributors': <class 'list'> [
@@ -739,6 +716,29 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
+      'id': 'test',
+    },
+    'version': 0,
+  }
+---
+# name: test_create_index[True-uvloop].1
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'has_json': False,
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'manifest': <class 'dict'> {
+      'bar': 5,
+      'foo': 2,
+    },
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
       'id': 'test',
     },
     'version': 0,
