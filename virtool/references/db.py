@@ -414,7 +414,7 @@ async def get_releases_from_virtool(
                     {release_type: desired_references}, etag=resp.headers["etag"]
                 )
 
-            elif resp.status == 304:
+            if resp.status == 304:
                 return None
 
             else:
