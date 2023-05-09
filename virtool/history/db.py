@@ -2,6 +2,7 @@
 Work with OTU history in the database.
 
 """
+import asyncio
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
@@ -136,6 +137,9 @@ async def add(
     try:
         await db.history.insert_one(document, silent=silent, session=session)
     except pymongo.errors.DocumentTooLarge:
+        history_path = data_path / "history"
+        await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
+
         await write_diff_file(data_path, otu_id, otu_version, document["diff"])
 
         await db.history.insert_one(
@@ -189,6 +193,9 @@ async def prepare_add(
 
     else:
         document["diff"] = calculate_diff(old, new)
+
+    history_path = data_path / "history"
+    await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
 
     if len(bson.encode(document)) > 16793600:
         await write_diff_file(data_path, otu_id, otu_version, document["diff"])

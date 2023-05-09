@@ -5,8 +5,6 @@ from aiohttp.web import Application
 
 import aiojobs
 
-from virtool.app import create_app
-
 import virtool.http.accept
 import virtool.http.errors
 from virtool.config.cls import TaskRunnerConfig
@@ -23,7 +21,6 @@ from virtool.startup import (
     startup_databases,
     startup_executors,
     startup_http_client,
-    startup_paths,
     startup_sentry,
     startup_task_runner,
     startup_version,
@@ -67,7 +64,6 @@ async def create_task_runner_app(config: TaskRunnerConfig):
             startup_http_client,
             startup_databases,
             startup_dispatcher_sql_listener,
-            startup_paths,
             startup_executors,
             startup_data,
             startup_task_runner,
@@ -89,5 +85,5 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
 
 def run_task_runner(config: TaskRunnerConfig):
-    app = create_app(config)
+    app = create_task_runner_app(config)
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)
