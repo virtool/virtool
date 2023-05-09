@@ -5,6 +5,8 @@ Revision ID: 7emq1brv0zz6
 Date: 2022-06-09 20:38:11.017655
 
 """
+import asyncio
+
 import arrow
 
 # Revision identifiers.
@@ -28,12 +30,15 @@ async def upgrade(ctx: RevisionContext):
     the analysis document by a workflow job.
 
     """
-    async with buffered_bulk_writer(ctx.mongo.database.analyses) as writer:
+    async with buffered_bulk_writer(
+        ctx.mongo.database.analyses, session=ctx.mongo.session
+    ) as writer:
         async for document in ctx.mongo.database.analyses.find(
             {
                 "results": {"$ne": None, "$exists": True},
                 "results.hits": {"$exists": False},
             },
+            session=ctx.mongo.session,
         ):
             _id = document["_id"]
 
@@ -89,63 +94,66 @@ async def upgrade(ctx: RevisionContext):
 
 
 async def test_upgrade(ctx, snapshot):
-    await ctx.mongo.database.analyses.delete_many({})
-    await ctx.mongo.database.analyses.insert_many(
-        [
-            {
-                "_id": "foo",
-                "read_count": 1209,
-                "results": [1, 2, 3, 4, 5],
-                "subtracted_count": 231,
-                "workflow": "pathoscope_bowtie",
-            },
-            {
-                "_id": "fine",
-                "results": {
-                    "hits": [1, 2, 3, 4, 5],
+    await asyncio.gather(
+        ctx.mongo.analyses.delete_many({}),
+        ctx.mongo.analyses.insert_many(
+            [
+                {
+                    "_id": "foo",
                     "read_count": 1209,
+                    "results": [1, 2, 3, 4, 5],
                     "subtracted_count": 231,
+                    "workflow": "pathoscope_bowtie",
                 },
-                "workflow": "pathoscope_bowtie",
-            },
-            {
-                "_id": "bar",
-                "read_count": 7982,
-                "results": [9, 8, 7, 6, 5],
-                "subtracted_count": 112,
-                "workflow": "pathoscope_bowtie",
-            },
-            {
-                "_id": "baz",
-                "results": [9, 8, 7, 6, 5],
-                "workflow": "nuvs",
-            },
-            {
-                "_id": "bad",
-                "join_histogram": [1, 2, 3, 4, 5],
-                "joined_pair_count": 12345,
-                "remainder_pair_count": 54321,
-                "results": [9, 8, 7, 6, 5],
-                "workflow": "aodp",
-            },
-            {
-                "_id": "missing",
-                "join_histogram": [1, 2, 3, 4, 5],
-                "joined_pair_count": 12345,
-                "remainder_pair_count": 54321,
-                "workflow": "aodp",
-            },
-            {
-                "_id": "none",
-                "join_histogram": [1, 2, 3, 4, 5],
-                "joined_pair_count": 12345,
-                "remainder_pair_count": 54321,
-                "results": None,
-                "workflow": "aodp",
-            },
-        ]
+                {
+                    "_id": "fine",
+                    "results": {
+                        "hits": [1, 2, 3, 4, 5],
+                        "read_count": 1209,
+                        "subtracted_count": 231,
+                    },
+                    "workflow": "pathoscope_bowtie",
+                },
+                {
+                    "_id": "bar",
+                    "read_count": 7982,
+                    "results": [9, 8, 7, 6, 5],
+                    "subtracted_count": 112,
+                    "workflow": "pathoscope_bowtie",
+                },
+                {
+                    "_id": "baz",
+                    "results": [9, 8, 7, 6, 5],
+                    "workflow": "nuvs",
+                },
+                {
+                    "_id": "bad",
+                    "join_histogram": [1, 2, 3, 4, 5],
+                    "joined_pair_count": 12345,
+                    "remainder_pair_count": 54321,
+                    "results": [9, 8, 7, 6, 5],
+                    "workflow": "aodp",
+                },
+                {
+                    "_id": "missing",
+                    "join_histogram": [1, 2, 3, 4, 5],
+                    "joined_pair_count": 12345,
+                    "remainder_pair_count": 54321,
+                    "workflow": "aodp",
+                },
+                {
+                    "_id": "none",
+                    "join_histogram": [1, 2, 3, 4, 5],
+                    "joined_pair_count": 12345,
+                    "remainder_pair_count": 54321,
+                    "results": None,
+                    "workflow": "aodp",
+                },
+            ]
+        ),
     )
 
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_ctx:
+        await upgrade(revision_ctx)
 
-    assert await ctx.mongo.database.analyses.find().to_list(None) == snapshot
+    assert await ctx.mongo.analyses.find().to_list(None) == snapshot

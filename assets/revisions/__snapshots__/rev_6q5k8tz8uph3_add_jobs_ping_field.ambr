@@ -6,6 +6,7 @@
     },
     <class 'dict'> {
       '_id': 'b',
+      'ping': None,
     },
     <class 'dict'> {
       '_id': 'c',
@@ -15,6 +16,7 @@
     },
     <class 'dict'> {
       '_id': 'd',
+      'ping': None,
     },
   ]
 ---

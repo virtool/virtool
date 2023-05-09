@@ -34,7 +34,7 @@ async def upgrade(ctx: RevisionContext):
                 ctx.mongo.database,
                 document["b2c_given_name"],
                 document["b2c_family_name"],
-                ctx.mongo.session
+                ctx.mongo.session,
             )
         else:
             handle = user_id
@@ -75,15 +75,17 @@ async def test_upgrade(ctx, snapshot, user):
     if user == "user_with_handle":
         document["handle"] = "bar"
 
-    await ctx.mongo.database.users.insert_one(document)
+    await ctx.mongo.users.insert_one(document)
 
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_context:
+        await upgrade(revision_context)
 
-    document = await ctx.mongo.database.users.find_one({"_id": "abc123"})
+    document = await ctx.mongo.users.find_one({"_id": "abc123"})
 
     if user == "ad_user":
         if "handle" in document:
             assert re.match(r"foo-bar-\d+", document["handle"])
+
         assert document == snapshot(
             exclude=props(
                 "handle",

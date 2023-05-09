@@ -25,12 +25,14 @@ async def upgrade(ctx: RevisionContext):
 
     """
     await ctx.mongo.database.users.update_many(
-        {"active": {"$exists": False}}, {"$set": {"active": True}}, session=ctx.mongo.session
+        {"active": {"$exists": False}},
+        {"$set": {"active": True}},
+        session=ctx.mongo.session,
     )
 
 
 async def test_upgrade(ctx, snapshot):
-    await ctx.mongo.database.users.insert_many(
+    await ctx.mongo.users.insert_many(
         [
             {
                 "_id": "bob",
@@ -49,6 +51,7 @@ async def test_upgrade(ctx, snapshot):
         ]
     )
 
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_ctx:
+        await upgrade(revision_ctx)
 
-    assert await ctx.mongo.database.users.find().to_list(None) == snapshot
+    assert await ctx.mongo.users.find().to_list(None) == snapshot

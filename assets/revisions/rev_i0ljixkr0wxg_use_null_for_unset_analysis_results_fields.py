@@ -5,6 +5,8 @@ Revision ID: i0ljixkr0wxg
 Date: 2022-10-03 19:29:47.077288
 
 """
+import asyncio
+
 import arrow
 
 from virtool.migration.ctx import RevisionContext
@@ -25,38 +27,41 @@ async def upgrade(ctx: RevisionContext):
 
 
 async def test_upgrade(ctx, snapshot):
-    await ctx.mongo.database.analyses.delete_many({})
-    await ctx.mongo.database.analyses.insert_many(
-        [
-            {
-                "_id": "bat",
-                "join_histogram": [1, 2, 3, 4, 5],
-                "joined_pair_count": 12345,
-                "remainder_pair_count": 54321,
-                "workflow": "aodp",
-            },
-            {
-                "_id": "bar",
-                "read_count": 7982,
-                "results": [9, 8, 7, 6, 5],
-                "subtracted_count": 112,
-                "workflow": "pathoscope_bowtie",
-            },
-            {
-                "_id": "baz",
-                "results": None,
-                "workflow": "nuvs",
-            },
-            {
-                "_id": "bad",
-                "join_histogram": [1, 2, 3, 4, 5],
-                "joined_pair_count": 12345,
-                "remainder_pair_count": 54321,
-                "workflow": "aodp",
-            },
-        ]
+    await asyncio.gather(
+        ctx.mongo.analyses.delete_many({}),
+        ctx.mongo.analyses.insert_many(
+            [
+                {
+                    "_id": "bat",
+                    "join_histogram": [1, 2, 3, 4, 5],
+                    "joined_pair_count": 12345,
+                    "remainder_pair_count": 54321,
+                    "workflow": "aodp",
+                },
+                {
+                    "_id": "bar",
+                    "read_count": 7982,
+                    "results": [9, 8, 7, 6, 5],
+                    "subtracted_count": 112,
+                    "workflow": "pathoscope_bowtie",
+                },
+                {
+                    "_id": "baz",
+                    "results": None,
+                    "workflow": "nuvs",
+                },
+                {
+                    "_id": "bad",
+                    "join_histogram": [1, 2, 3, 4, 5],
+                    "joined_pair_count": 12345,
+                    "remainder_pair_count": 54321,
+                    "workflow": "aodp",
+                },
+            ]
+        ),
     )
 
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_ctx:
+        await upgrade(revision_ctx)
 
-    assert await ctx.mongo.database.analyses.find().to_list(None) == snapshot
+    assert await ctx.mongo.analyses.find().to_list(None) == snapshot

@@ -11,6 +11,7 @@
       ],
       'joined_pair_count': 12345,
       'remainder_pair_count': 54321,
+      'results': None,
       'workflow': 'aodp',
     },
     <class 'dict'> {
@@ -42,6 +43,7 @@
       ],
       'joined_pair_count': 12345,
       'remainder_pair_count': 54321,
+      'results': None,
       'workflow': 'aodp',
     },
   ]

@@ -8,6 +8,7 @@
 # name: test_upgrade[uvloop-existing_user]
   <class 'dict'> {
     '_id': 'abc123',
+    'handle': 'abc123',
   }
 ---
 # name: test_upgrade[uvloop-user_with_handle]

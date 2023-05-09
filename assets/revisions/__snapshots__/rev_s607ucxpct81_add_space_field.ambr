@@ -9,6 +9,7 @@
       },
       <class 'dict'> {
         '_id': 'bar',
+        'space': 0,
       },
       <class 'dict'> {
         '_id': 'baz',
@@ -18,6 +19,7 @@
       },
       <class 'dict'> {
         '_id': 'noo',
+        'space': 0,
       },
     ],
     <class 'list'> [
@@ -29,6 +31,7 @@
       },
       <class 'dict'> {
         '_id': 'bar',
+        'space': 0,
       },
       <class 'dict'> {
         '_id': 'baz',
@@ -38,6 +41,7 @@
       },
       <class 'dict'> {
         '_id': 'noo',
+        'space': 0,
       },
     ],
     <class 'list'> [
@@ -49,6 +53,7 @@
       },
       <class 'dict'> {
         '_id': 'bar',
+        'space': 0,
       },
       <class 'dict'> {
         '_id': 'baz',
@@ -58,6 +63,7 @@
       },
       <class 'dict'> {
         '_id': 'noo',
+        'space': 0,
       },
     ],
     <class 'list'> [
@@ -69,6 +75,7 @@
       },
       <class 'dict'> {
         '_id': 'bar',
+        'space': 0,
       },
       <class 'dict'> {
         '_id': 'baz',
@@ -78,6 +85,7 @@
       },
       <class 'dict'> {
         '_id': 'noo',
+        'space': 0,
       },
     ],
     <class 'list'> [
@@ -89,6 +97,7 @@
       },
       <class 'dict'> {
         '_id': 'bar',
+        'space': 0,
       },
       <class 'dict'> {
         '_id': 'baz',
@@ -98,6 +107,7 @@
       },
       <class 'dict'> {
         '_id': 'noo',
+        'space': 0,
       },
     ],
   ]

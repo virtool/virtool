@@ -18,12 +18,13 @@ required_alembic_revision = None
 
 async def upgrade(ctx: RevisionContext):
     await ctx.mongo.database.status.delete_many(
-        {"_id": {"$in": ["software", "software_update", "version"]}}
+        {"_id": {"$in": ["software", "software_update", "version"]}},
+        session=ctx.mongo.session,
     )
 
 
 async def test_upgrade(ctx):
-    await ctx.mongo.database.status.insert_many(
+    await ctx.mongo.status.insert_many(
         [
             {"_id": "software_update", "foo": "bar"},
             {"_id": "version", "foo": "bar"},
@@ -31,6 +32,7 @@ async def test_upgrade(ctx):
         ]
     )
 
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_ctx:
+        await upgrade(revision_ctx)
 
-    assert await ctx.mongo.database.status.find().to_list(None) == []
+    assert await ctx.mongo.status.find().to_list(None) == []

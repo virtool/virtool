@@ -38,19 +38,19 @@ async def upgrade(ctx: RevisionContext):
             updates.append(update)
 
         if updates:
-            await collection.bulk_write(updates)
+            await collection.bulk_write(updates, session=ctx.mongo.session)
 
 
 async def test_upgrade(ctx, snapshot):
     await gather(
-        ctx.mongo.database.samples.insert_many(
+        ctx.mongo.samples.insert_many(
             [
                 {"_id": "foo", "subtraction": {"id": "prunus"}},
                 {"_id": "bar", "subtraction": {"id": "malus"}},
                 {"_id": "baz", "subtraction": None},
             ]
         ),
-        ctx.mongo.database.analyses.insert_many(
+        ctx.mongo.analyses.insert_many(
             [
                 {"_id": "foo", "subtraction": {"id": "prunus"}},
                 {"_id": "bar", "subtraction": {"id": "malus"}},
@@ -59,7 +59,8 @@ async def test_upgrade(ctx, snapshot):
         ),
     )
 
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_ctx:
+        await upgrade(revision_ctx)
 
-    assert await ctx.mongo.database.analyses.find().to_list(None) == snapshot(name="analyses")
-    assert await ctx.mongo.database.samples.find().to_list(None) == snapshot(name="samples")
+    assert await ctx.mongo.analyses.find().to_list(None) == snapshot(name="analyses")
+    assert await ctx.mongo.samples.find().to_list(None) == snapshot(name="samples")

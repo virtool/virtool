@@ -90,20 +90,20 @@ async def upgrade(ctx: RevisionContext):
 
 
 async def test_upgrade(ctx, snapshot):
-
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_ctx:
+        await upgrade(revision_ctx)
 
     assert (
         await asyncio.gather(
-            ctx.mongo.database.analyses.index_information(),
-            ctx.mongo.database.groups.index_information(),
-            ctx.mongo.database.history.index_information(),
-            ctx.mongo.database.indexes.index_information(),
-            ctx.mongo.database.keys.index_information(),
-            ctx.mongo.database.otus.index_information(),
-            ctx.mongo.database.samples.index_information(),
-            ctx.mongo.database.sequences.index_information(),
-            ctx.mongo.database.users.index_information(),
+            ctx.mongo.analyses.index_information(),
+            ctx.mongo.groups.index_information(),
+            ctx.mongo.history.index_information(),
+            ctx.mongo.indexes.index_information(),
+            ctx.mongo.keys.index_information(),
+            ctx.mongo.otus.index_information(),
+            ctx.mongo.samples.index_information(),
+            ctx.mongo.sequences.index_information(),
+            ctx.mongo.users.index_information(),
         )
         == snapshot
     )

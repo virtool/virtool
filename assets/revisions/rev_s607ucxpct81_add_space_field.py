@@ -27,17 +27,19 @@ async def upgrade(ctx: RevisionContext):
         ctx.mongo.database.subtractions,
     ):
         await collection.update_many(
-            {"space": {"$exists": False}}, {"$set": {"space": 0}}, session=ctx.mongo.session
+            {"space": {"$exists": False}},
+            {"$set": {"space": 0}},
+            session=ctx.mongo.session,
         )
 
 
 async def test_upgrade(ctx, snapshot):
     collections = (
-        ctx.mongo.database.analyses,
-        ctx.mongo.database.jobs,
-        ctx.mongo.database.references,
-        ctx.mongo.database.samples,
-        ctx.mongo.database.subtractions,
+        ctx.mongo.analyses,
+        ctx.mongo.jobs,
+        ctx.mongo.references,
+        ctx.mongo.samples,
+        ctx.mongo.subtractions,
     )
 
     for collection in collections:
@@ -61,7 +63,8 @@ async def test_upgrade(ctx, snapshot):
             ]
         )
 
-    await upgrade(ctx)
+    async with ctx.revision_context() as revision_ctx:
+        await upgrade(revision_ctx)
 
     assert (
         await asyncio.gather(

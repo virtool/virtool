@@ -10,9 +10,11 @@
     },
     <class 'dict'> {
       '_id': 'fran',
+      'active': True,
     },
     <class 'dict'> {
       '_id': 'mary',
+      'active': True,
     },
   ]
 ---
