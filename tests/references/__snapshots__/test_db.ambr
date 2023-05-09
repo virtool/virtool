@@ -226,14 +226,6 @@
 ---
 # name: test_fetch_and_update_release[uvloop-200]
   <class 'dict'> {
-    'etag': None,
-    'name': '1.0.0-fake-release',
-    'newer': True,
-    'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
-  }
----
-# name: test_fetch_and_update_release[uvloop-304]
-  <class 'dict'> {
     'body': '- add 1 isolate for Tobacco mosaic virus',
     'content_type': 'application/gzip',
     'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.2/reference.json.gz',
@@ -245,6 +237,14 @@
     'published_at': '2018-11-29T22:57:49Z',
     'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
     'size': 3448888,
+  }
+---
+# name: test_fetch_and_update_release[uvloop-304]
+  <class 'dict'> {
+    'etag': '"f1a3f4d9330494be0ea4bb8de666cb21"',
+    'name': '1.0.0-fake-release',
+    'newer': True,
+    'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
   }
 ---
 # name: test_fetch_and_update_release[uvloop-404]

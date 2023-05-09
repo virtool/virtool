@@ -721,18 +721,7 @@
     'has_files': True,
     'id': 'fb085f7f',
     'job': <class 'dict'> {
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
-      'user': <class 'dict'> {
-        'administrator': False,
-        'handle': 'bob',
-        'id': 'test',
-      },
-      'workflow': 'build_index',
     },
     'manifest': <class 'dict'> {
       'bar': 5,

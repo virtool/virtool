@@ -198,22 +198,18 @@ async def test_delete_member(field, snapshot, mongo):
 async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, static_time):
     await startup_http_client(fake_app)
 
-    match status:
-        # fetches and updates
-        case 200:
-            slug = "virtool/virtool-core"
-            etag = None
+    etag = None
+
+    if status == 200:
+        etag = 'W/"409d3d915cefec6a8d2004c44c9e5456961777ca3b7e4310458dd8707d6a8d08"'
+
+    if status == 304:
+        etag = '"f1a3f4d9330494be0ea4bb8de666cb21"'
+
+    if status == 404:
+        pass
         
-        # fetches; does not update
-        case 304:
-            slug = "virtool/virtool-core"
-            etag = 'W/"409d3d915cefec6a8d2004c44c9e5456961777ca3b7e4310458dd8707d6a8d08"'
-
-        # requested repo does not exist
-        case 404:
-            slug = "repo_dne"
-            etag = None
-
+        
     await mongo.references.insert_one(
             {
                 "_id": "fake_ref_id",
@@ -225,15 +221,17 @@ async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, stati
                     "name": "1.0.0-fake-release"
                 },
                 "remotes_from": {
-                    "slug": slug
+                    "slug": "virtool/ref-plant-viruses"
                 }
             }
         )
 
     try:
-        release = await virtool.references.db.fetch_and_update_release(mongo, fake_app["client"], ref_id="fake_ref_id")
-        
-        assert release == snapshot
+        assert await virtool.references.db.fetch_and_update_release(
+            mongo,
+            fake_app["client"],
+            ref_id="fake_ref_id"
+        ) == snapshot
 
     # only to catch status 404; any other exceptions are failures
     except Exception as e:
