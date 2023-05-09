@@ -97,7 +97,7 @@ class UserClient(AbstractClient):
         if right == READ:
             return True
 
-        if right == MODIFY or right == REMOVE:
+        if right in (MODIFY, REMOVE):
             return self.has_permission("modify_hmm")
 
     async def has_right_on_index(self, index_id: str, right: Right) -> bool:
@@ -117,7 +117,7 @@ class UserClient(AbstractClient):
         if right == READ:
             return sample["all_read"] or (is_group_member and sample["group_read"])
 
-        if right == MODIFY or right == REMOVE:
+        if right in (MODIFY, REMOVE):
             return sample["all_write"] or (is_group_member and sample["group_write"])
 
     async def has_right_on_reference(self, reference_id: str, right: Right):

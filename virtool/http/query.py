@@ -4,13 +4,15 @@ from aiohttp import web
 
 
 def parse_value(value: str) -> Union[bool, str]:
-    if value == "false" or value == "False":
-        return False
+    match value:
+        case "false", "False":
+            return False
 
-    if value == "true" or value == "True":
-        return True
+        case "true", "True":
+            return True
 
-    return value
+        case _:
+            return value
 
 
 @web.middleware

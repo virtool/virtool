@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional, Sequence, Set, Union
 
 from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection
 
-import virtool.utils
 from virtool.types import Projection
 
 

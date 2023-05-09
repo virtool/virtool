@@ -18,10 +18,13 @@ from virtool_core.models.user import UserNested
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import PROJECTION, fetch_complete_job, create_job
-from virtool.jobs.utils import JobRights, compose_status
+from virtool.jobs.utils import (
+    JobRights,
+    compose_status,
+    check_job_is_running_or_waiting,
+)
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
@@ -374,12 +377,14 @@ class JobsData:
         :return: the updated job document
 
         """
-        document = await self._mongo.jobs.find_one({"_id": job_id}, projection=PROJECTION)
+        document = await self._mongo.jobs.find_one(
+            {"_id": job_id}, projection=PROJECTION
+        )
 
         if document is None:
             raise ResourceNotFoundError
 
-        if not is_running_or_waiting(document):
+        if not check_job_is_running_or_waiting(document):
             raise ResourceConflictError("Not cancellable")
 
         result = await self._client.cancel(job_id)
@@ -455,7 +460,7 @@ class JobsData:
         if document is None:
             raise ResourceNotFoundError
 
-        if is_running_or_waiting(document):
+        if check_job_is_running_or_waiting(document):
             raise ResourceConflictError(
                 "Job is running or waiting and cannot be removed."
             )

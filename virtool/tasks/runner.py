@@ -48,7 +48,7 @@ class TaskRunner:
         """
         task: Task = await get_row_by_id(self.app["pg"], Task, task_id)
 
-        logging.info(f"Starting task: %s %s", task.id, task.type)
+        logging.info("Starting task id=%s name=%s", task.id, task.type)
 
         for cls in BaseTask.__subclasses__():
             if task.type == cls.name:
