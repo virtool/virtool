@@ -3,24 +3,17 @@ Work with references in the database
 
 """
 import asyncio
-from asyncio import to_thread
 import datetime
 import logging
+from asyncio import to_thread
 from pathlib import Path
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Union,
-    TYPE_CHECKING,
-)
-import aiohttp
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import pymongo
-from aiohttp import ClientConnectorError
+from aiohttp import ClientConnectorError, ClientSession
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo import UpdateOne, DeleteMany, DeleteOne
+from pymongo import DeleteMany, DeleteOne, UpdateOne
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
@@ -38,13 +31,12 @@ from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
 from virtool.references.bulk_models import (
+    OTUData,
+    OTUDelete,
+    OTUInsert,
     OTUUpdate,
     SequenceChanges,
-    OTUData,
-    OTUInsert,
-    OTUDelete,
 )
-
 from virtool.references.utils import (
     RIGHTS,
     check_will_change,
@@ -62,9 +54,7 @@ RELEASES_URL = "https://www.virtool.ca/releases"
 
 logger = logging.getLogger(__name__)
 
-SLUG_TO_RELEASE_TYPE = {
-    "virtool/ref-plant-viruses": "ref_plant_viruses"
-}
+SLUG_TO_RELEASE_TYPE = {"virtool/ref-plant-viruses": "ref_plant_viruses"}
 
 PROJECTION = [
     "_id",
@@ -387,9 +377,7 @@ class GetReleaseError(Exception):
 
 
 async def get_releases_from_virtool(
-    session: aiohttp.ClientSession,
-    slug: str,
-    etag: Optional[str] = None
+    session: ClientSession, slug: str, etag: Optional[str] = None
 ) -> Optional[dict]:
     """
     Get releases from virtool.ca/releases
@@ -413,10 +401,7 @@ async def get_releases_from_virtool(
 
         logger.debug("Making request to %s", url)
 
-        async with session.get(
-            url,
-            headers=headers
-        ) as resp:
+        async with session.get(url, headers=headers) as resp:
             if resp.status == 200:
                 data = await resp.json(content_type=None)
 
@@ -426,9 +411,8 @@ async def get_releases_from_virtool(
                     return None
 
                 else:
-                    return dict (
-                        {release_type: desired_references},
-                        etag=resp.headers["etag"]
+                    return dict(
+                        {release_type: desired_references}, etag=resp.headers["etag"]
                     )
 
             elif resp.status == 304:

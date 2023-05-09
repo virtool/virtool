@@ -1,7 +1,9 @@
 import pytest
+
 import virtool.errors
 import virtool.references.db
 from virtool.startup import startup_http_client
+
 
 @pytest.fixture
 async def fake_app():
@@ -16,6 +18,7 @@ async def fake_app():
         await app["client"].close()
     except TypeError:
         pass
+
 
 RIGHTS = {"build": False, "modify": False, "modify_otu": False, "remove": False}
 
@@ -195,6 +198,7 @@ async def test_delete_member(field, snapshot, mongo):
 
 
 @pytest.mark.parametrize("status", [200, 304, 404])
+# @pytest.mark.parametrize("ignore_errors", [True, False])
 async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, static_time):
     await startup_http_client(fake_app)
 
@@ -208,36 +212,19 @@ async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, stati
 
     if status == 404:
         pass
-        
-        
+
     await mongo.references.insert_one(
-            {
-                "_id": "fake_ref_id",
-                "installed": {
-                    "name": "1.0.0-fake-install"
-                },
-                "release": {
-                    "etag": etag,
-                    "name": "1.0.0-fake-release"
-                },
-                "remotes_from": {
-                    "slug": "virtool/ref-plant-viruses"
-                }
-            }
+        {
+            "_id": "fake_ref_id",
+            "installed": {"name": "1.0.0-fake-install"},
+            "release": {"etag": etag, "name": "1.0.0-fake-release"},
+            "remotes_from": {"slug": "virtool/ref-plant-viruses"},
+        }
+    )
+
+    assert (
+        await virtool.references.db.fetch_and_update_release(
+            mongo, fake_app["client"], "fake_ref_id", False
         )
-
-    try:
-        assert await virtool.references.db.fetch_and_update_release(
-            mongo,
-            fake_app["client"],
-            ref_id="fake_ref_id"
-        ) == snapshot
-
-    # only to catch status 404; any other exceptions are failures
-    except Exception as e:
-        match status:
-            case 404:
-                return
-
-            case _:
-                raise e
+        == snapshot
+    )
