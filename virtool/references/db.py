@@ -410,10 +410,9 @@ async def get_releases_from_virtool(
                 if len(desired_references) == 0:
                     return None
 
-                else:
-                    return dict(
-                        {release_type: desired_references}, etag=resp.headers["etag"]
-                    )
+                return dict(
+                    {release_type: desired_references}, etag=resp.headers["etag"]
+                )
 
             elif resp.status == 304:
                 return None

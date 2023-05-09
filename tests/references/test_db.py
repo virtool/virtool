@@ -207,11 +207,8 @@ async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, stati
     if status == 200:
         etag = 'W/"409d3d915cefec6a8d2004c44c9e5456961777ca3b7e4310458dd8707d6a8d08"'
 
-    if status == 304:
+    elif status == 304:
         etag = '"f1a3f4d9330494be0ea4bb8de666cb21"'
-
-    if status == 404:
-        pass
 
     await mongo.references.insert_one(
         {
