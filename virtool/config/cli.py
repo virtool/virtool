@@ -4,8 +4,10 @@ from logging import getLogger
 
 import click
 import uvloop
-
 from virtool_core.logging import configure_logs
+
+import virtool.tasks.main
+import virtool.tasks.spawner
 from virtool.app import run_api_server
 from virtool.config.cls import (
     MigrationConfig,
@@ -28,12 +30,10 @@ from virtool.config.options import (
     redis_connection_string_option,
     sentry_dsn_option,
 )
+from virtool.jobs.main import run_jobs_server
 from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions
-from virtool.jobs.main import run_jobs_server
-import virtool.tasks.main
-import virtool.tasks.spawner
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 
@@ -106,16 +106,16 @@ def start_jobs_api(**kwargs):
     logger.info("Starting the jobs api service")
 
     run_jobs_server(
-            ServerConfig(
-                **kwargs,
-                base_url="",
-                b2c_client_id="",
-                b2c_client_secret="",
-                b2c_tenant="",
-                b2c_user_flow="",
-                use_b2c=False,
-            )
+        ServerConfig(
+            **kwargs,
+            base_url="",
+            b2c_client_id="",
+            b2c_client_secret="",
+            b2c_tenant="",
+            b2c_user_flow="",
+            use_b2c=False,
         )
+    )
 
 
 @cli.command
@@ -179,6 +179,7 @@ def start_task_runner(**kwargs):
     configure_logs(False)
 
     run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
+
 
 @tasks.command("spawn")
 @postgres_connection_string_option

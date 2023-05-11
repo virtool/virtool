@@ -1,13 +1,12 @@
 import asyncio
-from contextlib import suppress
 import signal
-import sys
-import aiohttp
-import aiojobs.aiohttp
-import aiohttp.web
-from aiohttp.web import Application
+from contextlib import suppress
 
+import aiohttp
+import aiohttp.web
 import aiojobs
+import aiojobs.aiohttp
+from aiohttp.web import Application
 
 import virtool.http.accept
 import virtool.http.errors
@@ -89,10 +88,12 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
 
 def run_task_runner(config: TaskRunnerConfig):
-
     async def exit_gracefully():
-        tasks = [task for task in asyncio.all_tasks() if task is not 
-             asyncio.tasks.current_task()]
+        tasks = [
+            task
+            for task in asyncio.all_tasks()
+            if task is not asyncio.tasks.current_task()
+        ]
 
         for task in tasks:
             task.cancel()
@@ -100,15 +101,18 @@ def run_task_runner(config: TaskRunnerConfig):
             with suppress(asyncio.CancelledError):
                 await task
 
-
     loop = asyncio.new_event_loop()
 
-    loop.add_signal_handler(signal.SIGINT,
-                            lambda: asyncio.ensure_future(exit_gracefully()))
-    loop.add_signal_handler(signal.SIGTERM,
-                            lambda: asyncio.ensure_future(exit_gracefully()))
+    loop.add_signal_handler(
+        signal.SIGINT, lambda: asyncio.ensure_future(exit_gracefully())
+    )
+    loop.add_signal_handler(
+        signal.SIGTERM, lambda: asyncio.ensure_future(exit_gracefully())
+    )
 
     app = create_task_runner_app(config)
     print("before runner")
     with suppress(asyncio.CancelledError):
-        aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop, handle_signals=False)
+        aiohttp.web.run_app(
+            app=app, host=config.host, port=config.port, loop=loop, handle_signals=False
+        )
