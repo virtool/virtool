@@ -1,3 +1,6 @@
+import asyncio
+from contextlib import suppress
+import signal
 import aiohttp
 import aiojobs.aiohttp
 import aiohttp.web
@@ -84,6 +87,34 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     return app
 
 
+async def exit_gracefully():
+    tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+
+    print("\nexiting gracefully")
+
+    for task in tasks:
+        task.cancel()
+
+        with suppress(asyncio.CancelledError):
+            await task
+
+    asyncio.get_event_loop().stop()
+
+
 def run_task_runner(config: TaskRunnerConfig):
+    loop = asyncio.new_event_loop()
+
+    loop.add_signal_handler(
+        signal.SIGINT, lambda: asyncio.ensure_future(exit_gracefully())
+    )
+
+    loop.add_signal_handler(
+        signal.SIGTERM, lambda: asyncio.ensure_future(exit_gracefully())
+    )
+
     app = create_task_runner_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
+
+    with suppress(asyncio.CancelledError):
+        aiohttp.web.run_app(
+            app=app, host=config.host, port=config.port, loop=loop, handle_signals=False
+        )
