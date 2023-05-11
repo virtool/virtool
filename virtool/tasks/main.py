@@ -87,9 +87,6 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     return app
 
 
-
-
-
 async def exit_gracefully():
     async def task_generator():
         for task in asyncio.all_tasks():
@@ -106,7 +103,6 @@ async def exit_gracefully():
         await task
 
         all_tasks = asyncio.all_tasks()
-
 
     all_tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
     
