@@ -1,3 +1,5 @@
+
+
 pytest_plugins = (
     "tests.fixtures.client",
     "tests.fixtures.core",
@@ -9,6 +11,7 @@ pytest_plugins = (
     "tests.fixtures.history",
     "tests.fixtures.indexes",
     "tests.fixtures.jobs",
+    "tests.fixtures.migration",
     "tests.fixtures.postgres",
     "tests.fixtures.redis",
     "tests.fixtures.references",

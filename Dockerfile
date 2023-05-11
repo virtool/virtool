@@ -12,7 +12,7 @@ WORKDIR /virtool
 COPY --from=server /root/.local /root/.local
 COPY run.py pyproject.toml VERSION* /virtool/
 COPY virtool /virtool/virtool
-COPY example /virtool/example
+COPY assets/example /virtool/example
 EXPOSE 9950
 ENTRYPOINT ["python", "run.py"]
 CMD ["server"]

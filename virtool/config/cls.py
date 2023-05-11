@@ -4,6 +4,36 @@ from typing import Optional, Union
 
 from pymongo.uri_parser import parse_uri
 
+from virtool.authorization.openfga import OpenfgaScheme
+
+
+@dataclass
+class MigrationConfig:
+    """
+    Configuration for the migration service.
+
+    """
+
+    data_path: Path
+    mongodb_connection_string: str
+    openfga_host: str
+    openfga_scheme: OpenfgaScheme
+    openfga_store_name: str
+    postgres_connection_string: str
+
+    @property
+    def mongodb_name(self) -> str:
+        """
+        Get the name of the MongoDB database.
+
+        :return: the database name
+
+        """
+        return parse_uri(self.mongodb_connection_string)["database"]
+
+    def __post_init__(self):
+        self.data_path = Path(self.data_path)
+
 
 @dataclass
 class ServerConfig:

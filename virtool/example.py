@@ -1,3 +1,3 @@
 from pathlib import Path
 
-example_path = Path(__file__).parent.parent / "example"
+example_path = Path(__file__).parent.parent / "assets" / "example"

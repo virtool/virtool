@@ -58,6 +58,7 @@ aiohttp-pydantic = "^1.12.1"
 orjson = "^3.8.0"
 openfga-sdk = "^0.1.1"
 python-jose = "^3.3.0"
+alembic = {extras = ["tz"], version = "^1.10.3"}
 virtool-core = "^4.12.0"
 
 [tool.poetry.dev-dependencies]
@@ -73,7 +74,7 @@ black = "^21.12b0"
 pytest-rerunfailures = "^10.2"
 
 [tool.poetry.scripts]
-virtool = "virtool.config:entry"
+virtool = "virtool.config.cli:entry"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
