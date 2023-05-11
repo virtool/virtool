@@ -169,7 +169,6 @@ def tasks():
 @address_options
 @data_path_option
 @mongodb_connection_string_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -179,10 +178,7 @@ def start_task_runner(**kwargs):
     """Start a service that pulls tasks queued in Redis and runs them."""
     configure_logs(False)
 
-    logger.info("Starting tasks runner")
-
     run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
-
 
 @tasks.command("spawn")
 @postgres_connection_string_option

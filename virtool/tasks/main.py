@@ -1,3 +1,7 @@
+import asyncio
+from contextlib import suppress
+import signal
+import sys
 import aiohttp
 import aiojobs.aiohttp
 import aiohttp.web
@@ -85,5 +89,26 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
 
 def run_task_runner(config: TaskRunnerConfig):
+
+    async def exit_gracefully():
+        tasks = [task for task in asyncio.all_tasks() if task is not 
+             asyncio.tasks.current_task()]
+
+        for task in tasks:
+            task.cancel()
+
+            with suppress(asyncio.CancelledError):
+                await task
+
+
+    loop = asyncio.new_event_loop()
+
+    loop.add_signal_handler(signal.SIGINT,
+                            lambda: asyncio.ensure_future(exit_gracefully()))
+    loop.add_signal_handler(signal.SIGTERM,
+                            lambda: asyncio.ensure_future(exit_gracefully()))
+
     app = create_task_runner_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
+    print("before runner")
+    with suppress(asyncio.CancelledError):
+        aiohttp.web.run_app(app=app, host=config.host, port=config.port, loop=loop, handle_signals=False)
