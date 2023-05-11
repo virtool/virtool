@@ -88,13 +88,23 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
 
 async def exit_gracefully():
-    tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
-
     print("\nexiting gracefully")
 
-    for task in tasks:
-        task.cancel()
+    all_tasks = asyncio.all_tasks()
 
+    for task in all_tasks:
+        if len(all_tasks) <= 7:
+            break
+
+        await task
+
+        all_tasks = asyncio.all_tasks()
+
+
+    all_tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+    
+    for task in all_tasks:
+        task.cancel()
         with suppress(asyncio.CancelledError):
             await task
 
