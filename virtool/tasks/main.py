@@ -87,12 +87,19 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     return app
 
 
+
+
+
 async def exit_gracefully():
+    async def task_generator():
+        for task in asyncio.all_tasks():
+            yield task
+
     print("\nexiting gracefully")
 
     all_tasks = asyncio.all_tasks()
 
-    for task in all_tasks:
+    async for task in task_generator():
         if len(all_tasks) <= 7:
             break
 
