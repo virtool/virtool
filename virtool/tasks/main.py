@@ -94,15 +94,12 @@ async def exit_gracefully():
 
     print("\nexiting gracefully")
 
-    all_tasks = asyncio.all_tasks()
+    if len(asyncio.all_tasks()) > 7:
+        async for task in task_generator():
+            await task
 
-    async for task in task_generator():
-        if len(all_tasks) <= 7:
-            break
-
-        await task
-
-        all_tasks = asyncio.all_tasks()
+            if len(asyncio.all_tasks()) <= 7:
+                break
 
     all_tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
     
