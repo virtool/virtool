@@ -21,7 +21,6 @@ from virtool.config.options import (
     dev_option,
     mongodb_connection_string_option,
     no_check_db_option,
-    no_check_files_option,
     no_revision_check_option,
     openfga_options,
     postgres_connection_string_option,
@@ -73,7 +72,6 @@ def server():
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -93,7 +91,6 @@ def start_api_server(**kwargs):
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
