@@ -40,7 +40,7 @@ class TaskRunner:
         except asyncio.CancelledError:
             logging.info("Stopped task runner; awaiting task completion")
 
-            await asyncio.wait_for(asyncio.gather(*tasks), timeout=10)
+            await asyncio.wait_for(asyncio.gather(*tasks), timeout=20)
 
         except Exception as err:
             logging.fatal("Task runner shutting down due to exception %s", err)
