@@ -1,7 +1,10 @@
 import asyncio
+from contextlib import suppress
 import logging
+import time
 
 from aiohttp.abc import Application
+import async_timeout
 
 from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
@@ -20,36 +23,54 @@ class TaskRunner:
         self._tasks_client = tasks_client
         self.app = app
 
-    async def run(self):
-        logging.info("Started task runner")
 
-        tasks = []
+    async def fake_task(self):
+        await asyncio.sleep(3)
+
+
+    async def run(self):
+        task_id = None
 
         try:
             while True:
                 logging.info("Waiting for next task")
+                # task_id = await self._tasks_client.pop()
 
-                task_id = await self._tasks_client.pop()
+                # await self.run_task(task_id)
 
-                tasks.append(self.run_task(task_id))
+                task_id = 0
 
-                await asyncio.gather(*tasks)
+                self.current_task = asyncio.get_event_loop().create_task(self.fake_task())
+
+                await asyncio.shield(self.current_task)
 
                 logging.info("Finished task: %s", task_id)
 
-        except asyncio.CancelledError:
-            logging.info("Stopped task runner; awaiting task completion")
+        except (asyncio.CancelledError):
+            if task_id is not None:
+                logging.info("Recieved stop signal; awaiting task completion")
 
-            await asyncio.wait_for(asyncio.gather(*tasks), timeout=20)
+                try:
+                    with async_timeout.timeout_at(asyncio.get_running_loop().time() + 600):
+                        await self.current_task
+
+                    logging.info("Finished task: %s", task_id)
+
+                except TimeoutError:
+                    pass
+                    logging.info("Task %s timed out", task_id)
+
+                # REMOVE BEFORE PUSH
+                except Exception as e:
+                    pass
+
+            logging.info("Task runner shutting down")
 
         except Exception as err:
             logging.fatal("Task runner shutting down due to exception %s", err)
 
-            for task in tasks:
-                task.cancel()
-                await task
-
             capture_exception(err)
+
 
     async def run_task(self, task_id: int):
         """
@@ -58,18 +79,14 @@ class TaskRunner:
         :param task_id: ID of the task
 
         """
-        try:
-            task: Task = await get_row_by_id(self.app["pg"], Task, task_id)
+        task: Task = await get_row_by_id(self.app["pg"], Task, task_id)
 
-            logging.info(f"Starting task: %s %s", task.id, task.type)
+        logging.info(f"Starting task: %s %s", task.id, task.type)
 
-            for cls in BaseTask.__subclasses__():
-                if task.type == cls.name:
-                    current_task = await cls.from_task_id(self.app["data"], task.id)
-                    await asyncio.get_event_loop().create_task(current_task.run())
+        for cls in BaseTask.__subclasses__():
+            if task.type == cls.name:
+                current_task = await cls.from_task_id(self.app["data"], task.id)
 
-        except asyncio.CancelledError as task_cancelled:
-            raise task_cancelled
+                self.current_task = asyncio.get_event_loop().create_task(current_task.run())
 
-        except Exception as err:
-            raise err
+                await asyncio.shield(self.current_task)

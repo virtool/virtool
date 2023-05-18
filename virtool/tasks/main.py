@@ -75,10 +75,10 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
     app.on_shutdown.extend(
         [
+            shutdown_scheduler,
             shutdown_authorization_client,
             shutdown_client,
             shutdown_executors,
-            shutdown_scheduler,
             shutdown_redis,
         ]
     )
@@ -89,7 +89,6 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 def run_task_runner(config: TaskRunnerConfig):
     app = create_task_runner_app(config)
 
-    with suppress(asyncio.CancelledError):
-        aiohttp.web.run_app(
-            app=app, host=config.host, port=config.port, handle_signals=False
-        )
+    aiohttp.web.run_app(
+        app=app, host=config.host, port=config.port
+    )
