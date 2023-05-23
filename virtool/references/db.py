@@ -387,7 +387,7 @@ async def get_releases_from_virtool(
     Get releases from virtool.ca/releases
 
     :param session: the application HTTP client session
-    :param slug: the repository to fetch
+    :param release_type: the repository to fetch
 
     :return: the releases of the requested repository
     """
