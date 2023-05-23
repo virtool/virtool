@@ -197,24 +197,14 @@ async def test_delete_member(field, snapshot, mongo):
     assert await mongo.references.find_one() == snapshot
 
 
-@pytest.mark.parametrize("status", [200, 304, 404])
-# @pytest.mark.parametrize("ignore_errors", [True, False])
-async def test_fetch_and_update_release(mongo, status, fake_app, snapshot, static_time):
+async def test_fetch_and_update_release(mongo, fake_app, snapshot, static_time):
     await startup_http_client(fake_app)
-
-    etag = None
-
-    if status == 200:
-        etag = 'W/"409d3d915cefec6a8d2004c44c9e5456961777ca3b7e4310458dd8707d6a8d08"'
-
-    elif status == 304:
-        etag = '"f1a3f4d9330494be0ea4bb8de666cb21"'
 
     await mongo.references.insert_one(
         {
             "_id": "fake_ref_id",
             "installed": {"name": "1.0.0-fake-install"},
-            "release": {"etag": etag, "name": "1.0.0-fake-release"},
+            "release": {"name": "1.0.0-fake-release"},
             "remotes_from": {"slug": "virtool/ref-plant-viruses"},
         }
     )

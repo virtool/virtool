@@ -50,8 +50,6 @@ from virtool.users.db import AttachUserTransform, extend_user
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
-RELEASES_URL = "https://www.virtool.ca/releases"
-
 logger = logging.getLogger(__name__)
 
 SLUG_TO_RELEASE_TYPE = {"virtool/ref-plant-viruses": "ref_plant_viruses"}
@@ -377,53 +375,45 @@ class GetReleaseError(Exception):
 
 
 async def get_releases_from_virtool(
-    session: ClientSession, slug: str, etag: Optional[str] = None
+    session: ClientSession, slug: str
 ) -> Optional[dict]:
     """
     Get releases from virtool.ca/releases
 
     :param session: the application HTTP client session
     :param slug: the repository to fetch
-    :param etag: an ETag for the resource to be used with the `If-None-Match` header
 
-    :return: the releases of plant virus references
+    :return: the releases of the requested repository
     """
 
-    # maps between the slug syntax and the documents from virtool.ca/releases
-    release_type = SLUG_TO_RELEASE_TYPE[slug]
+    # maps between the github slug syntax and the documents from virtool.ca/releases
+    try:
+        release_type = SLUG_TO_RELEASE_TYPE[slug]
 
-    url = RELEASES_URL
+    except KeyError:
+        logger.error("Invalid release slug")
 
-    headers = {"Accept": "application/vnd.github.v3+json"}
+    url = "https://www.virtool.ca/releases"
 
-    if etag:
-        headers["If-None-Match"] = etag
+    logger.debug("Making request to %s", url)
 
-        logger.debug("Making request to %s", url)
+    async with session.get(url) as resp:
+        if resp.status == 200:
+            releases = await resp.json(content_type=None)
 
-        async with session.get(url, headers=headers) as resp:
-            if resp.status == 200:
-                data = await resp.json(content_type=None)
+            desired_releases = releases.get(release_type, [])
 
-                desired_references = data[release_type]
-
-                if len(desired_references) == 0:
-                    return None
-
-                return dict(
-                    {release_type: desired_references}, etag=resp.headers["etag"]
-                )
-
-            if resp.status == 304:
+            if len(desired_releases) == 0:
                 return None
 
-            else:
-                warning = f"Encountered error {resp.status} {await resp.json()}"
-                logger.warning(warning)
-                raise GetReleaseError("release does not exist")
+            return {release_type: desired_releases}
 
-    else:
-        return None
+        if resp.status == 304:
+            return None
+
+        else:
+            logger.warning(f"Encountered error {resp.status} {await resp.json()}")
+            raise GetReleaseError("release does not exist")
 
 
 async def fetch_and_update_release(
@@ -454,15 +444,13 @@ async def fetch_and_update_release(
 
     release = document.get("release")
 
-    etag = release.get("etag")
-
     errors = []
 
     updated_release = None
 
     try:
         releases = await get_releases_from_virtool(
-            client, document["remotes_from"]["slug"], etag
+            client, document["remotes_from"]["slug"]
         )
 
         if releases:
@@ -471,7 +459,6 @@ async def fetch_and_update_release(
             updated_release = {
                 "name": latest_release["name"],
                 "body": latest_release["body"],
-                "etag": releases["etag"],
                 "filename": latest_release["name"],
                 "size": latest_release["size"],
                 "html_url": latest_release["html_url"],
