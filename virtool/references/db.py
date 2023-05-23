@@ -4,6 +4,7 @@ Work with references in the database
 """
 import asyncio
 import datetime
+from enum import Enum
 import logging
 from asyncio import to_thread
 from pathlib import Path
@@ -374,8 +375,13 @@ class GetReleaseError(Exception):
     pass
 
 
+class ReleaseTypes(Enum):
+    references = "references"
+    hmms = "hmms"
+
+
 async def get_releases_from_virtool(
-    session: ClientSession, slug: str
+    session: ClientSession, release_type: ReleaseTypes
 ) -> Optional[dict]:
     """
     Get releases from virtool.ca/releases
@@ -386,27 +392,13 @@ async def get_releases_from_virtool(
     :return: the releases of the requested repository
     """
 
-    # maps between the github slug syntax and the documents from virtool.ca/releases
-    try:
-        release_type = SLUG_TO_RELEASE_TYPE[slug]
-
-    except KeyError:
-        logger.error("Invalid release slug")
-
-    url = "https://www.virtool.ca/releases"
+    url = f"https://www.virtool.ca/releases/{release_type.value}.json"
 
     logger.debug("Making request to %s", url)
 
     async with session.get(url) as resp:
         if resp.status == 200:
-            releases = await resp.json(content_type=None)
-
-            desired_releases = releases.get(release_type, [])
-
-            if len(desired_releases) == 0:
-                return None
-
-            return {release_type: desired_releases}
+            return await resp.json(content_type=None)
 
         if resp.status == 304:
             return None
@@ -449,12 +441,10 @@ async def fetch_and_update_release(
     updated_release = None
 
     try:
-        releases = await get_releases_from_virtool(
-            client, document["remotes_from"]["slug"]
-        )
+        releases = await get_releases_from_virtool(client, ReleaseTypes.references)
 
         if releases:
-            latest_release = releases["ref_plant_viruses"][0]
+            latest_release = releases["ref-plant-viruses"][0]
 
             updated_release = {
                 "name": latest_release["name"],

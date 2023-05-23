@@ -226,15 +226,20 @@
 ---
 # name: test_fetch_and_update_release[uvloop]
   <class 'dict'> {
-    'body': '- add 1 isolate for Tobacco mosaic virus',
+    'body': '
+      * Added many new isolates for existing viruses.
+      * Added many new viruses.
+      * Fixed naming for many viruses and isolates.
+      * Removed all viruses with non-plant hosts.
+    ',
     'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.2/reference.json.gz',
-    'filename': 'v1.0.2',
-    'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.2',
-    'name': 'v1.0.2',
+    'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.5.0/reference.json.gz',
+    'filename': 'v1.5.0',
+    'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.5.0',
+    'name': 'v1.5.0',
     'newer': True,
-    'published_at': '2018-11-29T22:57:49Z',
+    'published_at': '2022-10-04T22:47:33Z',
     'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'size': 3448888,
+    'size': 6449861,
   }
 ---
