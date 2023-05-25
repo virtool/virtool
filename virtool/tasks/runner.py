@@ -23,42 +23,34 @@ class TaskRunner:
         self._tasks_client = tasks_client
         self.app = app
 
-
-    async def fake_task(self):
-        await asyncio.sleep(3)
-
-
     async def run(self):
         task_id = None
 
         try:
             while True:
                 logging.info("Waiting for next task")
-                # task_id = await self._tasks_client.pop()
+                task_id = await self._tasks_client.pop()
 
-                # await self.run_task(task_id)
-
-                task_id = 0
-
-                self.current_task = asyncio.get_event_loop().create_task(self.fake_task())
+                await self.run_task(task_id)
 
                 await asyncio.shield(self.current_task)
 
                 logging.info("Finished task: %s", task_id)
 
-        except (asyncio.CancelledError):
+        except asyncio.CancelledError:
             if task_id is not None:
                 logging.info("Recieved stop signal; awaiting task completion")
 
                 try:
-                    with async_timeout.timeout_at(asyncio.get_running_loop().time() + 600):
-                        await self.current_task
+                    await asyncio.wait_for(asyncio.shield(self.current_task), 600)
 
                     logging.info("Finished task: %s", task_id)
 
-                except TimeoutError:
-                    pass
+                except asyncio.TimeoutError:
                     logging.info("Task %s timed out", task_id)
+
+                except asyncio.CancelledError:
+                    logging.info("Task %s was cancelled", task_id)
 
                 # REMOVE BEFORE PUSH
                 except Exception as e:
@@ -70,7 +62,6 @@ class TaskRunner:
             logging.fatal("Task runner shutting down due to exception %s", err)
 
             capture_exception(err)
-
 
     async def run_task(self, task_id: int):
         """
@@ -87,6 +78,8 @@ class TaskRunner:
             if task.type == cls.name:
                 current_task = await cls.from_task_id(self.app["data"], task.id)
 
-                self.current_task = asyncio.get_event_loop().create_task(current_task.run())
+                self.current_task = asyncio.get_event_loop().create_task(
+                    current_task.run()
+                )
 
                 await asyncio.shield(self.current_task)
