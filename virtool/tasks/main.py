@@ -1,5 +1,3 @@
-import asyncio
-from contextlib import suppress
 import aiohttp
 import aiojobs.aiohttp
 import aiohttp.web
