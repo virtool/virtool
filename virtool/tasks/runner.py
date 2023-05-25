@@ -52,7 +52,6 @@ class TaskRunner:
                 except asyncio.CancelledError:
                     logging.info("Task %s was cancelled", task_id)
 
-                # REMOVE BEFORE PUSH
                 except Exception as e:
                     pass
 
