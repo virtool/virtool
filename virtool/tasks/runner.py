@@ -1,10 +1,7 @@
 import asyncio
-from contextlib import suppress
 import logging
-import time
 
 from aiohttp.abc import Application
-import async_timeout
 
 from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
@@ -22,6 +19,7 @@ class TaskRunner:
         self._data = data
         self._tasks_client = tasks_client
         self.app = app
+        self.current_task = None
 
     async def run(self):
         task_id = None
@@ -51,9 +49,6 @@ class TaskRunner:
 
                 except asyncio.CancelledError:
                     logging.info("Task %s was cancelled", task_id)
-
-                except Exception as e:
-                    pass
 
             logging.info("Task runner shutting down")
 
