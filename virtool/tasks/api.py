@@ -28,6 +28,22 @@ class TasksRunnerView(PydanticView):
         return json_response({"version": version})
 
 
+class TasksSpawnerView(PydanticView):
+    async def get(self) -> r200:
+        """
+        Root response for task spawner. Used for aliveness/readiness check.
+        Status Codes:
+            200: Successful operation
+        """
+        version = "unknown"
+        try:
+            version = self.request.app["version"]
+        except KeyError:
+            pass
+
+        return json_response({"version": version})
+
+
 @routes.view("/tasks")
 class TasksView(PydanticView):
     async def get(self) -> r200[List[GetTasksResponse]]:

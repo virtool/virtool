@@ -104,4 +104,17 @@ class TaskSpawnerConfig:
     redis_connection_string: str
 
 
+@dataclass
+class PeriodicTaskSpawnerConfig:
+    """
+    Configuration for the periodic task spawner
+    """
+
+    base_url: str
+    postgres_connection_string: str
+    redis_connection_string: str
+    host: str
+    port: int
+
+
 Config = Union[ServerConfig, TaskRunnerConfig, TaskSpawnerConfig]

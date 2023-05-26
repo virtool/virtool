@@ -12,6 +12,7 @@ from virtool.config.cls import (
     ServerConfig,
     TaskRunnerConfig,
     TaskSpawnerConfig,
+    PeriodicTaskSpawnerConfig,
 )
 from virtool.config.options import (
     address_options,
@@ -31,10 +32,10 @@ from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions
 from virtool.jobs.main import run_jobs_server
-import virtool.tasks.main
-import virtool.tasks.spawner
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
+from virtool.tasks.spawn import spawn
+from virtool.tasks.spawner import run_task_spawner
 
 logger = getLogger("config")
 
@@ -191,5 +192,19 @@ def spawn_task(task_name: str, **kwargs):
     logger.info("Spawning task")
 
     asyncio.get_event_loop().run_until_complete(
-        virtool.tasks.spawner.spawn(TaskSpawnerConfig(**kwargs), task_name)
+        spawn(TaskSpawnerConfig(**kwargs), task_name)
     )
+
+
+@tasks.command("spawner")
+@postgres_connection_string_option
+@redis_connection_string_option
+@address_options
+def tasks_spawner(**kwargs):
+    """
+    Schedule all periodically run tasks on hardcoded schedules
+    """
+
+    logger.info("Periodic Task spawner")
+
+    run_task_spawner(PeriodicTaskSpawnerConfig(**kwargs, base_url=""))

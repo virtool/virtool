@@ -14,7 +14,7 @@ from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import TasksClient
 from virtool.tasks.models import Task as SQLTask
-from virtool.tasks.spawner import spawn
+from virtool.tasks.spawn import spawn
 from virtool.tasks.task import BaseTask
 from virtool.utils import get_temp_dir
 
@@ -132,9 +132,9 @@ def test_channel():
 
 
 @pytest.fixture
-def task_spawner(
-        mongo_connection_string,
-        mongo_name,
+def task_spawn(
+    mongo_connection_string,
+    mongo_name,
     pg_connection_string: str,
     redis_connection_string: str,
     mocker,
@@ -163,7 +163,7 @@ def tasks_client(redis):
 @pytest.mark.parametrize("valid_task", [True, False])
 async def test_spawn(
     valid_task,
-    task_spawner,
+    task_spawn,
     tasks_client: TasksClient,
     pg: AsyncEngine,
     snapshot,
@@ -173,7 +173,7 @@ async def test_spawn(
     error = None
 
     try:
-        await task_spawner(task_name)
+        await task_spawn(task_name)
     except ResourceError as e:
         error = e
 

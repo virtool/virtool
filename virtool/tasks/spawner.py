@@ -1,100 +1,190 @@
 import asyncio
 import logging
-from typing import Type
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from asyncio import CancelledError
+from dataclasses import dataclass
+from typing import Type, Optional, List, Tuple
+from datetime import datetime, timedelta
+
+from virtool.hmm.tasks import HMMRefreshTask
+from virtool.references.tasks import RefreshReferenceReleasesTask
+from virtool.startup import get_scheduler_from_app
+
+from virtool.types import App
+from virtool.utils import timestamp
+from virtool.config.cls import PeriodicTaskSpawnerConfig
+from virtool.tasks.task import BaseTask
+from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.utils import (
+    startup_databases_for_spawner,
+    startup_datalayer_for_spawner,
+)
+from virtool.uploads.tasks import MigrateFilesTask
+import aiohttp
+import aiojobs.aiohttp
+import aiohttp.web
+from aiohttp.web import Application
 
 import aiojobs
-from virtool_core.redis import connect
 
-from virtool.pg.utils import connect_pg
-from virtool.config import Config, get_config_from_app
-from virtool.config.cls import TaskSpawnerConfig
-from virtool.data.errors import ResourceError
-from virtool.dispatcher.client import DispatcherClient
-from virtool.shutdown import shutdown_redis, shutdown_scheduler
-from virtool.startup import get_scheduler_from_app, startup_version
-from virtool.tasks.client import TasksClient
-from virtool.tasks.data import TasksData
-from virtool.tasks.task import BaseTask
-from virtool.types import App
+import virtool.http.accept
+import virtool.http.errors
+from virtool.shutdown import (
+    shutdown_client,
+    shutdown_executors,
+    shutdown_redis,
+    shutdown_scheduler,
+)
+from virtool.startup import (
+    startup_executors,
+    startup_http_client,
+    startup_version,
+)
+from virtool.tasks.api import TasksSpawnerView
 
-logger = logging.getLogger("task_spawner")
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger("periodic_task_spawner")
 
 
-async def startup_databases_for_spawner(app: App):
+@dataclass
+class PeriodicTaskRegistration:
     """
-    Connects to MongoDB, Redis and Postgres concurrently
-
-    :param app: the app object
-
-    """
-    config = get_config_from_app(app)
-
-    pg, redis = await asyncio.gather(
-        connect_pg(config.postgres_connection_string),
-        connect(config.redis_connection_string),
-    )
-
-    dispatcher_interface = DispatcherClient(redis)
-    await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
-
-    app.update(
-        {
-            "dispatcher_interface": dispatcher_interface,
-            "pg": pg,
-            "redis": redis,
-        }
-    )
-
-
-async def startup_datalayer_for_spawner(app: App):
-    app["tasks_datalayer"] = TasksData(app["pg"], TasksClient(app["redis"]))
-
-
-async def create_spawner_app(config: Config):
-    """
-    Creates the Virtool application.
-
+    A dataclass that holds information about a periodic task registration.
+    Task class,
+    interval: how frequently the task should be triggered in seconds,
+    last triggered: the time the task was triggered and the times are stored as naive UTC datetimes
     """
 
-    app = {"config": config, "mode": "task_spawner", "scheduler": aiojobs.Scheduler()}
+    task: Type[BaseTask]
+    interval: float
+    task_rerun_time: float = None
+    last_triggered: Optional[datetime] = None
 
-    on_startup = [
-        startup_version,
-        startup_databases_for_spawner,
-        startup_datalayer_for_spawner,
+
+class TaskSpawnerService:
+    def __init__(self, app, tasks_datalayer):
+        self._registered = []
+        self._app = app
+        self._tasks_datalayer = tasks_datalayer
+
+    async def prepare(self, tasks: List[Tuple[Type[BaseTask], float]]):
+        """
+        Register a task with the task spawner service and sets the last triggered time attribute
+
+        :param tasks: list of tasks and their corresponding intervals
+        """
+        logger.info("In the prepare")
+        for task, interval in tasks:
+            self._registered.append(PeriodicTaskRegistration(task, interval))
+
+            async with AsyncSession(self._app["pg"]) as session:
+                result = await session.execute(
+                    select(SQLTask).filter_by(type=str(task.name))
+                )
+                task = result.scalar()
+
+            if task is not None:
+                self._registered[-1].last_triggered = task.created_at
+
+        await self.run()
+
+    async def run(self):
+        """
+        Run the task spawner service.
+
+        The task spawner service will periodically check for tasks that need to be run
+        and spawn them.
+
+        """
+        try:
+            while True:
+                wait_time = 9999
+
+                for registered_task in self._registered:
+                    if (timestamp() - registered_task.last_triggered) >= timedelta(
+                        seconds=registered_task.interval
+                    ):
+                        await self._tasks_datalayer.create(registered_task.task)
+                        logger.info("Spawning task %s", registered_task.task)
+                        registered_task.last_triggered = timestamp()
+
+                    task_wait_time = calculate_wait_time(
+                        registered_task.interval, registered_task.last_triggered
+                    )
+
+                    wait_time = (
+                        wait_time if wait_time < task_wait_time else task_wait_time
+                    )
+
+                await asyncio.sleep(wait_time)
+
+        except CancelledError:
+            logger.info("Stopped Task Spawner")
+
+
+def calculate_wait_time(interval, last_triggered):
+    wait_time = interval - (timestamp() - last_triggered).total_seconds()
+    return wait_time
+
+
+async def startup_task_spawner(app: App):
+    scheduler = get_scheduler_from_app(app)
+
+    tasks = [
+        (RefreshReferenceReleasesTask, 600),
+        (HMMRefreshTask, 600),
+        (MigrateFilesTask, 3600),
     ]
 
-    for step in on_startup:
-        await step(app)
+    await scheduler.spawn(
+        TaskSpawnerService(app, app["tasks_datalayer"]).prepare(tasks)
+    )
+
+
+async def create_task_spawner_app(config: PeriodicTaskSpawnerConfig):
+    """
+    Create task spawner application
+    """
+    app = Application(
+        middlewares=[
+            virtool.http.accept.middleware,
+            virtool.http.errors.middleware,
+        ]
+    )
+
+    app["config"] = config
+    app["mode"] = "periodic_task_spawner"
+
+    aiojobs.aiohttp.setup(app)
+
+    app.add_routes([aiohttp.web.view("/", TasksSpawnerView)])
+
+    app.on_startup.extend(
+        [
+            startup_version,
+            startup_http_client,
+            startup_databases_for_spawner,
+            startup_datalayer_for_spawner,
+            startup_executors,
+            startup_task_spawner,
+        ]
+    )
+
+    app.on_shutdown.extend(
+        [
+            shutdown_client,
+            shutdown_executors,
+            shutdown_scheduler,
+            shutdown_redis,
+        ]
+    )
 
     return app
 
 
-async def shutdown_spawner_app(app):
-    shutdown_steps = [
-        shutdown_scheduler,
-        shutdown_redis,
-    ]
-
-    for step in shutdown_steps:
-        await step(app)
-
-
-def get_task_from_name(task_name: str) -> Type[BaseTask]:
-    matching_task = [cls for cls in BaseTask.__subclasses__() if cls.name == task_name]
-
-    if len(matching_task) != 1:
-        raise ResourceError("Invalid task name")
-
-    return matching_task[0]
-
-
-async def spawn(config: TaskSpawnerConfig, task_name: str):
-    app = await create_spawner_app(config)
-
-    task = get_task_from_name(task_name)
-    logger.info("Spawning task %s", task.name)
-
-    await app["tasks_datalayer"].create(task)
-
-    await shutdown_spawner_app(app)
+def run_task_spawner(config: PeriodicTaskSpawnerConfig):
+    app = create_task_spawner_app(config)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
