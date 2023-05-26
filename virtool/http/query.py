@@ -2,10 +2,10 @@ from typing import Union
 
 
 def parse_value(value: str) -> Union[bool, str]:
-    if value == "false" or value == "False":
+    if value in {"false", "False"}:
         return False
 
-    if value == "true" or value == "True":
+    if value in {"true", "True"}:
         return True
 
     return value
