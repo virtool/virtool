@@ -45,7 +45,6 @@ def create_app_without_startup():
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
-        virtool.http.query.middleware,
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
@@ -67,7 +66,6 @@ def create_app(config: Config):
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
-        virtool.http.query.middleware,
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
