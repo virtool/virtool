@@ -1,6 +1,6 @@
 import os
 from asyncio import to_thread, wait_for
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Dict
 
 import pytest
@@ -13,10 +13,15 @@ from virtool.config.cls import TaskSpawnerConfig
 from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import TasksClient
+from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.spawn import spawn
+from virtool.tasks.spawner import (
+    TaskSpawnerService,
+    PeriodicTaskRegistration,
+)
 from virtool.tasks.task import BaseTask
-from virtool.utils import get_temp_dir
+from virtool.utils import get_temp_dir, timestamp
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -223,3 +228,42 @@ async def test_progress_handler_set_error(task: BaseTask, pg: AsyncEngine):
 
     await tracker.set_error("GenericError")
     assert (await get_row_by_id(pg, SQLTask, 1)).error == "GenericError"
+
+
+async def test_prepare(pg: AsyncEngine, tasks_data: TasksData):
+    await tasks_data.create(DummyBaseTask)
+
+    results = await tasks_data.find()
+    result = results[0]
+    created_at = result.created_at
+
+    task_spawner_service = TaskSpawnerService(pg, tasks_data)
+
+    tasks = [(DummyBaseTask, 10), (DummyTask, 15)]
+
+    await task_spawner_service.register(tasks)
+
+    assert task_spawner_service._registered[0].last_triggered == created_at
+
+
+@pytest.mark.parametrize(
+    "last_triggered, result",
+    [
+        ((timestamp() - timedelta(seconds=120)), True),
+        ((timestamp() - timedelta(seconds=30)), False),
+    ],
+)
+async def test_check_or_spawn_task(
+    pg: AsyncEngine, tasks_data: TasksData, last_triggered, result
+):
+    task_spawner_service = TaskSpawnerService(pg, tasks_data)
+
+    task_spawner_service._registered.append(
+        PeriodicTaskRegistration(DummyTask, interval=60, last_triggered=last_triggered)
+    )
+
+    spawned_task = await task_spawner_service.check_or_spawn_task(
+        task_spawner_service._registered[0]
+    )
+
+    assert spawned_task == result

@@ -8,9 +8,18 @@ from dataclasses import dataclass
 from typing import Type, Optional, List, Tuple
 from datetime import datetime, timedelta
 
+from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.hmm.tasks import HMMRefreshTask
-from virtool.references.tasks import RefreshReferenceReleasesTask
+from virtool.indexes.tasks import EnsureIndexFilesTask
+from virtool.jobs.tasks import TimeoutJobsTask
+from virtool.references.tasks import RefreshReferenceReleasesTask, CleanReferencesTask
+from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.startup import get_scheduler_from_app
+from virtool.subtractions.tasks import (
+    AddSubtractionFilesTask,
+    CheckSubtractionsFASTATask,
+)
+from virtool.tasks.data import TasksData
 
 from virtool.types import App
 from virtool.utils import timestamp
@@ -23,11 +32,10 @@ from virtool.tasks.utils import (
 )
 from virtool.uploads.tasks import MigrateFilesTask
 import aiohttp
-import aiojobs.aiohttp
 import aiohttp.web
 from aiohttp.web import Application
-
 import aiojobs
+import aiojobs.aiohttp
 
 import virtool.http.accept
 import virtool.http.errors
@@ -53,9 +61,6 @@ logger = logging.getLogger("periodic_task_spawner")
 class PeriodicTaskRegistration:
     """
     A dataclass that holds information about a periodic task registration.
-    Task class,
-    interval: how frequently the task should be triggered in seconds,
-    last triggered: the time the task was triggered and the times are stored as naive UTC datetimes
     """
 
     task: Type[BaseTask]
@@ -65,22 +70,29 @@ class PeriodicTaskRegistration:
 
 
 class TaskSpawnerService:
-    def __init__(self, app, tasks_datalayer):
+    def __init__(self, pg, tasks_datalayer: TasksData):
         self._registered = []
-        self._app = app
+        self._pg = pg
         self._tasks_datalayer = tasks_datalayer
 
     async def prepare(self, tasks: List[Tuple[Type[BaseTask], float]]):
         """
-        Register a task with the task spawner service and sets the last triggered time attribute
+        Prepares tasks to be run.
 
         :param tasks: list of tasks and their corresponding intervals
         """
-        logger.info("In the prepare")
+        await self.register(tasks)
+
+        await self.run()
+
+    async def register(self, tasks: List[Tuple[Type[BaseTask], float]]):
+        """
+        Registers tasks and sets the last triggered time attribute.
+        """
         for task, interval in tasks:
             self._registered.append(PeriodicTaskRegistration(task, interval))
 
-            async with AsyncSession(self._app["pg"]) as session:
+            async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLTask).filter_by(type=str(task.name))
                 )
@@ -88,8 +100,6 @@ class TaskSpawnerService:
 
             if task is not None:
                 self._registered[-1].last_triggered = task.created_at
-
-        await self.run()
 
     async def run(self):
         """
@@ -100,53 +110,98 @@ class TaskSpawnerService:
 
         """
         try:
+            await self.create_task_for_first_time()
+
             while True:
-                wait_time = 9999
-
                 for registered_task in self._registered:
-                    if (timestamp() - registered_task.last_triggered) >= timedelta(
-                        seconds=registered_task.interval
-                    ):
-                        await self._tasks_datalayer.create(registered_task.task)
-                        logger.info("Spawning task %s", registered_task.task)
-                        registered_task.last_triggered = timestamp()
+                    await self.check_or_spawn_task(registered_task)
 
-                    task_wait_time = calculate_wait_time(
-                        registered_task.interval, registered_task.last_triggered
-                    )
-
-                    wait_time = (
-                        wait_time if wait_time < task_wait_time else task_wait_time
-                    )
-
-                await asyncio.sleep(wait_time)
+                await asyncio.sleep(self.wait_time)
 
         except CancelledError:
             logger.info("Stopped Task Spawner")
 
+    @property
+    def wait_time(self):
+        """
+        Sets the wait time.
+        """
+        return min(
+            [
+                calculate_wait_time(item.interval, item.last_triggered)
+                for item in self._registered
+            ]
+        )
 
-def calculate_wait_time(interval, last_triggered):
+    async def check_or_spawn_task(self, task: PeriodicTaskRegistration):
+        """
+        Spawns task if enough time has passed.
+        """
+        spawned = False
+        if check_elapsed_time_exceeded(task.interval, task.last_triggered):
+            await self._tasks_datalayer.create(task.task)
+            logger.info("Spawning task %s", task.task)
+            task.last_triggered = timestamp()
+            spawned = True
+        return spawned
+
+    async def create_task_for_first_time(self):
+        """
+        Creates the task for the first time, if the task has never been run before.
+        """
+        for registered_task in self._registered:
+            if registered_task.last_triggered is None:
+                await self._tasks_datalayer.create(registered_task.task)
+                logger.info("Spawning task for the first time %s", registered_task.task)
+                registered_task.last_triggered = timestamp()
+
+
+def check_elapsed_time_exceeded(interval: float, last_triggered: Optional[datetime]):
+    """
+    Checks whether the time elapsed has exceeded the set interval.
+    """
+    elapsed_time_exceeded = (timestamp() - last_triggered) >= timedelta(
+        seconds=interval
+    )
+    return elapsed_time_exceeded
+
+
+def calculate_wait_time(interval: float, last_triggered: Optional[datetime]):
+    """
+    Calculates the wait time.
+    """
     wait_time = interval - (timestamp() - last_triggered).total_seconds()
     return wait_time
 
 
 async def startup_task_spawner(app: App):
+    """
+    Starts the task spawner.
+    """
     scheduler = get_scheduler_from_app(app)
 
     tasks = [
         (RefreshReferenceReleasesTask, 600),
         (HMMRefreshTask, 600),
         (MigrateFilesTask, 3600),
+        (AddSubtractionFilesTask, 3600),
+        (EnsureIndexFilesTask, 3600),
+        (StoreNuvsFilesTask, 3600),
+        (CompressSamplesTask, 3600),
+        (MoveSampleFilesTask, 3600),
+        (CleanReferencesTask, 3600),
+        (CheckSubtractionsFASTATask, 3600),
+        (TimeoutJobsTask, 3600),
     ]
 
     await scheduler.spawn(
-        TaskSpawnerService(app, app["tasks_datalayer"]).prepare(tasks)
+        TaskSpawnerService(app["pg"], app["tasks_datalayer"]).prepare(tasks)
     )
 
 
 async def create_task_spawner_app(config: PeriodicTaskSpawnerConfig):
     """
-    Create task spawner application
+    Create task spawner application.
     """
     app = Application(
         middlewares=[
@@ -186,5 +241,8 @@ async def create_task_spawner_app(config: PeriodicTaskSpawnerConfig):
 
 
 def run_task_spawner(config: PeriodicTaskSpawnerConfig):
+    """
+    Starts the setup of the task spawner application.
+    """
     app = create_task_spawner_app(config)
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)
