@@ -127,10 +127,8 @@ class TaskSpawnerService:
         Sets the wait time.
         """
         return min(
-            [
-                calculate_wait_time(item.interval, item.last_triggered)
-                for item in self._registered
-            ]
+            calculate_wait_time(item.interval, item.last_triggered)
+            for item in self._registered
         )
 
     async def check_or_spawn_task(self, task: PeriodicTaskRegistration):
