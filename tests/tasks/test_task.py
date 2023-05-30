@@ -246,27 +246,31 @@ async def test_prepare(pg: AsyncEngine, tasks_data: TasksData):
     assert task_spawner_service._registered[0].last_triggered == created_at
 
 
-@pytest.mark.parametrize(
-    "last_triggered, case",
-    [
-        (timestamp() - timedelta(seconds=120), 1),
-        (timestamp() - timedelta(seconds=30), 2),
-    ],
-)
-async def test_check_or_spawn_task(
-    pg: AsyncEngine, tasks_data: TasksData, last_triggered, case
-):
+async def test_check_or_spawn_task(pg: AsyncEngine, tasks_data: TasksData, static_time):
+    """
+    First case tests that the task has spawned, second case ensures that it does not
+    """
     task_spawner_service = TaskSpawnerService(pg, tasks_data)
 
     task_spawner_service._registered.append(
-        PeriodicTaskRegistration(DummyTask, interval=60, last_triggered=last_triggered)
+        PeriodicTaskRegistration(
+            DummyTask, interval=60, last_triggered=static_time.datetime
+        )
     )
 
     spawned_task = await task_spawner_service.check_or_spawn_task(
         task_spawner_service._registered[0]
     )
 
-    if case == 1:
-        assert spawned_task.last_triggered != last_triggered
-    else:
-        assert spawned_task.last_triggered == last_triggered
+    assert spawned_task.last_triggered != static_time.datetime
+
+    recent_time = timestamp()
+    task_spawner_service._registered.append(
+        PeriodicTaskRegistration(DummyBaseTask, interval=60, last_triggered=recent_time)
+    )
+
+    not_spawned_task = await task_spawner_service.check_or_spawn_task(
+        task_spawner_service._registered[1]
+    )
+
+    assert not_spawned_task.last_triggered == recent_time
