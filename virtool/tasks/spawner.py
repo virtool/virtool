@@ -135,13 +135,11 @@ class TaskSpawnerService:
         """
         Spawns task if enough time has passed.
         """
-        spawned = False
         if check_elapsed_time_exceeded(task.interval, task.last_triggered):
             await self._tasks_datalayer.create(task.task)
             logger.info("Spawning task %s", task.task)
             task.last_triggered = timestamp()
-            spawned = True
-        return spawned
+        return task
 
     async def create_task_for_first_time(self):
         """

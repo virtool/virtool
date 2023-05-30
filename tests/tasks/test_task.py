@@ -247,14 +247,14 @@ async def test_prepare(pg: AsyncEngine, tasks_data: TasksData):
 
 
 @pytest.mark.parametrize(
-    "last_triggered, result",
+    "last_triggered, case",
     [
-        ((timestamp() - timedelta(seconds=120)), True),
-        ((timestamp() - timedelta(seconds=30)), False),
+        (timestamp() - timedelta(seconds=120), 1),
+        (timestamp() - timedelta(seconds=30), 2),
     ],
 )
 async def test_check_or_spawn_task(
-    pg: AsyncEngine, tasks_data: TasksData, last_triggered, result
+    pg: AsyncEngine, tasks_data: TasksData, last_triggered, case
 ):
     task_spawner_service = TaskSpawnerService(pg, tasks_data)
 
@@ -266,4 +266,7 @@ async def test_check_or_spawn_task(
         task_spawner_service._registered[0]
     )
 
-    assert spawned_task == result
+    if case == 1:
+        assert spawned_task.last_triggered != last_triggered
+    else:
+        assert spawned_task.last_triggered == last_triggered
