@@ -1,0 +1,22 @@
+# name: test_upgrade[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'a',
+      'ping': None,
+    },
+    <class 'dict'> {
+      '_id': 'b',
+      'ping': None,
+    },
+    <class 'dict'> {
+      '_id': 'c',
+      'ping': <class 'dict'> {
+        'pinged_at': <class 'datetime'>,
+      },
+    },
+    <class 'dict'> {
+      '_id': 'd',
+      'ping': None,
+    },
+  ]
+---

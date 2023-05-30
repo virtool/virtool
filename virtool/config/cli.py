@@ -6,9 +6,13 @@ import click
 import uvloop
 
 from virtool_core.logging import configure_logs
-
 from virtool.app import run_api_server
-from virtool.config.cls import ServerConfig, TaskRunnerConfig, TaskSpawnerConfig
+from virtool.config.cls import (
+    MigrationConfig,
+    ServerConfig,
+    TaskRunnerConfig,
+    TaskSpawnerConfig,
+)
 from virtool.config.options import (
     address_options,
     b2c_options,
@@ -17,13 +21,15 @@ from virtool.config.options import (
     dev_option,
     mongodb_connection_string_option,
     no_check_db_option,
-    no_check_files_option,
     no_revision_check_option,
     openfga_options,
     postgres_connection_string_option,
     redis_connection_string_option,
     sentry_dsn_option,
 )
+from virtool.migration.apply import apply
+from virtool.migration.create import create_revision
+from virtool.migration.show import show_revisions
 from virtool.jobs.main import run_jobs_server
 import virtool.tasks.main
 import virtool.tasks.spawner
@@ -66,7 +72,6 @@ def server():
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -86,7 +91,6 @@ def start_api_server(**kwargs):
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -99,22 +103,57 @@ def start_jobs_api(**kwargs):
     logger.info("Starting the jobs api service")
 
     run_jobs_server(
-            ServerConfig(
-                **kwargs,
-                base_url="",
-                b2c_client_id="",
-                b2c_client_secret="",
-                b2c_tenant="",
-                b2c_user_flow="",
-                use_b2c=False,
-            )
+        ServerConfig(
+            **kwargs,
+            base_url="",
+            b2c_client_id="",
+            b2c_client_secret="",
+            b2c_tenant="",
+            b2c_user_flow="",
+            use_b2c=False,
         )
+    )
 
 
 @cli.command
 def oas():
     """Work with the Virtool OpenAPI specification."""
     show_oas()
+
+
+@cli.group("migration")
+def migration():
+    """Run and manage Virtool data migrations."""
+    ...
+
+
+@migration.command("apply")
+@data_path_option
+@mongodb_connection_string_option
+@openfga_options
+@postgres_connection_string_option
+def migration_apply(**kwargs):
+    """Apply all pending migrations."""
+    configure_logs(False)
+
+    logger.info("Applying migrations")
+
+    asyncio.run(apply(MigrationConfig(**kwargs), "latest"))
+
+
+@migration.command("create")
+@click.option("--name", help="Name of the migration", required=True, type=str)
+def migration_create(name: str):
+    """Create a new migration revision."""
+    create_revision(name)
+
+
+@migration.command("show")
+def migration_show(**kwargs):
+    """Apply all pending migrations."""
+    configure_logs(False)
+
+    show_revisions()
 
 
 @cli.group("tasks")
@@ -127,7 +166,6 @@ def tasks():
 @address_options
 @data_path_option
 @mongodb_connection_string_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
