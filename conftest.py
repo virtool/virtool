@@ -33,7 +33,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--db-connection-string",
         action="store",
-        default="mongodb://root:virtool@localhost:27017",
+        default="mongodb://root:virtool@localhost:27017/?directConnection=true",
     )
 
     parser.addoption(

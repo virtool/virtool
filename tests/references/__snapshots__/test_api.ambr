@@ -283,7 +283,6 @@
       ',
       'content_type': 'application/gzip',
       'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz',
-      'etag': <class 'str'>,
       'filename': 'reference.json.gz',
       'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
       'id': 11447367,
@@ -681,30 +680,7 @@
     ],
   }
 ---
-# name: test_create_index[True-uvloop][index]
-  <class 'dict'> {
-    '_id': 'fb085f7f',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
-    'job': <class 'dict'> {
-      'id': 'bf1b993c',
-    },
-    'manifest': <class 'dict'> {
-      'bar': 5,
-      'foo': 2,
-    },
-    'ready': False,
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-    'version': 0,
-  }
----
-# name: test_create_index[True-uvloop][json]
+# name: test_create_index[True-uvloop]
   <class 'dict'> {
     'change_count': 1,
     'contributors': <class 'list'> [
@@ -750,6 +726,29 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
+      'id': 'test',
+    },
+    'version': 0,
+  }
+---
+# name: test_create_index[True-uvloop].1
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'has_json': False,
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'manifest': <class 'dict'> {
+      'bar': 5,
+      'foo': 2,
+    },
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
       'id': 'test',
     },
     'version': 0,
@@ -1576,7 +1575,6 @@
     ',
     'content_type': 'application/gzip',
     'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz',
-    'etag': 'W/"b7e8a7fb0fbe0cade0d6a86c9e0d4549"',
     'filename': 'reference.json.gz',
     'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2',
     'id': 11449913,
@@ -1642,7 +1640,6 @@
     ',
     'content_type': 'application/gzip',
     'download_url': 'https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz',
-    'etag': 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
     'filename': 'reference.json.gz',
     'html_url': 'https://api.github.com/repos/virtool/virtool-database/releases/10742520',
     'id': 10742520,
