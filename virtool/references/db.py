@@ -403,9 +403,8 @@ async def get_releases_from_virtool(
         if resp.status == 304:
             return None
 
-        else:
-            logger.warning(f"Encountered error {resp.status} {await resp.json()}")
-            raise GetReleaseError("release does not exist")
+        logger.warning("Encountered error %s: %s", resp.status, await resp.json())
+        raise GetReleaseError("release does not exist")
 
 
 async def fetch_and_update_release(
