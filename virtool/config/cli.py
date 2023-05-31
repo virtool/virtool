@@ -66,7 +66,6 @@ def server():
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -86,7 +85,6 @@ def start_api_server(**kwargs):
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -99,16 +97,16 @@ def start_jobs_api(**kwargs):
     logger.info("Starting the jobs api service")
 
     run_jobs_server(
-            ServerConfig(
-                **kwargs,
-                base_url="",
-                b2c_client_id="",
-                b2c_client_secret="",
-                b2c_tenant="",
-                b2c_user_flow="",
-                use_b2c=False,
-            )
+        ServerConfig(
+            **kwargs,
+            base_url="",
+            b2c_client_id="",
+            b2c_client_secret="",
+            b2c_tenant="",
+            b2c_user_flow="",
+            use_b2c=False,
         )
+    )
 
 
 @cli.command
@@ -127,7 +125,6 @@ def tasks():
 @address_options
 @data_path_option
 @mongodb_connection_string_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
