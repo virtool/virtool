@@ -12,26 +12,10 @@ from virtool.tasks.oas import GetTasksResponse, TaskResponse
 routes = Routes()
 
 
-class TasksRunnerView(PydanticView):
+class TaskServicesRootView(PydanticView):
     async def get(self) -> r200:
         """
         Root response for task runner. Used for checking if the server is alive.
-        Status Codes:
-            200: Successful operation
-        """
-        version = "unknown"
-        try:
-            version = self.request.app["version"]
-        except KeyError:
-            pass
-
-        return json_response({"version": version})
-
-
-class TasksSpawnerView(PydanticView):
-    async def get(self) -> r200:
-        """
-        Root response for task spawner. Used for aliveness/readiness check.
         Status Codes:
             200: Successful operation
         """

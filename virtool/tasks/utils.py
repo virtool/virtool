@@ -13,7 +13,7 @@ from virtool.types import App
 
 async def startup_databases_for_spawner(app: App):
     """
-    Connects to MongoDB, Redis and Postgres concurrently
+    Creates Redis and Postgres connections
 
     :param app: the app object
 

@@ -117,4 +117,6 @@ class PeriodicTaskSpawnerConfig:
     port: int
 
 
-Config = Union[ServerConfig, TaskRunnerConfig, TaskSpawnerConfig]
+Config = Union[
+    ServerConfig, TaskRunnerConfig, TaskSpawnerConfig, PeriodicTaskSpawnerConfig
+]
