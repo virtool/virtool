@@ -2,6 +2,7 @@ import gzip
 import json
 from datetime import datetime
 from operator import itemgetter
+from pathlib import Path
 from typing import List, Set, Optional, Dict
 
 from cerberus import Validator
@@ -296,7 +297,7 @@ def get_sequence_schema(require_id: bool) -> dict:
     }
 
 
-def load_reference_file(path: str) -> dict:
+def load_reference_file(path: Path) -> dict:
     """
     Load a list of merged otus documents from a file associated with a Virtool reference
     file.
@@ -305,6 +306,9 @@ def load_reference_file(path: str) -> dict:
 
     :return: the otus data to import
     """
+    if not path.suffixes == [".json", ".gz"]:
+        raise ValueError("Reference file must be a gzip-compressed JSON file")
+
     with open(path, "rb") as handle, gzip.open(handle, "rt") as gzip_file:
         return json.load(gzip_file)
 

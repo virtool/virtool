@@ -1,0 +1,20 @@
+# name: test_upgrade[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bob',
+      'active': False,
+    },
+    <class 'dict'> {
+      '_id': 'dave',
+      'active': True,
+    },
+    <class 'dict'> {
+      '_id': 'fran',
+      'active': True,
+    },
+    <class 'dict'> {
+      '_id': 'mary',
+      'active': True,
+    },
+  ]
+---

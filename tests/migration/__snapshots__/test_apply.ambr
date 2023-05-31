@@ -1,0 +1,81 @@
+# name: test_apply_revisions[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 1,
+      'name': 'Nest analysis results field',
+      'revision': '7emq1brv0zz6',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 2,
+      'name': 'Add subtractions field',
+      'revision': '1keyha5n6l0j',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 3,
+      'name': 'Rename cache hash field to key',
+      'revision': 'jhqn47cauoea',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 4,
+      'name': 'Remove ref process field',
+      'revision': '1p681ke9wedv',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 5,
+      'name': 'Remove software_update status document',
+      'revision': 'gr5j6jx8ap7f',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 6,
+      'name': 'Add user handle',
+      'revision': 'ydvidjp34n4c',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 7,
+      'name': 'Add user active field',
+      'revision': 'tlogeiyxl9uz',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 8,
+      'name': 'Use null for unset analysis results fields',
+      'revision': 'i0ljixkr0wxg',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 9,
+      'name': 'Add jobs ping field',
+      'revision': '6q5k8tz8uph3',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 10,
+      'name': 'Create all database indexes',
+      'revision': 'l20h8fsbbb28',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 11,
+      'name': 'Add space field',
+      'revision': 's607ucxpct81',
+    },
+  ]
+---
