@@ -3,22 +3,18 @@ Work with references in the database
 
 """
 import asyncio
-from asyncio import to_thread
 import datetime
+from enum import Enum
+import logging
+from asyncio import to_thread
 from pathlib import Path
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Union,
-    TYPE_CHECKING,
-)
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import pymongo
-from aiohttp import ClientConnectorError
+from aiohttp import ClientConnectorError, ClientSession
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo import UpdateOne, DeleteMany, DeleteOne
+from pymongo import DeleteMany, DeleteOne, UpdateOne
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
@@ -36,13 +32,12 @@ from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
 from virtool.references.bulk_models import (
+    OTUData,
+    OTUDelete,
+    OTUInsert,
     OTUUpdate,
     SequenceChanges,
-    OTUData,
-    OTUInsert,
-    OTUDelete,
 )
-
 from virtool.references.utils import (
     RIGHTS,
     check_will_change,
@@ -55,6 +50,10 @@ from virtool.users.db import AttachUserTransform, extend_user
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
+
+logger = logging.getLogger(__name__)
+
+SLUG_TO_RELEASE_TYPE = {"virtool/ref-plant-viruses": "ref_plant_viruses"}
 
 PROJECTION = [
     "_id",
@@ -372,6 +371,42 @@ async def edit_group_or_user(
             return subdocument
 
 
+class GetReleaseError(Exception):
+    pass
+
+
+class ReleaseTypes(Enum):
+    references = "references"
+    hmms = "hmms"
+
+
+async def get_releases_from_virtool(
+    session: ClientSession, release_type: ReleaseTypes
+) -> Optional[dict]:
+    """
+    Get releases from virtool.ca/releases
+
+    :param session: the application HTTP client session
+    :param release_type: the repository to fetch
+
+    :return: the releases of the requested repository
+    """
+
+    url = f"https://www.virtool.ca/releases/{release_type.value}.json"
+
+    logger.debug("Making request to %s", url)
+
+    async with session.get(url) as resp:
+        if resp.status == 200:
+            return await resp.json(content_type=None)
+
+        if resp.status == 304:
+            return None
+
+        logger.warning("Encountered error %s: %s", resp.status, await resp.json())
+        raise GetReleaseError("release does not exist")
+
+
 async def fetch_and_update_release(
     mongo: "Mongo", client, ref_id: str, ignore_errors: bool = False
 ) -> dict:
@@ -381,13 +416,13 @@ async def fetch_and_update_release(
     If a release is found, update the reference identified by the passed `ref_id` and
     return the release.
 
-    Exceptions can be ignored during the GitHub request. Error information will still
+    Exceptions can be ignored during the request. Error information will still
     be written to the reference document.
 
     :param mongo: the application database client
     :param client: the application client
     :param ref_id: the id of the reference to update
-    :param ignore_errors: ignore exceptions raised during GitHub request
+    :param ignore_errors: ignore exceptions raised during the request
     :return: the latest release
 
     """
@@ -399,32 +434,41 @@ async def fetch_and_update_release(
     )
 
     release = document.get("release")
-    etag = virtool.github.get_etag(release)
 
-    # Variables that will be used when trying to fetch release from GitHub.
     errors = []
-    updated = None
+
+    updated_release = None
 
     try:
-        updated = await virtool.github.get_release(
-            client, document["remotes_from"]["slug"], etag
-        )
+        releases = await get_releases_from_virtool(client, ReleaseTypes.references)
 
-        if updated:
-            updated = virtool.github.format_release(updated)
+        if releases:
+            latest_release = releases["ref-plant-viruses"][0]
 
-    except (ClientConnectorError, virtool.errors.GitHubError) as err:
+            updated_release = {
+                "id": latest_release["id"],
+                "name": latest_release["name"],
+                "body": latest_release["body"],
+                "filename": latest_release["name"],
+                "size": latest_release["size"],
+                "html_url": latest_release["html_url"],
+                "download_url": latest_release["download_url"],
+                "published_at": latest_release["published_at"],
+                "content_type": latest_release["content_type"],
+            }
+
+    except (ClientConnectorError, GetReleaseError) as err:
         if "ClientConnectorError" in str(err):
-            errors = ["Could not reach GitHub"]
+            errors = ["Could not reach Virtool.ca"]
 
         if "404" in str(err):
-            errors = ["GitHub repository or release does not exist"]
+            errors = ["Release does not exist"]
 
         if errors and not ignore_errors:
             raise
 
-    if updated:
-        release = updated
+    if updated_release:
+        release = updated_release
 
     if release:
         installed = document["installed"]
