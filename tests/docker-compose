@@ -35,8 +35,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: openfga
-    volumes:
-      - postgres_openfga_data:/var/lib/postgresql/data
 
   migrate:
     image: openfga/openfga:v0.2.5
@@ -62,8 +60,3 @@ services:
       - "9004:8080"
       - "9005:3000"
 
-volumes:
-  postgres_openfga_data:
-    driver_opts:
-      type: tmpfs
-      device: tmpfs
