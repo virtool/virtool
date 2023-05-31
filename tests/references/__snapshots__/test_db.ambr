@@ -236,6 +236,7 @@
     'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.5.0/reference.json.gz',
     'filename': 'v1.5.0',
     'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.5.0',
+    'id': 79005111,
     'name': 'v1.5.0',
     'newer': True,
     'published_at': '2022-10-04T22:47:33Z',

@@ -446,6 +446,7 @@ async def fetch_and_update_release(
             latest_release = releases["ref-plant-viruses"][0]
 
             updated_release = {
+                "id": latest_release["id"],
                 "name": latest_release["name"],
                 "body": latest_release["body"],
                 "filename": latest_release["name"],
