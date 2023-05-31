@@ -280,4 +280,4 @@ async def startup_task_runner(app: App):
     """
     scheduler = get_scheduler_from_app(app)
     tasks_client = TasksClient(app["redis"])
-    await scheduler.spawn(TaskRunner(app["data"], tasks_client, app).run())
+    await scheduler.spawn(TaskRunner(tasks_client, app).run())

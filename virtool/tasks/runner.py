@@ -14,16 +14,13 @@ from sentry_sdk import capture_exception
 
 class TaskRunner:
     def __init__(
-        self, data: DataLayer, tasks_client: AbstractTasksClient, app: Application
+        self, tasks_client: AbstractTasksClient, app: Application
     ):
-        self._data = data
         self._tasks_client = tasks_client
         self.app = app
-        self.current_task = None
+        self._current_task: Task = None
 
     async def run(self):
-        task_id = None
-
         try:
             while True:
                 logging.info("Waiting for next task")
@@ -31,29 +28,33 @@ class TaskRunner:
 
                 await self.run_task(task_id)
 
-                await asyncio.shield(self.current_task)
+                await asyncio.shield(self._current_task)
+
+                self._current_task = None
 
                 logging.info("Finished task: %s", task_id)
 
         except asyncio.CancelledError:
-            if task_id is not None:
-                logging.info("Recieved stop signal; awaiting task completion")
+            if self._current_task:
+                logging.info("Recieved stop signal")
 
                 try:
-                    await asyncio.wait_for(asyncio.shield(self.current_task), 600)
+                    logging.info("Waiting for task to finish: %s", task_id)
+
+                    await asyncio.wait_for(asyncio.shield(self._current_task), 600)
 
                     logging.info("Finished task: %s", task_id)
 
                 except asyncio.TimeoutError:
-                    logging.info("Task %s timed out", task_id)
+                    logging.critical("Task Runner timed out while waiting for task to finish: %s", task_id)
 
                 except asyncio.CancelledError:
-                    logging.info("Task %s was cancelled", task_id)
+                    logging.info("Recieved second kill signal; forcefully ending task: %s", task_id)
 
-            logging.info("Task runner shutting down")
+            logging.info("Task Runner shutting down")
 
         except Exception as err:
-            logging.fatal("Task runner shutting down due to exception %s", err)
+            logging.fatal("Task Runner shutting down due to exception: %s", err)
 
             capture_exception(err)
 
@@ -72,8 +73,8 @@ class TaskRunner:
             if task.type == cls.name:
                 current_task = await cls.from_task_id(self.app["data"], task.id)
 
-                self.current_task = asyncio.get_event_loop().create_task(
+                self._current_task = asyncio.create_task(
                     current_task.run()
                 )
 
-                await asyncio.shield(self.current_task)
+                await asyncio.shield(self._current_task)
