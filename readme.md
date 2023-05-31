@@ -9,7 +9,7 @@ Gitter: https://gitter.im/virtool
 
 ## Getting Started
 
-See the [Virtool documentation](https://www.virtool.ca/docs/manual/start/installation/) to get started with the latest
+See the [Virtool documentation](https://www.virtool.ca/docs/legacy/manual/start/installation/) to get started with the latest
 version of Virtool 4.0.0.
 
 ## About Versions
