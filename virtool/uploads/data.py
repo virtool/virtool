@@ -37,7 +37,11 @@ class UploadsData(DataLayerPiece):
         if paginate:
             return await self._find_beta(user, page, per_page, upload_type)
 
-        filters = [SQLUpload.removed == False, SQLUpload.ready == True]
+        filters = [
+            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
+            SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
+        ]
+
         uploads = []
 
         async with AsyncSession(self._pg) as session:
@@ -65,18 +69,18 @@ class UploadsData(DataLayerPiece):
         self, user, page: int, per_page: int, upload_type
     ) -> UploadSearchResult:
         base_filters = [
-            SQLUpload.ready == True,
-            SQLUpload.removed == False,
-            SQLUpload.reserved == False,
+            SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
+            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
+            SQLUpload.reserved == False,  # skipcq: PTC-W0068,PYL-R1714
         ]
 
         filters = []
 
         if user:
-            filters.append(SQLUpload.user == user)
+            filters.append(SQLUpload.user == user)  # skipcq: PTC-W0068,PYL-R1714
 
         if upload_type:
-            filters.append(SQLUpload.type == upload_type)
+            filters.append(SQLUpload.type == upload_type)  # skipcq: PTC-W0068,PYL-R1714
 
         total_query = (
             select(func.count(SQLUpload.id).label("total"))

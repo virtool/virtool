@@ -90,13 +90,13 @@ class JobRightsDomain:
         """
         rights_dict = {}
 
-        if len(self._read):
+        if self._read:
             rights_dict["read"] = sorted(self._read)
 
-        if len(self._modify):
+        if self._modify:
             rights_dict["modify"] = sorted(self._modify)
 
-        if len(self._remove):
+        if self._remove:
             rights_dict["remove"] = sorted(self._remove)
 
         return rights_dict
@@ -162,3 +162,11 @@ def compose_status(
         "progress": progress,
         "timestamp": virtool.utils.timestamp(),
     }
+
+
+def check_job_is_running_or_waiting(document: Document) -> bool:
+    """
+    Returns a boolean indicating whether the passed job document is in the running or
+    waiting state.
+    """
+    return document["status"][-1]["state"] in ("waiting", "running")

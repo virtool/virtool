@@ -3,7 +3,6 @@ Work with OTUs in the database.
 
 """
 
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union, Mapping, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -197,9 +196,8 @@ async def bulk_join_documents(
 
     If an OTU is passed, the document will not be pulled from the database.
 
-    :param db: the application database client
-    :param query: the id of the otu to join or a Mongo query.
-    :param document: use this otu document as a basis for the join
+    :param mongo: the application database client
+    :param otus: use these otu documents as a basis for the joins
     :param session: a Motor session to use for database operations
     :return: the joined otu document
     """
