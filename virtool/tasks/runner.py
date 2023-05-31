@@ -3,7 +3,6 @@ import logging
 
 from aiohttp.abc import Application
 
-from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task
@@ -67,7 +66,7 @@ class TaskRunner:
         """
         task: Task = await get_row_by_id(self.app["pg"], Task, task_id)
 
-        logging.info(f"Starting task: %s %s", task.id, task.type)
+        logging.info("Starting task: %s %s", task.id, task.type)
 
         for cls in BaseTask.__subclasses__():
             if task.type == cls.name:
