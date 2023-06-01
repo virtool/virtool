@@ -1,5 +1,3 @@
-
-
 pytest_plugins = (
     "tests.fixtures.client",
     "tests.fixtures.core",
@@ -33,7 +31,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--db-connection-string",
         action="store",
-        default="mongodb://root:virtool@localhost:27017/?directConnection=true",
+        default="mongodb://root:virtool@localhost:27017/?directConnection=True",
     )
 
     parser.addoption(
