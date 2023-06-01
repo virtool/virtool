@@ -80,16 +80,20 @@ class TaskSpawnerService:
         Registers tasks and sets the last triggered time attribute.
         """
         for task, interval in tasks:
-            self._registered.append(PeriodicTask(task, interval))
-
             async with AsyncSession(self._pg) as session:
-                result = await session.execute(
-                    select(SQLTask).filter_by(type=str(task.name))
+                result = (
+                    await session.execute(
+                        select(SQLTask)
+                        .filter_by(type=str(task.name))
+                        .order_by(SQLTask.created_at)
+                    )
+                ).scalar()
+            if result is not None:
+                self._registered.append(
+                    PeriodicTask(task, interval, last_triggered=result.created_at)
                 )
-                task = result.scalar()
-
-            if task is not None:
-                self._registered[-1].last_triggered = task.created_at
+            else:
+                self._registered.append(PeriodicTask(task, interval))
 
     async def run(self, tasks: List[Tuple[Type[BaseTask], int]]):
         """
@@ -125,14 +129,14 @@ class TaskSpawnerService:
         """
         Spawns task if enough time has passed.
         """
-        if check_elapsed_time_exceeded(task.interval, task.last_triggered):
+        if check_interval_exceeded(task.interval, task.last_triggered):
             await self._tasks_datalayer.create(task.task)
             logger.info("Spawning task %s", task.task)
             task.last_triggered = timestamp()
         return task
 
 
-def check_elapsed_time_exceeded(interval: int, last_triggered: Optional[datetime]):
+def check_interval_exceeded(interval: int, last_triggered: Optional[datetime]):
     """
     Checks whether the time elapsed has exceeded the set interval.
     :param interval: how frequently the task should be triggered in seconds

@@ -230,6 +230,8 @@ async def test_progress_handler_set_error(task: BaseTask, pg: AsyncEngine):
 
 async def test_register(pg: AsyncEngine, tasks_data: TasksData):
     await tasks_data.create(DummyBaseTask)
+    await tasks_data.create(DummyTask)
+    await tasks_data.create(DummyBaseTask)
 
     results = await tasks_data.find()
     result = results[0]
