@@ -53,9 +53,7 @@ from virtool.startup import (
 )
 from virtool.tasks.api import TaskServicesRootView
 
-logging.basicConfig(level=logging.DEBUG)
-
-logger = logging.getLogger("periodic_task_spawner")
+logger = logging.getLogger("spawner")
 
 
 @dataclass
@@ -131,7 +129,7 @@ class TaskSpawnerService:
         """
         if check_interval_exceeded(task.interval, task.last_triggered):
             await self._tasks_datalayer.create(task.task)
-            logger.info("Spawning task %s", task.task)
+            logger.info("Spawning task %s", task.task.name)
             task.last_triggered = timestamp()
         return task
 

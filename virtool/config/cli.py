@@ -189,7 +189,7 @@ def spawn_task(task_name: str, **kwargs):
     """Create and queue a task instance of the given name."""
     configure_logs(False)
 
-    logger.info("Spawning task")
+    logger.info("Spawning task %s", task_name)
 
     asyncio.get_event_loop().run_until_complete(
         spawn(TaskSpawnerConfig(**kwargs), task_name)
