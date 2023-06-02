@@ -12,11 +12,6 @@ from virtool.tasks.models import Task
 from virtool.tasks.oas import TaskUpdate
 
 
-@pytest.fixture
-async def tasks_data(pg: AsyncEngine, redis: Redis) -> TasksData:
-    return TasksData(pg, TasksClient(redis))
-
-
 async def test_find(
     snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksData, static_time
 ):

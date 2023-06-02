@@ -25,7 +25,7 @@ from virtool.startup import (
     startup_task_runner,
     startup_version,
 )
-from virtool.tasks.api import TasksRunnerView
+from virtool.tasks.api import TaskServicesRootView
 
 
 async def startup_dispatcher_sql_listener(app: Application):
@@ -56,7 +56,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
     aiojobs.aiohttp.setup(app)
 
-    app.add_routes([aiohttp.web.view("/", TasksRunnerView)])
+    app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
 
     app.on_startup.extend(
         [
