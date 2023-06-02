@@ -52,7 +52,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     )
 
     app["config"] = config
-    app["mode"] = "tasks_worker"
+    app["mode"] = "task_runner"
 
     aiojobs.aiohttp.setup(app)
 

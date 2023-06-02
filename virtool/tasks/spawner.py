@@ -191,7 +191,7 @@ async def create_task_spawner_app(config: PeriodicTaskSpawnerConfig):
     )
 
     app["config"] = config
-    app["mode"] = "periodic_task_spawner"
+    app["mode"] = "task_spawner"
 
     aiojobs.aiohttp.setup(app)
 

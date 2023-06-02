@@ -204,7 +204,8 @@ def tasks_spawner(**kwargs):
     """
     Schedule all periodically run tasks on hardcoded schedules
     """
+    configure_logs(False)
 
-    logger.info("Periodic Task spawner")
+    logger.info("Starting task spawner")
 
     run_task_spawner(PeriodicTaskSpawnerConfig(**kwargs, base_url=""))
