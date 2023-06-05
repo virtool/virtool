@@ -104,6 +104,7 @@ class BLASTTask(BaseTask):
 
                     logger.info("Deleted BLAST due to cancellation: %s", self.rid)
 
+
         retries: int = 0
 
         while True:
