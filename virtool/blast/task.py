@@ -108,7 +108,8 @@ class BLASTTask(BaseTask):
 
         while True:
             try:
-                await asyncio.wait_for(wait_with_timeout(), 600)
+                await asyncio.wait_for(wait_with_timeout(), 10)
+                break
 
             except asyncio.TimeoutError:
                 if retries < 3:
