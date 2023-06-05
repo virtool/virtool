@@ -67,49 +67,48 @@ class BLASTTask(BaseTask):
         """
 
         async def wait_with_timeout():
-            async with asyncio.timeout_at(600):
-                try:
-                    while True:
-                        await asyncio.sleep(self.interval)
+            try:
+                while True:
+                    await asyncio.sleep(self.interval)
 
-                        blast = await self.data.blast.check_nuvs_blast(
-                            self.analysis_id, self.sequence_index
-                        )
-
-                        if blast.ready:
-                            logger.info("Retrieved result for BLAST %s", blast.rid)
-                            break
-
-                        if blast.error:
-                            logger.info(
-                                "Encountered error for BLAST %s: %s",
-                                blast.rid,
-                                blast.error,
-                            )
-                            await self._set_error(blast.error)
-                            break
-
-                        self.interval += 5
-
-                        logger.debug(
-                            "Checked BLAST %s. Waiting %s seconds",
-                            blast.rid,
-                            self.interval,
-                        )
-
-                except asyncio.CancelledError:
-                    await self.data.blast.delete_nuvs_blast(
+                    blast = await self.data.blast.check_nuvs_blast(
                         self.analysis_id, self.sequence_index
                     )
 
-                    logger.info("Deleted BLAST due to cancellation: %s", self.rid)
+                    if blast.ready:
+                        logger.info("Retrieved result for BLAST %s", blast.rid)
+                        break
+
+                    if blast.error:
+                        logger.info(
+                            "Encountered error for BLAST %s: %s",
+                            blast.rid,
+                            blast.error,
+                        )
+                        await self._set_error(blast.error)
+                        break
+
+                    self.interval += 5
+
+                    logger.debug(
+                        "Checked BLAST %s. Waiting %s seconds",
+                        blast.rid,
+                        self.interval,
+                    )
+
+            except asyncio.CancelledError:
+                await self.data.blast.delete_nuvs_blast(
+                    self.analysis_id, self.sequence_index
+                )
+
+                logger.info("Deleted BLAST due to cancellation: %s", self.rid)
 
 
         retries: int = 0
 
         while True:
             try:
-                await wait_with_timeout()
+                await asyncio.wait_for(wait_with_timeout(), 600)
 
             except asyncio.TimeoutError:
                 if retries < 3:
