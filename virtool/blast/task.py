@@ -67,7 +67,7 @@ class BLASTTask(BaseTask):
         """
 
         async def wait_with_timeout():
-            async with asyncio.timeout(600):
+            async with asyncio.timeout_at(600):
                 try:
                     while True:
                         await asyncio.sleep(self.interval)
