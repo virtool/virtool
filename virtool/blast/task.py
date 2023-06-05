@@ -53,7 +53,7 @@ class BLASTTask(BaseTask):
 
         self.rid = blast.rid
 
-    async def wait(self):
+    async def wait(self, retries: int = 3):
         """
         Wait until the BLAST search completes.
 
