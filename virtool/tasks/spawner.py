@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from asyncio import CancelledError
 from dataclasses import dataclass
@@ -83,7 +83,7 @@ class TaskSpawnerService:
                     await session.execute(
                         select(SQLTask)
                         .filter_by(type=str(task.name))
-                        .order_by(SQLTask.created_at)
+                        .order_by(desc(SQLTask.created_at))
                     )
                 ).scalar()
             if result is not None:

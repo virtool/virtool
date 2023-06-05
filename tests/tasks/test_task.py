@@ -234,7 +234,7 @@ async def test_register(pg: AsyncEngine, tasks_data: TasksData):
     await tasks_data.create(DummyBaseTask)
 
     results = await tasks_data.find()
-    result = results[0]
+    result = results[2]
     created_at = result.created_at
 
     task_spawner_service = TaskSpawnerService(pg, tasks_data)
