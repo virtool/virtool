@@ -1,25 +1,33 @@
-from sqlalchemy.ext.asyncio import AsyncEngine
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.migration.check import check_data_revision_version
 from virtool.migration.model import SQLRevision
 from virtool.utils import timestamp
 
 
-async def test_check_data_revision_version(mocker, pg: AsyncEngine, spawn_client):
-    mocker.patch("virtool.migration.check.REQUIRED_VIRTOOL_REVISION", "test_1")
+@pytest.mark.parametrize("revision", ["test_2", "test_missing"])
+async def test_check_data_revision_version(revision: str, mocker, pg: AsyncEngine):
+    mocker.patch("virtool.migration.check.REQUIRED_VIRTOOL_REVISION", revision)
 
-    async with AsyncEngine(pg) as session:
-        session.add(
-            SQLRevision(
-                name="Test 1",
-                revision="test_1",
-                created_at=timestamp(),
-                applied_at=timestamp(),
+    async with AsyncSession(pg) as session:
+        for suffix in (1, 2, 3):
+            session.add(
+                SQLRevision(
+                    name=f"Test {suffix}",
+                    revision=f"test_{suffix}",
+                    created_at=timestamp(),
+                    applied_at=timestamp(),
+                )
             )
-        )
+
         await session.commit()
 
-    try:
+    if revision == "test_2":
         await check_data_revision_version(pg)
-    except SystemExit as e:
-        assert e.code == 1
+
+    if revision == "test_missing":
+        with pytest.raises(SystemExit) as exc:
+            await check_data_revision_version(pg)
+
+        assert exc.value.code == 1
