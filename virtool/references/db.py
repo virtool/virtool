@@ -782,7 +782,7 @@ async def download_and_parse_release(
     app, url: str, task_id: int, progress_handler: callable
 ):
     with virtool.utils.get_temp_dir() as tempdir:
-        download_path = Path(tempdir) / "reference.tar.gz"
+        download_path = Path(tempdir) / "reference.json.gz"
 
         await download_file(url, download_path, progress_handler)
 

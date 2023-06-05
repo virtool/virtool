@@ -31,19 +31,25 @@ def pytest_addoption(parser):
     parser.addoption(
         "--db-connection-string",
         action="store",
-        default="mongodb://root:virtool@localhost:27017/?directConnection=True",
+        default="mongodb://root:virtool@localhost:9001",
     )
 
     parser.addoption(
         "--redis-connection-string",
         action="store",
-        default="redis://root:virtool@localhost:6379",
+        default="redis://root:virtool@localhost:9003",
     )
 
     parser.addoption(
         "--postgres-connection-string",
         action="store",
-        default="postgresql+asyncpg://virtool:virtool@localhost",
+        default="postgresql+asyncpg://virtool:virtool@localhost:9002",
+    )
+
+    parser.addoption(
+        "--openfga-host",
+        action="store",
+        default="localhost:9004",
     )
 
     parser.getgroup("syrupy").addoption(

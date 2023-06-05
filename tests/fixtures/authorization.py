@@ -13,8 +13,8 @@ from virtool.authorization.utils import (
 
 
 @pytest.fixture
-def openfga_host():
-    return "localhost:8080"
+def openfga_host(request):
+    return request.config.getoption("openfga_host")
 
 
 @pytest.fixture
