@@ -1,4 +1,5 @@
 from logging import getLogger
+from pprint import pprint
 from subprocess import call
 
 import arrow
@@ -36,21 +37,32 @@ async def apply(config: MigrationConfig, revision_id: str):
 
     last_applied_revision = await fetch_last_applied_revision(ctx.pg)
 
-    for revision in all_revisions:
+    logger.info(
+        "Last applied revision id='%s' name=%s",
+        last_applied_revision.id,
+        last_applied_revision.name,
+    )
 
-        if revision.id in await list_applied_revision_ids(ctx.pg):
+    applied_revision_ids = await list_applied_revision_ids(ctx.pg)
+
+    for revision in all_revisions:
+        logger.info("Checking revision id='%s' name=%s", revision.id, revision.name)
+
+        if revision.id in applied_revision_ids:
+            logger.info(
+                "Revision is already applied id='%s' name=%s",
+                revision.id,
+                revision.name,
+            )
+
             continue
 
         if last_applied_revision is None or (
             revision.created_at > last_applied_revision.created_at
         ):
-
             if revision.source == RevisionSource.VIRTOOL:
-
                 await apply_one_revision(ctx, revision)
-
             else:
-
                 call(["alembic", "upgrade", revision.id])
 
         if revision_id != "latest" and revision.id == revision_id:

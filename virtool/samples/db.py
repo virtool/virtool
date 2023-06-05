@@ -344,7 +344,9 @@ def get_workflow_name(workflow_name: str) -> str:
     return workflow_name
 
 
-async def recalculate_workflow_tags(db, sample_id: str) -> dict:
+async def recalculate_workflow_tags(
+    db, sample_id: str, session: Optional[AsyncIOMotorClientSession] = None
+) -> dict:
     """
     Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
@@ -365,7 +367,10 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     }
 
     document = await db.samples.find_one_and_update(
-        {"_id": sample_id}, {"$set": update}, projection=LIST_PROJECTION
+        {"_id": sample_id},
+        {"$set": update},
+        projection=LIST_PROJECTION,
+        session=session,
     )
 
     return document

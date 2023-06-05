@@ -1,19 +1,25 @@
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from virtool.migration.check import check_data_revision_version
+from virtool.migration.model import SQLRevision
+from virtool.utils import timestamp
 
 
-async def test_check_revision(mongo, spawn_client):
-    await mongo.migrations.insert_one(
-        {
-            "_id": "test",
-            "applied_at": "2022-11-16T23:58:55.651Z",
-            "created_at": "2022-06-09T20:38:11Z",
-            "name": "Nest analysis results field",
-            "revision_id": "7emq1brv0zz6",
-        }
-    )
+async def test_check_data_revision_version(mocker, pg: AsyncEngine, spawn_client):
+    mocker.patch("virtool.migration.check.REQUIRED_VIRTOOL_REVISION", "test_1")
+
+    async with AsyncEngine(pg) as session:
+        session.add(
+            SQLRevision(
+                name="Test 1",
+                revision="test_1",
+                created_at=timestamp(),
+                applied_at=timestamp(),
+            )
+        )
+        await session.commit()
 
     try:
-        await check_data_revision_version(mongo)
-
+        await check_data_revision_version(pg)
     except SystemExit as e:
         assert e.code == 1
