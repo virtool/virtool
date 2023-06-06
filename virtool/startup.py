@@ -172,7 +172,8 @@ async def startup_databases(app: App):
         ),
     )
 
-    await check_data_revision_version(pg)
+    if not get_config_from_app(app).no_revision_check:
+        await check_data_revision_version(pg)
 
     scheduler = get_scheduler_from_app(app)
     await scheduler.spawn(periodically_ping_redis(redis))
