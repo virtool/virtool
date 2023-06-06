@@ -60,10 +60,11 @@ class BLASTTask(BaseTask):
         Keep check the BLAST status on NCBI with increasingly longer intervals between
         checks.
 
-        Checks are conducted by the data layer and will store the results or error when
-        the search completes. The task completes when either an error or
+        Checks are conducted by the data layer and will store the results or error
+        when the search completes. The task completes when either an error or
 
-        The BLAST will be retried up to 3 times if a single BLAST search exceeds 10 minutes
+        The BLAST will be retried up to 3 times if a single BLAST
+        search exceeds 10 minutes
         """
 
         async def wait_with_timeout():
@@ -116,6 +117,5 @@ class BLASTTask(BaseTask):
 
                     continue
 
-                else:
-                    logger.error("BLAST timed out")
-                    break
+                logger.error("BLAST timed out")
+                break
