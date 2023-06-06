@@ -1,13 +1,14 @@
 import asyncio
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from asyncio import CancelledError
 from dataclasses import dataclass
 from typing import Type, Optional, List, Tuple
 from datetime import datetime, timedelta
 
+from virtool.administrators.tasks import PromoteAdministratorsTask
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.indexes.tasks import EnsureIndexFilesTask
@@ -83,7 +84,7 @@ class TaskSpawnerService:
                     await session.execute(
                         select(SQLTask)
                         .filter_by(type=str(task.name))
-                        .order_by(SQLTask.created_at)
+                        .order_by(desc(SQLTask.created_at))
                     )
                 ).scalar()
             if result is not None:
@@ -161,16 +162,17 @@ async def startup_task_spawner(app: App):
     scheduler = get_scheduler_from_app(app)
 
     tasks = [
-        (RefreshReferenceReleasesTask, 600),
-        (HMMRefreshTask, 600),
-        (MigrateFilesTask, 3600),
         (AddSubtractionFilesTask, 3600),
-        (EnsureIndexFilesTask, 3600),
-        (StoreNuvsFilesTask, 3600),
-        (CompressSamplesTask, 3600),
-        (MoveSampleFilesTask, 3600),
         (CleanReferencesTask, 3600),
         (CheckSubtractionsFASTATask, 3600),
+        (CompressSamplesTask, 3600),
+        (EnsureIndexFilesTask, 3600),
+        (HMMRefreshTask, 600),
+        (MigrateFilesTask, 3600),
+        (MoveSampleFilesTask, 3600),
+        (PromoteAdministratorsTask, 3600),
+        (RefreshReferenceReleasesTask, 600),
+        (StoreNuvsFilesTask, 3600),
         (TimeoutJobsTask, 3600),
     ]
 
