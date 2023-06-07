@@ -1,14 +1,16 @@
+import asyncio
+
 import orjson
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from virtool.api.custom_json import dump_string
 from virtool.pg.utils import Base
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def pg_base_connection_string(request, pg_db_name: str):
     """
     A Postgres connection string without the database name at the end.
@@ -19,7 +21,7 @@ def pg_base_connection_string(request, pg_db_name: str):
     return request.config.getoption("postgres_connection_string")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def pg_db_name(worker_id: str):
     """
     An auto-generated Postgres database name. One database is generated for each xdist worker.
@@ -30,7 +32,7 @@ def pg_db_name(worker_id: str):
     return f"test_{worker_id}"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
     """
     A full Postgres connection string with the auto-generated test database name appended.
@@ -41,8 +43,17 @@ def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
     return f"{pg_base_connection_string}/{pg_db_name}"
 
 
-@pytest.fixture
-async def pg(
+@pytest.fixture(scope="session")
+def loop():
+    """Overrides pytest default function scoped event loop"""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
+async def engine(
     loop, pg_db_name: str, pg_base_connection_string: str, pg_connection_string: str
 ) -> AsyncEngine:
     """
@@ -81,3 +92,27 @@ async def pg(
         await conn.commit()
 
     return pg
+
+
+@pytest.fixture(scope="function")
+async def pg(loop, engine):
+    async with AsyncSession(engine) as session:
+        await session.execute(
+            text(
+                """TRUNCATE TABLE analysis_files,
+                                labels,
+                                sample_artifacts,
+                                subtraction_files,
+                                sample_artifacts_cache,
+                                sample_reads_cache,
+                                index_files,
+                                instance_messages,
+                                uploads,
+                                nuvs_blast,
+                                sample_reads,
+                                tasks RESTART IDENTITY"""
+            )
+        )
+        await session.commit()
+
+    yield engine
