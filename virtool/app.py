@@ -1,5 +1,3 @@
-import logging
-
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
@@ -33,8 +31,6 @@ from virtool.startup import (
     startup_settings,
     startup_version,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def create_app_without_startup():

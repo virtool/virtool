@@ -63,7 +63,7 @@ async def list_applied_revision_ids(pg: AsyncEngine) -> list[str]:
             select(SQLRevision).order_by(SQLRevision.applied_at)
         )
 
-        return [revision.id for revision in result.scalars()]
+        return [revision.revision for revision in result.scalars()]
 
 
 async def fetch_last_applied_revision(
