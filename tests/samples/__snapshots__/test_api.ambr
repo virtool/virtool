@@ -63,6 +63,11 @@
       'handle': 'bob',
       'id': 'test',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: TestCreate.test[uvloop-force_choice].2
@@ -176,6 +181,11 @@
       'handle': 'bob',
       'id': 'test',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
 # name: TestCreate.test[uvloop-none].2
@@ -288,6 +298,11 @@
       'administrator': False,
       'handle': 'bob',
       'id': 'test',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     },
   }
 ---
@@ -425,6 +440,11 @@
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
   }
 ---
 # name: TestEdit.test_label_exists[uvloop][json]
@@ -467,6 +487,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -499,6 +524,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -524,6 +554,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -562,6 +597,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
     ],
     'found_count': 1,
@@ -599,6 +639,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -630,6 +675,11 @@
           'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -679,6 +729,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -710,6 +765,11 @@
           'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -748,6 +808,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
     ],
     'found_count': 3,
@@ -785,6 +850,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -817,6 +887,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -842,6 +917,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -880,6 +960,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -912,6 +997,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -937,6 +1027,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -975,6 +1070,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -1007,6 +1107,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -1032,6 +1137,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -1076,6 +1186,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -1101,6 +1216,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -1145,6 +1265,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -1170,6 +1295,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -1208,6 +1338,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
     ],
     'found_count': 1,
@@ -1244,6 +1379,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -1282,6 +1422,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -1314,6 +1459,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -1339,6 +1489,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -1383,6 +1538,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
     ],
     'found_count': 1,
@@ -1420,6 +1580,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T21:00:00Z',
@@ -1452,6 +1617,11 @@
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -1477,6 +1647,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -1515,6 +1690,11 @@
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        },
       },
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
@@ -1540,6 +1720,11 @@
           'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
+        },
+        'workflows': <class 'dict'> {
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         },
       },
     ],
@@ -1623,6 +1808,11 @@
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
   }
 ---
 # name: TestGet.test_get[uvloop-all_read][json]
@@ -1698,6 +1888,11 @@
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
   }
 ---
 # name: TestGet.test_get[uvloop-group_read][json]
@@ -1772,6 +1967,11 @@
       'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     },
   }
 ---
@@ -1853,6 +2053,11 @@
       'administrator': False,
       'handle': 'bob',
       'id': 'test',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     },
   }
 ---

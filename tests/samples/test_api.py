@@ -8,6 +8,7 @@ from aiohttp.test_utils import make_mocked_coro
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import LibraryType, Permission
+from virtool_core.models.samples import WorkflowState
 
 import virtool.caches.db
 import virtool.pg.utils
@@ -50,6 +51,14 @@ async def get_sample_data(mongo, fake2, pg, static_time):
                 "_id": "test",
                 "all_read": True,
                 "all_write": True,
+                "created_at": static_time.datetime,
+                "files": [
+                    {
+                        "id": "foo",
+                        "name": "Bar.fq.gz",
+                        "download_url": "/download/samples/files/file_1.fq.gz",
+                    }
+                ],
                 "format": "fastq",
                 "group": "none",
                 "group_read": True,
@@ -58,24 +67,21 @@ async def get_sample_data(mongo, fake2, pg, static_time):
                 "host": "",
                 "is_legacy": False,
                 "isolate": "",
+                "labels": [label.id],
                 "library_type": LibraryType.normal.value,
                 "locale": "",
-                "nuvs": False,
-                "pathoscope": True,
                 "name": "Test",
                 "notes": "",
-                "created_at": static_time.datetime,
+                "nuvs": False,
+                "pathoscope": True,
                 "ready": True,
-                "files": [
-                    {
-                        "id": "foo",
-                        "name": "Bar.fq.gz",
-                        "download_url": "/download/samples/files/file_1.fq.gz",
-                    }
-                ],
-                "labels": [label.id],
                 "subtractions": ["apple", "pear"],
                 "user": {"id": user.id},
+                "workflows": {
+                    "aodp": WorkflowState.INCOMPATIBLE.value,
+                    "pathoscope": WorkflowState.COMPLETE.value,
+                    "nuvs": WorkflowState.PENDING.value,
+                },
             }
         ),
     )

@@ -35,11 +35,17 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: openfga
+    healthcheck:
+      test: pg_isready -U virtool -d virtool
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   migrate:
     image: openfga/openfga:v0.2.5
     depends_on:
-      - postgres-openfga
+      postgres-openfga:
+        condition: service_healthy
     command: |
       migrate
     environment:
