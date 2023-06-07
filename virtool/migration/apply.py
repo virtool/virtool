@@ -1,5 +1,4 @@
 from logging import getLogger
-from pprint import pprint
 from subprocess import call
 
 import arrow
@@ -10,7 +9,6 @@ from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.model import SQLRevision
 from virtool.migration.pg import fetch_last_applied_revision, list_applied_revision_ids
 from virtool.migration.show import load_alembic_revisions, load_virtool_revisions
-
 
 logger = getLogger("migration")
 

@@ -1,6 +1,5 @@
 import sys
 from logging import getLogger
-from pprint import pprint
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
