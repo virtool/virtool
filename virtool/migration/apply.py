@@ -37,11 +37,14 @@ async def apply(config: MigrationConfig, revision_id: str):
 
     last_applied_revision = await fetch_last_applied_revision(ctx.pg)
 
-    logger.info(
-        "Last applied revision id='%s' name=%s",
-        last_applied_revision.id,
-        last_applied_revision.name,
-    )
+    if last_applied_revision:
+        logger.info(
+            "Last applied revision id='%s' name=%s",
+            last_applied_revision.id,
+            last_applied_revision.name,
+        )
+    else:
+        logger.info("No applied revisions found")
 
     applied_revision_ids = await list_applied_revision_ids(ctx.pg)
 
