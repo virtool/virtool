@@ -29,7 +29,7 @@ async def check_data_revision_version(pg: AsyncEngine):
             logger.info("Found required revision id=%s", REQUIRED_VIRTOOL_REVISION)
             return
 
-    logger.fatal(
+    logger.critical(
         "The required revision has not been applied id=%s",
         REQUIRED_VIRTOOL_REVISION,
     )
