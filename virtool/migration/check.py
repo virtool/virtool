@@ -19,7 +19,7 @@ async def check_data_revision_version(mongo: AsyncIOMotorDatabase):
     """
 
     if not await mongo.migrations.find_one({"revision_id": REQUIRED_MONGODB_REVISION}):
-        logger.fatal(
+        logger.critical(
             "The required MongoDB revision has not been applied: %s.",
             REQUIRED_MONGODB_REVISION,
         )
