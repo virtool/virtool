@@ -1,4 +1,4 @@
-# name: test_create[uvloop]
+# name: test_create
   <class 'dict'> {
     'count': None,
     'created_at': '2015-10-06T20:00:00Z',
@@ -23,7 +23,7 @@
     },
   }
 ---
-# name: test_create[uvloop][job]
+# name: test_create[job]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'acquired': False,
@@ -62,7 +62,7 @@
     'workflow': 'create_subtraction',
   }
 ---
-# name: test_edit[uvloop-False-False-data0]
+# name: test_edit[False-False-data0]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -97,7 +97,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-False-data0].1
+# name: test_edit[False-False-data0].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -118,7 +118,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-False-False-data1]
+# name: test_edit[False-False-data1]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -153,7 +153,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-False-data1].1
+# name: test_edit[False-False-data1].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -174,7 +174,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-False-False-data2]
+# name: test_edit[False-False-data2]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -209,7 +209,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-False-data2].1
+# name: test_edit[False-False-data2].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -230,7 +230,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-False-False-data3]
+# name: test_edit[False-False-data3]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -265,7 +265,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-False-False-data3].1
+# name: test_edit[False-False-data3].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -286,7 +286,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-False-True-data0]
+# name: test_edit[False-True-data0]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -325,7 +325,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-False-True-data0].1
+# name: test_edit[False-True-data0].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -349,7 +349,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-False-True-data1]
+# name: test_edit[False-True-data1]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -388,7 +388,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-False-True-data1].1
+# name: test_edit[False-True-data1].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -412,7 +412,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-False-True-data2]
+# name: test_edit[False-True-data2]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -451,7 +451,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-False-True-data2].1
+# name: test_edit[False-True-data2].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -475,7 +475,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-False-True-data3]
+# name: test_edit[False-True-data3]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -514,7 +514,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-False-True-data3].1
+# name: test_edit[False-True-data3].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -538,7 +538,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-False-data0]
+# name: test_edit[True-False-data0]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -586,7 +586,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-True-False-data0].1
+# name: test_edit[True-False-data0].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -610,7 +610,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-True-False-data1]
+# name: test_edit[True-False-data1]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -658,7 +658,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-True-False-data1].1
+# name: test_edit[True-False-data1].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -682,7 +682,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-True-False-data2]
+# name: test_edit[True-False-data2]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -730,7 +730,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-True-False-data2].1
+# name: test_edit[True-False-data2].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -754,7 +754,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-True-False-data3]
+# name: test_edit[True-False-data3]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -802,7 +802,7 @@
     'user': None,
   }
 ---
-# name: test_edit[uvloop-True-False-data3].1
+# name: test_edit[True-False-data3].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -826,7 +826,7 @@
     'ready': True,
   }
 ---
-# name: test_edit[uvloop-True-True-data0]
+# name: test_edit[True-True-data0]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -878,7 +878,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-True-data0].1
+# name: test_edit[True-True-data0].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -905,7 +905,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-True-data1]
+# name: test_edit[True-True-data1]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -957,7 +957,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-True-data1].1
+# name: test_edit[True-True-data1].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -984,7 +984,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-True-data2]
+# name: test_edit[True-True-data2]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -1036,7 +1036,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-True-data2].1
+# name: test_edit[True-True-data2].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -1063,7 +1063,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-True-data3]
+# name: test_edit[True-True-data3]
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -1115,7 +1115,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-True-True-data3].1
+# name: test_edit[True-True-data3].1
   <class 'dict'> {
     '_id': 'apple',
     'count': 11,
@@ -1142,7 +1142,7 @@
     },
   }
 ---
-# name: test_finalize_subtraction[uvloop-None]
+# name: test_finalize_subtraction[None]
   <class 'dict'> {
     'count': 100,
     'created_at': '2015-10-06T20:00:00Z',
@@ -1210,7 +1210,7 @@
     },
   }
 ---
-# name: test_finalize_subtraction[uvloop-None].1
+# name: test_finalize_subtraction[None].1
   <class 'dict'> {
     '_id': 'foo',
     'count': 100,
@@ -1237,7 +1237,7 @@
     },
   }
 ---
-# name: test_find[uvloop-2-1]
+# name: test_find[2-1]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1311,7 +1311,7 @@
     'total_count': 5,
   }
 ---
-# name: test_find[uvloop-2-2]
+# name: test_find[2-2]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1385,7 +1385,7 @@
     'total_count': 5,
   }
 ---
-# name: test_find[uvloop-None-None]
+# name: test_find[None-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1552,7 +1552,7 @@
     'total_count': 5,
   }
 ---
-# name: test_find_empty_subtractions[uvloop]
+# name: test_find_empty_subtractions
   <class 'dict'> {
     'documents': <class 'list'> [
     ],
@@ -1564,7 +1564,7 @@
     'total_count': 0,
   }
 ---
-# name: test_get[uvloop]
+# name: test_get
   <class 'dict'> {
     'count': 11,
     'created_at': '2015-10-06T20:00:00Z',
@@ -1608,7 +1608,7 @@
     },
   }
 ---
-# name: test_get_from_job[uvloop]
+# name: test_get_from_job
   <class 'dict'> {
     'count': None,
     'created_at': '2016-09-19T00:12:04Z',
@@ -1657,7 +1657,7 @@
     },
   }
 ---
-# name: test_job_remove[uvloop-True-False]
+# name: test_job_remove[True-False]
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1677,7 +1677,7 @@
     },
   }
 ---
-# name: test_job_remove[uvloop-True-False].1
+# name: test_job_remove[True-False].1
   <class 'dict'> {
     '_id': 'test',
     'name': 'Test',
@@ -1685,7 +1685,7 @@
     ],
   }
 ---
-# name: test_upload[uvloop-404]
+# name: test_upload[404]
   <class 'dict'> {
     'download_url': '/subtractions/foo/files/subtraction.1.bt2',
     'id': 1,
@@ -1695,7 +1695,7 @@
     'type': 'bowtie2',
   }
 ---
-# name: test_upload[uvloop-None]
+# name: test_upload[None]
   <class 'dict'> {
     'download_url': '/subtractions/foo/files/subtraction.1.bt2',
     'id': 1,

@@ -110,6 +110,7 @@ async def pg(loop, engine):
                                 uploads,
                                 nuvs_blast,
                                 sample_reads,
+                                revisions,
                                 tasks RESTART IDENTITY"""
             )
         )

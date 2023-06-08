@@ -1,4 +1,4 @@
-# name: test_get_subtraction_files[uvloop]
+# name: test_get_subtraction_files
   <class 'list'> [
     <class 'dict'> {
       'id': 1,

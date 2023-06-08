@@ -1,4 +1,4 @@
-# name: test_find[uvloop]
+# name: test_find
   <class 'list'> [
     <class 'dict'> {
       'complete': True,
@@ -30,7 +30,7 @@
     },
   ]
 ---
-# name: test_get[uvloop-None]
+# name: test_get[None]
   <class 'dict'> {
     'complete': True,
     'context': <class 'dict'> {

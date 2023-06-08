@@ -1,4 +1,4 @@
-# name: test_apply_revisions[uvloop]
+# name: test_apply_revisions
   <class 'list'> [
     <class 'dict'> {
       'applied_at': <class 'datetime'>,

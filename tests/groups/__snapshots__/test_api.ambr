@@ -1,4 +1,4 @@
-# name: TestUpdate.test[uvloop]
+# name: TestUpdate.test
   <class 'dict'> {
     'id': 'bf1b993c',
     'name': 'Technicians',
@@ -31,7 +31,7 @@
     ],
   }
 ---
-# name: TestUpdate.test[uvloop][users]
+# name: TestUpdate.test[users]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',
@@ -105,13 +105,13 @@
     },
   ]
 ---
-# name: TestUpdate.test_not_found[uvloop][json]
+# name: TestUpdate.test_not_found[json]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_create[uvloop-201][json]
+# name: test_create[201][json]
   <class 'dict'> {
     'id': 'fb085f7f',
     'name': 'test',
@@ -129,19 +129,19 @@
     ],
   }
 ---
-# name: test_create[uvloop-201][location]
+# name: test_create[201][location]
   'https://virtool.example.com/groups/fb085f7f'
 ---
-# name: test_create[uvloop-400][json]
+# name: test_create[400][json]
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Group already exists',
   }
 ---
-# name: test_create[uvloop-400][location]
+# name: test_create[400][location]
   None
 ---
-# name: test_find[uvloop]
+# name: test_find
   <class 'list'> [
     <class 'dict'> {
       'id': 'bf1b993c',
@@ -153,7 +153,7 @@
     },
   ]
 ---
-# name: test_get[uvloop-200]
+# name: test_get[200]
   <class 'dict'> {
     'id': 'bf1b993c',
     'name': 'musicians',
@@ -176,16 +176,16 @@
     ],
   }
 ---
-# name: test_get[uvloop-404]
+# name: test_get[404]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_remove[uvloop-204][json]
+# name: test_remove[204][json]
   None
 ---
-# name: test_remove[uvloop-204][users]
+# name: test_remove[204][users]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',
@@ -241,13 +241,13 @@
     },
   ]
 ---
-# name: test_remove[uvloop-404][json]
+# name: test_remove[404][json]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_remove[uvloop-404][users]
+# name: test_remove[404][users]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',

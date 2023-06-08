@@ -1,4 +1,4 @@
-# name: test_ensure[uvloop]
+# name: test_ensure
   <class 'dict'> {
     '_id': 'settings',
     'default_source_types': <class 'list'> [

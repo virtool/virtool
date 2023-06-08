@@ -1,4 +1,4 @@
-# name: test_create_fake_hmm[uvloop]
+# name: test_create_fake_hmm
   <class 'dict'> {
     'cluster': 3088,
     'count': 9934,

@@ -1,4 +1,4 @@
-# name: test_get[uvloop-False]
+# name: test_get[False]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'test history',
@@ -25,7 +25,7 @@
     },
   }
 ---
-# name: test_get[uvloop-True]
+# name: test_get[True]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'test history',

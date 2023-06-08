@@ -1,4 +1,4 @@
-# name: test_spawn[uvloop-True][test_spawn_task_dummy_task]
+# name: test_spawn[True][test_spawn_task_dummy_task]
   <class 'dict'> {
     'complete': False,
     'context': <class 'dict'> {

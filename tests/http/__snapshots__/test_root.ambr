@@ -1,4 +1,4 @@
-# name: test_get[uvloop-False-False]
+# name: test_get[False-False]
   <class 'dict'> {
     'dev': False,
     'endpoints': <class 'dict'> {
@@ -67,7 +67,7 @@
     'version': <class 'str'>,
   }
 ---
-# name: test_get[uvloop-False-True]
+# name: test_get[False-True]
   <class 'dict'> {
     'dev': True,
     'endpoints': <class 'dict'> {
@@ -136,7 +136,7 @@
     'version': <class 'str'>,
   }
 ---
-# name: test_get[uvloop-True-False]
+# name: test_get[True-False]
   <class 'dict'> {
     'dev': False,
     'endpoints': <class 'dict'> {
@@ -205,7 +205,7 @@
     'version': <class 'str'>,
   }
 ---
-# name: test_get[uvloop-True-True]
+# name: test_get[True-True]
   <class 'dict'> {
     'dev': True,
     'endpoints': <class 'dict'> {
