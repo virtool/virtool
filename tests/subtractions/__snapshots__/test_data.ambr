@@ -1,4 +1,4 @@
-# name: test_finalize[uvloop][db]
+# name: test_finalize[db]
   <class 'dict'> {
     '_id': 'apple',
     'count': 100,
@@ -27,7 +27,7 @@
     },
   }
 ---
-# name: test_finalize[uvloop][obj]
+# name: test_finalize[obj]
   <class 'dict'> {
     'count': 100,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),

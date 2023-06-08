@@ -1,4 +1,4 @@
-# name: test_processor[uvloop]
+# name: test_processor
   <class 'dict'> {
     'acquired': False,
     'archived': False,

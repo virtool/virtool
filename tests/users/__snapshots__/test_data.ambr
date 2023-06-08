@@ -1,4 +1,4 @@
-# name: TestCreate.test_force_reset[uvloop-False]
+# name: TestCreate.test_force_reset[False]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -26,7 +26,7 @@
     'primary_group': None,
   }
 ---
-# name: TestCreate.test_force_reset[uvloop-True]
+# name: TestCreate.test_force_reset[True]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -54,7 +54,7 @@
     'primary_group': None,
   }
 ---
-# name: TestCreate.test_no_force_reset[uvloop]
+# name: TestCreate.test_no_force_reset
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -82,7 +82,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[uvloop-administrator][db]
+# name: TestUpdate.test[administrator][db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -114,7 +114,7 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-administrator][obj]
+# name: TestUpdate.test[administrator][obj]
   <class 'dict'> {
     'active': True,
     'administrator': True,
@@ -147,7 +147,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[uvloop-force_reset][db]
+# name: TestUpdate.test[force_reset][db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -179,7 +179,7 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-force_reset][obj]
+# name: TestUpdate.test[force_reset][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -212,7 +212,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[uvloop-groups][db]
+# name: TestUpdate.test[groups][db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -245,7 +245,7 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-groups][obj]
+# name: TestUpdate.test[groups][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -285,7 +285,7 @@
     },
   }
 ---
-# name: TestUpdate.test_password[uvloop][db]
+# name: TestUpdate.test_password[db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -316,7 +316,7 @@
     },
   }
 ---
-# name: TestUpdate.test_password[uvloop][obj]
+# name: TestUpdate.test_password[obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -345,7 +345,7 @@
     'primary_group': None,
   }
 ---
-# name: test_find_or_create_b2c_user[uvloop-False]
+# name: test_find_or_create_b2c_user[False]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -374,7 +374,7 @@
     'primary_group': None,
   }
 ---
-# name: test_find_or_create_b2c_user[uvloop-True]
+# name: test_find_or_create_b2c_user[True]
   <class 'dict'> {
     'active': True,
     'administrator': False,

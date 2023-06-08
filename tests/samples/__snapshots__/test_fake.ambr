@@ -1,4 +1,4 @@
-# name: test_create_fake_unpaired[uvloop-False-False]
+# name: test_create_fake_unpaired[False-False]
   <class 'dict'> {
     '_id': 'sample_1',
     'all_read': True,
@@ -35,7 +35,7 @@
     },
   }
 ---
-# name: test_create_fake_unpaired[uvloop-False-True]
+# name: test_create_fake_unpaired[False-True]
   <class 'dict'> {
     '_id': 'sample_1',
     'all_read': True,
@@ -72,7 +72,7 @@
     },
   }
 ---
-# name: test_create_fake_unpaired[uvloop-True-False]
+# name: test_create_fake_unpaired[True-False]
   <class 'dict'> {
     '_id': 'sample_1',
     'all_read': True,
@@ -240,7 +240,7 @@
     },
   }
 ---
-# name: test_create_fake_unpaired[uvloop-True-True]
+# name: test_create_fake_unpaired[True-True]
   <class 'dict'> {
     '_id': 'sample_1',
     'all_read': True,

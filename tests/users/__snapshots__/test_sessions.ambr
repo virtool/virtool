@@ -1,4 +1,4 @@
-# name: test_clear_reset_session[uvloop-False]
+# name: test_clear_reset_session[False]
   <class 'dict'> {
     'authentication': <class 'dict'> {
       'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
@@ -9,7 +9,7 @@
     'reset': None,
   }
 ---
-# name: test_clear_reset_session[uvloop-False].1
+# name: test_clear_reset_session[False].1
   <class 'dict'> {
     'authentication': <class 'dict'> {
       'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
@@ -20,7 +20,7 @@
     'reset': None,
   }
 ---
-# name: test_clear_reset_session[uvloop-True]
+# name: test_clear_reset_session[True]
   <class 'dict'> {
     'authentication': None,
     'created_at': <class 'datetime'>,
@@ -32,7 +32,7 @@
     },
   }
 ---
-# name: test_clear_reset_session[uvloop-True].1
+# name: test_clear_reset_session[True].1
   <class 'dict'> {
     'authentication': None,
     'created_at': <class 'datetime'>,
@@ -40,10 +40,10 @@
     'reset': None,
   }
 ---
-# name: test_clear_reset_session[uvloop-True].2
+# name: test_clear_reset_session[True].2
   ResourceNotFoundError('Session is invalid')
 ---
-# name: test_create_anonymous_session[uvloop]
+# name: test_create_anonymous_session
   <class 'dict'> {
     'authentication': None,
     'created_at': <class 'str'>,
@@ -51,7 +51,7 @@
     'reset': None,
   }
 ---
-# name: test_create_reset_session[uvloop]
+# name: test_create_reset_session
   <class 'dict'> {
     'authentication': None,
     'created_at': <class 'str'>,
@@ -63,7 +63,7 @@
     },
   }
 ---
-# name: test_create_session[uvloop-False]
+# name: test_create_session[False]
   <class 'dict'> {
     'authentication': <class 'dict'> {
       'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
@@ -74,7 +74,7 @@
     'reset': None,
   }
 ---
-# name: test_create_session[uvloop-True]
+# name: test_create_session[True]
   <class 'dict'> {
     'authentication': <class 'dict'> {
       'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
@@ -85,7 +85,7 @@
     'reset': None,
   }
 ---
-# name: test_delete[uvloop]
+# name: test_delete
   <class 'dict'> {
     'authentication': None,
     'created_at': <class 'datetime'>,
@@ -93,10 +93,10 @@
     'reset': None,
   }
 ---
-# name: test_delete[uvloop].1
+# name: test_delete.1
   ResourceNotFoundError('Session is invalid')
 ---
-# name: test_get_anonymous[uvloop]
+# name: test_get_anonymous
   <class 'dict'> {
     'authentication': None,
     'created_at': <class 'datetime'>,
@@ -104,10 +104,10 @@
     'reset': None,
   }
 ---
-# name: test_get_anonymous[uvloop].1
+# name: test_get_anonymous.1
   ResourceNotFoundError('Session is invalid')
 ---
-# name: test_get_authenticated[uvloop]
+# name: test_get_authenticated
   <class 'dict'> {
     'authentication': <class 'dict'> {
       'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
@@ -118,10 +118,10 @@
     'reset': None,
   }
 ---
-# name: test_get_authenticated[uvloop].1
+# name: test_get_authenticated.1
   ResourceError('Session not authenticated')
 ---
-# name: test_get_reset_data[uvloop]
+# name: test_get_reset_data
   <class 'dict'> {
     'code': 'reset_code',
     'remember': False,

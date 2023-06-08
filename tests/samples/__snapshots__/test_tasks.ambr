@@ -1,4 +1,4 @@
-# name: test_deduplicate_sample_names[uvloop-False]
+# name: test_deduplicate_sample_names[False]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test_id',
@@ -22,7 +22,7 @@
     },
   ]
 ---
-# name: test_deduplicate_sample_names[uvloop-True]
+# name: test_deduplicate_sample_names[True]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test_id',
@@ -50,14 +50,14 @@
     },
   ]
 ---
-# name: test_move_sample_files_task[uvloop-False-False-False]
+# name: test_move_sample_files_task[False-False-False]
   <class 'dict'> {
     '_id': 'foo',
     'is_compressed': False,
     'is_legacy': False,
   }
 ---
-# name: test_move_sample_files_task[uvloop-False-False-True]
+# name: test_move_sample_files_task[False-False-True]
   <class 'dict'> {
     '_id': 'foo',
     'files': <class 'list'> [
@@ -78,28 +78,28 @@
     'is_legacy': True,
   }
 ---
-# name: test_move_sample_files_task[uvloop-False-True-False]
+# name: test_move_sample_files_task[False-True-False]
   <class 'dict'> {
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': False,
   }
 ---
-# name: test_move_sample_files_task[uvloop-False-True-True]
+# name: test_move_sample_files_task[False-True-True]
   <class 'dict'> {
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': True,
   }
 ---
-# name: test_move_sample_files_task[uvloop-True-False-False]
+# name: test_move_sample_files_task[True-False-False]
   <class 'dict'> {
     '_id': 'foo',
     'is_compressed': False,
     'is_legacy': False,
   }
 ---
-# name: test_move_sample_files_task[uvloop-True-False-True]
+# name: test_move_sample_files_task[True-False-True]
   <class 'dict'> {
     '_id': 'foo',
     'files': <class 'list'> [
@@ -132,21 +132,21 @@
     'is_legacy': True,
   }
 ---
-# name: test_move_sample_files_task[uvloop-True-True-False]
+# name: test_move_sample_files_task[True-True-False]
   <class 'dict'> {
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': False,
   }
 ---
-# name: test_move_sample_files_task[uvloop-True-True-True]
+# name: test_move_sample_files_task[True-True-True]
   <class 'dict'> {
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': True,
   }
 ---
-# name: test_update_workflows_fields[uvloop-False]
+# name: test_update_workflows_fields[False]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test_id',
@@ -161,7 +161,7 @@
     },
   ]
 ---
-# name: test_update_workflows_fields[uvloop-True]
+# name: test_update_workflows_fields[True]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test_id',

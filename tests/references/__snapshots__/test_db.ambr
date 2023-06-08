@@ -1,7 +1,7 @@
-# name: test_delete_member[uvloop-groups]
+# name: test_delete_member[groups]
   'bar'
 ---
-# name: test_delete_member[uvloop-groups].1
+# name: test_delete_member[groups].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -19,10 +19,10 @@
     ],
   }
 ---
-# name: test_delete_member[uvloop-users]
+# name: test_delete_member[users]
   'bar'
 ---
-# name: test_delete_member[uvloop-users].1
+# name: test_delete_member[users].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -40,7 +40,7 @@
     ],
   }
 ---
-# name: test_edit_member[uvloop-group-None]
+# name: test_edit_member[group-None]
   <class 'dict'> {
     'build': True,
     'id': 'baz',
@@ -49,7 +49,7 @@
     'remove': True,
   }
 ---
-# name: test_edit_member[uvloop-group-None].1
+# name: test_edit_member[group-None].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -86,16 +86,16 @@
     ],
   }
 ---
-# name: test_edit_member[uvloop-group-reference]
+# name: test_edit_member[group-reference]
   None
 ---
-# name: test_edit_member[uvloop-group-reference].1
+# name: test_edit_member[group-reference].1
   None
 ---
-# name: test_edit_member[uvloop-group-subdocument]
+# name: test_edit_member[group-subdocument]
   None
 ---
-# name: test_edit_member[uvloop-group-subdocument].1
+# name: test_edit_member[group-subdocument].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -132,7 +132,7 @@
     ],
   }
 ---
-# name: test_edit_member[uvloop-user-None]
+# name: test_edit_member[user-None]
   <class 'dict'> {
     'build': True,
     'id': 'baz',
@@ -141,7 +141,7 @@
     'remove': True,
   }
 ---
-# name: test_edit_member[uvloop-user-None].1
+# name: test_edit_member[user-None].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -178,16 +178,16 @@
     ],
   }
 ---
-# name: test_edit_member[uvloop-user-reference]
+# name: test_edit_member[user-reference]
   None
 ---
-# name: test_edit_member[uvloop-user-reference].1
+# name: test_edit_member[user-reference].1
   None
 ---
-# name: test_edit_member[uvloop-user-subdocument]
+# name: test_edit_member[user-subdocument]
   None
 ---
-# name: test_edit_member[uvloop-user-subdocument].1
+# name: test_edit_member[user-subdocument].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -224,7 +224,7 @@
     ],
   }
 ---
-# name: test_fetch_and_update_release[uvloop]
+# name: test_fetch_and_update_release
   <class 'dict'> {
     'body': '
       * Added many new isolates for existing viruses.

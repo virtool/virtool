@@ -1,4 +1,4 @@
-# name: test_fake[uvloop]
+# name: test_fake
   <class 'dict'> {
     'id': 'bf1b993c',
     'name': 'musicians',
@@ -16,7 +16,7 @@
     ],
   }
 ---
-# name: test_fake[uvloop].1
+# name: test_fake.1
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -45,7 +45,7 @@
     'primary_group': None,
   }
 ---
-# name: test_fake[uvloop].2
+# name: test_fake.2
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -78,7 +78,7 @@
     'primary_group': None,
   }
 ---
-# name: test_fake[uvloop][job]
+# name: test_fake[job]
   <class 'dict'> {
     'acquired': False,
     'archived': False,

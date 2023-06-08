@@ -1,4 +1,4 @@
-# name: test_add_isolate[uvloop-None-False-empty-False]
+# name: test_add_isolate[None-False-empty-False]
   <class 'dict'> {
     'default': True,
     'id': '9pf',
@@ -8,7 +8,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-False-empty-False].1
+# name: test_add_isolate[None-False-empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -33,7 +33,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-False-empty-False].2
+# name: test_add_isolate[None-False-empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -83,7 +83,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-None-False-empty-True]
+# name: test_add_isolate[None-False-empty-True]
   <class 'dict'> {
     'default': True,
     'id': '9pf',
@@ -93,7 +93,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-False-empty-True].1
+# name: test_add_isolate[None-False-empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -118,7 +118,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-False-empty-True].2
+# name: test_add_isolate[None-False-empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -168,7 +168,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-None-False-not_empty-False]
+# name: test_add_isolate[None-False-not_empty-False]
   <class 'dict'> {
     'default': False,
     'id': '9pf',
@@ -178,7 +178,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-False-not_empty-False].1
+# name: test_add_isolate[None-False-not_empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -209,7 +209,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-False-not_empty-False].2
+# name: test_add_isolate[None-False-not_empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -259,7 +259,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-None-False-not_empty-True]
+# name: test_add_isolate[None-False-not_empty-True]
   <class 'dict'> {
     'default': True,
     'id': '9pf',
@@ -269,7 +269,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-False-not_empty-True].1
+# name: test_add_isolate[None-False-not_empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -300,7 +300,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-False-not_empty-True].2
+# name: test_add_isolate[None-False-not_empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -350,7 +350,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-None-True-empty-False]
+# name: test_add_isolate[None-True-empty-False]
   <class 'dict'> {
     'default': True,
     'id': '9pf',
@@ -360,7 +360,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-True-empty-False].1
+# name: test_add_isolate[None-True-empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -385,7 +385,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-True-empty-False].2
+# name: test_add_isolate[None-True-empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -435,7 +435,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-None-True-empty-True]
+# name: test_add_isolate[None-True-empty-True]
   <class 'dict'> {
     'default': True,
     'id': '9pf',
@@ -445,7 +445,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-True-empty-True].1
+# name: test_add_isolate[None-True-empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -470,7 +470,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-True-empty-True].2
+# name: test_add_isolate[None-True-empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -520,7 +520,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-None-True-not_empty-False]
+# name: test_add_isolate[None-True-not_empty-False]
   <class 'dict'> {
     'default': False,
     'id': '9pf',
@@ -530,7 +530,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-True-not_empty-False].1
+# name: test_add_isolate[None-True-not_empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -561,7 +561,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-True-not_empty-False].2
+# name: test_add_isolate[None-True-not_empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -611,7 +611,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-None-True-not_empty-True]
+# name: test_add_isolate[None-True-not_empty-True]
   <class 'dict'> {
     'default': True,
     'id': '9pf',
@@ -621,7 +621,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-None-True-not_empty-True].1
+# name: test_add_isolate[None-True-not_empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -652,7 +652,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-None-True-not_empty-True].2
+# name: test_add_isolate[None-True-not_empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -714,7 +714,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-empty-False]
+# name: test_add_isolate[isolate-False-empty-False]
   <class 'dict'> {
     'default': True,
     'id': 'isolate',
@@ -724,7 +724,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-empty-False].1
+# name: test_add_isolate[isolate-False-empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -749,7 +749,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-empty-False].2
+# name: test_add_isolate[isolate-False-empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -799,7 +799,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-empty-True]
+# name: test_add_isolate[isolate-False-empty-True]
   <class 'dict'> {
     'default': True,
     'id': 'isolate',
@@ -809,7 +809,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-empty-True].1
+# name: test_add_isolate[isolate-False-empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -834,7 +834,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-empty-True].2
+# name: test_add_isolate[isolate-False-empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -884,7 +884,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-not_empty-False]
+# name: test_add_isolate[isolate-False-not_empty-False]
   <class 'dict'> {
     'default': False,
     'id': 'isolate',
@@ -894,7 +894,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-not_empty-False].1
+# name: test_add_isolate[isolate-False-not_empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -925,7 +925,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-not_empty-False].2
+# name: test_add_isolate[isolate-False-not_empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -975,7 +975,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-not_empty-True]
+# name: test_add_isolate[isolate-False-not_empty-True]
   <class 'dict'> {
     'default': True,
     'id': 'isolate',
@@ -985,7 +985,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-not_empty-True].1
+# name: test_add_isolate[isolate-False-not_empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -1016,7 +1016,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-False-not_empty-True].2
+# name: test_add_isolate[isolate-False-not_empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1066,7 +1066,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-empty-False]
+# name: test_add_isolate[isolate-True-empty-False]
   <class 'dict'> {
     'default': True,
     'id': 'isolate',
@@ -1076,7 +1076,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-empty-False].1
+# name: test_add_isolate[isolate-True-empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -1101,7 +1101,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-empty-False].2
+# name: test_add_isolate[isolate-True-empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1151,7 +1151,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-empty-True]
+# name: test_add_isolate[isolate-True-empty-True]
   <class 'dict'> {
     'default': True,
     'id': 'isolate',
@@ -1161,7 +1161,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-empty-True].1
+# name: test_add_isolate[isolate-True-empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -1186,7 +1186,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-empty-True].2
+# name: test_add_isolate[isolate-True-empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1236,7 +1236,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-not_empty-False]
+# name: test_add_isolate[isolate-True-not_empty-False]
   <class 'dict'> {
     'default': False,
     'id': 'isolate',
@@ -1246,7 +1246,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-not_empty-False].1
+# name: test_add_isolate[isolate-True-not_empty-False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -1277,7 +1277,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-not_empty-False].2
+# name: test_add_isolate[isolate-True-not_empty-False].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1327,7 +1327,7 @@
     },
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-not_empty-True]
+# name: test_add_isolate[isolate-True-not_empty-True]
   <class 'dict'> {
     'default': True,
     'id': 'isolate',
@@ -1337,7 +1337,7 @@
     'source_type': 'bob',
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-not_empty-True].1
+# name: test_add_isolate[isolate-True-not_empty-True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -1368,7 +1368,7 @@
     'version': 1,
   }
 ---
-# name: test_add_isolate[uvloop-isolate-True-not_empty-True].2
+# name: test_add_isolate[isolate-True-not_empty-True].2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1430,7 +1430,7 @@
     },
   }
 ---
-# name: test_create[uvloop-data0][db]
+# name: test_create[data0][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'fb085f7f',
@@ -1487,7 +1487,7 @@
     },
   ]
 ---
-# name: test_create[uvloop-data0][return]
+# name: test_create[data0][return]
   <class 'dict'> {
     'abbreviation': 'TMV',
     'id': 'fb085f7f',
@@ -1524,7 +1524,7 @@
     'version': 0,
   }
 ---
-# name: test_create[uvloop-data1][db]
+# name: test_create[data1][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'fb085f7f',
@@ -1581,7 +1581,7 @@
     },
   ]
 ---
-# name: test_create[uvloop-data1][return]
+# name: test_create[data1][return]
   <class 'dict'> {
     'abbreviation': '',
     'id': 'fb085f7f',
@@ -1618,7 +1618,7 @@
     'version': 0,
   }
 ---
-# name: test_create_sequence[uvloop-None-None-None][change]
+# name: test_create_sequence[None-None-None][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1678,7 +1678,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-None-None-None][otu]
+# name: test_create_sequence[None-None-None][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -1696,7 +1696,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-None-None-None][return]
+# name: test_create_sequence[None-None-None][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -1712,7 +1712,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-None-None-None][sequence]
+# name: test_create_sequence[None-None-None][sequence]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'accession': 'abc123',
@@ -1728,7 +1728,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-None-None-host][change]
+# name: test_create_sequence[None-None-host][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1788,7 +1788,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-None-None-host][otu]
+# name: test_create_sequence[None-None-host][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -1806,7 +1806,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-None-None-host][return]
+# name: test_create_sequence[None-None-host][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -1822,7 +1822,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-None-None-host][sequence]
+# name: test_create_sequence[None-None-host][sequence]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'accession': 'abc123',
@@ -1838,7 +1838,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-None][change]
+# name: test_create_sequence[None-seg-None][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -1898,7 +1898,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-None][otu]
+# name: test_create_sequence[None-seg-None][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -1916,7 +1916,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-None][return]
+# name: test_create_sequence[None-seg-None][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -1932,7 +1932,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-None][sequence]
+# name: test_create_sequence[None-seg-None][sequence]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'accession': 'abc123',
@@ -1948,7 +1948,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-host][change]
+# name: test_create_sequence[None-seg-host][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2008,7 +2008,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-host][otu]
+# name: test_create_sequence[None-seg-host][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -2026,7 +2026,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-host][return]
+# name: test_create_sequence[None-seg-host][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -2042,7 +2042,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-None-seg-host][sequence]
+# name: test_create_sequence[None-seg-host][sequence]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'accession': 'abc123',
@@ -2058,7 +2058,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-None][change]
+# name: test_create_sequence[foobar-None-None][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2118,7 +2118,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-None][otu]
+# name: test_create_sequence[foobar-None-None][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -2136,7 +2136,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-None][return]
+# name: test_create_sequence[foobar-None-None][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -2152,7 +2152,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-None][sequence]
+# name: test_create_sequence[foobar-None-None][sequence]
   <class 'dict'> {
     '_id': 'foobar',
     'accession': 'abc123',
@@ -2168,7 +2168,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-host][change]
+# name: test_create_sequence[foobar-None-host][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2228,7 +2228,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-host][otu]
+# name: test_create_sequence[foobar-None-host][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -2246,7 +2246,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-host][return]
+# name: test_create_sequence[foobar-None-host][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -2262,7 +2262,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-None-host][sequence]
+# name: test_create_sequence[foobar-None-host][sequence]
   <class 'dict'> {
     '_id': 'foobar',
     'accession': 'abc123',
@@ -2278,7 +2278,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-None][change]
+# name: test_create_sequence[foobar-seg-None][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2338,7 +2338,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-None][otu]
+# name: test_create_sequence[foobar-seg-None][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -2356,7 +2356,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-None][return]
+# name: test_create_sequence[foobar-seg-None][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -2372,7 +2372,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-None][sequence]
+# name: test_create_sequence[foobar-seg-None][sequence]
   <class 'dict'> {
     '_id': 'foobar',
     'accession': 'abc123',
@@ -2388,7 +2388,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-host][change]
+# name: test_create_sequence[foobar-seg-host][change]
   <class 'dict'> {
     '_id': 'bar.4',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2448,7 +2448,7 @@
     },
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-host][otu]
+# name: test_create_sequence[foobar-seg-host][otu]
   <class 'dict'> {
     '_id': 'bar',
     'isolates': <class 'list'> [
@@ -2466,7 +2466,7 @@
     'version': 4,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-host][return]
+# name: test_create_sequence[foobar-seg-host][return]
   <class 'dict'> {
     'accession': 'abc123',
     'definition': 'A made up sequence',
@@ -2482,7 +2482,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[uvloop-foobar-seg-host][sequence]
+# name: test_create_sequence[foobar-seg-host][sequence]
   <class 'dict'> {
     '_id': 'foobar',
     'accession': 'abc123',
@@ -2498,7 +2498,7 @@
     'target': None,
   }
 ---
-# name: test_get_fasta[uvloop]
+# name: test_get_fasta
   <class 'tuple'> (
     'prunus_virus_f.fa',
     '
@@ -2509,7 +2509,7 @@
     ',
   )
 ---
-# name: test_get_sequence[uvloop-None]
+# name: test_get_sequence[None]
   <class 'dict'> {
     'accession': 'KX269872',
     'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
@@ -2527,7 +2527,7 @@
     'target': None,
   }
 ---
-# name: test_remove_isolate[uvloop-bar]
+# name: test_remove_isolate[bar]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -2626,7 +2626,7 @@
     ],
   ]
 ---
-# name: test_remove_isolate[uvloop-cab8b360]
+# name: test_remove_isolate[cab8b360]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -2754,7 +2754,7 @@
     ],
   ]
 ---
-# name: test_remove_sequence[uvloop]
+# name: test_remove_sequence
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -2779,7 +2779,7 @@
     'version': 1,
   }
 ---
-# name: test_remove_sequence[uvloop].1
+# name: test_remove_sequence.1
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2835,7 +2835,7 @@
     },
   }
 ---
-# name: test_set_default[uvloop]
+# name: test_set_default
   <class 'dict'> {
     'default': True,
     'id': 'bar',
@@ -2845,7 +2845,7 @@
     'source_type': 'isolate',
   }
 ---
-# name: test_set_default[uvloop].1
+# name: test_set_default.1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -2876,7 +2876,7 @@
     'version': 1,
   }
 ---
-# name: test_set_default[uvloop].2
+# name: test_set_default.2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2933,7 +2933,7 @@
     },
   }
 ---
-# name: test_update[uvloop-data0]
+# name: test_update[data0]
   <class 'dict'> {
     'abbreviation': 'TMV',
     'id': '6116cba1',
@@ -2980,7 +2980,7 @@
     'version': 1,
   }
 ---
-# name: test_update[uvloop-data0][db]
+# name: test_update[data0][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -3062,7 +3062,7 @@
     },
   ]
 ---
-# name: test_update_isolate[uvloop]
+# name: test_update_isolate
   <class 'dict'> {
     'default': True,
     'id': 'cab8b360',
@@ -3072,7 +3072,7 @@
     'source_type': 'strain',
   }
 ---
-# name: test_update_isolate[uvloop].1
+# name: test_update_isolate.1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -3097,7 +3097,7 @@
     'version': 1,
   }
 ---
-# name: test_update_isolate[uvloop].2
+# name: test_update_isolate.2
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -3154,7 +3154,7 @@
     },
   }
 ---
-# name: test_update_sequence[uvloop-ATAGAG GAGTA\nAGAGTGA][db]
+# name: test_update_sequence[ATAGAG GAGTA\nAGAGTGA][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -3304,7 +3304,7 @@
     },
   ]
 ---
-# name: test_update_sequence[uvloop-ATAGAG GAGTA\nAGAGTGA][return]
+# name: test_update_sequence[ATAGAG GAGTA\nAGAGTGA][return]
   <class 'dict'> {
     'accession': '987xyz',
     'definition': 'Hello world',
@@ -3320,7 +3320,7 @@
     'sequence': 'ATAGAGGAGTAAGAGTGA',
   }
 ---
-# name: test_update_sequence[uvloop-None][db]
+# name: test_update_sequence[None][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': '6116cba1',
@@ -3456,7 +3456,7 @@
     },
   ]
 ---
-# name: test_update_sequence[uvloop-None][return]
+# name: test_update_sequence[None][return]
   <class 'dict'> {
     'accession': '987xyz',
     'definition': 'Hello world',

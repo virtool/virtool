@@ -1,7 +1,7 @@
-# name: TestCreate.test[uvloop-force_choice]
+# name: TestCreate.test[force_choice]
   '/samples/fb085f7f'
 ---
-# name: TestCreate.test[uvloop-force_choice].1
+# name: TestCreate.test[force_choice].1
   <class 'dict'> {
     'all_read': True,
     'all_write': True,
@@ -70,7 +70,7 @@
     },
   }
 ---
-# name: TestCreate.test[uvloop-force_choice].2
+# name: TestCreate.test[force_choice].2
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -116,10 +116,10 @@
     },
   }
 ---
-# name: TestCreate.test[uvloop-none]
+# name: TestCreate.test[none]
   '/samples/fb085f7f'
 ---
-# name: TestCreate.test[uvloop-none].1
+# name: TestCreate.test[none].1
   <class 'dict'> {
     'all_read': True,
     'all_write': True,
@@ -188,7 +188,7 @@
     },
   }
 ---
-# name: TestCreate.test[uvloop-none].2
+# name: TestCreate.test[none].2
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -234,10 +234,10 @@
     },
   }
 ---
-# name: TestCreate.test[uvloop-users_primary_group]
+# name: TestCreate.test[users_primary_group]
   '/samples/fb085f7f'
 ---
-# name: TestCreate.test[uvloop-users_primary_group].1
+# name: TestCreate.test[users_primary_group].1
   <class 'dict'> {
     'all_read': True,
     'all_write': True,
@@ -306,7 +306,7 @@
     },
   }
 ---
-# name: TestCreate.test[uvloop-users_primary_group].2
+# name: TestCreate.test[users_primary_group].2
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -352,10 +352,10 @@
     },
   }
 ---
-# name: TestCreateCache.test[uvloop-key]
+# name: TestCreateCache.test[key]
   '/samples/test/caches/a1b2c3d4'
 ---
-# name: TestCreateCache.test[uvloop-key].1
+# name: TestCreateCache.test[key].1
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
@@ -371,7 +371,7 @@
     },
   }
 ---
-# name: TestEdit.test[uvloop]
+# name: TestEdit.test
   <class 'dict'> {
     'all_read': True,
     'all_write': True,
@@ -447,19 +447,19 @@
     },
   }
 ---
-# name: TestEdit.test_label_exists[uvloop][json]
+# name: TestEdit.test_label_exists[json]
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Labels do not exist: [1]',
   }
 ---
-# name: TestEdit.test_subtraction_exists[uvloop][json]
+# name: TestEdit.test_subtraction_exists[json]
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Subtractions do not exist: bar',
   }
 ---
-# name: TestFindSamples.test_labels[uvloop-None]
+# name: TestFindSamples.test_labels[None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -569,7 +569,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_labels[uvloop-labels1]
+# name: TestFindSamples.test_labels[labels1]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -611,7 +611,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_labels[uvloop-labels2]
+# name: TestFindSamples.test_labels[labels2]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -690,7 +690,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_labels[uvloop-labels3]
+# name: TestFindSamples.test_labels[labels3]
   <class 'dict'> {
     'documents': <class 'list'> [
     ],
@@ -701,7 +701,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_page_perpage[uvloop-2-1]
+# name: TestFindSamples.test_page_perpage[2-1]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -780,7 +780,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_page_perpage[uvloop-2-2]
+# name: TestFindSamples.test_page_perpage[2-2]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -822,7 +822,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_page_perpage[uvloop-None-None]
+# name: TestFindSamples.test_page_perpage[None-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -932,7 +932,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-None-/samples]
+# name: TestFindSamples.test_term[None-/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1042,7 +1042,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-None-/spaces/0/samples]
+# name: TestFindSamples.test_term[None-/spaces/0/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1152,7 +1152,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-gv-/samples]
+# name: TestFindSamples.test_term[gv-/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1231,7 +1231,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-gv-/spaces/0/samples]
+# name: TestFindSamples.test_term[gv-/spaces/0/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1310,7 +1310,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-sp-/samples]
+# name: TestFindSamples.test_term[sp-/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1352,7 +1352,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_term[uvloop-sp-/spaces/0/samples]
+# name: TestFindSamples.test_term[sp-/spaces/0/samples]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1394,7 +1394,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_workflows[uvloop-None]
+# name: TestFindSamples.test_workflows[None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1504,7 +1504,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_workflows[uvloop-workflows1]
+# name: TestFindSamples.test_workflows[workflows1]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1552,7 +1552,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_workflows[uvloop-workflows2]
+# name: TestFindSamples.test_workflows[workflows2]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1662,7 +1662,7 @@
     'total_count': 3,
   }
 ---
-# name: TestFindSamples.test_workflows[uvloop-workflows3]
+# name: TestFindSamples.test_workflows[workflows3]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1735,7 +1735,7 @@
     'total_count': 3,
   }
 ---
-# name: TestGet.test_get[uvloop-administrator][json]
+# name: TestGet.test_get[administrator][json]
   <class 'dict'> {
     'all_read': False,
     'all_write': True,
@@ -1815,7 +1815,7 @@
     },
   }
 ---
-# name: TestGet.test_get[uvloop-all_read][json]
+# name: TestGet.test_get[all_read][json]
   <class 'dict'> {
     'all_read': True,
     'all_write': True,
@@ -1895,7 +1895,7 @@
     },
   }
 ---
-# name: TestGet.test_get[uvloop-group_read][json]
+# name: TestGet.test_get[group_read][json]
   <class 'dict'> {
     'all_read': False,
     'all_write': True,
@@ -1975,13 +1975,13 @@
     },
   }
 ---
-# name: TestGet.test_get[uvloop-not_in_group][json]
+# name: TestGet.test_get[not_in_group][json]
   <class 'dict'> {
     'id': 'insufficient_rights',
     'message': 'Insufficient rights',
   }
 ---
-# name: TestGet.test_get[uvloop-owner][json]
+# name: TestGet.test_get[owner][json]
   <class 'dict'> {
     'all_read': False,
     'all_write': True,
@@ -2061,7 +2061,7 @@
     },
   }
 ---
-# name: TestUploadReads.test_upload_reads[uvloop-True]
+# name: TestUploadReads.test_upload_reads[True]
   <class 'dict'> {
     'id': 1,
     'name': 'reads_1.fq.gz',
@@ -2072,7 +2072,7 @@
     'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_analyze[uvloop-None]
+# name: test_analyze[None]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'id': 'test_analysis',
@@ -2107,7 +2107,7 @@
     'workflow': 'pathoscope_bowtie',
   }
 ---
-# name: test_finalize[uvloop-quality]
+# name: test_finalize[quality]
   <class 'dict'> {
     'artifacts': <class 'list'> [
       <class 'dict'> {
@@ -2151,7 +2151,7 @@
     },
   }
 ---
-# name: test_finalize_cache[uvloop-quality]
+# name: test_finalize_cache[quality]
   <class 'dict'> {
     'id': 'test',
     'key': 'aodp-abcdefgh',
@@ -2163,7 +2163,7 @@
     },
   }
 ---
-# name: test_find_analyses[uvloop-Baz-None]
+# name: test_find_analyses[Baz-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -2232,7 +2232,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_analyses[uvloop-None-None]
+# name: test_find_analyses[None-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -2330,7 +2330,7 @@
     'total_count': 3,
   }
 ---
-# name: test_get_cache[uvloop-None]
+# name: test_get_cache[None]
   <class 'dict'> {
     'id': 'bar',
     'key': 'abc123',
@@ -2340,7 +2340,7 @@
     },
   }
 ---
-# name: test_upload_artifact[uvloop-None]
+# name: test_upload_artifact[None]
   <class 'dict'> {
     'id': 1,
     'name': 'small.fq',
@@ -2351,7 +2351,7 @@
     'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_upload_artifact_cache[uvloop-None]
+# name: test_upload_artifact_cache[None]
   <class 'dict'> {
     'id': 1,
     'key': 'aodp-abcdefgh',
@@ -2363,7 +2363,7 @@
     'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_upload_reads_cache[uvloop-False]
+# name: test_upload_reads_cache[False]
   <class 'dict'> {
     'id': 1,
     'key': 'aodp-abcdefgh',
@@ -2374,7 +2374,7 @@
     'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_upload_reads_cache[uvloop-True]
+# name: test_upload_reads_cache[True]
   <class 'dict'> {
     'id': 2,
     'key': 'aodp-abcdefgh',

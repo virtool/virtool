@@ -1,4 +1,4 @@
-# name: TestUpdate.test[uvloop]
+# name: TestUpdate.test
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -34,31 +34,31 @@
     },
   }
 ---
-# name: TestUpdate.test_non_existent_primary_group[uvloop]
+# name: TestUpdate.test_non_existent_primary_group
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Non-existent group: managers',
   }
 ---
-# name: TestUpdate.test_not_a_member_of_primary_group[uvloop]
+# name: TestUpdate.test_not_a_member_of_primary_group
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'User is not member of group',
   }
 ---
-# name: TestUpdate.test_not_found[uvloop]
+# name: TestUpdate.test_not_found
   <class 'dict'> {
     'id': 'not_found',
     'message': 'User does not exist',
   }
 ---
-# name: TestUpdate.test_short_password[uvloop]
+# name: TestUpdate.test_short_password
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Password does not meet minimum length requirement (8)',
   }
 ---
-# name: TestUpdate.test_with_groups[uvloop]
+# name: TestUpdate.test_with_groups
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -95,7 +95,7 @@
     'primary_group': None,
   }
 ---
-# name: test_add_permission[uvloop-invalid_permission]
+# name: test_add_permission[invalid_permission]
   <class 'list'> [
     <class 'dict'> {
       'ctx': <class 'dict'> {
@@ -203,10 +203,10 @@
     },
   ]
 ---
-# name: test_add_permission[uvloop-valid_permission]
+# name: test_add_permission[valid_permission]
   True
 ---
-# name: test_create[uvloop-None]
+# name: test_create[None]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -235,7 +235,7 @@
     'primary_group': None,
   }
 ---
-# name: test_create[uvloop-None].2
+# name: test_create[None].2
   <class 'dict'> {
     '_id': 'fb085f7f',
     'active': True,
@@ -265,10 +265,10 @@
     },
   }
 ---
-# name: test_create[uvloop-None][location]
+# name: test_create[None][location]
   '/users/fb085f7f'
 ---
-# name: test_find[uvloop-None]
+# name: test_find[None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -339,7 +339,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find[uvloop-fred]
+# name: test_find[fred]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -370,7 +370,7 @@
     'total_count': 3,
   }
 ---
-# name: test_get[uvloop-200]
+# name: test_get[200]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -410,17 +410,17 @@
     },
   }
 ---
-# name: test_get[uvloop-404]
+# name: test_get[404]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_list_permissions[uvloop-bob]
+# name: test_list_permissions[bob]
   <class 'list'> [
   ]
 ---
-# name: test_list_permissions[uvloop-test]
+# name: test_list_permissions[test]
   <class 'list'> [
     <class 'dict'> {
       'id': 'reference_builder',
@@ -430,7 +430,7 @@
     },
   ]
 ---
-# name: test_remove_permission[uvloop-invalid_permission]
+# name: test_remove_permission[invalid_permission]
   <class 'list'> [
     <class 'dict'> {
       'ctx': <class 'dict'> {
@@ -538,6 +538,6 @@
     },
   ]
 ---
-# name: test_remove_permission[uvloop-valid_permission]
+# name: test_remove_permission[valid_permission]
   True
 ---
