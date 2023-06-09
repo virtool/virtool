@@ -1,7 +1,6 @@
 import pytest
 from virtool.flags import (
     FF_ADMINISTRATOR_ROLES,
-    FF_ML_MODELS,
     FF_SPACES,
     check_flag_enabled,
     FeatureFlags,
@@ -10,10 +9,9 @@ from virtool.flags import (
 
 def test_check_flag_enabled():
     FeatureFlags.flags = ["FF_ML_MODELS"]
-    feature_flags = FeatureFlags()
 
     assert check_flag_enabled("FF_ADMINISTRATOR_ROLES") == FF_ADMINISTRATOR_ROLES
-    assert check_flag_enabled("FF_ML_MODELS") == True
+    assert check_flag_enabled("FF_ML_MODELS") is True
     assert check_flag_enabled("FF_SPACES") == FF_SPACES
 
 

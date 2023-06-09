@@ -16,7 +16,7 @@ routes = virtool.http.routes.Routes()
 
 class FeatureFlags:
     """
-    Class contains the derived value of the feature flags to determine whether to enable a feature
+    Class contains the derived value of the feature flags and cli flag config
     """
 
     flags = []
@@ -36,15 +36,16 @@ class FeatureFlags:
             )
 
 
-def check_flag_enabled(flag: str):
+def check_flag_enabled(feature_flag: str):
     derived_feature_flags = FeatureFlags()
 
-    if flag == "FF_ADMINISTRATOR_ROLES":
+    if feature_flag == "FF_ADMINISTRATOR_ROLES":
         return derived_feature_flags.FF_ADMINISTRATOR_ROLES
-    if flag == "FF_ML_MODELS":
+    if feature_flag == "FF_ML_MODELS":
         return derived_feature_flags.FF_ML_MODELS
-    if flag == "FF_SPACES":
+    if feature_flag == "FF_SPACES":
         return derived_feature_flags.FF_SPACES
+    return None
 
 
 def flag(feature_flag: str):
@@ -59,13 +60,13 @@ def flag(feature_flag: str):
     def func(route):
         if check_flag_enabled(feature_flag):
             return route
-        else:
-            return FeatureOff
+        return FeatureOff
 
     return func
 
 
 @routes.view("/featureoff")
+@staticmethod
 class FeatureOff(PydanticView):
     def get(self):
         raise HTTPNotFound(text="API route off")
