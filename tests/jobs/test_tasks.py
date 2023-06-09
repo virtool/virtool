@@ -1,8 +1,7 @@
 import pytest
-
-from virtool.jobs.client import DummyJobsClient
 from virtool_core.models.job import JobState
 
+from virtool.jobs.client import DummyJobsClient
 from virtool.jobs.data import JobsData
 
 

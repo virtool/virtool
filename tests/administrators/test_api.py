@@ -195,6 +195,6 @@ class TestUpdateUser:
 async def test_run_actions(spawn_client, fake2, snapshot, mongo, name, status):
     client = await spawn_client(authorize=True, administrator=True)
 
-    resp = await client.put(f"/admin/actions", {"name": name})
+    resp = await client.put("/admin/actions", {"name": name})
 
     assert resp.status == status
