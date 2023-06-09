@@ -21,6 +21,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
+from virtool.flags import flag
 
 routes = Routes()
 
@@ -31,6 +32,7 @@ AVAILABLE_ROLES = [
 
 
 @routes.view("/admin/roles")
+@flag("FF_ADMINISTRATOR_ROLES")
 class RolesView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def get(self) -> r200[ListRolesResponse]:
