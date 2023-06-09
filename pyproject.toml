@@ -28,7 +28,6 @@ classifiers = [
 profile = "black"
 
 [tool.poetry.dependencies]
-aiohttp-devtools = "^0.0.2"
 python = "~3.10"
 aiofiles = "^0.7.0"
 aiohttp = {extras = ["speedups"], version = "^3.8.1"}
@@ -79,6 +78,7 @@ virtool = "virtool.config.cli:entry"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
+aiohttp-devtools = "^0.0.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

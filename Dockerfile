@@ -14,5 +14,5 @@ COPY alembic.ini poetry.lock pyproject.toml run.py VERSION* /virtool/
 COPY virtool /virtool/virtool
 COPY assets /virtool/assets
 EXPOSE 9950
-ENTRYPOINT ["adev runserver", "run.py"]
+ENTRYPOINT ["python", "run.py"]
 CMD ["server"]
