@@ -1,0 +1,20 @@
+# name: test_relist_jobs[preparing-False]
+  <class 'list'> [
+  ]
+---
+# name: test_relist_jobs[waiting-False]
+  <class 'list'> [
+    <class 'tuple'> (
+      'jobs_pathoscope_bowtie',
+      'fb085f7f',
+    ),
+  ]
+---
+# name: test_relist_jobs[waiting-True]
+  <class 'list'> [
+    <class 'tuple'> (
+      'jobs_pathoscope_bowtie',
+      'fb085f7f',
+    ),
+  ]
+---

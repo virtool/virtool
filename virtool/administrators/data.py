@@ -1,12 +1,14 @@
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User, UserSearchResult
 
 import virtool
+from virtool.administrators.actions import get_action_from_name
 from virtool.administrators.db import update_legacy_administrator
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.api.utils import paginate_aggregate, compose_regex_query
+from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -21,9 +23,6 @@ from virtool.users.db import (
     update_keys,
     compose_groups_update,
 )
-
-from virtool.authorization.client import AuthorizationClient
-
 
 PROJECTION = [
     "_id",
@@ -246,3 +245,14 @@ class AdministratorsData(DataLayerPiece):
             await self._authorization_client.add(
                 AdministratorRoleAssignment(user_id, AdministratorRole.FULL)
             )
+
+    async def run_action(self, name: str):
+        """
+        Run an action
+
+        Runs an action with the given name.
+
+        :param name: the name of the action to run
+        :return: the result of the action
+        """
+        return await get_action_from_name(name).run(self.data)
