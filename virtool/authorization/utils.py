@@ -80,7 +80,7 @@ async def connect_openfga(
         await write_openfga_authorization_model(api_instance)
 
     except ClientConnectorError:
-        logger.fatal("Could not connect to OpenFGA")
+        logger.critical("Could not connect to OpenFGA")
         sys.exit(1)
 
     return api_instance

@@ -1,17 +1,17 @@
-# name: test_upgrade[uvloop-ad_user]
+# name: test_upgrade[ad_user]
   <class 'dict'> {
     '_id': 'abc123',
     'b2c_family_name': 'bar',
     'b2c_given_name': 'foo',
   }
 ---
-# name: test_upgrade[uvloop-existing_user]
+# name: test_upgrade[existing_user]
   <class 'dict'> {
     '_id': 'abc123',
     'handle': 'abc123',
   }
 ---
-# name: test_upgrade[uvloop-user_with_handle]
+# name: test_upgrade[user_with_handle]
   <class 'dict'> {
     '_id': 'abc123',
     'handle': 'bar',

@@ -1,4 +1,4 @@
-# name: TestCheckNuvsBlast.test_bad_zip_file[uvloop]
+# name: TestCheckNuvsBlast.test_bad_zip_file
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': 'Unable to interpret NCBI result',
@@ -11,7 +11,7 @@
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
   }
 ---
-# name: TestCheckNuvsBlast.test_result[uvloop]
+# name: TestCheckNuvsBlast.test_result
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -37,7 +37,7 @@
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
   }
 ---
-# name: TestCheckNuvsBlast.test_running[uvloop][after]
+# name: TestCheckNuvsBlast.test_running[after]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -50,7 +50,7 @@
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
   }
 ---
-# name: TestCheckNuvsBlast.test_running[uvloop][before]
+# name: TestCheckNuvsBlast.test_running[before]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -63,10 +63,10 @@
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
   }
 ---
-# name: test_create_nuvs_blast[uvloop]
+# name: test_create_nuvs_blast
   <SQLNuVsBlast(id=1, analysis_id=analysis, sequence_index=21, created_at=2015-10-06 20:00:00, updated_at=2015-10-06 20:00:00, last_checked_at=2015-10-06 20:00:00, error=None, interval=3, rid=None, ready=False, result=None, task_id=1)>
 ---
-# name: test_list_by_analysis[uvloop]
+# name: test_list_by_analysis
   <class 'list'> [
     <class 'dict'> {
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),

@@ -1,4 +1,4 @@
-# name: test_finalize[uvloop]
+# name: test_finalize
   <class 'dict'> {
     'change_count': 0,
     'contributors': <class 'list'> [
@@ -97,7 +97,7 @@
     'version': 2,
   }
 ---
-# name: test_finalize[uvloop].1
+# name: test_finalize.1
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),

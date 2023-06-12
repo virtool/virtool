@@ -1,9 +1,9 @@
-# name: test_hmm_install_task[uvloop]
+# name: test_hmm_install_task
   <class 'list'> [
     <Task(id=1, complete=True, context={}, count=0, created_at=2015-10-06 20:00:00, error=None, file_size=None, progress=100, step=install, type=install_hmms)>,
   ]
 ---
-# name: test_hmm_install_task[uvloop].1
+# name: test_hmm_install_task.1
   <class 'list'> [
     <class 'dict'> {
       '_id': 'bf1b993c',

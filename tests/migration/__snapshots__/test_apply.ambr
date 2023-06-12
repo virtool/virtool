@@ -1,4 +1,4 @@
-# name: test_apply_revisions[uvloop]
+# name: test_apply_revisions
   <class 'list'> [
     <class 'dict'> {
       'applied_at': <class 'datetime'>,
@@ -76,6 +76,13 @@
       'id': 11,
       'name': 'Add space field',
       'revision': 's607ucxpct81',
+    },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 12,
+      'name': 'Populate sample workflows field',
+      'revision': '1zg28cpib2uj',
     },
   ]
 ---

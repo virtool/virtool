@@ -13,10 +13,15 @@ from virtool.config.cls import TaskSpawnerConfig
 from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import TasksClient
+from virtool.tasks.data import TasksData
 from virtool.tasks.models import Task as SQLTask
-from virtool.tasks.spawner import spawn
+from virtool.tasks.spawn import spawn
+from virtool.tasks.spawner import (
+    TaskSpawnerService,
+    PeriodicTask,
+)
 from virtool.tasks.task import BaseTask
-from virtool.utils import get_temp_dir
+from virtool.utils import get_temp_dir, timestamp
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -132,9 +137,7 @@ def test_channel():
 
 
 @pytest.fixture
-def task_spawner(
-        mongo_connection_string,
-        mongo_name,
+def spawn_task(
     pg_connection_string: str,
     redis_connection_string: str,
     mocker,
@@ -163,7 +166,7 @@ def tasks_client(redis):
 @pytest.mark.parametrize("valid_task", [True, False])
 async def test_spawn(
     valid_task,
-    task_spawner,
+    spawn_task,
     tasks_client: TasksClient,
     pg: AsyncEngine,
     snapshot,
@@ -173,7 +176,7 @@ async def test_spawn(
     error = None
 
     try:
-        await task_spawner(task_name)
+        await spawn_task(task_name)
     except ResourceError as e:
         error = e
 
@@ -223,3 +226,49 @@ async def test_progress_handler_set_error(task: BaseTask, pg: AsyncEngine):
 
     await tracker.set_error("GenericError")
     assert (await get_row_by_id(pg, SQLTask, 1)).error == "GenericError"
+
+
+async def test_register(pg: AsyncEngine, tasks_data: TasksData):
+    await tasks_data.create(DummyBaseTask)
+    await tasks_data.create(DummyTask)
+    await tasks_data.create(DummyBaseTask)
+
+    results = await tasks_data.find()
+    result = results[2]
+    created_at = result.created_at
+
+    task_spawner_service = TaskSpawnerService(pg, tasks_data)
+
+    tasks = [(DummyBaseTask, 10), (DummyTask, 15)]
+
+    await task_spawner_service.register(tasks)
+
+    assert task_spawner_service._registered[0].last_triggered == created_at
+
+
+async def test_check_or_spawn_task(pg: AsyncEngine, tasks_data: TasksData, static_time):
+    """
+    First case tests that the task has spawned, second case ensures that it does not
+    """
+    task_spawner_service = TaskSpawnerService(pg, tasks_data)
+
+    task_spawner_service._registered.append(
+        PeriodicTask(DummyTask, interval=60, last_triggered=static_time.datetime)
+    )
+
+    spawned_task = await task_spawner_service.check_or_spawn_task(
+        task_spawner_service._registered[0]
+    )
+
+    assert spawned_task.last_triggered != static_time.datetime
+
+    recent_time = timestamp()
+    task_spawner_service._registered.append(
+        PeriodicTask(DummyBaseTask, interval=60, last_triggered=recent_time)
+    )
+
+    not_spawned_task = await task_spawner_service.check_or_spawn_task(
+        task_spawner_service._registered[1]
+    )
+
+    assert not_spawned_task.last_triggered == recent_time

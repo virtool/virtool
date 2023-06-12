@@ -117,7 +117,6 @@ def show_revisions():
     )
 
     print(f"Found {len(all_revisions)} revisions\n")
-
     print("Date\t\t", "ID\t", "Source", "Name", sep="\t")
 
     for revision in all_revisions:

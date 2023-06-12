@@ -1,4 +1,4 @@
-# name: test_create_fake_otus[uvloop]
+# name: test_create_fake_otus
   <class 'list'> [
     <class 'dict'> {
       '_id': 'fb085f7f',
@@ -108,7 +108,7 @@
     },
   ]
 ---
-# name: test_create_fake_otus[uvloop].1
+# name: test_create_fake_otus.1
   <class 'list'> [
     <class 'dict'> {
       '_id': 'c2uyoYJd',

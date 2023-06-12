@@ -1,6 +1,24 @@
 import pytest
+
 import virtool.errors
 import virtool.references.db
+from virtool.startup import startup_http_client
+
+
+@pytest.fixture
+async def fake_app():
+    version = "v1.2.3"
+
+    app = {"version": version}
+
+    yield app
+
+    # Close real session created in `test_startup_executors()`.
+    try:
+        await app["client"].close()
+    except TypeError:
+        pass
+
 
 RIGHTS = {"build": False, "modify": False, "modify_otu": False, "remove": False}
 
@@ -177,3 +195,23 @@ async def test_delete_member(field, snapshot, mongo):
 
     assert subdocument_id == snapshot
     assert await mongo.references.find_one() == snapshot
+
+
+async def test_fetch_and_update_release(mongo, fake_app, snapshot, static_time):
+    await startup_http_client(fake_app)
+
+    await mongo.references.insert_one(
+        {
+            "_id": "fake_ref_id",
+            "installed": {"name": "1.0.0-fake-install"},
+            "release": {"name": "1.0.0-fake-release"},
+            "remotes_from": {"slug": "virtool/ref-plant-viruses"},
+        }
+    )
+
+    assert (
+        await virtool.references.db.fetch_and_update_release(
+            mongo, fake_app["client"], "fake_ref_id", False
+        )
+        == snapshot
+    )

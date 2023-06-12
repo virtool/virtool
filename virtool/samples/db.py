@@ -7,18 +7,21 @@ import logging
 import os
 from asyncio import to_thread
 from collections import defaultdict
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+from motor.motor_asyncio import AsyncIOMotorClientSession
+from pymongo.results import DeleteResult
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.samples import WorkflowState
+from virtool_core.models.settings import Settings
+from virtool_core.utils import compress_file, rm, file_stats
 
 import virtool.errors
 import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo.results import DeleteResult
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
@@ -30,8 +33,6 @@ from virtool.types import Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
-from virtool_core.models.settings import Settings
-from virtool_core.utils import compress_file, rm, file_stats
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -83,13 +84,6 @@ RIGHTS_PROJECTION = {
     "all_write": True,
     "user": True,
 }
-
-
-class WorkflowState(Enum):
-    COMPLETE = "complete"
-    INCOMPATIBLE = "incompatible"
-    NONE = "none"
-    PENDING = "pending"
 
 
 UNCHANGABLE_WORKFLOW_STATES = [
@@ -344,12 +338,15 @@ def get_workflow_name(workflow_name: str) -> str:
     return workflow_name
 
 
-async def recalculate_workflow_tags(db, sample_id: str) -> dict:
+async def recalculate_workflow_tags(
+    db, sample_id: str, session: Optional[AsyncIOMotorClientSession] = None
+) -> dict:
     """
     Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param db: the application database client
     :param sample_id: the id of the sample to recalculate tags for
+    :param session: an optional MongoDB session to use
     :return: the updated sample document
 
     """
@@ -365,7 +362,10 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     }
 
     document = await db.samples.find_one_and_update(
-        {"_id": sample_id}, {"$set": update}, projection=LIST_PROJECTION
+        {"_id": sample_id},
+        {"$set": update},
+        projection=LIST_PROJECTION,
+        session=session,
     )
 
     return document

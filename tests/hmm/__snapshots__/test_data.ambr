@@ -1,4 +1,4 @@
-# name: test_get_status[uvloop]
+# name: test_get_status
   <class 'dict'> {
     'errors': <class 'list'> [
     ],

@@ -5,22 +5,17 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
 from semver import VersionInfo
 
-from virtool.migration.check import check_data_revision_version
-
 MINIMUM_MONGO_VERSION = "3.6.0"
 
 logger = getLogger("mongo")
 
 
-async def connect_mongo(
-    connection_string: str, db_name: str, skip_revision_check: bool
-) -> AsyncIOMotorDatabase:
+async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDatabase:
     """
     Connect to a MongoDB server and return an application database object.
 
     :param connection_string: the mongoDB connection string
     :param db_name: the database name
-    :param skip_revision_check: skips check for required MongoDB revision if set
     :return: database
 
     """
@@ -35,9 +30,6 @@ async def connect_mongo(
         sys.exit(1)
 
     await check_mongo_version(mongo_client)
-
-    if not skip_revision_check:
-        await check_data_revision_version(mongo_client[db_name])
 
     return mongo_client[db_name]
 
