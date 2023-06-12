@@ -142,7 +142,7 @@ speedups = ["Brotli", "aiodns", "cchardet"]
 name = "aiohttp-debugtoolbar"
 version = "0.6.0"
 description = "debugtoolbar for aiohttp"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -158,7 +158,7 @@ aiohttp-jinja2 = "*"
 name = "aiohttp-devtools"
 version = "0.0.2"
 description = "Dev tools for aiohttp"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -179,7 +179,7 @@ watchdog = ">=0.8.3"
 name = "aiohttp-jinja2"
 version = "1.5.1"
 description = "jinja2 template renderer for aiohttp.web (http server for asyncio)"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1404,7 +1404,7 @@ files = [
 name = "isort"
 version = "5.12.0"
 description = "A Python utility / library to sort Python imports."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.8.0"
 files = [
@@ -2717,7 +2717,7 @@ files = [
 name = "trafaret"
 version = "2.1.1"
 description = "Validation and parsing library"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -2733,7 +2733,7 @@ rfc3339 = ["python-dateutil (>=1.5)"]
 name = "trafaret-config"
 version = "2.0.2"
 description = "A configuration library for python using trafaret and yaml"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -2872,7 +2872,7 @@ cli = ["Fiona (>=1.6.2,<2)"]
 name = "watchdog"
 version = "3.0.0"
 description = "Filesystem events monitoring"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2999,4 +2999,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "357a27b24b29bebcafbfbdcfde1305102b2270ba4c69c49c1896c0a1b2775006"
+content-hash = "887eca7300faf639967a687f685f6dd78e2df24f7ed7ebeaa87f94ac4199a79a"
