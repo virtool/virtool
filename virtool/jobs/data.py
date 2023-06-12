@@ -1,3 +1,4 @@
+import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
@@ -527,3 +528,34 @@ class JobsData:
                     },
                     session=session,
                 )
+
+    async def relist(self):
+        """
+        Relist jobs in redis.
+
+        Relists jobs in redis which are in the waiting state and are not in the queue.
+
+        """
+        listed_jobs = await self._client.list()
+
+        relistable_jobs = await self._mongo.jobs.find(
+            {
+                "_id": {"$nin": listed_jobs},
+                "state": JobState.WAITING.value,
+            }
+        ).to_list(None)
+
+        await asyncio.sleep(10)
+
+        listed_jobs = await self._client.list()
+
+        async for job in self._mongo.jobs.find(
+            {
+                "_id": {
+                    "$nin": listed_jobs,
+                    "$in": [job["_id"] for job in relistable_jobs],
+                },
+                "state": JobState.WAITING.value,
+            }
+        ):
+            await self._client.enqueue(job["workflow"], job["_id"])

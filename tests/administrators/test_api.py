@@ -188,3 +188,13 @@ class TestUpdateUser:
             body = await resp.json()
             assert body["force_reset"] is True
             assert body == snapshot
+
+
+@pytest.mark.apitest
+@pytest.mark.parametrize("name,status", [("relist_jobs", 202), ("foo", 400)])
+async def test_run_actions(spawn_client, fake2, snapshot, mongo, name, status):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    resp = await client.put("/admin/actions", {"name": name})
+
+    assert resp.status == status
