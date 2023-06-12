@@ -41,7 +41,7 @@ class BLASTTask(BaseTask):
 
         self.analysis_id = self.context["analysis_id"]
         self.sequence_index = self.context["sequence_index"]
-        self.interval = Optional[int] = None
+        self.interval: Optional[int] = None
         self.steps = [self.request]
         self.rid: Optional[str] = None
 
