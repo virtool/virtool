@@ -106,7 +106,7 @@ class TestUpdate:
         client, _ = setup_update_group
 
         resp = await client.patch(
-            f"/groups/ghosts",
+            "/groups/ghosts",
             data={"name": "Real boys"},
         )
 

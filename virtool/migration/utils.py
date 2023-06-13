@@ -3,7 +3,7 @@ from pathlib import Path
 
 def get_revisions_path() -> Path:
     """
-    Get the hardcoded path to data revision files.
+    Get the hardcoded path to Virtool revision files.
 
     :return: the revisions path
 

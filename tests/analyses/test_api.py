@@ -677,6 +677,6 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
         }
     )
 
-    resp = await client.patch(f"/analyses/analysis1", json=patch_json)
+    resp = await client.patch("/analyses/analysis1", json=patch_json)
 
     assert resp.status == 200

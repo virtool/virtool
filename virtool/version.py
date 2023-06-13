@@ -21,7 +21,7 @@ async def determine_server_version(install_path: Optional[Path] = Path.cwd()):
         async with aiofiles.open(install_path / "VERSION", "r") as version_file:
             return (await version_file.read()).rstrip()
     except FileNotFoundError:
-        logger.critical("Could not determine software version.")
+        logger.warning("Could not determine software version.")
         return "Unknown"
 
 

@@ -1,19 +1,33 @@
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+
 from virtool.migration.check import check_data_revision_version
+from virtool.migration.model import SQLRevision
+from virtool.utils import timestamp
 
 
-async def test_check_revision(mongo, spawn_client):
-    await mongo.migrations.insert_one(
-        {
-            "_id": "test",
-            "applied_at": "2022-11-16T23:58:55.651Z",
-            "created_at": "2022-06-09T20:38:11Z",
-            "name": "Nest analysis results field",
-            "revision_id": "7emq1brv0zz6",
-        }
-    )
+@pytest.mark.parametrize("revision", ["test_2", "test_missing"])
+async def test_check_data_revision_version(revision: str, mocker, pg: AsyncEngine):
+    mocker.patch("virtool.migration.check.REQUIRED_VIRTOOL_REVISION", revision)
 
-    try:
-        await check_data_revision_version(mongo)
+    async with AsyncSession(pg) as session:
+        for suffix in (1, 2, 3):
+            session.add(
+                SQLRevision(
+                    name=f"Test {suffix}",
+                    revision=f"test_{suffix}",
+                    created_at=timestamp(),
+                    applied_at=timestamp(),
+                )
+            )
 
-    except SystemExit as e:
-        assert e.code == 1
+        await session.commit()
+
+    if revision == "test_2":
+        await check_data_revision_version(pg)
+
+    if revision == "test_missing":
+        with pytest.raises(SystemExit) as exc:
+            await check_data_revision_version(pg)
+
+        assert exc.value.code == 1

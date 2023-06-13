@@ -1,14 +1,14 @@
-# name: test_increment_otu_version[uvloop]
+# name: test_increment_otu_version
   <class 'dict'> {
     '_id': 'foo',
     'verified': False,
     'version': 4,
   }
 ---
-# name: test_join[uvloop-False-False][return]
+# name: test_join[False-False][return]
   None
 ---
-# name: test_join[uvloop-False-True][return]
+# name: test_join[False-True][return]
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -49,7 +49,7 @@
     'version': 0,
   }
 ---
-# name: test_join[uvloop-True-False][return]
+# name: test_join[True-False][return]
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -90,7 +90,7 @@
     'version': 0,
   }
 ---
-# name: test_join[uvloop-True-True][return]
+# name: test_join[True-True][return]
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',

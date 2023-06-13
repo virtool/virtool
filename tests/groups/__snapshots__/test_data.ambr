@@ -1,4 +1,4 @@
-# name: test_update[uvloop][added]
+# name: test_update[added]
   <class 'dict'> {
     'cancel_job': False,
     'create_ref': False,
@@ -10,7 +10,7 @@
     'upload_file': False,
   }
 ---
-# name: test_update[uvloop][removed]
+# name: test_update[removed]
   <class 'dict'> {
     'cancel_job': False,
     'create_ref': False,

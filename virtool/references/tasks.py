@@ -170,7 +170,7 @@ class UpdateRemoteReferenceTask(BaseTask):
             self.create_progress_handler(), self.download_size
         )
 
-        path = self.temp_path / "reference.tar.gz"
+        path = self.temp_path / "reference.json.gz"
 
         try:
             await download_file(self.download_url, path, tracker.add)

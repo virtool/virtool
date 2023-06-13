@@ -1,4 +1,4 @@
-# name: test_upgrade[uvloop]
+# name: test_upgrade
   <class 'list'> [
     <class 'dict'> {
       '_id': 'bat',

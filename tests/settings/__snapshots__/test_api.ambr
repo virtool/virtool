@@ -1,4 +1,4 @@
-# name: test_get[uvloop]
+# name: test_get
   <class 'dict'> {
     'default_source_types': <class 'list'> [
       'isolate',
@@ -16,7 +16,7 @@
     'sample_unique_names': True,
   }
 ---
-# name: test_update[uvloop]
+# name: test_update
   <class 'dict'> {
     'default_source_types': <class 'list'> [
       'isolate',

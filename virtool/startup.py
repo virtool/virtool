@@ -3,7 +3,6 @@ import concurrent.futures
 import logging
 import sys
 from dataclasses import dataclass
-from typing import Dict
 
 import aiohttp.client
 import aiojobs
@@ -11,8 +10,7 @@ import aiojobs.aiohttp
 import pymongo.errors
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
-from virtool.mongo.connect import connect_mongo
-from virtool.pg.utils import connect_pg
+
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 from virtool.config import get_config_from_app
@@ -22,10 +20,13 @@ from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
+from virtool.migration.check import check_data_revision_version
+from virtool.mongo.connect import connect_mongo
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
+from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
 from virtool.sentry import setup
 from virtool.tasks.client import TasksClient
@@ -163,7 +164,6 @@ async def startup_databases(app: App):
         connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_database,
-            config.no_revision_check,
         ),
         connect_pg(config.postgres_connection_string),
         connect(config.redis_connection_string),
@@ -171,6 +171,9 @@ async def startup_databases(app: App):
             config.openfga_host, config.openfga_scheme, config.openfga_store_name
         ),
     )
+
+    if not get_config_from_app(app).no_revision_check:
+        await check_data_revision_version(pg)
 
     scheduler = get_scheduler_from_app(app)
     await scheduler.spawn(periodically_ping_redis(redis))

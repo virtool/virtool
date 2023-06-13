@@ -1,4 +1,4 @@
-# name: TestLabelsFetcher.test_insert_and_update[uvloop-insert]
+# name: TestLabelsFetcher.test_insert_and_update[insert]
   <class 'list'> [
     <class 'dict'> {
       'data': <class 'dict'> {
@@ -35,7 +35,7 @@
     },
   ]
 ---
-# name: TestLabelsFetcher.test_insert_and_update[uvloop-update]
+# name: TestLabelsFetcher.test_insert_and_update[update]
   <class 'list'> [
     <class 'dict'> {
       'data': <class 'dict'> {
@@ -72,7 +72,7 @@
     },
   ]
 ---
-# name: TestUploadsFetcher.test_insert_and_update[uvloop-insert]
+# name: TestUploadsFetcher.test_insert_and_update[insert]
   <class 'list'> [
     <class 'dict'> {
       'data': <class 'dict'> {
@@ -142,7 +142,7 @@
     },
   ]
 ---
-# name: TestUploadsFetcher.test_insert_and_update[uvloop-update]
+# name: TestUploadsFetcher.test_insert_and_update[update]
   <class 'list'> [
     <class 'dict'> {
       'data': <class 'dict'> {

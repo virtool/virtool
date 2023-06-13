@@ -1,0 +1,68 @@
+version: "3.1"
+
+services:
+  mongo:
+    image: bitnami/mongodb:6.0.6
+    environment:
+      MONGODB_REPLICA_SET_MODE: primary
+      MONGODB_REPLICA_SET_KEY: virtool
+      MONGODB_ROOT_PASSWORD: virtool
+      MONGODB_ADVERTISED_HOSTNAME: localhost
+      MONGODB_ADVERTISED_PORT: 9001
+      MONGODB_PORT_NUMBER: 9001
+    ports:
+      - 9001:9001
+
+  postgres:
+    command: -c fsync=off -c shared_buffers=2000MB
+    environment:
+      POSTGRES_PASSWORD: virtool
+      POSTGRES_USER: virtool
+      POSTGRES_DB: virtool
+    image: postgres:14.5
+    ports:
+      - 9002:5432
+
+  redis:
+    image: redis:6.0
+    command: redis-server --requirepass virtool
+    ports:
+      - 9003:6379
+
+  postgres-openfga:
+    image: postgres:14.5
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: openfga
+    healthcheck:
+      test: pg_isready -U virtool -d virtool
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  migrate:
+    image: openfga/openfga:v0.2.5
+    depends_on:
+      postgres-openfga:
+        condition: service_healthy
+    command: |
+      migrate
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://postgres:password@postgres-openfga:5432/openfga
+
+  openfga:
+    image: openfga/openfga:v0.2.5
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://postgres:password@postgres-openfga:5432/openfga
+      OPENFGA_LOG_FORMAT: json
+    command: run
+    depends_on:
+      - postgres-openfga
+      - migrate
+    ports:
+      - "9004:8080"
+      - "9005:3000"
+

@@ -10,7 +10,6 @@ from virtool.migration.model import SQLRevision
 from virtool.migration.pg import fetch_last_applied_revision, list_applied_revision_ids
 from virtool.migration.show import load_alembic_revisions, load_virtool_revisions
 
-
 logger = getLogger("migration")
 
 
@@ -36,21 +35,35 @@ async def apply(config: MigrationConfig, revision_id: str):
 
     last_applied_revision = await fetch_last_applied_revision(ctx.pg)
 
-    for revision in all_revisions:
+    if last_applied_revision:
+        logger.info(
+            "Last applied revision id='%s' name=%s",
+            last_applied_revision.id,
+            last_applied_revision.name,
+        )
+    else:
+        logger.info("No applied revisions found")
 
-        if revision.id in await list_applied_revision_ids(ctx.pg):
+    applied_revision_ids = await list_applied_revision_ids(ctx.pg)
+
+    for revision in all_revisions:
+        logger.info("Checking revision id='%s' name=%s", revision.id, revision.name)
+
+        if revision.id in applied_revision_ids:
+            logger.info(
+                "Revision is already applied id='%s' name=%s",
+                revision.id,
+                revision.name,
+            )
+
             continue
 
         if last_applied_revision is None or (
             revision.created_at > last_applied_revision.created_at
         ):
-
             if revision.source == RevisionSource.VIRTOOL:
-
                 await apply_one_revision(ctx, revision)
-
             else:
-
                 call(["alembic", "upgrade", revision.id])
 
         if revision_id != "latest" and revision.id == revision_id:

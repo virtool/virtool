@@ -1,4 +1,4 @@
-# name: TestFind.test_find[uvloop]
+# name: TestFind.test_find
   <class 'list'> [
     <class 'dict'> {
       'color': '#955887',
@@ -16,7 +16,7 @@
     },
   ]
 ---
-# name: TestFind.test_find_by_name[uvloop]
+# name: TestFind.test_find_by_name
   <class 'list'> [
     <class 'dict'> {
       'color': '#629F70',
@@ -27,11 +27,11 @@
     },
   ]
 ---
-# name: TestFind.test_find_by_name[uvloop].1
+# name: TestFind.test_find_by_name.1
   <class 'list'> [
   ]
 ---
-# name: test_edit[uvloop-None]
+# name: test_edit[None]
   <class 'dict'> {
     'color': '#629F70',
     'count': 2,
@@ -40,7 +40,7 @@
     'name': 'Summer',
   }
 ---
-# name: test_get[uvloop-200]
+# name: test_get[200]
   <class 'dict'> {
     'color': '#629F70',
     'count': 2,
@@ -49,16 +49,16 @@
     'name': 'Three',
   }
 ---
-# name: test_get[uvloop-404]
+# name: test_get[404]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_remove[uvloop-204]
+# name: test_remove[204]
   None
 ---
-# name: test_remove[uvloop-404]
+# name: test_remove[404]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',

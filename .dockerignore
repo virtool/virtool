@@ -1,6 +1,6 @@
 .codacy.yml
 .coveragerc
-.pytest_cache
+.github
 .idea
 .pytest_cache
 data

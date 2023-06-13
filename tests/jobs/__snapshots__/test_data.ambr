@@ -1,4 +1,4 @@
-# name: test_acquire[uvloop]
+# name: test_acquire
   <class 'dict'> {
     'acquired': True,
     'archived': False,
@@ -32,7 +32,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_acquire[uvloop].1
+# name: test_acquire.1
   <class 'dict'> {
     '_id': 'foo',
     'acquired': True,
@@ -59,7 +59,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_archive[uvloop]
+# name: test_archive
   <class 'dict'> {
     'acquired': False,
     'archived': True,
@@ -92,7 +92,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_archive[uvloop].1
+# name: test_archive.1
   <class 'dict'> {
     '_id': 'foo',
     'acquired': False,
@@ -119,7 +119,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_cancel[uvloop]
+# name: test_cancel
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -152,7 +152,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_cancel[uvloop].1
+# name: test_cancel.1
   <class 'dict'> {
     '_id': 'foo',
     'archived': False,
@@ -176,7 +176,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_create[uvloop-None]
+# name: test_create[None]
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -221,7 +221,7 @@
     'workflow': 'create_sample',
   }
 ---
-# name: test_create[uvloop-None].1
+# name: test_create[None].1
   <class 'dict'> {
     '_id': 'bf1b993c',
     'acquired': False,
@@ -265,7 +265,7 @@
     'workflow': 'create_sample',
   }
 ---
-# name: test_create[uvloop-bar]
+# name: test_create[bar]
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -310,7 +310,7 @@
     'workflow': 'create_sample',
   }
 ---
-# name: test_create[uvloop-bar].1
+# name: test_create[bar].1
   <class 'dict'> {
     '_id': 'bar',
     'acquired': False,
@@ -354,7 +354,7 @@
     'workflow': 'create_sample',
   }
 ---
-# name: test_timeout[uvloop]
+# name: test_timeout
   <class 'list'> [
     <class 'dict'> {
       '_id': 'ok_new',

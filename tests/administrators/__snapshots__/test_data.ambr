@@ -1,4 +1,4 @@
-# name: TestUpdate.test[uvloop-force_reset][db]
+# name: TestUpdate.test[force_reset][db]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'active': True,
@@ -29,7 +29,7 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-force_reset][obj]
+# name: TestUpdate.test[force_reset][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -62,7 +62,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[uvloop-groups][db]
+# name: TestUpdate.test[groups][db]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'active': True,
@@ -94,7 +94,7 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-groups][obj]
+# name: TestUpdate.test[groups][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -134,7 +134,7 @@
     },
   }
 ---
-# name: TestUpdate.test_password[uvloop][db]
+# name: TestUpdate.test_password[db]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'active': True,
@@ -164,7 +164,7 @@
     },
   }
 ---
-# name: TestUpdate.test_password[uvloop][obj]
+# name: TestUpdate.test_password[obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -193,7 +193,7 @@
     'primary_group': None,
   }
 ---
-# name: test_find_users[uvloop-False-None]
+# name: test_find_users[False-None]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -231,7 +231,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-False-missing-handle]
+# name: test_find_users[False-missing-handle]
   <class 'dict'> {
     'found_count': 0,
     'items': <class 'list'> [
@@ -242,7 +242,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-False-test_user]
+# name: test_find_users[False-test_user]
   <class 'dict'> {
     'found_count': 0,
     'items': <class 'list'> [
@@ -253,7 +253,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-None-None]
+# name: test_find_users[None-None]
   <class 'dict'> {
     'found_count': 3,
     'items': <class 'list'> [
@@ -356,7 +356,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-None-missing-handle]
+# name: test_find_users[None-missing-handle]
   <class 'dict'> {
     'found_count': 0,
     'items': <class 'list'> [
@@ -367,7 +367,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-None-test_user]
+# name: test_find_users[None-test_user]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -416,7 +416,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-True-None]
+# name: test_find_users[True-None]
   <class 'dict'> {
     'found_count': 2,
     'items': <class 'list'> [
@@ -492,7 +492,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-True-missing-handle]
+# name: test_find_users[True-missing-handle]
   <class 'dict'> {
     'found_count': 0,
     'items': <class 'list'> [
@@ -503,7 +503,7 @@
     'total_count': 3,
   }
 ---
-# name: test_find_users[uvloop-True-test_user]
+# name: test_find_users[True-test_user]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -552,7 +552,7 @@
     'total_count': 3,
   }
 ---
-# name: test_get_user[uvloop-False]
+# name: test_get_user[False]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -588,7 +588,7 @@
     },
   }
 ---
-# name: test_get_user[uvloop-True]
+# name: test_get_user[True]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -624,7 +624,7 @@
     },
   }
 ---
-# name: test_set_admin_role[uvloop-None][obj]
+# name: test_set_admin_role[None][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -653,7 +653,7 @@
     'primary_group': None,
   }
 ---
-# name: test_set_admin_role[uvloop-base][obj]
+# name: test_set_admin_role[base][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -682,7 +682,7 @@
     'primary_group': None,
   }
 ---
-# name: test_set_admin_role[uvloop-full][obj]
+# name: test_set_admin_role[full][obj]
   <class 'dict'> {
     'active': True,
     'administrator': True,

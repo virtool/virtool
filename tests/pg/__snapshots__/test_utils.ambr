@@ -1,10 +1,10 @@
-# name: test_get_row[uvloop]
+# name: test_get_row
   <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
 ---
-# name: test_get_row[uvloop].1
+# name: test_get_row.1
   <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
 ---
-# name: test_get_rows[uvloop]
+# name: test_get_rows
   <class 'ScalarResult'> {
     closed=False,
   }

@@ -113,7 +113,6 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
         virtool.mongo.connect.connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_name,
-            skip_revision_check=True,
         ),
         connect_openfga(
             config.openfga_host, config.openfga_scheme, config.openfga_store_name

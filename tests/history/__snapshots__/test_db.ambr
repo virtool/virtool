@@ -1,4 +1,4 @@
-# name: TestAdd.test[uvloop]
+# name: TestAdd.test
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -47,7 +47,7 @@
     },
   }
 ---
-# name: TestAdd.test[uvloop].1
+# name: TestAdd.test.1
   <class 'dict'> {
     '_id': '6116cba1.1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -96,7 +96,7 @@
     },
   }
 ---
-# name: TestAdd.test_create[uvloop]
+# name: TestAdd.test_create
   <class 'dict'> {
     '_id': '6116cba1.0',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -151,7 +151,7 @@
     },
   }
 ---
-# name: TestAdd.test_create[uvloop].1
+# name: TestAdd.test_create.1
   <class 'dict'> {
     '_id': '6116cba1.0',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -206,7 +206,7 @@
     },
   }
 ---
-# name: TestAdd.test_remove[uvloop]
+# name: TestAdd.test_remove
   <class 'dict'> {
     '_id': '6116cba1.removed',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -261,7 +261,7 @@
     },
   }
 ---
-# name: TestAdd.test_remove[uvloop].1
+# name: TestAdd.test_remove.1
   <class 'dict'> {
     '_id': '6116cba1.removed',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -316,10 +316,10 @@
     },
   }
 ---
-# name: test_get_most_recent_change[uvloop-False]
+# name: test_get_most_recent_change[False]
   None
 ---
-# name: test_get_most_recent_change[uvloop-True]
+# name: test_get_most_recent_change[True]
   <class 'dict'> {
     '_id': '6116cba1.2',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -335,7 +335,7 @@
     },
   }
 ---
-# name: test_patch_to_version[uvloop-False]
+# name: test_patch_to_version[False]
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'TST',
@@ -354,7 +354,7 @@
     'version': 3,
   }
 ---
-# name: test_patch_to_version[uvloop-False].1
+# name: test_patch_to_version[False].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'TST',
@@ -390,16 +390,16 @@
     'version': 1,
   }
 ---
-# name: test_patch_to_version[uvloop-False].2
+# name: test_patch_to_version[False].2
   <class 'list'> [
     '6116cba1.3',
     '6116cba1.2',
   ]
 ---
-# name: test_patch_to_version[uvloop-True]
+# name: test_patch_to_version[True]
   None
 ---
-# name: test_patch_to_version[uvloop-True].1
+# name: test_patch_to_version[True].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'TST',
@@ -435,7 +435,7 @@
     'version': 1,
   }
 ---
-# name: test_patch_to_version[uvloop-True].2
+# name: test_patch_to_version[True].2
   <class 'list'> [
     '6116cba1.removed',
     '6116cba1.3',

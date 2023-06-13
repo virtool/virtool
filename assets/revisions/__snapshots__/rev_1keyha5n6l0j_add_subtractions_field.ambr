@@ -1,4 +1,4 @@
-# name: test_upgrade[uvloop][analyses]
+# name: test_upgrade[analyses]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'foo',
@@ -19,7 +19,7 @@
     },
   ]
 ---
-# name: test_upgrade[uvloop][samples]
+# name: test_upgrade[samples]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'foo',

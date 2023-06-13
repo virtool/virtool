@@ -1,4 +1,4 @@
-# name: test_promote_administrators[uvloop]
+# name: test_promote_administrators
   <class 'dict'> {
     'found_count': 2,
     'items': <class 'list'> [

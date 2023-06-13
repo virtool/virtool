@@ -1,4 +1,4 @@
-# name: test_attach_user_transform[uvloop-False]
+# name: test_attach_user_transform[False]
   <class 'dict'> {
     '_id': 'bar',
     'user': <class 'dict'> {
@@ -8,7 +8,7 @@
     },
   }
 ---
-# name: test_attach_user_transform[uvloop-True]
+# name: test_attach_user_transform[True]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'bar',
@@ -36,7 +36,7 @@
     },
   ]
 ---
-# name: test_update_keys[uvloop-False-False-False]
+# name: test_update_keys[False-False-False]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': False,
@@ -59,7 +59,7 @@
     },
   }
 ---
-# name: test_update_keys[uvloop-False-False-True]
+# name: test_update_keys[False-False-True]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -82,7 +82,7 @@
     },
   }
 ---
-# name: test_update_keys[uvloop-False-True-False]
+# name: test_update_keys[False-True-False]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': False,
@@ -105,7 +105,7 @@
     },
   }
 ---
-# name: test_update_keys[uvloop-False-True-True]
+# name: test_update_keys[False-True-True]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -128,7 +128,7 @@
     },
   }
 ---
-# name: test_update_keys[uvloop-True-False-False]
+# name: test_update_keys[True-False-False]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': False,
@@ -151,7 +151,7 @@
     },
   }
 ---
-# name: test_update_keys[uvloop-True-False-True]
+# name: test_update_keys[True-False-True]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -174,7 +174,7 @@
     },
   }
 ---
-# name: test_update_keys[uvloop-True-True-False]
+# name: test_update_keys[True-True-False]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': False,
@@ -197,7 +197,7 @@
     },
   }
 ---
-# name: test_update_keys[uvloop-True-True-True]
+# name: test_update_keys[True-True-True]
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
