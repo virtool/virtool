@@ -61,7 +61,7 @@ def create_data_layer(
         AdministratorsData(authorization_client, mongo),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
-        GroupsData(authorization_client, mongo),
+        GroupsData(authorization_client, mongo, pg),
         HistoryData(config.data_path, mongo),
         HmmData(client, config, mongo, pg),
         IndexData(mongo, config, pg),

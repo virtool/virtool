@@ -95,11 +95,12 @@ async def engine(
 
 
 @pytest.fixture(scope="function")
-async def pg(loop, engine):
+async def pg(loop, engine: AsyncEngine):
     async with AsyncSession(engine) as session:
         await session.execute(
             text(
                 """TRUNCATE TABLE analysis_files,
+                                groups,
                                 labels,
                                 sample_artifacts,
                                 subtraction_files,
