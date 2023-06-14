@@ -83,10 +83,9 @@ class BLASTTask(BaseTask):
 
                     break
 
-                else:
-                    logger.info("Restarting BLAST: %s", self.rid)
+                logger.info("Restarting BLAST: %s", self.rid)
 
-                    continue
+                continue
 
             except asyncio.CancelledError:
                 await self.data.blast.delete_nuvs_blast(
