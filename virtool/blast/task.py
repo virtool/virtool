@@ -49,11 +49,6 @@ class BLASTTask(BaseTask):
         """
         Make the initial request to NCBI to start a BLAST search.
 
-        Wait until the BLAST search completes.
-
-        Keep check the BLAST status on NCBI with increasingly longer intervals between
-        checks.
-
         Checks are conducted by the data layer and will store the results or error
         when the search completes. The task completes when either an error or
 
@@ -61,49 +56,17 @@ class BLASTTask(BaseTask):
         search exceeds 10 minutes. The search interval is reset if multiple
         BLAST attempts are required
         """
-
-        async def wait():
-            while True:
-                await asyncio.sleep(self.interval)
-
-                blast = await self.data.blast.check_nuvs_blast(
-                    self.analysis_id, self.sequence_index
-                )
-
-                if blast.ready:
-                    logger.info("Retrieved result for BLAST %s", blast.rid)
-                    break
-
-                if blast.error:
-                    logger.info(
-                        "Encountered error for BLAST %s: %s",
-                        blast.rid,
-                        blast.error,
-                    )
-                    await self._set_error(blast.error)
-                    break
-
-                self.interval += 5
-
-                logger.debug(
-                    "Checked BLAST %s. Waiting %s seconds",
-                    blast.rid,
-                    self.interval,
-                )
-
         blast_timeout_count: int = 0
 
         while True:
             try:
-                self.interval = 3
-
                 blast = await self.data.blast.initialize_on_ncbi(
                     self.analysis_id, self.sequence_index
                 )
 
                 self.rid = blast.rid
 
-                await asyncio.wait_for(wait(), 600)
+                await asyncio.wait_for(self.wait_for_blast_search(), 600)
 
                 break
 
@@ -134,3 +97,40 @@ class BLASTTask(BaseTask):
                 logger.info("Deleted BLAST due to cancellation: %s", self.rid)
 
                 break
+
+    async def wait_for_blast_search(self):
+        """
+        Wait until the BLAST search completes.
+
+        Keep check the BLAST status on NCBI with increasingly longer intervals between
+        checks.
+        """
+        self.interval = 3
+
+        while True:
+            await asyncio.sleep(self.interval)
+
+            blast = await self.data.blast.check_nuvs_blast(
+                self.analysis_id, self.sequence_index
+            )
+
+            if blast.ready:
+                logger.info("Retrieved result for BLAST %s", blast.rid)
+                break
+
+            if blast.error:
+                logger.info(
+                    "Encountered error for BLAST %s: %s",
+                    blast.rid,
+                    blast.error,
+                )
+                await self._set_error(blast.error)
+                break
+
+            self.interval += 5
+
+            logger.debug(
+                "Checked BLAST %s. Waiting %s seconds",
+                blast.rid,
+                self.interval,
+            )
