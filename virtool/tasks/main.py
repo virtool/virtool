@@ -26,6 +26,7 @@ from virtool.startup import (
     startup_version,
 )
 from virtool.tasks.api import TaskServicesRootView
+from virtool.tasks.runner import shutdown_task_runner
 
 
 async def startup_dispatcher_sql_listener(app: Application):
@@ -73,6 +74,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
     app.on_shutdown.extend(
         [
+            shutdown_task_runner,
             shutdown_scheduler,
             shutdown_authorization_client,
             shutdown_client,
@@ -87,6 +89,4 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 def run_task_runner(config: TaskRunnerConfig):
     app = create_task_runner_app(config)
 
-    aiohttp.web.run_app(
-        app=app, host=config.host, port=config.port
-    )
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
