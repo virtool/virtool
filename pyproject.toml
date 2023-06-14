@@ -78,6 +78,7 @@ virtool = "virtool.config.cli:entry"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
+aiohttp-devtools = "^0.0.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

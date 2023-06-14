@@ -29,7 +29,6 @@ async def upgrade(ctx: RevisionContext):
         await collection.update_many(
             {"space": {"$exists": False}},
             {"$set": {"space": 0}},
-            session=ctx.mongo.session,
         )
 
 

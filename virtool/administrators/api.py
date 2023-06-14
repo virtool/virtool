@@ -2,8 +2,9 @@ import asyncio
 from typing import Union, Optional
 
 from aiohttp.web_exceptions import HTTPForbidden, HTTPBadRequest
+from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r404
+from aiohttp_pydantic.oas.typing import r200, r404, r202, r400
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.utils import document_enum
 
@@ -13,11 +14,12 @@ from virtool.administrators.oas import (
     ListRolesResponse,
     UpdateUserRequest,
     UserResponse,
+    RunActionRequest,
 )
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import get_authorization_client_from_req
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError, ResourceError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
@@ -187,3 +189,25 @@ class AdminRoleView(PydanticView):
             raise NotFound()
 
         return json_response(administrator, status=200)
+
+
+@routes.view("/admin/actions")
+class AdminActionsView(PydanticView):
+    @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
+    async def put(self, data: RunActionRequest) -> Union[r202, r400]:
+        """
+        Initiate an action
+
+        Starts an action with the given name.
+
+        Status Codes:
+            200: Successful operation
+            404: User not found
+        """
+
+        try:
+            await get_data_from_req(self.request).administrators.run_action(data.name)
+        except ResourceError:
+            raise HTTPBadRequest(text="Invalid action name")
+
+        return Response(status=202)

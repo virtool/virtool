@@ -5,6 +5,17 @@ from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.validators import prevent_none
 
 
+class RunActionRequest(BaseModel):
+    """
+    Used when running an action on a task
+    """
+
+    name: str = Field(description="the action to run")
+
+    class Config:
+        schema_extra = {"example": {"name": "relist_jobs"}}
+
+
 class UpdateAdministratorRoleRequest(BaseModel):
     """
     Used when adding a user as an administrator
