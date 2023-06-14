@@ -53,8 +53,7 @@ class BLASTTask(BaseTask):
         when the search completes. The task completes when either an error or
 
         The BLAST will be retried up to 3 times if a single BLAST
-        search exceeds 10 minutes. The search interval is reset if multiple
-        BLAST attempts are required
+        search exceeds 10 minutes.
         """
         blast_timeout_count: int = 0
 
