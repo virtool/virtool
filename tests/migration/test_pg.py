@@ -6,11 +6,10 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.matchers import path_type
 
-from virtool.migration.model import SQLRevision
 from virtool.migration.pg import (
     check_revision_applied,
     fetch_last_applied_revision,
-    list_applied_revisions,
+    list_applied_revisions, SQLRevision,
 )
 
 

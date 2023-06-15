@@ -136,10 +136,8 @@ def migration():
 def migration_apply(**kwargs):
     """Apply all pending migrations."""
     configure_logs(False)
-
-    logger.info("Applying migrations")
-
-    asyncio.run(apply(MigrationConfig(**kwargs), "latest"))
+    logger.info("Starting migration")
+    asyncio.run(apply(MigrationConfig(**kwargs)))
 
 
 @migration.command("create")
@@ -153,7 +151,6 @@ def migration_create(name: str):
 def migration_show(**kwargs):
     """Apply all pending migrations."""
     configure_logs(False)
-
     show_revisions()
 
 

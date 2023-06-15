@@ -8,20 +8,20 @@ Date: 2022-06-09 22:04:28.890559
 from asyncio import gather
 
 import arrow
-
-# Revision identifiers.
 from pymongo import UpdateOne
 
-from virtool.migration.ctx import RevisionContext
+from virtool.migration import MigrationContext
 
 name = "Add subtractions field"
 created_at = arrow.get("2022-06-09 22:04:28.890559")
 revision_id = "1keyha5n6l0j"
-required_alembic_revision = None
+
+alembic_down_revision = None
+virtool_down_revision = "7emq1brv0zz6"
 
 
-async def upgrade(ctx: RevisionContext):
-    for collection in (ctx.mongo.database.analyses, ctx.mongo.database.samples):
+async def upgrade(ctx: MigrationContext):
+    for collection in (ctx.mongo.analyses, ctx.mongo.samples):
         updates = []
 
         async for document in collection.find({"subtraction": {"$exists": True}}):
@@ -38,10 +38,11 @@ async def upgrade(ctx: RevisionContext):
             updates.append(update)
 
         if updates:
-            await collection.bulk_write(updates, session=ctx.mongo.session)
+            async with await ctx.mongo.client.start_session() as session, session.start_transaction():
+                await collection.bulk_write(updates, session=session)
 
 
-async def test_upgrade(ctx, snapshot):
+async def test_upgrade(ctx: MigrationContext, snapshot):
     await gather(
         ctx.mongo.samples.insert_many(
             [
@@ -59,8 +60,7 @@ async def test_upgrade(ctx, snapshot):
         ),
     )
 
-    async with ctx.revision_context() as revision_ctx:
-        await upgrade(revision_ctx)
+    await upgrade(ctx)
 
     assert await ctx.mongo.analyses.find().to_list(None) == snapshot(name="analyses")
     assert await ctx.mongo.samples.find().to_list(None) == snapshot(name="samples")
