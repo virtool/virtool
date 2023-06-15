@@ -38,10 +38,10 @@ class TaskRunner:
 
                 self._current_task_id = await self._tasks_client.pop()
 
-                await self.run_task()
+                await self._run_task()
 
         except asyncio.CancelledError:
-            await self.shutdown()
+            await self._shutdown()
 
             raise
 
@@ -50,7 +50,7 @@ class TaskRunner:
 
             capture_exception(err)
 
-    async def run_task(self):
+    async def _run_task(self):
         """
         Run task given by `self._current_task_id`.
         """
@@ -74,7 +74,7 @@ class TaskRunner:
 
                 self._current_task_id = None
 
-    async def shutdown(self):
+    async def _shutdown(self):
         """
         Gracefully shutdown the task runner.
 
