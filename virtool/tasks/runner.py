@@ -15,6 +15,15 @@ from sentry_sdk import capture_exception
 SHUTDOWN_TIMEOUT: int = 600
 
 
+async def shutdown_task_runner(app: Application):
+    """
+    Raise an `asyncio.CancelledError` in the running task runner.
+
+    :param app: Current running application.
+    """
+    await app["task_runner"].close(timeout=sys.maxsize)
+
+
 class TaskRunner:
     def __init__(self, tasks_client: AbstractTasksClient, app: Application):
         self._tasks_client = tasks_client
@@ -92,12 +101,3 @@ class TaskRunner:
                 raise
 
         logging.info("Task Runner shutting down")
-
-
-async def shutdown_task_runner(app: Application):
-    """
-    Raise an `asyncio.CancelledError` in the running task runner.
-
-    :param app: Current running application.
-    """
-    await app["task_runner"].close(timeout=sys.maxsize)
