@@ -55,6 +55,7 @@ class BLASTTask(BaseTask):
         The BLAST will be retried up to 3 times if a single BLAST
         search exceeds 10 minutes.
         """
+
         blast_timeout_count: int = 0
 
         while True:
@@ -103,6 +104,7 @@ class BLASTTask(BaseTask):
         Keep check the BLAST status on NCBI with increasingly longer intervals between
         checks.
         """
+
         self.interval = 3
 
         while True:
