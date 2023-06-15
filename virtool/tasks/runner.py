@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 
 from aiohttp.abc import Application
 
@@ -12,16 +11,16 @@ from virtool.tasks.task import BaseTask
 from sentry_sdk import capture_exception
 
 
-SHUTDOWN_TIMEOUT: int = 600
-
-
 async def shutdown_task_runner(app: Application):
     """
     Raise an `asyncio.CancelledError` in the running task runner.
 
     :param app: Current running application.
     """
-    await app["task_runner"].close(timeout=sys.maxsize)
+    await app["task_runner"].close(timeout=float("inf"))
+
+
+SHUTDOWN_TIMEOUT: int = 600
 
 
 class TaskRunner:
