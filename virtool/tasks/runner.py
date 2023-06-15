@@ -29,7 +29,7 @@ class TaskRunner:
         self._tasks_client = tasks_client
         self.app = app
         self._current_task: BaseTask = None
-        self._current_task_id = None
+        self._current_task_id: int = None
 
     async def run(self):
         try:
