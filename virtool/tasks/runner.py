@@ -98,6 +98,4 @@ class TaskRunner:
                     self._current_task_id,
                 )
 
-                raise
-
         logging.info("Task Runner shutting down")
