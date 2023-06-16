@@ -2,7 +2,6 @@ import asyncio
 import os
 from logging import getLogger
 from pathlib import Path
-from pprint import pprint
 
 import alembic.command
 import alembic.config
