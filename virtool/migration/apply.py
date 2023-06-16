@@ -62,14 +62,13 @@ async def apply(config: MigrationConfig):
         revision.revision for revision in await list_applied_revisions(ctx.pg)
     }
 
-    seen_last_applied = False
+    start_applying = last_applied_revision is None
 
     for revision in all_revisions:
-        if revision.id == last_applied_revision.revision:
-            seen_last_applied = True
-            continue
+        if not start_applying:
+            if revision.id == last_applied_revision.revision:
+                start_applying = True
 
-        if not seen_last_applied:
             continue
 
         logger.info("Checking revision id='%s' name=%s", revision.id, revision.name)
