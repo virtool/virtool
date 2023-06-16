@@ -7,6 +7,7 @@ import virtool.http.accept
 import virtool.http.authentication
 import virtool.http.errors
 from virtool.config.cls import Config
+from virtool.flags import feature_flag_middleware, set_feature_flags
 from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.http.policy import route_policy_middleware
 from virtool.routes import setup_routes
@@ -61,6 +62,7 @@ def create_app(config: Config):
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
+        feature_flag_middleware,
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
@@ -69,6 +71,7 @@ def create_app(config: Config):
 
     app["config"] = config
     app["mode"] = "server"
+    app["flags"] = set_feature_flags(config.cli_flags)
 
     aiojobs.aiohttp.setup(app)
 

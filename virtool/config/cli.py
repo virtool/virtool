@@ -36,7 +36,6 @@ from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 from virtool.tasks.spawn import spawn
 from virtool.tasks.spawner import run_task_spawner
-from virtool.flags import FeatureFlags
 
 logger = getLogger("config")
 
@@ -94,9 +93,7 @@ def start_api_server(flags, **kwargs):
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
 
-    FeatureFlags.flags = flags
-
-    run_api_server(ServerConfig(**kwargs))
+    run_api_server(ServerConfig(cli_flags=flags, **kwargs))
 
 
 @server.command("jobs")
