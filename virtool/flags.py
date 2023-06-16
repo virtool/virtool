@@ -2,7 +2,7 @@ from typing import List, Callable, Dict
 from enum import Enum
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPNotFound
-from aiohttp.web_request import Request
+from aiohttp.web import Request
 
 import virtool.http.routes
 from virtool.types import App
@@ -53,14 +53,13 @@ def flag(feature_flag: str):
 @web.middleware
 async def feature_flag_middleware(req: Request, handler: Callable):
     """
-    Enables or disables routes based on incoming requests and their corresponding flag value
+    Enables or disables routes based on feature flag value.
     """
 
     feature_flag = getattr(handler, "feature_flag", None)
 
-    if feature_flag is not None:
-        if req.app["flags"].get(feature_flag) is False:
-            raise HTTPNotFound(text="API route disabled")
+    if req.app["flags"].get(feature_flag) is False:
+        raise HTTPNotFound(text="API route disabled")
 
     return await handler(req)
 

@@ -11,6 +11,6 @@ def test_derive_flag_values():
 
 
 def test_flag():
-    feature_flag = getattr(RolesView, "feature_flag")
+    feature_flag = getattr(RolesView, "feature_flag", None)
 
     assert feature_flag == FlagName.FF_ADMINISTRATOR_ROLES.value
