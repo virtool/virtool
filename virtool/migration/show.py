@@ -1,4 +1,5 @@
 from logging import getLogger
+from pprint import pprint
 from typing import NamedTuple
 
 import arrow
@@ -159,6 +160,8 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
                         RevisionSource.ALEMBIC,
                     )
                 )
+
+                last_seen_alembic_revision = next_revision
             except KeyError:
                 break
 
