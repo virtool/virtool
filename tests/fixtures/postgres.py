@@ -95,7 +95,7 @@ async def engine(
 
 
 @pytest.fixture(scope="function")
-async def pg(loop, engine):
+async def pg(loop, engine: AsyncEngine):
     async with AsyncSession(engine) as session:
         await session.execute(
             text(
@@ -115,5 +115,8 @@ async def pg(loop, engine):
             )
         )
         await session.commit()
+
+    # This is necessary to prevent InvalidCachedStatementError exceptions in some tests.
+    await engine.dispose()
 
     yield engine
