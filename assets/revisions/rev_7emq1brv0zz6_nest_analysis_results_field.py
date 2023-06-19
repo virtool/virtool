@@ -13,38 +13,37 @@ import arrow
 from pymongo import UpdateOne
 from virtool_core.mongo import buffered_bulk_writer
 
-from virtool.migration.ctx import RevisionContext
+from virtool.migration import MigrationContext
 
 name = "Nest analysis results field"
 created_at = arrow.get("2022-06-09 20:38:11.017655")
 revision_id = "7emq1brv0zz6"
-required_alembic_revision = None
+
+alembic_down_revision = "90bf491700cb"
+virtool_down_revision = None
 
 
-async def upgrade(ctx: RevisionContext):
+async def upgrade(ctx: MigrationContext):
     """
     Move the ``subtracted_count`` and ``read_count`` fields from the document to the
-    ``results`` subdocument.
+    ``results`` sub-document.
 
     This supports the new jobs API model where only a ``results`` field can be set on
     the analysis document by a workflow job.
 
     """
-    async with buffered_bulk_writer(
-        ctx.mongo.database.analyses, session=ctx.mongo.session
-    ) as writer:
-        async for document in ctx.mongo.database.analyses.find(
-            {
-                "results": {"$ne": None, "$exists": True},
-                "results.hits": {"$exists": False},
-            },
-            session=ctx.mongo.session,
-        ):
+    # We are only interested in analyses that have a non-``None`` ``results`` field
+    # but no ``results.hits`` field, which indicates it is an older analysis.
+    query = {
+        "results": {"$ne": None, "$exists": True},
+        "results.hits": {"$exists": False},
+    }
+
+    async with buffered_bulk_writer(ctx.mongo.analyses) as writer:
+        async for document in ctx.mongo.analyses.find(query):
             _id = document["_id"]
 
-            results = {
-                "hits": document["results"],
-            }
+            results = {"hits": document["results"]}
 
             if document["workflow"] == "pathoscope_bowtie":
                 await writer.add(
@@ -92,8 +91,11 @@ async def upgrade(ctx: RevisionContext):
                     )
                 )
 
+    if await ctx.mongo.analyses.count_documents(query) > 0:
+        raise Exception("Some analyses still have a non-nested results field")
 
-async def test_upgrade(ctx, snapshot):
+
+async def test_upgrade(ctx: MigrationContext, snapshot):
     await asyncio.gather(
         ctx.mongo.analyses.delete_many({}),
         ctx.mongo.analyses.insert_many(
@@ -121,11 +123,7 @@ async def test_upgrade(ctx, snapshot):
                     "subtracted_count": 112,
                     "workflow": "pathoscope_bowtie",
                 },
-                {
-                    "_id": "baz",
-                    "results": [9, 8, 7, 6, 5],
-                    "workflow": "nuvs",
-                },
+                {"_id": "baz", "results": [9, 8, 7, 6, 5], "workflow": "nuvs"},
                 {
                     "_id": "bad",
                     "join_histogram": [1, 2, 3, 4, 5],
@@ -153,7 +151,6 @@ async def test_upgrade(ctx, snapshot):
         ),
     )
 
-    async with ctx.revision_context() as revision_ctx:
-        await upgrade(revision_ctx)
+    await upgrade(ctx)
 
     assert await ctx.mongo.analyses.find().to_list(None) == snapshot

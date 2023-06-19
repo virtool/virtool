@@ -20,7 +20,7 @@ from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
-from virtool.migration.check import check_data_revision_version
+from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
@@ -144,9 +144,7 @@ async def startup_http_client(app: App):
 
     version = app["version"]
 
-    headers = {
-        "User-Agent": f"virtool/{version}",
-    }
+    headers = {"User-Agent": f"virtool/{version}"}
 
     app["client"] = aiohttp.client.ClientSession(headers=headers)
 
@@ -161,10 +159,7 @@ async def startup_databases(app: App):
     config = get_config_from_app(app)
 
     mongo, pg, redis, openfga_instance = await asyncio.gather(
-        connect_mongo(
-            config.mongodb_connection_string,
-            config.mongodb_database,
-        ),
+        connect_mongo(config.mongodb_connection_string, config.mongodb_database),
         connect_pg(config.postgres_connection_string),
         connect(config.redis_connection_string),
         connect_openfga(
