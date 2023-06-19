@@ -7,40 +7,55 @@ from typing import List
 import arrow
 from alembic.util import load_python_file, template_to_file
 
-from virtool.migration.utils import get_revisions_path, get_template_path
+from virtool.migration.cls import RevisionSource
+from virtool.migration.show import load_all_revisions
+from virtool.migration.utils import (
+    get_revisions_path,
+    get_template_path,
+    derive_revision_filename,
+)
 
 logger = getLogger("migration")
 
 
 def create_revision(name: str):
     """
-    Create a new data revision.
+    Create a new Virtool revision.
+
+    The revision will be created at ``./assets/revisions``. It will automatically have
+    its downgrades set to the last created revision.
 
     """
     revisions_path = get_revisions_path()
-    revisions_path.mkdir(
-        exist_ok=True,
-        parents=True,
-    )
+
+    most_recent_revision = load_all_revisions()[0]
 
     revision_id = _generate_revision_id(_get_existing_revisions(revisions_path))
 
-    now = arrow.utcnow()
-
-    transformed_name = name.lower().replace(" ", "_")
-
-    template_path = get_template_path()
-
-    template_to_file(
-        str(template_path/"revision.py.mako"),
-        str(revisions_path / f"rev_{revision_id}_{transformed_name}.py"),
-        "utf-8",
-        name=name,
-        revision_id=revision_id,
-        created_at=now.naive,
+    alembic_down_revision = (
+        most_recent_revision.id
+        if most_recent_revision.source == RevisionSource.ALEMBIC
+        else None
     )
 
-    print(f"Created empty revision '{name}' with id '{revision_id}'")
+    virtool_down_revision = (
+        most_recent_revision.id
+        if most_recent_revision.source == RevisionSource.VIRTOOL
+        else None
+    )
+
+    template_to_file(
+        str(get_template_path() / "revision.py.mako"),
+        str(revisions_path / derive_revision_filename(revision_id, name)),
+        "utf-8",
+        alembic_down_revision=alembic_down_revision,
+        created_at=arrow.utcnow().naive,
+        name=name,
+        revision_id=revision_id,
+        virtool_down_revision=virtool_down_revision,
+    )
+
+    logger.info('Created empty revision "%s" with id "%s"', name, revision_id)
 
     return revision_id
 
@@ -70,7 +85,7 @@ def _get_existing_revisions(revisions_path: Path) -> List[str]:
 
     try:
         for revision_path in revisions_path.iterdir():
-            if revision_path.suffix == ".py":
+            if revision_path.suffix == ".py" and revisions_path.stem.startswith("rev_"):
                 with open(revision_path):
                     module = load_python_file(
                         str(revision_path.parent), str(revision_path.name)

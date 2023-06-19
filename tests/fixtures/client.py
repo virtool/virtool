@@ -231,12 +231,7 @@ def spawn_job_client(
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
-            await mongo.jobs.insert_one(
-                {
-                    "_id": job_id,
-                    "key": hash_key(key),
-                }
-            )
+            await mongo.jobs.insert_one({"_id": job_id, "key": hash_key(key)})
 
             # Create Basic Authentication header.
             auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)

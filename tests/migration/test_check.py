@@ -1,14 +1,13 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-from virtool.migration.check import check_data_revision_version
-from virtool.migration.model import SQLRevision
+from virtool.migration.pg import SQLRevision, check_data_revision_version
 from virtool.utils import timestamp
 
 
 @pytest.mark.parametrize("revision", ["test_2", "test_missing"])
 async def test_check_data_revision_version(revision: str, mocker, pg: AsyncEngine):
-    mocker.patch("virtool.migration.check.REQUIRED_VIRTOOL_REVISION", revision)
+    mocker.patch("virtool.migration.pg.REQUIRED_VIRTOOL_REVISION", revision)
 
     async with AsyncSession(pg) as session:
         for suffix in (1, 2, 3):

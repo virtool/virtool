@@ -9,31 +9,36 @@ import asyncio
 
 import arrow
 
-from virtool.migration.ctx import RevisionContext
+from virtool.migration import MigrationContext, MigrationError
 
 # Revision identifiers.
 name = "Add space field"
 created_at = arrow.get("2023-02-08 00:06:52.287448")
 revision_id = "s607ucxpct81"
-required_alembic_revision = None
+
+alembic_down_revision = None
+virtool_down_revision = "l20h8fsbbb28"
 
 
-async def upgrade(ctx: RevisionContext):
+async def upgrade(ctx: MigrationContext):
     for collection in (
-        ctx.mongo.database.analyses,
-        ctx.mongo.database.jobs,
-        ctx.mongo.database.references,
-        ctx.mongo.database.samples,
-        ctx.mongo.database.subtractions,
+        ctx.mongo.analyses,
+        ctx.mongo.jobs,
+        ctx.mongo.references,
+        ctx.mongo.samples,
+        ctx.mongo.subtractions,
     ):
         await collection.update_many(
-            {"space": {"$exists": False}},
-            {"$set": {"space": 0}},
-            session=ctx.mongo.session,
+            {"space": {"$exists": False}}, {"$set": {"space": 0}}
         )
 
+        if await collection.count_documents({"space": {"$exists": False}}):
+            raise MigrationError(
+                f"Some {collection.name} still do not have a space field"
+            )
 
-async def test_upgrade(ctx, snapshot):
+
+async def test_upgrade(ctx: MigrationContext, snapshot):
     collections = (
         ctx.mongo.analyses,
         ctx.mongo.jobs,
@@ -46,25 +51,14 @@ async def test_upgrade(ctx, snapshot):
         await collection.delete_many({})
         await collection.insert_many(
             [
-                {
-                    "_id": "foo",
-                    "space": {"id": 2},
-                },
-                {
-                    "_id": "bar",
-                },
-                {
-                    "_id": "baz",
-                    "space": {"id": 15},
-                },
-                {
-                    "_id": "noo",
-                },
+                {"_id": "foo", "space": {"id": 2}},
+                {"_id": "bar"},
+                {"_id": "baz", "space": {"id": 15}},
+                {"_id": "noo"},
             ]
         )
 
-    async with ctx.revision_context() as revision_ctx:
-        await upgrade(revision_ctx)
+    await upgrade(ctx)
 
     assert (
         await asyncio.gather(

@@ -117,4 +117,7 @@ async def pg(loop, engine: AsyncEngine):
         )
         await session.commit()
 
+    # This is necessary to prevent InvalidCachedStatementError exceptions in some tests.
+    await engine.dispose()
+
     yield engine
