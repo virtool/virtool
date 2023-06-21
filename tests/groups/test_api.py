@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import pytest
 
 from virtool.groups.oas import UpdatePermissionsRequest

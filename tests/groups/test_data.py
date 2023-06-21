@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 

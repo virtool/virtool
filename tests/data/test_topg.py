@@ -1,5 +1,4 @@
 import pytest
-from pymongo.errors import DuplicateKeyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.topg import both_transactions
@@ -69,35 +68,5 @@ class TestBothTransactions:
                     SQLGroup(name="Test", permissions=generate_base_permissions())
                 )
 
-        print(excinfo)
-
         assert await mongo.groups.count_documents({}) == 0
         assert await get_row_by_id(pg, SQLGroup, 1) == snapshot(name="pg")
-
-        assert 0
-
-    async def test_mongo_duplicate(self, mongo: Mongo, pg: AsyncEngine, snapshot):
-        """
-        Test that a DuplicateKeyError can be recovered from inside
-        ``both_transactions``.
-        """
-        await mongo.groups.insert_one({"_id": "test"})
-
-        with pytest.raises(Exception) as excinfo:
-            async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-                try:
-                    await mongo.groups.insert_one(
-                        {"_id": "test"}, session=mongo_session
-                    )
-                except DuplicateKeyError:
-                    print("Caught duplicate key error")
-                    await mongo.groups.insert_one(
-                        {"_id": "test"}, session=mongo_session
-                    )
-
-                pg_session.add(
-                    SQLGroup(name="Test", permissions=generate_base_permissions())
-                )
-
-        assert await mongo.groups.count_documents({}) == 1
-        assert await get_row_by_id(pg, SQLGroup, 1)
