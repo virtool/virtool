@@ -36,6 +36,13 @@ async def test_create(
     assert doc["_id"] == group.id == row.legacy_id
 
 
+async def test_create_duplicate(groups_data: GroupsData):
+    group = await groups_data.create("test")
+
+    with pytest.raises(ResourceConflictError):
+        await groups_data.create(group.name)
+
+
 async def test_update_name(
     authorization_client: AuthorizationClient,
     groups_data: GroupsData,
@@ -85,8 +92,7 @@ async def test_update_permissions(
     )
 
     group = await groups_data.update(
-        group.id,
-        UpdateGroupRequest(**{"permissions": {"create_sample": False}}),
+        group.id, UpdateGroupRequest(**{"permissions": {"create_sample": False}})
     )
 
     doc = await mongo.groups.find_one()

@@ -8,6 +8,6 @@ class SQLGroup(Base):
     __tablename__ = "groups"
 
     id = Column(Integer, primary_key=True)
-    legacy_id = Column(String, nullable=False, unique=True)
+    legacy_id = Column(String, nullable=True, unique=True)
     name = Column(String, nullable=False, unique=True)
     permissions = Column(JSONB, nullable=False)
