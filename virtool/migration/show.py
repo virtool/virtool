@@ -1,5 +1,4 @@
 from logging import getLogger
-from pprint import pprint
 from typing import NamedTuple
 
 import arrow
