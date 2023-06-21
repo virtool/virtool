@@ -120,6 +120,8 @@ async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
 
         await session.commit()
 
+    logger.info("Applied revision id='%s'", revision.id)
+
 
 async def apply_alembic(revision: str):
     """

@@ -50,10 +50,7 @@ async def test_create(status, fake2, mongo, spawn_client, snapshot):
     group = await fake2.groups.create()
 
     resp = await client.post(
-        "/groups",
-        data={
-            "group_id": group.name if status == 400 else "test",
-        },
+        "/groups", data={"group_id": group.name if status == 400 else "Test"}
     )
 
     assert resp.status == status
@@ -105,10 +102,7 @@ class TestUpdate:
     async def test_not_found(self, setup_update_group, snapshot):
         client, _ = setup_update_group
 
-        resp = await client.patch(
-            "/groups/ghosts",
-            data={"name": "Real boys"},
-        )
+        resp = await client.patch("/groups/ghosts", data={"name": "Real boys"})
 
         assert resp.status == 404
         assert await resp.json() == snapshot(name="json")

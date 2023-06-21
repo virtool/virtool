@@ -98,5 +98,12 @@
       'name': 'Populate sample workflows field',
       'revision': '1zg28cpib2uj',
     },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 15,
+      'name': 'Add groups table',
+      'revision': '7bd75961d130',
+    },
   ]
 ---

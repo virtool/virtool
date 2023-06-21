@@ -88,12 +88,12 @@ class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
     async def create(self, permissions: Optional[UpdatePermissionsRequest] = None):
-        group_id = "contains spaces"
+        name = "contains spaces"
 
-        while " " in group_id:
-            group_id = self.faker.profile()["job"].lower() + "s"
+        while " " in name:
+            name = self.faker.profile()["job"].lower() + "s"
 
-        group = await self.layer.groups.create(group_id)
+        group = await self.layer.groups.create(name)
 
         if permissions:
             group = await self.layer.groups.update(
@@ -166,7 +166,6 @@ class HMMFakerPiece(DataFakerPiece):
     model = HMM
 
     async def create(self, mongo):
-
         hmm_id = "".join(self.faker.mongo_id())
         faker = self.faker
 
@@ -177,7 +176,7 @@ class HMMFakerPiece(DataFakerPiece):
                         "accession": faker.pystr(),
                         "gi": faker.pystr(),
                         "name": faker.pystr(),
-                        "organism": faker.pystr()
+                        "organism": faker.pystr(),
                     }
                 ],
                 "genera": {faker.pystr(): faker.pyint()},
@@ -188,7 +187,7 @@ class HMMFakerPiece(DataFakerPiece):
                 "cluster": faker.pyint(),
                 "count": faker.pyint(),
                 "families": {faker.pystr(): faker.pyint()},
-                "names": [faker.pystr()]
+                "names": [faker.pystr()],
             }
         )
 
