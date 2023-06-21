@@ -10,14 +10,22 @@ from virtool.users.utils import generate_base_permissions
 
 class TestBothTransactions:
     async def test_mongo_only(self, mongo: Mongo, pg: AsyncEngine, snapshot):
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        """
+        Test that a change to the MongoDB database is committed if no change is made
+        to the PostgreSQL database.
+        """
+        async with both_transactions(mongo, pg) as (mongo_session, _):
             await mongo.groups.insert_one({"_id": "test"}, session=mongo_session)
 
         assert await mongo.groups.find_one({}) == snapshot
         assert await get_row_by_id(pg, SQLGroup, 1) is None
 
     async def test_pg_only(self, mongo: Mongo, pg: AsyncEngine, snapshot):
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        """
+        Test that a change to the PostgreSQL database is committed if no change is made
+        to the MongoDB database.
+        """
+        async with both_transactions(mongo, pg) as (_, pg_session):
             pg_session.add(
                 SQLGroup(name="test", permissions=generate_base_permissions())
             )
@@ -26,6 +34,9 @@ class TestBothTransactions:
         assert await get_row_by_id(pg, SQLGroup, 1) == snapshot
 
     async def test_both(self, mongo: Mongo, pg: AsyncEngine, snapshot):
+        """
+        Test that changes to both databases are successful.
+        """
         async with both_transactions(mongo, pg) as (mongo_session, pg_session):
             await mongo.groups.insert_one({"_id": "test"}, session=mongo_session)
             pg_session.add(
@@ -42,7 +53,7 @@ class TestBothTransactions:
         """
         await mongo.groups.insert_one({"_id": "test"})
 
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(Exception):
             async with both_transactions(mongo, pg) as (mongo_session, pg_session):
                 await mongo.groups.insert_one({"_id": "test"}, session=mongo_session)
                 pg_session.add(
@@ -54,14 +65,14 @@ class TestBothTransactions:
 
     async def test_pg_exception(self, mongo: Mongo, pg: AsyncEngine, snapshot):
         """
-        Test that neither change is committed if an exception is raised within the
-        context manager.
+        Test that neither change is committed if a SQLAlchemy exception is raised within
+        the context manager.
         """
         async with AsyncSession(pg) as session:
             session.add(SQLGroup(name="Test", permissions=generate_base_permissions()))
             await session.commit()
 
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(Exception):
             async with both_transactions(mongo, pg) as (mongo_session, pg_session):
                 await mongo.groups.insert_one({"_id": "test"}, session=mongo_session)
                 pg_session.add(

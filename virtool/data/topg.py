@@ -29,14 +29,13 @@ async def both_transactions(mongo: "Mongo", pg: AsyncEngine):
     """
     async with AsyncSession(
         pg
-    ) as pg_session, await mongo.motor_client.client.start_session() as mongo_session:
-        async with mongo_session.start_transaction():
-            # An exception will be raised here if there is a problem with the MongoDB
-            # transaction.
-            yield mongo_session, pg_session
+    ) as pg_session, await mongo.motor_client.client.start_session() as mongo_session, mongo_session.start_transaction():
+        # An exception will be raised here if there is a problem with the MongoDB
+        # transaction.
+        yield mongo_session, pg_session
 
-            # Flush to check that there are no key conflicts. If there are conflicts,
-            # an ``IntegrityError`` will be raised.
-            await pg_session.flush()
+        # Flush to check that there are no key conflicts. If there are conflicts,
+        # an ``IntegrityError`` will be raised.
+        await pg_session.flush()
 
-            await pg_session.commit()
+        await pg_session.commit()

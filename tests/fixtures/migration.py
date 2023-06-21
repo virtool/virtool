@@ -11,6 +11,7 @@ from virtool.api.custom_json import dump_string
 from virtool.authorization.openfga import OpenfgaScheme
 from virtool.config.cls import MigrationConfig
 from virtool.migration.ctx import create_migration_context, MigrationContext
+from virtool.migration.pg import SQLRevision
 from virtool.pg.base import Base
 
 
@@ -47,7 +48,7 @@ async def migration_pg_connection_string(
 
     async with pg.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(SQLRevision.__table__.create)
         await conn.commit()
 
     return connection_string
