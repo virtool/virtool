@@ -45,13 +45,11 @@ async def test_create(status, fake2, mongo, spawn_client, snapshot):
     """
     await mongo.groups.create_index("name", unique=True, sparse=True)
 
-    group = await fake2.groups.create()
-
     client = await spawn_client(
         authorize=True, administrator=True, base_url="https://virtool.example.com"
     )
 
-    # pprint(await mongo.groups.find().to_list(None))
+    group = await fake2.groups.create()
 
     resp = await client.post(
         "/groups", data={"group_id": group.name if status == 400 else "Test"}

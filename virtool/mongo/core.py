@@ -30,6 +30,7 @@ import virtool.users.db
 import virtool.utils
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.mongo.identifier import AbstractIdProvider
+from virtool.mongo.utils import id_exists
 from virtool.types import Document, Projection
 
 
@@ -205,16 +206,13 @@ class Collection:
             await self._collection.insert_one(document, session=session)
             inserted = document
         else:
-            try:
-                inserted = {**document, "_id": self.mongo.id_provider.get()}
+            document_id = self.mongo.id_provider.get()
+
+            if await id_exists(self, document_id, session):
+                inserted = await self.insert_one(document, session=session)
+            else:
+                inserted = {**document, "_id": document_id}
                 await self._collection.insert_one(inserted, session=session)
-            except DuplicateKeyError as err:
-                keys = list(err.details["keyPattern"].keys())
-
-                if len(keys) == 1 and keys[0] == "_id":
-                    return await self.insert_one(document, session=session)
-
-                raise
 
         if not silent:
             self.enqueue_change(INSERT, inserted["_id"])
@@ -426,13 +424,7 @@ class Mongo:
         projection: Optional[Projection] = None,
         silent: bool = False,
     ) -> Collection:
-        return Collection(
-            self,
-            name,
-            processor,
-            projection,
-            silent,
-        )
+        return Collection(self, name, processor, projection, silent)
 
     @asynccontextmanager
     async def create_session(self):
