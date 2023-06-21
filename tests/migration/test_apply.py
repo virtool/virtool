@@ -1,17 +1,15 @@
 import datetime
 import shutil
 from dataclasses import asdict
-from logging import INFO
 from pathlib import Path
-from pprint import pprint
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
 
 from virtool.config.cls import MigrationConfig
-from virtool.migration.pg import list_applied_revisions
 from virtool.migration.apply import apply
+from virtool.migration.pg import list_applied_revisions
 
 
 @pytest.fixture
