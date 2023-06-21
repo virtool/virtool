@@ -2,6 +2,7 @@ import asyncio
 import os
 from logging import getLogger
 from pathlib import Path
+from pprint import pprint
 
 import alembic.command
 import alembic.config
@@ -119,6 +120,8 @@ async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
         )
 
         await session.commit()
+
+    logger.info("Applied revision id='%s'", revision.id)
 
 
 async def apply_alembic(revision: str):

@@ -35,7 +35,8 @@ def pg_db_name(worker_id: str):
 @pytest.fixture(scope="session")
 def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
     """
-    A full Postgres connection string with the auto-generated test database name appended.
+    A full Postgres connection string with the auto-generated test database name
+    appended.
 
      eg. postgresql+asyncpg://virtool:virtool@localhost/test_2
 
