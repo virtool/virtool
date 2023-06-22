@@ -55,6 +55,8 @@ async def migration_pg_connection_string(
     async with pg.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+
+        # The groups table is created and updated only by migrations. We need to drop it.
         await conn.run_sync(SQLGroup.__table__.drop)
 
         await conn.commit()

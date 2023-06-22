@@ -105,5 +105,12 @@
       'name': 'Add groups table',
       'revision': '7bd75961d130',
     },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 16,
+      'name': 'Fix group permission type',
+      'revision': '011389a5ae19',
+    },
   ]
 ---
