@@ -33,10 +33,9 @@ async def shutdown_task_runner(app: Application):
 
 class TaskRunner:
     def __init__(
-        self, data: DataLayer, tasks_client: AbstractTasksClient, app: Application
+        self, data: DataLayer, tasks_client: AbstractTasksClient
     ):
         self._tasks_client = tasks_client
-        self._app = app
         self._data = data
         self._current_task: BaseTask = None
         self._current_task_id: int = None
