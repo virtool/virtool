@@ -32,4 +32,4 @@ def test_create_revision(revisions_path: Path):
             assert f"Revision ID: {revision_id}" in text
             assert f'revision_id = "{revision_id}"' in text
             assert f'name = "{name}"' in text
-            assert "async def upgrade(ctx: RevisionContext):" in text
+            assert "async def upgrade(ctx: MigrationContext):" in text
