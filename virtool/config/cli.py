@@ -36,6 +36,7 @@ from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 from virtool.tasks.spawn import spawn
 from virtool.tasks.spawner import run_task_spawner
+from virtool.flags import FlagName
 
 logger = getLogger("config")
 
@@ -81,9 +82,7 @@ def server():
 @click.option(
     "--flags",
     help="feature flag of the feature to enable",
-    type=click.Choice(
-        ['FF_ADMINISTRATOR_ROLES', 'FF_ML_MODELS', 'FF_SPACES'], case_sensitive=True
-    ),
+    type=click.Choice([flag.name for flag in FlagName], case_sensitive=False),
     required=False,
     multiple=True,
     default=[],
@@ -93,7 +92,7 @@ def start_api_server(flags, **kwargs):
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
 
-    run_api_server(ServerConfig(cli_flags=flags, **kwargs))
+    run_api_server(ServerConfig(flags=flags, **kwargs))
 
 
 @server.command("jobs")

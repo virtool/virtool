@@ -34,7 +34,7 @@ AVAILABLE_ROLES = [
 
 
 @routes.view("/admin/roles")
-@flag(FlagName.FF_ADMINISTRATOR_ROLES.value)
+@flag(FlagName.ADMINISTRATOR_ROLES)
 class RolesView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def get(self) -> r200[ListRolesResponse]:
