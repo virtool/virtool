@@ -22,7 +22,6 @@ from virtool.account.oas import (
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceError, ResourceNotFoundError
-from virtool.data.events import emits
 from virtool.data.piece import DataLayerPiece
 from virtool.groups.db import lookup_groups_minimal_by_id
 from virtool.mongo.core import Mongo

@@ -53,7 +53,10 @@ logger = logging.getLogger(__name__)
 
 class SamplesData(DataLayerPiece):
     name = "samples"
-    def __init__(self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient):
+
+    def __init__(
+        self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient
+    ):
         self._config = config
         self._mongo = mongo
         self._pg = pg
@@ -116,17 +119,13 @@ class SamplesData(DataLayerPiece):
             [
                 {
                     "$facet": {
-                        "total_count": [
-                            {"$count": "total_count"},
-                        ],
+                        "total_count": [{"$count": "total_count"}],
                         "found_count": [
                             {"$match": search_query},
                             {"$count": "found_count"},
                         ],
                         "data": [
-                            {
-                                "$match": search_query,
-                            },
+                            {"$match": search_query},
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
@@ -145,7 +144,7 @@ class SamplesData(DataLayerPiece):
                         },
                     }
                 },
-            ],
+            ]
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
@@ -172,7 +171,7 @@ class SamplesData(DataLayerPiece):
                 *lookup_nested_user_by_id(local_field="user.id"),
                 *lookup_nested_subtractions(local_field="subtractions"),
                 *lookup_caches(local_field="_id"),
-                *lookup_minimal_job_by_id(local_field="job.id")
+                *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
 
@@ -183,10 +182,7 @@ class SamplesData(DataLayerPiece):
 
         document = await apply_transforms(
             base_processor(document),
-            [
-                ArtifactsAndReadsTransform(self._pg),
-                AttachLabelsTransform(self._pg),
-            ],
+            [ArtifactsAndReadsTransform(self._pg), AttachLabelsTransform(self._pg)],
         )
 
         document["paired"] = len(document["reads"]) == 2
@@ -254,9 +250,7 @@ class SamplesData(DataLayerPiece):
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
-                        "job": {
-                            "id": job_id
-                        },
+                        "job": {"id": job_id},
                         "labels": data.labels,
                         "library_type": data.library_type,
                         "locale": data.locale,
@@ -299,7 +293,7 @@ class SamplesData(DataLayerPiece):
                 rights=JobRights(),
                 space_id=0,
                 job_id=job_id,
-                session=session
+                session=session,
             )
 
         return await self.get(sample_id)
@@ -317,10 +311,7 @@ class SamplesData(DataLayerPiece):
         if "name" in data:
             aws.append(
                 check_name_is_in_use(
-                    self._mongo,
-                    data["name"],
-                    sample_id=sample_id,
-                    session=session,
+                    self._mongo, data["name"], sample_id=sample_id, session=session
                 )
             )
 
@@ -437,7 +428,9 @@ class SamplesData(DataLayerPiece):
             if sample is None:
                 break
 
-            await virtool.samples.db.move_sample_files_to_pg(self._mongo, self._pg, sample)
+            await virtool.samples.db.move_sample_files_to_pg(
+                self._mongo, self._pg, sample
+            )
             await tracker.add(1)
 
     async def deduplicate_sample_names(self):

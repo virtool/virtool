@@ -110,8 +110,6 @@ def emits(operation: Operation, domain: str | None = None, name: str | None = No
     """
 
     def decorator(func: Callable[..., Awaitable[BaseModel]]):
-        func._emits = True
-
         emitted_name = name or func.__name__
 
         @functools.wraps(func)

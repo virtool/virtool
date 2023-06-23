@@ -7,19 +7,12 @@ from typing import Optional, Dict
 
 import arrow
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.job import (
-    JobMinimal,
-    JobSearchResult,
-    JobStatus,
-    Job,
-    JobPing,
-    JobState,
-)
+from virtool_core.models.job import JobMinimal, JobSearchResult, Job, JobPing, JobState
 from virtool_core.models.user import UserNested
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import emits, emit, Event, Operation
+from virtool.data.events import emits, emit, Operation
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import PROJECTION, fetch_complete_job, create_job
 from virtool.jobs.utils import (
