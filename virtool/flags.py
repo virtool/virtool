@@ -13,7 +13,7 @@ class FlagName(Enum):
 
 class FeatureFlags:
     """
-    Maintains default values for feature flags and can accept overrides as a list of enabled flags.
+    Maintains default values for feature flags and can accepts list of enabled flags.
     """
 
     def __init__(self, overrides: List[FlagName]):
@@ -40,7 +40,7 @@ class FeatureFlags:
 
 def flag(feature_flag: FlagName):
     """
-     Prevents access to the decorated request handler if the passed "feature_flag" is not enabled.
+    Prevents access to the decorated request handler if "feature_flag" is not enabled.
     :param feature_flag: feature flag name associated with the route
     """
 
@@ -59,8 +59,10 @@ async def feature_flag_middleware(req: Request, handler: Callable):
 
     feature_flag = getattr(handler, "feature_flag", None)
 
-    if feature_flag is not None:
-        if req.app["flags"].check_flag_enabled(feature_flag) is False:
-            raise HTTPNotFound
+    if (
+        feature_flag is not None
+        and req.app["flags"].check_flag_enabled(feature_flag) is False
+    ):
+        raise HTTPNotFound
 
     return await handler(req)
