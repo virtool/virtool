@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 
 
 @pytest.mark.apitest
@@ -12,7 +12,7 @@ async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    task_1 = Task(
+    task_1 = SQLTask(
         id=1,
         complete=True,
         context={"user_id": "test_1"},
@@ -23,7 +23,7 @@ async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
         step="download",
         type="clone_reference",
     )
-    task_2 = Task(
+    task_2 = SQLTask(
         id=2,
         complete=False,
         context={"user_id": "test_2"},
@@ -65,7 +65,7 @@ async def test_get(
     if not error:
         async with AsyncSession(pg) as session:
             session.add(
-                Task(
+                SQLTask(
                     id=1,
                     complete=True,
                     context={"user_id": "test_1"},

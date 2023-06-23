@@ -3,9 +3,9 @@ import os
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.analyses.tasks import StoreNuvsFilesTask
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 from virtool.utils import get_temp_dir
 
 
@@ -24,7 +24,7 @@ async def test_store_nuvs_files_task(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},
@@ -42,7 +42,7 @@ async def test_store_nuvs_files_task(
     await task.run()
 
     async with AsyncSession(pg) as session:
-        task = await session.scalar(select(Task).filter(Task.id == 1))
+        task = await session.scalar(select(SQLTask).filter(SQLTask.id == 1))
         assert task.error is None
 
     assert set(os.listdir(tmp_path / "analyses" / "bar")) == {
@@ -52,6 +52,8 @@ async def test_store_nuvs_files_task(
     }
 
     async with AsyncSession(pg) as session:
-        assert (await session.execute(select(AnalysisFile))).scalars().all() == snapshot
+        assert (
+            await session.execute(select(SQLAnalysisFile))
+        ).scalars().all() == snapshot
 
     assert not (tmp_path / "samples" / "foo" / "analysis" / "bar").is_dir()

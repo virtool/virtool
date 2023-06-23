@@ -20,7 +20,7 @@ class ArtifactType(str, SQLEnum):
     json = "json"
 
 
-class SampleArtifact(Base):
+class SQLSampleArtifact(Base):
     """
     SQL model to store sample artifacts
 
@@ -38,7 +38,7 @@ class SampleArtifact(Base):
     uploaded_at = Column(DateTime)
 
 
-class SampleReads(Base):
+class SQLSampleReads(Base):
     """
     SQL model to store new sample reads files
 

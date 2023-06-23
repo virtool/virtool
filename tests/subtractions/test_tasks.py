@@ -11,7 +11,7 @@ from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
     CheckSubtractionsFASTATask,
 )
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 from virtool.utils import get_temp_dir
 
 
@@ -41,7 +41,7 @@ async def test_add_subtraction_files_task(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},
@@ -104,7 +104,7 @@ async def test_check_subtraction_fasta_file_task(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},

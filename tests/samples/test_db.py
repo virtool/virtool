@@ -24,10 +24,10 @@ from virtool.samples.db import (
     remove_samples,
     update_is_compressed,
 )
-from virtool.samples.models import SampleReads
+from virtool.samples.models import SQLSampleReads
 from virtool.samples.utils import calculate_workflow_tags
 from virtool.samples.db import define_initial_workflows, derive_workflow_state
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
 
@@ -504,9 +504,9 @@ async def test_finalize(
     await mongo.samples.insert_one({"_id": "test", "user": {"id": user.id}})
 
     async with AsyncSession(pg) as session:
-        upload = Upload(name="test", name_on_disk="test.fq.gz")
+        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
 
-        reads = SampleReads(
+        reads = SQLSampleReads(
             name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
         )
 
@@ -522,7 +522,7 @@ async def test_finalize(
     assert result == snapshot
     with pytest.raises(ResourceNotFoundError):
         await get_data_from_app(client.app).uploads.get(1)
-    assert not (await get_row_by_id(pg, SampleReads, 1)).upload
+    assert not (await get_row_by_id(pg, SQLSampleReads, 1)).upload
 
 
 class TestComposeWorkflowQuery:
