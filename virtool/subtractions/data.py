@@ -24,6 +24,7 @@ import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.events import emits, Operation
 from virtool.data.file import FileDescriptor
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.utils import JobRights
@@ -60,6 +61,8 @@ logger = getLogger(__name__)
 
 
 class SubtractionsData(DataLayerPiece):
+    name = "subtractions"
+
     def __init__(self, base_url: str, config: Config, mongo, pg: AsyncEngine):
         self._base_url = base_url
         self._config = config
@@ -91,16 +94,10 @@ class SubtractionsData(DataLayerPiece):
                 {"$match": {"deleted": False}},
                 {
                     "$facet": {
-                        "total_count": [
-                            {"$count": "total_count"}
-                        ],
+                        "total_count": [{"$count": "total_count"}],
                         "ready_count": [
-                            {
-                                "$match": {
-                                    "ready": True
-                                }
-                            },
-                            {"$count": "ready_count"}
+                            {"$match": {"ready": True}},
+                            {"$count": "ready_count"},
                         ],
                         "found_count": [
                             {"$match": db_query},
@@ -126,7 +123,7 @@ class SubtractionsData(DataLayerPiece):
                                     "nickname": True,
                                     "user": True,
                                     "subtraction_id": True,
-                                    "gc": True
+                                    "gc": True,
                                 }
                             },
                         ],
@@ -136,15 +133,24 @@ class SubtractionsData(DataLayerPiece):
                     "$project": {
                         "documents": True,
                         "total_count": {
-                            "$ifNull": [{"$arrayElemAt": ["$total_count.total_count", 0]}, 0]
+                            "$ifNull": [
+                                {"$arrayElemAt": ["$total_count.total_count", 0]},
+                                0,
+                            ]
                         },
                         "found_count": {
-                            "$ifNull": [{"$arrayElemAt": ["$found_count.found_count", 0]}, 0]
+                            "$ifNull": [
+                                {"$arrayElemAt": ["$found_count.found_count", 0]},
+                                0,
+                            ]
                         },
                         "ready_count": {
-                            "$ifNull": [{"$arrayElemAt": ["$ready_count.ready_count", 0]}, 0]
+                            "$ifNull": [
+                                {"$arrayElemAt": ["$ready_count.ready_count", 0]},
+                                0,
+                            ]
                         },
-                    },
+                    }
                 },
             ]
         ).to_list(length=1)
@@ -158,9 +164,10 @@ class SubtractionsData(DataLayerPiece):
             **data,
             page=page,
             per_page=per_page,
-            page_count=math.ceil(data["found_count"] / per_page)
+            page_count=math.ceil(data["found_count"] / per_page),
         )
 
+    @emits(Operation.CREATE)
     async def create(
         self,
         data: CreateSubtractionRequest,
@@ -191,14 +198,9 @@ class SubtractionsData(DataLayerPiece):
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
-                "file": {
-                    "id": upload.id,
-                    "name": upload.name,
-                },
+                "file": {"id": upload.id, "name": upload.name},
                 "gc": None,
-                "job": {
-                    "id": job_id
-                },
+                "job": {"id": job_id},
                 "name": data.name,
                 "nickname": data.nickname,
                 "ready": False,
@@ -219,7 +221,7 @@ class SubtractionsData(DataLayerPiece):
             user_id,
             JobRights(),
             0,
-            job_id
+            job_id,
         )
 
         return subtraction
@@ -227,11 +229,7 @@ class SubtractionsData(DataLayerPiece):
     async def get(self, subtraction_id: str) -> Subtraction:
         document = await self._mongo.subtraction.aggregate(
             [
-                {
-                    "$match": {
-                        "_id": subtraction_id
-                    }
-                },
+                {"$match": {"_id": subtraction_id}},
                 {
                     "$project": {
                         "_id": True,
@@ -244,7 +242,7 @@ class SubtractionsData(DataLayerPiece):
                         "nickname": True,
                         "user": True,
                         "subtraction_id": True,
-                        "gc": True
+                        "gc": True,
                     }
                 },
                 *lookup_nested_user_by_id(local_field="user.id"),
@@ -254,10 +252,7 @@ class SubtractionsData(DataLayerPiece):
 
         if len(document) != 0:
             document = await attach_computed(
-                self._mongo,
-                self._pg,
-                self._base_url,
-                document[0]
+                self._mongo, self._pg, self._base_url, document[0]
             )
 
             document = base_processor(document)
@@ -266,8 +261,9 @@ class SubtractionsData(DataLayerPiece):
 
         raise ResourceNotFoundError
 
+    @emits(Operation.UPDATE)
     async def update(
-            self, subtraction_id: str, data: UpdateSubtractionRequest
+        self, subtraction_id: str, data: UpdateSubtractionRequest
     ) -> Subtraction:
         data = data.dict(exclude_unset=True)
 
@@ -288,6 +284,7 @@ class SubtractionsData(DataLayerPiece):
 
         return await self.get(subtraction_id)
 
+    @emits(Operation.DELETE)
     async def delete(self, subtraction_id: str):
         async with self._mongo.create_session() as session:
             update_result = await self._mongo.subtraction.update_one(
@@ -310,6 +307,7 @@ class SubtractionsData(DataLayerPiece):
 
         return update_result.modified_count
 
+    @emits(Operation.UPDATE)
     async def finalize(self, subtraction_id: str, data: FinalizeSubtractionRequest):
         """
         Finalize a subtraction.
@@ -336,7 +334,7 @@ class SubtractionsData(DataLayerPiece):
         raise ResourceNotFoundError
 
     async def upload_file(
-            self, subtraction_id: str, filename: str, reader: MultipartReader
+        self, subtraction_id: str, filename: str, reader: MultipartReader
     ) -> SubtractionFile:
         """
         Handle a subtraction file upload.
@@ -391,8 +389,7 @@ class SubtractionsData(DataLayerPiece):
                 await session.commit()
         except CancelledError:
             await to_thread(
-                rm,
-                self._config.data_path / "subtractions" / subtraction_id / filename,
+                rm, self._config.data_path / "subtractions" / subtraction_id / filename
             )
 
         return SubtractionFile(
@@ -437,7 +434,7 @@ class SubtractionsData(DataLayerPiece):
         index_path = join_subtraction_index_path(self._config, subtraction_id)
 
         fasta_path = (
-                join_subtraction_path(self._config, subtraction_id) / "subtraction.fa"
+            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa"
         )
 
         proc = await asyncio.create_subprocess_shell(
@@ -449,7 +446,7 @@ class SubtractionsData(DataLayerPiece):
         await proc.communicate()
 
         target_path = (
-                join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
+            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
         )
 
         await to_thread(compress_file, fasta_path, target_path)

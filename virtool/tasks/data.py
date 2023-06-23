@@ -1,5 +1,4 @@
-import asyncio
-from typing import List, Type, Optional, Dict
+from typing import List, Type
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -7,6 +6,7 @@ from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.events import emits, Operation
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task as SQLTask
 from virtool.tasks.oas import TaskUpdate
@@ -14,6 +14,8 @@ from virtool.tasks.task import BaseTask
 
 
 class TasksData:
+    name = "tasks"
+
     def __init__(self, pg: AsyncEngine, tasks_client: AbstractTasksClient):
         self._pg = pg
         self._tasks_client = tasks_client
@@ -49,6 +51,7 @@ class TasksData:
 
         raise ResourceNotFoundError
 
+    @emits(Operation.UPDATE)
     async def update(self, task_id: int, task_update: TaskUpdate) -> Task:
         """
         Update a task record with given `task_id`
@@ -79,6 +82,7 @@ class TasksData:
 
         return task
 
+    @emits(Operation.UPDATE)
     async def complete(self, task_id: int):
         """
         Update a task record as completed.
@@ -100,6 +104,7 @@ class TasksData:
 
             await session.commit()
 
+    @emits(Operation.DELETE)
     async def remove(self, task_id: int):
         """
         Delete a task record.
@@ -114,12 +119,13 @@ class TasksData:
 
             await session.commit()
 
+    @emits(Operation.CREATE)
     async def create(self, task_class: Type[BaseTask], context: dict = None) -> Task:
         """
         Register a new task.
 
-        :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
-        :param context: A dict containing data used by the task
+        :param task_class: a subclass of :class:`~virtool.tasks.task.Task`
+        :param context: data to be passed to the task
         :return: the task record
 
         """
@@ -142,25 +148,3 @@ class TasksData:
         await self._tasks_client.enqueue(task.type, task.id)
 
         return task
-
-    async def create_periodically(
-        self,
-        cls: Type[BaseTask],
-        interval: int = None,
-        context: Optional[Dict] = None,
-    ):
-        """
-        Register a new task that will be run regularly at the given interval.
-
-        :param cls: a task class
-        :param interval: a time interval
-        :param context: a dict containing data used by the task
-        :return: the task record
-
-        """
-        try:
-            while True:
-                await self.create(cls, context=context)
-                await asyncio.sleep(interval)
-        except asyncio.CancelledError:
-            pass

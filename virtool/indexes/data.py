@@ -1,6 +1,6 @@
 import asyncio
-import logging
 from asyncio import to_thread
+from logging import getLogger
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -23,6 +23,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceNotFoundError,
 )
+from virtool.data.events import emits, Operation
 from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
@@ -44,10 +45,12 @@ from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
-logger = logging.getLogger("indexes")
+logger = getLogger("indexes")
 
 
 class IndexData:
+    name = "indexes"
+
     def __init__(self, mongo: Mongo, config: Config, pg: AsyncEngine):
         self._config = config
         self._mongo = mongo
@@ -119,12 +122,7 @@ class IndexData:
             virtool.indexes.db.get_otus(self._mongo, index_id),
         )
 
-        document.update(
-            {
-                "contributors": contributors,
-                "otus": otus,
-            }
-        )
+        document.update({"contributors": contributors, "otus": otus})
 
         document = await virtool.indexes.db.attach_files(
             self._pg, self._config.base_url, document
@@ -225,6 +223,7 @@ class IndexData:
             **index_file_dict, download_url=f"/indexes/{index_id}/files/{name}"
         )
 
+    @emits(Operation.UPDATE)
     async def finalize(self, index_id: str) -> Index:
         """
         Finalize an index document.
@@ -308,9 +307,7 @@ class IndexData:
             )
 
             await self._ensure_json(
-                index_path,
-                index["reference"]["id"],
-                index["manifest"],
+                index_path, index["reference"]["id"], index["manifest"]
             )
 
             async with AsyncSession(self._pg) as session:
@@ -338,12 +335,7 @@ class IndexData:
 
                 await session.commit()
 
-    async def _ensure_json(
-        self,
-        path: Path,
-        ref_id: str,
-        manifest: Dict,
-    ):
+    async def _ensure_json(self, path: Path, ref_id: str, manifest: Dict):
         """
         Ensure that a there is a compressed JSON representation of the index found at
         `path`` exists.
@@ -376,6 +368,7 @@ class IndexData:
             json_path,
         )
 
+    @emits(Operation.DELETE)
     async def delete(self, index_id: str):
         """
         Delete an index given it's id.

@@ -8,9 +8,10 @@ import tempfile
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Any, Iterable, Optional, Tuple, Dict
+from typing import Any, Iterable, Optional, Tuple, Dict, Type
 
 import arrow
+from pydantic import BaseModel
 
 SUB_DIRS = [
     "caches",
@@ -45,24 +46,6 @@ def base_processor(document: Optional[Dict]) -> Optional[Dict]:
         pass
 
     return document
-
-
-def get_safely(dct: Dict, *keys) -> Any:
-    """
-    Get values from nested dictionaries while returning ``None`` when a ``KeyError`` or
-    ``TypeError`` is raised.
-
-    """
-    for key in keys:
-        try:
-            dct = dct[key]
-        except (
-            KeyError,
-            TypeError,
-        ):
-            return None
-
-    return dct
 
 
 def chunk_list(lst: list, n: int):
@@ -112,6 +95,39 @@ def ensure_data_dir(data_path: Path):
 def generate_key() -> Tuple[str, str]:
     key = secrets.token_hex(32)
     return key, hash_key(key)
+
+
+def get_safely(dct: Dict, *keys) -> Any:
+    """
+    Get values from nested dictionaries while returning ``None`` when a ``KeyError`` or
+    ``TypeError`` is raised.
+
+    """
+    for key in keys:
+        try:
+            dct = dct[key]
+        except (KeyError, TypeError):
+            return None
+
+    return dct
+
+
+def get_all_subclasses(cls):
+    all_subclasses = []
+
+    for subclass in cls.__subclasses__():
+        all_subclasses.append(subclass)
+        all_subclasses.extend(get_all_subclasses(subclass))
+
+    return all_subclasses
+
+
+def get_model_by_name(name: str) -> Type[BaseModel]:
+    for cls in get_all_subclasses(BaseModel):
+        if cls.__name__ == name:
+            return cls
+
+    raise ValueError(f"Could not find model with name {name}")
 
 
 def get_temp_dir():

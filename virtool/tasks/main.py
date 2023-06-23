@@ -1,17 +1,15 @@
 import aiohttp
-import aiojobs.aiohttp
 import aiohttp.web
-from aiohttp.web import Application
-
 import aiojobs
+import aiojobs.aiohttp
+from aiohttp.web import Application
 
 import virtool.http.accept
 import virtool.http.errors
 from virtool.config.cls import TaskRunnerConfig
-from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.shutdown import (
     shutdown_authorization_client,
-    shutdown_client,
+    shutdown_http_client,
     shutdown_executors,
     shutdown_redis,
     shutdown_scheduler,
@@ -28,27 +26,13 @@ from virtool.startup import (
 from virtool.tasks.api import TaskServicesRootView
 
 
-async def startup_dispatcher_sql_listener(app: Application):
-    """
-    Starts  the SQL dispatcher listener. Essential for reporting changes in
-    PostgreSQL to the dispatcher for client side updates.
-
-    :param app: the app object
-
-    """
-    DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
-
-
 async def create_task_runner_app(config: TaskRunnerConfig):
     """
     Creates task runner application
 
     """
     app = Application(
-        middlewares=[
-            virtool.http.accept.middleware,
-            virtool.http.errors.middleware,
-        ]
+        middlewares=[virtool.http.accept.middleware, virtool.http.errors.middleware]
     )
 
     app["config"] = config
@@ -63,7 +47,6 @@ async def create_task_runner_app(config: TaskRunnerConfig):
             startup_version,
             startup_http_client,
             startup_databases,
-            startup_dispatcher_sql_listener,
             startup_executors,
             startup_data,
             startup_task_runner,
@@ -74,7 +57,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     app.on_shutdown.extend(
         [
             shutdown_authorization_client,
-            shutdown_client,
+            shutdown_http_client,
             shutdown_executors,
             shutdown_scheduler,
             shutdown_redis,

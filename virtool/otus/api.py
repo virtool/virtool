@@ -446,9 +446,7 @@ class SequenceView(PydanticView):
 
         try:
             sequence = await get_data_from_req(self.request).otus.get_sequence(
-                otu_id,
-                isolate_id,
-                sequence_id,
+                otu_id, isolate_id, sequence_id
             )
         except ResourceNotFoundError:
             raise NotFound
@@ -496,11 +494,7 @@ class SequenceView(PydanticView):
             raise HTTPBadRequest(text=message)
 
         sequence_document = await get_data_from_req(self.request).otus.update_sequence(
-            otu_id,
-            isolate_id,
-            sequence_id,
-            self.request["client"].user_id,
-            data,
+            otu_id, isolate_id, sequence_id, self.request["client"].user_id, data
         )
 
         return json_response(sequence_document)
