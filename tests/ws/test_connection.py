@@ -4,7 +4,8 @@ from virtool.users.utils import Permission
 
 def test_init(ws):
     """
-    Test that :meth:`.Connection.__init__` draws attributes from the passed session and websocket handler.
+    Test that Connection object draws attributes from the passed session and websocket
+    handler.
 
     """
     assert ws.user_id == "test"
@@ -13,14 +14,17 @@ def test_init(ws):
 
 
 async def test_send(ws):
-    """ """
-    message = {
-        "interface": "users",
-        "operation": "update",
-        "data": {"groups": [], "user_id": "john"},
-    }
-
-    await ws.send(message)
+    """
+    Test that calling the send method calls the send_json method on the underlying
+    WebSocket response.
+    """
+    await ws.send(
+        {
+            "interface": "users",
+            "operation": "update",
+            "data": {"groups": [], "user_id": "john"},
+        }
+    )
 
     ws._ws.send_json.assert_called_with(
         {
@@ -33,5 +37,9 @@ async def test_send(ws):
 
 
 async def test_close(ws):
+    """
+    Test that closing the connection calls the close method on the underlying WebSocket
+    response.
+    """
     await ws.close(1000)
     ws._ws.close.assert_called()

@@ -52,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 class SamplesData(DataLayerPiece):
+    name = "samples"
     def __init__(self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient):
         self._config = config
         self._mongo = mongo

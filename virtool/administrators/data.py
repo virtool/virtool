@@ -10,10 +10,7 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.api.utils import paginate_aggregate, compose_regex_query
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
-from virtool.data.errors import (
-    ResourceNotFoundError,
-    ResourceConflictError,
-)
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError
 from virtool.groups.db import lookup_groups_minimal_by_id, lookup_group_minimal_by_id
@@ -44,6 +41,8 @@ PROJECTION = [
 
 
 class AdministratorsData(DataLayerPiece):
+    name = "administrators"
+
     def __init__(self, authorization_client: AuthorizationClient, mongo: "DB"):
         self._authorization_client = authorization_client
         self._mongo = mongo
@@ -73,10 +72,7 @@ class AdministratorsData(DataLayerPiece):
 
         term_query = compose_regex_query(term, ["handle"]) if term else {}
 
-        client_query = {
-            **administrator_query,
-            **term_query,
-        }
+        client_query = {**administrator_query, **term_query}
 
         result = await paginate_aggregate(
             self._mongo.users,

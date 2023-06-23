@@ -1,11 +1,10 @@
-from typing import Union
-
 from aiohttp.web_ws import WebSocketResponse
 
 from virtool.api.custom_json import dump_string
+from virtool.ws.cls import WSMessage
 
 
-class Connection:
+class WSConnection:
     """
     Wraps a :class:``WebSocketResponse``.
     """
@@ -17,9 +16,10 @@ class Connection:
         self.groups = session.groups
         self.permissions = session.permissions
 
-    async def send(self, message: Union[dict, list]):
+    async def send(self, message: WSMessage):
         """
         Sends the passed JSON-encodable message to the connected client.
+
         :param message: the message to send
         """
         try:

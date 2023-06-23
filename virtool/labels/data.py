@@ -15,6 +15,8 @@ from virtool.pg.utils import get_generic
 
 
 class LabelsData:
+    name = "labels"
+
     def __init__(self, db: Mongo, pg: AsyncEngine):
         self._db = db
         self._pg = pg

@@ -22,6 +22,7 @@ from virtool.account.oas import (
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.events import emits
 from virtool.data.piece import DataLayerPiece
 from virtool.groups.db import lookup_groups_minimal_by_id
 from virtool.mongo.core import Mongo
@@ -44,6 +45,8 @@ PROJECTION = (
 
 
 class AccountData(DataLayerPiece):
+    name = "account"
+
     def __init__(
         self, db: Mongo, redis: Redis, authorization_client: AuthorizationClient
     ):
@@ -97,10 +100,7 @@ class AccountData(DataLayerPiece):
         if "email" in data_dict:
             update["email"] = data_dict["email"]
 
-        await self._db.users.update_one(
-            {"_id": user_id},
-            {"$set": update},
-        )
+        await self._db.users.update_one({"_id": user_id}, {"$set": update})
 
         return await self.get(user_id)
 
@@ -358,12 +358,9 @@ class AccountData(DataLayerPiece):
         await self.data.sessions.delete(session_id)
 
         await self.data.administrators.update(
-            reset.user_id,
-            UpdateUserRequest(force_reset=False, password=data.password),
+            reset.user_id, UpdateUserRequest(force_reset=False, password=data.password)
         )
 
         return await self.data.sessions.create(
-            ip,
-            reset.user_id,
-            remember=reset.remember,
+            ip, reset.user_id, remember=reset.remember
         )

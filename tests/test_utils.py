@@ -7,11 +7,13 @@ from pathlib import Path
 import arrow
 import pytest
 from aiohttp.web_exceptions import HTTPBadRequest
+from virtool_core.models.basemodel import BaseModel
+from virtool_core.models.samples import Sample
 from virtool_core.utils import decompress_tgz
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError
-from virtool.utils import wait_for_checks
+from virtool.utils import wait_for_checks, get_model_by_name
 
 
 @pytest.fixture(scope="session")
@@ -21,28 +23,10 @@ def alphanumeric():
 
 @pytest.mark.parametrize(
     "document,result",
-    [
-        (None, None),
-        ({"_id": "foo"}, {"id": "foo"}),
-        ({"id": "foo"}, {"id": "foo"}),
-    ],
+    [(None, None), ({"_id": "foo"}, {"id": "foo"}), ({"id": "foo"}, {"id": "foo"})],
 )
 def test_base_processor(document, result):
     assert virtool.utils.base_processor(document) == result
-
-
-def test_generate_key(mocker):
-    """
-    Test that API keys are generated using UUID4 and that :func:`generate_api_key()` returns the
-    raw and hashed version of the key. Hashing is done through a call to :func:`hash_api_key`.
-
-    """
-    m_token_hex = mocker.patch("secrets.token_hex", return_value="foobar")
-    assert virtool.utils.generate_key() == (
-        "foobar",
-        "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2",
-    )
-    m_token_hex.assert_called_with(32)
 
 
 def test_decompress_tgz(tmp_path):
@@ -64,6 +48,29 @@ def test_decompress_tgz(tmp_path):
         "VERSION",
         "install.sh",
     }
+
+
+def test_generate_key(mocker):
+    """
+    Test that API keys are generated using UUID4 and that :func:`generate_api_key()` returns the
+    raw and hashed version of the key. Hashing is done through a call to :func:`hash_api_key`.
+
+    """
+    m_token_hex = mocker.patch("secrets.token_hex", return_value="foobar")
+    assert virtool.utils.generate_key() == (
+        "foobar",
+        "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2",
+    )
+    m_token_hex.assert_called_with(32)
+
+
+def test_get_model_by_name():
+    subclasses = []
+
+    for cls in BaseModel.__subclasses__():
+        subclasses.append(cls)
+
+    assert get_model_by_name("Sample") == Sample
 
 
 class TestRandomAlphanumeric:
@@ -105,13 +112,7 @@ def test_timestamp(mocker):
 
 
 @pytest.mark.parametrize(
-    "value,result",
-    [
-        ("true", True),
-        ("1", True),
-        ("false", False),
-        ("0", False),
-    ],
+    "value,result", [("true", True), ("1", True), ("false", False), ("0", False)]
 )
 def test_to_bool(value, result):
     """
