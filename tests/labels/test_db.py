@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.mongo.transforms import apply_transforms
 from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
-from virtool.labels.models import LabelSQL
+from virtool.labels.models import SQLLabel
 
 
 @pytest.mark.parametrize(
@@ -21,10 +21,10 @@ async def test_label_attacher(documents, snapshot, pg: AsyncEngine):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                LabelSQL(
+                SQLLabel(
                     id=1, name="Bug", color="#a83432", description="This is a bug"
                 ),
-                LabelSQL(
+                SQLLabel(
                     id=2,
                     name="Question",
                     color="#03fc20",

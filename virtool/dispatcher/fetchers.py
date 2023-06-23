@@ -18,7 +18,7 @@ from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.operations import DELETE
 from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
-from virtool.labels.models import LabelSQL
+from virtool.labels.models import SQLLabel
 from virtool.tasks.models import SQLTask
 from virtool.types import Projection
 from virtool.uploads.models import SQLUpload
@@ -164,7 +164,7 @@ class LabelsFetcher(AbstractFetcher):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(LabelSQL).filter(LabelSQL.id.in_(change.id_list))
+                select(SQLLabel).filter(SQLLabel.id.in_(change.id_list))
             )
 
         records = [object_as_dict(record) for record in result.scalars().all()]

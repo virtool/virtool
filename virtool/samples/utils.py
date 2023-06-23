@@ -7,7 +7,7 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.config.cls import Config
-from virtool.labels.models import LabelSQL
+from virtool.labels.models import SQLLabel
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
 
@@ -52,7 +52,7 @@ async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
     """
     async with AsyncSession(pg) as session:
         query = await session.execute(
-            select(LabelSQL.id).filter(LabelSQL.id.in_(labels))
+            select(SQLLabel.id).filter(SQLLabel.id.in_(labels))
         )
         results = set(query.scalars().all())
 

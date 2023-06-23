@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.dispatcher.events import DispatcherSQLEvents
-from virtool.labels.models import LabelSQL
+from virtool.labels.models import SQLLabel
 
 
 @pytest.mark.parametrize("rollback", [False, True])
@@ -21,7 +21,7 @@ async def test_events(rollback, mocker, pg: AsyncEngine):
 
     async with AsyncSession(pg) as session:
         session.add(
-            LabelSQL(name="Test 1", color="#D97706", description="This is a test")
+            SQLLabel(name="Test 1", color="#D97706", description="This is a test")
         )
         await session.commit()
 
@@ -29,10 +29,10 @@ async def test_events(rollback, mocker, pg: AsyncEngine):
 
     async with AsyncSession(pg) as session:
         session.add(
-            LabelSQL(name="Test 2", color="#000000", description="This is a test again")
+            SQLLabel(name="Test 2", color="#000000", description="This is a test again")
         )
         session.add(
-            LabelSQL(
+            SQLLabel(
                 name="Test 3", color="#FFFFFF", description="This is a test yet again"
             )
         )
@@ -40,7 +40,7 @@ async def test_events(rollback, mocker, pg: AsyncEngine):
         await session.flush()
 
         session.add(
-            LabelSQL(
+            SQLLabel(
                 name="Test 4", color="#DDDDDD", description="This is a test after flush"
             )
         )

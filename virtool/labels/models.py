@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String
 from virtool.pg.base import Base
 
 
-class LabelSQL(Base):
+class SQLLabel(Base):
     __tablename__ = "labels"
 
     id = Column(Integer, primary_key=True)
