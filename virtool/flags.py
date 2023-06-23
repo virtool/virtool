@@ -13,37 +13,34 @@ class FlagName(Enum):
 
 class FeatureFlags:
     """
-    Class contains the derived value of the feature flags.
+    Maintains default values for feature flags and can accept overrides as a list of enabled flags.
     """
 
-    def __init__(self, cli_flags: List[FlagName]):
-        self.constants = {
+    def __init__(self, overrides: List[FlagName]):
+        self._flags = {
             FlagName.ADMINISTRATOR_ROLES: True,
             FlagName.ML_MODELS: False,
             FlagName.SPACES: False,
         }
-        self.set_derived_flag_values(cli_flags)
 
-    def set_derived_flag_values(self, cli_flags: List[FlagName]):
-        """
-        :param cli_flags:
-        """
-        for attr_name, constant_value in self.constants.items():
+        for flag_name, flag_value in self._flags.items():
             setattr(
                 self,
-                attr_name.name,
-                constant_value if attr_name not in cli_flags else True,
+                flag_name.name,
+                flag_value if flag_name not in overrides else True,
             )
 
-    def check_flag_enabled(self, feature_flag: FlagName):
-        if feature_flag is None:
-            return None
+    def check_flag_enabled(self, feature_flag: FlagName) -> bool:
+        """
+        Checks whether the specified feature flag is enabled.
+        :param feature_flag: the name of the feature flag
+        """
         return getattr(self, feature_flag.name)
 
 
 def flag(feature_flag: FlagName):
     """
-    Sets the feature flag attribute for the route.
+     Prevents access to the decorated request handler if the passed "feature_flag" is not enabled.
     :param feature_flag: feature flag name associated with the route
     """
 
@@ -62,7 +59,8 @@ async def feature_flag_middleware(req: Request, handler: Callable):
 
     feature_flag = getattr(handler, "feature_flag", None)
 
-    if req.app["flags"].check_flag_enabled(feature_flag) is False:
-        raise HTTPNotFound
+    if feature_flag is not None:
+        if req.app["flags"].check_flag_enabled(feature_flag) is False:
+            raise HTTPNotFound
 
     return await handler(req)
