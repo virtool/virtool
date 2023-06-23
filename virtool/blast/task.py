@@ -41,7 +41,6 @@ class BLASTTask(BaseTask):
 
         self.analysis_id = self.context["analysis_id"]
         self.sequence_index = self.context["sequence_index"]
-        self.interval: Optional[int] = None
         self.steps = [self.request]
         self.rid: Optional[str] = None
 
@@ -105,10 +104,10 @@ class BLASTTask(BaseTask):
         checks.
         """
 
-        self.interval = 3
+        interval = 3
 
         while True:
-            await asyncio.sleep(self.interval)
+            await asyncio.sleep(interval)
 
             blast = await self.data.blast.check_nuvs_blast(
                 self.analysis_id, self.sequence_index
@@ -127,10 +126,10 @@ class BLASTTask(BaseTask):
                 await self._set_error(blast.error)
                 break
 
-            self.interval += 5
+            interval += 5
 
             logger.debug(
                 "Checked BLAST %s. Waiting %s seconds",
                 blast.rid,
-                self.interval,
+                interval,
             )
