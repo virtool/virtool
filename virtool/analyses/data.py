@@ -40,6 +40,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceConflictError,
 )
+from virtool.data.events import emits, Operation
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
@@ -62,6 +63,8 @@ logger = getLogger("analyses")
 
 
 class AnalysisData(DataLayerPiece):
+    name = "analyses"
+
     def __init__(self, db: Mongo, config, pg: AsyncEngine):
         self._db = db
         self._config = config
@@ -87,12 +90,8 @@ class AnalysisData(DataLayerPiece):
             [
                 {
                     "$facet": {
-                        "total_count": [
-                            {"$count": "total_count"},
-                        ],
-                        "found_count": [
-                            {"$count": "found_count"},
-                        ],
+                        "total_count": [{"$count": "total_count"}],
+                        "found_count": [{"$count": "found_count"}],
                         "data": [
                             {"$sort": sort},
                             {"$skip": skip_count},
@@ -127,7 +126,7 @@ class AnalysisData(DataLayerPiece):
                         },
                     }
                 },
-            ],
+            ]
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
@@ -194,10 +193,7 @@ class AnalysisData(DataLayerPiece):
         analysis = base_processor(analysis)
 
         if analysis["workflow"] == "nuvs":
-            analysis = await apply_transforms(
-                analysis,
-                [AttachNuVsBLAST(self._pg)],
-            )
+            analysis = await apply_transforms(analysis, [AttachNuVsBLAST(self._pg)])
 
         return Analysis(
             **{**analysis, "job": analysis["job"] if analysis["job"] else None}
@@ -233,6 +229,7 @@ class AnalysisData(DataLayerPiece):
         if right == "write":
             return write
 
+    @emits(Operation.DELETE)
     async def delete(self, analysis_id: str, jobs_api_flag: bool):
         """
         Delete a single analysis by its ID.
@@ -404,6 +401,7 @@ class AnalysisData(DataLayerPiece):
 
         return blast_data
 
+    @emits(Operation.UPDATE)
     async def finalize(self, analysis_id: str, results: dict) -> Analysis:
         """
         Sets the result for an analysis and marks it as ready.

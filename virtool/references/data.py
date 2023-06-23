@@ -5,9 +5,7 @@ from typing import List, Optional, Union
 import aiohttp
 import arrow
 from aiohttp import ClientSession
-from aiohttp.web_exceptions import (
-    HTTPNoContent,
-)
+from aiohttp.web_exceptions import HTTPNoContent
 from multidict import MultiDictProxy
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -77,14 +75,13 @@ from virtool.tasks.progress import (
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.models import Upload as SQLUpload
-from virtool.users.db import (
-    AttachUserTransform,
-    extend_user,
-)
+from virtool.users.db import AttachUserTransform, extend_user
 from virtool.utils import chunk_list
 
 
 class ReferencesData(DataLayerPiece):
+    name = "references"
+
     def __init__(self, mongo, pg: AsyncEngine, config: Config, client: ClientSession):
         self._mongo = mongo
         self._pg = pg
@@ -109,11 +106,7 @@ class ReferencesData(DataLayerPiece):
         if find:
             db_query = compose_regex_query(find, ["name", "data_type"])
 
-        base_query = compose_base_find_query(
-            user_id,
-            administrator,
-            groups,
-        )
+        base_query = compose_base_find_query(user_id, administrator, groups)
 
         data = await paginate(
             self._mongo.references,
@@ -211,9 +204,7 @@ class ReferencesData(DataLayerPiece):
         elif data.remote_from:
             try:
                 release = await virtool.github.get_release(
-                    self._client,
-                    data.remote_from,
-                    release_id=data.release_id,
+                    self._client, data.remote_from, release_id=data.release_id
                 )
 
             except aiohttp.ClientConnectionError:
@@ -704,11 +695,7 @@ class ReferencesData(DataLayerPiece):
         return document
 
     async def populate_cloned_reference(
-        self,
-        manifest,
-        ref_id,
-        user_id,
-        progress_handler: TaskProgressHandler,
+        self, manifest, ref_id, user_id, progress_handler: TaskProgressHandler
     ):
         """
 
@@ -848,10 +835,7 @@ class ReferencesData(DataLayerPiece):
                 await tracker.add(1)
 
             await self._mongo.references.update_one(
-                {
-                    "_id": ref_id,
-                    "updates.id": release["id"],
-                },
+                {"_id": ref_id, "updates.id": release["id"]},
                 {
                     "$set": {
                         "installed": create_update_subdocument(release, True, user_id),
@@ -900,12 +884,7 @@ class ReferencesData(DataLayerPiece):
 
             await self._mongo.references.update_one(
                 {"_id": ref_id},
-                {
-                    "$set": {
-                        "organism": data.organism,
-                        "targets": data.targets,
-                    }
-                },
+                {"$set": {"organism": data.organism, "targets": data.targets}},
                 session=session,
             )
 
@@ -991,8 +970,5 @@ class ReferencesData(DataLayerPiece):
             "_id", {"remotes_from": {"$exists": True}}
         ):
             await fetch_and_update_release(
-                self._mongo,
-                self._client,
-                ref_id,
-                ignore_errors=True,
+                self._mongo, self._client, ref_id, ignore_errors=True
             )

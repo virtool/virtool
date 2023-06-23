@@ -10,6 +10,7 @@ from virtool_core.models.group import GroupMinimal, Group
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.events import emits, Operation
 from virtool.data.topg import both_transactions
 from virtool.groups.db import update_member_users, fetch_complete_group
 from virtool.groups.oas import UpdateGroupRequest
@@ -25,6 +26,8 @@ logger = getLogger("groups")
 
 
 class GroupsData:
+    name = "groups"
+
     def __init__(
         self, authorization_client: AuthorizationClient, mongo: "Mongo", pg: AsyncEngine
     ):
@@ -58,6 +61,7 @@ class GroupsData:
 
         raise ResourceNotFoundError()
 
+    @emits(Operation.CREATE)
     async def create(self, name: str) -> Group:
         """
         Create new group with the given name.
@@ -88,6 +92,7 @@ class GroupsData:
 
         return Group(**base_processor(document), users=[])
 
+    @emits(Operation.UPDATE)
     async def update(self, group_id: str, data: UpdateGroupRequest) -> Group:
         """
         Update the permissions for a group.
@@ -137,6 +142,7 @@ class GroupsData:
 
         return await fetch_complete_group(self._mongo, group_id)
 
+    @emits(Operation.DELETE)
     async def delete(self, group_id: str):
         """
         Delete a group by its id.

@@ -5,7 +5,7 @@ import aiojobs
 
 from virtool.config.cls import TaskSpawnerConfig, Config
 from virtool.data.errors import ResourceError
-from virtool.shutdown import shutdown_scheduler, shutdown_redis, shutdown_dispatcher
+from virtool.shutdown import shutdown_scheduler, shutdown_redis
 from virtool.startup import startup_version
 from virtool.tasks.task import BaseTask
 from virtool.tasks.utils import (
@@ -37,11 +37,8 @@ async def create_spawner_app(config: Config):
 
 
 async def shutdown_spawner_app(app):
-    shutdown_steps = [
-        shutdown_dispatcher,
-        shutdown_scheduler,
-        shutdown_redis,
-    ]
+    shutdown_steps = [shutdown_scheduler, shutdown_redis]
+
     for step in shutdown_steps:
         await step(app)
 

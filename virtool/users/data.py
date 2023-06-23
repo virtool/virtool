@@ -6,6 +6,7 @@ from virtool_core.models.user import User
 
 import virtool.users.utils
 import virtool.utils
+from virtool.data.events import emits, Operation
 from virtool.users.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
@@ -23,6 +24,8 @@ from virtool.utils import base_processor
 
 
 class UsersData:
+    name = "users"
+
     def __init__(self, authorization_client: AuthorizationClient, mongo, pg):
         self._authorization_client = authorization_client
         self._mongo = mongo
@@ -43,11 +46,9 @@ class UsersData:
 
         raise ResourceNotFoundError
 
+    @emits(Operation.CREATE)
     async def create(
-        self,
-        handle: str,
-        password: str,
-        force_reset: bool = False,
+        self, handle: str, password: str, force_reset: bool = False
     ) -> User:
         """
         Create a new user.
@@ -59,12 +60,7 @@ class UsersData:
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
-        document = await create_user(
-            self._mongo,
-            handle,
-            password,
-            force_reset,
-        )
+        document = await create_user(self._mongo, handle, password, force_reset)
 
         return await fetch_complete_user(
             self._mongo, self._authorization_client, document["_id"]
@@ -147,6 +143,7 @@ class UsersData:
 
         return user
 
+    @emits(Operation.UPDATE)
     async def update(self, user_id: str, data: UpdateUserRequest):
         """
         Update a user.
@@ -167,7 +164,6 @@ class UsersData:
         update = {}
 
         if "administrator" in data:
-
             update["administrator"] = data["administrator"]
 
             role_assignment = AdministratorRoleAssignment(

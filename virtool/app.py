@@ -12,8 +12,7 @@ from virtool.http.policy import route_policy_middleware
 from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_authorization_client,
-    shutdown_client,
-    shutdown_dispatcher,
+    shutdown_http_client,
     shutdown_executors,
     shutdown_redis,
     shutdown_scheduler,
@@ -23,13 +22,14 @@ from virtool.startup import (
     startup_check_db,
     startup_data,
     startup_databases,
-    startup_dispatcher,
+    startup_events,
     startup_executors,
     startup_http_client,
     startup_routes,
     startup_sentry,
     startup_settings,
     startup_version,
+    startup_ws,
 )
 
 
@@ -77,9 +77,10 @@ def create_app(config: Config):
             startup_version,
             startup_http_client,
             startup_databases,
-            startup_dispatcher,
+            startup_events,
             startup_routes,
             startup_executors,
+            startup_ws,
             startup_data,
             startup_settings,
             startup_sentry,
@@ -93,8 +94,7 @@ def create_app(config: Config):
     app.on_shutdown.extend(
         [
             shutdown_authorization_client,
-            shutdown_client,
-            shutdown_dispatcher,
+            shutdown_http_client,
             shutdown_executors,
             shutdown_scheduler,
             shutdown_redis,

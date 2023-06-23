@@ -41,17 +41,12 @@ import aiojobs.aiohttp
 import virtool.http.accept
 import virtool.http.errors
 from virtool.shutdown import (
-    shutdown_client,
+    shutdown_http_client,
     shutdown_executors,
     shutdown_redis,
     shutdown_scheduler,
-    shutdown_dispatcher,
 )
-from virtool.startup import (
-    startup_executors,
-    startup_http_client,
-    startup_version,
-)
+from virtool.startup import startup_executors, startup_http_client, startup_version
 from virtool.tasks.api import TaskServicesRootView
 
 logger = logging.getLogger("spawner")
@@ -186,10 +181,7 @@ async def create_task_spawner_app(config: PeriodicTaskSpawnerConfig):
     Create task spawner application.
     """
     app = Application(
-        middlewares=[
-            virtool.http.accept.middleware,
-            virtool.http.errors.middleware,
-        ]
+        middlewares=[virtool.http.accept.middleware, virtool.http.errors.middleware]
     )
 
     app["config"] = config
@@ -211,13 +203,7 @@ async def create_task_spawner_app(config: PeriodicTaskSpawnerConfig):
     )
 
     app.on_shutdown.extend(
-        [
-            shutdown_client,
-            shutdown_dispatcher,
-            shutdown_executors,
-            shutdown_scheduler,
-            shutdown_redis,
-        ]
+        [shutdown_http_client, shutdown_executors, shutdown_scheduler, shutdown_redis]
     )
 
     return app

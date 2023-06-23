@@ -26,7 +26,7 @@ async def test_startup_http_client(loop, fake_app):
 
 
 async def test_startup_http_client_headers(loop, mocker, fake_app):
-    m = mocker.patch("aiohttp.client.ClientSession")
+    m = mocker.patch("virtool.startup.ClientSession")
 
     await startup_http_client(fake_app)
 
