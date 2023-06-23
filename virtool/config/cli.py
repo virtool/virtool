@@ -36,6 +36,7 @@ from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 from virtool.tasks.spawn import spawn
 from virtool.tasks.spawner import run_task_spawner
+from virtool.flags import FlagName
 
 logger = getLogger("config")
 
@@ -78,12 +79,20 @@ def server():
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_api_server(**kwargs):
+@click.option(
+    "--flags",
+    help="feature flag of the feature to enable",
+    type=click.Choice([flag.name for flag in FlagName], case_sensitive=False),
+    required=False,
+    multiple=True,
+    default=[],
+)
+def start_api_server(flags, **kwargs):
     """Start a Virtool public API server."""
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
 
-    run_api_server(ServerConfig(**kwargs))
+    run_api_server(ServerConfig(flags=flags, **kwargs))
 
 
 @server.command("jobs")
