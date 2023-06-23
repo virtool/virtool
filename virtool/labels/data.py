@@ -7,7 +7,7 @@ from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.labels.db import SampleCountTransform
-from virtool.labels.models import Label as LabelSQL
+from virtool.labels.models import LabelSQL
 from virtool.labels.oas import UpdateLabelRequest
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms

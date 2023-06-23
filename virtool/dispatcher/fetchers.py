@@ -18,10 +18,10 @@ from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.operations import DELETE
 from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
-from virtool.labels.models import Label
-from virtool.tasks.models import Task
+from virtool.labels.models import LabelSQL
+from virtool.tasks.models import SQLTask
 from virtool.types import Projection
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -164,7 +164,7 @@ class LabelsFetcher(AbstractFetcher):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(Label).filter(Label.id.in_(change.id_list))
+                select(LabelSQL).filter(LabelSQL.id.in_(change.id_list))
             )
 
         records = [object_as_dict(record) for record in result.scalars().all()]
@@ -268,7 +268,7 @@ class UploadsFetcher(AbstractFetcher):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(Upload).filter(Upload.id.in_(change.id_list))
+                select(SQLUpload).filter(SQLUpload.id.in_(change.id_list))
             )
 
         records = await apply_transforms(
@@ -307,7 +307,7 @@ class TasksFetcher(AbstractFetcher):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(Task).filter(Task.id.in_(change.id_list))
+                select(SQLTask).filter(SQLTask.id.in_(change.id_list))
             )
 
         records = [object_as_dict(r) for r in result.scalars()]

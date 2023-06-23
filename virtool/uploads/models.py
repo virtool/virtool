@@ -17,7 +17,7 @@ class UploadType(str, SQLEnum):
     subtraction = "subtraction"
 
 
-class Upload(Base):
+class SQLUpload(Base):
     """
     SQL table to store all new uploads
 
@@ -30,7 +30,7 @@ class Upload(Base):
     name: Column = Column(String)
     name_on_disk: Column = Column(String, unique=True)
     ready: Column = Column(Boolean, default=False, nullable=False)
-    reads: Column = relationship("SampleReads", lazy="joined")
+    reads: Column = relationship("SQLSampleReads", lazy="joined")
     removed: Column = Column(Boolean, default=False, nullable=False)
     removed_at: Column = Column(DateTime)
     reserved: Column = Column(Boolean, default=False, nullable=False)

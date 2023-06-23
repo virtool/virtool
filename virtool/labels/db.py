@@ -3,7 +3,7 @@ from typing import Any, Awaitable, List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.labels.models import Label
+from virtool.labels.models import LabelSQL
 from virtool.mongo.transforms import AbstractTransform
 from virtool.types import Document
 
@@ -15,7 +15,7 @@ class AttachLabelsTransform(AbstractTransform):
     async def _fetch_labels(self, label_ids: List[int]) -> List[Document]:
         async with AsyncSession(self._pg) as session:
             results = await session.execute(
-                select(Label).filter(Label.id.in_(label_ids))
+                select(LabelSQL).filter(LabelSQL.id.in_(label_ids))
             )
 
         return [label.to_dict() for label in results.scalars()]

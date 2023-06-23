@@ -8,7 +8,7 @@ from virtool_core.models.task import Task
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.tasks.client import AbstractTasksClient
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.task import BaseTask
 
@@ -118,7 +118,7 @@ class TasksData:
         """
         Register a new task.
 
-        :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
+        :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.SQLTask`
         :param context: A dict containing data used by the task
         :return: the task record
 

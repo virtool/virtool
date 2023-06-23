@@ -76,7 +76,7 @@ from virtool.tasks.progress import (
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
-from virtool.uploads.models import Upload as SQLUpload
+from virtool.uploads.models import SQLUpload as SQLUpload
 from virtool.users.db import (
     AttachUserTransform,
     extend_user,

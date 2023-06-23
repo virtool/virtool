@@ -6,7 +6,7 @@ from aiohttp.abc import Application
 from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import AbstractTasksClient
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 from virtool.tasks.task import BaseTask
 
 from sentry_sdk import capture_exception
@@ -46,7 +46,7 @@ class TaskRunner:
         :param task_id: ID of the task
 
         """
-        task: Task = await get_row_by_id(self.app["pg"], Task, task_id)
+        task: SQLTask = await get_row_by_id(self.app["pg"], SQLTask, task_id)
 
         logging.info("Starting task id=%s name=%s", task.id, task.type)
 
