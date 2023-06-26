@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union, List
+from typing import Union
 
 from pymongo.uri_parser import parse_uri
 
@@ -113,10 +113,10 @@ class PeriodicTaskSpawnerConfig:
     """
 
     base_url: str
-    postgres_connection_string: str
-    redis_connection_string: str
     host: str
     port: int
+    postgres_connection_string: str
+    redis_connection_string: str
 
 
 Config = Union[
