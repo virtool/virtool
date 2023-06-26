@@ -96,7 +96,6 @@ def spawn_client(
         flags: list[FlagName] | None = None,
         groups: list[str] | None = None,
         permissions: list[Permission] | None = None,
-        use_b2c: bool = False,
     ):
         authenticated = authenticated or authorize
 
@@ -120,7 +119,7 @@ def spawn_client(
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
             sentry_dsn="",
-            use_b2c=use_b2c,
+            use_b2c=False,
         )
 
         if config_overrides:
@@ -178,9 +177,8 @@ def spawn_client(
 
             cookies = {"session_id": session_id, "session_token": session_token}
 
-        elif use_b2c:
+        elif config.use_b2c:
             cookies = {"id_token": "foobar"}
-
         else:
             cookies = {"session_id": "dne"}
 
