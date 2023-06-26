@@ -45,7 +45,7 @@ from virtool.references.utils import (
     load_reference_file,
 )
 from virtool.types import Document
-from virtool.uploads.models import Upload as SQLUpload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform, extend_user
 
 if TYPE_CHECKING:
@@ -832,7 +832,6 @@ async def insert_change(
         joined,
         description,
         user_id,
-
         session=session,
     )
 

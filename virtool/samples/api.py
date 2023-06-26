@@ -32,7 +32,7 @@ from virtool.api.response import (
 )
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.permissions import LegacyPermission
-from virtool.caches.models import SampleArtifactCache
+from virtool.caches.models import SQLSampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -57,7 +57,7 @@ from virtool.samples.files import (
     create_reads_file,
     get_existing_reads,
 )
-from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
+from virtool.samples.models import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.oas import (
     GetSampleResponse,
     CreateSampleRequest,
@@ -354,7 +354,7 @@ async def job_remove(req):
     if await get_one_field(req.app["db"].samples, "ready", sample_id):
         raise HTTPBadRequest(text="Only unfinalized samples can be deleted")
 
-    reads_files = await get_rows(pg, SampleReads, "sample", sample_id)
+    reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
 
     if upload_ids:
@@ -598,11 +598,11 @@ async def upload_artifact(req):
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file upload aborted for sample: %s", sample_id)
-        await delete_row(pg, upload_id, SampleArtifact)
+        await delete_row(pg, upload_id, SQLSampleArtifact)
         await to_thread(os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
 
-    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SQLSampleArtifact)
 
     headers = {"Location": f"/samples/{sample_id}/artifact/{name}"}
 
@@ -785,12 +785,12 @@ async def upload_cache_artifact(req):
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)
-        await delete_row(pg, upload_id, SampleArtifact)
+        await delete_row(pg, upload_id, SQLSampleArtifact)
         await to_thread(os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(
-        pg, size, upload_id, SampleArtifactCache
+        pg, size, upload_id, SQLSampleArtifactCache
     )
 
     headers = {"Location": f"/samples/{sample_id}/caches/{key}/artifacts/{name}"}
@@ -873,7 +873,7 @@ async def download_artifact(req: aiohttp.web.Request):
     async with AsyncSession(pg) as session:
         result = (
             await session.execute(
-                select(SampleArtifact).filter_by(sample=sample_id, name=filename)
+                select(SQLSampleArtifact).filter_by(sample=sample_id, name=filename)
             )
         ).scalar()
 
@@ -958,7 +958,7 @@ async def download_cache_artifact(req):
     async with AsyncSession(pg) as session:
         result = (
             await session.execute(
-                select(SampleArtifactCache).filter_by(
+                select(SQLSampleArtifactCache).filter_by(
                     name=filename, key=key, sample=sample_id
                 )
             )

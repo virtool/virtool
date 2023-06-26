@@ -8,7 +8,7 @@ from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
 
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.pg.utils import get_row_by_id
 
 
@@ -402,7 +402,7 @@ async def test_upload_file(
         assert resp.status == 201
         assert await resp.json() == snapshot
         assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
-        assert await get_row_by_id(pg, AnalysisFile, 1)
+        assert await get_row_by_id(pg, SQLAnalysisFile, 1)
 
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported analysis file format")

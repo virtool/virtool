@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from virtool.data.layer import DataLayer
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import EnsureIndexFilesTask
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 from virtool.utils import get_temp_dir
 
 
@@ -90,7 +90,7 @@ async def test_ensure_index_files(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},

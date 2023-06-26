@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.future import select
 from virtool_core.utils import compress_file
 
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 
 
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
@@ -29,7 +29,7 @@ async def attach_analysis_files(
         results = (
             (
                 await session.execute(
-                    select(AnalysisFile).filter_by(analysis=analysis_id)
+                    select(SQLAnalysisFile).filter_by(analysis=analysis_id)
                 )
             )
             .scalars()

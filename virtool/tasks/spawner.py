@@ -26,7 +26,7 @@ from virtool.types import App
 from virtool.utils import timestamp
 from virtool.config.cls import PeriodicTaskSpawnerConfig
 from virtool.tasks.task import BaseTask
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 from virtool.tasks.utils import (
     startup_databases_for_spawner,
     startup_datalayer_for_spawner,

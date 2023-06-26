@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.uploads.models import Upload, UploadType
+from virtool.uploads.models import SQLUpload, UploadType
 from virtool_core.models.enums import Permission
 
 
@@ -167,7 +167,7 @@ class TestGet:
 
         async with AsyncSession(pg) as session:
             session.add(
-                Upload(
+                SQLUpload(
                     id=1,
                     created_at=virtool.utils.timestamp(),
                     name="test.fq.gz",
@@ -221,7 +221,7 @@ class TestDelete:
 
         async with AsyncSession(pg) as session:
             session.add(
-                Upload(
+                SQLUpload(
                     id=1,
                     created_at=virtool.utils.timestamp(),
                     name="test.fq.gz",
@@ -262,7 +262,7 @@ class TestDelete:
         if exists:
             async with AsyncSession(pg) as session:
                 session.add(
-                    Upload(
+                    SQLUpload(
                         id=1,
                         created_at=virtool.utils.timestamp(),
                         name="test.fq.gz",
