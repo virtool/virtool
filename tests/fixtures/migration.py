@@ -56,7 +56,11 @@ async def migration_pg_connection_string(
     async with pg.begin() as conn:
         for table in Base.metadata.sorted_tables:
             if str(table) not in ("revisions", "groups", "spaces"):
-                await conn.execute(text(f"DROP TABLE {table} CASCADE"))
+                try:
+                    await conn.execute(text(f"DROP TABLE {table} CASCADE"))
+                except ProgrammingError as exc:
+                    if "does not exist" not in str(exc):
+                        raise
 
         await conn.run_sync(Base.metadata.create_all)
         await conn.commit()
