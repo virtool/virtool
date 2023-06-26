@@ -35,7 +35,7 @@ class OTUView(PydanticView):
         """
         Get an OTU.
 
-        Retrieves the details of an OTU.
+        Fetches the details of an OTU.
 
         A FASTA file containing all sequences in the OTU can be downloaded by appending
         `.fa` to the path.
@@ -208,7 +208,7 @@ class IsolateView(PydanticView):
         """
         Get an isolate.
 
-        Retrieves the details of an isolate.
+        Fetches the details of an isolate.
 
         A FASTA file containing all sequences in the isolate can be downloaded by
         appending `.fa` to the path.
@@ -258,7 +258,7 @@ class IsolateView(PydanticView):
         """
         Update an isolate.
 
-        Updates an isolate.
+        Updates an isolate using 'otu_id' and 'isolate_id'.
 
         """
         db = self.request.app["db"]
@@ -304,7 +304,7 @@ class IsolateView(PydanticView):
         """
         Delete an isolate.
 
-        Deletes and isolate.
+        Deletes an isolate using its 'otu id' and 'isolate id'.
 
         """
         db = self.request.app["db"]
@@ -417,7 +417,7 @@ class SequenceView(PydanticView):
         """
         Get a sequence.
 
-        Retrieves the details for a sequence.
+        Fetches the details for a sequence.
 
         A FASTA file containing the nucelotide sequence can be downloaded by appending
         `.fa` to the path.
@@ -446,9 +446,7 @@ class SequenceView(PydanticView):
 
         try:
             sequence = await get_data_from_req(self.request).otus.get_sequence(
-                otu_id,
-                isolate_id,
-                sequence_id,
+                otu_id, isolate_id, sequence_id
             )
         except ResourceNotFoundError:
             raise NotFound
@@ -465,6 +463,8 @@ class SequenceView(PydanticView):
     ) -> Union[r200[Sequence], r400, r401, r403, r404]:
         """
         Update a sequence.
+
+        Updates a sequence using its 'otu id', 'isolate id' and 'sequence id'.
 
         """
         db = self.request.app["db"]
@@ -494,11 +494,7 @@ class SequenceView(PydanticView):
             raise HTTPBadRequest(text=message)
 
         sequence_document = await get_data_from_req(self.request).otus.update_sequence(
-            otu_id,
-            isolate_id,
-            sequence_id,
-            self.request["client"].user_id,
-            data,
+            otu_id, isolate_id, sequence_id, self.request["client"].user_id, data
         )
 
         return json_response(sequence_document)
@@ -506,6 +502,8 @@ class SequenceView(PydanticView):
     async def delete(self, otu_id: str, isolate_id: str, sequence_id: str, /):
         """
         Delete a sequence.
+
+        Deletes the specified sequence.
 
         """
         db = self.request.app["db"]
@@ -534,6 +532,11 @@ class SequenceView(PydanticView):
 
 @routes.get("/otus/{otu_id}/history")
 async def list_history(req):
+    """
+    List history.
+
+    Lists an OTU's history.
+    """
     db = req.app["db"]
 
     otu_id = req.match_info["otu_id"]

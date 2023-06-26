@@ -8,10 +8,11 @@ from aiohttp.test_utils import make_mocked_coro
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import LibraryType, Permission
+from virtool_core.models.samples import WorkflowState
 
 import virtool.caches.db
 import virtool.pg.utils
-from virtool.caches.models import SampleArtifactCache, SampleReadsCache
+from virtool.caches.models import SQLSampleArtifactCache, SQLSampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.config import get_config_from_app
 from virtool.data.errors import ResourceNotFoundError
@@ -19,9 +20,9 @@ from virtool.data.utils import get_data_from_app
 from virtool.jobs.client import DummyJobsClient
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.files import create_reads_file
-from virtool.samples.models import SampleArtifact, SampleReads
+from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 
 
 class MockJobInterface:
@@ -50,6 +51,14 @@ async def get_sample_data(mongo, fake2, pg, static_time):
                 "_id": "test",
                 "all_read": True,
                 "all_write": True,
+                "created_at": static_time.datetime,
+                "files": [
+                    {
+                        "id": "foo",
+                        "name": "Bar.fq.gz",
+                        "download_url": "/download/samples/files/file_1.fq.gz",
+                    }
+                ],
                 "format": "fastq",
                 "group": "none",
                 "group_read": True,
@@ -58,29 +67,26 @@ async def get_sample_data(mongo, fake2, pg, static_time):
                 "host": "",
                 "is_legacy": False,
                 "isolate": "",
+                "labels": [label.id],
                 "library_type": LibraryType.normal.value,
                 "locale": "",
-                "nuvs": False,
-                "pathoscope": True,
                 "name": "Test",
                 "notes": "",
-                "created_at": static_time.datetime,
+                "nuvs": False,
+                "pathoscope": True,
                 "ready": True,
-                "files": [
-                    {
-                        "id": "foo",
-                        "name": "Bar.fq.gz",
-                        "download_url": "/download/samples/files/file_1.fq.gz",
-                    }
-                ],
-                "labels": [label.id],
                 "subtractions": ["apple", "pear"],
                 "user": {"id": user.id},
+                "workflows": {
+                    "aodp": WorkflowState.INCOMPATIBLE.value,
+                    "pathoscope": WorkflowState.COMPLETE.value,
+                    "nuvs": WorkflowState.PENDING.value,
+                },
             }
         ),
     )
 
-    reads = SampleReads(
+    reads = SQLSampleReads(
         name="reads_1.fq.gz",
         name_on_disk="reads_1.fq.gz",
         sample="test",
@@ -92,7 +98,7 @@ async def get_sample_data(mongo, fake2, pg, static_time):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                SampleArtifact(
+                SQLSampleArtifact(
                     name="reference.fa.gz",
                     sample="test",
                     type="fasta",
@@ -346,7 +352,9 @@ class TestCreate:
         )
 
         data = get_data_from_app(client.app)
-        data.jobs._client = DummyJobsClient()
+        dummy_jobs_client = DummyJobsClient()
+        data.jobs._client = dummy_jobs_client
+        data.samples.jobs_client = dummy_jobs_client
 
         label = await fake2.labels.create()
 
@@ -378,10 +386,10 @@ class TestCreate:
 
         assert await client.db.samples.find_one() == snapshot
 
-        assert data.jobs._client.enqueued == [("create_sample", "fb085f7f")]
+        assert data.jobs._client.enqueued == [("create_sample", "bf1b993c")]
 
         async with pg.begin() as conn:
-            upload = await get_row_by_id(conn, Upload, 1)
+            upload = await get_row_by_id(conn, SQLUpload, 1)
 
         assert upload.reserved is True
 
@@ -696,16 +704,16 @@ async def test_finalize(
     )
 
     async with AsyncSession(pg) as session:
-        upload = Upload(name="test", name_on_disk="test.fq.gz")
+        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
 
-        artifact = SampleArtifact(
+        artifact = SQLSampleArtifact(
             name="reference.fa.gz",
             sample="test",
             type="fasta",
             name_on_disk="reference.fa.gz",
         )
 
-        reads = SampleReads(
+        reads = SQLSampleReads(
             name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
         )
 
@@ -722,7 +730,7 @@ async def test_finalize(
         assert await resp.json() == snapshot
         with pytest.raises(ResourceNotFoundError):
             await get_data_from_app(client.app).uploads.get(1)
-        assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
+        assert not (await virtool.pg.utils.get_row_by_id(pg, SQLSampleReads, 1)).upload
     else:
         assert resp.status == 422
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
@@ -1243,7 +1251,9 @@ async def test_download_reads(
     if error != "404_reads":
         async with AsyncSession(pg) as session:
             session.add(
-                SampleReads(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+                SQLSampleReads(
+                    id=1, sample="foo", name=file_name, name_on_disk=file_name
+                )
             )
             await session.commit()
 
@@ -1287,7 +1297,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     if error != "404_artifact":
         async with AsyncSession(pg) as session:
             session.add(
-                SampleArtifact(
+                SQLSampleArtifact(
                     id=1,
                     sample="foo",
                     name="fastqc.txt",
@@ -1519,7 +1529,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
     if error != "404_cache":
         await client.db.caches.insert_one({"key": key, "sample": {"id": "test"}})
     if error != "404_reads":
-        sample_reads_cache = SampleReadsCache(
+        sample_reads_cache = SQLSampleReadsCache(
             id=1,
             sample="foo",
             name=filename,
@@ -1574,7 +1584,7 @@ async def test_download_artifact_cache(
         )
 
     if error != "404_artifact":
-        sample_artfact_cache = SampleArtifactCache(
+        sample_artfact_cache = SQLSampleArtifactCache(
             id=1,
             sample="foo",
             name=name,

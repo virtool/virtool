@@ -7,7 +7,7 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.config.cls import Config
-from virtool.labels.models import Label
+from virtool.labels.models import SQLLabel
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
 
@@ -51,7 +51,9 @@ async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
     :return: a list containing any label IDs given in the request that do not exist
     """
     async with AsyncSession(pg) as session:
-        query = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
+        query = await session.execute(
+            select(SQLLabel.id).filter(SQLLabel.id.in_(labels))
+        )
         results = set(query.scalars().all())
 
     return [label for label in labels if label not in results]

@@ -123,7 +123,7 @@ class OTUDBBuffer(BaseDataBuffer):
                 collection, change_buffer, id_provider, session
             )
             await collection.insert_many(
-                [item.data for item in updates], session=session, silent=True
+                [item.data for item in updates], session=session
             )
             for update in updates:
                 await update.callback(update.data["_id"])
@@ -162,7 +162,7 @@ class OTUDBBuffer(BaseDataBuffer):
             change_buffer: List[BufferData], session: AsyncIOMotorClientSession
         ):
             await collection.insert_many(
-                [item.data for item in change_buffer], session=session, silent=True
+                [item.data for item in change_buffer], session=session
             )
 
         return cls(func, task_queue)
@@ -175,10 +175,7 @@ async def generate_bulk_id_buffer(
     session: AsyncIOMotorClientSession,
 ) -> List[BufferData]:
     id_insert_buffer = [
-        DBBufferData(
-            {**update.data, "_id": id_provider.get()},
-            update.callback,
-        )
+        DBBufferData({**update.data, "_id": id_provider.get()}, update.callback)
         for update in change_buffer
     ]
     # if await collection.find_one(
@@ -376,11 +373,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
                 or otu_data.data.history_method == "create"
             ]
 
-            joined_documents = await bulk_join_ids(
-                mongo,
-                docs,
-                session,
-            )
+            joined_documents = await bulk_join_ids(mongo, docs, session)
             joined_documents = {
                 document["_id"]: document for document in joined_documents
             }

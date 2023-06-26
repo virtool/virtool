@@ -9,27 +9,25 @@ A sample needs a user and upload to exist.
 ```
 
 """
-from typing import List, Optional, Type, Dict
+from typing import Dict, List, Optional, Type
 
 from faker import Faker
-from faker.providers import BaseProvider, python, color, lorem
+from faker.providers import BaseProvider, color, lorem, python
 from virtool_core.models.group import Group
 from virtool_core.models.job import Job
 from virtool_core.models.label import Label
 from virtool_core.models.task import Task
 from virtool_core.models.user import User
+from virtool_core.models.hmm import HMM
 
+from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.layer import DataLayer
-from virtool.groups.oas import UpdatePermissionsRequest, UpdateGroupRequest
+from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
-from virtool.references.tasks import (
-    CloneReferenceTask,
-    CleanReferencesTask,
-)
+from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
-from virtool.users.oas import UpdateUserRequest
 
 
 class VirtoolProvider(BaseProvider):
@@ -46,7 +44,7 @@ class VirtoolProvider(BaseProvider):
 
 
 class DataFaker:
-    def __init__(self, layer: DataLayer):
+    def __init__(self, layer: DataLayer, mongo):
         self.layer = layer
 
         self.faker = Faker()
@@ -61,6 +59,9 @@ class DataFaker:
         self.jobs = JobsFakerPiece(self)
         self.tasks = TasksFakerPiece(self)
         self.users = UsersFakerPiece(self)
+        self.hmm = HMMFakerPiece(self)
+
+        self.mongo = mongo
 
 
 class DataFakerPiece:
@@ -73,9 +74,9 @@ class DataFakerPiece:
 class JobsFakerPiece(DataFakerPiece):
     model = Job
 
-    async def create(self, user: User) -> Job:
+    async def create(self, user: User, workflow: Optional[str] = None) -> Job:
         return await self.layer.jobs.create(
-            self.faker.workflow(),
+            workflow or self.faker.workflow(),
             self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
             JobRights(),
@@ -87,12 +88,12 @@ class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
     async def create(self, permissions: Optional[UpdatePermissionsRequest] = None):
-        group_id = "contains spaces"
+        name = "contains spaces"
 
-        while " " in group_id:
-            group_id = self.faker.profile()["job"].lower() + "s"
+        while " " in name:
+            name = self.faker.profile()["job"].lower() + "s"
 
-        group = await self.layer.groups.create(group_id)
+        group = await self.layer.groups.create(name)
 
         if permissions:
             group = await self.layer.groups.update(
@@ -147,15 +148,47 @@ class UsersFakerPiece(DataFakerPiece):
 
         if groups or primary_group:
             if groups:
-                await self.layer.users.update(
+                await self.layer.administrators.update(
                     user.id, UpdateUserRequest(groups=[group.id for group in groups])
                 )
 
             if primary_group:
-                await self.layer.users.update(
+                await self.layer.administrators.update(
                     user.id, UpdateUserRequest(primary_group=primary_group.id)
                 )
 
             return await self.layer.users.get(user.id)
 
         return user
+
+
+class HMMFakerPiece(DataFakerPiece):
+    model = HMM
+
+    async def create(self, mongo):
+        hmm_id = "".join(self.faker.mongo_id())
+        faker = self.faker
+
+        document = await mongo.hmm.insert_one(
+            {
+                "entries": [
+                    {
+                        "accession": faker.pystr(),
+                        "gi": faker.pystr(),
+                        "name": faker.pystr(),
+                        "organism": faker.pystr(),
+                    }
+                ],
+                "genera": {faker.pystr(): faker.pyint()},
+                "length": faker.pyint(),
+                "mean_entropy": faker.pyfloat(),
+                "total_entropy": faker.pyfloat(),
+                "_id": hmm_id,
+                "cluster": faker.pyint(),
+                "count": faker.pyint(),
+                "families": {faker.pystr(): faker.pyint()},
+                "names": [faker.pystr()],
+            }
+        )
+
+        return HMM(**document)

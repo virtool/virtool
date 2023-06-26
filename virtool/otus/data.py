@@ -30,6 +30,8 @@ from virtool.utils import base_processor
 
 
 class OTUData:
+    name = "otus"
+
     def __init__(self, mongo: Mongo, data_path: Path):
         self._mongo = mongo
         self._data_path = data_path
@@ -83,10 +85,7 @@ class OTUData:
             fasta.extend(
                 [
                     format_fasta_entry(
-                        otu["name"],
-                        isolate_name,
-                        sequence["_id"],
-                        sequence["sequence"],
+                        otu["name"], isolate_name, sequence["_id"], sequence["sequence"]
                     )
                     async for sequence in self._mongo.sequences.find(
                         {"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]
@@ -182,12 +181,7 @@ class OTUData:
             fasta,
         )
 
-    async def create(
-        self,
-        ref_id: str,
-        data: CreateOTURequest,
-        user_id: str,
-    ) -> OTU:
+    async def create(self, ref_id: str, data: CreateOTURequest, user_id: str) -> OTU:
         """
         Create an OTU and it's first history record.
 
@@ -225,12 +219,7 @@ class OTUData:
 
         return await self.get(document["_id"])
 
-    async def update(
-        self,
-        otu_id: str,
-        data: UpdateOTURequest,
-        user_id: str,
-    ) -> OTU:
+    async def update(self, otu_id: str, data: UpdateOTURequest, user_id: str) -> OTU:
         """
         Update an OTU.
 
@@ -294,9 +283,7 @@ class OTUData:
 
         return await self.get(otu_id)
 
-    async def remove(
-        self, otu_id: str, user_id: str, silent: bool = False
-    ) -> Optional[DeleteResult]:
+    async def remove(self, otu_id: str, user_id: str) -> Optional[DeleteResult]:
         """
         Remove an OTU.
 
@@ -304,7 +291,6 @@ class OTUData:
 
         :param otu_id: the ID of the OTU
         :param user_id: the ID of the requesting user
-        :param silent: prevents dispatch of the change
         :return: `True` if the removal was successful
 
         """
@@ -315,12 +301,8 @@ class OTUData:
 
         async with self._mongo.create_session() as session:
             _, delete_result, _ = await asyncio.gather(
-                self._mongo.sequences.delete_many(
-                    {"otu_id": otu_id}, silent=True, session=session
-                ),
-                self._mongo.otus.delete_one(
-                    {"_id": otu_id}, silent=silent, session=session
-                ),
+                self._mongo.sequences.delete_many({"otu_id": otu_id}, session=session),
+                self._mongo.otus.delete_one({"_id": otu_id}, session=session),
                 # Unset the reference internal_control if it is the OTU being removed.
                 self._mongo.references.update_one(
                     {
@@ -342,7 +324,6 @@ class OTUData:
                 None,
                 description,
                 user_id,
-                silent=silent,
                 session=session,
             )
 
@@ -735,18 +716,12 @@ class OTUData:
 
         async with self._mongo.create_session() as session:
             sequence_document = await self._mongo.sequences.find_one_and_update(
-                {"_id": sequence_id},
-                {"$set": update},
-                session=session,
+                {"_id": sequence_id}, {"$set": update}, session=session
             )
 
             await increment_otu_version(self._mongo, otu_id, session=session)
 
-            new = await virtool.otus.db.join(
-                self._mongo,
-                otu_id,
-                session=session,
-            )
+            new = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
             await update_otu_verification(self._mongo, new, session=session)
 

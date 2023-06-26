@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.mongo.utils
 import virtool.utils
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.subtractions.db import AttachSubtractionTransform
@@ -52,7 +52,7 @@ class AttachAnalysisFileTransform(AbstractTransform):
             results = (
                 (
                     await session.execute(
-                        select(AnalysisFile).filter_by(analysis=document["id"])
+                        select(SQLAnalysisFile).filter_by(analysis=document["id"])
                     )
                 )
                 .scalars()

@@ -1,8 +1,8 @@
 import random
 from asyncio import gather
 from dataclasses import dataclass
-from logging import Logger
-from typing import Any, Dict, List, Optional, Union
+from logging import getLogger
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.user import User
@@ -10,8 +10,8 @@ from virtool_core.models.user import User
 from virtool.errors import DatabaseError
 from virtool.groups.db import (
     get_merged_permissions,
-    lookup_minimal_groups,
-    lookup_minimal_group_by_id,
+    lookup_groups_minimal_by_id,
+    lookup_group_minimal_by_id,
 )
 from virtool.mongo.transforms import AbstractTransform
 from virtool.mongo.utils import (
@@ -26,7 +26,11 @@ from virtool.users.utils import (
 )
 from virtool.utils import base_processor
 
-logger = Logger(__name__)
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
+    from virtool.authorization.client import AuthorizationClient
+
+logger = getLogger("users")
 
 PROJECTION = [
     "_id",
@@ -256,7 +260,7 @@ async def validate_credentials(db, user_id: str, password: str) -> bool:
     return False
 
 
-async def update_sessions_and_keys(
+async def update_keys(
     db,
     user_id: str,
     administrator: bool,
@@ -295,32 +299,27 @@ async def update_sessions_and_keys(
         ]
     )
 
-    await db.sessions.update_many(
-        query,
-        {
-            "$set": {
-                "administrator": administrator,
-                "groups": groups,
-                "permissions": permissions,
-            }
-        },
-        session=session,
+
+async def fetch_complete_user(
+    mongo: "Mongo", authorization_client: "AuthorizationClient", user_id: str
+) -> Optional[User]:
+    user, (user_id, role) = await gather(
+        mongo.users.aggregate(
+            [
+                {"$match": {"_id": user_id}},
+                *lookup_groups_minimal_by_id(),
+                *lookup_group_minimal_by_id(
+                    local_field="primary_group", set_as="primary_group"
+                ),
+            ]
+        ).to_list(1),
+        authorization_client.get_administrator(user_id),
     )
 
+    if len(user) == 0:
+        return None
 
-async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
-    async for user in mongo.users.aggregate(
-        [
-            {"$match": {"_id": user_id}},
-            *lookup_minimal_groups(),
-            *lookup_minimal_group_by_id(
-                local_field="primary_group", set_as="primary_group"
-            ),
-        ]
-    ):
-        return User(**user)
-
-    return None
+    return User(**user[0], administrator_role=role)
 
 
 def lookup_nested_user_by_id(

@@ -1,7 +1,7 @@
-# name: TestCreate.test_clone_reference[uvloop]
+# name: TestCreate.test_clone_reference
   '/refs/bf1b993c'
 ---
-# name: TestCreate.test_clone_reference[uvloop].1
+# name: TestCreate.test_clone_reference.1
   <class 'dict'> {
     'cloned_from': <class 'dict'> {
       'id': 'foo',
@@ -60,10 +60,10 @@
     ],
   }
 ---
-# name: TestCreate.test_create[uvloop-barcode]
+# name: TestCreate.test_create[barcode]
   'https://virtool.example.com/refs/bf1b993c'
 ---
-# name: TestCreate.test_create[uvloop-barcode].1
+# name: TestCreate.test_create[barcode].1
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -112,10 +112,10 @@
     ],
   }
 ---
-# name: TestCreate.test_create[uvloop-genome]
+# name: TestCreate.test_create[genome]
   'https://virtool.example.com/refs/bf1b993c'
 ---
-# name: TestCreate.test_create[uvloop-genome].1
+# name: TestCreate.test_create[genome].1
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -163,7 +163,7 @@
     ],
   }
 ---
-# name: TestCreate.test_import_reference[uvloop]
+# name: TestCreate.test_import_reference
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -236,10 +236,10 @@
     ],
   }
 ---
-# name: TestCreate.test_remote_reference[uvloop]
+# name: TestCreate.test_remote_reference
   '/refs/bf1b993c'
 ---
-# name: TestCreate.test_remote_reference[uvloop].1
+# name: TestCreate.test_remote_reference.1
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -283,7 +283,6 @@
       ',
       'content_type': 'application/gzip',
       'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz',
-      'etag': <class 'str'>,
       'filename': 'reference.json.gz',
       'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
       'id': 11447367,
@@ -334,7 +333,7 @@
     ],
   }
 ---
-# name: TestCreateOTU.test[True-uvloop--True][db]
+# name: TestCreateOTU.test[True--True][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'bf1b993c',
@@ -391,7 +390,7 @@
     },
   ]
 ---
-# name: TestCreateOTU.test[True-uvloop--True][json]
+# name: TestCreateOTU.test[True--True][json]
   <class 'dict'> {
     'abbreviation': '',
     'id': 'bf1b993c',
@@ -428,10 +427,10 @@
     'version': 0,
   }
 ---
-# name: TestCreateOTU.test[True-uvloop--True][location]
+# name: TestCreateOTU.test[True--True][location]
   'https://virtool.example.com/otus/bf1b993c'
 ---
-# name: TestCreateOTU.test[True-uvloop-None-True][db]
+# name: TestCreateOTU.test[True-None-True][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'bf1b993c',
@@ -488,7 +487,7 @@
     },
   ]
 ---
-# name: TestCreateOTU.test[True-uvloop-None-True][json]
+# name: TestCreateOTU.test[True-None-True][json]
   <class 'dict'> {
     'abbreviation': '',
     'id': 'bf1b993c',
@@ -525,10 +524,10 @@
     'version': 0,
   }
 ---
-# name: TestCreateOTU.test[True-uvloop-None-True][location]
+# name: TestCreateOTU.test[True-None-True][location]
   'https://virtool.example.com/otus/bf1b993c'
 ---
-# name: TestCreateOTU.test[True-uvloop-TMV-True][db]
+# name: TestCreateOTU.test[True-TMV-True][db]
   <class 'list'> [
     <class 'dict'> {
       '_id': 'bf1b993c',
@@ -585,7 +584,7 @@
     },
   ]
 ---
-# name: TestCreateOTU.test[True-uvloop-TMV-True][json]
+# name: TestCreateOTU.test[True-TMV-True][json]
   <class 'dict'> {
     'abbreviation': 'TMV',
     'id': 'bf1b993c',
@@ -622,10 +621,10 @@
     'version': 0,
   }
 ---
-# name: TestCreateOTU.test[True-uvloop-TMV-True][location]
+# name: TestCreateOTU.test[True-TMV-True][location]
   'https://virtool.example.com/otus/bf1b993c'
 ---
-# name: test_add_group_or_user[True-uvloop-group-None]
+# name: test_add_group_or_user[True-group-None]
   <class 'dict'> {
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
@@ -635,7 +634,7 @@
     'remove': False,
   }
 ---
-# name: test_add_group_or_user[True-uvloop-group-None].1
+# name: test_add_group_or_user[True-group-None].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -652,7 +651,7 @@
     ],
   }
 ---
-# name: test_add_group_or_user[True-uvloop-user-None]
+# name: test_add_group_or_user[True-user-None]
   <class 'dict'> {
     'administrator': False,
     'build': False,
@@ -664,7 +663,7 @@
     'remove': False,
   }
 ---
-# name: test_add_group_or_user[True-uvloop-user-None].1
+# name: test_add_group_or_user[True-user-None].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -681,30 +680,7 @@
     ],
   }
 ---
-# name: test_create_index[True-uvloop][index]
-  <class 'dict'> {
-    '_id': 'fb085f7f',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
-    'job': <class 'dict'> {
-      'id': 'bf1b993c',
-    },
-    'manifest': <class 'dict'> {
-      'bar': 5,
-      'foo': 2,
-    },
-    'ready': False,
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-    'version': 0,
-  }
----
-# name: test_create_index[True-uvloop][json]
+# name: test_create_index[True]
   <class 'dict'> {
     'change_count': 1,
     'contributors': <class 'list'> [
@@ -721,7 +697,18 @@
     'has_files': True,
     'id': 'fb085f7f',
     'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'build_index',
     },
     'manifest': <class 'dict'> {
       'bar': 5,
@@ -744,7 +731,30 @@
     'version': 0,
   }
 ---
-# name: test_delete_group_or_user[True-uvloop-group-None]
+# name: test_create_index[True].1
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'has_json': False,
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'manifest': <class 'dict'> {
+      'bar': 5,
+      'foo': 2,
+    },
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+    'version': 0,
+  }
+---
+# name: test_delete_group_or_user[True-group-None]
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -760,7 +770,7 @@
     ],
   }
 ---
-# name: test_delete_group_or_user[True-uvloop-user-None]
+# name: test_delete_group_or_user[True-user-None]
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -776,7 +786,7 @@
     ],
   }
 ---
-# name: test_edit[uvloop-400_duplicates-barcode]
+# name: test_edit[400_duplicates-barcode]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -788,7 +798,7 @@
     },
   ]
 ---
-# name: test_edit[uvloop-400_duplicates-genome]
+# name: test_edit[400_duplicates-genome]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -800,7 +810,7 @@
     },
   ]
 ---
-# name: test_edit[uvloop-None-barcode][db]
+# name: test_edit[None-barcode][db]
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -846,7 +856,7 @@
     ],
   }
 ---
-# name: test_edit[uvloop-None-barcode][resp]
+# name: test_edit[None-barcode][resp]
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -910,7 +920,7 @@
     ],
   }
 ---
-# name: test_edit[uvloop-None-genome][db]
+# name: test_edit[None-genome][db]
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -949,7 +959,7 @@
     ],
   }
 ---
-# name: test_edit[uvloop-None-genome][resp]
+# name: test_edit[None-genome][resp]
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -1007,7 +1017,7 @@
     ],
   }
 ---
-# name: test_edit_group_or_user[True-uvloop-group-None]
+# name: test_edit_group_or_user[True-group-None]
   <class 'dict'> {
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
@@ -1017,7 +1027,7 @@
     'remove': True,
   }
 ---
-# name: test_edit_group_or_user[True-uvloop-group-None].1
+# name: test_edit_group_or_user[True-group-None].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -1042,7 +1052,7 @@
     ],
   }
 ---
-# name: test_edit_group_or_user[True-uvloop-user-None]
+# name: test_edit_group_or_user[True-user-None]
   <class 'dict'> {
     'administrator': False,
     'build': False,
@@ -1054,7 +1064,7 @@
     'remove': True,
   }
 ---
-# name: test_edit_group_or_user[True-uvloop-user-None].1
+# name: test_edit_group_or_user[True-user-None].1
   <class 'dict'> {
     '_id': 'foo',
     'groups': <class 'list'> [
@@ -1079,7 +1089,7 @@
     ],
   }
 ---
-# name: test_find[uvloop]
+# name: test_find
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1153,7 +1163,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-False-None]
+# name: test_find_otus[False-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1177,7 +1187,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-False-PVF]
+# name: test_find_otus[False-PVF]
   <class 'dict'> {
     'documents': <class 'list'> [
     ],
@@ -1189,7 +1199,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-False-Prunus]
+# name: test_find_otus[False-Prunus]
   <class 'dict'> {
     'documents': <class 'list'> [
     ],
@@ -1201,7 +1211,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-False-VF]
+# name: test_find_otus[False-VF]
   <class 'dict'> {
     'documents': <class 'list'> [
     ],
@@ -1213,7 +1223,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-False-virus]
+# name: test_find_otus[False-virus]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1237,7 +1247,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-None-None]
+# name: test_find_otus[None-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1273,7 +1283,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-None-PVF]
+# name: test_find_otus[None-PVF]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1297,7 +1307,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-None-Prunus]
+# name: test_find_otus[None-Prunus]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1321,7 +1331,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-None-VF]
+# name: test_find_otus[None-VF]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1345,7 +1355,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-None-virus]
+# name: test_find_otus[None-virus]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1381,7 +1391,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-True-None]
+# name: test_find_otus[True-None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1405,7 +1415,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-True-PVF]
+# name: test_find_otus[True-PVF]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1429,7 +1439,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-True-Prunus]
+# name: test_find_otus[True-Prunus]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1453,7 +1463,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-True-VF]
+# name: test_find_otus[True-VF]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1477,7 +1487,7 @@
     'total_count': 2,
   }
 ---
-# name: test_find_otus[uvloop-True-virus]
+# name: test_find_otus[True-virus]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -1501,7 +1511,7 @@
     'total_count': 2,
   }
 ---
-# name: test_get[uvloop-None]
+# name: test_get[None]
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -1557,7 +1567,7 @@
     ],
   }
 ---
-# name: test_get_release[uvloop-None]
+# name: test_get_release[None]
   <class 'dict'> {
     'body': '
       #### Changed
@@ -1565,7 +1575,6 @@
     ',
     'content_type': 'application/gzip',
     'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz',
-    'etag': 'W/"b7e8a7fb0fbe0cade0d6a86c9e0d4549"',
     'filename': 'reference.json.gz',
     'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2',
     'id': 11449913,
@@ -1576,7 +1585,7 @@
     'size': 3699729,
   }
 ---
-# name: test_list_updates[True-uvloop-False]
+# name: test_list_updates[True-False]
   <class 'list'> [
     <class 'dict'> {
       'body': '
@@ -1600,11 +1609,11 @@
     },
   ]
 ---
-# name: test_list_updates[True-uvloop-True]
+# name: test_list_updates[True-True]
   <class 'list'> [
   ]
 ---
-# name: test_update[True-True-uvloop-None][call]
+# name: test_update[True-True-None][call]
   <class 'tuple'> (
     <Request POST /refs/foo/updates >,
     datetime.datetime(2015, 10, 6, 20, 0),
@@ -1616,7 +1625,7 @@
     'test',
   )
 ---
-# name: test_update[True-True-uvloop-None][json]
+# name: test_update[True-True-None][json]
   <class 'dict'> {
     'body': '
       The release consists of a gzipped JSON file containing:
@@ -1631,7 +1640,6 @@
     ',
     'content_type': 'application/gzip',
     'download_url': 'https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz',
-    'etag': 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
     'filename': 'reference.json.gz',
     'html_url': 'https://api.github.com/repos/virtool/virtool-database/releases/10742520',
     'id': 10742520,

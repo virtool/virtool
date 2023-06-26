@@ -12,7 +12,7 @@ from virtool.tasks.oas import GetTasksResponse, TaskResponse
 routes = Routes()
 
 
-class TasksRunnerView(PydanticView):
+class TaskServicesRootView(PydanticView):
     async def get(self) -> r200:
         """
         Root response for task runner. Used for checking if the server is alive.
@@ -34,7 +34,7 @@ class TasksView(PydanticView):
         """
         List all tasks.
 
-        Retrieves a list of all tasks active on the instance. Pagination is not
+        Lists all tasks active on the instance. Pagination is not
         supported.
 
         Status Codes:
@@ -49,7 +49,7 @@ class TaskView(PydanticView):
         """
         Retrieve a task.
 
-        Get the details of a task.
+        Fetches the details of a task.
 
         Status Codes:
             200: Successful operation

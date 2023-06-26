@@ -3,16 +3,16 @@ Authorization clients.
 
 """
 import asyncio
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 
 from openfga_sdk import (
-    OpenFgaApi,
-    WriteRequest,
-    TupleKeys,
-    TupleKey,
     ApiException,
-    ReadRequest,
     CheckRequest,
+    OpenFgaApi,
+    ReadRequest,
+    TupleKey,
+    TupleKeys,
+    WriteRequest,
 )
 from virtool_core.models.enums import Permission
 from virtool_core.models.roles import (
@@ -22,14 +22,11 @@ from virtool_core.models.roles import (
     SpaceRole,
 )
 
-from virtool.authorization.permissions import (
-    ResourceType,
-    ReferencePermission,
-)
+from virtool.authorization.permissions import ReferencePermission, ResourceType
 from virtool.authorization.relationships import AbstractRelationship
 from virtool.authorization.results import (
-    RemoveRelationshipResult,
     AddRelationshipResult,
+    RemoveRelationshipResult,
 )
 
 
@@ -84,16 +81,21 @@ class AuthorizationClient:
             [relation.key.relation for relation in response.tuples]
         )
 
-    async def get_administrator(self, user_id: str) -> Tuple[str, AdministratorRole]:
+    async def get_administrator(
+        self, user_id: str
+    ) -> Tuple[str, Optional[AdministratorRole]]:
         response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object="app:virtool"),
             )
         )
 
-        relation = response.tuples[0]
+        role = None
+        if response.tuples:
+            role = AdministratorRole(response.tuples[0].key.relation)
+            user_id = response.tuples[0].key.user.split(":")[1]
 
-        return relation.key.user.split(":")[1], relation.key.relation
+        return user_id, role
 
     async def list_administrators(self) -> List[Tuple[str, AdministratorRole]]:
         """

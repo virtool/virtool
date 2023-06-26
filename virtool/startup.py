@@ -1,41 +1,38 @@
 import asyncio
-import concurrent.futures
-import logging
-import signal
 import sys
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from typing import Dict
+from logging import getLogger
 
-import aiohttp.client
-import aiojobs
 import aiojobs.aiohttp
-import pymongo.errors
+from aiohttp import ClientSession
+from aiojobs import Scheduler
 from msal import ClientApplication
+from pymongo.errors import CollectionInvalid
 from virtool_core.redis import connect, periodically_ping_redis
-from virtool.mongo.connect import connect_mongo
-from virtool.pg.utils import connect_pg
+
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
 from virtool.config import get_config_from_app
+from virtool.data.events import EventPublisher
 from virtool.data.factory import create_data_layer
 from virtool.data.utils import get_data_from_app
-from virtool.dispatcher.client import DispatcherClient
-from virtool.dispatcher.dispatcher import Dispatcher
-from virtool.dispatcher.events import DispatcherSQLEvents
-from virtool.dispatcher.listener import RedisDispatcherListener
+from virtool.migration.pg import check_data_revision_version
+from virtool.mongo.connect import connect_mongo
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
+from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
 from virtool.sentry import setup
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
-from virtool.utils import ensure_data_dir
 from virtool.version import determine_server_version
+from virtool.ws.server import WSServer
 
-logger = logging.getLogger("startup")
+logger = getLogger("startup")
 
 
 @dataclass
@@ -46,222 +43,13 @@ class B2C:
     auth_code_flow: dict = None
 
 
-def create_events() -> Dict[str, asyncio.Event]:
-    """
-    Create and store :class:`asyncio.Event` objects for triggering an application
-    restart or shutdown.
-
-    :return: a `dict` with :class:`~asyncio.Event` objects for restart and shutdown
-
-    """
-    return {"restart": asyncio.Event(), "shutdown": asyncio.Event()}
-
-
-def get_scheduler_from_app(app: App) -> aiojobs.Scheduler:
+def get_scheduler_from_app(app: App) -> Scheduler:
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
 
     if scheduler is None:
         return app["scheduler"]
 
     return scheduler
-
-
-async def startup_check_db(app: App):
-    if app["config"].no_check_db:
-        return logger.info("Skipping database checks")
-
-    db = app["db"]
-
-    logger.info("Checking database")
-    await migrate(app)
-
-    # Make sure the indexes collection exists before later trying to set an compound
-    # index on it.
-    try:
-        await db.motor_client.create_collection("indexes")
-    except pymongo.errors.CollectionInvalid:
-        pass
-
-
-async def startup_data(app: App):
-    """
-    Create the application data layer object.
-
-    :param app: the application object
-    """
-
-    app["data"] = create_data_layer(
-        app["authorization"],
-        app["db"],
-        app["pg"],
-        app["config"],
-        app["client"],
-        app["redis"],
-    )
-
-
-async def startup_dispatcher(app: App):
-    """
-    An application ``on_startup`` callback that initializes a Virtool
-    :class:`~.Dispatcher` object and attaches it to the ``app`` object.
-
-    :param app: the app object
-
-    """
-    logger.info("Starting dispatcher")
-
-    DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
-
-    app["dispatcher"] = Dispatcher(
-        app["pg"], app["db"], RedisDispatcherListener(app["redis"], "channel:dispatch")
-    )
-
-    await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
-
-
-async def startup_events(app: App):
-    events = create_events()
-
-    loop = asyncio.get_event_loop()
-
-    loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
-    loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
-
-    app["events"] = events
-
-
-async def startup_executors(app: App):
-    """
-    An application ``on_startup`` callback that initializes a
-    :class:`~ThreadPoolExecutor` and attaches it to the ``app`` object.
-
-    :param app: the application object
-
-    """
-    loop = asyncio.get_event_loop()
-
-    thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-
-    loop.set_default_executor(thread_executor)
-
-    process_executor = concurrent.futures.ProcessPoolExecutor()
-
-    async def run_in_process(func, *args):
-        return await loop.run_in_executor(process_executor, func, *args)
-
-    app["run_in_process"] = run_in_process
-    app["process_executor"] = process_executor
-
-
-async def startup_http_client(app: App):
-    """
-    Create an async HTTP client session for the server.
-
-    The client session is used to make requests to GitHub, NCBI, and
-    https://www.virtool.ca.
-
-    :param app: the application object
-
-    """
-    logging.info("Starting HTTP client")
-
-    version = app["version"]
-
-    headers = {
-        "User-Agent": f"virtool/{version}",
-    }
-
-    app["client"] = aiohttp.client.ClientSession(headers=headers)
-
-
-async def startup_paths(app: App):
-    if app["config"].no_check_files is False:
-        logger.info("Checking files")
-        ensure_data_dir(app["config"].data_path)
-
-
-async def startup_databases(app: App):
-    """
-    Connects to MongoDB, Redis and Postgres concurrently
-
-    :param app: the app object
-
-    """
-    config = get_config_from_app(app)
-
-    mongo, pg, redis, openfga_instance = await asyncio.gather(
-        connect_mongo(
-            config.mongodb_connection_string,
-            config.mongodb_database,
-            config.no_revision_check,
-        ),
-        connect_pg(config.postgres_connection_string),
-        connect(config.redis_connection_string),
-        connect_openfga(
-            config.openfga_host, config.openfga_scheme, config.openfga_store_name
-        ),
-    )
-
-    scheduler = get_scheduler_from_app(app)
-    await scheduler.spawn(periodically_ping_redis(redis))
-
-    dispatcher_interface = DispatcherClient(redis)
-    await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
-
-    app.update(
-        {
-            "authorization": AuthorizationClient(openfga_instance),
-            "db": Mongo(mongo, dispatcher_interface.enqueue_change, RandomIdProvider()),
-            "dispatcher_interface": dispatcher_interface,
-            "pg": pg,
-            "redis": redis,
-        }
-    )
-
-
-async def startup_routes(app: App):
-    logger.debug("Setting up routes")
-    setup_routes(app, dev=app["config"].dev)
-
-
-async def startup_sentry(app: App):
-    """
-    Create a Sentry client and attach it to the application if a DSN was configured.
-
-    :param app: the application object
-    """
-    if app["config"].sentry_dsn:
-        logger.info("Configuring Sentry")
-        setup(app["version"], app["config"].sentry_dsn)
-    else:
-        logger.info("Skipped configuring Sentry")
-
-
-async def startup_settings(app: App):
-    """
-    Draws settings from the settings database collection.
-
-    Performs migration of old settings style to `v3.3.0` if necessary.
-
-    :param app: the app object
-
-    """
-    await get_data_from_app(app).settings.ensure()
-
-
-async def startup_version(app: App):
-    """
-    Store and log the Virtool version.
-
-    :param app: the application object
-
-    """
-    version = await determine_server_version()
-
-    logger.info("Virtool %s", version)
-    logger.info("Mode: %s", app["mode"])
-
-    app["version"] = version
 
 
 async def startup_b2c(app: App):
@@ -299,6 +87,145 @@ async def startup_b2c(app: App):
     app["b2c"] = B2C(msal, authority)
 
 
+async def startup_check_db(app: App):
+    if app["config"].no_check_db:
+        return logger.info("Skipping database checks")
+
+    db = app["db"]
+
+    logger.info("Checking database")
+    await migrate(app)
+
+    # Make sure the indexes collection exists before later trying to set an compound
+    # index on it.
+    try:
+        await db.motor_client.create_collection("indexes")
+    except CollectionInvalid:
+        pass
+
+
+async def startup_data(app: App):
+    """
+    Create the application data layer object.
+
+    :param app: the application object
+    """
+
+    app["data"] = create_data_layer(
+        app["authorization"],
+        app["db"],
+        app["pg"],
+        app["config"],
+        app["client"],
+        app["redis"],
+    )
+
+
+async def startup_databases(app: App):
+    """
+    Connects to MongoDB, Redis and Postgres concurrently
+
+    :param app: the app object
+
+    """
+    config = get_config_from_app(app)
+
+    mongo, pg, redis, openfga_instance = await asyncio.gather(
+        connect_mongo(config.mongodb_connection_string, config.mongodb_database),
+        connect_pg(config.postgres_connection_string),
+        connect(config.redis_connection_string),
+        connect_openfga(
+            config.openfga_host, config.openfga_scheme, config.openfga_store_name
+        ),
+    )
+
+    if not get_config_from_app(app).no_revision_check:
+        await check_data_revision_version(pg)
+
+    await get_scheduler_from_app(app).spawn(periodically_ping_redis(redis))
+
+    app.update(
+        {
+            "authorization": AuthorizationClient(openfga_instance),
+            "db": Mongo(mongo, RandomIdProvider()),
+            "pg": pg,
+            "redis": redis,
+        }
+    )
+
+
+async def startup_events(app: App):
+    app["events"] = EventPublisher(app["redis"])
+    await get_scheduler_from_app(app).spawn(app["events"].run())
+
+
+async def startup_executors(app: App):
+    """
+    An application ``on_startup`` callback that initializes a
+    :class:`~ThreadPoolExecutor` and attaches it to the ``app`` object.
+
+    :param app: the application object
+
+    """
+    loop = asyncio.get_event_loop()
+
+    process_executor = ProcessPoolExecutor()
+
+    async def run_in_process(func, *args):
+        return await loop.run_in_executor(process_executor, func, *args)
+
+    app["run_in_process"] = run_in_process
+    app["process_executor"] = process_executor
+
+
+async def startup_http_client(app: App):
+    """
+    Create an async HTTP client session for the server.
+
+    The client session is used to make requests to GitHub, NCBI, and
+    https://www.virtool.ca.
+
+    :param app: the application object
+
+    """
+    logger.info("Starting HTTP client")
+
+    version = app["version"]
+
+    headers = {"User-Agent": f"virtool/{version}"}
+
+    app["client"] = ClientSession(headers=headers)
+
+
+async def startup_routes(app: App):
+    setup_routes(app, dev=app["config"].dev)
+
+
+async def startup_sentry(app: App):
+    """
+    Create a Sentry client and attach it to the application if a DSN was configured.
+
+    :param app: the application object
+    """
+    if app["config"].sentry_dsn:
+        logger.info("Configuring Sentry")
+        setup(app["version"], app["config"].sentry_dsn)
+    else:
+        logger.info("Skipped configuring Sentry")
+
+
+async def startup_settings(app: App):
+    """
+    Draws settings from the settings database collection.
+
+    Performs migration of old settings style to `v3.3.0` if necessary.
+
+    :param app: the app object
+
+    """
+    await get_data_from_app(app).settings.ensure()
+
+
 async def startup_task_runner(app: App):
     """
     An application `on_startup` callback that initializes a Virtool
@@ -310,3 +237,27 @@ async def startup_task_runner(app: App):
     scheduler = get_scheduler_from_app(app)
     tasks_client = TasksClient(app["redis"])
     await scheduler.spawn(TaskRunner(app["data"], tasks_client, app).run())
+
+
+async def startup_version(app: App):
+    """
+    Store and log the Virtool version.
+
+    :param app: the application object
+
+    """
+    version = await determine_server_version()
+
+    logger.info("Virtool %s", version)
+    logger.info("Mode: %s", app["mode"])
+
+    app["version"] = version
+
+
+async def startup_ws(app: App):
+    """Start the websocket server."""
+    logger.info("Starting websocket server")
+
+    ws = WSServer(app["redis"])
+    await get_scheduler_from_app(app).spawn(ws.run())
+    app["ws"] = ws

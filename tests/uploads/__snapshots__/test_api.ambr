@@ -1,4 +1,4 @@
-# name: TestFind.test[uvloop-None]
+# name: TestFind.test[None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -22,13 +22,13 @@
     ],
   }
 ---
-# name: TestFind.test[uvloop-reads]
+# name: TestFind.test[reads]
   <class 'dict'> {
     'documents': <class 'list'> [
     ],
   }
 ---
-# name: TestFind.test[uvloop-reference]
+# name: TestFind.test[reference]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -52,7 +52,7 @@
     ],
   }
 ---
-# name: TestFind.test_pagination[uvloop-1-2]
+# name: TestFind.test_pagination[1-2]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -63,7 +63,7 @@
     'total_count': 1,
   }
 ---
-# name: TestFind.test_pagination[uvloop-1-None]
+# name: TestFind.test_pagination[1-None]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -92,7 +92,7 @@
     'total_count': 1,
   }
 ---
-# name: TestFind.test_pagination[uvloop-2-None]
+# name: TestFind.test_pagination[2-None]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -121,7 +121,7 @@
     'total_count': 1,
   }
 ---
-# name: TestFind.test_pagination[uvloop-3-1]
+# name: TestFind.test_pagination[3-1]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -150,7 +150,7 @@
     'total_count': 1,
   }
 ---
-# name: TestFind.test_pagination[uvloop-None-2]
+# name: TestFind.test_pagination[None-2]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -161,7 +161,7 @@
     'total_count': 1,
   }
 ---
-# name: TestFind.test_pagination[uvloop-None-None]
+# name: TestFind.test_pagination[None-None]
   <class 'dict'> {
     'found_count': 1,
     'items': <class 'list'> [
@@ -190,7 +190,7 @@
     'total_count': 1,
   }
 ---
-# name: TestFind.test_uploads_order[uvloop]
+# name: TestFind.test_uploads_order
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -250,7 +250,7 @@
     ],
   }
 ---
-# name: TestUpload.test[uvloop-hmm]
+# name: TestUpload.test[hmm]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,
@@ -270,7 +270,7 @@
     },
   }
 ---
-# name: TestUpload.test[uvloop-reads]
+# name: TestUpload.test[reads]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,
@@ -290,7 +290,7 @@
     },
   }
 ---
-# name: TestUpload.test[uvloop-reference]
+# name: TestUpload.test[reference]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,
@@ -310,7 +310,7 @@
     },
   }
 ---
-# name: TestUpload.test[uvloop-subtraction]
+# name: TestUpload.test[subtraction]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,

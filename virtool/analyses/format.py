@@ -146,7 +146,7 @@ async def format_pathoscope_hits(
 
     for isolate in patched_otu["isolates"]:
         max_sequence_length = max(
-            max_sequence_length, max([len(s["sequence"]) for s in isolate["sequences"]])
+            max_sequence_length, max(len(s["sequence"]) for s in isolate["sequences"])
         )
 
     otu = {

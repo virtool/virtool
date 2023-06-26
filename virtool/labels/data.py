@@ -7,7 +7,7 @@ from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.labels.db import SampleCountTransform
-from virtool.labels.models import Label as LabelSQL
+from virtool.labels.models import SQLLabel
 from virtool.labels.oas import UpdateLabelRequest
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
@@ -15,6 +15,8 @@ from virtool.pg.utils import get_generic
 
 
 class LabelsData:
+    name = "labels"
+
     def __init__(self, db: Mongo, pg: AsyncEngine):
         self._db = db
         self._pg = pg
@@ -26,10 +28,10 @@ class LabelsData:
         :param term: the query term
         :return: a list of all sample labels.
         """
-        statement = select(LabelSQL).order_by(LabelSQL.name)
+        statement = select(SQLLabel).order_by(SQLLabel.name)
 
         if term:
-            statement = statement.filter(LabelSQL.name.ilike(f"%{term}%"))
+            statement = statement.filter(SQLLabel.name.ilike(f"%{term}%"))
 
         labels = await get_generic(self._pg, statement)
 
@@ -49,7 +51,7 @@ class LabelsData:
         :return: the label
         """
         async with AsyncSession(self._pg) as session:
-            label = LabelSQL(name=name, color=color, description=description)
+            label = SQLLabel(name=name, color=color, description=description)
 
             session.add(label)
 
@@ -73,7 +75,7 @@ class LabelsData:
         """
 
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(LabelSQL).filter_by(id=label_id))
+            result = await session.execute(select(SQLLabel).filter_by(id=label_id))
             label = result.scalar()
 
         if label is None:
@@ -96,7 +98,7 @@ class LabelsData:
         data = data.dict(exclude_unset=True)
 
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(LabelSQL).filter_by(id=label_id))
+            result = await session.execute(select(SQLLabel).filter_by(id=label_id))
             label = result.scalar()
 
             if label is None:
@@ -130,7 +132,7 @@ class LabelsData:
         """
         async with AsyncSession(self._pg) as session:
             async with self._db.create_session() as mongo_session:
-                result = await session.execute(select(LabelSQL).filter_by(id=label_id))
+                result = await session.execute(select(SQLLabel).filter_by(id=label_id))
                 label = result.scalar()
 
                 if label is None:

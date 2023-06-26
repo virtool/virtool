@@ -11,7 +11,7 @@ from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.types import Document
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 
 
 class AbstractFakeDataGenerator(ABC):
@@ -121,7 +121,7 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
         user = await self.generator.users.insert()
 
         async with AsyncSession(self._pg) as session:
-            upload = Upload(
+            upload = SQLUpload(
                 id=1,
                 created_at=self._faker.fake.date_time_between(
                     datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
@@ -261,5 +261,5 @@ def fake(mongo, pg):
 
 
 @pytest.fixture
-def fake2(data_layer):
-    return DataFaker(data_layer)
+def fake2(data_layer, mongo):
+    return DataFaker(data_layer, mongo)

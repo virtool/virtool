@@ -14,7 +14,7 @@ from virtool.config import Config
 from virtool.data.layer import DataLayer
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
-from virtool.hmm.data import HmmData
+from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
@@ -55,21 +55,23 @@ def create_data_layer(
     :param redis: the redis object
     :return: the application data layer
     """
+    jobs_client = JobsClient(redis)
+
     data_layer = DataLayer(
-        AccountData(mongo, redis),
+        AccountData(mongo, redis, authorization_client),
         AdministratorsData(authorization_client, mongo),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
-        GroupsData(authorization_client, mongo),
+        GroupsData(authorization_client, mongo, pg),
         HistoryData(config.data_path, mongo),
-        HmmData(client, config, mongo, pg),
+        HmmsData(client, config, mongo, pg),
         IndexData(mongo, config, pg),
-        JobsData(JobsClient(redis), mongo, pg),
+        JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
         MessagesData(pg, mongo),
         OTUData(mongo, config.data_path),
         ReferencesData(mongo, pg, config, client),
-        SamplesData(config, mongo, pg),
+        SamplesData(config, mongo, pg, jobs_client),
         SubtractionsData(config.base_url, config, mongo, pg),
         SessionData(redis),
         SettingsData(mongo),

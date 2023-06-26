@@ -1,4 +1,4 @@
-# name: test_clean_references_task[uvloop-clean]
+# name: test_clean_references_task[clean]
   <class 'dict'> {
     '_id': 'foo',
     'installed': <class 'dict'> {
@@ -12,7 +12,7 @@
     'updating': False,
   }
 ---
-# name: test_clean_references_task[uvloop-no_updates]
+# name: test_clean_references_task[no_updates]
   <class 'dict'> {
     '_id': 'foo',
     'installed': <class 'dict'> {
@@ -26,7 +26,7 @@
     'updating': True,
   }
 ---
-# name: test_clean_references_task[uvloop-ready]
+# name: test_clean_references_task[ready]
   <class 'dict'> {
     '_id': 'foo',
     'installed': <class 'dict'> {
@@ -44,7 +44,7 @@
     'updating': True,
   }
 ---
-# name: test_clean_references_task[uvloop-too_new]
+# name: test_clean_references_task[too_new]
   <class 'dict'> {
     '_id': 'foo',
     'installed': <class 'dict'> {
@@ -63,7 +63,7 @@
     'updating': True,
   }
 ---
-# name: test_clean_references_task[uvloop-too_old]
+# name: test_clean_references_task[too_old]
   <class 'dict'> {
     '_id': 'foo',
     'installed': <class 'dict'> {
@@ -80,7 +80,7 @@
     'updating': True,
   }
 ---
-# name: test_clone_reference[uvloop][history]
+# name: test_clone_reference[history]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -1891,7 +1891,7 @@
     },
   ]
 ---
-# name: test_clone_reference[uvloop][otus]
+# name: test_clone_reference[otus]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -2642,13 +2642,13 @@
     },
   ]
 ---
-# name: test_clone_reference[uvloop][ref]
+# name: test_clone_reference[ref]
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
   }
 ---
-# name: test_clone_reference[uvloop][sequences]
+# name: test_clone_reference[sequences]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -3068,7 +3068,7 @@
     },
   ]
 ---
-# name: test_import_reference_task[uvloop][history]
+# name: test_import_reference_task[history]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -4879,7 +4879,7 @@
     },
   ]
 ---
-# name: test_import_reference_task[uvloop][otus]
+# name: test_import_reference_task[otus]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -5630,7 +5630,7 @@
     },
   ]
 ---
-# name: test_import_reference_task[uvloop][ref]
+# name: test_import_reference_task[ref]
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -5639,7 +5639,7 @@
     'targets': None,
   }
 ---
-# name: test_import_reference_task[uvloop][sequences]
+# name: test_import_reference_task[sequences]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -6059,7 +6059,7 @@
     },
   ]
 ---
-# name: test_remote_reference_task[uvloop][history]
+# name: test_remote_reference_task[history]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -7870,7 +7870,7 @@
     },
   ]
 ---
-# name: test_remote_reference_task[uvloop][otus]
+# name: test_remote_reference_task[otus]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -8621,7 +8621,7 @@
     },
   ]
 ---
-# name: test_remote_reference_task[uvloop][ref]
+# name: test_remote_reference_task[ref]
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -8646,7 +8646,7 @@
     'updating': False,
   }
 ---
-# name: test_remote_reference_task[uvloop][sequences]
+# name: test_remote_reference_task[sequences]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,

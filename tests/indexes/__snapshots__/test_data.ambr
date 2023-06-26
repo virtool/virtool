@@ -1,4 +1,4 @@
-# name: test_finalize[uvloop]
+# name: test_finalize
   <class 'dict'> {
     'change_count': 0,
     'contributors': <class 'list'> [
@@ -65,7 +65,18 @@
     'has_files': True,
     'id': 'foo',
     'job': <class 'dict'> {
+      'archived': False,
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.WAITING: 'waiting'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'jobs_pathoscope_bowtie',
     },
     'manifest': <class 'dict'> {
     },
@@ -86,7 +97,7 @@
     'version': 2,
   }
 ---
-# name: test_finalize[uvloop].1
+# name: test_finalize.1
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),

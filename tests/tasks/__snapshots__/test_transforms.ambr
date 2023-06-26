@@ -1,4 +1,4 @@
-# name: test_attach_task_transform[uvloop]
+# name: test_attach_task_transform
   <class 'list'> [
     <class 'dict'> {
       'id': 1,
@@ -42,7 +42,7 @@
     },
   ]
 ---
-# name: test_attach_task_transform_single[uvloop]
+# name: test_attach_task_transform_single
   <class 'list'> [
     <class 'dict'> {
       'id': 1,

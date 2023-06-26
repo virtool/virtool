@@ -1,60 +1,56 @@
 import asyncio
 from asyncio import to_thread
-import logging
+from logging import getLogger
 from pathlib import Path
-from typing import List, Union, Optional, Dict
+from typing import Dict, List, Optional, Union
 
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index, IndexFile
+from virtool_core.models.index import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool_core.models.reference import ReferenceNested
 from virtool_core.utils import file_stats
 
-import virtool.indexes.db
 import virtool.history.db
+import virtool.indexes.db
 from virtool.api.custom_json import dump_bytes
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import (
-    ResourceNotFoundError,
     ResourceConflictError,
     ResourceError,
+    ResourceNotFoundError,
 )
+from virtool.data.events import emits, Operation
 from virtool.history.db import LIST_PROJECTION
-from virtool.indexes.checks import (
-    check_fasta_file_uploaded,
-    check_index_files_uploaded,
-)
+from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
-    update_last_indexed_versions,
     lookup_index_otu_counts,
+    update_last_indexed_versions,
 )
 from virtool.indexes.models import SQLIndexFile
-from virtool.indexes.tasks import get_index_file_type_from_name, export_index
+from virtool.indexes.tasks import export_index, get_index_file_type_from_name
 from virtool.indexes.utils import join_index_path
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
-
 from virtool.mongo.utils import get_one_field
-
 from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
-
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
-
-logger = logging.getLogger("indexes")
+logger = getLogger("indexes")
 
 
 class IndexData:
+    name = "indexes"
+
     def __init__(self, mongo: Mongo, config: Config, pg: AsyncEngine):
         self._config = config
         self._mongo = mongo
@@ -78,7 +74,14 @@ class IndexData:
             IndexMinimal(**index)
             async for index in self._mongo.indexes.aggregate(
                 [
-                    {"$match": {"ready": True}},
+                    {
+                        "$match": {
+                            "ready": True,
+                            "reference.id": {
+                                "$in": await self._mongo.references.distinct("_id")
+                            },
+                        }
+                    },
                     *lookup_minimal_job_by_id(),
                     *lookup_nested_reference_by_id(local_field="reference.id"),
                     *lookup_nested_user_by_id(),
@@ -119,12 +122,7 @@ class IndexData:
             virtool.indexes.db.get_otus(self._mongo, index_id),
         )
 
-        document.update(
-            {
-                "contributors": contributors,
-                "otus": otus,
-            }
-        )
+        document.update({"contributors": contributors, "otus": otus})
 
         document = await virtool.indexes.db.attach_files(
             self._pg, self._config.base_url, document
@@ -205,6 +203,8 @@ class IndexData:
             except IntegrityError:
                 raise ResourceConflictError()
 
+            index_path = self._config.data_path / "references" / index_id
+            await asyncio.to_thread(index_path.mkdir, parents=True, exist_ok=True)
             path = (
                 join_index_path(self._config.data_path, reference_id, index_id) / name
             )
@@ -223,6 +223,7 @@ class IndexData:
             **index_file_dict, download_url=f"/indexes/{index_id}/files/{name}"
         )
 
+    @emits(Operation.UPDATE)
     async def finalize(self, index_id: str) -> Index:
         """
         Finalize an index document.
@@ -306,9 +307,7 @@ class IndexData:
             )
 
             await self._ensure_json(
-                index_path,
-                index["reference"]["id"],
-                index["manifest"],
+                index_path, index["reference"]["id"], index["manifest"]
             )
 
             async with AsyncSession(self._pg) as session:
@@ -336,12 +335,7 @@ class IndexData:
 
                 await session.commit()
 
-    async def _ensure_json(
-        self,
-        path: Path,
-        ref_id: str,
-        manifest: Dict,
-    ):
+    async def _ensure_json(self, path: Path, ref_id: str, manifest: Dict):
         """
         Ensure that a there is a compressed JSON representation of the index found at
         `path`` exists.
@@ -374,6 +368,7 @@ class IndexData:
             json_path,
         )
 
+    @emits(Operation.DELETE)
     async def delete(self, index_id: str):
         """
         Delete an index given it's id.

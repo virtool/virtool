@@ -131,7 +131,7 @@ class BaseTask:
             try:
                 await func()
             except Exception as err:
-                logger.exception(f"Encountered error in task {self.task_id}")
+                logger.exception("Encountered error in task id=%s, ", self.task_id)
                 await self._set_error(f"{type(err)}: {str(err)}")
 
         if self.errored:

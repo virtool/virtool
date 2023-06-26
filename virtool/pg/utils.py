@@ -1,6 +1,6 @@
-import logging
 import sys
 from enum import Enum
+from logging import getLogger
 from typing import Optional, Type, Union
 
 import orjson
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base
 
-logger = logging.getLogger(__name__)
+logger = getLogger("pg")
 
 
 class SQLEnum(Enum):
@@ -43,7 +43,7 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
         )
 
         await check_version(pg)
-        await create_models(pg)
+        await create_tables(pg)
 
         return pg
     except ConnectionRefusedError:
@@ -65,7 +65,12 @@ async def check_version(engine: AsyncEngine):
     logger.info("Found PostgreSQL %s", version)
 
 
-async def create_models(engine):
+async def create_tables(engine: AsyncEngine):
+    """
+    Create PostgreSQL tables based of the models in the `Base` declarative base.
+
+    :param engine: an AsyncConnection object
+    """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

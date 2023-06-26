@@ -1,8 +1,7 @@
 import asyncio
+from asyncio import to_thread
 import logging
 import os
-from asyncio import to_thread
-from pathlib import Path
 from typing import List, Union, Optional
 
 import aiohttp.web
@@ -22,18 +21,20 @@ import virtool.analyses.db
 import virtool.caches.db
 import virtool.mongo.utils
 import virtool.samples.db
-import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
+from virtool.analyses.db import PROJECTION
 from virtool.api.response import (
     InsufficientRights,
     InvalidQuery,
     NotFound,
     json_response,
 )
+from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.permissions import LegacyPermission
-from virtool.caches.models import SampleArtifactCache
+from virtool.caches.models import SQLSampleArtifactCache
 from virtool.caches.utils import join_cache_path
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
@@ -41,6 +42,7 @@ from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
@@ -55,7 +57,7 @@ from virtool.samples.files import (
     create_reads_file,
     get_existing_reads,
 )
-from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
+from virtool.samples.models import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.oas import (
     GetSampleResponse,
     CreateSampleRequest,
@@ -68,8 +70,10 @@ from virtool.samples.oas import (
     GetSampleAnalysesResponse,
     CreateAnalysisResponse,
 )
-from virtool.samples.utils import SampleRight
+from virtool.samples.utils import SampleRight, join_sample_path
+from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
+from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = logging.getLogger("samples")
@@ -89,7 +93,9 @@ class SamplesView(PydanticView):
         workflows: List[str] = Field(default_factory=lambda: []),
     ) -> Union[r200[SampleSearchResult], r400]:
         """
-        Find samples, filtering by data passed as URL parameters
+        Find samples.
+
+        Lists samples, filtering by data passed as URL parameters.
 
         Status Codes:
             200: Successful operation
@@ -107,6 +113,8 @@ class SamplesView(PydanticView):
     ) -> Union[r201[CreateSampleResponse], r400, r403]:
         """
         Create a sample.
+
+        Creates a new sample with the given name, labels and subtractions.
 
         Status Codes:
             201: Operation successful
@@ -141,7 +149,7 @@ class SampleView(PydanticView):
         """
         Get a sample.
 
-        Retrieve the details for a sample.
+        Fetches the details for a sample.
 
         Status Codes:
             200: Successful operation
@@ -165,6 +173,8 @@ class SampleView(PydanticView):
     ) -> Union[r200[UpdateSampleResponse], r400, r403, r404]:
         """
         Update a sample.
+
+        Updates a sample using its 'sample id'.
 
         Status Codes:
             200: Successful operation
@@ -191,7 +201,9 @@ class SampleView(PydanticView):
 
     async def delete(self, sample_id: str, /) -> Union[r204, r403, r404]:
         """
-        Remove a sample document and all associated analyses.
+        Delete a sample.
+
+        Removes a sample document and all associated analyses.
 
         Status Codes:
             204: Operation successful
@@ -214,7 +226,9 @@ class SampleView(PydanticView):
 @routes.jobs_api.get("/samples/{sample_id}")
 async def get_sample(req):
     """
-    Get a complete sample document from a job.
+    Get a sample.
+
+    Fetches a complete sample document from a job.
 
     """
     sample_id = req.match_info["sample_id"]
@@ -230,7 +244,9 @@ async def get_sample(req):
 @routes.jobs_api.get("/samples/{sample_id}/caches/{cache_key}")
 async def get_cache(req):
     """
-    Get a cache document by key using the Jobs API.
+    Get cache.
+
+    Fetches a cache document by key using the Jobs API.
 
     """
     db = req.app["db"]
@@ -277,7 +293,9 @@ class RightsView(PydanticView):
         self, sample_id: str, /, data: UpdateRightsRequest
     ) -> Union[r200[UpdateRightsResponse], r400, r403, r404]:
         """
-        Change rights settings for the specified sample document.
+        Update rights settings.
+
+        Updates rights settings for the specified sample document.
 
         Status Codes:
             200: Successful operation
@@ -322,7 +340,9 @@ class RightsView(PydanticView):
 @routes.jobs_api.delete("/samples/{sample_id}")
 async def job_remove(req):
     """
-    Remove a sample document and all associated analyses.
+    Remove a job.
+
+    Removes a sample document and all associated analyses.
 
     Only usable in the Jobs API and when samples are unfinalized.
 
@@ -334,7 +354,7 @@ async def job_remove(req):
     if await get_one_field(req.app["db"].samples, "ready", sample_id):
         raise HTTPBadRequest(text="Only unfinalized samples can be deleted")
 
-    reads_files = await get_rows(pg, SampleReads, "sample", sample_id)
+    reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
 
     if upload_ids:
@@ -354,14 +374,14 @@ class AnalysesView(PydanticView):
         self,
         sample_id: str,
         /,
-        page: conint(ge=1) = 1,
-        per_page: conint(ge=1, le=100) = 25,
         term: Optional[str] = Field(
             description="Provide text to filter by partial matches to the reference name or user id in the sample."
         ),
     ) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
         """
-        List the analyses associated with the given ``sample_id``.
+        Get analyses.
+
+        Lists the analyses associated with the given `sample_id`.
 
         Status Codes:
             200: Successful operation
@@ -381,16 +401,36 @@ class AnalysesView(PydanticView):
 
             raise
 
+        db_query = {}
+
+        if term:
+            db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+
+        data = await paginate(
+            db.analyses,
+            db_query,
+            self.request.query,
+            base_query={"sample.id": sample_id},
+            projection=PROJECTION,
+            sort=[("created_at", -1)],
+        )
+
         return json_response(
-            await get_data_from_req(self.request).samples.find_analyses(
-                page, per_page, sample_id, term
-            )
+            {
+                **data,
+                "documents": await apply_transforms(
+                    data["documents"],
+                    [AttachSubtractionTransform(db), AttachUserTransform(db)],
+                ),
+            }
         )
 
     async def post(
         self, sample_id: str, /, data: CreateAnalysisRequest
     ) -> Union[r201[CreateAnalysisResponse], r400, r403, r404]:
         """
+        Start analysis job.
+
         Starts an analysis job for a given sample.
 
         Status Codes:
@@ -489,7 +529,9 @@ class AnalysesView(PydanticView):
 @routes.jobs_api.delete("/samples/{sample_id}/caches/{cache_key}")
 async def cache_job_remove(req: aiohttp.web.Request):
     """
-    Remove a cache document. Only usable in the Jobs API and when caches are
+    Remove cache document.
+
+    Removes a cache document. Only usable in the Jobs API and when caches are
     unfinalized.
 
     """
@@ -513,8 +555,9 @@ async def cache_job_remove(req: aiohttp.web.Request):
 @routes.jobs_api.post("/samples/{sample_id}/artifacts")
 async def upload_artifact(req):
     """
-    Upload artifact created during sample creation using the Jobs API.
+    Upload an artifact.
 
+    Uploads artifact created during sample creation using the Jobs API.
     """
     db = req.app["db"]
     pg = req.app["pg"]
@@ -532,9 +575,10 @@ async def upload_artifact(req):
 
     name = req.query.get("name")
 
-    artifact_file_path = (
-        virtool.samples.utils.join_sample_path(req.app["config"], sample_id) / name
-    )
+    sample_path = join_sample_path(get_config_from_req(req), sample_id)
+    await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
+
+    artifact_file_path = sample_path / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
         raise HTTPBadRequest(text="Unsupported sample artifact type")
@@ -554,11 +598,11 @@ async def upload_artifact(req):
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file upload aborted for sample: %s", sample_id)
-        await delete_row(pg, upload_id, SampleArtifact)
+        await delete_row(pg, upload_id, SQLSampleArtifact)
         await to_thread(os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
 
-    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SQLSampleArtifact)
 
     headers = {"Location": f"/samples/{sample_id}/artifact/{name}"}
 
@@ -568,8 +612,9 @@ async def upload_artifact(req):
 @routes.jobs_api.put("/samples/{sample_id}/reads/{filename}")
 async def upload_reads(req):
     """
-    Upload sample reads using the Jobs API.
+    Upload reads.
 
+    Uploads sample reads using the Jobs API.
     """
     db = req.app["db"]
     pg = req.app["pg"]
@@ -585,9 +630,10 @@ async def upload_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
-    reads_path = (
-        virtool.samples.utils.join_sample_path(req.app["config"], sample_id) / name
-    )
+    sample_path = join_sample_path(get_config_from_req(req), sample_id)
+    await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
+
+    reads_path = sample_path / name
 
     if not await db.samples.find_one(sample_id):
         raise NotFound()
@@ -617,7 +663,9 @@ async def upload_reads(req):
 @schema({"key": {"type": "string", "required": True}})
 async def create_cache(req):
     """
-    Create a new cache document using the Jobs API.
+    Create cache document.
+
+    Creates a new cache document using the Jobs API.
 
     """
     db = req.app["db"]
@@ -643,6 +691,8 @@ async def create_cache(req):
 @routes.jobs_api.put("/samples/{sample_id}/caches/{key}/reads/{filename}")
 async def upload_cache_reads(req):
     """
+    Upload reads files to cache.
+
     Upload reads files to cache using the Jobs API.
 
     """
@@ -656,16 +706,17 @@ async def upload_cache_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
-    cache_path = (
-        Path(virtool.caches.utils.join_cache_path(req.app["config"], key)) / name
-    )
+    cache_path = join_cache_path(get_config_from_req(req), key) / name
+    await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
+
+    cache_file_path = cache_path / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise NotFound("Cache doesn't exist with given key")
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_path, is_gzip_compressed
+            await req.multipart(), cache_file_path, is_gzip_compressed
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -687,7 +738,9 @@ async def upload_cache_reads(req):
 @routes.jobs_api.post("/samples/{sample_id}/caches/{key}/artifacts")
 async def upload_cache_artifact(req):
     """
-    Upload sample artifacts to cache using the Jobs API.
+    Upload artifacts to cache.
+
+    Uploads sample artifacts to cache using the Jobs API.
 
     """
     db = req.app["db"]
@@ -706,6 +759,9 @@ async def upload_cache_artifact(req):
         raise InvalidQuery(errors)
 
     name = req.query.get("name")
+
+    caches_path = req.app["config"].data_path / "caches"
+    await asyncio.to_thread(caches_path.mkdir, parents=True, exist_ok=True)
 
     cache_path = join_cache_path(req.app["config"], key) / name
 
@@ -729,12 +785,12 @@ async def upload_cache_artifact(req):
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)
-        await delete_row(pg, upload_id, SampleArtifact)
+        await delete_row(pg, upload_id, SQLSampleArtifact)
         await to_thread(os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(
-        pg, size, upload_id, SampleArtifactCache
+        pg, size, upload_id, SQLSampleArtifactCache
     )
 
     headers = {"Location": f"/samples/{sample_id}/caches/{key}/artifacts/{name}"}
@@ -745,6 +801,11 @@ async def upload_cache_artifact(req):
 @routes.jobs_api.patch("/samples/{sample_id}/caches/{key}")
 @schema({"quality": {"type": "dict", "required": True}})
 async def finalize_cache(req):
+    """
+    Finalize cache.
+
+    Finalizes cache documents.
+    """
     db = req.app["db"]
     data = req["data"]
     key = req.match_info["key"]
@@ -760,8 +821,9 @@ async def finalize_cache(req):
 @routes.jobs_api.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 async def download_reads(req: aiohttp.web.Request):
     """
-    Download the sample reads file.
+    Download reads.
 
+    Downloads the sample reads file.
     """
     db = req.app["db"]
     pg = req.app["pg"]
@@ -794,7 +856,9 @@ async def download_reads(req: aiohttp.web.Request):
 @routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
 async def download_artifact(req: aiohttp.web.Request):
     """
-    Download the sample artifact.
+    Download artifact.
+
+    Downloads the sample artifact.
 
     """
     db = req.app["db"]
@@ -809,7 +873,7 @@ async def download_artifact(req: aiohttp.web.Request):
     async with AsyncSession(pg) as session:
         result = (
             await session.execute(
-                select(SampleArtifact).filter_by(sample=sample_id, name=filename)
+                select(SQLSampleArtifact).filter_by(sample=sample_id, name=filename)
             )
         ).scalar()
 
@@ -835,7 +899,9 @@ async def download_artifact(req: aiohttp.web.Request):
 @routes.jobs_api.get("/samples/{sample_id}/caches/{key}/reads/reads_{suffix}.fq.gz")
 async def download_cache_reads(req):
     """
-    Download sample reads cache for a given key.
+    Download reads cache.
+
+    Downloads sample reads cache for a given key.
 
     """
     db = req.app["db"]
@@ -872,7 +938,9 @@ async def download_cache_reads(req):
 @routes.jobs_api.get("/samples/{sample_id}/caches/{key}/artifacts/{filename}")
 async def download_cache_artifact(req):
     """
-    Download sample artifact cache for a given key.
+    Download artifact cache.
+
+    Downloads sample artifact cache for a given key.
 
     """
     db = req.app["db"]
@@ -890,7 +958,7 @@ async def download_cache_artifact(req):
     async with AsyncSession(pg) as session:
         result = (
             await session.execute(
-                select(SampleArtifactCache).filter_by(
+                select(SQLSampleArtifactCache).filter_by(
                     name=filename, key=key, sample=sample_id
                 )
             )

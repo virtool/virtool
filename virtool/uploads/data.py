@@ -11,17 +11,20 @@ from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.events import emits, Operation
 from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
-from virtool.uploads.models import Upload as SQLUpload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform
 
 logger = getLogger("uploads")
 
 
 class UploadsData(DataLayerPiece):
+    name = "uploads"
+
     def __init__(self, config, db, pg):
         self._config = config
         self._db: Mongo = db
@@ -37,7 +40,11 @@ class UploadsData(DataLayerPiece):
         if paginate:
             return await self._find_beta(user, page, per_page, upload_type)
 
-        filters = [SQLUpload.removed == False, SQLUpload.ready == True]
+        filters = [
+            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
+            SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
+        ]
+
         uploads = []
 
         async with AsyncSession(self._pg) as session:
@@ -65,18 +72,18 @@ class UploadsData(DataLayerPiece):
         self, user, page: int, per_page: int, upload_type
     ) -> UploadSearchResult:
         base_filters = [
-            SQLUpload.ready == True,
-            SQLUpload.removed == False,
-            SQLUpload.reserved == False,
+            SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
+            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
+            SQLUpload.reserved == False,  # skipcq: PTC-W0068,PYL-R1714
         ]
 
         filters = []
 
         if user:
-            filters.append(SQLUpload.user == user)
+            filters.append(SQLUpload.user == user)  # skipcq: PTC-W0068,PYL-R1714
 
         if upload_type:
-            filters.append(SQLUpload.type == upload_type)
+            filters.append(SQLUpload.type == upload_type)  # skipcq: PTC-W0068,PYL-R1714
 
         total_query = (
             select(func.count(SQLUpload.id).label("total"))
@@ -131,12 +138,9 @@ class UploadsData(DataLayerPiece):
             per_page=per_page,
         )
 
+    @emits(Operation.CREATE)
     async def create(
-        self,
-        name: str,
-        upload_type: str,
-        reserved: bool,
-        user: Optional[str] = None,
+        self, name: str, upload_type: str, reserved: bool, user: Optional[str] = None
     ) -> Upload:
         """
         Create an upload.
@@ -186,6 +190,7 @@ class UploadsData(DataLayerPiece):
             **await apply_transforms(upload.to_dict(), [AttachUserTransform(self._db)])
         )
 
+    @emits(Operation.DELETE)
     async def delete(self, upload_id: int) -> Upload:
         """
         Delete an upload by its id.
@@ -223,13 +228,14 @@ class UploadsData(DataLayerPiece):
 
         return upload
 
+    @emits(Operation.UPDATE)
     async def finalize(self, size: int, id_: int) -> Optional[Upload]:
         """
         Finalize an upload by marking it as ready.
 
         :param size: Size of the newly uploaded file in bytes
         :param id_: id of the upload
-        :return: The upload
+        :return: the upload
         """
         upload = await finalize(self._pg, size, id_, SQLUpload)
 

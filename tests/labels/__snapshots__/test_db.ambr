@@ -1,4 +1,4 @@
-# name: test_label_attacher[uvloop-documents0]
+# name: test_label_attacher[documents0]
   <class 'dict'> {
     'id': 'foo',
     'labels': <class 'list'> [
@@ -18,7 +18,7 @@
     'name': 'Foo',
   }
 ---
-# name: test_label_attacher[uvloop-documents1]
+# name: test_label_attacher[documents1]
   <class 'list'> [
     <class 'dict'> {
       'id': 'foo',
@@ -58,7 +58,7 @@
     },
   ]
 ---
-# name: test_sample_count_attacher[uvloop-labels0]
+# name: test_sample_count_attacher[labels0]
   <class 'dict'> {
     'color': '#a83432',
     'count': 1,
@@ -67,7 +67,7 @@
     'name': 'Bug',
   }
 ---
-# name: test_sample_count_attacher[uvloop-labels1]
+# name: test_sample_count_attacher[labels1]
   <class 'list'> [
     <class 'dict'> {
       'color': '#03fc20',

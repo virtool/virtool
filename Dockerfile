@@ -10,9 +10,9 @@ RUN pip install --user .
 FROM ghcr.io/virtool/workflow-tools:2.0.1
 WORKDIR /virtool
 COPY --from=server /root/.local /root/.local
-COPY run.py pyproject.toml VERSION* /virtool/
+COPY alembic.ini poetry.lock pyproject.toml run.py VERSION* /virtool/
 COPY virtool /virtool/virtool
-COPY example /virtool/example
+COPY assets /virtool/assets
 EXPOSE 9950
 ENTRYPOINT ["python", "run.py"]
 CMD ["server"]

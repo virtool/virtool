@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import CancelledError
 from logging import getLogger
 from typing import List, Union, Optional
@@ -39,7 +40,7 @@ class UploadsView(PydanticView):
         """
         List uploads.
 
-        Returns JSON details of all files uploaded to the instance.
+        Lists JSON details of all files uploaded to the instance.
 
         Status Codes:
             200: Successful operation
@@ -89,6 +90,8 @@ class UploadsView(PydanticView):
         )
 
         file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
+        files_path = self.request.app["config"].data_path / "files"
+        await asyncio.to_thread(files_path.mkdir, parents=True, exist_ok=True)
 
         try:
             size = await naive_writer(await self.request.multipart(), file_path)
@@ -119,7 +122,7 @@ class UploadView(PydanticView):
         """
         Download an upload.
 
-        Returns a previously uploaded file.
+        Downloads a previously uploaded file.
 
         Headers:
             Content-Disposition: attachment; filename=<name>
@@ -151,7 +154,7 @@ class UploadView(PydanticView):
         """
         Delete an upload.
 
-        Deletes an upload.
+        Deletes an upload using its 'upload id'.
 
         Status Codes:
             204: Successful operation
@@ -171,8 +174,9 @@ class UploadView(PydanticView):
 @routes.jobs_api.get("/uploads/{id}")
 async def download(req):
     """
-    Downloads an upload.
+    Download an upload.
 
+    Downloads an upload using its 'upload id'.
     """
     upload_id = int(req.match_info["id"])
 

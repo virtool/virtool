@@ -1,30 +1,14 @@
 """
 Core database classes.
 
-The purpose of these classes is to automatically dispatch database changes via
-:class:`Dispatcher` using the projections and processors appropriate for each
-collection.
 
 """
 from contextlib import asynccontextmanager
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Optional,
-    Sequence,
-    Union,
-    List,
-)
+from typing import Any, Awaitable, Callable
 
-from motor.motor_asyncio import (
-    AsyncIOMotorClient,
-    AsyncIOMotorClientSession,
-)
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorClientSession
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
-from pymongo.results import DeleteResult, UpdateResult
 
 import virtool.analyses.db
 import virtool.caches.db
@@ -40,8 +24,8 @@ import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.users.db
 import virtool.utils
-from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.mongo.identifier import AbstractIdProvider
+from virtool.mongo.utils import id_exists
 from virtool.types import Document, Projection
 
 
@@ -59,29 +43,29 @@ class Collection:
         mongo: "Mongo",
         name: str,
         processor: Callable[[Any, Document], Awaitable[Document]],
-        projection: Optional[Projection],
-        silent: bool = False,
+        projection: Projection | None,
     ):
         self.mongo = mongo
         self.name = name
         self._collection = mongo.motor_client[name]
-        self._enqueue_change = mongo.enqueue_change
         self.processor = processor
         self.projection = projection
-        self.silent = silent
 
-        # No dispatches are necessary for these collection methods, so they can be
-        # directly referenced instead of wrapped.
         self.aggregate = self._collection.aggregate
         self.bulk_write = self._collection.bulk_write
         self.count_documents = self._collection.count_documents
         self.create_index = self._collection.create_index
+        self.delete_many = self._collection.delete_many
+        self.delete_one = self._collection.delete_one
         self.distinct = self._collection.distinct
         self.drop_index = self._collection.drop_index
         self.drop_indexes = self._collection.drop_indexes
         self.find_one = self._collection.find_one
         self.find = self._collection.find
         self.rename = self._collection.rename
+        self.replace_one = self._collection.replace_one
+        self.update_many = self._collection.update_many
+        self.update_one = self._collection.update_one
 
     async def apply_processor(self, document):
         if self.processor:
@@ -89,88 +73,20 @@ class Collection:
 
         return virtool.utils.base_processor(document)
 
-    def enqueue_change(self, operation: str, *id_list: str):
-        """
-        Dispatch collection updates.
-
-        Applies the collection projection and processor.
-
-        Does not dispatch if the collection is `silent` or `silent` parameter is
-        `True`.
-
-        :param operation: the dispatch operation (insert, update, delete)
-        :param id_list: the document IDs the queue changes for
-
-        """
-        if not self.silent:
-            self.mongo.enqueue_change(self.name, operation, id_list)
-
-    async def delete_many(
-        self,
-        query: dict,
-        silent: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> DeleteResult:
-        """
-        Delete many documents based on the passed `query`.
-
-        :param query: a MongoDB query
-        :param silent: don't dispatch websocket messages for this operation
-        :param session: an optional Motor session to use
-        :return: the result
-
-        """
-        id_list = await self.distinct("_id", query)
-
-        delete_result = await self._collection.delete_many(query, session=session)
-
-        if not silent and len(id_list):
-            self.enqueue_change(DELETE, *id_list)
-
-        return delete_result
-
-    async def delete_one(
-        self,
-        query: dict,
-        silent: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> DeleteResult:
-        """
-        Delete a single document based on the passed `query`.
-
-        :param query: a MongoDB query
-        :param silent: don't dispatch websocket messages for this operation
-        :param session: an optional Motor session to use
-        :return: the result
-
-        """
-        document_id = await virtool.mongo.utils.get_one_field(
-            self._collection, "_id", query, session=session
-        )
-
-        delete_result = await self._collection.delete_one(query, session=session)
-
-        if not silent and delete_result.deleted_count:
-            self.enqueue_change(DELETE, document_id)
-
-        return delete_result
-
     async def find_one_and_update(
         self,
         query: dict,
         update: dict,
-        projection: Optional[Projection] = None,
-        silent: bool = False,
+        projection: Projection | None = None,
         upsert: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> Optional[Document]:
+        session: AsyncIOMotorClientSession | None = None,
+    ) -> Document | None:
         """
         Update a document and return the updated result.
 
         :param query: a MongoDB query used to select the documents to update
         :param update: a MongoDB update
         :param projection: a projection to apply to the document instead of the default
-        :param silent: don't dispatch websocket messages for this operation
         :param upsert: insert a new document if no existing document is found
         :param session: an optional Motor session to use
         :return: the updated document
@@ -187,19 +103,13 @@ class Collection:
         if document is None:
             return None
 
-        if not silent:
-            self.enqueue_change(UPDATE, document["_id"])
-
         if projection:
             return virtool.mongo.utils.apply_projection(document, projection)
 
         return document
 
     async def insert_one(
-        self,
-        document: Document,
-        silent: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
+        self, document: Document, session: AsyncIOMotorClientSession | None = None
     ) -> Document:
         """
         Insert the `document`.
@@ -208,7 +118,6 @@ class Collection:
         provided `_id` already exists, a :class:`DuplicateKeyError` will be raised.
 
         :param document: the document to insert
-        :param silent: don't dispatch the change to connected clients
         :param session: an optional Motor session to use
         :return: the inserted document
 
@@ -217,39 +126,27 @@ class Collection:
             await self._collection.insert_one(document, session=session)
             inserted = document
         else:
-            try:
-                inserted = {**document, "_id": self.mongo.id_provider.get()}
+            document_id = self.mongo.id_provider.get()
+
+            if await id_exists(self, document_id, session):
+                inserted = await self.insert_one(document, session=session)
+            else:
+                inserted = {**document, "_id": document_id}
                 await self._collection.insert_one(inserted, session=session)
-            except DuplicateKeyError as err:
-                keys = list(err.details["keyPattern"].keys())
-
-                if len(keys) == 1 and keys[0] == "_id":
-                    return await self.insert_one(document, session=session)
-
-                raise
-
-        if not silent:
-            self.enqueue_change(INSERT, inserted["_id"])
 
         return inserted
 
     async def insert_many(
-        self,
-        documents: List[Document],
-        session: AsyncIOMotorClientSession,
-        silent: bool = False,
+        self, documents: list[Document], session: AsyncIOMotorClientSession
     ):
         inserted = await self.populate_bulk_ids(documents, session=session)
 
         await self._collection.insert_many(inserted, session=session)
 
-        if not silent:
-            self.enqueue_change(INSERT, *[insert["_id"] for insert in inserted])
-
         return inserted
 
     async def populate_bulk_ids(
-        self, documents: List[Document], session: AsyncIOMotorClientSession = None
+        self, documents: list[Document], session: AsyncIOMotorClientSession = None
     ):
         is_id_populated = any("_id" in document for document in documents)
 
@@ -268,102 +165,13 @@ class Collection:
 
         return id_documents
 
-    async def replace_one(
-        self,
-        query: Dict[str, Any],
-        replacement: Document,
-        upsert: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> Document:
-        """
-        Replace the document identified using `query` with the `replacement` document.
-
-        :param query: the query used to find a document to replace
-        :param replacement: the replacement document
-        :param upsert: insert a new document if nothing matches the query
-        :param session: an optional Motor session to use
-        :return: the replacement document
-
-        """
-        document = await self._collection.find_one_and_replace(
-            query,
-            replacement,
-            projection=self.projection,
-            upsert=upsert,
-            session=session,
-        )
-
-        self.enqueue_change(UPDATE, replacement["_id"])
-
-        return document
-
-    async def update_many(
-        self,
-        query: Union[str, Dict],
-        update: Dict,
-        silent: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> UpdateResult:
-        """
-        Update all documents that match `query` by applying the `update`.
-
-        :param query: the query to match
-        :param update: the update to apply to matching documents
-        :param silent: don't dispatch the change to connected clients
-        :param session: an optional Motor session to use
-        :return: the Pymongo `UpdateResult` object
-
-        """
-        updated_ids = await self._collection.distinct("_id", query, session=session)
-        update_result = await self._collection.update_many(
-            query, update, session=session
-        )
-
-        if not silent:
-            self.enqueue_change(UPDATE, *updated_ids)
-
-        return update_result
-
-    async def update_one(
-        self,
-        query: Union[str, Dict],
-        update: Dict,
-        upsert: bool = False,
-        silent: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
-    ) -> UpdateResult:
-        """
-        Update one document matching the `query` by applying the `update`.
-
-        :param query: the query to match
-        :param update: the update to apply to matching document
-        :param upsert: insert a new document if there is no match for the query
-        :param silent: don't dispatch the change to connected clients
-        :param session: an optional Motor session to use
-        :return: the Pymongo `UpdateResult` object
-
-        """
-        document = await self.find_one(query, ["_id"], session=session)
-        update_result = await self._collection.update_one(
-            query, update, upsert=upsert, session=session
-        )
-
-        if not silent and document:
-            self.enqueue_change(UPDATE, document["_id"])
-
-        return update_result
-
 
 class Mongo:
     def __init__(
-        self,
-        motor_client: AsyncIOMotorClient,
-        enqueue_change: Callable[[str, str, Sequence[str]], None],
-        id_provider: AbstractIdProvider,
+        self, motor_client: AsyncIOMotorClient, id_provider: AbstractIdProvider
     ):
         self.motor_client = motor_client
         self.start_session = motor_client.start_session
-        self.enqueue_change = enqueue_change
         self.id_provider = id_provider
 
         self.analyses = self.bind_collection(
@@ -396,7 +204,7 @@ class Mongo:
             processor=virtool.jobs.db.processor,
         )
 
-        self.keys = self.bind_collection("keys", silent=True)
+        self.keys = self.bind_collection("keys")
 
         self.labels = self.bind_collection("labels")
 
@@ -419,7 +227,7 @@ class Mongo:
 
         self.sequences = self.bind_collection("sequences")
 
-        self.sessions = self.bind_collection("sessions", silent=True)
+        self.sessions = self.bind_collection("sessions")
 
         self.status = self.bind_collection("status")
 
@@ -434,17 +242,10 @@ class Mongo:
     def bind_collection(
         self,
         name: str,
-        processor: Optional[Callable] = None,
-        projection: Optional[Projection] = None,
-        silent: bool = False,
+        processor: None | Callable = None,
+        projection: Projection | None = None,
     ) -> Collection:
-        return Collection(
-            self,
-            name,
-            processor,
-            projection,
-            silent,
-        )
+        return Collection(self, name, processor, projection)
 
     @asynccontextmanager
     async def create_session(self):

@@ -7,31 +7,32 @@ import logging
 import os
 from asyncio import to_thread
 from collections import defaultdict
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+from motor.motor_asyncio import AsyncIOMotorClientSession
+from pymongo.results import DeleteResult
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.samples import WorkflowState
+from virtool_core.models.settings import Settings
+from virtool_core.utils import compress_file, rm, file_stats
 
 import virtool.errors
 import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo.results import DeleteResult
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import id_exists, get_one_field
-from virtool.samples.models import SampleArtifact, SampleReads
+from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
-from virtool_core.models.settings import Settings
-from virtool_core.utils import compress_file, rm, file_stats
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -85,13 +86,6 @@ RIGHTS_PROJECTION = {
 }
 
 
-class WorkflowState(Enum):
-    COMPLETE = "complete"
-    INCOMPATIBLE = "incompatible"
-    NONE = "none"
-    PENDING = "pending"
-
-
 UNCHANGABLE_WORKFLOW_STATES = [
     WorkflowState.COMPLETE.value,
     WorkflowState.INCOMPATIBLE.value,
@@ -111,12 +105,14 @@ class ArtifactsAndReadsTransform(AbstractTransform):
         async with AsyncSession(self._pg) as session:
             artifacts = (
                 await session.execute(
-                    select(SampleArtifact).filter_by(sample=sample_id)
+                    select(SQLSampleArtifact).filter_by(sample=sample_id)
                 )
             ).scalars()
 
             reads_files = (
-                await session.execute(select(SampleReads).filter_by(sample=sample_id))
+                await session.execute(
+                    select(SQLSampleReads).filter_by(sample=sample_id)
+                )
             ).scalars()
 
             artifacts = [artifact.to_dict() for artifact in artifacts]
@@ -133,7 +129,7 @@ class ArtifactsAndReadsTransform(AbstractTransform):
                 if upload := reads_file.get("upload"):
                     reads_file["upload"] = (
                         (
-                            await session.execute(select(Upload).filter_by(id=upload))
+                            await session.execute(select(SQLUpload).filter_by(id=upload))
                         ).scalar()
                     ).to_dict()
 
@@ -344,12 +340,15 @@ def get_workflow_name(workflow_name: str) -> str:
     return workflow_name
 
 
-async def recalculate_workflow_tags(db, sample_id: str) -> dict:
+async def recalculate_workflow_tags(
+    db, sample_id: str, session: Optional[AsyncIOMotorClientSession] = None
+) -> dict:
     """
     Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param db: the application database client
     :param sample_id: the id of the sample to recalculate tags for
+    :param session: an optional MongoDB session to use
     :return: the updated sample document
 
     """
@@ -365,7 +364,10 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     }
 
     document = await db.samples.find_one_and_update(
-        {"_id": sample_id}, {"$set": update}, projection=LIST_PROJECTION
+        {"_id": sample_id},
+        {"$set": update},
+        projection=LIST_PROJECTION,
+        session=session,
     )
 
     return document
@@ -528,14 +530,14 @@ async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str
         for file_ in files:
             from_ = file_.get("from")
 
-            upload = Upload(
+            upload = SQLUpload(
                 name=from_["name"],
                 name_on_disk=from_["id"],
                 size=from_["size"],
                 uploaded_at=from_.get("uploaded_at"),
             )
 
-            reads = SampleReads(
+            reads = SQLSampleReads(
                 name=file_["name"],
                 name_on_disk=file_["name"],
                 size=file_["size"],
@@ -580,9 +582,9 @@ async def finalize(
         rows = (
             (
                 await session.execute(
-                    select(Upload)
-                    .filter(SampleReads.sample == sample_id)
-                    .join_from(SampleReads, Upload)
+                    select(SQLUpload)
+                    .filter(SQLSampleReads.sample == sample_id)
+                    .join_from(SQLSampleReads, SQLUpload)
                 )
             )
             .unique()

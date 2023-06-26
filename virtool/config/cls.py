@@ -1,8 +1,39 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from pymongo.uri_parser import parse_uri
+
+from virtool.authorization.openfga import OpenfgaScheme
+from virtool.flags import FlagName
+
+
+@dataclass
+class MigrationConfig:
+    """
+    Configuration for the migration service.
+
+    """
+
+    data_path: Path
+    mongodb_connection_string: str
+    openfga_host: str
+    openfga_scheme: OpenfgaScheme
+    openfga_store_name: str
+    postgres_connection_string: str
+
+    @property
+    def mongodb_name(self) -> str:
+        """
+        Get the name of the MongoDB database.
+
+        :return: the database name
+
+        """
+        return parse_uri(self.mongodb_connection_string)["database"]
+
+    def __post_init__(self):
+        self.data_path = Path(self.data_path)
 
 
 @dataclass
@@ -17,7 +48,6 @@ class ServerConfig:
     host: str
     mongodb_connection_string: str
     no_check_db: bool
-    no_check_files: bool
     no_revision_check: bool
     openfga_host: str
     openfga_scheme: str
@@ -27,6 +57,7 @@ class ServerConfig:
     redis_connection_string: str
     use_b2c: bool
     sentry_dsn: Optional[str]
+    flags: List[FlagName] = field(default_factory=list)
 
     @property
     def mongodb_database(self) -> str:
@@ -47,7 +78,6 @@ class TaskRunnerConfig:
     data_path: Path
     host: str
     mongodb_connection_string: str
-    no_check_files: bool
     no_revision_check: bool
     openfga_host: str
     openfga_scheme: str
@@ -76,4 +106,19 @@ class TaskSpawnerConfig:
     redis_connection_string: str
 
 
-Config = Union[ServerConfig, TaskRunnerConfig, TaskSpawnerConfig]
+@dataclass
+class PeriodicTaskSpawnerConfig:
+    """
+    Configuration for the periodic task spawner
+    """
+
+    base_url: str
+    postgres_connection_string: str
+    redis_connection_string: str
+    host: str
+    port: int
+
+
+Config = Union[
+    ServerConfig, TaskRunnerConfig, TaskSpawnerConfig, PeriodicTaskSpawnerConfig
+]

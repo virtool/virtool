@@ -11,7 +11,7 @@ from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.data.layer import DataLayer
 from virtool.tasks.data import TasksData
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ async def blast_data(mocker, mongo, pg: AsyncEngine, static_time, redis):
     )
 
     async with AsyncSession(pg) as session:
-        task = Task(created_at=static_time.datetime, type="blast")
+        task = SQLTask(created_at=static_time.datetime, type="blast")
         session.add(task)
         await session.flush()
 

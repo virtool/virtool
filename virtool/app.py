@@ -1,6 +1,3 @@
-import asyncio
-import logging
-
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
@@ -9,16 +6,14 @@ from aiohttp_pydantic import oas
 import virtool.http.accept
 import virtool.http.authentication
 import virtool.http.errors
-import virtool.http.query
 from virtool.config.cls import Config
+from virtool.flags import feature_flag_middleware, FeatureFlags
 from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.http.policy import route_policy_middleware
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_authorization_client,
-    shutdown_client,
-    shutdown_dispatcher,
+    shutdown_http_client,
     shutdown_executors,
     shutdown_redis,
     shutdown_scheduler,
@@ -28,18 +23,15 @@ from virtool.startup import (
     startup_check_db,
     startup_data,
     startup_databases,
-    startup_dispatcher,
     startup_events,
     startup_executors,
     startup_http_client,
-    startup_paths,
     startup_routes,
     startup_sentry,
     startup_settings,
     startup_version,
+    startup_ws,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def create_app_without_startup():
@@ -49,7 +41,6 @@ def create_app_without_startup():
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
-        virtool.http.query.middleware,
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
@@ -71,7 +62,7 @@ def create_app(config: Config):
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
         route_policy_middleware,
-        virtool.http.query.middleware,
+        feature_flag_middleware,
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
@@ -80,19 +71,19 @@ def create_app(config: Config):
 
     app["config"] = config
     app["mode"] = "server"
+    app["flags"] = FeatureFlags(config.flags)
 
     aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend(
         [
             startup_version,
-            startup_events,
             startup_http_client,
             startup_databases,
-            startup_dispatcher,
-            startup_paths,
+            startup_events,
             startup_routes,
             startup_executors,
+            startup_ws,
             startup_data,
             startup_settings,
             startup_sentry,
@@ -106,8 +97,7 @@ def create_app(config: Config):
     app.on_shutdown.extend(
         [
             shutdown_authorization_client,
-            shutdown_client,
-            shutdown_dispatcher,
+            shutdown_http_client,
             shutdown_executors,
             shutdown_scheduler,
             shutdown_redis,
@@ -117,18 +107,6 @@ def create_app(config: Config):
     return app
 
 
-async def run_app(config: Config):
+def run_api_server(config: Config):
     app = create_app(config)
-
-    runner = await create_app_runner(app, config.host, config.port)
-
-    _, pending = await asyncio.wait(
-        [
-            wait_for_restart(runner, app["events"]),
-            wait_for_shutdown(runner, app["events"]),
-        ],
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-
-    for task in pending:
-        task.cancel()
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)

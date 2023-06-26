@@ -1,28 +1,31 @@
 import random
 
 from pymongo.errors import DuplicateKeyError
-from virtool_core.models.user import User
 from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.user import User
 
 import virtool.users.utils
 import virtool.utils
+from virtool.data.events import emits, Operation
+from virtool.users.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.errors import DatabaseError
 from virtool.users.db import (
     B2CUserAttributes,
-    update_sessions_and_keys,
+    update_keys,
     compose_groups_update,
     compose_primary_group_update,
     fetch_complete_user,
 )
 from virtool.users.mongo import create_user
-from virtool.users.oas import UpdateUserRequest
 from virtool.utils import base_processor
 
 
 class UsersData:
+    name = "users"
+
     def __init__(self, authorization_client: AuthorizationClient, mongo, pg):
         self._authorization_client = authorization_client
         self._mongo = mongo
@@ -36,16 +39,16 @@ class UsersData:
         :return: the user
         """
 
-        if document := await fetch_complete_user(self._mongo, user_id):
+        if document := await fetch_complete_user(
+            self._mongo, self._authorization_client, user_id
+        ):
             return User(**base_processor(document))
 
         raise ResourceNotFoundError
 
+    @emits(Operation.CREATE)
     async def create(
-        self,
-        handle: str,
-        password: str,
-        force_reset: bool = False,
+        self, handle: str, password: str, force_reset: bool = False
     ) -> User:
         """
         Create a new user.
@@ -57,14 +60,11 @@ class UsersData:
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
-        document = await create_user(
-            self._mongo,
-            handle,
-            password,
-            force_reset,
-        )
+        document = await create_user(self._mongo, handle, password, force_reset)
 
-        return await fetch_complete_user(self._mongo, document["_id"])
+        return await fetch_complete_user(
+            self._mongo, self._authorization_client, document["_id"]
+        )
 
     async def create_first(self, handle: str, password: str) -> User:
         """
@@ -95,7 +95,9 @@ class UsersData:
             AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL)
         )
 
-        return await fetch_complete_user(self._mongo, document["_id"])
+        return await fetch_complete_user(
+            self._mongo, self._authorization_client, document["_id"]
+        )
 
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes
@@ -112,7 +114,9 @@ class UsersData:
         if document := await self._mongo.users.find_one(
             {"b2c_oid": b2c_user_attributes.oid}
         ):
-            return await fetch_complete_user(self._mongo, document["_id"])
+            return await fetch_complete_user(
+                self._mongo, self._authorization_client, document["_id"]
+            )
 
         handle = "-".join(
             [
@@ -133,10 +137,13 @@ class UsersData:
         except DuplicateKeyError:
             return await self.find_or_create_b2c_user(b2c_user_attributes)
 
-        user = await fetch_complete_user(self._mongo, document["_id"])
+        user = await fetch_complete_user(
+            self._mongo, self._authorization_client, document["_id"]
+        )
 
         return user
 
+    @emits(Operation.UPDATE)
     async def update(self, user_id: str, data: UpdateUserRequest):
         """
         Update a user.
@@ -157,7 +164,6 @@ class UsersData:
         update = {}
 
         if "administrator" in data:
-
             update["administrator"] = data["administrator"]
 
             role_assignment = AdministratorRoleAssignment(
@@ -207,7 +213,7 @@ class UsersData:
                 {"_id": user_id}, {"$set": update}
             )
 
-            await update_sessions_and_keys(
+            await update_keys(
                 self._mongo,
                 user_id,
                 document["administrator"],
@@ -215,7 +221,9 @@ class UsersData:
                 document["permissions"],
             )
 
-        user = await fetch_complete_user(self._mongo, user_id)
+        user = await fetch_complete_user(
+            self._mongo, self._authorization_client, user_id
+        )
 
         if user is None:
             raise ResourceNotFoundError

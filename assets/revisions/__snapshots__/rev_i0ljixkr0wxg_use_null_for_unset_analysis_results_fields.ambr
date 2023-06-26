@@ -1,0 +1,50 @@
+# name: test_upgrade
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bat',
+      'join_histogram': <class 'list'> [
+        1,
+        2,
+        3,
+        4,
+        5,
+      ],
+      'joined_pair_count': 12345,
+      'remainder_pair_count': 54321,
+      'results': None,
+      'workflow': 'aodp',
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'read_count': 7982,
+      'results': <class 'list'> [
+        9,
+        8,
+        7,
+        6,
+        5,
+      ],
+      'subtracted_count': 112,
+      'workflow': 'pathoscope_bowtie',
+    },
+    <class 'dict'> {
+      '_id': 'baz',
+      'results': None,
+      'workflow': 'nuvs',
+    },
+    <class 'dict'> {
+      '_id': 'bad',
+      'join_histogram': <class 'list'> [
+        1,
+        2,
+        3,
+        4,
+        5,
+      ],
+      'joined_pair_count': 12345,
+      'remainder_pair_count': 54321,
+      'results': None,
+      'workflow': 'aodp',
+    },
+  ]
+---

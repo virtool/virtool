@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from asyncio import gather
 from logging import getLogger
+from typing import List
 
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.types import Document
@@ -18,6 +19,10 @@ class AbstractJobsClient(ABC):
 
     @abstractmethod
     async def cancel(self, job_id: str) -> Document:
+        ...
+
+    @abstractmethod
+    async def list(self) -> Document:
         ...
 
 
@@ -77,6 +82,20 @@ class JobsClient(AbstractJobsClient):
 
         return JOB_CANCELLATION_DISPATCHED
 
+    async def list(self) -> List[str]:
+        """
+        List all job IDs in Redis.
+
+        :return: a list of job IDs
+
+        """
+        return await gather(
+            *[
+                self._redis.lrange(workflow_name, 0, -1)
+                for workflow_name in WORKFLOW_NAMES
+            ]
+        )
+
 
 class DummyJobsClient(AbstractJobsClient):
     """
@@ -93,3 +112,6 @@ class DummyJobsClient(AbstractJobsClient):
     async def cancel(self, job_id: str) -> Document:
         self.cancelled.append(job_id)
         return {}
+
+    async def list(self) -> List[str]:
+        return [jobs[1] for jobs in self.enqueued]

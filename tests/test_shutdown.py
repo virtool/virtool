@@ -1,11 +1,10 @@
-from virtool.startup import get_scheduler_from_app
 from virtool.shutdown import (
-    shutdown_client,
-    shutdown_dispatcher,
+    shutdown_http_client,
     shutdown_executors,
     shutdown_scheduler,
     shutdown_redis,
 )
+from virtool.startup import get_scheduler_from_app
 
 
 async def test_shutdown_client(spawn_client):
@@ -16,24 +15,9 @@ async def test_shutdown_client(spawn_client):
     client = await spawn_client(authorize=True)
     app = client.app
 
-    await shutdown_client(app)
+    await shutdown_http_client(app)
 
     assert app["client"].closed
-
-
-async def test_shutdown_dispatcher(mocker, spawn_client):
-    """
-    Test that the app's `Dispatcher` object is properly closed on shutdown.
-
-    """
-    client = await spawn_client(authorize=True)
-    app = client.app
-
-    mock = mocker.patch("virtool.dispatcher.dispatcher.Dispatcher.close")
-
-    await shutdown_dispatcher(app)
-
-    assert mock.called
 
 
 async def test_shutdown_executors(mocker, spawn_client):

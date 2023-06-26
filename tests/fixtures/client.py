@@ -72,8 +72,9 @@ def create_app(
     mongo: "Mongo",
     pg_connection_string: str,
     redis_connection_string: str,
-        mongo_connection_string,
-        mongo_name,
+    mongo_connection_string,
+    openfga_host: str,
+    mongo_name,
     openfga_store_name: str,
 ):
     mongodb_connection_string = (
@@ -97,9 +98,8 @@ def create_app(
             host="localhost",
             mongodb_connection_string=mongodb_connection_string,
             no_check_db=True,
-            no_check_files=True,
             no_revision_check=True,
-            openfga_host="localhost:8080",
+            openfga_host=openfga_host,
             openfga_scheme="http",
             openfga_store_name=openfga_store_name,
             port=9950,
@@ -212,12 +212,13 @@ def spawn_client(
 def spawn_job_client(
     mongo: "Mongo",
     aiohttp_client,
-        mongo_connection_string,
+    mongo_connection_string,
     redis_connection_string: str,
     pg_connection_string: str,
     pg: AsyncEngine,
-        mongo_name,
+    mongo_name,
     openfga_store_name: str,
+    openfga_host: str,
     authorization_client: AuthorizationClient,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
@@ -230,12 +231,7 @@ def spawn_job_client(
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
-            await mongo.jobs.insert_one(
-                {
-                    "_id": job_id,
-                    "key": hash_key(key),
-                }
-            )
+            await mongo.jobs.insert_one({"_id": job_id, "key": hash_key(key)})
 
             # Create Basic Authentication header.
             auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)
@@ -254,9 +250,8 @@ def spawn_job_client(
                 host="localhost",
                 mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
                 no_check_db=True,
-                no_check_files=True,
                 no_revision_check=True,
-                openfga_host="localhost:8080",
+                openfga_host=openfga_host,
                 openfga_scheme="http",
                 openfga_store_name=openfga_store_name,
                 port=9950,

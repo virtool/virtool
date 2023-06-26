@@ -1,0 +1,42 @@
+# name: test_upgrade[analyses]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+      'subtractions': <class 'list'> [
+        'prunus',
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'subtractions': <class 'list'> [
+        'malus',
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'baz',
+      'subtractions': <class 'list'> [
+      ],
+    },
+  ]
+---
+# name: test_upgrade[samples]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+      'subtractions': <class 'list'> [
+        'prunus',
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'subtractions': <class 'list'> [
+        'malus',
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'baz',
+      'subtractions': <class 'list'> [
+      ],
+    },
+  ]
+---

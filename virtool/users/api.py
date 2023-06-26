@@ -4,11 +4,12 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
-from virtool_core.models.user import User
 from virtool_core.models.roles import AdministratorRole, SpaceRoleType
+from virtool_core.models.user import User
 
 import virtool.http.authentication
 import virtool.users.db
+from virtool.users.oas import UpdateUserRequest
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.relationships import UserRoleAssignment
@@ -24,7 +25,6 @@ from virtool.http.routes import Routes
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.oas import (
-    UpdateUserRequest,
     CreateUserRequest,
     CreateFirstUserRequest,
     PermissionsResponse,
@@ -46,7 +46,7 @@ class UsersView(PydanticView):
         """
         List all users.
 
-        Returns a paginated list of all users in the instance.
+        Lists all users in the instance.
 
         Status Codes:
             200: Successful operation
@@ -157,7 +157,7 @@ class UserView(PydanticView):
         """
         Retrieve a user.
 
-        Returns the details for a user.
+        Fetches the details for a user.
 
         Status Codes:
             200: Success
@@ -214,7 +214,9 @@ class UserView(PydanticView):
 class PermissionsView(PydanticView):
     async def get(self, user_id: str, /) -> r200[PermissionsResponse]:
         """
-        List all roles that a user has on the space.
+        List user roles.
+
+        Lists all roles that a user has on the space.
 
         Status Codes:
             200: Successful operation
@@ -234,7 +236,9 @@ class PermissionView(PydanticView):
         self, user_id: str, role: SpaceRoleType, /
     ) -> r200[PermissionResponse]:
         """
-        Add a role for a user
+        Add user role.
+
+        Adds a role for a user.
 
         Status Codes:
             200: Successful operation
@@ -250,7 +254,9 @@ class PermissionView(PydanticView):
         self, user_id: str, role: SpaceRoleType, /
     ) -> r200[PermissionResponse]:
         """
-        Delete a permission for a user
+        Delete user permission.
+
+        Removes a permission for a user.
 
         Status Codes:
             200: Successful operation

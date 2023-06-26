@@ -23,7 +23,7 @@ class SequenceChanges:
 
     @property
     def sequence_changes(self):
-        return sum([len(change) for change in astuple(self) if change is not None])
+        return sum(len(change) for change in astuple(self) if change is not None)
 
 
 @dataclass(init=True)

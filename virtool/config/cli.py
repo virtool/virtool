@@ -4,13 +4,16 @@ from logging import getLogger
 
 import click
 import uvloop
-from virtool_core.logging import configure_logs
 
-import virtool.jobs.main
-import virtool.tasks.main
-import virtool.tasks.spawner
-from virtool.app import run_app
-from virtool.config.cls import ServerConfig, TaskRunnerConfig, TaskSpawnerConfig
+from virtool_core.logging import configure_logs
+from virtool.app import run_api_server
+from virtool.config.cls import (
+    MigrationConfig,
+    ServerConfig,
+    TaskRunnerConfig,
+    TaskSpawnerConfig,
+    PeriodicTaskSpawnerConfig,
+)
 from virtool.config.options import (
     address_options,
     b2c_options,
@@ -19,14 +22,21 @@ from virtool.config.options import (
     dev_option,
     mongodb_connection_string_option,
     no_check_db_option,
-    no_check_files_option,
     no_revision_check_option,
     openfga_options,
     postgres_connection_string_option,
     redis_connection_string_option,
     sentry_dsn_option,
 )
+from virtool.migration.apply import apply
+from virtool.migration.create import create_revision
+from virtool.migration.show import show_revisions
+from virtool.jobs.main import run_jobs_server
 from virtool.oas.cmd import show_oas
+from virtool.tasks.main import run_task_runner
+from virtool.tasks.spawn import spawn
+from virtool.tasks.spawner import run_task_spawner
+from virtool.flags import FlagName
 
 logger = getLogger("config")
 
@@ -64,17 +74,25 @@ def server():
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_api_server(**kwargs):
+@click.option(
+    "--flags",
+    help="feature flag of the feature to enable",
+    type=click.Choice([flag.name for flag in FlagName], case_sensitive=False),
+    required=False,
+    multiple=True,
+    default=[],
+)
+def start_api_server(flags, **kwargs):
     """Start a Virtool public API server."""
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
-    asyncio.get_event_loop().run_until_complete(run_app(ServerConfig(**kwargs)))
+
+    run_api_server(ServerConfig(flags=flags, **kwargs))
 
 
 @server.command("jobs")
@@ -83,7 +101,6 @@ def start_api_server(**kwargs):
 @dev_option
 @mongodb_connection_string_option
 @no_check_db_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -95,17 +112,15 @@ def start_jobs_api(**kwargs):
 
     logger.info("Starting the jobs api service")
 
-    asyncio.get_event_loop().run_until_complete(
-        virtool.jobs.main.run(
-            ServerConfig(
-                **kwargs,
-                base_url="",
-                b2c_client_id="",
-                b2c_client_secret="",
-                b2c_tenant="",
-                b2c_user_flow="",
-                use_b2c=False,
-            )
+    run_jobs_server(
+        ServerConfig(
+            **kwargs,
+            base_url="",
+            b2c_client_id="",
+            b2c_client_secret="",
+            b2c_tenant="",
+            b2c_user_flow="",
+            use_b2c=False,
         )
     )
 
@@ -114,6 +129,38 @@ def start_jobs_api(**kwargs):
 def oas():
     """Work with the Virtool OpenAPI specification."""
     show_oas()
+
+
+@cli.group("migration")
+def migration():
+    """Run and manage Virtool data migrations."""
+    ...
+
+
+@migration.command("apply")
+@data_path_option
+@mongodb_connection_string_option
+@openfga_options
+@postgres_connection_string_option
+def migration_apply(**kwargs):
+    """Apply all pending migrations."""
+    configure_logs(False)
+    logger.info("Starting migration")
+    asyncio.run(apply(MigrationConfig(**kwargs)))
+
+
+@migration.command("create")
+@click.option("--name", help="Name of the migration", required=True, type=str)
+def migration_create(name: str):
+    """Create a new migration revision."""
+    create_revision(name)
+
+
+@migration.command("show")
+def migration_show(**kwargs):
+    """Apply all pending migrations."""
+    configure_logs(False)
+    show_revisions()
 
 
 @cli.group("tasks")
@@ -126,7 +173,6 @@ def tasks():
 @address_options
 @data_path_option
 @mongodb_connection_string_option
-@no_check_files_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
@@ -138,21 +184,34 @@ def start_task_runner(**kwargs):
 
     logger.info("Starting tasks runner")
 
-    asyncio.get_event_loop().run_until_complete(
-        virtool.tasks.main.run(TaskRunnerConfig(**kwargs, base_url=""))
-    )
+    run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
 
 
 @tasks.command("spawn")
 @postgres_connection_string_option
 @redis_connection_string_option
-@click.option("--task-name", help="Name of the task to spawn", type=str)
+@click.option("--task-name", help="Name of the task to spawn", type=str, required=True)
 def spawn_task(task_name: str, **kwargs):
     """Create and queue a task instance of the given name."""
     configure_logs(False)
 
-    logger.info("Spawning task")
+    logger.info("Spawning task %s", task_name)
 
     asyncio.get_event_loop().run_until_complete(
-        virtool.tasks.spawner.spawn(TaskSpawnerConfig(**kwargs), task_name)
+        spawn(TaskSpawnerConfig(**kwargs), task_name)
     )
+
+
+@tasks.command("spawner")
+@postgres_connection_string_option
+@redis_connection_string_option
+@address_options
+def tasks_spawner(**kwargs):
+    """
+    Schedule all periodically run tasks on hardcoded schedules
+    """
+    configure_logs(False)
+
+    logger.info("Starting task spawner")
+
+    run_task_spawner(PeriodicTaskSpawnerConfig(**kwargs, base_url=""))

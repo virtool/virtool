@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.utils import get_temp_dir
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 
 import tarfile
 import json

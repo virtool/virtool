@@ -19,13 +19,14 @@ from virtool.account.oas import (
     CreateLoginRequest,
     UpdateAccountRequest,
 )
+from virtool.administrators.oas import UpdateUserRequest
+from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
-from virtool.groups.db import lookup_minimal_groups
+from virtool.groups.db import lookup_groups_minimal_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
-from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import limit_permissions
 
 PROJECTION = (
@@ -43,7 +44,12 @@ PROJECTION = (
 
 
 class AccountData(DataLayerPiece):
-    def __init__(self, db: Mongo, redis: Redis):
+    name = "account"
+
+    def __init__(
+        self, db: Mongo, redis: Redis, authorization_client: AuthorizationClient
+    ):
+        self._authorization_client = authorization_client
         self._db = db
         self._redis = redis
 
@@ -56,7 +62,11 @@ class AccountData(DataLayerPiece):
         """
         return Account(
             **{
-                **(await fetch_complete_user(self._db, user_id)).dict(),
+                **(
+                    await fetch_complete_user(
+                        self._db, self._authorization_client, user_id
+                    )
+                ).dict(),
                 "settings": {
                     "quick_analyze_workflow": "nuvs",
                     "show_ids": False,
@@ -89,10 +99,7 @@ class AccountData(DataLayerPiece):
         if "email" in data_dict:
             update["email"] = data_dict["email"]
 
-        await self._db.users.update_one(
-            {"_id": user_id},
-            {"$set": update},
-        )
+        await self._db.users.update_one({"_id": user_id}, {"$set": update})
 
         return await self.get(user_id)
 
@@ -141,7 +148,7 @@ class AccountData(DataLayerPiece):
             async for key in self._db.keys.aggregate(
                 [
                     {"$match": {"user.id": user_id}},
-                    *lookup_minimal_groups(),
+                    *lookup_groups_minimal_by_id(),
                     {
                         "$project": {
                             "_id": False,
@@ -349,13 +356,10 @@ class AccountData(DataLayerPiece):
 
         await self.data.sessions.delete(session_id)
 
-        await self.data.users.update(
-            reset.user_id,
-            UpdateUserRequest(force_reset=False, password=data.password),
+        await self.data.administrators.update(
+            reset.user_id, UpdateUserRequest(force_reset=False, password=data.password)
         )
 
         return await self.data.sessions.create(
-            ip,
-            reset.user_id,
-            remember=reset.remember,
+            ip, reset.user_id, remember=reset.remember
         )

@@ -12,7 +12,7 @@ import virtool.utils
 from virtool.data.utils import get_data_from_app
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 
 
 @pytest.mark.apitest
@@ -483,7 +483,9 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
 
     assert resp.status == 200
 
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot(
+        matcher=path_type({".*etag": (str,)}, regex=True)
+    )
 
     m_fetch_and_update_release.assert_called_with(
         client.app["db"], client.app["client"], "foo"
@@ -625,7 +627,9 @@ async def test_update(
     )
 
     assert resp.status == 201
-    assert await resp.json() == snapshot(name="json")
+    assert await resp.json() == snapshot(
+        name="json", matcher=path_type({".*etag": (str,)}, regex=True)
+    )
     assert m_update.call_args[0] == snapshot(name="call")
 
 
@@ -781,8 +785,8 @@ async def test_create_index(
         return
 
     assert resp.status == 201
-    assert await resp.json() == snapshot(name="json")
-    assert await client.db.indexes.find_one() == snapshot(name="index")
+    assert await resp.json() == snapshot
+    assert await client.db.indexes.find_one() == snapshot
 
     m_create_manifest.assert_called_with(client.db, "foo")
 
@@ -988,7 +992,7 @@ async def test_find_otus(find, verified, spawn_client, snapshot):
                 "abbreviation": "PVF",
                 "last_indexed_version": None,
                 "verified": True,
-                "lower_name": 'prunus virus f',
+                "lower_name": "prunus virus f",
                 "isolates": [],
                 "version": 0,
                 "reference": {"id": "foo"},
@@ -1000,7 +1004,7 @@ async def test_find_otus(find, verified, spawn_client, snapshot):
                 "abbreviation": "P",
                 "last_indexed_version": None,
                 "verified": False,
-                "lower_name": 'papaya virus q',
+                "lower_name": "papaya virus q",
                 "isolates": [],
                 "version": 0,
                 "reference": {"id": "foo"},

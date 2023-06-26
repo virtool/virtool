@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from virtool.blast.data import BLASTData
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
-from virtool.hmm.data import HmmData
+from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
@@ -42,7 +42,7 @@ class DataLayer:
     blast: BLASTData
     groups: GroupsData
     history: HistoryData
-    hmms: HmmData
+    hmms: HmmsData
     index: IndexData
     jobs: JobsData
     labels: LabelsData
@@ -67,3 +67,4 @@ class DataLayer:
         self.references.bind_layer(self)
         self.sessions.bind_layer(self)
         self.account.bind_layer(self)
+        self.administrators.bind_layer(self)

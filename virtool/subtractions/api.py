@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Union, Optional
 
@@ -10,6 +11,7 @@ from virtool_core.models.subtraction import SubtractionSearchResult
 
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionRoutePolicy
@@ -37,7 +39,7 @@ class SubtractionsView(PydanticView):
         """
         Find subtractions.
 
-        Finds subtractions by their `name` or `nickname` by providing a `term` as a
+        Lists subtractions by their `name` or `nickname` by providing a `term` as a
         query parameter. Partial matches are supported.
 
         Supports pagination unless the `short` query parameter is set. In this case, an
@@ -98,7 +100,7 @@ class SubtractionView(PydanticView):
         """
         Get a subtraction.
 
-        Retrieves the details of a subtraction.
+        Fetches the details of a subtraction.
 
         Status Codes:
             200: Operation Successful
@@ -162,9 +164,16 @@ class SubtractionView(PydanticView):
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
 async def upload(req):
-    """Upload a new subtraction file."""
+    """
+    Upload subtraction file.
+
+    Uploads a new subtraction file.
+    """
     subtraction_id = req.match_info["subtraction_id"]
     filename = req.match_info["filename"]
+
+    subtraction_path = get_config_from_req(req).data_path / "subtractions" / subtraction_id
+    await asyncio.to_thread(subtraction_path.mkdir, parents=True, exist_ok=True)
 
     try:
         subtraction_file = await get_data_from_req(req).subtractions.upload_file(
@@ -193,6 +202,8 @@ async def upload(req):
 )
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
+    Finalize a subtraction.
+
     Sets the GC field for a subtraction and marks it as ready.
 
     """
@@ -243,7 +254,7 @@ class SubtractionFileView(PydanticView):
         self, subtraction_id: str, filename: str, /
     ) -> Union[r200, r400, r404]:
         """
-        Download a file.
+        Download a subtraction file.
 
         Downloads a Bowtie2 index or FASTA file for the given subtraction.
 

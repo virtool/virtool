@@ -2,6 +2,7 @@
 Work with OTU history in the database.
 
 """
+import asyncio
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
@@ -93,7 +94,6 @@ async def add(
     new: Optional[dict],
     description: str,
     user_id: str,
-    silent: bool = False,
     session: Optional[AsyncIOMotorClientSession] = None,
 ) -> dict:
     """
@@ -106,7 +106,6 @@ async def add(
     :param new: the otu document after the change
     :param description: a human readable description of the change
     :param user_id: the id of the requesting user
-    :param silent: don't dispatch a message
     :return: the change document
 
     """
@@ -134,13 +133,14 @@ async def add(
         document["diff"] = calculate_diff(old, new)
 
     try:
-        await db.history.insert_one(document, silent=silent, session=session)
+        await db.history.insert_one(document, session=session)
     except pymongo.errors.DocumentTooLarge:
+        history_path = data_path / "history"
+        await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
+
         await write_diff_file(data_path, otu_id, otu_version, document["diff"])
 
-        await db.history.insert_one(
-            dict(document, diff="file"), silent=silent, session=session
-        )
+        await db.history.insert_one(dict(document, diff="file"), session=session)
 
     return document
 
@@ -189,6 +189,9 @@ async def prepare_add(
 
     else:
         document["diff"] = calculate_diff(old, new)
+
+    history_path = data_path / "history"
+    await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
 
     if len(bson.encode(document)) > 16793600:
         await write_diff_file(data_path, otu_id, otu_version, document["diff"])
@@ -256,13 +259,7 @@ async def get_contributors(db, query: dict) -> List[dict]:
         [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}]
     )
 
-    contributors = [
-        {
-            "id": c["_id"],
-            "count": c["count"],
-        }
-        async for c in cursor
-    ]
+    contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
     users = await db.users.find(
         {"_id": {"$in": [c["id"] for c in contributors]}}, projection=ATTACH_PROJECTION
