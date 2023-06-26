@@ -5,15 +5,21 @@ import pytest
 from orjson import orjson
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.api.custom_json import dump_string
 from virtool.authorization.openfga import OpenfgaScheme
+from virtool.caches.models import SQLSampleArtifactCache, SQLSampleReadsCache
 from virtool.config.cls import MigrationConfig
-from virtool.groups.pg import SQLGroup
+from virtool.indexes.models import SQLIndexFile
+from virtool.labels.models import SQLLabel
 from virtool.migration.ctx import create_migration_context, MigrationContext
-from virtool.pg.base import Base
-from virtool.spaces.models import SQLSpace
+from virtool.migration.pg import SQLRevision
+from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
+from virtool.subtractions.models import SQLSubtractionFile
+from virtool.tasks.models import SQLTask
+from virtool.uploads.models import SQLUpload
 
 
 @pytest.fixture
@@ -36,6 +42,8 @@ async def migration_pg_connection_string(
     )
 
     async with engine.connect() as conn:
+        await conn.execute(text(f"DROP DATABASE IF EXISTS {database}"))
+
         try:
             await conn.execute(text(f"CREATE DATABASE {database}"))
         except ProgrammingError as exc:
@@ -46,23 +54,28 @@ async def migration_pg_connection_string(
 
     connection_string = f"{pg_base_connection_string}/{database}"
 
-    pg = create_async_engine(
+    engine = create_async_engine(
         connection_string,
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
         pool_recycle=1800,
     )
 
-    async with pg.begin() as conn:
-        for table in Base.metadata.sorted_tables:
-            if str(table) not in ("revisions", "groups", "spaces"):
-                try:
-                    await conn.execute(text(f"DROP TABLE {table} CASCADE"))
-                except ProgrammingError as exc:
-                    if "does not exist" not in str(exc):
-                        raise
+    async with engine.connect() as conn:
+        await conn.run_sync(SQLRevision.__table__.create)
+        await conn.run_sync(SQLAnalysisFile.__table__.create)
+        await conn.run_sync(SQLSampleArtifact.__table__.create)
+        await conn.run_sync(
+            lambda conn: SQLSampleArtifactCache.__table__.create(conn, checkfirst=True)
+        )
+        await conn.run_sync(SQLUpload.__table__.create)
+        await conn.run_sync(SQLSampleReads.__table__.create)
+        await conn.run_sync(SQLSampleReadsCache.__table__.create)
+        await conn.run_sync(SQLSubtractionFile.__table__.create)
+        await conn.run_sync(SQLIndexFile.__table__.create)
+        await conn.run_sync(SQLTask.__table__.create)
+        await conn.run_sync(SQLLabel.__table__.create)
 
-        await conn.run_sync(Base.metadata.create_all)
         await conn.commit()
 
     return connection_string

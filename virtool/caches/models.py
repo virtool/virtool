@@ -20,7 +20,7 @@ class SQLSampleArtifactCache(Base):
     name_on_disk = Column(String)
     sample = Column(String, nullable=False)
     size = Column(BigInteger)
-    type = Column(Enum(ArtifactType), nullable=False)
+    type = Column(Enum(ArtifactType), nullable=False, create_type=False)
     uploaded_at = Column(DateTime)
 
 
