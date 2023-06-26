@@ -39,12 +39,13 @@ class MigrationConfig:
 @dataclass
 class ServerConfig:
     base_url: str
-    b2c_client_id: Optional[str]
-    b2c_client_secret: Optional[str]
-    b2c_tenant: Optional[str]
-    b2c_user_flow: Optional[str]
+    b2c_client_id: str | None
+    b2c_client_secret: str | None
+    b2c_tenant: str | None
+    b2c_user_flow: str | None
     data_path: Path
     dev: bool
+    flags: list[FlagName]
     host: str
     mongodb_connection_string: str
     no_check_db: bool
@@ -56,8 +57,7 @@ class ServerConfig:
     postgres_connection_string: str
     redis_connection_string: str
     use_b2c: bool
-    sentry_dsn: Optional[str]
-    flags: List[FlagName] = field(default_factory=list)
+    sentry_dsn: str | None
 
     @property
     def mongodb_database(self) -> str:

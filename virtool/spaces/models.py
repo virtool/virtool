@@ -1,15 +1,10 @@
-from sqlalchemy import (
-    Column,
-    DateTime,
-    Integer,
-    String,
-)
+from sqlalchemy import Column, DateTime, Integer, String
 
 from virtool.pg.base import Base
 
 
 class SQLSpace(Base):
-    __tablename__ = "space"
+    __tablename__ = "spaces"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)

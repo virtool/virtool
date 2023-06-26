@@ -4,7 +4,7 @@ from aioredis import Redis
 
 
 @pytest.fixture
-async def redis_connection_string(request, worker_id: str):
+def redis_connection_string(request, worker_id: str) -> str:
     """
     The connection string for the Redis database used for testing.
     """

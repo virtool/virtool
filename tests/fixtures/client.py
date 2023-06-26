@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 import pytest
+from aiohttp import BasicAuth
 from aiohttp.web_routedef import RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.models.enums import Permission
 from virtool_core.models.session import Session
 
 import virtool.app
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes
+from virtool.app import create_app
 from virtool.authorization.client import AuthorizationClient
 from virtool.config.cls import ServerConfig
+from virtool.flags import FlagName, FeatureFlags
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
@@ -24,8 +28,8 @@ from virtool.utils import hash_key
 class VirtoolTestClient:
     def __init__(self, test_client):
         self._test_client = test_client
-
         self.server = self._test_client.server
+
         self.app = self.server.app
         self.db = self.app["db"]
 
@@ -67,26 +71,37 @@ class VirtoolTestClient:
 
 
 @pytest.fixture
-def create_app(
+def spawn_client(
+    aiohttp_client,
+    authorization_client,
     create_user,
-    mongo: "Mongo",
-    pg_connection_string: str,
-    redis_connection_string: str,
+    mongo,
     mongo_connection_string,
-    openfga_host: str,
     mongo_name,
-    openfga_store_name: str,
+    openfga_host,
+    openfga_scheme,
+    openfga_store_name,
+    pg_connection_string,
+    pg,
+    redis,
+    redis_connection_string,
+    test_motor,
 ):
-    mongodb_connection_string = (
-        f"{mongo_connection_string}/{mongo_name}?authSource=admin"
-    )
-
-    def func(
+    async def func(
+        addon_route_table: RouteTableDef | None = None,
+        administrator: bool = False,
+        auth: BasicAuth | None = None,
+        authenticated: bool = False,
+        authorize: bool = False,
         base_url: str = "",
-        dev: bool = False,
+        config_overrides: dict[str, Any] | None = None,
+        flags: list[FlagName] | None = None,
+        groups: list[str] | None = None,
+        permissions: list[Permission] | None = None,
         use_b2c: bool = False,
-        config_overrides: Optional[dict[str, Any]] = None,
     ):
+        authenticated = authenticated or authorize
+
         config = ServerConfig(
             base_url=base_url,
             b2c_client_id="",
@@ -94,9 +109,10 @@ def create_app(
             b2c_tenant="",
             b2c_user_flow="",
             data_path=Path("data"),
-            dev=dev,
+            dev=False,
+            flags=[],
             host="localhost",
-            mongodb_connection_string=mongodb_connection_string,
+            mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
             no_check_db=True,
             no_revision_check=True,
             openfga_host=openfga_host,
@@ -113,35 +129,10 @@ def create_app(
             for key, value in config_overrides.items():
                 setattr(config, key, value)
 
-        return virtool.app.create_app(config)
+        app = create_app(config)
 
-    return func
-
-
-@pytest.fixture
-def spawn_client(
-    aiohttp_client,
-    authorization_client,
-    create_app,
-    create_user,
-    mongo,
-    pg,
-    redis,
-    test_motor,
-):
-    async def func(
-        addon_route_table: Optional[RouteTableDef] = None,
-        auth=None,
-        authorize=False,
-        administrator=False,
-        base_url="",
-        dev=False,
-        groups=None,
-        permissions=None,
-        use_b2c=False,
-        config_overrides: Optional[dict[str, Any]] = None,
-    ):
-        app = create_app(base_url, dev, use_b2c)
+        if addon_route_table:
+            app.add_routes(addon_route_table)
 
         if groups is not None:
             await mongo.groups.insert_many(
@@ -166,12 +157,10 @@ def spawn_client(
             )
         )
 
-        if addon_route_table:
-            app.add_routes(addon_route_table)
-
-        if authorize:
+        if authenticated:
             session_token = "bar"
             session_id = "foobar"
+
             await redis.set(
                 session_id,
                 dump_bytes(
@@ -202,6 +191,9 @@ def spawn_client(
         )
 
         test_client.app["db"].id_provider = FakeIdProvider()
+
+        if flags:
+            test_client.app["flags"] = FeatureFlags(flags)
 
         return VirtoolTestClient(test_client)
 
@@ -247,6 +239,7 @@ def spawn_job_client(
                 b2c_user_flow="",
                 data_path=Path("data"),
                 dev=dev,
+                flags=[],
                 host="localhost",
                 mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
                 no_check_db=True,

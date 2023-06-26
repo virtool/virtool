@@ -1,4 +1,4 @@
-# name: test_get_space[uvloop]
+# name: test_get_space
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'description': '',
@@ -33,7 +33,7 @@
     'updated_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_list_space_members[uvloop]
+# name: test_list_space_members
   <class 'dict'> {
     'available_roles': <class 'list'> [
       <class 'dict'> {
@@ -184,7 +184,7 @@
     ],
   }
 ---
-# name: test_list_spaces[uvloop]
+# name: test_list_spaces
   <class 'list'> [
     <class 'dict'> {
       'description': '',
@@ -192,13 +192,13 @@
       'name': 'Space 0',
     },
     <class 'dict'> {
-      'description': '',
+      'description': 'A testing space.',
       'id': 1,
       'name': 'Space 1',
     },
   ]
 ---
-# name: test_update_member_roles[uvloop]
+# name: test_update_member_roles
   <class 'dict'> {
     'administrator': False,
     'handle': 'leeashley',
@@ -212,7 +212,7 @@
     'upload_role': None,
   }
 ---
-# name: test_update_space[uvloop]
+# name: test_update_space
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'description': 'New description',

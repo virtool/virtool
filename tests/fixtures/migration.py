@@ -13,11 +13,12 @@ from virtool.config.cls import MigrationConfig
 from virtool.groups.pg import SQLGroup
 from virtool.migration.ctx import create_migration_context, MigrationContext
 from virtool.pg.base import Base
+from virtool.spaces.models import SQLSpace
 
 
 @pytest.fixture
 async def migration_pg_connection_string(
-    pg_base_connection_string: str, worker_id: str
+    loop, pg_base_connection_string: str, worker_id: str
 ) -> str:
     """
     The connection string to a Postgres database for testing migrations.
@@ -56,8 +57,9 @@ async def migration_pg_connection_string(
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-        # The groups table is created and updated only by migrations. We need to drop it.
+        # These tables are created and updated only by migrations. We need to drop them.
         await conn.run_sync(SQLGroup.__table__.drop)
+        await conn.run_sync(SQLSpace.__table__.drop)
 
         await conn.commit()
 
