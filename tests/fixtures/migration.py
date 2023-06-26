@@ -54,13 +54,11 @@ async def migration_pg_connection_string(
     )
 
     async with pg.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        for table in Base.metadata.sorted_tables:
+            if str(table) not in ("revisions", "groups", "spaces"):
+                await conn.execute(text(f"DROP TABLE {table} CASCADE"))
+
         await conn.run_sync(Base.metadata.create_all)
-
-        # These tables are created and updated only by migrations. We need to drop them.
-        await conn.run_sync(SQLGroup.__table__.drop)
-        await conn.run_sync(SQLSpace.__table__.drop)
-
         await conn.commit()
 
     return connection_string
