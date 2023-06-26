@@ -1,10 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from pymongo.uri_parser import parse_uri
 
 from virtool.authorization.openfga import OpenfgaScheme
+from virtool.flags import FlagName
 
 
 @dataclass
@@ -56,6 +57,7 @@ class ServerConfig:
     redis_connection_string: str
     use_b2c: bool
     sentry_dsn: Optional[str]
+    flags: List[FlagName] = field(default_factory=list)
 
     @property
     def mongodb_database(self) -> str:

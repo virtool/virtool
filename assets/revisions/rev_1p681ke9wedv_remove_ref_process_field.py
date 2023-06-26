@@ -8,27 +8,29 @@ Date: 2022-06-09 22:17:02.297460
 
 import arrow
 
-from virtool.migration.ctx import RevisionContext
+from virtool.migration import MigrationContext, MigrationError
 
 # Revision identifiers.
 name = "Remove ref process field"
 created_at = arrow.get("2022-06-09 22:17:02.297460")
 revision_id = "1p681ke9wedv"
-required_alembic_revision = None
+
+alembic_down_revision = None
+virtool_down_revision = "jhqn47cauoea"
 
 
-async def upgrade(ctx: RevisionContext):
-    await ctx.mongo.database.references.update_many(
-        {}, {"$unset": {"process": ""}}, session=ctx.mongo.session
-    )
+async def upgrade(ctx: MigrationContext):
+    await ctx.mongo.references.update_many({}, {"$unset": {"process": ""}})
+
+    if await ctx.mongo.references.count_documents({"process": {"$exists": True}}):
+        raise MigrationError("Some references still have a process field")
 
 
-async def test_upgrade(ctx, snapshot):
+async def test_upgrade(ctx: MigrationContext, snapshot):
     await ctx.mongo.references.insert_many(
         [{"_id": "foo", "process": "test"}, {"_id": "bar", "task": "test"}]
     )
 
-    async with ctx.revision_context() as revision_ctx:
-        await upgrade(revision_ctx)
+    await upgrade(ctx)
 
     assert await ctx.mongo.references.find().to_list(None) == snapshot

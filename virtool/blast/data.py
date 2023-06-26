@@ -32,6 +32,7 @@ class BLASTData(DataLayerPiece):
     """
     A data layer piece for BLAST data.
     """
+    name = "blast"
 
     def __init__(self, client: ClientSession, mongo: "Mongo", pg: AsyncEngine):
         self._client = client

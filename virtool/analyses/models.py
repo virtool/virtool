@@ -19,7 +19,7 @@ class AnalysisFormat(str, SQLEnum):
     json = "json"
 
 
-class AnalysisFile(Base):
+class SQLAnalysisFile(Base):
     """
     SQL model to store new analysis files
 

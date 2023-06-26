@@ -3,15 +3,15 @@ from datetime import timedelta
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool.samples.models import SampleReads
+from virtool.samples.models import SQLSampleReads
 from virtool.samples.tasks import (
     CompressSamplesTask,
     MoveSampleFilesTask,
     DeduplicateSampleNamesTask,
     UpdateSampleWorkflowsTask,
 )
-from virtool.tasks.models import Task
-from virtool.uploads.models import Upload
+from virtool.tasks.models import SQLTask
+from virtool.uploads.models import SQLUpload
 from virtool.data.layer import DataLayer
 from virtool.utils import get_temp_dir
 
@@ -33,7 +33,7 @@ async def test_compress_samples_task(
     )
 
     async with AsyncSession(pg) as session:
-        task = Task(
+        task = SQLTask(
             id=1,
             complete=False,
             context={},
@@ -123,7 +123,7 @@ async def test_move_sample_files_task(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},
@@ -145,9 +145,9 @@ async def test_move_sample_files_task(
     if not legacy or (legacy and compressed):
         async with AsyncSession(pg) as session:
             sample_reads = (
-                await session.execute(select(SampleReads).filter_by(id=1))
+                await session.execute(select(SQLSampleReads).filter_by(id=1))
             ).scalar()
-            upload = (await session.execute(select(Upload).filter_by(id=1))).scalar()
+            upload = (await session.execute(select(SQLUpload).filter_by(id=1))).scalar()
 
         assert sample_reads in upload.reads
         assert sample_reads.upload == upload.id
@@ -198,7 +198,7 @@ async def test_deduplicate_sample_names(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},
@@ -262,7 +262,7 @@ async def test_update_workflows_fields(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},

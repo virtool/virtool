@@ -12,7 +12,7 @@ import virtool.utils
 from virtool.data.utils import get_data_from_app
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 
 
 @pytest.mark.apitest

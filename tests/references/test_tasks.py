@@ -17,7 +17,7 @@ from virtool.references.tasks import (
     RemoteReferenceTask,
     CloneReferenceTask,
 )
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 from virtool.uploads.models import UploadType
 from virtool.utils import get_temp_dir
 
@@ -57,7 +57,7 @@ async def test_clean_references_task(
     """
     mocker.patch("arrow.utcnow", return_value=arrow.get("2020-01-01T21:25:00"))
 
-    task = Task(
+    task = SQLTask(
         id=1,
         complete=False,
         context={},
@@ -157,7 +157,7 @@ async def test_import_reference_task(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={
@@ -207,7 +207,7 @@ async def test_remote_reference_task(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={
@@ -257,7 +257,7 @@ async def create_reference(pg, tmpdir, fake2, data_layer, static_time, mongo):
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=2,
                 complete=False,
                 context={
@@ -306,7 +306,7 @@ async def test_clone_reference(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={
@@ -335,7 +335,7 @@ async def test_clone_reference(
     task = await CloneReferenceTask.from_task_id(data_layer, 1)
     await task.run()
 
-    row = await get_row_by_id(pg, Task, 1)
+    row = await get_row_by_id(pg, SQLTask, 1)
     assert row.complete is True
 
     await assert_reference_created(query={"reference.id": "foo"})

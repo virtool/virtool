@@ -33,7 +33,7 @@
     'file_size': None,
     'id': 1,
     'progress': 100,
-    'step': 'wait',
+    'step': 'request',
     'type': 'blast',
   }
 ---

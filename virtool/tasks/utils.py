@@ -4,7 +4,6 @@ from virtool_core.redis import connect, periodically_ping_redis
 
 from virtool.pg.utils import connect_pg
 from virtool.config import get_config_from_app
-from virtool.dispatcher.client import DispatcherClient
 from virtool.startup import get_scheduler_from_app
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
@@ -25,19 +24,9 @@ async def startup_databases_for_spawner(app: App):
         connect(config.redis_connection_string),
     )
 
-    dispatcher_interface = DispatcherClient(redis)
-    scheduler = get_scheduler_from_app(app)
+    await get_scheduler_from_app(app).spawn(periodically_ping_redis(redis))
 
-    await scheduler.spawn(periodically_ping_redis(redis))
-    await scheduler.spawn(dispatcher_interface.run())
-
-    app.update(
-        {
-            "dispatcher_interface": dispatcher_interface,
-            "pg": pg,
-            "redis": redis,
-        }
-    )
+    app.update({"pg": pg, "redis": redis})
 
 
 async def startup_datalayer_for_spawner(app: App):

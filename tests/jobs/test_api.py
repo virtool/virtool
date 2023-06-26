@@ -275,8 +275,13 @@ async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test
 @pytest.mark.apitest
 class TestPushStatus:
     @pytest.mark.parametrize("error", [None, 404, 409])
-    async def test(self, error, snapshot, resp_is, spawn_client, static_time, test_job):
+    async def test(
+        self, error, fake2, snapshot, resp_is, spawn_client, static_time, test_job
+    ):
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         if error != 409:
             # Removes the last "completed" status entry, imitating a running job.
@@ -301,9 +306,12 @@ class TestPushStatus:
         assert await resp.json() == snapshot
 
     async def test_name_and_description(
-        self, snapshot, spawn_client, static_time, test_job
+        self, fake2, snapshot, spawn_client, static_time, test_job
     ):
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)
@@ -321,12 +329,15 @@ class TestPushStatus:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-    async def test_bad_state(self, snapshot, spawn_client, test_job):
+    async def test_bad_state(self, fake2, snapshot, spawn_client, test_job):
         """
         Check that an unallowed state is rejected with 422.
 
         """
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)
@@ -352,6 +363,7 @@ class TestPushStatus:
         error_type,
         traceback,
         details,
+        fake2,
         snapshot,
         spawn_client,
         static_time,
@@ -362,6 +374,9 @@ class TestPushStatus:
 
         """
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)

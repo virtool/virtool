@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from virtool.pg.base import Base
 
 
-class Task(Base):
+class SQLTask(Base):
     __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True)

@@ -19,7 +19,7 @@ import virtool.uploads.db
 
 from virtool.analyses.db import TARGET_FILES
 from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.analyses.utils import (
     attach_analysis_files,
     join_analysis_path,
@@ -40,6 +40,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceConflictError,
 )
+from virtool.data.events import emits, Operation
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
@@ -62,6 +63,8 @@ logger = getLogger("analyses")
 
 
 class AnalysisData(DataLayerPiece):
+    name = "analyses"
+
     def __init__(self, db: Mongo, config, pg: AsyncEngine):
         self._db = db
         self._config = config
@@ -87,12 +90,8 @@ class AnalysisData(DataLayerPiece):
             [
                 {
                     "$facet": {
-                        "total_count": [
-                            {"$count": "total_count"},
-                        ],
-                        "found_count": [
-                            {"$count": "found_count"},
-                        ],
+                        "total_count": [{"$count": "total_count"}],
+                        "found_count": [{"$count": "found_count"}],
                         "data": [
                             {"$sort": sort},
                             {"$skip": skip_count},
@@ -127,7 +126,7 @@ class AnalysisData(DataLayerPiece):
                         },
                     }
                 },
-            ],
+            ]
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
@@ -194,10 +193,7 @@ class AnalysisData(DataLayerPiece):
         analysis = base_processor(analysis)
 
         if analysis["workflow"] == "nuvs":
-            analysis = await apply_transforms(
-                analysis,
-                [AttachNuVsBLAST(self._pg)],
-            )
+            analysis = await apply_transforms(analysis, [AttachNuVsBLAST(self._pg)])
 
         return Analysis(
             **{**analysis, "job": analysis["job"] if analysis["job"] else None}
@@ -233,6 +229,7 @@ class AnalysisData(DataLayerPiece):
         if right == "write":
             return write
 
+    @emits(Operation.DELETE)
     async def delete(self, analysis_id: str, jobs_api_flag: bool):
         """
         Delete a single analysis by its ID.
@@ -264,7 +261,7 @@ class AnalysisData(DataLayerPiece):
 
     async def upload_file(
         self, reader, analysis_id: str, analysis_format: str, name: str
-    ) -> Optional[AnalysisFile]:
+    ) -> Optional[SQLAnalysisFile]:
         """
         Uploads a new analysis result file.
 
@@ -294,15 +291,15 @@ class AnalysisData(DataLayerPiece):
             size = await naive_writer(reader, analysis_file_path)
         except CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
-            await delete_row(self._pg, upload_id, AnalysisFile)
+            await delete_row(self._pg, upload_id, SQLAnalysisFile)
 
             return None
 
         analysis_file = await virtool.uploads.db.finalize(
-            self._pg, size, upload_id, AnalysisFile
+            self._pg, size, upload_id, SQLAnalysisFile
         )
 
-        return AnalysisFile(**analysis_file)
+        return SQLAnalysisFile(**analysis_file)
 
     async def get_file_name(self, upload_id: int) -> str:
         """
@@ -312,7 +309,7 @@ class AnalysisData(DataLayerPiece):
         :return: the name on disk of the analysis file
         """
 
-        analysis_file = await get_row_by_id(self._pg, AnalysisFile, upload_id)
+        analysis_file = await get_row_by_id(self._pg, SQLAnalysisFile, upload_id)
 
         if analysis_file:
             return analysis_file.name_on_disk
@@ -404,6 +401,7 @@ class AnalysisData(DataLayerPiece):
 
         return blast_data
 
+    @emits(Operation.UPDATE)
     async def finalize(self, analysis_id: str, results: dict) -> Analysis:
         """
         Sets the result for an analysis and marks it as ready.
@@ -449,7 +447,7 @@ class AnalysisData(DataLayerPiece):
             async with AsyncSession(self._pg) as session:
                 exists = (
                     await session.execute(
-                        select(AnalysisFile).filter_by(analysis=analysis_id)
+                        select(SQLAnalysisFile).filter_by(analysis=analysis_id)
                     )
                 ).scalar()
 

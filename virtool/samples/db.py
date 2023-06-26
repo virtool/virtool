@@ -26,11 +26,11 @@ from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import id_exists, get_one_field
-from virtool.samples.models import SampleArtifact, SampleReads
+from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -105,12 +105,14 @@ class ArtifactsAndReadsTransform(AbstractTransform):
         async with AsyncSession(self._pg) as session:
             artifacts = (
                 await session.execute(
-                    select(SampleArtifact).filter_by(sample=sample_id)
+                    select(SQLSampleArtifact).filter_by(sample=sample_id)
                 )
             ).scalars()
 
             reads_files = (
-                await session.execute(select(SampleReads).filter_by(sample=sample_id))
+                await session.execute(
+                    select(SQLSampleReads).filter_by(sample=sample_id)
+                )
             ).scalars()
 
             artifacts = [artifact.to_dict() for artifact in artifacts]
@@ -127,7 +129,7 @@ class ArtifactsAndReadsTransform(AbstractTransform):
                 if upload := reads_file.get("upload"):
                     reads_file["upload"] = (
                         (
-                            await session.execute(select(Upload).filter_by(id=upload))
+                            await session.execute(select(SQLUpload).filter_by(id=upload))
                         ).scalar()
                     ).to_dict()
 
@@ -528,14 +530,14 @@ async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str
         for file_ in files:
             from_ = file_.get("from")
 
-            upload = Upload(
+            upload = SQLUpload(
                 name=from_["name"],
                 name_on_disk=from_["id"],
                 size=from_["size"],
                 uploaded_at=from_.get("uploaded_at"),
             )
 
-            reads = SampleReads(
+            reads = SQLSampleReads(
                 name=file_["name"],
                 name_on_disk=file_["name"],
                 size=file_["size"],
@@ -580,9 +582,9 @@ async def finalize(
         rows = (
             (
                 await session.execute(
-                    select(Upload)
-                    .filter(SampleReads.sample == sample_id)
-                    .join_from(SampleReads, Upload)
+                    select(SQLUpload)
+                    .filter(SQLSampleReads.sample == sample_id)
+                    .join_from(SQLSampleReads, SQLUpload)
                 )
             )
             .unique()

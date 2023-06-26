@@ -2,7 +2,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web_ws import WebSocketResponse
 
-from virtool.dispatcher.connection import Connection
+from virtool.ws.connection import WSConnection
 from virtool.http.client import UserClient
 from virtool.users.utils import Permission
 
@@ -20,4 +20,4 @@ def ws(mocker):
     client.groups = ["admin", "test"]
     client.permissions = [Permission.create_sample.value]
 
-    return Connection(ws, client)
+    return WSConnection(ws, client)

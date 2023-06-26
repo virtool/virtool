@@ -5,7 +5,7 @@ from aiohttp.abc import Application
 
 from virtool.data.layer import DataLayer
 from virtool.tasks.client import AbstractTasksClient
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 from virtool.tasks.task import BaseTask
 
 from sentry_sdk import capture_exception

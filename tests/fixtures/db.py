@@ -15,6 +15,11 @@ class MockDeleteResult:
 
 
 @pytest.fixture
+def create_delete_result():
+    return MockDeleteResult
+
+
+@pytest.fixture
 def mongo_connection_string(request):
     return request.config.getoption("db_connection_string")
 
@@ -54,8 +59,8 @@ async def test_motor(mongo_connection_string, mongo_name, loop, request):
 
 
 @pytest.fixture
-def mongo(test_motor, mocker):
-    return virtool.mongo.core.Mongo(test_motor, mocker.stub(), FakeIdProvider())
+def mongo(test_motor):
+    return virtool.mongo.core.Mongo(test_motor, FakeIdProvider())
 
 
 @pytest.fixture(params=[True, False])
@@ -65,8 +70,3 @@ def id_exists(mocker, request):
     )
     setattr(mock, "__bool__", lambda x: request.param)
     return mock
-
-
-@pytest.fixture
-def create_delete_result():
-    return MockDeleteResult

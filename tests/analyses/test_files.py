@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.analyses.files
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 
 
 async def test_create_nuvs_analysis_files(snapshot, tmp_path, pg: AsyncEngine):
@@ -16,4 +16,6 @@ async def test_create_nuvs_analysis_files(snapshot, tmp_path, pg: AsyncEngine):
     )
 
     async with AsyncSession(pg) as session:
-        assert (await session.execute(select(AnalysisFile))).scalars().all() == snapshot
+        assert (
+            await session.execute(select(SQLAnalysisFile))
+        ).scalars().all() == snapshot

@@ -45,7 +45,7 @@ from virtool.references.utils import (
     load_reference_file,
 )
 from virtool.types import Document
-from virtool.uploads.models import Upload as SQLUpload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform, extend_user
 
 if TYPE_CHECKING:
@@ -832,7 +832,6 @@ async def insert_change(
         joined,
         description,
         user_id,
-        silent=True,
         session=session,
     )
 
@@ -870,7 +869,6 @@ async def insert_joined_otu(
             "verified": issues is None,
             "version": 0,
         },
-        silent=True,
         session=session,
     )
 
@@ -897,7 +895,7 @@ async def insert_joined_otu(
             )
 
     for sequence in sequences:
-        await mongo.sequences.insert_one(sequence, session=session, silent=True)
+        await mongo.sequences.insert_one(sequence, session=session)
 
     return document["_id"]
 
@@ -1131,7 +1129,6 @@ async def prepare_remove_otu(
 
     :param otu_id: the ID of the OTU
     :param user_id: the ID of the requesting user
-    :param silent: prevents dispatch of the change
     :return: `True` if the removal was successful
 
     """

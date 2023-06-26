@@ -14,7 +14,7 @@ from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 from virtool.tasks.spawn import spawn
 from virtool.tasks.spawner import (
     TaskSpawnerService,

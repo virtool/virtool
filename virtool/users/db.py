@@ -1,7 +1,7 @@
 import random
 from asyncio import gather
 from dataclasses import dataclass
-from logging import Logger
+from logging import getLogger
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
     from virtool.authorization.client import AuthorizationClient
 
-logger = Logger(__name__)
+logger = getLogger("users")
 
 PROJECTION = [
     "_id",
@@ -303,7 +303,6 @@ async def update_keys(
 async def fetch_complete_user(
     mongo: "Mongo", authorization_client: "AuthorizationClient", user_id: str
 ) -> Optional[User]:
-
     user, (user_id, role) = await gather(
         mongo.users.aggregate(
             [

@@ -14,7 +14,7 @@ from virtool.config import Config
 from virtool.data.layer import DataLayer
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
-from virtool.hmm.data import HmmData
+from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
@@ -61,9 +61,9 @@ def create_data_layer(
         AdministratorsData(authorization_client, mongo),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
-        GroupsData(authorization_client, mongo),
+        GroupsData(authorization_client, mongo, pg),
         HistoryData(config.data_path, mongo),
-        HmmData(client, config, mongo, pg),
+        HmmsData(client, config, mongo, pg),
         IndexData(mongo, config, pg),
         JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
