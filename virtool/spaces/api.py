@@ -8,6 +8,7 @@ from virtool_core.models.roles import AdministratorRole
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
+from virtool.flags import flag, FlagName
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
 from virtool.spaces.oas import (
@@ -23,6 +24,7 @@ from virtool.spaces.oas import (
 routes = Routes()
 
 
+@flag(FlagName.SPACES)
 @routes.view("/spaces")
 class SpacesView(PydanticView):
     async def get(self) -> r200[ListSpacesResponse]:
@@ -42,6 +44,7 @@ class SpacesView(PydanticView):
         )
 
 
+@flag(FlagName.SPACES)
 @routes.view("/spaces/{space_id}")
 class SpaceView(PydanticView):
     async def get(self, space_id: int, /) -> Union[r200[GetSpaceResponse], r404]:
@@ -86,6 +89,7 @@ class SpaceView(PydanticView):
         return json_response(space)
 
 
+@flag(FlagName.SPACES)
 @routes.view("/spaces/{space_id}/members")
 class SpaceMembersView(PydanticView):
     async def get(self, space_id: int, /) -> r200[ListMembersResponse]:
@@ -107,6 +111,7 @@ class SpaceMembersView(PydanticView):
         return json_response(members)
 
 
+@flag(FlagName.SPACES)
 @routes.view("/spaces/{space_id}/members/{member_id}")
 class SpaceMemberView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
