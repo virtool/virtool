@@ -9,7 +9,7 @@ from aiohttp import ClientSession
 from aiojobs import Scheduler
 from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
-from virtool_core.redis import connect_redis, periodically_ping_redis
+from virtool_core.redis import connect, periodically_ping_redis
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
@@ -133,7 +133,7 @@ async def startup_databases(app: App):
     mongo, pg, redis, openfga_instance = await asyncio.gather(
         connect_mongo(config.mongodb_connection_string, config.mongodb_database),
         connect_pg(config.postgres_connection_string),
-        connect_redis(config.redis_connection_string),
+        connect(config.redis_connection_string),
         connect_openfga(
             config.openfga_host, config.openfga_scheme, config.openfga_store_name
         ),

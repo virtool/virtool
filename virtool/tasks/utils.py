@@ -1,6 +1,6 @@
 import asyncio
 
-from virtool_core.redis import connect_redis, periodically_ping_redis
+from virtool_core.redis import connect, periodically_ping_redis
 
 from virtool.pg.utils import connect_pg
 from virtool.config import get_config_from_app
@@ -21,7 +21,7 @@ async def startup_databases_for_spawner(app: App):
 
     pg, redis = await asyncio.gather(
         connect_pg(config.postgres_connection_string),
-        connect_redis(config.redis_connection_string),
+        connect(config.redis_connection_string),
     )
 
     await get_scheduler_from_app(app).spawn(periodically_ping_redis(redis))
