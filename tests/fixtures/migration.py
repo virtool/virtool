@@ -5,7 +5,7 @@ import pytest
 from orjson import orjson
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.api.custom_json import dump_string
@@ -67,7 +67,7 @@ async def migration_pg_connection_string(
         await conn.run_sync(SQLAnalysisFile.__table__.create)
         await conn.run_sync(SQLSampleArtifact.__table__.create)
         await conn.run_sync(
-            lambda conn: SQLSampleArtifactCache.__table__.create(conn, checkfirst=True)
+            lambda c: SQLSampleArtifactCache.__table__.create(c, checkfirst=True)
         )
         await conn.run_sync(SQLUpload.__table__.create)
         await conn.run_sync(SQLSampleReads.__table__.create)

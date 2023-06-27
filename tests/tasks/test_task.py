@@ -19,7 +19,7 @@ from virtool.tasks.models import SQLTask
 from virtool.tasks.spawn import spawn
 from virtool.tasks.spawner import TaskSpawnerService, PeriodicTask
 from virtool.tasks.task import BaseTask
-from virtool.utils import get_temp_dir, timestamp
+from virtool.utils import get_temp_dir
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
