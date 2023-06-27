@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import math
-from asyncio import to_thread
+from asyncio import gather, to_thread
 from typing import List, Optional
 
 import virtool_core.utils
@@ -22,7 +22,6 @@ from virtool.jobs.client import JobsClient
 from virtool.jobs.db import lookup_minimal_job_by_id, create_job
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
-from virtool.mongo.migrate import recalculate_all_workflow_tags
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
@@ -34,6 +33,7 @@ from virtool.samples.db import (
     compose_sample_workflow_query,
     LIST_PROJECTION,
     ArtifactsAndReadsTransform,
+    recalculate_workflow_tags,
     validate_force_choice_group,
     define_initial_workflows,
     NameGenerator,
@@ -46,7 +46,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.users.db import lookup_nested_user_by_id
-from virtool.utils import base_processor, wait_for_checks
+from virtool.utils import base_processor, chunk_list, wait_for_checks
 
 logger = logging.getLogger(__name__)
 
@@ -484,4 +484,14 @@ class SamplesData(DataLayerPiece):
                     )
 
     async def update_sample_workflows(self):
-        await recalculate_all_workflow_tags(self._mongo)
+        logger.info("Recalculating samples workflow tags")
+
+        sample_ids = await self._mongo.samples.distinct("_id")
+
+        for chunk in chunk_list(sample_ids, 50):
+            await gather(
+                *[
+                    recalculate_workflow_tags(self._mongo, sample_id)
+                    for sample_id in chunk
+                ]
+            )
