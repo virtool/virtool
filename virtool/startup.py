@@ -94,7 +94,7 @@ async def startup_check_db(app: App):
     db = app["db"]
 
     logger.info("Checking database")
-    migrate_status(db)
+    await migrate_status(db)
 
     # Make sure the indexes collection exists before later trying to set an compound
     # index on it.

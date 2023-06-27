@@ -484,8 +484,6 @@ class SamplesData(DataLayerPiece):
                     )
 
     async def update_sample_workflows(self):
-        logger.info("Recalculating samples workflow tags")
-
         sample_ids = await self._mongo.samples.distinct("_id")
 
         for chunk in chunk_list(sample_ids, 50):
