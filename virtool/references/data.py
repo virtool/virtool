@@ -35,6 +35,7 @@ from virtool.data.errors import (
     ResourceRemoteError,
     ResourceError,
 )
+from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release, create_update_subdocument
@@ -139,6 +140,7 @@ class ReferencesData(DataLayerPiece):
             }
         )
 
+    @emits(Operation.CREATE)
     async def create(self, data: CreateReferenceRequest, user_id: str) -> Reference:
         settings = await self.data.settings.get_all()
 
@@ -299,6 +301,7 @@ class ReferencesData(DataLayerPiece):
 
         return Reference(**document)
 
+    @emits(Operation.UPDATE)
     async def update(self, ref_id: str, data: UpdateReferenceRequest) -> Reference:
         """
         Update a reference.
@@ -314,6 +317,7 @@ class ReferencesData(DataLayerPiece):
 
         return await self.get(ref_id)
 
+    @emits(Operation.DELETE)
     async def remove(self, ref_id: str, user_id: str, req):
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
@@ -408,6 +412,7 @@ class ReferencesData(DataLayerPiece):
 
         raise ResourceNotFoundError()
 
+    @emits(Operation.CREATE, domain="otus", name="create")
     async def create_otu(
         self, ref_id: str, data: CreateOTURequest, req, user_id: str
     ) -> OTU:
@@ -456,6 +461,7 @@ class ReferencesData(DataLayerPiece):
 
         return IndexSearchResult(**data)
 
+    @emits(Operation.CREATE, domain="indexes", name="create")
     async def create_index(self, ref_id: str, req, user_id: str) -> IndexMinimal:
         reference = await self._mongo.references.find_one(ref_id, ["groups", "users"])
 
@@ -547,6 +553,8 @@ class ReferencesData(DataLayerPiece):
 
             raise
 
+        emit(await self.get(ref_id), "references", "create_group", Operation.UPDATE)
+
         return ReferenceGroup(**subdocument)
 
     async def get_group(self, ref_id: str, group_id: str) -> ReferenceGroup:
@@ -581,6 +589,8 @@ class ReferencesData(DataLayerPiece):
             self._mongo, ref_id, group_id, "groups", data
         )
 
+        emit(await self.get(ref_id), "references", "update_group", Operation.UPDATE)
+
         return ReferenceGroup(**subdocument)
 
     async def delete_group(self, ref_id: str, group_id: str, req):
@@ -597,6 +607,8 @@ class ReferencesData(DataLayerPiece):
         await virtool.references.db.delete_group_or_user(
             self._mongo, ref_id, group_id, "groups"
         )
+
+        emit(await self.get(ref_id), "references", "delete_group", Operation.UPDATE)
 
         raise HTTPNoContent
 
@@ -626,6 +638,8 @@ class ReferencesData(DataLayerPiece):
 
             raise
 
+        emit(await self.get(ref_id), "references", "create_user", Operation.UPDATE)
+
         return ReferenceUser(**await extend_user(self._mongo, subdocument))
 
     async def update_user(
@@ -648,7 +662,9 @@ class ReferencesData(DataLayerPiece):
         )
 
         if subdocument is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
+
+        emit(await self.get(ref_id), "references", "update_user", Operation.UPDATE)
 
         return ReferenceUser(**await extend_user(self._mongo, subdocument))
 
@@ -658,7 +674,7 @@ class ReferencesData(DataLayerPiece):
         )
 
         if document is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         if not await virtool.references.db.check_right(req, ref_id, "modify"):
             raise InsufficientRights()
@@ -666,6 +682,8 @@ class ReferencesData(DataLayerPiece):
         await virtool.references.db.delete_group_or_user(
             self._mongo, ref_id, user_id, "users"
         )
+
+        emit(await self.get(ref_id), "references", "delete_user", Operation.UPDATE)
 
         raise HTTPNoContent
 
@@ -736,6 +754,13 @@ class ReferencesData(DataLayerPiece):
 
                 await tracker.add(1)
 
+        emit(
+            await self.get(ref_id),
+            "references",
+            "populate_cloned_reference",
+            Operation.UPDATE,
+        )
+
     async def populate_imported_reference(
         self,
         ref_id: str,
@@ -791,6 +816,13 @@ class ReferencesData(DataLayerPiece):
                 )
                 await tracker.add(len(chunk))
 
+        emit(
+            await self.get(ref_id),
+            "references",
+            "populate_imported_reference",
+            Operation.UPDATE,
+        )
+
     async def populate_remote_reference(
         self,
         ref_id: str,
@@ -845,6 +877,13 @@ class ReferencesData(DataLayerPiece):
                 },
                 session=session,
             )
+
+        emit(
+            await self.get(ref_id),
+            "references",
+            "populate_remote_reference",
+            Operation.UPDATE,
+        )
 
     async def update_remote_reference(
         self,
@@ -920,6 +959,13 @@ class ReferencesData(DataLayerPiece):
 
         await self._mongo.with_transaction(update_reference)
 
+        emit(
+            await self.get(ref_id),
+            "references",
+            "update_remote_reference",
+            Operation.UPDATE,
+        )
+
     async def clean_all(self):
         """
         Clean corrupt updates from reference update lists.
@@ -928,42 +974,41 @@ class ReferencesData(DataLayerPiece):
         removed.
 
         """
-        async with self._mongo.create_session() as session:
-            async for reference in self._mongo.references.find(
-                {"remotes_from": {"$exists": True}},
-                ["installed", "task", "updates"],
-                session=session,
+        async for reference in self._mongo.references.find(
+            {"remotes_from": {"$exists": True}},
+            ["installed", "task", "updates"],
+            session=session,
+        ):
+            if len(reference["updates"]) == 0:
+                continue
+
+            latest_update = reference["updates"][-1]
+
+            if latest_update["ready"]:
+                continue
+
+            try:
+                raw_version = reference["installed"]["name"].lstrip("v")
+            except (KeyError, TypeError):
+                continue
+
+            installed_version = VersionInfo.parse(raw_version)
+
+            latest_update_version = VersionInfo.parse(latest_update["name"].lstrip("v"))
+
+            if latest_update_version <= installed_version:
+                continue
+
+            if arrow.utcnow() - arrow.get(latest_update["created_at"]) > timedelta(
+                minutes=15
             ):
-                if len(reference["updates"]) == 0:
-                    continue
-
-                latest_update = reference["updates"][-1]
-
-                if latest_update["ready"]:
-                    continue
-
-                try:
-                    raw_version = reference["installed"]["name"].lstrip("v")
-                except (KeyError, TypeError):
-                    continue
-
-                installed_version = VersionInfo.parse(raw_version)
-
-                latest_update_version = VersionInfo.parse(
-                    latest_update["name"].lstrip("v")
+                await self._mongo.references.update_one(
+                    {"_id": reference["_id"]},
+                    {"$pop": {"updates": -1}, "$set": {"updating": False}},
+                    session=session,
                 )
 
-                if latest_update_version <= installed_version:
-                    continue
-
-                if arrow.utcnow() - arrow.get(latest_update["created_at"]) > timedelta(
-                    minutes=15
-                ):
-                    await self._mongo.references.update_one(
-                        {"_id": reference["_id"]},
-                        {"$pop": {"updates": -1}, "$set": {"updating": False}},
-                        session=session,
-                    )
+            emit(await self.get(ref_id), "references", "clean_all", Operation.UPDATE)
 
     async def fetch_and_update_reference_releases(self):
         for ref_id in await self._mongo.references.distinct(
@@ -971,4 +1016,11 @@ class ReferencesData(DataLayerPiece):
         ):
             await fetch_and_update_release(
                 self._mongo, self._client, ref_id, ignore_errors=True
+            )
+
+            emit(
+                await self.get(ref_id),
+                "references",
+                "fetch_and_update_reference_releases",
+                Operation.UPDATE,
             )
