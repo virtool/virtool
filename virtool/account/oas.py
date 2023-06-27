@@ -1,7 +1,8 @@
 from typing import Union, Optional
+
 from pydantic import BaseModel, constr, Field, root_validator, validator
-from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
+from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.validators import prevent_none
 
 from virtool.groups.oas import UpdatePermissionsRequest
@@ -104,11 +105,7 @@ class UpdateSettingsRequest(BaseModel):
     )
 
     class Config:
-        schema_extra = {
-            "example": {
-                "show_ids": False,
-            }
-        }
+        schema_extra = {"example": {"show_ids": False}}
 
     _prevent_none = prevent_none("*")
 
@@ -296,6 +293,6 @@ class ListAPIKeysResponse(APIKey):
                         "remove_job": False,
                         "upload_file": False,
                     },
-                },
+                }
             ]
         }
