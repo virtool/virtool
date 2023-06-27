@@ -24,7 +24,6 @@ from virtool.startup import (
     startup_version,
 )
 from virtool.tasks.api import TaskServicesRootView
-from virtool.tasks.runner import shutdown_task_runner
 
 
 async def create_task_runner_app(config: TaskRunnerConfig):
@@ -39,7 +38,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     app["config"] = config
     app["mode"] = "task_runner"
 
-    aiojobs.aiohttp.setup(app)
+    aiojobs.aiohttp.setup(app, close_timeout=600)
 
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
 
@@ -57,7 +56,6 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
     app.on_shutdown.extend(
         [
-            shutdown_task_runner,
             shutdown_scheduler,
             shutdown_authorization_client,
             shutdown_http_client,
