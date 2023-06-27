@@ -25,7 +25,7 @@ async def migrate(app: App):
     :param app: the application object
 
     """
-    await gather(migrate_status(app["db"]), recalculate_all_workflow_tags(app["db"]))
+    await gather(migrate_status(app["db"]))
 
 
 async def recalculate_all_workflow_tags(mongo: Mongo):

@@ -13,6 +13,7 @@ from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.tasks import TimeoutJobsTask
+from virtool.mongo.tasks import RecalculateWorkflowTagsTask
 from virtool.references.tasks import RefreshReferenceReleasesTask, CleanReferencesTask
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.startup import get_scheduler_from_app
@@ -169,6 +170,7 @@ async def startup_task_spawner(app: App):
         (RefreshReferenceReleasesTask, 600),
         (StoreNuvsFilesTask, 3600),
         (TimeoutJobsTask, 3600),
+        (RecalculateWorkflowTagsTask, 3600),
     ]
 
     await scheduler.spawn(
