@@ -43,9 +43,12 @@ async def migration_pg_connection_string(
 
     async with engine.connect() as conn:
         await conn.execute(text(f"DROP DATABASE IF EXISTS {database}"))
+        await conn.commit()
 
+    async with engine.connect() as conn:
         try:
             await conn.execute(text(f"CREATE DATABASE {database}"))
+            await conn.commit()
         except ProgrammingError as exc:
             if "DuplicateDatabaseError" not in str(exc):
                 raise
