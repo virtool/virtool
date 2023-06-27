@@ -21,7 +21,7 @@ from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
-from virtool.mongo.migrate import migrate
+from virtool.mongo.migrate import migrate_status
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
@@ -94,7 +94,7 @@ async def startup_check_db(app: App):
     db = app["db"]
 
     logger.info("Checking database")
-    await migrate(app)
+    await migrate_status(db)
 
     # Make sure the indexes collection exists before later trying to set an compound
     # index on it.
