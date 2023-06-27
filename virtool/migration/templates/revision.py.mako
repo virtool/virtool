@@ -6,16 +6,19 @@ Date: ${created_at}
 
 """
 import arrow
-from virtool.migration.ctx import RevisionContext
+from virtool.migration import MigrationContext
 
 # Revision identifiers.
 name = "${name}"
 created_at = arrow.get("${created_at}")
 revision_id = "${revision_id}"
 
+alembic_down_revision = "${alembic_down_revision}"
+virtool_down_revision = "${virtool_down_revision}"
+
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None
 
 
-async def upgrade(ctx: RevisionContext):
+async def upgrade(ctx: MigrationContext):
     ...

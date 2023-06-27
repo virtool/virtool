@@ -7,16 +7,18 @@ Date: 2022-09-29 21:56:37.130137
 """
 import arrow
 
-from virtool.migration.ctx import RevisionContext
+from virtool.migration import MigrationContext
 
 # Revision identifiers.
 name = "Add user active field"
 created_at = arrow.get("2022-09-29 21:56:37.130137")
 revision_id = "tlogeiyxl9uz"
-required_alembic_revision = None
+
+alembic_down_revision = None
+virtool_down_revision = "ydvidjp34n4c"
 
 
-async def upgrade(ctx: RevisionContext):
+async def upgrade(ctx: MigrationContext):
     """
     Set the ``active`` field to ``True`` for users that do not have the field.
 
@@ -24,34 +26,22 @@ async def upgrade(ctx: RevisionContext):
     in order to deactivate the user account.
 
     """
-    await ctx.mongo.database.users.update_many(
-        {"active": {"$exists": False}},
-        {"$set": {"active": True}},
-        session=ctx.mongo.session,
-    )
+    async with await ctx.mongo.client.start_session() as session, session.start_transaction():
+        await ctx.mongo.users.update_many(
+            {"active": {"$exists": False}}, {"$set": {"active": True}}, session=session
+        )
 
 
-async def test_upgrade(ctx, snapshot):
+async def test_upgrade(ctx: MigrationContext, snapshot):
     await ctx.mongo.users.insert_many(
         [
-            {
-                "_id": "bob",
-                "active": False,
-            },
-            {
-                "_id": "dave",
-                "active": True,
-            },
-            {
-                "_id": "fran",
-            },
-            {
-                "_id": "mary",
-            },
+            {"_id": "bob", "active": False},
+            {"_id": "dave", "active": True},
+            {"_id": "fran"},
+            {"_id": "mary"},
         ]
     )
 
-    async with ctx.revision_context() as revision_ctx:
-        await upgrade(revision_ctx)
+    await upgrade(ctx)
 
     assert await ctx.mongo.users.find().to_list(None) == snapshot

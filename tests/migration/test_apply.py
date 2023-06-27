@@ -23,8 +23,7 @@ async def test_apply_revisions(
     pg: AsyncEngine,
     snapshot,
 ):
-
-    await apply(migration_config, "latest")
+    await apply(migration_config)
 
     assert [asdict(r) for r in await list_applied_revisions(pg)] == snapshot(
         matcher=path_type(

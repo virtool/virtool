@@ -1,11 +1,29 @@
-from typing import Optional
+import sys
+from datetime import datetime
+from logging import getLogger
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import select, Column, Integer, String, DateTime
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.migration.cls import AppliedRevision
-from virtool.migration.model import SQLRevision
+from virtool.pg.base import Base
+
+REQUIRED_VIRTOOL_REVISION = "1zg28cpib2uj"
+
+logger = getLogger("migration")
+
+
+class SQLRevision(Base):
+    """Describes an applied data revision."""
+
+    __tablename__ = "revisions"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    revision = Column(String, unique=True)
+    created_at = Column(DateTime, nullable=False)
+    applied_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 async def check_revision_applied(pg: AsyncEngine, revision: str) -> bool:
@@ -50,25 +68,7 @@ async def list_applied_revisions(pg: AsyncEngine) -> list[AppliedRevision]:
         ]
 
 
-async def list_applied_revision_ids(pg: AsyncEngine) -> list[str]:
-    """
-    List all applied data revision ids.
-
-    :param pg: the SQLAlchemy database engine
-    :return: a list of applied revision ids
-
-    """
-    async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(SQLRevision).order_by(SQLRevision.applied_at)
-        )
-
-        return [revision.revision for revision in result.scalars()]
-
-
-async def fetch_last_applied_revision(
-    pg: AsyncEngine,
-) -> Optional[AppliedRevision]:
+async def fetch_last_applied_revision(pg: AsyncEngine) -> AppliedRevision | None:
     """
     Fetch the last applied data revision.
 
@@ -79,7 +79,7 @@ async def fetch_last_applied_revision(
     """
     async with AsyncSession(pg) as session:
         result = await session.execute(
-            select(SQLRevision).order_by(SQLRevision.applied_at.desc()).limit(1)
+            select(SQLRevision).order_by(SQLRevision.id.desc()).limit(1)
         )
 
         if result is None:
@@ -98,3 +98,27 @@ async def fetch_last_applied_revision(
             if revision
             else None
         )
+
+
+async def check_data_revision_version(pg: AsyncEngine):
+    """
+    Check if the required MongoDB revision has been applied.
+
+    Log a critical error and exit if the required revision has not been applied.
+
+    :param pg: the application database object
+    """
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLRevision).where(SQLRevision.revision == REQUIRED_VIRTOOL_REVISION)
+        )
+
+        if result.first():
+            logger.info("Found required revision id=%s", REQUIRED_VIRTOOL_REVISION)
+            return
+
+    logger.critical(
+        "The required revision has not been applied id=%s", REQUIRED_VIRTOOL_REVISION
+    )
+
+    sys.exit(1)
