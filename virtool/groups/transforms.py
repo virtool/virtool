@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List, Union
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import AbstractTransform
 from virtool.types import Document
@@ -7,7 +7,7 @@ from virtool.utils import base_processor
 
 def extract_group_id(document: Document):
     try:
-        return document.get("group").get("id")
+        return document["group"]["id"]
 
     except KeyError:
         raise ValueError("Document must contain a valid group with field `id`")
@@ -26,5 +26,19 @@ class AttachGroupTransform(AbstractTransform):
 
         return group_doc
 
-    async def attach_one(self, document: Document, prepared: Any):
-        return {**document, "group": prepared}
+    async def attach_one(self, group_doc: Document, prepared: Any):
+        return {**group_doc, "group": prepared}
+
+    async def prepare_many(self, documents: List[Document]):
+        user_ids = [extract_group_id(document) for document in documents]
+
+        return {
+            group_doc["_id"]: base_processor(group_doc)
+            async for group_doc in self._mongo.groups.find({"_id": {"$in": user_ids}})
+        }
+
+    async def attach_many(self, group_docs: List[Document], prepared: Dict[str, Any]):
+        return [
+            await self.attach_one(group_doc, prepared[extract_group_id(group_doc)])
+            for group_doc in group_docs
+        ]

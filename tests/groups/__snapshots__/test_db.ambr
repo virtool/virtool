@@ -1,3 +1,58 @@
+# name: test_attach_group_transform[many]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'doc_0',
+      'group': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    },
+    <class 'dict'> {
+      '_id': 'doc_1',
+      'group': <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    },
+    <class 'dict'> {
+      '_id': 'doc_2',
+      'group': <class 'dict'> {
+        'id': '7cf872dc',
+        'name': 'architects',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    },
+  ]
+---
 # name: test_attach_group_transform[one]
   <class 'dict'> {
     '_id': 'doc',

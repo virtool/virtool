@@ -17,5 +17,16 @@ async def test_attach_group_transform(snapshot, fake2, mongo, quantity):
             )
 
         case "many":
-            # not yet implemented
-            pass
+            group_0 = await fake2.groups.create()
+            group_1 = await fake2.groups.create()
+            group_2 = await fake2.groups.create()
+
+            docs = [
+                {"_id": "doc_0", "group": {"id": group_0.id}},
+                {"_id": "doc_1", "group": {"id": group_1.id}},
+                {"_id": "doc_2", "group": {"id": group_2.id}},
+            ]
+
+            assert (
+                await apply_transforms(docs, [AttachGroupTransform(mongo)]) == snapshot
+            )
