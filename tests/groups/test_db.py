@@ -44,8 +44,8 @@ async def test_attach_groups_transform(snapshot, fake2, mongo, quantity):
 
             doc = {"_id": "doc", "groups": [groups[0].id, groups[1].id, groups[2].id]}
 
-            transformed_doc = await apply_transforms(
-                doc, [AttachGroupsTransform(mongo)]
+            assert (
+                await apply_transforms(doc, [AttachGroupsTransform(mongo)]) == snapshot
             )
 
         case "many":
@@ -67,8 +67,6 @@ async def test_attach_groups_transform(snapshot, fake2, mongo, quantity):
                 {"_id": "doc_2", "groups": [groups[6].id, groups[7].id, groups[8].id]},
             ]
 
-            transformed_docs = await apply_transforms(
-                docs, [AttachGroupsTransform(mongo)]
+            assert (
+                await apply_transforms(docs, [AttachGroupsTransform(mongo)]) == snapshot
             )
-
-            pass
