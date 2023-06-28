@@ -1,0 +1,19 @@
+# name: test_attach_group_transform[one]
+  <class 'dict'> {
+    '_id': 'doc',
+    'group': <class 'dict'> {
+      'id': 'bf1b993c',
+      'name': 'musicians',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  }
+---
