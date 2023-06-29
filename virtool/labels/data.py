@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.events import emits, Operation
 from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import SQLLabel
 from virtool.labels.oas import UpdateLabelRequest
@@ -41,6 +42,7 @@ class LabelsData:
 
         return [LabelMinimal(**label) for label in documents]
 
+    @emits(Operation.CREATE)
     async def create(self, name: str, color: str, description: str) -> Label:
         """
         Create a new sample label given a label name, color and description.
@@ -87,6 +89,7 @@ class LabelsData:
 
         return Label(**document)
 
+    @emits(Operation.UPDATE)
     async def update(self, label_id: int, data: UpdateLabelRequest) -> Label:
         """
         Edit an existing label.
@@ -124,6 +127,7 @@ class LabelsData:
 
         return Label(**document)
 
+    @emits(Operation.DELETE)
     async def delete(self, label_id: int):
         """
         Delete an existing label.

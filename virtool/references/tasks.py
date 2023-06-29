@@ -26,8 +26,6 @@ logger = getLogger(__name__)
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
-logger = getLogger(__name__)
-
 
 class CloneReferenceTask(BaseTask):
     """
@@ -49,12 +47,11 @@ class CloneReferenceTask(BaseTask):
         self.steps = [self.clone]
 
     async def clone(self):
-        manifest = self.context["manifest"]
-        ref_id = self.context["ref_id"]
-        user_id = self.context["user_id"]
-
         await self.data.references.populate_cloned_reference(
-            manifest, ref_id, user_id, self.create_progress_handler()
+            self.context["manifest"],
+            self.context["ref_id"],
+            self.context["user_id"],
+            self.create_progress_handler(),
         )
 
 
@@ -64,12 +61,9 @@ class ImportReferenceTask(BaseTask):
     def __init__(self, task_id: int, data, context, temp_dir):
         super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [
-            self.load_file,
-            self.import_reference,
-        ]
+        self.steps = [self.load_file, self.import_reference]
 
-        self.import_data: Optional[ReferenceSourceData] = None
+        self.import_data: ReferenceSourceData | None = None
 
     async def load_file(self):
         path = Path(self.context["path"])
@@ -94,10 +88,7 @@ class ImportReferenceTask(BaseTask):
         user_id = self.context["user_id"]
 
         await self.data.references.populate_imported_reference(
-            ref_id,
-            user_id,
-            self.import_data,
-            self.create_progress_handler(),
+            ref_id, user_id, self.import_data, self.create_progress_handler()
         )
 
 
@@ -156,10 +147,7 @@ class UpdateRemoteReferenceTask(BaseTask):
     ):
         super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [
-            self.download,
-            self.update,
-        ]
+        self.steps = [self.download, self.update]
 
         self.download_url = self.context["release"]["download_url"]
         self.download_size = self.context["release"]["size"]

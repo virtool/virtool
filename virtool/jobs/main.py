@@ -15,6 +15,7 @@ from virtool.startup import (
     startup_sentry,
     startup_settings,
     startup_version,
+    startup_events,
 )
 from virtool.types import App
 
@@ -42,17 +43,14 @@ async def create_app(config: ServerConfig):
             startup_databases,
             startup_executors,
             startup_data,
+            startup_events,
             startup_routes,
             startup_settings,
             startup_sentry,
         ]
     )
 
-    app.on_shutdown.extend(
-        [
-            shutdown,
-        ]
-    )
+    app.on_shutdown.extend([shutdown])
 
     return app
 

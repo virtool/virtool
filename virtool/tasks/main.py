@@ -22,6 +22,7 @@ from virtool.startup import (
     startup_sentry,
     startup_task_runner,
     startup_version,
+    startup_events,
 )
 from virtool.tasks.api import TaskServicesRootView
 
@@ -49,6 +50,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
             startup_databases,
             startup_executors,
             startup_data,
+            startup_events,
             startup_task_runner,
             startup_sentry,
         ]

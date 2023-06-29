@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import List, Type
 
 from sqlalchemy import select
@@ -11,6 +12,8 @@ from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import SQLTask
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.task import BaseTask
+
+logger = getLogger("tasks")
 
 
 class TasksData:
