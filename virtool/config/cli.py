@@ -1,3 +1,8 @@
+"""
+The definition of the command line interface for Virtool.
+
+We
+"""
 import asyncio
 import json
 from logging import getLogger

@@ -1,13 +1,13 @@
 from logging import getLogger
 from typing import List, Type
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.events import emits, Operation
+from virtool.data.events import emits, Operation, emit
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import SQLTask
 from virtool.tasks.oas import TaskUpdate
@@ -107,20 +107,23 @@ class TasksData:
 
             await session.commit()
 
-    @emits(Operation.DELETE)
     async def remove(self, task_id: int):
         """
-        Delete a task record.
+        Delete a task.
 
         :param task_id: ID of the task
 
         """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLTask).filter_by(id=task_id))
-            task = result.scalar()
-            await session.delete(task)
+        task = await self.get(task_id)
 
+        if not task:
+            raise ResourceNotFoundError
+
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(delete(SQLTask).where(SQLTask.id == task_id))
             await session.commit()
+
+        emit(task, "tasks", "delete", Operation.DELETE)
 
     @emits(Operation.CREATE)
     async def create(self, task_class: Type[BaseTask], context: dict = None) -> Task:

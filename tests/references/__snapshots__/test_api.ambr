@@ -637,6 +637,9 @@
 # name: test_add_group_or_user[True-group-None].1
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
     'groups': <class 'list'> [
       <class 'dict'> {
         'build': False,
@@ -647,6 +650,14 @@
         'remove': False,
       },
     ],
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'users': <class 'list'> [
     ],
   }
@@ -666,8 +677,19 @@
 # name: test_add_group_or_user[True-user-None].1
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
     'groups': <class 'list'> [
     ],
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
@@ -757,12 +779,24 @@
 # name: test_delete_group_or_user[True-group-None]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
     'groups': <class 'list'> [
     ],
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
-        'id': 'fred',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'fb085f7f',
         'modify': False,
         'modify_otu': False,
         'remove': False,
@@ -773,15 +807,27 @@
 # name: test_delete_group_or_user[True-user-None]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
     'groups': <class 'list'> [
       <class 'dict'> {
         'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'id': 'tech',
         'modify': False,
         'modify_otu': False,
         'remove': False,
       },
     ],
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
     'users': <class 'list'> [
     ],
   }
@@ -1030,6 +1076,9 @@
 # name: test_edit_group_or_user[True-group-None].1
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
     'groups': <class 'list'> [
       <class 'dict'> {
         'build': False,
@@ -1040,6 +1089,14 @@
         'remove': True,
       },
     ],
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
@@ -1067,6 +1124,9 @@
 # name: test_edit_group_or_user[True-user-None].1
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
     'groups': <class 'list'> [
       <class 'dict'> {
         'build': False,
@@ -1077,6 +1137,14 @@
         'remove': False,
       },
     ],
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,

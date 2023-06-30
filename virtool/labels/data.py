@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import emits, Operation
+from virtool.data.events import emits, Operation, emit
 from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import SQLLabel
 from virtool.labels.oas import UpdateLabelRequest
@@ -127,20 +127,21 @@ class LabelsData:
 
         return Label(**document)
 
-    @emits(Operation.DELETE)
     async def delete(self, label_id: int):
         """
         Delete an existing label.
 
         :param label_id: ID of the label to delete
         """
+        label = await self.get(label_id)
+
         async with AsyncSession(self._pg) as session:
             async with self._db.create_session() as mongo_session:
                 result = await session.execute(select(SQLLabel).filter_by(id=label_id))
                 label = result.scalar()
 
                 if label is None:
-                    raise ResourceNotFoundError()
+                    raise ResourceNotFoundError
 
                 await self._db.samples.update_many(
                     {"labels": label_id},
@@ -150,3 +151,5 @@ class LabelsData:
 
                 await session.delete(label)
                 await session.commit()
+
+        emit(label, "labels", "delete", Operation.DELETE)

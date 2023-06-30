@@ -390,13 +390,14 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
             "_id": "foo",
             "created_at": virtool.utils.timestamp(),
             "data_type": "genome",
+            "description": "This is a test reference.",
+            "groups": [],
+            "internal_control": None,
             "name": "Foo",
             "organism": "virus",
-            "internal_control": None,
             "restrict_source_types": False,
             "source_types": ["isolate", "strain"],
             "user": {"id": user_1.id},
-            "groups": [],
             "users": [
                 {
                     "id": user_2.id,
@@ -808,16 +809,28 @@ async def test_add_group_or_user(
     """
     client = await spawn_client(authorize=True)
 
-    document = {"_id": "foo", "groups": [], "users": []}
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    user = await fake2.users.create()
+    document = {
+        "_id": "foo",
+        "created_at": static_time.datetime,
+        "data_type": "genome",
+        "description": "This is a test reference.",
+        "groups": [],
+        "name": "Test",
+        "organism": "virus",
+        "restrict_source_types": False,
+        "source_types": [],
+        "user": {"id": user_2.id},
+        "users": [],
+    }
 
     # Add group and user subdocuments to make sure a 400 is returned complaining about the user or group already
     # existing in the ref.
     if error == "400_exists":
         document["groups"].append({"id": "tech"})
-
-        document["users"].append({"id": user.id})
+        document["users"].append({"id": user_1.id})
 
     # Add group and user document to their collections unless we want to trigger a 400 complaining about the user or
     # group already not existing.
@@ -832,9 +845,10 @@ async def test_add_group_or_user(
 
     if field == "group":
         resp = await client.post(url, {"group_id": "tech", "modify": True})
-    if field == "user":
+    else:
         resp = await client.post(
-            url, {"user_id": user.id if error != "400_dne" else "fred", "modify": True}
+            url,
+            {"user_id": user_1.id if error != "400_dne" else "fred", "modify": True},
         )
 
     if error == "404":
@@ -866,9 +880,22 @@ async def test_edit_group_or_user(
 ):
     client = await spawn_client(authorize=True)
 
-    document = {"_id": "foo", "groups": [], "users": []}
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    user = await fake2.users.create()
+    document = {
+        "_id": "foo",
+        "created_at": static_time.datetime,
+        "data_type": "genome",
+        "description": "This is a test reference.",
+        "groups": [],
+        "name": "Test",
+        "organism": "virus",
+        "restrict_source_types": False,
+        "source_types": [],
+        "user": {"id": user_2.id},
+        "users": [],
+    }
 
     if error != "404_field":
         document["groups"].append(
@@ -884,7 +911,7 @@ async def test_edit_group_or_user(
 
         document["users"].append(
             {
-                "id": user.id,
+                "id": user_1.id,
                 "build": False,
                 "modify": False,
                 "modify_otu": False,
@@ -899,7 +926,7 @@ async def test_edit_group_or_user(
     if field == "group":
         subdocument_id = "tech"
     else:
-        subdocument_id = user.id if error != "404_field" else "fred"
+        subdocument_id = user_1.id if error != "404_field" else user_1.id
 
     url = f"/refs/foo/{field}s/{subdocument_id}"
 
@@ -923,17 +950,33 @@ async def test_edit_group_or_user(
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_delete_group_or_user(
-    error, field, snapshot, spawn_client, check_ref_right, resp_is
+    error, field, check_ref_right, fake2, resp_is, spawn_client, snapshot, static_time
 ):
     client = await spawn_client(authorize=True)
 
-    document = {"_id": "foo", "groups": [], "users": []}
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+
+    document = {
+        "_id": "foo",
+        "created_at": static_time.datetime,
+        "data_type": "genome",
+        "description": "This is a test reference.",
+        "groups": [],
+        "name": "Test",
+        "organism": "virus",
+        "restrict_source_types": False,
+        "source_types": [],
+        "user": {"id": user_1.id},
+        "users": [],
+    }
 
     if error != "404_field":
         document["groups"].append(
             {
                 "id": "tech",
                 "build": False,
+                "created_at": static_time.datetime,
                 "modify": False,
                 "modify_otu": False,
                 "remove": False,
@@ -942,8 +985,9 @@ async def test_delete_group_or_user(
 
         document["users"].append(
             {
-                "id": "fred",
+                "id": user_2.id,
                 "build": False,
+                "created_at": static_time.datetime,
                 "modify": False,
                 "modify_otu": False,
                 "remove": False,
@@ -953,7 +997,7 @@ async def test_delete_group_or_user(
     if error != "404_ref":
         await client.db.references.insert_one(document)
 
-    subdocument_id = "tech" if field == "group" else "fred"
+    subdocument_id = "tech" if field == "group" else user_2.id
 
     url = f"/refs/foo/{field}s/{subdocument_id}"
 

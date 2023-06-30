@@ -267,7 +267,7 @@ class ReferencesData(DataLayerPiece):
         document = await self._mongo.references.find_one(ref_id)
 
         if not document:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         document = await attach_computed(self._mongo, document)
         document = await apply_transforms(
@@ -317,15 +317,18 @@ class ReferencesData(DataLayerPiece):
 
         return await self.get(ref_id)
 
-    @emits(Operation.DELETE)
     async def remove(self, ref_id: str, user_id: str, req):
+        reference = await self.get(ref_id)
+
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         if not await virtool.references.db.check_right(req, ref_id, "remove"):
-            raise InsufficientRights()
+            raise InsufficientRights
 
         await self._mongo.references.delete_one({"_id": ref_id})
+
+        emit(reference, "references", "delete", Operation.DELETE)
 
     async def get_release(self, ref_id: str, app) -> ReferenceRelease:
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
@@ -599,18 +602,18 @@ class ReferencesData(DataLayerPiece):
         )
 
         if document is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         if not await virtool.references.db.check_right(req, ref_id, "modify"):
-            raise InsufficientRights()
+            raise InsufficientRights
 
         await virtool.references.db.delete_group_or_user(
             self._mongo, ref_id, group_id, "groups"
         )
 
-        emit(await self.get(ref_id), "references", "delete_group", Operation.UPDATE)
+        reference = await self.get(ref_id)
 
-        raise HTTPNoContent
+        emit(reference, "references", "delete_group", Operation.UPDATE)
 
     async def create_user(
         self, data: CreateReferenceUsersRequest, ref_id: str, req
@@ -677,15 +680,13 @@ class ReferencesData(DataLayerPiece):
             raise ResourceNotFoundError
 
         if not await virtool.references.db.check_right(req, ref_id, "modify"):
-            raise InsufficientRights()
+            raise InsufficientRights
 
         await virtool.references.db.delete_group_or_user(
             self._mongo, ref_id, user_id, "users"
         )
 
         emit(await self.get(ref_id), "references", "delete_user", Operation.UPDATE)
-
-        raise HTTPNoContent
 
     async def update_reference(self, ref_id: str, data: dict) -> dict:
         """
@@ -977,7 +978,6 @@ class ReferencesData(DataLayerPiece):
         async for reference in self._mongo.references.find(
             {"remotes_from": {"$exists": True}},
             ["installed", "task", "updates"],
-            session=session,
         ):
             if len(reference["updates"]) == 0:
                 continue
@@ -1005,10 +1005,14 @@ class ReferencesData(DataLayerPiece):
                 await self._mongo.references.update_one(
                     {"_id": reference["_id"]},
                     {"$pop": {"updates": -1}, "$set": {"updating": False}},
-                    session=session,
                 )
 
-            emit(await self.get(ref_id), "references", "clean_all", Operation.UPDATE)
+            emit(
+                await self.get(reference["_id"]),
+                "references",
+                "clean_all",
+                Operation.UPDATE,
+            )
 
     async def fetch_and_update_reference_releases(self):
         for ref_id in await self._mongo.references.distinct(

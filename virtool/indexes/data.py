@@ -23,7 +23,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceNotFoundError,
 )
-from virtool.data.events import emits, Operation
+from virtool.data.events import emits, Operation, emit
 from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
@@ -368,20 +368,24 @@ class IndexData:
             json_path,
         )
 
-    @emits(Operation.DELETE)
     async def delete(self, index_id: str):
         """
         Delete an index given it's id.
 
         :param index_id: the ID of the index to delete
         """
+        index = await self.get(index_id)
+
+        if not index:
+            raise ResourceNotFoundError
+
         async with self._mongo.create_session() as mongo_session:
             delete_result = await self._mongo.indexes.delete_one(
                 {"_id": index_id}, session=mongo_session
             )
 
             if delete_result.deleted_count == 0:
-                raise ResourceNotFoundError()
+                raise ResourceNotFoundError
 
             index_change_ids = await self._mongo.history.distinct(
                 "_id", {"index.id": index_id}
@@ -392,3 +396,5 @@ class IndexData:
                 {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
                 session=mongo_session,
             )
+
+        emit(index, "indexes", "delete", Operation.DELETE)
