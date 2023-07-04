@@ -926,7 +926,7 @@ async def test_edit_group_or_user(
     if field == "group":
         subdocument_id = "tech"
     else:
-        subdocument_id = user_1.id if error != "404_field" else user_1.id
+        subdocument_id = "fred" if error == "404_field" else user_1.id
 
     url = f"/refs/foo/{field}s/{subdocument_id}"
 
