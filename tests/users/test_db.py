@@ -3,7 +3,7 @@ import hashlib
 import pytest
 
 import virtool.errors
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.users.db import (
     AttachUserTransform,
     compose_groups_update,

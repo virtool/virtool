@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
 
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.tasks.transforms import AttachTaskTransform
 
 

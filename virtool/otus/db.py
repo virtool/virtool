@@ -11,7 +11,7 @@ import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import DatabaseError
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document

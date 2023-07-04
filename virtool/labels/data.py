@@ -10,7 +10,7 @@ from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import SQLLabel
 from virtool.labels.oas import UpdateLabelRequest
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_generic
 
 

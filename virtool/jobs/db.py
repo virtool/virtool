@@ -11,7 +11,7 @@ from virtool_core.models.job import Job, JobAcquired, JobState
 
 from virtool.jobs.client import AbstractJobsClient
 from virtool.jobs.utils import JobRights, compose_status
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.utils import base_processor, get_safely

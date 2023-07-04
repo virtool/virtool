@@ -23,7 +23,7 @@ from virtool.history.utils import (
     write_diff_file,
     compose_history_description,
 )
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform

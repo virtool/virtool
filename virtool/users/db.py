@@ -13,7 +13,7 @@ from virtool.groups.db import (
     lookup_groups_minimal_by_id,
     lookup_group_minimal_by_id,
 )
-from virtool.mongo.transforms import AbstractTransform
+from virtool.data.transforms import AbstractTransform
 from virtool.mongo.utils import (
     get_non_existent_ids,
     id_exists,

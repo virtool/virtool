@@ -18,7 +18,7 @@ from virtool.history.utils import (
     compose_remove_description,
 )
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
 from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest

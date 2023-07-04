@@ -12,7 +12,7 @@ from virtool_core.models.subtraction import Subtraction
 
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import Document

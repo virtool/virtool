@@ -44,7 +44,7 @@ from virtool.data.events import emits, Operation
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id

@@ -5,8 +5,8 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.mongo.transforms import AbstractTransform
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import AbstractTransform
+from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
