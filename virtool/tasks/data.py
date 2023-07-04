@@ -60,7 +60,7 @@ class TasksData:
         Update a task record with given `task_id`
 
         :param task_id: the id of the task
-        :param task_update: as task update object
+        :param task_update: as task update objectd
         :return: the task record
 
         """
@@ -120,7 +120,7 @@ class TasksData:
             raise ResourceNotFoundError
 
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(delete(SQLTask).where(SQLTask.id == task_id))
+            await session.execute(delete(SQLTask).where(SQLTask.id == task_id))
             await session.commit()
 
         emit(task, "tasks", "delete", Operation.DELETE)

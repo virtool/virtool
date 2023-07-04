@@ -848,7 +848,7 @@ async def test_add_group_or_user(
     else:
         resp = await client.post(
             url,
-            {"user_id": user_1.id if error != "400_dne" else "fred", "modify": True},
+            {"user_id": "fred" if error == "400_dne" else user_1.id, "modify": True},
         )
 
     if error == "404":

@@ -1,11 +1,10 @@
 import asyncio
 from datetime import datetime, timedelta
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import aiohttp
 import arrow
 from aiohttp import ClientSession
-from aiohttp.web_exceptions import HTTPNoContent
 from multidict import MultiDictProxy
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio import AsyncEngine

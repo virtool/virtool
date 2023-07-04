@@ -2,7 +2,8 @@
 Configuration classes for the Virtool subcommands.
 
 These will be available in the application context and should be accessed using
-:func:`~virtool.utils.get_config_from_app` or :func:`~virtool.utils.get_config_from_request`.
+:func:`~virtool.utils.get_config_from_app` or
+:func:`~virtool.utils.get_config_from_request`.
 
 """
 from dataclasses import dataclass
