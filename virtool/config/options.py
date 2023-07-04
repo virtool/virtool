@@ -1,6 +1,14 @@
 """
 Reusable Click options for CLI subcommands.
 
+Decorate a Click command with these options to add them to the command:
+
+```
+@address_options
+@click.command()
+def my_command(host, port):
+    ...
+```
 """
 import os
 

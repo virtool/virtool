@@ -1,6 +1,13 @@
+"""
+Configuration classes for the Virtool subcommands.
+
+These will be available in the application context and should be accessed using
+:func:`~virtool.utils.get_config_from_app` or
+:func:`~virtool.utils.get_config_from_request`.
+
+"""
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
 
 from pymongo.uri_parser import parse_uri
 
@@ -119,6 +126,4 @@ class PeriodicTaskSpawnerConfig:
     redis_connection_string: str
 
 
-Config = Union[
-    ServerConfig, TaskRunnerConfig, TaskSpawnerConfig, PeriodicTaskSpawnerConfig
-]
+Config = ServerConfig | TaskRunnerConfig | TaskSpawnerConfig | PeriodicTaskSpawnerConfig
