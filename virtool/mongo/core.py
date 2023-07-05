@@ -199,9 +199,7 @@ class Mongo:
         )
 
         self.jobs = self.bind_collection(
-            "jobs",
-            projection=virtool.jobs.db.LIST_PROJECTION,
-            processor=virtool.jobs.db.processor,
+            "jobs", projection=virtool.jobs.db.LIST_PROJECTION
         )
 
         self.keys = self.bind_collection("keys")
