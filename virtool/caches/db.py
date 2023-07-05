@@ -93,23 +93,3 @@ async def remove(app: App, cache_id: str):
         await to_thread(rm, path, True)
     except FileNotFoundError:
         pass
-
-
-def lookup_caches(local_field: str = "_id", set_as: str = "caches") -> list[dict]:
-    """
-        Create a mongoDB aggregation pipeline step to look up nested caches.
-
-        :param local_field: cache id field to look up
-        :param set_as: desired name of the returned record
-        :return: mongoDB aggregation steps for use in an aggregation pipeline
-    """
-    return [
-        {
-            "$lookup": {
-                "from": "caches",
-                "localField": local_field,
-                "foreignField": "sample.id",
-                "as": set_as,
-            }
-        },
-    ]
