@@ -2,13 +2,12 @@ import asyncio
 from typing import List, Dict, Any, Union, Optional, TYPE_CHECKING
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.topg import both_transactions
 from virtool.groups.pg import SQLGroup
 from virtool.groups.utils import merge_group_permissions
 from virtool.mongo.transforms import AbstractTransform
-from virtool.tasks.models import SQLTask
 from virtool.types import Document
 from virtool.utils import get_safely
 
