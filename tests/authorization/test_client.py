@@ -28,10 +28,21 @@ def spawn_auth_client(authorization_client, create_user, mongo):
     async def func(
         permissions=None,
     ) -> AuthorizationClient:
+        if permissions:
+            await mongo.groups.insert_one(
+                {
+                    "_id": "perms_group",
+                    "name": "perms_group",
+                    "permissions": {
+                        permission.value: True for permission in permissions
+                    },
+                }
+            )
+
         await mongo.users.insert_one(
             await create_user(
                 user_id="test",
-                permissions=permissions,
+                groups=["perms_group"],
             )
         )
 

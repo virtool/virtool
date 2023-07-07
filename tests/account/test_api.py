@@ -1,6 +1,7 @@
 import pytest
 
 from virtool.data.utils import get_data_from_app
+from virtool.groups.oas import UpdatePermissionsRequest
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.utils import Permission, hash_password
 
@@ -168,6 +169,7 @@ class TestCreateAPIKey:
         spawn_client,
         static_time,
         no_permissions,
+        fake2,
     ):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
@@ -177,19 +179,16 @@ class TestCreateAPIKey:
             "virtool.utils.generate_key", return_value=("raw_key", "hashed_key")
         )
 
+        group = await fake2.groups.create(
+            UpdatePermissionsRequest(**{Permission.create_sample: True})
+        )
+
         client = await spawn_client(authorize=True)
 
         if has_perm:
             await client.db.users.update_one(
                 {"_id": "test"},
-                {
-                    "$set": {
-                        "permissions": {
-                            **no_permissions,
-                            Permission.create_sample.value: True,
-                        }
-                    }
-                },
+                {"$set": {"groups": [group.id]}},
             )
 
         body = {"name": "Foobar"}

@@ -156,12 +156,23 @@ def spawn_client(
                 session=None,
             )
 
+        if permissions is not None:
+            await mongo.groups.insert_one(
+                {
+                    "_id": "perms_group",
+                    "name": "perms_group",
+                    "permissions": {
+                        permission.value: True for permission in permissions
+                    },
+                }
+            )
+            groups = ["perms_group"] if groups is None else ["perms_group", *groups]
+
         await mongo.users.insert_one(
             await create_user(
                 user_id="test",
                 administrator=administrator,
                 groups=groups,
-                permissions=permissions,
                 authorization_client=authorization_client if administrator else None,
             )
         )

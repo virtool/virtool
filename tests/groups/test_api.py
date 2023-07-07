@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from virtool.groups.oas import UpdatePermissionsRequest
@@ -80,7 +82,7 @@ async def test_get(status, fake2, spawn_client, snapshot):
 
 @pytest.mark.apitest
 class TestUpdate:
-    async def test(self, setup_update_group, snapshot):
+    async def test(self, setup_update_group, snapshot, data_layer):
         client, group = setup_update_group
 
         resp = await client.patch(
@@ -95,9 +97,14 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
         # Ensure that members users are updated with new permissions.
-        assert await client.db.users.find({}, ["handle", "permissions"]).to_list(
-            None
-        ) == snapshot(name="users")
+        users = await asyncio.gather(
+            *[
+                data_layer.users.get(user["_id"])
+                async for user in client.db.users.find({})
+            ]
+        )
+
+        assert users == snapshot(name="users")
 
     async def test_not_found(self, setup_update_group, snapshot):
         client, _ = setup_update_group
@@ -137,6 +144,6 @@ async def test_remove(status, fake2, snapshot, spawn_client):
     if status == 204:
         assert await client.db.groups.count_documents({"_id": group_1.id}) == 0
 
-    assert await client.db.users.find({}, ["name", "permissions"]).to_list(
-        None
-    ) == snapshot(name="users")
+    assert await client.db.users.find({}, ["name", "groups"]).to_list(None) == snapshot(
+        name="users"
+    )

@@ -1,4 +1,4 @@
-# name: test_create_api_key[has permission-administrator][dl]
+# name: test_create_api_key[has permission-full][dl]
   <class 'dict'> {
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -26,14 +26,14 @@
     },
   }
 ---
-# name: test_create_api_key[has permission-administrator][mongo]
+# name: test_create_api_key[has permission-full][mongo]
   <class 'dict'> {
     '_id': 'baz',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'bf1b993c',
       'fb085f7f',
+      'bf1b993c',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -48,11 +48,11 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'bob',
+      'id': '7cf872dc',
     },
   }
 ---
-# name: test_create_api_key[has permission-limited][dl]
+# name: test_create_api_key[has permission-none][dl]
   <class 'dict'> {
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -80,14 +80,14 @@
     },
   }
 ---
-# name: test_create_api_key[has permission-limited][mongo]
+# name: test_create_api_key[has permission-none][mongo]
   <class 'dict'> {
     '_id': 'baz',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'bf1b993c',
       'fb085f7f',
+      'bf1b993c',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -102,11 +102,11 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'bob',
+      'id': '7cf872dc',
     },
   }
 ---
-# name: test_create_api_key[missing permission-administrator][dl]
+# name: test_create_api_key[missing permission-full][dl]
   <class 'dict'> {
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -134,14 +134,14 @@
     },
   }
 ---
-# name: test_create_api_key[missing permission-administrator][mongo]
+# name: test_create_api_key[missing permission-full][mongo]
   <class 'dict'> {
     '_id': 'baz',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'bf1b993c',
       'fb085f7f',
+      'bf1b993c',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -156,11 +156,11 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'bob',
+      'id': '7cf872dc',
     },
   }
 ---
-# name: test_create_api_key[missing permission-limited][dl]
+# name: test_create_api_key[missing permission-none][dl]
   <class 'dict'> {
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -188,14 +188,14 @@
     },
   }
 ---
-# name: test_create_api_key[missing permission-limited][mongo]
+# name: test_create_api_key[missing permission-none][mongo]
   <class 'dict'> {
     '_id': 'baz',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'bf1b993c',
       'fb085f7f',
+      'bf1b993c',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -210,7 +210,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'bob',
+      'id': '7cf872dc',
     },
   }
 ---

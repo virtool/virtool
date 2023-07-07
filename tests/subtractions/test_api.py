@@ -42,7 +42,7 @@ async def test_find(fake2, spawn_client, snapshot, static_time, per_page, page):
                 "deleted": False,
                 "ready": True,
                 "user": {"id": user.id},
-                "job": {"id": job.id}
+                "job": {"id": job.id},
             }
             for number in range(0, 5)
         ],
@@ -84,7 +84,7 @@ async def test_get(fake2, spawn_client, static_time, snapshot):
         "nickname": "Apple",
         "ready": True,
         "user": {"id": user.id},
-        "job": {"id": job.id}
+        "job": {"id": job.id},
     }
 
     await client.db.subtraction.insert_one(subtraction)
@@ -120,7 +120,9 @@ async def test_get_from_job(fake, spawn_job_client, snapshot):
 )
 @pytest.mark.parametrize("has_user", [True, False])
 @pytest.mark.parametrize("has_job", [True, False])
-async def test_edit(data, fake2, has_user, has_job, mocker, snapshot, spawn_client, static_time):
+async def test_edit(
+    data, fake2, has_user, has_job, mocker, snapshot, spawn_client, static_time
+):
     mocker.patch(
         "virtool.subtractions.db.get_linked_samples",
         make_mocked_coro(
@@ -188,7 +190,7 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
                 "ready": False,
                 "nickname": "Foo Subtraction",
                 "user": {"id": user.id},
-                "job": {"id": job.id}
+                "job": {"id": job.id},
             }
         )
 
@@ -200,7 +202,7 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
 async def test_upload(
-        error, tmp_path, spawn_job_client, snapshot, resp_is, pg: AsyncEngine
+    error, tmp_path, spawn_job_client, snapshot, resp_is, pg: AsyncEngine
 ):
     client = await spawn_job_client(authorize=True)
     test_dir = tmp_path / "files"
@@ -246,13 +248,13 @@ async def test_upload(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize_subtraction(
-        error,
-        fake2,
-        spawn_job_client,
-        snapshot,
-        resp_is,
-        test_subtraction_files,
-        static_time,
+    error,
+    fake2,
+    spawn_job_client,
+    snapshot,
+    resp_is,
+    test_subtraction_files,
+    static_time,
 ):
     user = await fake2.users.create()
     job = await fake2.jobs.create(user)
@@ -267,7 +269,7 @@ async def test_finalize_subtraction(
         "name": "Foo",
         "nickname": "Foo Subtraction",
         "user": {"id": user.id},
-        "job": {"id": job.id}
+        "job": {"id": job.id},
     }
 
     data = {
@@ -311,7 +313,7 @@ async def test_finalize_subtraction(
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_job_remove(
-        exists, fake2, ready, tmp_path, spawn_job_client, snapshot, resp_is, static_time
+    exists, fake2, ready, tmp_path, spawn_job_client, snapshot, resp_is, static_time
 ):
     client = await spawn_job_client(authorize=True)
     client.app["config"].data_path = tmp_path
@@ -334,7 +336,7 @@ async def test_job_remove(
                     "deleted": False,
                     "ready": ready,
                     "user": {"id": user.id},
-                    "job": {"job": job.id}
+                    "job": {"job": job.id},
                 }
             ),
             client.db.samples.insert_one(
@@ -360,7 +362,7 @@ async def test_job_remove(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
 async def test_download_subtraction_files(
-        error, tmp_path, spawn_job_client, pg: AsyncEngine
+    error, tmp_path, spawn_job_client, pg: AsyncEngine
 ):
     client = await spawn_job_client(authorize=True)
 
@@ -401,10 +403,10 @@ async def test_download_subtraction_files(
         return
 
     fasta_expected_path = (
-            client.app["config"].data_path / "subtractions" / "foo" / "subtraction.fa.gz"
+        client.app["config"].data_path / "subtractions" / "foo" / "subtraction.fa.gz"
     )
     bowtie_expected_path = (
-            client.app["config"].data_path / "subtractions" / "foo" / "subtraction.1.bt2"
+        client.app["config"].data_path / "subtractions" / "foo" / "subtraction.1.bt2"
     )
 
     assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()
@@ -426,7 +428,7 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
             size=12345,
             type="subtraction",
             user=user.id,
-            uploaded_at=static_time.datetime
+            uploaded_at=static_time.datetime,
         )
 
         session.add(upload)
@@ -442,7 +444,7 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
     client = await spawn_client(
         authorize=True,
         base_url="https://virtool.example.com",
-        permissions=Permission.modify_subtraction.value,
+        permissions=[Permission.modify_subtraction],
     )
 
     data = {"name": "Calamus", "nickname": "Rim Palm", "upload_id": upload_id}

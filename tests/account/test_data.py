@@ -1,6 +1,7 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import Permission
+from virtool_core.models.roles import AdministratorRole
 
 from virtool.account.data import AccountData
 from virtool.account.oas import CreateKeysRequest
@@ -8,20 +9,19 @@ from virtool.groups.oas import UpdatePermissionsRequest
 
 
 @pytest.mark.parametrize(
-    "administrator", [True, False], ids=["administrator", "limited"]
+    "administrator_role", [AdministratorRole.FULL, None], ids=["full", "none"]
 )
 @pytest.mark.parametrize(
     "has_permission", [True, False], ids=["has permission", "missing permission"]
 )
 async def test_create_api_key(
-    administrator,
+    administrator_role,
     has_permission,
     mocker,
     mongo,
-    redis,
     snapshot,
     static_time,
-    authorization_client,
+    data_layer,
     fake2,
 ):
     """
@@ -34,31 +34,27 @@ async def test_create_api_key(
     mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
     group_1 = await fake2.groups.create()
-    group_2 = await fake2.groups.create()
-
-    # Vary the key owner's administrator status and permissions.
-    await mongo.users.insert_one(
-        {
-            "_id": "bob",
-            "administrator": administrator,
-            "groups": [group_1.id, group_2.id],
-            "permissions": {
-                Permission.create_sample.value: True,
-                "modify_subtraction": has_permission,
-            },
-        }
+    group_2 = await fake2.groups.create(
+        UpdatePermissionsRequest(
+            **{
+                Permission.create_sample: True,
+                Permission.modify_subtraction: has_permission,
+            }
+        )
     )
 
-    account_data = AccountData(mongo, redis, authorization_client)
+    user = await fake2.users.create(
+        groups=[group_1, group_2], administrator_role=administrator_role
+    )
 
-    _, api_key = await account_data.create_key(
+    _, api_key = await data_layer.account.create_key(
         CreateKeysRequest(
             name="Foo",
             permissions=UpdatePermissionsRequest(
                 create_sample=True, modify_subtraction=True
             ),
         ),
-        "bob",
+        user.id,
     )
 
     assert api_key == snapshot(name="dl")

@@ -219,9 +219,7 @@ class TestEdit:
         test_ref,
         test_sequence,
     ):
-        client = await spawn_client(
-            authorize=True, permissions=[ReferencePermission.modify_otu]
-        )
+        client = await spawn_client(authorize=True)
 
         user = await fake2.users.create()
         test_change.update({"user": {"id": user.id}, "_id": "6116cba1.0"})
@@ -244,7 +242,7 @@ class TestEdit:
         assert await resp.json() == snapshot(name="json")
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(authorize=True)
 
         data = {"name": "Tobacco mosaic otu", "abbreviation": "TMV"}
 
