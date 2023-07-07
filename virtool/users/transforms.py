@@ -8,7 +8,7 @@ from virtool.data.topg import both_transactions
 from virtool.groups.pg import SQLGroup
 from virtool.groups.utils import merge_group_permissions
 from virtool.mongo.transforms import AbstractTransform
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 from virtool.types import Document
 from virtool.utils import get_safely
 
