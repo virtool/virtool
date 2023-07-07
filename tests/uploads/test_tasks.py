@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.data.layer import DataLayer
-from virtool.tasks.models import Task
-from virtool.uploads.models import Upload
+from virtool.tasks.models import SQLTask
+from virtool.uploads.models import SQLUpload
 from virtool.uploads.tasks import MigrateFilesTask
 
 
@@ -26,7 +26,7 @@ async def test_migrate_files_task(
             "size": 1234567,
         }
     )
-    task = Task(
+    task = SQLTask(
         id=1,
         complete=False,
         context={},
@@ -47,7 +47,7 @@ async def test_migrate_files_task(
 
     async with AsyncSession(pg) as session:
         assert (
-            await session.execute(select(Upload).filter_by(id=1))
+            await session.execute(select(SQLUpload).filter_by(id=1))
         ).scalar() == snapshot
 
     assert await mongo.files.find().to_list(None) == []

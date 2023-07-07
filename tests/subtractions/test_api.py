@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import Permission
 
 from virtool.subtractions.models import SQLSubtractionFile
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 
 
 @pytest.mark.apitest
@@ -418,7 +418,7 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
     user = await fake2.users.create()
 
     async with AsyncSession(pg) as session:
-        upload = Upload(
+        upload = SQLUpload(
             created_at=static_time.datetime,
             name="palm.fa.gz",
             name_on_disk="1-palm.fa.gz",

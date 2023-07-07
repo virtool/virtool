@@ -68,7 +68,7 @@ def coerce_list(obj: Any) -> list:
     return [obj] if not isinstance(obj, list) else obj
 
 
-def compress_json_with_gzip(json_string: str, target: str):
+def compress_json_with_gzip(json_bytes: bytes, target: Path):
     """
     Compress the JSON string to a gzipped file at `target`.
 
@@ -78,7 +78,7 @@ def compress_json_with_gzip(json_string: str, target: str):
     target.parent.mkdir(exist_ok=True, parents=True)
 
     with gzip.open(target, "wb") as f:
-        f.write(json_string)
+        f.write(json_bytes)
 
 
 def ensure_data_dir(data_path: Path):

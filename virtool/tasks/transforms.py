@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.mongo.transforms import AbstractTransform
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 from virtool.types import Document
 from virtool.utils import get_safely
 

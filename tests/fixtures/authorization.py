@@ -23,7 +23,7 @@ def openfga_scheme() -> OpenfgaScheme:
 
 
 @pytest.fixture
-async def openfga_store_name(worker_id, loop):
+def openfga_store_name(worker_id) -> str:
     return f"vt-test-{worker_id}"
 
 

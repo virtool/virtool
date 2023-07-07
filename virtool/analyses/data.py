@@ -1,8 +1,6 @@
 import math
 import os
-
 from asyncio import gather, CancelledError, to_thread
-
 from datetime import datetime
 from logging import getLogger
 from shutil import rmtree
@@ -10,27 +8,25 @@ from typing import Tuple, Optional
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.analysis import AnalysisSearchResult, Analysis
+from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
 from virtool_core.utils import rm
 
 import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
-
-from virtool.analyses.db import TARGET_FILES
-from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
-from virtool.analyses.models import AnalysisFile
-from virtool.analyses.utils import (
-    attach_analysis_files,
-    join_analysis_path,
-    move_nuvs_files,
-)
 from virtool.analyses.checks import (
     check_analysis_workflow,
     check_analysis_nuvs_sequence,
     check_if_analysis_running,
-    check_if_analysis_ready,
     check_if_analysis_modified,
+)
+from virtool.analyses.db import TARGET_FILES
+from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
+from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.utils import (
+    attach_analysis_files,
+    join_analysis_path,
+    move_nuvs_files,
 )
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
@@ -40,7 +36,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceConflictError,
 )
-from virtool.data.events import emits, Operation
+from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
@@ -229,7 +225,6 @@ class AnalysisData(DataLayerPiece):
         if right == "write":
             return write
 
-    @emits(Operation.DELETE)
     async def delete(self, analysis_id: str, jobs_api_flag: bool):
         """
         Delete a single analysis by its ID.
@@ -237,27 +232,34 @@ class AnalysisData(DataLayerPiece):
         :param analysis_id: the analysis ID
         :param jobs_api_flag: checks if the jobs_api is handling the request
         """
-        document = await self._db.analyses.find_one(
-            {"_id": analysis_id}, ["job", "ready", "sample"]
+
+        analysis = await self.get(analysis_id, None)
+
+        if not analysis:
+            raise ResourceNotFoundError
+
+        if not analysis.ready and not jobs_api_flag:
+            # Only the jobs API is allowed to delete incomplete analyses.
+            raise ResourceConflictError
+
+        await self._db.analyses.delete_one({"_id": analysis.id})
+
+        path = (
+            self._config.data_path
+            / "samples"
+            / analysis.sample.id
+            / "analysis"
+            / analysis_id
         )
-
-        if not document:
-            raise ResourceNotFoundError()
-
-        sample_id = document["sample"]["id"]
-
-        await wait_for_checks(check_if_analysis_ready(jobs_api_flag, document["ready"]))
-
-        await self._db.analyses.delete_one({"_id": analysis_id})
-
-        path = self._config.data_path / "samples" / sample_id / "analysis" / analysis_id
 
         try:
             await to_thread(rm, path, True)
         except FileNotFoundError:
             pass
 
-        await recalculate_workflow_tags(self._db, sample_id)
+        await recalculate_workflow_tags(self._db, analysis.sample.id)
+
+        emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
         self, reader, analysis_id: str, analysis_format: str, name: str
@@ -275,7 +277,7 @@ class AnalysisData(DataLayerPiece):
         document = await self._db.analyses.find_one(analysis_id)
 
         if document is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         analysis_file = await create_analysis_file(
             self._pg, analysis_id, analysis_format, name
@@ -291,12 +293,12 @@ class AnalysisData(DataLayerPiece):
             size = await naive_writer(reader, analysis_file_path)
         except CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
-            await delete_row(self._pg, upload_id, AnalysisFile)
+            await delete_row(self._pg, upload_id, SQLAnalysisFile)
 
             return None
 
         analysis_file = await virtool.uploads.db.finalize(
-            self._pg, size, upload_id, AnalysisFile
+            self._pg, size, upload_id, SQLAnalysisFile
         )
 
         return AnalysisFile(**analysis_file)
@@ -309,7 +311,7 @@ class AnalysisData(DataLayerPiece):
         :return: the name on disk of the analysis file
         """
 
-        analysis_file = await get_row_by_id(self._pg, AnalysisFile, upload_id)
+        analysis_file = await get_row_by_id(self._pg, SQLAnalysisFile, upload_id)
 
         if analysis_file:
             return analysis_file.name_on_disk
@@ -447,7 +449,7 @@ class AnalysisData(DataLayerPiece):
             async with AsyncSession(self._pg) as session:
                 exists = (
                     await session.execute(
-                        select(AnalysisFile).filter_by(analysis=analysis_id)
+                        select(SQLAnalysisFile).filter_by(analysis=analysis_id)
                     )
                 ).scalar()
 

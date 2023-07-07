@@ -16,7 +16,7 @@ from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.uploads.db import finalize
-from virtool.uploads.models import Upload as SQLUpload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform
 
 logger = getLogger("uploads")

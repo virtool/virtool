@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import math
-from asyncio import to_thread
+from asyncio import gather, to_thread
 from typing import List, Optional
 
 import virtool_core.utils
@@ -9,11 +9,9 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import SampleSearchResult, Sample
-from virtool.mongo.core import Mongo
 
 import virtool.utils
 from virtool.api.utils import compose_regex_query
-from virtool.caches.db import lookup_caches
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
@@ -22,7 +20,7 @@ from virtool.jobs.client import JobsClient
 from virtool.jobs.db import lookup_minimal_job_by_id, create_job
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
-from virtool.mongo.migrate import recalculate_all_workflow_tags
+from virtool.mongo.core import Mongo
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
@@ -34,6 +32,7 @@ from virtool.samples.db import (
     compose_sample_workflow_query,
     LIST_PROJECTION,
     ArtifactsAndReadsTransform,
+    recalculate_workflow_tags,
     validate_force_choice_group,
     define_initial_workflows,
     NameGenerator,
@@ -46,7 +45,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.users.db import lookup_nested_user_by_id
-from virtool.utils import base_processor, wait_for_checks
+from virtool.utils import base_processor, chunk_list, wait_for_checks
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +169,6 @@ class SamplesData(DataLayerPiece):
                 {"$match": {"_id": sample_id}},
                 *lookup_nested_user_by_id(local_field="user.id"),
                 *lookup_nested_subtractions(local_field="subtractions"),
-                *lookup_caches(local_field="_id"),
                 *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
@@ -185,6 +183,7 @@ class SamplesData(DataLayerPiece):
             [ArtifactsAndReadsTransform(self._pg), AttachLabelsTransform(self._pg)],
         )
 
+        document["caches"] = []
         document["paired"] = len(document["reads"]) == 2
 
         return Sample(**document)
@@ -484,4 +483,12 @@ class SamplesData(DataLayerPiece):
                     )
 
     async def update_sample_workflows(self):
-        await recalculate_all_workflow_tags(self._mongo)
+        sample_ids = await self._mongo.samples.distinct("_id")
+
+        for chunk in chunk_list(sample_ids, 50):
+            await gather(
+                *[
+                    recalculate_workflow_tags(self._mongo, sample_id)
+                    for sample_id in chunk
+                ]
+            )

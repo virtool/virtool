@@ -8,7 +8,7 @@ from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
 
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.pg.utils import get_row_by_id
 
 
@@ -28,7 +28,6 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
     client = await spawn_client(authorize=True)
 
     user_1 = await fake2.users.create()
-
     user_2 = await fake2.users.create()
 
     job = await fake2.jobs.create(user=user_2)
@@ -311,12 +310,23 @@ async def test_get_304(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
-async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
+async def test_remove(
+    mocker, error, fake2, spawn_client, resp_is, tmp_path, static_time
+):
     client = await spawn_client(authorize=True)
 
     client.app["config"].data_path = tmp_path
 
     user = await fake2.users.create()
+
+    await asyncio.gather(
+        client.db.indexes.insert_one(
+            {"_id": "bar", "version": 3, "reference": {"id": "baz"}}
+        ),
+        client.db.references.insert_one(
+            {"_id": "baz", "data_type": "genome", "name": "Baz"}
+        ),
+    )
 
     if error != "400":
         await client.db.samples.insert_one(
@@ -335,9 +345,15 @@ async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
         await client.db.analyses.insert_one(
             {
                 "_id": "foobar",
-                "ready": error != "409",
-                "sample": {"id": "baz", "name": "Baz"},
+                "created_at": static_time.datetime,
+                "index": {"id": "bar", "version": 3},
                 "job": {"id": "hello"},
+                "ready": error != "409",
+                "reference": {"id": "baz"},
+                "sample": {"id": "baz", "name": "Baz"},
+                "user": {"id": user.id},
+                "workflow": "pathoscope_bowtie",
+                "results": {"hits": []},
             }
         )
 
@@ -402,7 +418,7 @@ async def test_upload_file(
         assert resp.status == 201
         assert await resp.json() == snapshot
         assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
-        assert await get_row_by_id(pg, AnalysisFile, 1)
+        assert await get_row_by_id(pg, SQLAnalysisFile, 1)
 
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported analysis file format")

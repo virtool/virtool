@@ -53,7 +53,7 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 from virtool.uploads.utils import naive_writer
 from virtool.utils import base_processor
 
@@ -184,7 +184,7 @@ class SubtractionsData(DataLayerPiece):
         :return: the subtraction
         """
 
-        upload = await get_row_by_id(self._pg, Upload, data.upload_id)
+        upload = await get_row_by_id(self._pg, SQLUpload, data.upload_id)
 
         if upload is None:
             raise ResourceNotFoundError("Upload does not exist")
@@ -284,7 +284,6 @@ class SubtractionsData(DataLayerPiece):
 
         return await self.get(subtraction_id)
 
-    @emits(Operation.DELETE)
     async def delete(self, subtraction_id: str):
         async with self._mongo.create_session() as session:
             update_result = await self._mongo.subtraction.update_one(

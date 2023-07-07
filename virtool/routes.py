@@ -20,6 +20,7 @@ import virtool.otus.api
 import virtool.references.api
 import virtool.samples.api
 import virtool.settings.api
+import virtool.spaces.api
 import virtool.subtractions.api
 import virtool.tasks.api
 import virtool.uploads.api
@@ -49,6 +50,7 @@ ROUTES = (
     virtool.references.api.routes,
     virtool.samples.api.routes,
     virtool.settings.api.routes,
+    virtool.spaces.api.routes,
     virtool.subtractions.api.routes,
     virtool.tasks.api.routes,
     virtool.uploads.api.routes,

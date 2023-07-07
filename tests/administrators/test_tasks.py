@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.administrators.tasks import PromoteAdministratorsTask
 from virtool.pg.utils import get_row_by_id
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 from virtool.utils import get_temp_dir
 
 
@@ -27,7 +27,7 @@ async def test_promote_administrators(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 count=0,
@@ -44,7 +44,7 @@ async def test_promote_administrators(
 
     await task.run()
 
-    row = await get_row_by_id(pg, Task, 1)
+    row = await get_row_by_id(pg, SQLTask, 1)
     assert row.complete is True
 
     assert await data_layer.administrators.find(page=1, per_page=25) == snapshot
