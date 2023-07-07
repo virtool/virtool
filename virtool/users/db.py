@@ -10,7 +10,6 @@ from virtool_core.models.user import User
 
 from virtool.errors import DatabaseError
 from virtool.groups.db import (
-    get_merged_permissions,
     lookup_groups_minimal_by_id,
     lookup_group_minimal_by_id,
 )

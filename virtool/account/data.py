@@ -4,7 +4,6 @@ from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
-from virtool_core.models.group import Permissions
 from virtool_core.models.session import Session
 
 import virtool.utils

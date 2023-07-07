@@ -3,7 +3,6 @@ from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import Permission
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.account.data import AccountData
 from virtool.account.oas import CreateKeysRequest
 from virtool.groups.oas import UpdatePermissionsRequest
 

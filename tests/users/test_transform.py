@@ -1,7 +1,5 @@
-import asyncio
-
 from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSessionTransaction, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
 
 from virtool.groups.pg import SQLGroup
@@ -15,7 +13,7 @@ async def test_permission_transform(fake2, pg, mongo, snapshot):
         permissions={Permission.create_sample.value: True}
     )
 
-    await fake2.groups.create(permissions={Permission.create_ref: True}),
+    await fake2.groups.create(permissions={Permission.create_ref: True})
 
     assert await apply_transforms(
         [{"id": 5, "groups": [dict(group)]}, {"id": 2, "groups": [group.id]}],
