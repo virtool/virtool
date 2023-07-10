@@ -160,7 +160,6 @@ class EventPublisher:
                         }
                     ),
                 )
-                await asyncio.sleep(0.1)
         except CancelledError:
             pass
 
