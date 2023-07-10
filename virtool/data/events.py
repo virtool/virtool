@@ -141,9 +141,22 @@ class EventPublisher:
 
     async def run(self):
         """Start the event publisher."""
+        logger.info("Starting event publisher")
+
         try:
             while True:
                 event = await _events_target.get()
+
+                try:
+                    data = event.data.dict()
+                except AttributeError:
+                    logger.exception(
+                        "Encountered exception while publishing event: name=%s.%s operation=%s",
+                        event.domain,
+                        event.name,
+                        event.operation,
+                    )
+                    continue
 
                 await self._redis.publish(
                     "channel:events",
@@ -153,12 +166,19 @@ class EventPublisher:
                             "name": event.name,
                             "operation": event.operation,
                             "payload": {
-                                "data": event.data.dict(),
+                                "data": data,
                                 "model": event.data.__class__.__name__,
                             },
                             "timestamp": event.timestamp,
                         }
                     ),
+                )
+
+                logger.info(
+                    "Published event: name=%s.%s operation=%s",
+                    event.domain,
+                    event.name,
+                    event.operation,
                 )
         except CancelledError:
             pass
