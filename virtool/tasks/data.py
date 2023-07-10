@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
 
 import virtool.utils
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.events import emits, Operation, emit
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import SQLTask
@@ -100,12 +100,16 @@ class TasksData:
             task = result.scalar()
 
             if task.complete:
-                raise ValueError("Task is already complete")
+                raise ResourceConflictError("Task is already complete")
 
             task.complete = True
             task.progress = 100
 
+            task = Task(**task.to_dict())
+
             await session.commit()
+
+        return task
 
     async def remove(self, task_id: int):
         """

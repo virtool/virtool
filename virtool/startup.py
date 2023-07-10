@@ -155,6 +155,7 @@ async def startup_databases(app: App):
 
 
 async def startup_events(app: App):
+    """Create and run the event publisher."""
     app["events"] = EventPublisher(app["redis"])
     await get_scheduler_from_app(app).spawn(app["events"].run())
 
