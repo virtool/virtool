@@ -29,7 +29,7 @@
 # name: test_download_analysis_result[True-False]
   <class 'dict'> {
     'id': 'not_found',
-    'message': 'Uploaded file not found at expected location',
+    'message': 'Not found',
   }
 ---
 # name: test_finalize[None]

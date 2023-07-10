@@ -28,7 +28,6 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
     client = await spawn_client(authorize=True)
 
     user_1 = await fake2.users.create()
-
     user_2 = await fake2.users.create()
 
     job = await fake2.jobs.create(user=user_2)
@@ -311,12 +310,23 @@ async def test_get_304(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
-async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
+async def test_remove(
+    mocker, error, fake2, spawn_client, resp_is, tmp_path, static_time
+):
     client = await spawn_client(authorize=True)
 
     client.app["config"].data_path = tmp_path
 
     user = await fake2.users.create()
+
+    await asyncio.gather(
+        client.db.indexes.insert_one(
+            {"_id": "bar", "version": 3, "reference": {"id": "baz"}}
+        ),
+        client.db.references.insert_one(
+            {"_id": "baz", "data_type": "genome", "name": "Baz"}
+        ),
+    )
 
     if error != "400":
         await client.db.samples.insert_one(
@@ -335,9 +345,15 @@ async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
         await client.db.analyses.insert_one(
             {
                 "_id": "foobar",
-                "ready": error != "409",
-                "sample": {"id": "baz", "name": "Baz"},
+                "created_at": static_time.datetime,
+                "index": {"id": "bar", "version": 3},
                 "job": {"id": "hello"},
+                "ready": error != "409",
+                "reference": {"id": "baz"},
+                "sample": {"id": "baz", "name": "Baz"},
+                "user": {"id": user.id},
+                "workflow": "pathoscope_bowtie",
+                "results": {"hits": []},
             }
         )
 

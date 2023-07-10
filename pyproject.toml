@@ -63,22 +63,20 @@ virtool-core = "^4.12.1"
 pytest = "^6.2.5"
 syrupy = "^1.7.4"
 
-[tool.poetry.dev-dependencies]
-pytest-cov = "^2.12.1"
-pytest-mock = "^3.6.1"
-pytest-regressions = "^2.2.0"
-pytest-xdist = "^2.2.1"
-pytest-aiohttp = "^0.3.0"
-pre-commit = "^2.16.0"
-black = "^21.12b0"
-pytest-rerunfailures = "^10.2"
-
 [tool.poetry.scripts]
 virtool = "virtool.config.cli:entry"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
 aiohttp-devtools = "^0.0.2"
+pytest-cov = "^2.12.1"
+pytest-mock = "^3.6.1"
+pytest-regressions = "^2.2.0"
+pytest-xdist = "^2.2.1"
+pytest-aiohttp = "^0.3.0"
+pre-commit = "^3.3.3"
+black = "^23.3.0"
+pytest-rerunfailures = "^10.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

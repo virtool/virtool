@@ -1,10 +1,20 @@
 """
 Reusable Click options for CLI subcommands.
 
+Decorate a Click command with these options to add them to the command:
+
+```
+@address_options
+@click.command()
+def my_command(host, port):
+    ...
+```
 """
 import os
 
 import click
+
+from virtool.flags import FlagName
 
 
 def get_from_environment(key, default):
@@ -88,6 +98,15 @@ dev_option = click.option(
     default=get_from_environment("dev", False),
     help="Run in development mode",
     is_flag=True,
+)
+
+flags_option = click.option(
+    "--flags",
+    help="feature flag of the feature to enable",
+    type=click.Choice([flag.name for flag in FlagName], case_sensitive=False),
+    required=False,
+    multiple=True,
+    default=[],
 )
 
 mongodb_connection_string_option = click.option(

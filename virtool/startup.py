@@ -9,7 +9,7 @@ from aiohttp import ClientSession
 from aiojobs import Scheduler
 from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
-from virtool_core.redis import connect, periodically_ping_redis
+from virtool_core.redis import connect as connect_redis, periodically_ping_redis
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.utils import connect_openfga
@@ -21,7 +21,7 @@ from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
-from virtool.mongo.migrate import migrate
+from virtool.mongo.migrate import migrate_status
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
@@ -94,7 +94,7 @@ async def startup_check_db(app: App):
     db = app["db"]
 
     logger.info("Checking database")
-    await migrate(app)
+    await migrate_status(db)
 
     # Make sure the indexes collection exists before later trying to set an compound
     # index on it.
@@ -133,7 +133,7 @@ async def startup_databases(app: App):
     mongo, pg, redis, openfga_instance = await asyncio.gather(
         connect_mongo(config.mongodb_connection_string, config.mongodb_database),
         connect_pg(config.postgres_connection_string),
-        connect(config.redis_connection_string),
+        connect_redis(config.redis_connection_string),
         connect_openfga(
             config.openfga_host, config.openfga_scheme, config.openfga_store_name
         ),
@@ -155,6 +155,7 @@ async def startup_databases(app: App):
 
 
 async def startup_events(app: App):
+    """Create and run the event publisher."""
     app["events"] = EventPublisher(app["redis"])
     await get_scheduler_from_app(app).spawn(app["events"].run())
 

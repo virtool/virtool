@@ -1,3 +1,8 @@
+"""
+The definition of the command line interface for Virtool.
+
+We
+"""
 import asyncio
 import json
 from logging import getLogger
@@ -27,6 +32,7 @@ from virtool.config.options import (
     postgres_connection_string_option,
     redis_connection_string_option,
     sentry_dsn_option,
+    flags_option,
 )
 from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
@@ -36,7 +42,6 @@ from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner
 from virtool.tasks.spawn import spawn
 from virtool.tasks.spawner import run_task_spawner
-from virtool.flags import FlagName
 
 logger = getLogger("config")
 
@@ -72,6 +77,7 @@ def server():
 @base_url_option
 @data_path_option
 @dev_option
+@flags_option
 @mongodb_connection_string_option
 @no_check_db_option
 @no_revision_check_option
@@ -79,26 +85,19 @@ def server():
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-@click.option(
-    "--flags",
-    help="feature flag of the feature to enable",
-    type=click.Choice([flag.name for flag in FlagName], case_sensitive=False),
-    required=False,
-    multiple=True,
-    default=[],
-)
-def start_api_server(flags, **kwargs):
+def start_api_server(**kwargs):
     """Start a Virtool public API server."""
     configure_logs(kwargs["dev"])
     logger.info("Starting the public api service")
 
-    run_api_server(ServerConfig(flags=flags, **kwargs))
+    run_api_server(ServerConfig(**kwargs))
 
 
 @server.command("jobs")
 @address_options
 @data_path_option
 @dev_option
+@flags_option
 @mongodb_connection_string_option
 @no_check_db_option
 @no_revision_check_option

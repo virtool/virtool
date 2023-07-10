@@ -428,19 +428,18 @@ class JobsData:
 
         return job.status[-1]
 
-    @emits(Operation.DELETE)
     async def delete(self, job_id: str):
         """
         Delete a job by its ID.
 
         :param job_id: the ID of the job to delete
         """
-        document = await self._mongo.jobs.find_one({"_id": job_id}, ["status"])
+        job = await self.get(job_id)
 
-        if document is None:
+        if job is None:
             raise ResourceNotFoundError
 
-        if check_job_is_running_or_waiting(document):
+        if check_job_is_running_or_waiting(job.dict()):
             raise ResourceConflictError(
                 "Job is running or waiting and cannot be removed."
             )
@@ -449,6 +448,8 @@ class JobsData:
 
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError
+
+        emit(job, "jobs", "delete", Operation.DELETE)
 
     async def force_delete(self):
         """

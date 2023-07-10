@@ -51,7 +51,7 @@ async def test_run_task(
     await asyncio.sleep(0.2)
     assert await redis.lrange("tasks", 0, -1) == []
 
-    task_runner._current_task.done()
+    task_runner.current_task.done()
 
     retries = 0
 
@@ -82,7 +82,7 @@ async def test_graceful_shutdown(
 
     task_runner_runtime.cancel()
 
-    task_runner._current_task.done()
+    task_runner.current_task.done()
     await asyncio.sleep(timeout)
     task_runner_runtime.cancel()
 

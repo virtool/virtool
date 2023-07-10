@@ -13,6 +13,7 @@ from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.tasks import TimeoutJobsTask
+from virtool.samples.tasks import UpdateSampleWorkflowsTask
 from virtool.references.tasks import RefreshReferenceReleasesTask, CleanReferencesTask
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.startup import get_scheduler_from_app
@@ -65,9 +66,10 @@ class PeriodicTask:
 
 class TaskSpawnerService:
     def __init__(self, pg, tasks_datalayer: TasksData):
-        self._registered = []
         self._pg = pg
         self._tasks_datalayer = tasks_datalayer
+
+        self.registered = []
 
     async def register(self, tasks: List[Tuple[Type[BaseTask], int]]):
         """
@@ -83,11 +85,11 @@ class TaskSpawnerService:
                     )
                 ).scalar()
             if result is not None:
-                self._registered.append(
+                self.registered.append(
                     PeriodicTask(task, interval, last_triggered=result.created_at)
                 )
             else:
-                self._registered.append(PeriodicTask(task, interval))
+                self.registered.append(PeriodicTask(task, interval))
 
     async def run(self, tasks: List[Tuple[Type[BaseTask], int]]):
         """
@@ -101,7 +103,7 @@ class TaskSpawnerService:
             await self.register(tasks)
 
             while True:
-                for registered_task in self._registered:
+                for registered_task in self.registered:
                     await self.check_or_spawn_task(registered_task)
 
                 await asyncio.sleep(self.wait_time)
@@ -116,18 +118,21 @@ class TaskSpawnerService:
         """
         return min(
             calculate_wait_time(item.interval, item.last_triggered)
-            for item in self._registered
+            for item in self.registered
         )
 
-    async def check_or_spawn_task(self, task: PeriodicTask):
+    async def check_or_spawn_task(self, periodic_task: PeriodicTask):
         """
         Spawns task if enough time has passed.
         """
-        if check_interval_exceeded(task.interval, task.last_triggered):
-            await self._tasks_datalayer.create(task.task)
-            logger.info("Spawning task %s", task.task.name)
-            task.last_triggered = timestamp()
-        return task
+        if check_interval_exceeded(
+            periodic_task.interval, periodic_task.last_triggered
+        ):
+            task = await self._tasks_datalayer.create(periodic_task.task)
+            logger.info("Spawning task %s", periodic_task.task.name)
+            periodic_task.last_triggered = task.created_at
+
+        return periodic_task
 
 
 def check_interval_exceeded(interval: int, last_triggered: Optional[datetime]):
@@ -169,6 +174,7 @@ async def startup_task_spawner(app: App):
         (RefreshReferenceReleasesTask, 600),
         (StoreNuvsFilesTask, 3600),
         (TimeoutJobsTask, 3600),
+        (UpdateSampleWorkflowsTask, 3600),
     ]
 
     await scheduler.spawn(

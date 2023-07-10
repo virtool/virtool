@@ -284,7 +284,6 @@ class SubtractionsData(DataLayerPiece):
 
         return await self.get(subtraction_id)
 
-    @emits(Operation.DELETE)
     async def delete(self, subtraction_id: str):
         async with self._mongo.create_session() as session:
             update_result = await self._mongo.subtraction.update_one(
