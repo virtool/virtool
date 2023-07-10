@@ -6,7 +6,4 @@ async def test_fetch_complete_job(snapshot, mongo, fake2, static_time, test_job)
     user = await fake2.users.create()
     test_job["user"] = {"id": user.id}
 
-    result = await fetch_complete_job(mongo, test_job)
-
-    assert isinstance(result, Job)
-    snapshot.assert_match(result)
+    assert await fetch_complete_job(mongo, test_job) == snapshot
