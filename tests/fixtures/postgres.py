@@ -45,7 +45,7 @@ def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
 
 
 @pytest.fixture(scope="session")
-def loop():
+def event_loop():
     """Overrides pytest default function scoped event loop"""
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
@@ -55,7 +55,9 @@ def loop():
 
 @pytest.fixture(scope="session")
 async def engine(
-    loop, pg_db_name: str, pg_base_connection_string: str, pg_connection_string: str
+    pg_db_name: str,
+    pg_base_connection_string: str,
+    pg_connection_string: str,
 ) -> AsyncEngine:
     """
     Return a SQLAlchemy :class:`AsyncEngine` object for an auto-generated test database.
@@ -96,7 +98,7 @@ async def engine(
 
 
 @pytest.fixture(scope="function")
-async def pg(loop, engine: AsyncEngine):
+async def pg(engine: AsyncEngine):
     async with AsyncSession(engine) as session:
         await session.execute(
             text(
