@@ -10,8 +10,12 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Iterable, Optional, Tuple, Dict, Type
 
+import aiojobs.aiohttp
 import arrow
+from aiojobs import Scheduler
 from pydantic import BaseModel
+
+from virtool.types import App
 
 SUB_DIRS = [
     "caches",
@@ -203,3 +207,20 @@ async def wait_for_checks(*aws):
             raise result
         if result is not None:
             raise TypeError("Check functions may only return a NoneType object.")
+
+
+def get_scheduler_from_app(app: App) -> Scheduler:
+    """
+    Get the aiojobs :class:`Scheduler` from the passed ``app`` object.
+
+    This will work
+
+    :param app:
+    :return:
+    """
+    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
+    if scheduler is None:
+        return app["scheduler"]
+
+    return scheduler

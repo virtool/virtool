@@ -1,3 +1,4 @@
+"""Request handlers for querying tasks."""
 from typing import List
 
 from aiohttp_pydantic import PydanticView
@@ -17,7 +18,7 @@ class TaskServicesRootView(PydanticView):
 
     async def get(self) -> r200:
         """
-        Root response for task runner.
+        Root request handler response for task runner.
 
         Used for checking if the server is alive.
 

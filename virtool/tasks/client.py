@@ -1,7 +1,5 @@
 import asyncio
-import logging
 from abc import ABC, abstractmethod
-from typing import List
 
 from aioredis import (
     Redis,
@@ -9,7 +7,6 @@ from aioredis import (
 )
 
 REDIS_TASKS_LIST_KEY = "tasks"
-logging.getLogger("tasks")
 
 
 class AbstractTasksClient(ABC):
@@ -46,17 +43,3 @@ class TasksClient(AbstractTasksClient):
                 ConnectionClosedError,
             ):
                 await asyncio.sleep(5)
-
-
-class DummyTasksClient(AbstractTasksClient):
-    def __init__(
-        self,
-        task_list: List = None,
-    ):
-        self.task_list = task_list or []
-
-    async def enqueue(self, task_type: str, task_id: int):
-        self.task_list.append(task_id)
-
-    async def pop(self) -> int:
-        return self.task_list.pop(0)

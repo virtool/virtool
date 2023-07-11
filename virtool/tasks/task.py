@@ -1,12 +1,14 @@
+"""The base class for all Virtool tasks, and associated utilities."""
 import asyncio
+from asyncio import to_thread
 from logging import getLogger
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional
+from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional, Type
 
+from virtool.data.errors import ResourceError
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.progress import TaskProgressHandler
-from asyncio import to_thread
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -167,3 +169,20 @@ class BaseTask:
         """
         await self.data.tasks.update(self.task_id, TaskUpdate(error=error))
         self.errored = True
+
+
+def get_task_from_name(task_name: str) -> Type[BaseTask]:
+    """
+    Get a task subclass by its ``name``.
+
+    For example, ``get_task_from_name("add_subtraction_files")`` will return the
+    ``AddSubtractionFilesTask`` class.
+
+    :param task_name: the task name
+    """
+    matching_task = [cls for cls in BaseTask.__subclasses__() if cls.name == task_name]
+
+    if len(matching_task) != 1:
+        raise ResourceError("Invalid task name")
+
+    return matching_task[0]
