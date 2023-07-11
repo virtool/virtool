@@ -8,6 +8,7 @@ from aiohttp.web import HTTPBadGateway, Response
 import virtool.genbank.http
 from virtool.api.response import NotFound, json_response
 from virtool.http.routes import Routes
+from virtool.utils import get_http_session_from_app
 
 routes = Routes()
 
@@ -20,10 +21,11 @@ async def get(req) -> Response:
 
     """
     accession = req.match_info["accession"]
-    session = req.app["client"]
 
     try:
-        data = await virtool.genbank.http.fetch(session, accession)
+        data = await virtool.genbank.http.fetch(
+            get_http_session_from_app(req.app), accession
+        )
 
         if data is None:
             raise NotFound()

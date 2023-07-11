@@ -4,6 +4,7 @@ from aiohttp.web import Application
 from aiojobs.aiohttp import get_scheduler_from_app
 
 from virtool.authorization.utils import get_authorization_client_from_app
+from virtool.utils import get_http_session_from_app
 
 logger = getLogger("shutdown")
 
@@ -37,11 +38,7 @@ async def shutdown_http_client(app: Application):
     :param app: The application object
     """
     logger.info("Stopping HTTP client")
-
-    try:
-        await app["client"].close()
-    except KeyError:
-        pass
+    await get_http_session_from_app(app).close()
 
 
 async def shutdown_redis(app: Application):
