@@ -77,9 +77,7 @@ class AuthorizationClient:
             )
         )
 
-        return sorted(
-            [relation.key.relation for relation in response.tuples]
-        )
+        return sorted([relation.key.relation for relation in response.tuples])
 
     async def get_administrator(
         self, user_id: str
@@ -132,10 +130,7 @@ class AuthorizationClient:
             )
         )
 
-        test = [
-            int(relation.key.object.split(":")[1])
-            for relation in response.tuples
-        ]
+        test = [int(relation.key.object.split(":")[1]) for relation in response.tuples]
 
         response = await self.openfga.read(
             ReadRequest(
@@ -145,10 +140,7 @@ class AuthorizationClient:
             )
         )
 
-        test2 = [
-            int(relation.key.object.split(":")[1])
-            for relation in response.tuples
-        ]
+        test2 = [int(relation.key.object.split(":")[1]) for relation in response.tuples]
 
         return sorted([*test, *test2])
 
@@ -159,9 +151,7 @@ class AuthorizationClient:
             )
         )
 
-        return sorted(
-            [relation.key.relation for relation in response.tuples]
-        )
+        return sorted([relation.key.relation for relation in response.tuples])
 
     async def list_reference_users(
         self, ref_id: str
@@ -205,7 +195,6 @@ class AuthorizationClient:
         relations = {}
 
         for relation in response.tuples:
-
             user_id = relation.key.user.split(":")[1]
 
             if user_id not in relations:
@@ -252,7 +241,7 @@ class AuthorizationClient:
             )
 
         done, _ = await asyncio.wait(
-            [self.openfga.write(request) for request in requests]
+            [asyncio.create_task(self.openfga.write(request)) for request in requests]
         )
 
         result = AddRelationshipResult(0, 0)
@@ -287,7 +276,7 @@ class AuthorizationClient:
         ]
 
         done, _ = await asyncio.wait(
-            [self.openfga.write(request) for request in requests]
+            [asyncio.create_task(self.openfga.write(request)) for request in requests]
         )
 
         result = RemoveRelationshipResult(0, 0)
