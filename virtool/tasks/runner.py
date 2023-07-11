@@ -19,14 +19,14 @@ class TaskRunner:
         self.current_task: BaseTask | None = None
         """
         The current Virtool task.
-        
-        This is set to `None` when no task is running.        
+
+        This is set to `None` when no task is running.
         """
 
         self.asyncio_task: AsyncioTask | None = None
         """
         The asyncio task running the current Virtool task.
-        
+
         This is set to `None` when no task is running.
         """
 

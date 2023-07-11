@@ -4,7 +4,6 @@ from typing import Dict
 import pytest
 from humanfriendly.testing import TemporaryDirectory
 
-import virtool.tasks.runner
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.tasks.task import BaseTask

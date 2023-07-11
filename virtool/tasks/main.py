@@ -3,7 +3,6 @@ import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
 from aiohttp.web import Application
-from aiohttp.web_app import Application
 
 import virtool.http
 import virtool.http.accept
