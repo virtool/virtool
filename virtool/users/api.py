@@ -67,7 +67,9 @@ class UsersView(PydanticView):
             projection=virtool.users.db.PROJECTION,
         )
 
-        data["documents"] = await apply_transforms(data["documents"], [AttachPermissionsTransform(pg, mongo)])
+        data["documents"] = await apply_transforms(
+            data["documents"], [AttachPermissionsTransform(mongo, pg)]
+        )
 
         return json_response(data)
 

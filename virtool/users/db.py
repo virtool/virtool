@@ -301,9 +301,9 @@ async def update_keys(
 
 
 async def fetch_complete_user(
-    pg: AsyncEngine,
-    mongo: "Mongo",
     authorization_client: "AuthorizationClient",
+    mongo: "Mongo",
+    pg: AsyncEngine,
     user_id: str,
 ) -> Optional[User]:
     user, (user_id, role) = await gather(
@@ -323,7 +323,11 @@ async def fetch_complete_user(
         return None
 
     return User(
-        **(await apply_transforms(user[0], [AttachPermissionsTransform(pg, mongo)])),
+        **(
+            await apply_transforms(
+                base_processor(user[0]), [AttachPermissionsTransform(mongo, pg)]
+            )
+        ),
         administrator_role=role,
     )
 

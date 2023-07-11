@@ -17,7 +17,7 @@ async def test_permission_transform(fake2, pg, mongo, snapshot):
 
     assert await apply_transforms(
         [{"id": 5, "groups": [dict(group)]}, {"id": 2, "groups": [group.id]}],
-        [AttachPermissionsTransform(pg, mongo)],
+        [AttachPermissionsTransform(mongo, pg)],
     ) == snapshot(name="dict_group")
 
     group.permissions.cancel_job = True
@@ -32,5 +32,5 @@ async def test_permission_transform(fake2, pg, mongo, snapshot):
 
     assert await apply_transforms(
         [{"id": 5, "groups": [dict(group)]}],
-        [AttachPermissionsTransform(pg, mongo)],
+        [AttachPermissionsTransform(mongo, pg)],
     ) == snapshot(name="postgres_priority")
