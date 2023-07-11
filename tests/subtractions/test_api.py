@@ -6,6 +6,7 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import Permission
 
+from virtool.config import get_config_from_app
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import SQLUpload
 
@@ -18,6 +19,7 @@ async def test_find_empty_subtractions(fake2, spawn_client, snapshot, static_tim
 
     assert resp.status == 200
     assert await resp.json() == snapshot
+
 
 @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
 @pytest.mark.apitest
@@ -176,7 +178,7 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
     client = await spawn_client(
         authorize=True, permissions=[Permission.modify_subtraction]
     )
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     if exists:
         user = await fake2.users.create()
@@ -212,7 +214,7 @@ async def test_upload(
 
     files = {"file": open(path, "rb")}
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     subtraction = {"_id": "foo", "name": "Foo"}
 
@@ -316,7 +318,7 @@ async def test_job_remove(
     exists, fake2, ready, tmp_path, spawn_job_client, snapshot, resp_is, static_time
 ):
     client = await spawn_job_client(authorize=True)
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     user = await fake2.users.create()
     job = await fake2.jobs.create(user)
@@ -366,7 +368,7 @@ async def test_download_subtraction_files(
 ):
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     test_dir = tmp_path / "subtractions" / "foo"
     test_dir.mkdir(parents=True)
@@ -403,10 +405,16 @@ async def test_download_subtraction_files(
         return
 
     fasta_expected_path = (
-        client.app["config"].data_path / "subtractions" / "foo" / "subtraction.fa.gz"
+        get_config_from_app(client.app).data_path
+        / "subtractions"
+        / "foo"
+        / "subtraction.fa.gz"
     )
     bowtie_expected_path = (
-        client.app["config"].data_path / "subtractions" / "foo" / "subtraction.1.bt2"
+        get_config_from_app(client.app).data_path
+        / "subtractions"
+        / "foo"
+        / "subtraction.1.bt2"
     )
 
     assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()

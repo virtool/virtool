@@ -1,15 +1,13 @@
 import asyncio
-from typing import List, Dict, Any, Union, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.topg import both_transactions
 from virtool.groups.pg import SQLGroup
 from virtool.groups.utils import merge_group_permissions
 from virtool.mongo.transforms import AbstractTransform
 from virtool.types import Document
-from virtool.utils import get_safely
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -17,70 +15,80 @@ if TYPE_CHECKING:
 
 class AttachPermissionsTransform(AbstractTransform):
     """
-    Attaches more complete task data to a document with a `task.id` field.
+    Attaches permissions to a user document.
     """
 
-    def __init__(self, pg: AsyncEngine, mongo: "Mongo"):
-        self._pg = pg
+    def __init__(self, mongo: "Mongo", pg: AsyncEngine):
         self._mongo = mongo
+        self._pg = pg
 
-    async def attach_one(self, document, prepared):
+    async def attach_one(self, document, prepared) -> Document:
+        """
+        Attach permissions to a user document.
+
+        :param document: the user document
+        :param prepared: list of groups associated with the user
+        :return: the user document with permissions attached
+        """
         return {
             **document,
-            "permissions": merge_group_permissions(
-                [prepared[group_id] for group_id in self.get_group_ids(document)]
-            ),
+            "permissions": merge_group_permissions(prepared),
         }
 
-    async def attach_many(
-        self, documents: List[Document], prepared: Dict[str, any]
-    ) -> List[Document]:
-        attached = []
+    async def prepare_one(self, document) -> list[Document]:
+        """
+        prepares a list of groups associated with a user.
 
-        for document in documents:
-            attached.append(
-                {
-                    **document,
-                    "permissions": merge_group_permissions(
-                        [
-                            prepared[group_id]
-                            for group_id in self.get_group_ids(document)
-                        ]
-                    ),
-                }
-            )
+        :param document: the user document
+        :return: a list of groups associated with the user
+        """
+        return list(
+            (
+                await self.get_groups_from_ids(self.get_group_ids_from_user(document))
+            ).values()
+        )
 
-        return attached
+    async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
+        """
+        Prepares a list of groups associated with each user in a list of user documents.
 
-    async def prepare_one(self, document) -> Optional[Document]:
-        group_ids = self.get_group_ids(document)
-        return await self.get_groups_from_ids(list(group_ids))
-
-    async def prepare_many(
-        self, documents: List[Document]
-    ) -> Dict[Union[int, str], Any]:
+        :param documents: a list of user documents
+        :return: a dictionary of groups associated with a list of users
+        """
         group_ids = set()
+        prepared = {}
 
         for user in documents:
-            group_ids.update(self.get_group_ids(user))
+            user_groups = self.get_group_ids_from_user(user)
 
-        return await self.get_groups_from_ids(list(group_ids))
+            prepared[user["id"]] = user_groups
+            group_ids.update(set(user_groups))
 
-    async def get_groups_from_ids(self, group_ids: list[str]):
-        if len(group_ids) == 0:
+        all_groups = await self.get_groups_from_ids(list(group_ids))
+
+        return {
+            user_id: [all_groups[group] for group in groups]
+            for user_id, groups in prepared.items()
+        }
+
+    async def get_groups_from_ids(self, group_ids: list[str]) -> dict[str, Document]:
+        """
+        Get a dictionary of groups from a list of group ids.
+
+        :param group_ids: a list of group ids
+        :return: a dictionary of groups
+        """
+        if not group_ids:
             return {}
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
+        async with AsyncSession(self._pg) as pg_session:
 
             mongo_result, pg_result = await asyncio.gather(
-                self._mongo.groups.find(
-                    {"_id": {"$in": group_ids}}, session=mongo_session
-                ).to_list(None),
+                self._mongo.groups.find({"_id": {"$in": list(group_ids)}}).to_list(
+                    None
+                ),
                 pg_session.execute(
-                    select(SQLGroup).filter(SQLGroup.legacy_id.in_(group_ids))
+                    select(SQLGroup).filter(SQLGroup.legacy_id.in_(list(group_ids)))
                 ),
             )
 
@@ -92,6 +100,13 @@ class AttachPermissionsTransform(AbstractTransform):
             return mongo_groups | pg_groups
 
     @staticmethod
-    def get_group_ids(user) -> set[str]:
-        groups = get_safely(user, "groups")
-        return {get_safely(group, "id") or group for group in groups}
+    def get_group_ids_from_user(user: Document) -> list[str]:
+        """
+        Get a list of group ids from a user document.
+
+        :param user: the user document
+        :return: the group id
+        """
+        return [
+            group if isinstance(group, str) else group["id"] for group in user["groups"]
+        ]
