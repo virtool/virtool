@@ -1,9 +1,9 @@
 from logging import getLogger
 
 from aiohttp.web import Application
+from aiojobs.aiohttp import get_scheduler_from_app
 
 from virtool.authorization.utils import get_authorization_client_from_app
-from virtool.startup import get_scheduler_from_app
 
 logger = getLogger("shutdown")
 
@@ -46,7 +46,7 @@ async def shutdown_http_client(app: Application):
 
 async def shutdown_redis(app: Application):
     """
-    Attempt to close the app's `redis` instance.
+    Attempt to close the application :class:`Redis` instance.
 
     :param app: the application object
     """

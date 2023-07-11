@@ -1,0 +1,45 @@
+# name: test_graceful_shutdown[0][take timeout 0s]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': 'wait',
+    'type': 'dummy_trigger_task',
+  }
+---
+# name: test_graceful_shutdown[1][take timeout 1s]
+  <class 'dict'> {
+    'complete': True,
+    'context': <class 'dict'> {
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 100,
+    'step': 'wait',
+    'type': 'dummy_trigger_task',
+  }
+---
+# name: test_run_task[complete_task]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': 'wait',
+    'type': 'dummy_trigger_task',
+  }
+---

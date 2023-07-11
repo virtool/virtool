@@ -1,56 +1,19 @@
 import asyncio
-import logging
+from asyncio import CancelledError
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from logging import getLogger
+from typing import Type, List, Tuple
 
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from asyncio import CancelledError
-from dataclasses import dataclass
-from typing import Type, Optional, List, Tuple
-from datetime import datetime, timedelta
 
-from virtool.administrators.tasks import PromoteAdministratorsTask
-from virtool.analyses.tasks import StoreNuvsFilesTask
-from virtool.hmm.tasks import HMMRefreshTask
-from virtool.indexes.tasks import EnsureIndexFilesTask
-from virtool.jobs.tasks import TimeoutJobsTask
-from virtool.samples.tasks import UpdateSampleWorkflowsTask
-from virtool.references.tasks import RefreshReferenceReleasesTask, CleanReferencesTask
-from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
-from virtool.startup import get_scheduler_from_app
-from virtool.subtractions.tasks import (
-    AddSubtractionFilesTask,
-    CheckSubtractionsFASTATask,
-)
 from virtool.tasks.data import TasksData
-
-from virtool.types import App
-from virtool.utils import timestamp
-from virtool.config.cls import PeriodicTaskSpawnerConfig
-from virtool.tasks.task import BaseTask
 from virtool.tasks.models import SQLTask
-from virtool.tasks.utils import (
-    startup_databases_for_spawner,
-    startup_datalayer_for_spawner,
-)
-from virtool.uploads.tasks import MigrateFilesTask
-import aiohttp
-import aiohttp.web
-from aiohttp.web import Application
-import aiojobs
-import aiojobs.aiohttp
+from virtool.tasks.task import BaseTask
+from virtool.utils import timestamp
 
-import virtool.http.accept
-import virtool.http.errors
-from virtool.shutdown import (
-    shutdown_http_client,
-    shutdown_executors,
-    shutdown_redis,
-    shutdown_scheduler,
-)
-from virtool.startup import startup_executors, startup_http_client, startup_version
-from virtool.tasks.api import TaskServicesRootView
-
-logger = logging.getLogger("spawner")
+logger = getLogger("spawner")
 
 
 @dataclass
@@ -61,7 +24,7 @@ class PeriodicTask:
 
     task: Type[BaseTask]
     interval: int
-    last_triggered: Optional[datetime] = None
+    last_triggered: datetime | None = None
 
 
 class TaskSpawnerService:
@@ -135,7 +98,7 @@ class TaskSpawnerService:
         return periodic_task
 
 
-def check_interval_exceeded(interval: int, last_triggered: Optional[datetime]):
+def check_interval_exceeded(interval: int, last_triggered: datetime | None):
     """
     Checks whether the time elapsed has exceeded the set interval.
     :param interval: how frequently the task should be triggered in seconds
@@ -146,78 +109,10 @@ def check_interval_exceeded(interval: int, last_triggered: Optional[datetime]):
     return (timestamp() - last_triggered) >= timedelta(seconds=interval)
 
 
-def calculate_wait_time(interval: int, last_triggered: Optional[datetime]):
+def calculate_wait_time(interval: int, last_triggered: datetime | None):
     """
     Calculates the wait time.
     :param interval: how frequently the task should be triggered in seconds
     :param last_triggered: the time the task was last triggered
     """
     return interval - (timestamp() - last_triggered).total_seconds()
-
-
-async def startup_task_spawner(app: App):
-    """
-    Starts the task spawner.
-    """
-    scheduler = get_scheduler_from_app(app)
-
-    tasks = [
-        (AddSubtractionFilesTask, 3600),
-        (CleanReferencesTask, 3600),
-        (CheckSubtractionsFASTATask, 3600),
-        (CompressSamplesTask, 3600),
-        (EnsureIndexFilesTask, 3600),
-        (HMMRefreshTask, 600),
-        (MigrateFilesTask, 3600),
-        (MoveSampleFilesTask, 3600),
-        (PromoteAdministratorsTask, 3600),
-        (RefreshReferenceReleasesTask, 600),
-        (StoreNuvsFilesTask, 3600),
-        (TimeoutJobsTask, 3600),
-        (UpdateSampleWorkflowsTask, 3600),
-    ]
-
-    await scheduler.spawn(
-        TaskSpawnerService(app["pg"], app["tasks_datalayer"]).run(tasks)
-    )
-
-
-async def create_task_spawner_app(config: PeriodicTaskSpawnerConfig):
-    """
-    Create task spawner application.
-    """
-    app = Application(
-        middlewares=[virtool.http.accept.middleware, virtool.http.errors.middleware]
-    )
-
-    app["config"] = config
-    app["mode"] = "task_spawner"
-
-    aiojobs.aiohttp.setup(app)
-
-    app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
-
-    app.on_startup.extend(
-        [
-            startup_version,
-            startup_http_client,
-            startup_databases_for_spawner,
-            startup_datalayer_for_spawner,
-            startup_executors,
-            startup_task_spawner,
-        ]
-    )
-
-    app.on_shutdown.extend(
-        [shutdown_http_client, shutdown_executors, shutdown_scheduler, shutdown_redis]
-    )
-
-    return app
-
-
-def run_task_spawner(config: PeriodicTaskSpawnerConfig):
-    """
-    Starts the setup of the task spawner application.
-    """
-    app = create_task_spawner_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port)

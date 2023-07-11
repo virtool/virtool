@@ -4,9 +4,8 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
 
-import aiojobs.aiohttp
 from aiohttp import ClientSession
-from aiojobs import Scheduler
+from aiojobs.aiohttp import get_scheduler_from_app
 from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
 from virtool_core.redis import connect as connect_redis, periodically_ping_redis
@@ -41,15 +40,6 @@ class B2C:
     authority: str
     jwk_args: JWKArgs = None
     auth_code_flow: dict = None
-
-
-def get_scheduler_from_app(app: App) -> Scheduler:
-    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
-
-    if scheduler is None:
-        return app["scheduler"]
-
-    return scheduler
 
 
 async def startup_b2c(app: App):
@@ -235,9 +225,8 @@ async def startup_task_runner(app: App):
     :param app: the app object
 
     """
-    scheduler = get_scheduler_from_app(app)
     tasks_client = TasksClient(app["redis"])
-    await scheduler.spawn(TaskRunner(app["data"], tasks_client, app).run())
+    await get_scheduler_from_app(app).spawn(TaskRunner(app["data"], tasks_client).run())
 
 
 async def startup_version(app: App):

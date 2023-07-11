@@ -4,9 +4,10 @@ import aiojobs
 import aiojobs.aiohttp
 from aiohttp.web import Application
 
+import virtool.http
 import virtool.http.accept
 import virtool.http.errors
-from virtool.config.cls import TaskRunnerConfig
+from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
 from virtool.shutdown import (
     shutdown_authorization_client,
     shutdown_http_client,
@@ -25,12 +26,18 @@ from virtool.startup import (
     startup_events,
 )
 from virtool.tasks.api import TaskServicesRootView
+from virtool.tasks.startup import (
+    startup_databases_for_spawner,
+    startup_datalayer_for_spawner,
+    startup_task_spawner,
+)
 
 
-async def create_task_runner_app(config: TaskRunnerConfig):
+def run_task_runner(config: TaskRunnerConfig):
     """
-    Creates task runner application
+    Run the task runner service.
 
+    :param config: the task runner configuration object
     """
     app = Application(
         middlewares=[virtool.http.accept.middleware, virtool.http.errors.middleware]
@@ -39,7 +46,7 @@ async def create_task_runner_app(config: TaskRunnerConfig):
     app["config"] = config
     app["mode"] = "task_runner"
 
-    aiojobs.aiohttp.setup(app)
+    aiojobs.aiohttp.setup(app, close_timeout=600)
 
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
 
@@ -58,17 +65,47 @@ async def create_task_runner_app(config: TaskRunnerConfig):
 
     app.on_shutdown.extend(
         [
+            shutdown_scheduler,
             shutdown_authorization_client,
             shutdown_http_client,
             shutdown_executors,
-            shutdown_scheduler,
             shutdown_redis,
         ]
     )
 
-    return app
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
 
 
-def run_task_runner(config: TaskRunnerConfig):
-    app = create_task_runner_app(config)
+def run_task_spawner(config: TaskSpawnerConfig):
+    """
+    Run the task spawner service.
+
+    :param config: the task spawner configuration object
+    """
+    app = Application(
+        middlewares=[virtool.http.accept.middleware, virtool.http.errors.middleware]
+    )
+
+    app["config"] = config
+    app["mode"] = "task_spawner"
+
+    aiojobs.aiohttp.setup(app)
+
+    app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
+
+    app.on_startup.extend(
+        [
+            startup_version,
+            startup_http_client,
+            startup_databases_for_spawner,
+            startup_datalayer_for_spawner,
+            startup_executors,
+            startup_task_spawner,
+        ]
+    )
+
+    app.on_shutdown.extend(
+        [shutdown_http_client, shutdown_executors, shutdown_scheduler, shutdown_redis]
+    )
+
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)
