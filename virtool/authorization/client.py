@@ -39,6 +39,10 @@ class AuthorizationClient:
     def __init__(self, openfga: OpenFgaApi):
         self.openfga = openfga
 
+    async def close(self):
+        """Close the authorization client."""
+        await self.openfga.close()
+
     async def check(
         self,
         user_id: str,
