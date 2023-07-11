@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import List
 
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400
@@ -13,9 +13,14 @@ routes = Routes()
 
 
 class TaskServicesRootView(PydanticView):
+    """The only endpoint for the task runner and spawner services."""
+
     async def get(self) -> r200:
         """
-        Root response for task runner. Used for checking if the server is alive.
+        Root response for task runner.
+
+        Used for checking if the server is alive.
+
         Status Codes:
             200: Successful operation
         """
@@ -45,7 +50,7 @@ class TasksView(PydanticView):
 
 @routes.view("/tasks/{task_id}")
 class TaskView(PydanticView):
-    async def get(self, task_id: int, /) -> Union[r200[TaskResponse], r400]:
+    async def get(self, task_id: int, /) -> r200[TaskResponse] | r400:
         """
         Retrieve a task.
 

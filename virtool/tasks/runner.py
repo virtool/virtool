@@ -1,7 +1,8 @@
 import asyncio
-import logging
+from logging import getLogger
 
 from aiohttp.abc import Application
+from sentry_sdk import capture_exception
 
 from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
@@ -9,7 +10,7 @@ from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import SQLTask
 from virtool.tasks.task import BaseTask
 
-from sentry_sdk import capture_exception
+logger = getLogger("tasks")
 
 
 class TaskRunner:
@@ -21,22 +22,22 @@ class TaskRunner:
         self.app = app
 
     async def run(self):
-        logging.info("Started task runner")
+        logger.info("Started task runner")
 
         try:
             while True:
-                logging.info("Waiting for next task")
+                logger.info("Waiting for next task")
 
                 task_id = await self._tasks_client.pop()
 
                 await self.run_task(task_id)
 
-                logging.info("Finished task: %s", task_id)
+                logger.info("Finished task: %s", task_id)
 
         except asyncio.CancelledError:
-            logging.info("Stopped task runner")
+            logger.info("Stopped task runner")
         except Exception as err:
-            logging.fatal("Task runner shutting down due to exception %s", err)
+            logger.fatal("Task runner shutting down due to exception %s", err)
             capture_exception(err)
 
     async def run_task(self, task_id: int):
@@ -48,7 +49,7 @@ class TaskRunner:
         """
         task: SQLTask = await get_row_by_id(self.app["pg"], SQLTask, task_id)
 
-        logging.info("Starting task id=%s name=%s", task.id, task.type)
+        logger.info("Starting task id=%s name=%s", task.id, task.type)
 
         for cls in BaseTask.__subclasses__():
             if task.type == cls.name:
