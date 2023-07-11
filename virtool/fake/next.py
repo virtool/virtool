@@ -16,6 +16,7 @@ from faker.providers import BaseProvider, color, lorem, python
 from virtool_core.models.group import Group
 from virtool_core.models.job import Job
 from virtool_core.models.label import Label
+from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.task import Task
 from virtool_core.models.user import User
 from virtool_core.models.hmm import HMM
@@ -142,6 +143,7 @@ class UsersFakerPiece(DataFakerPiece):
         handle: Optional[str] = None,
         groups: Optional[List[Group]] = None,
         primary_group: Optional[Group] = None,
+        administrator_role: AdministratorRole = None,
     ):
         handle = handle or self.faker.profile()["username"]
         user = await self.layer.users.create(handle, self.faker.password())
@@ -155,6 +157,11 @@ class UsersFakerPiece(DataFakerPiece):
             if primary_group:
                 await self.layer.administrators.update(
                     user.id, UpdateUserRequest(primary_group=primary_group.id)
+                )
+
+            if administrator_role:
+                await self.layer.administrators.set_administrator_role(
+                    user.id, administrator_role
                 )
 
             return await self.layer.users.get(user.id)

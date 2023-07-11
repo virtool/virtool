@@ -5,20 +5,21 @@ from logging import getLogger
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.user import User
 
 from virtool.errors import DatabaseError
 from virtool.groups.db import (
-    get_merged_permissions,
     lookup_groups_minimal_by_id,
     lookup_group_minimal_by_id,
 )
-from virtool.mongo.transforms import AbstractTransform
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import (
     get_non_existent_ids,
     id_exists,
 )
 from virtool.types import Document
+from virtool.users.transforms import AttachPermissionsTransform
 from virtool.users.utils import (
     check_legacy_password,
     check_password,
@@ -39,7 +40,6 @@ PROJECTION = [
     "force_reset",
     "groups",
     "last_password_change",
-    "permissions",
     "primary_group",
 ]
 
@@ -172,7 +172,7 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     if non_existent_groups:
         raise DatabaseError("Non-existent groups: " + ", ".join(non_existent_groups))
 
-    update = {"groups": groups, "permissions": await get_merged_permissions(db, groups)}
+    update = {"groups": groups}
 
     return update
 
@@ -301,7 +301,10 @@ async def update_keys(
 
 
 async def fetch_complete_user(
-    mongo: "Mongo", authorization_client: "AuthorizationClient", user_id: str
+    pg: AsyncEngine,
+    mongo: "Mongo",
+    authorization_client: "AuthorizationClient",
+    user_id: str,
 ) -> Optional[User]:
     user, (user_id, role) = await gather(
         mongo.users.aggregate(
@@ -319,7 +322,10 @@ async def fetch_complete_user(
     if len(user) == 0:
         return None
 
-    return User(**user[0], administrator_role=role)
+    return User(
+        **(await apply_transforms(user[0], [AttachPermissionsTransform(pg, mongo)])),
+        administrator_role=role,
+    )
 
 
 def lookup_nested_user_by_id(
