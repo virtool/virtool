@@ -100,8 +100,6 @@ jobs:
           --redis-connection-string redis://localhost:6379
           --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
           --openfga-host localhost:8080
-          --cov
-          --cov-report xml
           --snapshot-details
           --snapshot-warn-unused
   test-unit:
@@ -174,8 +172,6 @@ jobs:
           --redis-connection-string redis://localhost:6379
           --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
           --openfga-host localhost:8080
-          --cov
-          --cov-report xml
           --snapshot-details          
           --snapshot-warn-unused
   oas:
