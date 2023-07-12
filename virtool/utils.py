@@ -10,14 +10,10 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Iterable, Optional, Tuple, Dict, Type
 
-import aiojobs.aiohttp
 import arrow
 from aiohttp import ClientSession
 from aiohttp.web import Application
-from aiojobs import Scheduler
 from pydantic import BaseModel
-
-from virtool.types import App
 
 SUB_DIRS = [
     "caches",
