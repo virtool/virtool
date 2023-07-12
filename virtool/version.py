@@ -41,3 +41,13 @@ def determine_server_version_from_git():
         pass
 
     return None
+
+
+def get_version_from_app(app) -> str:
+    """
+    Get the server version from the application object.
+
+    :param app: the application object
+    :return: the application version
+    """
+    return app["version"]

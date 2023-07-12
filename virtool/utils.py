@@ -11,6 +11,8 @@ from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Iterable, Optional, Tuple, Dict, Type
 
 import arrow
+from aiohttp import ClientSession
+from aiohttp.web import Application
 from pydantic import BaseModel
 
 SUB_DIRS = [
@@ -203,3 +205,12 @@ async def wait_for_checks(*aws):
             raise result
         if result is not None:
             raise TypeError("Check functions may only return a NoneType object.")
+
+
+def get_http_session_from_app(app: Application) -> ClientSession:
+    """
+    Get the application shared :class:`aiohttp.ClientSession` object.
+
+    :param app: the application object
+    """
+    return app["client"]

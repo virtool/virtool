@@ -1,6 +1,7 @@
 from typing import Union, Tuple, List
 
 from aioredis import Redis
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
@@ -47,11 +48,16 @@ class AccountData(DataLayerPiece):
     name = "account"
 
     def __init__(
-        self, db: Mongo, redis: Redis, authorization_client: AuthorizationClient
+        self,
+        db: Mongo,
+        redis: Redis,
+        authorization_client: AuthorizationClient,
+        pg: AsyncEngine,
     ):
         self._authorization_client = authorization_client
         self._db = db
         self._redis = redis
+        self._pg = pg
 
     async def get(self, user_id: str) -> Account:
         """
@@ -64,7 +70,7 @@ class AccountData(DataLayerPiece):
             **{
                 **(
                     await fetch_complete_user(
-                        self._db, self._authorization_client, user_id
+                        self._pg, self._db, self._authorization_client, user_id
                     )
                 ).dict(),
                 "settings": {
@@ -172,22 +178,21 @@ class AccountData(DataLayerPiece):
 
         :param data: the fields to create a new API key
         :param user_id: the user ID
+        :param permissions: the permissions of the requesting user
         :return: the API key
         """
         permissions_dict = data.permissions.dict(exclude_unset=True)
 
-        user = await self._db.users.find_one(
-            user_id, ["administrator", "groups", "permissions"]
-        )
+        user = await self.data.users.get(user_id)
 
         key_permissions = {
             **virtool.users.utils.generate_base_permissions(),
             **permissions_dict,
         }
 
-        if not user["administrator"]:
+        if not user.administrator:
             key_permissions = virtool.users.utils.limit_permissions(
-                key_permissions, user["permissions"]
+                key_permissions, user.permissions.dict()
             )
 
         raw, hashed = virtool.utils.generate_key()
@@ -195,9 +200,9 @@ class AccountData(DataLayerPiece):
         document = {
             "_id": hashed,
             "id": await virtool.account.db.get_alternate_id(self._db, data.name),
-            "administrator": user["administrator"],
+            "administrator": user.administrator,
             "name": data.name,
-            "groups": user["groups"],
+            "groups": [group.id for group in user.groups],
             "permissions": key_permissions,
             "created_at": virtool.utils.timestamp(),
             "user": {"id": user_id},

@@ -212,7 +212,7 @@ class TestCreate:
     async def test_clone_reference(
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
     ):
-        client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+        client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
 
         user_1 = await fake2.users.create()
         user_2 = await fake2.users.create()
@@ -258,7 +258,7 @@ class TestCreate:
     async def test_remote_reference(
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
     ):
-        client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+        client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
 
         data = {
             "name": "Test Remote",

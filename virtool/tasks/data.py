@@ -1,3 +1,4 @@
+"""The data layer piece for tasks."""
 from logging import getLogger
 from typing import List, Type
 

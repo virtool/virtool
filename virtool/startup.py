@@ -4,15 +4,17 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
 
-import aiojobs.aiohttp
 from aiohttp import ClientSession
-from aiojobs import Scheduler
+from aiojobs.aiohttp import get_scheduler_from_app
 from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
 from virtool_core.redis import connect as connect_redis, periodically_ping_redis
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.utils import connect_openfga
+from virtool.authorization.utils import (
+    connect_openfga,
+    get_authorization_client_from_app,
+)
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
 from virtool.data.factory import create_data_layer
@@ -29,7 +31,8 @@ from virtool.sentry import setup
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
-from virtool.version import determine_server_version
+from virtool.utils import get_http_session_from_app
+from virtool.version import determine_server_version, get_version_from_app
 from virtool.ws.server import WSServer
 
 logger = getLogger("startup")
@@ -41,15 +44,6 @@ class B2C:
     authority: str
     jwk_args: JWKArgs = None
     auth_code_flow: dict = None
-
-
-def get_scheduler_from_app(app: App) -> Scheduler:
-    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
-
-    if scheduler is None:
-        return app["scheduler"]
-
-    return scheduler
 
 
 async def startup_b2c(app: App):
@@ -112,11 +106,11 @@ async def startup_data(app: App):
     """
 
     app["data"] = create_data_layer(
-        app["authorization"],
+        get_authorization_client_from_app(app),
         app["db"],
         app["pg"],
-        app["config"],
-        app["client"],
+        get_config_from_app(app),
+        get_http_session_from_app(app),
         app["redis"],
     )
 
@@ -179,7 +173,7 @@ async def startup_executors(app: App):
     app["process_executor"] = process_executor
 
 
-async def startup_http_client(app: App):
+async def startup_http_client_session(app: App):
     """
     Create an async HTTP client session for the server.
 
@@ -191,11 +185,9 @@ async def startup_http_client(app: App):
     """
     logger.info("Starting HTTP client")
 
-    version = app["version"]
-
-    headers = {"User-Agent": f"virtool/{version}"}
-
-    app["client"] = ClientSession(headers=headers)
+    app["client"] = ClientSession(
+        headers={"User-Agent": f"virtool/{get_version_from_app(app)}"}
+    )
 
 
 async def startup_routes(app: App):
@@ -235,9 +227,8 @@ async def startup_task_runner(app: App):
     :param app: the app object
 
     """
-    scheduler = get_scheduler_from_app(app)
     tasks_client = TasksClient(app["redis"])
-    await scheduler.spawn(TaskRunner(app["data"], tasks_client, app).run())
+    await get_scheduler_from_app(app).spawn(TaskRunner(app["data"], tasks_client).run())
 
 
 async def startup_version(app: App):
