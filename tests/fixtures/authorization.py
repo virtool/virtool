@@ -47,4 +47,8 @@ async def authorization_client(
 
     await delete_tuples(api_instance, ResourceType.APP, "virtool")
 
-    return AuthorizationClient(api_instance)
+    authorization_client = AuthorizationClient(api_instance)
+
+    yield authorization_client
+
+    await authorization_client.close()

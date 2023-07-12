@@ -10,12 +10,10 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Iterable, Optional, Tuple, Dict, Type
 
-import aiojobs.aiohttp
 import arrow
-from aiojobs import Scheduler
+from aiohttp import ClientSession
+from aiohttp.web import Application
 from pydantic import BaseModel
-
-from virtool.types import App
 
 SUB_DIRS = [
     "caches",
@@ -209,18 +207,10 @@ async def wait_for_checks(*aws):
             raise TypeError("Check functions may only return a NoneType object.")
 
 
-def get_scheduler_from_app(app: App) -> Scheduler:
+def get_http_session_from_app(app: Application) -> ClientSession:
     """
-    Get the aiojobs :class:`Scheduler` from the passed ``app`` object.
+    Get the application shared :class:`aiohttp.ClientSession` object.
 
-    This will work
-
-    :param app:
-    :return:
+    :param app: the application object
     """
-    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
-
-    if scheduler is None:
-        return app["scheduler"]
-
-    return scheduler
+    return app["client"]

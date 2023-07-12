@@ -11,7 +11,10 @@ from pymongo.errors import CollectionInvalid
 from virtool_core.redis import connect as connect_redis, periodically_ping_redis
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.utils import connect_openfga
+from virtool.authorization.utils import (
+    connect_openfga,
+    get_authorization_client_from_app,
+)
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
 from virtool.data.factory import create_data_layer
@@ -28,7 +31,8 @@ from virtool.sentry import setup
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
-from virtool.version import determine_server_version
+from virtool.utils import get_http_session_from_app
+from virtool.version import determine_server_version, get_version_from_app
 from virtool.ws.server import WSServer
 
 logger = getLogger("startup")
@@ -102,11 +106,11 @@ async def startup_data(app: App):
     """
 
     app["data"] = create_data_layer(
-        app["authorization"],
+        get_authorization_client_from_app(app),
         app["db"],
         app["pg"],
-        app["config"],
-        app["client"],
+        get_config_from_app(app),
+        get_http_session_from_app(app),
         app["redis"],
     )
 
@@ -169,7 +173,7 @@ async def startup_executors(app: App):
     app["process_executor"] = process_executor
 
 
-async def startup_http_client(app: App):
+async def startup_http_client_session(app: App):
     """
     Create an async HTTP client session for the server.
 
@@ -181,11 +185,9 @@ async def startup_http_client(app: App):
     """
     logger.info("Starting HTTP client")
 
-    version = app["version"]
-
-    headers = {"User-Agent": f"virtool/{version}"}
-
-    app["client"] = ClientSession(headers=headers)
+    app["client"] = ClientSession(
+        headers={"User-Agent": f"virtool/{get_version_from_app(app)}"}
+    )
 
 
 async def startup_routes(app: App):

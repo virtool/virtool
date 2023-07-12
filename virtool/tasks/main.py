@@ -19,7 +19,7 @@ from virtool.startup import (
     startup_data,
     startup_databases,
     startup_executors,
-    startup_http_client,
+    startup_http_client_session,
     startup_sentry,
     startup_task_runner,
     startup_version,
@@ -53,7 +53,7 @@ def run_task_runner(config: TaskRunnerConfig):
     app.on_startup.extend(
         [
             startup_version,
-            startup_http_client,
+            startup_http_client_session,
             startup_databases,
             startup_executors,
             startup_data,
@@ -96,7 +96,7 @@ def run_task_spawner(config: TaskSpawnerConfig):
     app.on_startup.extend(
         [
             startup_version,
-            startup_http_client,
+            startup_http_client_session,
             startup_databases_for_spawner,
             startup_datalayer_for_spawner,
             startup_executors,

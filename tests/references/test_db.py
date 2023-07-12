@@ -2,7 +2,7 @@ import pytest
 
 import virtool.errors
 import virtool.references.db
-from virtool.startup import startup_http_client
+from virtool.startup import startup_http_client_session
 
 
 @pytest.fixture
@@ -198,7 +198,7 @@ async def test_delete_member(field, snapshot, mongo):
 
 
 async def test_fetch_and_update_release(mongo, fake_app, snapshot, static_time):
-    await startup_http_client(fake_app)
+    await startup_http_client_session(fake_app)
 
     await mongo.references.insert_one(
         {

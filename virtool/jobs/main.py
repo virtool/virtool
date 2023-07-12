@@ -11,7 +11,7 @@ from virtool.startup import (
     startup_data,
     startup_databases,
     startup_executors,
-    startup_http_client,
+    startup_http_client_session,
     startup_sentry,
     startup_settings,
     startup_version,
@@ -39,7 +39,7 @@ async def create_app(config: ServerConfig):
     app.on_startup.extend(
         [
             startup_version,
-            startup_http_client,
+            startup_http_client_session,
             startup_databases,
             startup_executors,
             startup_data,

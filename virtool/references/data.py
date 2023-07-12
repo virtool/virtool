@@ -76,7 +76,7 @@ from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform, extend_user
-from virtool.utils import chunk_list
+from virtool.utils import chunk_list, get_http_session_from_app
 
 
 class ReferencesData(DataLayerPiece):
@@ -339,7 +339,7 @@ class ReferencesData(DataLayerPiece):
             raise ResourceConflictError("Not a remote reference")
         try:
             release = await virtool.references.db.fetch_and_update_release(
-                app["db"], app["client"], ref_id
+                app["db"], get_http_session_from_app(app), ref_id
             )
         except aiohttp.ClientConnectorError:
             raise ResourceRemoteError("Could not reach GitHub")
