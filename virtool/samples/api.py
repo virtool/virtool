@@ -442,87 +442,29 @@ class AnalysesView(PydanticView):
             404: Not found
         """
         db = self.request.app["db"]
-        ref_id = data.ref_id
 
         try:
             if not await check_rights(db, sample_id, self.request["client"]):
                 raise InsufficientRights()
         except DatabaseError as err:
             if "Sample does not exist" in str(err):
-                raise NotFound()
+                raise NotFound
 
             raise
 
-        if not await db.references.count_documents({"_id": ref_id}):
-            raise HTTPBadRequest(text="Reference does not exist")
-
-        if not await db.indexes.count_documents(
-            {"reference.id": ref_id, "ready": True}
-        ):
-            raise HTTPBadRequest(text="No ready index")
-
-        subtractions = data.subtractions
-
-        if subtractions is None:
-            subtractions = []
-        else:
-            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-                db.subtraction, subtractions
+        try:
+            analysis = await get_data_from_req(self.request).analyses.create(
+                sample_id, self.request["client"].user_id, data
             )
-
-            if non_existent_subtractions:
-                raise HTTPBadRequest(
-                    text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
-                )
-
-        job_id = await get_new_id(db.jobs)
-
-        document = await virtool.analyses.db.create(
-            self.request.app["db"],
-            sample_id,
-            ref_id,
-            subtractions,
-            self.request["client"].user_id,
-            data.workflow,
-            job_id,
-            0,
-        )
-
-        analysis_id = document["id"]
-
-        sample = await db.samples.find_one(sample_id, ["name"])
-
-        task_args = {
-            "analysis_id": analysis_id,
-            "ref_id": ref_id,
-            "sample_id": sample_id,
-            "sample_name": sample["name"],
-            "index_id": document["index"]["id"],
-            "subtractions": subtractions,
-        }
-
-        rights = JobRights()
-
-        rights.analyses.can_read(analysis_id)
-        rights.analyses.can_modify(analysis_id)
-        rights.analyses.can_remove(analysis_id)
-        rights.samples.can_read(sample_id)
-        rights.indexes.can_read(document["index"]["id"])
-        rights.references.can_read(ref_id)
-        rights.subtractions.can_read(*subtractions)
-
-        job = await get_data_from_req(self.request).jobs.create(
-            document["workflow"], task_args, document["user"]["id"], rights, 0, job_id
-        )
-
-        document["job"] = JobMinimal(**job.dict())
-
-        await recalculate_workflow_tags(db, sample_id)
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
+        except ResourceNotFoundError:
+            raise NotFound
 
         return json_response(
-            base_processor(document),
+            analysis,
             status=201,
-            headers={"Location": f"/analyses/{analysis_id}"},
+            headers={"Location": f"/analyses/{analysis.id}"},
         )
 
 

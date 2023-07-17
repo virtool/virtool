@@ -47,34 +47,3 @@ async def test_format_analysis(workflow, config, mongo, mocker):
     elif workflow == "pathoscope":
         m_format_pathoscope.assert_called_with(config, mongo, document)
         assert not m_format_nuvs.called
-
-
-@pytest.mark.parametrize("analysis_id", [None, "test_analysis"])
-async def test_create(
-    analysis_id, snapshot, mongo, static_time, test_random_alphanumeric
-):
-    subtractions = ["subtraction_1", "subtraction_2"]
-
-    await mongo.indexes.insert_one(
-        {
-            "_id": "test_index",
-            "version": 11,
-            "ready": True,
-            "reference": {"id": "test_ref"},
-        }
-    )
-
-    document = await virtool.analyses.db.create(
-        mongo,
-        "test_sample",
-        "test_ref",
-        subtractions,
-        "test_user",
-        "nuvs",
-        "test_job",
-        0,
-        analysis_id=analysis_id,
-    )
-
-    assert document == snapshot
-    assert await mongo.analyses.find_one() == snapshot
