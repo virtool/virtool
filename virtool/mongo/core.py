@@ -240,7 +240,7 @@ class Mongo:
     def bind_collection(
         self,
         name: str,
-        processor: None | Callable = None,
+        processor: Callable | None = None,
         projection: Projection | None = None,
     ) -> Collection:
         return Collection(self, name, processor, projection)

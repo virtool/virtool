@@ -4,9 +4,9 @@ from typing import Any, TYPE_CHECKING
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.transforms import AbstractTransform
 from virtool.groups.pg import SQLGroup
 from virtool.groups.utils import merge_group_permissions
-from virtool.mongo.transforms import AbstractTransform
 from virtool.types import Document
 
 if TYPE_CHECKING:
@@ -82,7 +82,6 @@ class AttachPermissionsTransform(AbstractTransform):
             return {}
 
         async with AsyncSession(self._pg) as pg_session:
-
             mongo_result, pg_result = await asyncio.gather(
                 self._mongo.groups.find({"_id": {"$in": list(group_ids)}}).to_list(
                     None

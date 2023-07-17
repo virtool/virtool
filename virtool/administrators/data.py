@@ -13,11 +13,11 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.piece import DataLayerPiece
+from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.db import lookup_groups_minimal_by_id, lookup_group_minimal_by_id
 from virtool.groups.utils import merge_group_permissions
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import (
     fetch_complete_user,
     compose_primary_group_update,

@@ -1,5 +1,6 @@
 import sys
 from enum import Enum
+from logging import getLogger
 
 from aiohttp import ClientConnectorError
 from openfga_sdk import (
@@ -15,9 +16,8 @@ from openfga_sdk import (
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.authorization.permissions import ResourceType, Permission
-from virtool.authorization.utils import (
-    logger,
-)
+
+logger = getLogger("openfga")
 
 
 class OpenfgaScheme(str, Enum):
