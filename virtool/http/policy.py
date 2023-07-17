@@ -15,7 +15,7 @@ from virtool.authorization.permissions import (
     ResourceType,
     LegacyPermission,
 )
-from virtool.authorization.utils import get_authorization_client_from_req
+from virtool.authorization.client import get_authorization_client_from_req
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient
 

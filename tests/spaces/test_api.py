@@ -8,7 +8,7 @@ from virtool_core.models.roles import (
 )
 
 from virtool.authorization.relationships import SpaceMembership, UserRoleAssignment
-from virtool.authorization.utils import get_authorization_client_from_app
+from virtool.authorization.client import get_authorization_client_from_app
 from virtool.flags import FlagName
 from virtool.spaces.models import SQLSpace
 

@@ -1,8 +1,18 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from aioredis import Redis
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from virtool.account.data import AccountData
 from virtool.administrators.data import AdministratorsData
+from virtool.authorization.client import AuthorizationClient
+from virtool.config import Config
+from virtool.jobs.client import JobsClient
+from virtool.mongo.core import Mongo
+from virtool.tasks.client import TasksClient
 
 if TYPE_CHECKING:
     from virtool.analyses.data import AnalysisData
@@ -68,3 +78,51 @@ class DataLayer:
         self.sessions.bind_layer(self)
         self.account.bind_layer(self)
         self.administrators.bind_layer(self)
+
+
+def create_data_layer(
+    authorization_client: AuthorizationClient,
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    config: Config,
+    client,
+    redis: Redis,
+) -> DataLayer:
+    """
+    Create and return a data layer object.
+
+    :param authorization_client: the authorization client
+    :param mongo: the MongoDB client
+    :param pg: the Postgres client
+    :param config: the application config object
+    :param client: an async HTTP client session for the server
+    :param redis: the redis object
+    :return: the application data layer
+    """
+    jobs_client = JobsClient(redis)
+
+    data_layer = DataLayer(
+        AccountData(mongo, redis, authorization_client),
+        AdministratorsData(authorization_client, mongo),
+        AnalysisData(mongo, config, pg),
+        BLASTData(client, mongo, pg),
+        GroupsData(authorization_client, mongo, pg),
+        HistoryData(config.data_path, mongo),
+        HmmsData(client, config, mongo, pg),
+        IndexData(mongo, config, pg),
+        JobsData(jobs_client, mongo, pg),
+        LabelsData(mongo, pg),
+        MessagesData(pg, mongo),
+        OTUData(mongo, config.data_path),
+        ReferencesData(mongo, pg, config, client),
+        SamplesData(config, mongo, pg, jobs_client),
+        SubtractionsData(config.base_url, config, mongo, pg),
+        SessionData(redis),
+        SettingsData(mongo),
+        SpacesData(authorization_client, mongo, pg),
+        TasksData(pg, TasksClient(redis)),
+        UploadsData(config, mongo, pg),
+        UsersData(authorization_client, mongo, pg),
+    )
+
+    return data_layer

@@ -25,6 +25,13 @@ class ResourceType(str, Enum):
 
 
 class LegacyPermission(str, Enum):
+    """
+    Global permissions for Virtool.
+
+
+
+    """
+
     CANCEL_JOB = "cancel_job"
     CREATE_REF = "create_ref"
     CREATE_SAMPLE = "create_sample"

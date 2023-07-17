@@ -1,3 +1,10 @@
+"""
+Fixtures for creating test clients.
+
+When clients are created, a testing server instance is also created. All methods called
+on the client (eg. ``client.get()``) are directed to the server instance.
+
+"""
 from __future__ import annotations
 
 import json
@@ -34,7 +41,7 @@ class VirtoolTestClient:
         self.auth = self._test_client.session.auth
         self.cookie_jar = self._test_client.session.cookie_jar
 
-    def get_cookie(self, key):
+    def get_cookie(self, key) -> Any | None:
         for cookie in self._test_client.session.cookie_jar:
             if cookie.key == key:
                 return cookie.value
@@ -85,6 +92,8 @@ def spawn_client(
     redis_connection_string,
     test_motor,
 ):
+    """A factory for spawning test clients."""
+
     async def func(
         addon_route_table: RouteTableDef | None = None,
         administrator: bool = False,

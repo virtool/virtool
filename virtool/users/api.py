@@ -14,7 +14,7 @@ from virtool.users.oas import UpdateUserRequest
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.relationships import UserRoleAssignment
-from virtool.authorization.utils import get_authorization_client_from_req
+from virtool.authorization.client import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import (

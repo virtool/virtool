@@ -1,36 +1,22 @@
+"""Fixtures"""
 import openfga_sdk
 import pytest
-from openfga_sdk import ApiException, TupleKey, TupleKeys, WriteRequest
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.openfga import OpenfgaScheme
-from virtool.authorization.permissions import ResourceType
-from virtool.authorization.utils import (
-    delete_tuples,
+from virtool.authorization.openfga import (
+    OpenfgaScheme,
+    delete_openfga_tuples,
     get_or_create_openfga_store,
     write_openfga_authorization_model,
 )
-
-
-@pytest.fixture
-def openfga_host(request):
-    return request.config.getoption("openfga_host")
-
-
-@pytest.fixture
-def openfga_scheme() -> OpenfgaScheme:
-    return OpenfgaScheme.HTTP
-
-
-@pytest.fixture
-def openfga_store_name(worker_id) -> str:
-    return f"vt-test-{worker_id}"
+from virtool.authorization.permissions import ResourceType
 
 
 @pytest.fixture
 async def authorization_client(
     openfga_host: str, openfga_scheme, openfga_store_name: str
 ) -> AuthorizationClient:
+    """An :class:`AuthorizationClient` instance backed by a testing OpenFGA server."""
     configuration = openfga_sdk.Configuration(
         api_scheme=openfga_scheme.value, api_host=openfga_host
     )
@@ -42,13 +28,34 @@ async def authorization_client(
     )
 
     await write_openfga_authorization_model(api_instance)
+    await delete_openfga_tuples(api_instance, ResourceType.SPACE, 0)
+    await delete_openfga_tuples(api_instance, ResourceType.APP, "virtool")
 
-    await delete_tuples(api_instance, ResourceType.SPACE, 0)
+    return AuthorizationClient(api_instance)
 
-    await delete_tuples(api_instance, ResourceType.APP, "virtool")
 
     authorization_client = AuthorizationClient(api_instance)
+@pytest.fixture
+def openfga_host(request):
+    """The host of the OpenFGA server."""
+    return request.config.getoption("openfga_host")
 
     yield authorization_client
 
     await authorization_client.close()
+
+
+@pytest.fixture
+def openfga_scheme() -> OpenfgaScheme:
+    """
+    The scheme used by the OpenFGA server.
+    """
+    return OpenfgaScheme.HTTP
+
+
+@pytest.fixture
+def openfga_store_name(worker_id: str) -> str:
+    """
+    The name for the OpenFGA store.
+    """
+    return f"vt-test-{worker_id}"

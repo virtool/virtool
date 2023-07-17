@@ -1,9 +1,9 @@
 from logging import getLogger
 
 from aiohttp.web import Application
-from aiojobs.aiohttp import get_scheduler_from_app
 
-from virtool.authorization.utils import get_authorization_client_from_app
+from virtool.authorization.client import get_authorization_client_from_app
+from virtool.startup import get_scheduler_from_app
 from virtool.utils import get_http_session_from_app
 
 logger = getLogger("shutdown")

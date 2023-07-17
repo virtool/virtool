@@ -10,14 +10,11 @@ from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
 from virtool_core.redis import connect as connect_redis, periodically_ping_redis
 
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.utils import (
-    connect_openfga,
-    get_authorization_client_from_app,
-)
+from virtool.authorization.client import AuthorizationClient, get_authorization_client_from_app
+from virtool.authorization.openfga import connect_openfga
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
-from virtool.data.factory import create_data_layer
+from virtool.data.layer import create_data_layer
 from virtool.data.utils import get_data_from_app
 from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo

@@ -1,10 +1,11 @@
 """
-Authorization clients.
+The client class and utilities for managing authorization.
 
 """
 import asyncio
-from typing import Union, List, Tuple, Optional
+from typing import List, Tuple
 
+from aiohttp.web_request import Request
 from openfga_sdk import (
     ApiException,
     CheckRequest,
@@ -28,15 +29,20 @@ from virtool.authorization.results import (
     AddRelationshipResult,
     RemoveRelationshipResult,
 )
+from virtool.types import App
 
 
 class AuthorizationClient:
     """
-    An authorization client backed by OpenFGA.
+    The Virtool authorization client.
+
+    The client is currently backed by OpenFGA, but is built to abstract away the
+    underlying authorization service.
 
     """
 
     def __init__(self, openfga: OpenFgaApi):
+        #: The backing OpenFGA API instance.
         self.openfga = openfga
 
     async def close(self):
@@ -46,9 +52,9 @@ class AuthorizationClient:
     async def check(
         self,
         user_id: str,
-        permission: Union[Permission, ReferencePermission, AdministratorRole],
+        permission: Permission | ReferencePermission | AdministratorRole,
         resource_type: ResourceType,
-        resource_id: Union[str, int],
+        resource_id: str | int,
     ) -> bool:
         """
         Check whether a user has the given role on a resource.
@@ -66,7 +72,7 @@ class AuthorizationClient:
 
         return response.allowed
 
-    async def get_space_roles(self, space_id: int) -> List[str]:
+    async def get_space_roles(self, space_id: int) -> list[str]:
         """
         Return a list of base roles for a space.
 
@@ -85,7 +91,7 @@ class AuthorizationClient:
 
     async def get_administrator(
         self, user_id: str
-    ) -> Tuple[str, Optional[AdministratorRole]]:
+    ) -> Tuple[str, AdministratorRole | None]:
         response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object="app:virtool"),
@@ -294,3 +300,25 @@ class AuthorizationClient:
         result.removed_count = len(relationships) - result.not_found_count
 
         return result
+
+
+def get_authorization_client_from_app(app: App) -> "AuthorizationClient":
+    """
+    Get the authorization client instance from an :class:`virtool.types.App` object.
+
+    Use this when you need to access the authorization client outside a request handler.
+
+    :param app: the application object
+    """
+    return app["authorization"]
+
+
+def get_authorization_client_from_req(req: Request) -> "AuthorizationClient":
+    """
+    Get the authorization client instance from a :class:``aiohttp.web.Request`` object.
+
+    Use this in request handlers instead of ``get_authorization_client_from_app``.
+
+    :param req: the request
+    """
+    return get_authorization_client_from_app(req.app)
