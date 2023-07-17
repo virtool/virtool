@@ -1,7 +1,7 @@
 pytest_plugins = (
     "tests.fixtures.client",
     "tests.fixtures.core",
-    "tests.fixtures.db",
+    "tests.fixtures.mongo",
     "tests.fixtures.dispatcher",
     "tests.fixtures.documents",
     "tests.fixtures.fake",
