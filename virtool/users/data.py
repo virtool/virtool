@@ -7,6 +7,8 @@ from virtool_core.models.user import User
 import virtool.users.utils
 import virtool.utils
 from virtool.data.events import emits, Operation
+from virtool.data.piece import DataLayerPiece
+from virtool.groups.utils import merge_group_permissions
 from virtool.users.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
@@ -23,7 +25,7 @@ from virtool.users.mongo import create_user
 from virtool.utils import base_processor
 
 
-class UsersData:
+class UsersData(DataLayerPiece):
     name = "users"
 
     def __init__(self, authorization_client: AuthorizationClient, mongo, pg):
@@ -39,9 +41,7 @@ class UsersData:
         :return: the user
         """
 
-        if document := await fetch_complete_user(
-            self._mongo, self._authorization_client, user_id
-        ):
+        if document := await fetch_complete_user(self._authorization_client, self._mongo, self._pg, user_id):
             return User(**base_processor(document))
 
         raise ResourceNotFoundError
@@ -62,9 +62,7 @@ class UsersData:
         """
         document = await create_user(self._mongo, handle, password, force_reset)
 
-        return await fetch_complete_user(
-            self._mongo, self._authorization_client, document["_id"]
-        )
+        return await fetch_complete_user(self._authorization_client, self._mongo, self._pg, document["_id"])
 
     async def create_first(self, handle: str, password: str) -> User:
         """
@@ -95,9 +93,7 @@ class UsersData:
             AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL)
         )
 
-        return await fetch_complete_user(
-            self._mongo, self._authorization_client, document["_id"]
-        )
+        return await fetch_complete_user(self._authorization_client, self._mongo, self._pg, document["_id"])
 
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes
@@ -114,9 +110,7 @@ class UsersData:
         if document := await self._mongo.users.find_one(
             {"b2c_oid": b2c_user_attributes.oid}
         ):
-            return await fetch_complete_user(
-                self._mongo, self._authorization_client, document["_id"]
-            )
+            return await fetch_complete_user(self._authorization_client, self._mongo, self._pg, document["_id"])
 
         handle = "-".join(
             [
@@ -137,9 +131,7 @@ class UsersData:
         except DuplicateKeyError:
             return await self.find_or_create_b2c_user(b2c_user_attributes)
 
-        user = await fetch_complete_user(
-            self._mongo, self._authorization_client, document["_id"]
-        )
+        user = await fetch_complete_user(self._authorization_client, self._mongo, self._pg, document["_id"])
 
         return user
 
@@ -213,17 +205,21 @@ class UsersData:
                 {"_id": user_id}, {"$set": update}
             )
 
+            permissions = merge_group_permissions(
+                await self._mongo.groups.find(
+                    {"_id": {"$in": [document["groups"]]}}
+                ).to_list(None)
+            )
+
             await update_keys(
                 self._mongo,
                 user_id,
                 document["administrator"],
                 document["groups"],
-                document["permissions"],
+                permissions,
             )
 
-        user = await fetch_complete_user(
-            self._mongo, self._authorization_client, user_id
-        )
+        user = await fetch_complete_user(self._authorization_client, self._mongo, self._pg, user_id)
 
         if user is None:
             raise ResourceNotFoundError

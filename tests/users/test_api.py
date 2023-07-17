@@ -97,7 +97,7 @@ async def test_get(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
-async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is):
+async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is, data_layer):
     """
     Test that a valid request results in a user document being properly inserted.
 
@@ -149,8 +149,12 @@ async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is):
     document = await client.db.users.find_one(resp_json["id"])
     password = document.pop("password")
 
-    assert document == snapshot
+
+    assert document == snapshot(name="db")
     assert check_password("hello_world", password)
+    assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
+
+
 
 
 @pytest.mark.apitest

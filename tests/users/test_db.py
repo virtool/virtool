@@ -55,7 +55,6 @@ async def test_compose_groups_update(
     else:
         assert update == {
             "groups": groups,
-            "permissions": no_permissions if groups == [] else all_permissions,
         }
 
 

@@ -48,6 +48,10 @@
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
     ],
     'id': 'foobar_0',
     'key': 'raw_key',
@@ -70,6 +74,7 @@
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
+      'bf1b993c',
     ],
     'id': 'foobar_0',
     'name': 'Foobar',
@@ -138,6 +143,10 @@
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
     ],
     'id': 'foobar_0',
     'key': 'raw_key',
@@ -160,6 +169,7 @@
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
+      'bf1b993c',
     ],
     'id': 'foobar_0',
     'name': 'Foobar',

@@ -488,9 +488,9 @@ async def fetch_and_update_release(
     return release
 
 
-async def get_contributors(mongo: "Mongo", ref_id: str) -> Optional[List[Document]]:
+async def get_contributors(mongo: "Mongo", ref_id: str) -> list[Document] | None:
     """
-    Return an list of contributors and their contribution count for a specific ref.
+    Return a list of contributors and their contribution count for a specific ref.
 
     :param mongo: the application database client
     :param ref_id: the id of the ref to get contributors for
@@ -501,7 +501,7 @@ async def get_contributors(mongo: "Mongo", ref_id: str) -> Optional[List[Documen
 
 
 async def get_internal_control(
-    mongo: "Mongo", internal_control_id: Optional[str], ref_id: str
+    mongo: "Mongo", internal_control_id: str | None, ref_id: str
 ) -> Optional[Document]:
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.

@@ -11,6 +11,8 @@ from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Iterable, Optional, Tuple, Dict, Type
 
 import arrow
+from aiohttp import ClientSession
+from aiohttp.web import Application
 from pydantic import BaseModel
 
 SUB_DIRS = [
@@ -68,7 +70,7 @@ def coerce_list(obj: Any) -> list:
     return [obj] if not isinstance(obj, list) else obj
 
 
-def compress_json_with_gzip(json_string: str, target: str):
+def compress_json_with_gzip(json_bytes: bytes, target: Path):
     """
     Compress the JSON string to a gzipped file at `target`.
 
@@ -78,7 +80,7 @@ def compress_json_with_gzip(json_string: str, target: str):
     target.parent.mkdir(exist_ok=True, parents=True)
 
     with gzip.open(target, "wb") as f:
-        f.write(json_string)
+        f.write(json_bytes)
 
 
 def ensure_data_dir(data_path: Path):
@@ -203,3 +205,12 @@ async def wait_for_checks(*aws):
             raise result
         if result is not None:
             raise TypeError("Check functions may only return a NoneType object.")
+
+
+def get_http_session_from_app(app: Application) -> ClientSession:
+    """
+    Get the application shared :class:`aiohttp.ClientSession` object.
+
+    :param app: the application object
+    """
+    return app["client"]

@@ -8,9 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.analyses.models import SQLAnalysisFile
-from virtool.data.transforms import AbstractTransform, apply_transforms
-from virtool.indexes.db import get_current_id_and_version
-from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
 
 PROJECTION = (

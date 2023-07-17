@@ -59,35 +59,32 @@ async def update_member_users(
         if remove:
             user["groups"].remove(group_id)
 
-        new_permissions = merge_group_permissions(
-            [group for group in groups if group["_id"] in user["groups"]]
-        )
-
-        # Skip updating this user if their group membership and permissions haven't changed.
-        if not remove and new_permissions == user["permissions"]:
-            continue
-
-        update_dict = {"$set": {"permissions": new_permissions}}
-
-        if user["primary_group"] == group_id:
-            update_dict["$set"]["primary_group"] = ""
+        update_dict = {}
 
         if remove:
             update_dict["$pull"] = {"groups": group_id}
 
-        document = await db.users.find_one_and_update(
-            {"_id": user["_id"]},
-            update_dict,
-            projection=["groups", "permissions"],
-            session=session,
+            if user["primary_group"] == group_id:
+                update_dict["$set"]["primary_group"] = ""
+
+        if update_dict:
+            await db.users.find_one_and_update(
+                {"_id": user["_id"]},
+                update_dict,
+                projection=["groups", "permissions"],
+                session=session,
+            )
+
+        permissions = merge_group_permissions(
+            [group for group in groups if group["_id"] in user["groups"]]
         )
 
         await virtool.users.db.update_keys(
             db,
             user["administrator"],
             user["_id"],
-            document["groups"],
-            document["permissions"],
+            user["groups"],
+            permissions,
             session=session,
         )
 

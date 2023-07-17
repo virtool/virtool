@@ -9,20 +9,19 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import SampleSearchResult, Sample
-from virtool.mongo.core import Mongo
 
 import virtool.utils
 from virtool.api.utils import compose_regex_query
-from virtool.caches.db import lookup_caches
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
+from virtool.data.transforms import apply_transforms
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.db import lookup_minimal_job_by_id, create_job
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
-from virtool.data.transforms import apply_transforms
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
     check_labels_do_not_exist,
@@ -170,7 +169,6 @@ class SamplesData(DataLayerPiece):
                 {"$match": {"_id": sample_id}},
                 *lookup_nested_user_by_id(local_field="user.id"),
                 *lookup_nested_subtractions(local_field="subtractions"),
-                *lookup_caches(local_field="_id"),
                 *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
@@ -185,6 +183,7 @@ class SamplesData(DataLayerPiece):
             [ArtifactsAndReadsTransform(self._pg), AttachLabelsTransform(self._pg)],
         )
 
+        document["caches"] = []
         document["paired"] = len(document["reads"]) == 2
 
         return Sample(**document)

@@ -1,12 +1,10 @@
-from virtool.jobs.db import processor
+from virtool.jobs.db import fetch_complete_job
 
 
-async def test_processor(snapshot, mongo, fake2, static_time, test_job):
-    """
-    Test that the dispatch processor properly formats a raw job document into a
-    dispatchable format.
-
-    """
+async def test_fetch_complete_job(snapshot, fake2, mongo, static_time, test_job):
     user = await fake2.users.create()
     test_job["user"] = {"id": user.id}
-    assert await processor(mongo, test_job) == snapshot
+
+    result = dict(await fetch_complete_job(mongo, test_job))
+
+    assert result == snapshot

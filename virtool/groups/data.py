@@ -10,7 +10,7 @@ from virtool_core.models.group import GroupMinimal, Group
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.data.events import emits, Operation
+from virtool.data.events import emits, Operation, emit
 from virtool.data.topg import both_transactions
 from virtool.groups.db import update_member_users, fetch_complete_group
 from virtool.groups.oas import UpdateGroupRequest
@@ -142,7 +142,6 @@ class GroupsData:
 
         return await fetch_complete_group(self._mongo, group_id)
 
-    @emits(Operation.DELETE)
     async def delete(self, group_id: str):
         """
         Delete a group by its id.
@@ -154,6 +153,8 @@ class GroupsData:
         :raises ResourceNotFoundError: if the group is not found
 
         """
+        group = await self.get(group_id)
+
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
@@ -174,3 +175,5 @@ class GroupsData:
             await update_member_users(
                 self._mongo, group_id, remove=True, session=mongo_session
             )
+
+        emit(group, "groups", "delete", Operation.DELETE)

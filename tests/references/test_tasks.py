@@ -28,7 +28,7 @@ TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
     "update",
     [
         None,
-        {"name": "v1.2.0"},
+        {"name": "v1.2.0", "ready": True},
         {"name": "v1.2.2", "ready": True},
         {
             "name": "v1.2.2",
@@ -44,7 +44,7 @@ TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
     ids=["no_updates", "too_old", "ready", "too_new", "clean"],
 )
 async def test_clean_references_task(
-    update, data_layer, mocker, mongo, pg, snapshot, static_time
+    update, data_layer, fake2, mocker, mongo, pg, snapshot, static_time
 ):
     """
     Test the following situations:
@@ -68,29 +68,57 @@ async def test_clean_references_task(
         created_at=static_time.datetime,
     )
 
-    updates = []
+    user = await fake2.users.create()
 
     if update:
-        updates.append(update)
+        updates = [
+            {
+                **update,
+                "body": "## Changelog\n\n### v1.2.2\n\n* Foo\n* Bar\n",
+                "filename": "CHANGELOG.md",
+                "html_url": "https://example.com",
+                "id": 1123456,
+                "newer": True,
+                "published_at": datetime.datetime(2020, 1, 1, 21, 0, 0),
+                "size": 1234567,
+                "user": {"id": user.id},
+            }
+        ]
+    else:
+        updates = []
+
+    await mongo.references.insert_one(
+        {
+            "_id": "foo",
+            "created_at": datetime.datetime(2020, 1, 1, 21, 0, 0),
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "organism": "",
+            "installed": {"name": "v1.2.1"},
+            "name": "Foo",
+            "remotes_from": {"slug": "virtool/ref-plant-viruses", "errors": []},
+            "restrict_source_types": False,
+            "source_types": ["isolate"],
+            "updates": updates,
+            "updating": True,
+            "user": {
+                "id": user.id,
+            },
+        }
+    )
 
     async with AsyncSession(pg) as session:
         session.add(task)
-
-        await asyncio.gather(
-            session.commit(),
-            mongo.references.insert_one(
-                {
-                    "_id": "foo",
-                    "updates": updates,
-                    "installed": {"name": "v1.2.1"},
-                    "updating": True,
-                    "remotes_from": {"slug": "virtool/ref-plant-viruses"},
-                }
-            ),
-        )
+        await session.commit()
 
     task = CleanReferencesTask(1, data_layer, {}, get_temp_dir())
     await task.run()
+
+    task = await get_row_by_id(pg, SQLTask, 1)
+
+    assert task.complete is True
+    assert task.progress == 100
 
     assert await mongo.references.find_one({}) == snapshot
 
@@ -139,12 +167,12 @@ def assert_reference_created(mongo, snapshot):
 async def test_import_reference_task(
     assert_reference_created,
     data_layer,
+    fake2,
     mongo,
     pg,
     snapshot,
     static_time,
     tmpdir,
-    fake2,
 ):
     path = Path(tmpdir.mkdir("files")) / "reference.json.gz"
     shutil.copyfile(TEST_FILES_PATH / "reference.json.gz", path)
@@ -163,7 +191,7 @@ async def test_import_reference_task(
                 context={
                     "path": str(path),
                     "ref_id": "foo",
-                    "user_id": "test",
+                    "user_id": user.id,
                 },
                 count=0,
                 progress=0,
@@ -179,6 +207,12 @@ async def test_import_reference_task(
                 {
                     "_id": "foo",
                     "created_at": static_time.datetime,
+                    "data_type": "genome",
+                    "description": "A test reference",
+                    "internal_control": None,
+                    "user": {
+                        "id": user.id,
+                    },
                 }
             ),
         )
@@ -266,10 +300,10 @@ async def create_reference(pg, tmpdir, fake2, data_layer, static_time, mongo):
                     "user_id": "test",
                 },
                 count=0,
+                created_at=static_time.datetime,
                 progress=0,
                 step="load_file",
                 type="import_reference",
-                created_at=static_time.datetime,
             )
         )
 
@@ -279,6 +313,15 @@ async def create_reference(pg, tmpdir, fake2, data_layer, static_time, mongo):
                 {
                     "_id": "bar",
                     "created_at": static_time.datetime,
+                    "data_type": "genome",
+                    "description": "This is a test reference.",
+                    "groups": [],
+                    "name": "Test",
+                    "organism": "virus",
+                    "restrict_source_types": False,
+                    "source_types": [],
+                    "user": {"id": user.id},
+                    "users": [],
                 }
             ),
         )
@@ -293,16 +336,18 @@ async def create_reference(pg, tmpdir, fake2, data_layer, static_time, mongo):
 async def test_clone_reference(
     assert_reference_created,
     caplog,
+    create_reference,
     data_layer,
+    fake2,
     mongo,
     pg,
     snapshot,
     static_time,
     tmpdir,
-    fake2,
-    create_reference,
 ):
     manifest = await get_manifest(mongo, create_reference)
+
+    user = await fake2.users.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -312,7 +357,7 @@ async def test_clone_reference(
                 context={
                     "manifest": manifest,
                     "ref_id": "foo",
-                    "user_id": "test",
+                    "user_id": user.id,
                 },
                 count=0,
                 progress=0,
@@ -328,6 +373,18 @@ async def test_clone_reference(
                 {
                     "_id": "foo",
                     "created_at": static_time.datetime,
+                    "data_type": "genome",
+                    "description": "A test reference",
+                    "internal_control": None,
+                    "groups": [],
+                    "name": "Test",
+                    "organism": "virus",
+                    "restrict_source_types": False,
+                    "source_types": [],
+                    "user": {
+                        "id": user.id,
+                    },
+                    "users": [],
                 }
             ),
         )

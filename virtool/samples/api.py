@@ -1,7 +1,7 @@
 import asyncio
-from asyncio import to_thread
 import logging
 import os
+from asyncio import to_thread
 from typing import List, Union, Optional
 
 import aiohttp.web
@@ -13,7 +13,6 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import constr, conint, Field
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.job import JobMinimal
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
@@ -36,21 +35,18 @@ from virtool.caches.models import SQLSampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.jobs.utils import JobRights
-from virtool.data.transforms import apply_transforms
-from virtool.mongo.utils import get_new_id
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     RIGHTS_PROJECTION,
     check_rights,
     get_sample_owner,
-    recalculate_workflow_tags,
 )
 from virtool.samples.files import (
     create_artifact_file,

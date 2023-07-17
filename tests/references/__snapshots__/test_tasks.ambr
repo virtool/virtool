@@ -1,83 +1,218 @@
 # name: test_clean_references_task[clean]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2020, 1, 1, 21, 0),
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
     'installed': <class 'dict'> {
       'name': 'v1.2.1',
     },
+    'name': 'Foo',
+    'organism': '',
     'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
       'slug': 'virtool/ref-plant-viruses',
     },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+    ],
     'updates': <class 'list'> [
     ],
     'updating': False,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
   }
 ---
 # name: test_clean_references_task[no_updates]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2020, 1, 1, 21, 0),
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
     'installed': <class 'dict'> {
       'name': 'v1.2.1',
     },
+    'name': 'Foo',
+    'organism': '',
     'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
       'slug': 'virtool/ref-plant-viruses',
     },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+    ],
     'updates': <class 'list'> [
     ],
     'updating': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
   }
 ---
 # name: test_clean_references_task[ready]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2020, 1, 1, 21, 0),
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
     'installed': <class 'dict'> {
       'name': 'v1.2.1',
     },
+    'name': 'Foo',
+    'organism': '',
     'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
       'slug': 'virtool/ref-plant-viruses',
     },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+    ],
     'updates': <class 'list'> [
       <class 'dict'> {
+        'body': '
+          ## Changelog
+          
+          ### v1.2.2
+          
+          * Foo
+          * Bar
+  
+        ',
+        'filename': 'CHANGELOG.md',
+        'html_url': 'https://example.com',
+        'id': 1123456,
         'name': 'v1.2.2',
+        'newer': True,
+        'published_at': datetime.datetime(2020, 1, 1, 21, 0),
         'ready': True,
+        'size': 1234567,
+        'user': <class 'dict'> {
+          'id': 'bf1b993c',
+        },
       },
     ],
     'updating': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
   }
 ---
 # name: test_clean_references_task[too_new]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2020, 1, 1, 21, 0),
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
     'installed': <class 'dict'> {
       'name': 'v1.2.1',
     },
+    'name': 'Foo',
+    'organism': '',
     'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
       'slug': 'virtool/ref-plant-viruses',
     },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+    ],
     'updates': <class 'list'> [
       <class 'dict'> {
+        'body': '
+          ## Changelog
+          
+          ### v1.2.2
+          
+          * Foo
+          * Bar
+  
+        ',
         'created_at': datetime.datetime(2020, 1, 1, 21, 20),
+        'filename': 'CHANGELOG.md',
+        'html_url': 'https://example.com',
+        'id': 1123456,
         'name': 'v1.2.2',
+        'newer': True,
+        'published_at': datetime.datetime(2020, 1, 1, 21, 0),
         'ready': False,
+        'size': 1234567,
+        'user': <class 'dict'> {
+          'id': 'bf1b993c',
+        },
       },
     ],
     'updating': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
   }
 ---
 # name: test_clean_references_task[too_old]
   <class 'dict'> {
     '_id': 'foo',
+    'created_at': datetime.datetime(2020, 1, 1, 21, 0),
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
     'installed': <class 'dict'> {
       'name': 'v1.2.1',
     },
+    'name': 'Foo',
+    'organism': '',
     'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
       'slug': 'virtool/ref-plant-viruses',
     },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+    ],
     'updates': <class 'list'> [
       <class 'dict'> {
+        'body': '
+          ## Changelog
+          
+          ### v1.2.2
+          
+          * Foo
+          * Bar
+  
+        ',
+        'filename': 'CHANGELOG.md',
+        'html_url': 'https://example.com',
+        'id': 1123456,
         'name': 'v1.2.0',
+        'newer': True,
+        'published_at': datetime.datetime(2020, 1, 1, 21, 0),
+        'ready': True,
+        'size': 1234567,
+        'user': <class 'dict'> {
+          'id': 'bf1b993c',
+        },
       },
     ],
     'updating': True,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
   }
 ---
 # name: test_clone_reference[history]
@@ -141,7 +276,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -163,7 +298,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -225,7 +360,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -247,7 +382,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -309,7 +444,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -331,7 +466,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -393,7 +528,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -415,7 +550,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -477,7 +612,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -499,7 +634,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -561,7 +696,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -583,7 +718,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -645,7 +780,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -667,7 +802,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -750,7 +885,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -772,7 +907,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -876,7 +1011,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -898,7 +1033,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -981,7 +1116,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1003,7 +1138,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1065,7 +1200,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1087,7 +1222,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1149,7 +1284,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1171,7 +1306,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1233,7 +1368,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1255,7 +1390,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1317,7 +1452,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1339,7 +1474,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1396,7 +1531,7 @@
               'schema': <class 'list'> [
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1418,7 +1553,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1528,7 +1663,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1550,7 +1685,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1612,7 +1747,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1634,7 +1769,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1696,7 +1831,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1718,7 +1853,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1780,7 +1915,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1802,7 +1937,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
     <class 'dict'> {
@@ -1864,7 +1999,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': '875cbf34',
               },
               'verified': True,
               'version': 0,
@@ -1886,7 +2021,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
     },
   ]
@@ -1924,7 +2059,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -1960,7 +2095,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -1996,7 +2131,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2032,7 +2167,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2068,7 +2203,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2104,7 +2239,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2140,7 +2275,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2181,7 +2316,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2227,7 +2362,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2268,7 +2403,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2304,7 +2439,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2340,7 +2475,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2376,7 +2511,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2412,7 +2547,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2443,7 +2578,7 @@
       'schema': <class 'list'> [
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2491,7 +2626,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2527,7 +2662,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2563,7 +2698,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2599,7 +2734,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2635,7 +2770,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': '875cbf34',
       },
       'verified': True,
       'version': 0,
@@ -2646,6 +2781,21 @@
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'A test reference',
+    'groups': <class 'list'> [
+    ],
+    'internal_control': None,
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': '875cbf34',
+    },
+    'users': <class 'list'> [
+    ],
   }
 ---
 # name: test_clone_reference[sequences]
@@ -3129,7 +3279,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3151,7 +3301,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3213,7 +3363,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3235,7 +3385,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3297,7 +3447,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3319,7 +3469,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3381,7 +3531,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3403,7 +3553,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3465,7 +3615,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3487,7 +3637,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3549,7 +3699,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3571,7 +3721,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3633,7 +3783,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3655,7 +3805,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3738,7 +3888,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3760,7 +3910,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3864,7 +4014,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3886,7 +4036,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -3969,7 +4119,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -3991,7 +4141,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4053,7 +4203,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4075,7 +4225,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4137,7 +4287,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4159,7 +4309,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4221,7 +4371,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4243,7 +4393,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4305,7 +4455,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4327,7 +4477,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4384,7 +4534,7 @@
               'schema': <class 'list'> [
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4406,7 +4556,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4516,7 +4666,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4538,7 +4688,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4600,7 +4750,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4622,7 +4772,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4684,7 +4834,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4706,7 +4856,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4768,7 +4918,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4790,7 +4940,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
@@ -4852,7 +5002,7 @@
                 },
               ],
               'user': <class 'dict'> {
-                'id': 'test',
+                'id': 'bf1b993c',
               },
               'verified': True,
               'version': 0,
@@ -4874,7 +5024,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
   ]
@@ -4912,7 +5062,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -4948,7 +5098,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -4984,7 +5134,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5020,7 +5170,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5056,7 +5206,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5092,7 +5242,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5128,7 +5278,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5169,7 +5319,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5215,7 +5365,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5256,7 +5406,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5292,7 +5442,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5328,7 +5478,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5364,7 +5514,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5400,7 +5550,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5431,7 +5581,7 @@
       'schema': <class 'list'> [
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5479,7 +5629,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5515,7 +5665,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5551,7 +5701,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5587,7 +5737,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5623,7 +5773,7 @@
         },
       ],
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'verified': True,
       'version': 0,
@@ -5635,8 +5785,13 @@
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
+    'description': 'A test reference',
+    'internal_control': None,
     'organism': 'virus',
     'targets': None,
+    'user': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
   }
 ---
 # name: test_import_reference_task[sequences]
