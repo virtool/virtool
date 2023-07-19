@@ -31,18 +31,19 @@ async def authorization_client(
     await delete_openfga_tuples(api_instance, ResourceType.SPACE, 0)
     await delete_openfga_tuples(api_instance, ResourceType.APP, "virtool")
 
-    return AuthorizationClient(api_instance)
-
+    yield AuthorizationClient(api_instance)
 
     authorization_client = AuthorizationClient(api_instance)
-@pytest.fixture
-def openfga_host(request):
-    """The host of the OpenFGA server."""
-    return request.config.getoption("openfga_host")
 
     yield authorization_client
 
     await authorization_client.close()
+
+
+@pytest.fixture
+def openfga_host(request):
+    """The host of the OpenFGA server."""
+    return request.config.getoption("openfga_host")
 
 
 @pytest.fixture
