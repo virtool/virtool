@@ -9,6 +9,7 @@ from faker import Faker
 
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import SQLAnalysisFile
+from virtool.config import get_config_from_app
 from virtool.pg.utils import get_row_by_id
 
 
@@ -110,7 +111,15 @@ async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time)
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("ready, job_exists", [(True, True), (False, False)])
-@pytest.mark.parametrize("error", [None, "400", "403", "404"])
+@pytest.mark.parametrize(
+    "error",
+    [
+        None,
+        "403",
+        "404_analysis",
+        "404_sample",
+    ],
+)
 async def test_get(
     ready,
     job_exists,
@@ -154,7 +163,7 @@ async def test_get(
         ),
     )
 
-    if error != "400":
+    if error != "404_sample":
         await client.db.samples.insert_one(
             {
                 "_id": "baz",
@@ -169,7 +178,7 @@ async def test_get(
             }
         )
 
-    if error != "404":
+    if error != "404_analysis":
         await client.db.analyses.insert_one(document)
         await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
@@ -226,27 +235,22 @@ async def test_get(
 
     resp = await client.get(url="/analyses/foobar")
 
-    if error == "400":
-        await resp_is.bad_request(resp, "Parent sample does not exist")
-        return
+    if error is None:
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
-    if error == "403":
+        if ready:
+            args = m_format_analysis.call_args[0]
+            assert args[0] == client.app["config"]
+            assert args[2] == snapshot
+        else:
+            assert not m_format_analysis.called
+
+    elif error == "403":
         await resp_is.insufficient_rights(resp)
-        return
 
-    if error == "404":
+    elif error.startswith("404"):
         await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-
-    if ready:
-        args = m_format_analysis.call_args[0]
-        assert args[0] == client.app["config"]
-        assert args[2] == snapshot
-    else:
-        assert not m_format_analysis.called
 
 
 @pytest.mark.apitest
@@ -309,13 +313,13 @@ async def test_get_304(
 
 
 @pytest.mark.apitest
-@pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
+@pytest.mark.parametrize("error", [None, "403", "404_analysis", "404_sample", "409"])
 async def test_remove(
     mocker, error, fake2, spawn_client, resp_is, tmp_path, static_time
 ):
     client = await spawn_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     user = await fake2.users.create()
 
@@ -328,7 +332,7 @@ async def test_remove(
         ),
     )
 
-    if error != "400":
+    if error != "404_sample":
         await client.db.samples.insert_one(
             {
                 "_id": "baz",
@@ -341,7 +345,7 @@ async def test_remove(
             }
         )
 
-    if error != "404":
+    if error != "404_analysis":
         await client.db.analyses.insert_one(
             {
                 "_id": "foobar",
@@ -361,27 +365,24 @@ async def test_remove(
 
     resp = await client.delete("/analyses/foobar")
 
-    if error == "400":
-        await resp_is.bad_request(resp, "Parent sample does not exist")
-        return
+    if error is None:
+        await resp_is.no_content(resp)
 
-    if error == "403":
+        assert await client.db.analyses.find_one() is None
+
+        assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
+
+    elif error == "403":
         await resp_is.insufficient_rights(resp)
         return
 
-    if error == "404":
+    elif error.startswith("404"):
         await resp_is.not_found(resp)
         return
 
-    if error == "409":
+    elif error == "409":
         await resp_is.conflict(resp, "Analysis is still running")
         return
-
-    await resp_is.no_content(resp)
-
-    assert await client.db.analyses.find_one() is None
-
-    assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
 
 
 @pytest.mark.apitest
@@ -395,7 +396,7 @@ async def test_upload_file(
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     if error == 400:
         format_ = "foo"
@@ -443,10 +444,12 @@ async def test_download_analysis_result(
     client = await spawn_client(authorize=True, administrator=True)
     job_client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
-    job_client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
+    get_config_from_app(job_client.app).data_path = tmp_path
 
-    expected_path = client.app["config"].data_path / "analyses" / "1-reference.fa"
+    expected_path = (
+        get_config_from_app(client.app).data_path / "analyses" / "1-reference.fa"
+    )
 
     await client.db.analyses.insert_one(
         {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
@@ -498,7 +501,15 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
 @pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
-    [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"],
+    [
+        None,
+        "403",
+        "404_analysis",
+        "404_sample",
+        "404_sequence",
+        "409_workflow",
+        "409_ready",
+    ],
 )
 async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
     """
@@ -532,7 +543,7 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
         elif error == "409_ready":
             analysis_document["ready"] = False
 
-        if error != "400":
+        if error != "404_sample":
             await client.db.samples.insert_one(
                 {
                     "_id": "baz",
@@ -551,38 +562,30 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
 
     resp = await client.put("/analyses/foobar/5/blast", {})
 
-    if error == "400":
-        await resp_is.bad_request(resp, "Parent sample does not exist")
-        return
+    if error is None:
+        assert resp.status == 201
 
-    if error == "403":
+        assert (
+            resp.headers["Location"]
+            == "https://virtool.example.com/analyses/foobar/5/blast"
+        )
+
+        assert await resp.json() == snapshot
+
+    elif error == "403":
         await resp_is.insufficient_rights(resp)
-        return
 
-    if error == "404_analysis":
-        await resp_is.not_found(resp, "Analysis not found")
-        return
+    elif error == "404_analysis":
+        await resp_is.not_found(resp)
 
-    if error == "404_sequence":
+    elif error == "404_sequence":
         await resp_is.not_found(resp, "Sequence not found")
-        return
 
-    if error == "409_workflow":
+    elif error == "409_workflow":
         await resp_is.conflict(resp, "Not a NuVs analysis")
-        return
 
-    if error == "409_ready":
+    elif error == "409_ready":
         await resp_is.conflict(resp, "Analysis is still running")
-        return
-
-    assert resp.status == 201
-
-    assert (
-        resp.headers["Location"]
-        == "https://virtool.example.com/analyses/foobar/5/blast"
-    )
-
-    assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest

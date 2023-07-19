@@ -207,15 +207,22 @@ class AnalysisData(DataLayerPiece):
         sample = await get_one_field(self._db.analyses, "sample", analysis_id)
 
         if sample is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
+
+        sample_id = sample["id"]
 
         sample = await self._db.samples.find_one(
-            {"_id": sample["id"]},
+            {"_id": sample_id},
             ["user", "group", "all_read", "group_read", "group_write", "all_write"],
         )
 
         if not sample:
-            raise ResourceError()
+            logger.warning(
+                "Parent sample for analysis not found analysis_id=%s sample_id=%s",
+                analysis_id,
+                sample_id,
+            )
+            raise ResourceNotFoundError
 
         read, write = get_sample_rights(sample, client)
 

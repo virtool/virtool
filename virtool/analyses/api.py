@@ -93,32 +93,31 @@ class AnalysisView(PydanticView):
             if not await get_data_from_req(self.request).analyses.has_right(
                 analysis_id, self.request["client"], "read"
             ):
-                raise InsufficientRights()
-        except ResourceError:
-            raise HTTPBadRequest(text="Parent sample does not exist")
+                raise InsufficientRights
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         if_modified_since = self.request.headers.get("If-Modified-Since")
 
-        if if_modified_since is not None:
+        if if_modified_since:
             if_modified_since = arrow.get(if_modified_since).naive
 
         try:
-            document = await get_data_from_req(self.request).analyses.get(
+            analysis = await get_data_from_req(self.request).analyses.get(
                 analysis_id, if_modified_since
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceNotModifiedError:
-            raise HTTPNotModified()
+            raise HTTPNotModified
 
-        headers = {
-            "Cache-Control": "no-cache",
-            "Last-Modified": datetime_to_isoformat(document.created_at),
-        }
-
-        return json_response(document, headers=headers)
+        return json_response(
+            analysis,
+            headers={
+                "Cache-Control": "no-cache",
+                "Last-Modified": datetime_to_isoformat(analysis.created_at),
+            },
+        )
 
     async def delete(self, analysis_id: str, /) -> r204 | r403 | r404 | r409:
         """
@@ -140,8 +139,6 @@ class AnalysisView(PydanticView):
                     right,
                 ):
                     raise InsufficientRights()
-            except ResourceError:
-                raise HTTPBadRequest(text="Parent sample does not exist")
             except ResourceNotFoundError:
                 raise NotFound()
 
@@ -334,11 +331,9 @@ class BlastView(PydanticView):
                 self.request["client"],
                 "write",
             ):
-                raise InsufficientRights()
-        except ResourceError:
-            raise HTTPBadRequest(text="Parent sample does not exist")
+                raise InsufficientRights
         except ResourceNotFoundError:
-            raise NotFound("Analysis not found")
+            raise NotFound
 
         try:
             document = await get_data_from_req(self.request).analyses.blast(

@@ -947,6 +947,7 @@ async def test_analyze(
                 "_id": "test",
                 "reference": {"id": "foo"},
                 "ready": error != "400_ready_index",
+                "version": 4,
             }
         )
 
@@ -991,12 +992,8 @@ async def test_analyze(
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/analyses/test_analysis"
+    assert resp.headers["Location"] == "/analyses/fb085f7f"
     assert await resp.json() == snapshot
-
-    m_create.assert_called_with(
-        client.db, "test", "foo", ["bar"], "test", "pathoscope_bowtie", "bf1b993c", 0
-    )
 
 
 @pytest.mark.apitest
