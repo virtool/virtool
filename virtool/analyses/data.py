@@ -33,7 +33,6 @@ from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceError,
     ResourceConflictError,
 )
 from virtool.data.events import emits, Operation, emit

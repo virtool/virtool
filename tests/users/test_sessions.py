@@ -6,7 +6,7 @@ import pytest
 from syrupy.matchers import path_type
 
 from virtool.api.custom_json import loads
-from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.utils import hash_key
 

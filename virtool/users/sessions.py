@@ -13,7 +13,6 @@ import virtool.utils
 from virtool.api.custom_json import dump_string
 from virtool.api.custom_json import isoformat_to_datetime, loads
 from virtool.data.errors import (
-    ResourceError,
     ResourceNotFoundError,
 )
 from virtool.data.piece import DataLayerPiece
