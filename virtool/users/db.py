@@ -8,12 +8,12 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.user import User
 
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.db import (
     lookup_groups_minimal_by_id,
     lookup_group_minimal_by_id,
 )
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import (
     get_non_existent_ids,
     id_exists,

@@ -2075,10 +2075,12 @@
 # name: test_analyze[None]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
-    'id': 'test_analysis',
+    'files': <class 'list'> [
+    ],
+    'id': 'fb085f7f',
     'index': <class 'dict'> {
-      'id': 'foobar',
-      'version': 3,
+      'id': 'test',
+      'version': 4,
     },
     'job': <class 'dict'> {
       'archived': False,
@@ -2097,10 +2099,19 @@
     'ready': False,
     'reference': <class 'dict'> {
       'id': 'foo',
+      'name': None,
     },
+    'results': None,
     'sample': <class 'dict'> {
       'id': 'test',
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
+    'subtractions': <class 'list'> [
+      'bar',
+    ],
+    'updated_at': '2015-10-06T20:00:00Z',
     'user': <class 'dict'> {
       'id': 'test',
     },

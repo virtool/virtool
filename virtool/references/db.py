@@ -27,7 +27,7 @@ import virtool.utils
 from virtool.data.utils import get_data_from_app
 from virtool.errors import DatabaseError
 from virtool.http.utils import download_file
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row

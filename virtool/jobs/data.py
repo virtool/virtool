@@ -21,7 +21,7 @@ from virtool.jobs.utils import (
     check_job_is_running_or_waiting,
 )
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform

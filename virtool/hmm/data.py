@@ -25,7 +25,7 @@ from virtool.hmm.db import PROJECTION, generate_annotations_json_file
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.hmm.db import fetch_and_update_release
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.progress import (
     AbstractProgressHandler,

@@ -36,7 +36,7 @@ from virtool.indexes.tasks import export_index, get_index_file_type_from_name
 from virtool.indexes.utils import join_index_path
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id

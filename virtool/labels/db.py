@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.labels.models import SQLLabel
-from virtool.mongo.transforms import AbstractTransform
+from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
 
 

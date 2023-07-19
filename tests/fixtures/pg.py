@@ -1,3 +1,8 @@
+"""
+Fixtures for working with the Postgres testing instance.
+
+
+"""
 import asyncio
 
 import orjson
@@ -15,7 +20,10 @@ def pg_base_connection_string(request, pg_db_name: str):
     """
     A Postgres connection string without the database name at the end.
 
-    eg. postgresql+asyncpg://virtool:virtool@localhost
+    This is used to manage databases in the Postgres instance. It is used by
+    migration-specific fixtures like :func:`migration_pg` to create and drop databases.
+
+    eg. ``postgresql+asyncpg://virtool:virtool@localhost``
 
     """
     return request.config.getoption("postgres_connection_string")

@@ -24,7 +24,7 @@ import virtool.samples.utils
 import virtool.utils
 from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import id_exists, get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES

@@ -33,14 +33,13 @@ from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceError,
     ResourceConflictError,
 )
 from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
+from virtool.data.transforms import apply_transforms
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
@@ -207,15 +206,22 @@ class AnalysisData(DataLayerPiece):
         sample = await get_one_field(self._db.analyses, "sample", analysis_id)
 
         if sample is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
+
+        sample_id = sample["id"]
 
         sample = await self._db.samples.find_one(
-            {"_id": sample["id"]},
+            {"_id": sample_id},
             ["user", "group", "all_read", "group_read", "group_write", "all_write"],
         )
 
         if not sample:
-            raise ResourceError()
+            logger.warning(
+                "Parent sample for analysis not found analysis_id=%s sample_id=%s",
+                analysis_id,
+                sample_id,
+            )
+            raise ResourceNotFoundError
 
         read, write = get_sample_rights(sample, client)
 

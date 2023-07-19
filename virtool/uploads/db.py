@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.mongo.transforms import AbstractTransform
+from virtool.data.transforms import AbstractTransform
 from virtool.pg.base import Base
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document

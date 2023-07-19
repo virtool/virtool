@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 import virtool.mongo.connect
 from virtool.api.custom_json import dump_string
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.utils import connect_openfga
+from virtool.authorization.openfga import connect_openfga
 from virtool.config.cls import MigrationConfig
 
 logger = getLogger("migration")

@@ -2,7 +2,7 @@ import pytest
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.authorization.relationships import AdministratorRoleAssignment
-from virtool.authorization.utils import get_authorization_client_from_app
+from virtool.authorization.client import get_authorization_client_from_app
 from virtool.data.utils import get_data_from_app
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.mongo.utils import get_one_field

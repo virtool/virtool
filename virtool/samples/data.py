@@ -15,13 +15,13 @@ from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
+from virtool.data.transforms import apply_transforms
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.db import lookup_minimal_job_by_id, create_job
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
     check_labels_do_not_exist,

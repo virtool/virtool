@@ -947,6 +947,7 @@ async def test_analyze(
                 "_id": "test",
                 "reference": {"id": "foo"},
                 "ready": error != "400_ready_index",
+                "version": 4,
             }
         )
 
@@ -964,25 +965,6 @@ async def test_analyze(
                 "ready": True,
             }
         )
-
-    m_create = mocker.patch(
-        "virtool.analyses.db.create",
-        make_mocked_coro(
-            {
-                "id": "test_analysis",
-                "ready": False,
-                "created_at": static_time.iso,
-                "job": {"id": "baz"},
-                "workflow": "pathoscope_bowtie",
-                "reference": {"id": "foo"},
-                "sample": {"id": "test"},
-                "index": {"id": "foobar", "version": 3},
-                "user": {
-                    "id": "test",
-                },
-            }
-        ),
-    )
 
     resp = await client.post(
         "/samples/test/analyses",
@@ -1010,12 +992,8 @@ async def test_analyze(
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/analyses/test_analysis"
+    assert resp.headers["Location"] == "/analyses/fb085f7f"
     assert await resp.json() == snapshot
-
-    m_create.assert_called_with(
-        client.db, "test", "foo", ["bar"], "test", "pathoscope_bowtie", "bf1b993c", 0
-    )
 
 
 @pytest.mark.apitest

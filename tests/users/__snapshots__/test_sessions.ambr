@@ -107,7 +107,7 @@
 # name: test_get_anonymous.1
   ResourceNotFoundError('Session is invalid')
 ---
-# name: test_get_authenticated
+# name: test_get_authenticated[snapshot]
   <class 'dict'> {
     'authentication': <class 'dict'> {
       'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
@@ -117,9 +117,6 @@
     'ip': '1.1.1.1',
     'reset': None,
   }
----
-# name: test_get_authenticated.1
-  ResourceError('Session not authenticated')
 ---
 # name: test_get_reset_data
   <class 'dict'> {

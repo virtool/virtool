@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_app
 from virtool.labels.db import AttachLabelsTransform
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import (
     check_is_legacy,

@@ -9,7 +9,7 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.errors import DatabaseError
 from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.users.db import AttachUserTransform
 

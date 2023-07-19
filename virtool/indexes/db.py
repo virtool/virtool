@@ -18,7 +18,7 @@ from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.indexes.models import SQLIndexFile
 from virtool.jobs.db import AttachJobsTransform
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform

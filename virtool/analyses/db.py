@@ -2,7 +2,7 @@
 Work with analyses in the database.
 
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -10,11 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.mongo.utils
 import virtool.utils
 from virtool.analyses.models import SQLAnalysisFile
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform
 from virtool.indexes.db import get_current_id_and_version
-from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 PROJECTION = (
@@ -62,21 +60,6 @@ class AttachAnalysisFileTransform(AbstractTransform):
         return [result.to_dict() for result in results]
 
 
-async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Process an analysis document by attaching user and subtraction data.
-
-    :param db: the application database object
-    :param document: the analysis document
-    :return: the processed analysis document
-
-    """
-    return await apply_transforms(
-        base_processor(document),
-        [AttachSubtractionTransform(db), AttachUserTransform(db)],
-    )
-
-
 async def create(
     db,
     sample_id: str,
@@ -86,7 +69,7 @@ async def create(
     workflow: str,
     job_id: str,
     space_id: int,
-    analysis_id: Optional[str] = None,
+    analysis_id: str | None = None,
 ) -> dict:
     """
     Creates a new analysis.
@@ -102,6 +85,7 @@ async def create(
     :param user_id: the ID of the user starting the job
     :param workflow: the analysis workflow to run
     :param job_id: the ID of the job
+    :param space_id: the ID of the parent space
     :param analysis_id: the ID of the analysis
     :return: the analysis document
 

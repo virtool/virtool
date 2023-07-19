@@ -40,7 +40,7 @@ from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release, create_update_subdocument
 from virtool.history.db import patch_to_version
 from virtool.jobs.utils import JobRights
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row

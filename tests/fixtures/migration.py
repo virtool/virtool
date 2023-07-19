@@ -1,3 +1,12 @@
+"""
+Specialized fixtures for testing migrations.
+
+Some of the fixtures in this module looks similar to other used for manipulating
+Postgres (eg. :fixture:`pg` and :fixture:`migration_pg`). The difference is the
+migration-flavoured fixtures dispose of the database after each test to eliminate any
+schema conflicts between tests.
+
+"""
 from pathlib import Path
 
 import py.path

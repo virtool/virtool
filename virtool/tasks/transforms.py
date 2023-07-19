@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Union, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.mongo.transforms import AbstractTransform
+from virtool.data.transforms import AbstractTransform
 from virtool.tasks.models import SQLTask
 from virtool.types import Document
 from virtool.utils import get_safely

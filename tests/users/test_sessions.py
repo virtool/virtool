@@ -6,7 +6,8 @@ import pytest
 from syrupy.matchers import path_type
 
 from virtool.api.custom_json import loads
-from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError
+from virtool.data.layer import DataLayer
 from virtool.utils import hash_key
 
 
@@ -77,10 +78,7 @@ async def test_create_session(
         matcher=path_type({"created_at": (str,)})
     )
 
-    if remember:
-        starting_ttl = 2592000
-    else:
-        starting_ttl = 3600
+    starting_ttl = 2592000 if remember else 3600
 
     await session_manager.test_ttl(starting_ttl)
 
@@ -123,7 +121,7 @@ async def test_create_reset_session(
 
 
 async def test_get_authenticated(
-    data_layer,
+    data_layer: DataLayer,
     ip,
     fake2,
     snapshot,
@@ -133,13 +131,12 @@ async def test_get_authenticated(
     session_id, _, token = await session_manager.create(ip, user.id)
 
     assert (await data_layer.sessions.get_authenticated(session_id, token)) == snapshot(
-        matcher=path_type({"created_at": (datetime,)})
+        name="snapshot", matcher=path_type({"created_at": (datetime,)})
     )
 
-    try:
+    with pytest.raises(ResourceNotFoundError) as err:
         await data_layer.sessions.get_authenticated(session_id, "invalid_token")
-    except ResourceError as err:
-        assert err == snapshot()
+        assert err == snapshot(name="error")
 
 
 async def test_get_anonymous(
