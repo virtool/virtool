@@ -2,14 +2,18 @@
 Work with analyses in the database.
 
 """
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.mongo.utils
+import virtool.utils
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
+from virtool.users.db import AttachUserTransform
+from virtool.utils import base_processor
 
 PROJECTION = (
     "_id",
@@ -54,3 +58,78 @@ class AttachAnalysisFileTransform(AbstractTransform):
             )
 
         return [result.to_dict() for result in results]
+
+
+async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Process an analysis document by attaching user and subtraction data.
+
+    :param db: the application database object
+    :param document: the analysis document
+    :return: the processed analysis document
+
+    """
+    return await apply_transforms(
+        base_processor(document),
+        [AttachSubtractionTransform(db), AttachUserTransform(db)],
+    )
+
+
+async def create(
+    db,
+    sample_id: str,
+    ref_id: str,
+    subtractions: List[str],
+    user_id: str,
+    workflow: str,
+    job_id: str,
+    space_id: int,
+    analysis_id: Optional[str] = None,
+) -> dict:
+    """
+    Creates a new analysis.
+
+    Ensures that a valid subtraction host was the submitted. Configures read and write
+    permissions on the sample document and assigns it a creator username based on the
+    requesting connection.
+
+    :param db: the application database object
+    :param sample_id: the ID of the sample to create an analysis for
+    :param ref_id: the ID of the reference to analyze against
+    :param subtractions: the list of the subtraction IDs to remove from the analysis
+    :param user_id: the ID of the user starting the job
+    :param workflow: the analysis workflow to run
+    :param job_id: the ID of the job
+    :param analysis_id: the ID of the analysis
+    :return: the analysis document
+
+    """
+    index_id, index_version = await get_current_id_and_version(db, ref_id)
+
+    created_at = virtool.utils.timestamp()
+
+    document = {
+        "created_at": created_at,
+        "files": [],
+        "job": {"id": job_id},
+        "index": {"id": index_id, "version": index_version},
+        "reference": {
+            "id": ref_id,
+            "name": await virtool.mongo.utils.get_one_field(
+                db.references, "name", ref_id
+            ),
+        },
+        "ready": False,
+        "results": None,
+        "sample": {"id": sample_id},
+        "space": {"id": space_id},
+        "subtractions": subtractions,
+        "updated_at": created_at,
+        "user": {"id": user_id},
+        "workflow": workflow,
+    }
+
+    if analysis_id:
+        document["_id"] = analysis_id
+
+    return base_processor(await db.analyses.insert_one(document))

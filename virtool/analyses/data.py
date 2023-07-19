@@ -39,16 +39,12 @@ from virtool.data.errors import (
 from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
-from virtool.indexes.db import get_current_id_and_version
-from virtool.jobs.client import AbstractJobsClient
-from virtool.jobs.db import create_job, AttachJobsTransform
-from virtool.jobs.utils import JobRights
+from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field, id_exists, get_new_id
+from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.samples.db import recalculate_workflow_tags
-from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.tasks.progress import (
@@ -65,12 +61,9 @@ logger = getLogger("analyses")
 class AnalysisData(DataLayerPiece):
     name = "analyses"
 
-    def __init__(
-        self, db: Mongo, config, jobs_client: AbstractJobsClient, pg: AsyncEngine
-    ):
+    def __init__(self, db: Mongo, config, pg: AsyncEngine):
         self._db = db
         self._config = config
-        self._jobs_client = jobs_client
         self._pg = pg
 
     async def find(self, page: int, per_page: int, client) -> AnalysisSearchResult:
@@ -99,6 +92,7 @@ class AnalysisData(DataLayerPiece):
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
+                            *lookup_minimal_job_by_id(),
                             *lookup_nested_subtractions(),
                             *lookup_nested_reference_by_id(),
                             *lookup_nested_user_by_id(),
@@ -149,8 +143,6 @@ class AnalysisData(DataLayerPiece):
             if can_write
         ]
 
-        documents = await apply_transforms(documents, [AttachJobsTransform(self._db)])
-
         return AnalysisSearchResult(
             documents=documents,
             found_count=found_count,
@@ -159,98 +151,6 @@ class AnalysisData(DataLayerPiece):
             page_count=int(math.ceil(found_count / per_page)),
             per_page=per_page,
         )
-
-    async def create(
-        self, sample_id: str, user_id: str, data: CreateAnalysisRequest
-    ) -> Analysis:
-        """
-        Creates a new analysis.
-
-        Ensures that a valid subtraction host was the submitted. Configures read and
-        write permissions on the sample document and assigns it a creator username based
-        on the requesting connection.
-
-        :param sample_id: the ID of the sample to create an analysis for
-        :param user_id: the ID of the user starting the job
-        :return: the analysis
-
-        """
-
-        created_at = virtool.utils.timestamp()
-
-        if not await id_exists(self._db.references, data.ref_id):
-            raise ResourceConflictError("Reference does not exist")
-
-        if not await self._db.indexes.count_documents(
-            {"reference.id": data.ref_id, "ready": True}
-        ):
-            raise ResourceConflictError("No ready index")
-
-        if data.subtractions is None:
-            subtractions = []
-        else:
-            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-                self._db.subtraction, data.subtractions
-            )
-
-            if non_existent_subtractions:
-                raise ResourceConflictError(
-                    f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
-                )
-
-            subtractions = data.subtractions
-
-        index_id, index_version = await get_current_id_and_version(
-            self._db, data.ref_id
-        )
-
-        job_id = await get_new_id(self._db.jobs)
-
-        async with self._db.create_session() as session:
-            document = await self._db.analyses.insert_one(
-                {
-                    "created_at": created_at,
-                    "files": [],
-                    "index": {"id": index_id, "version": index_version},
-                    "job": {"id": job_id},
-                    "ready": False,
-                    "reference": {
-                        "id": data.ref_id,
-                        "name": await virtool.mongo.utils.get_one_field(
-                            self._db.references, "name", data.ref_id
-                        ),
-                    },
-                    "results": None,
-                    "sample": {"id": sample_id},
-                    "space": {"id": 0},
-                    "subtractions": subtractions,
-                    "updated_at": created_at,
-                    "user": {"id": user_id},
-                    "workflow": data.workflow,
-                },
-                session=session,
-            )
-
-            await create_job(
-                self._db,
-                self._jobs_client,
-                data.workflow,
-                {
-                    "analysis_id": document["_id"],
-                    "ref_id": data.ref_id,
-                    "sample_id": sample_id,
-                    "sample_name": document["name"],
-                    "index_id": document["index"]["id"],
-                    "subtractions": subtractions,
-                },
-                user_id,
-                JobRights(),
-                0,
-                job_id,
-                session=session,
-            )
-
-        return await self.get(document["_id"], None)
 
     async def get(
         self, analysis_id: str, if_modified_since: Optional[datetime]
@@ -265,6 +165,7 @@ class AnalysisData(DataLayerPiece):
         result = await self._db.analyses.aggregate(
             [
                 {"$match": {"_id": analysis_id}},
+                *lookup_minimal_job_by_id(),
                 *lookup_nested_subtractions(),
                 *lookup_nested_reference_by_id(),
                 *lookup_nested_user_by_id(),
@@ -272,7 +173,7 @@ class AnalysisData(DataLayerPiece):
         ).to_list(length=1)
 
         if not result:
-            raise ResourceNotFoundError
+            raise ResourceNotFoundError()
 
         analysis = result[0]
 
@@ -285,11 +186,10 @@ class AnalysisData(DataLayerPiece):
                 self._config, self._db, analysis
             )
 
+        analysis = base_processor(analysis)
+
         if analysis["workflow"] == "nuvs":
-            analysis = await apply_transforms(
-                base_processor(analysis),
-                [AttachJobsTransform(self._db), AttachNuVsBLAST(self._pg)],
-            )
+            analysis = await apply_transforms(analysis, [AttachNuVsBLAST(self._pg)])
 
         return Analysis(
             **{**analysis, "job": analysis["job"] if analysis["job"] else None}

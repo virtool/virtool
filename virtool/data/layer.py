@@ -100,7 +100,7 @@ def create_data_layer(
     data_layer = DataLayer(
         AccountData(mongo, redis, authorization_client, pg),
         AdministratorsData(authorization_client, mongo, pg),
-        AnalysisData(mongo, config, jobs_client, pg),
+        AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
         GroupsData(authorization_client, mongo, pg),
         HistoryData(config.data_path, mongo),
