@@ -965,25 +965,6 @@ async def test_analyze(
             }
         )
 
-    m_create = mocker.patch(
-        "virtool.analyses.db.create",
-        make_mocked_coro(
-            {
-                "id": "test_analysis",
-                "ready": False,
-                "created_at": static_time.iso,
-                "job": {"id": "baz"},
-                "workflow": "pathoscope_bowtie",
-                "reference": {"id": "foo"},
-                "sample": {"id": "test"},
-                "index": {"id": "foobar", "version": 3},
-                "user": {
-                    "id": "test",
-                },
-            }
-        ),
-    )
-
     resp = await client.post(
         "/samples/test/analyses",
         data={

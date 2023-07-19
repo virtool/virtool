@@ -197,12 +197,16 @@ async def middleware(req, handler) -> Response:
             session = await get_data_from_req(req).sessions.get_authenticated(
                 session_id, session_token
             )
-        except ResourceConflictError:
-            session = await get_data_from_req(req).sessions.get_anonymous(session_id)
         except ResourceNotFoundError:
-            session_id, session = await get_data_from_req(
-                req
-            ).sessions.create_anonymous(get_ip(req))
+            try:
+                session = await get_data_from_req(req).sessions.get_anonymous(
+                    session_id
+                )
+            except ResourceNotFoundError:
+                session_id, session = await get_data_from_req(
+                    req
+                ).sessions.create_anonymous(get_ip(req))
+
     else:
         session_id, session = await get_data_from_req(req).sessions.create_anonymous(
             get_ip(req)

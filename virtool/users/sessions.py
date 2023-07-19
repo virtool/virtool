@@ -15,7 +15,6 @@ from virtool.api.custom_json import isoformat_to_datetime, loads
 from virtool.data.errors import (
     ResourceError,
     ResourceNotFoundError,
-    ResourceConflictError,
 )
 from virtool.data.piece import DataLayerPiece
 from virtool.utils import hash_key
@@ -137,6 +136,7 @@ class SessionData(DataLayerPiece):
 
         :param session_id: the session id
         :param session_token: the secure token for an authenticated session
+        :raises ResourceNotFoundError: if the session is not found or not authenticated
         :return: the session object and token
         """
 
@@ -145,7 +145,7 @@ class SessionData(DataLayerPiece):
         if session.authentication is None or session.authentication.token != hash_key(
             session_token
         ):
-            raise ResourceConflictError("Session not authenticated")
+            raise ResourceNotFoundError("Session not authenticated")
 
         return session
 
@@ -154,13 +154,10 @@ class SessionData(DataLayerPiece):
         Gets an anonymous session by its id.
 
         :param session_id: the session id
+        :raises ResourceNotFoundError: if the session is not found
         :return: the session object
         """
-
-        try:
-            return await self._get(session_id)
-        except ResourceNotFoundError:
-            raise ResourceError("Invalid session")
+        return await self._get(session_id)
 
     async def delete(self, session_id) -> None:
         """
