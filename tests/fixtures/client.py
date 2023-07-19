@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 from aiohttp import BasicAuth
-from aiohttp.web_routedef import RouteTableDef
+from aiohttp.web import Response, RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
 from virtool_core.models.session import Session
@@ -51,10 +51,10 @@ class VirtoolTestClient:
     def has_cookie(self, key, value):
         return self.get_cookie(key) == value
 
-    async def get(self, url, headers=None, params=None):
+    async def get(self, url: str, headers=None, params=None) -> Response:
         return await self._test_client.get(url, headers=headers, params=params)
 
-    async def post(self, url, data=None):
+    async def post(self, url: str, data=None) -> Response:
         payload = None
 
         if data:
@@ -62,16 +62,16 @@ class VirtoolTestClient:
 
         return await self._test_client.post(url, data=payload)
 
-    async def post_form(self, url, data):
+    async def post_form(self, url: str, data) -> Response:
         return await self._test_client.post(url, data=data)
 
-    async def patch(self, url, data):
+    async def patch(self, url: str, data) -> Response:
         return await self._test_client.patch(url, data=json.dumps(data))
 
-    async def put(self, url, data):
+    async def put(self, url: str, data) -> Response:
         return await self._test_client.put(url, data=json.dumps(data))
 
-    async def delete(self, url):
+    async def delete(self, url: str) -> Response:
         return await self._test_client.delete(url)
 
 

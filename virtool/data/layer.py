@@ -1,36 +1,32 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
 from virtool.administrators.data import AdministratorsData
+from virtool.analyses.data import AnalysisData
 from virtool.authorization.client import AuthorizationClient
-from virtool.config import Config
-from virtool.jobs.client import JobsClient
-from virtool.mongo.core import Mongo
-from virtool.tasks.client import TasksClient
-
-if TYPE_CHECKING:
-    from virtool.analyses.data import AnalysisData
-
 from virtool.blast.data import BLASTData
+from virtool.config import Config
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
+from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.messages.data import MessagesData
+from virtool.mongo.core import Mongo
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.settings.data import SettingsData
 from virtool.spaces.data import SpacesData
 from virtool.subtractions.data import SubtractionsData
+from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
@@ -48,7 +44,7 @@ class DataLayer:
 
     account: AccountData
     administrators: AdministratorsData
-    analyses: "AnalysisData"
+    analyses: AnalysisData
     blast: BLASTData
     groups: GroupsData
     history: HistoryData
@@ -102,9 +98,9 @@ def create_data_layer(
     jobs_client = JobsClient(redis)
 
     data_layer = DataLayer(
-        AccountData(mongo, redis, authorization_client),
-        AdministratorsData(authorization_client, mongo),
-        AnalysisData(mongo, config, pg),
+        AccountData(mongo, redis, authorization_client, pg),
+        AdministratorsData(authorization_client, mongo, pg),
+        AnalysisData(mongo, config, jobs_client, pg),
         BLASTData(client, mongo, pg),
         GroupsData(authorization_client, mongo, pg),
         HistoryData(config.data_path, mongo),

@@ -2,13 +2,12 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
 
+from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.transforms import apply_transforms
 from virtool.users.transforms import AttachPermissionsTransform
 
 
 async def test_permission_transform(fake2, pg, mongo, snapshot):
-
     group = await fake2.groups.create(
         permissions={Permission.create_sample.value: True}
     )

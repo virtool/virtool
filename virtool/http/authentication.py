@@ -6,7 +6,11 @@ from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
 from jose.exceptions import JWTError, JWTClaimsError, ExpiredSignatureError
 
-from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.errors import (
+    ResourceError,
+    ResourceNotFoundError,
+    ResourceConflictError,
+)
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.http.client import UserClient
@@ -193,7 +197,7 @@ async def middleware(req, handler) -> Response:
             session = await get_data_from_req(req).sessions.get_authenticated(
                 session_id, session_token
             )
-        except ResourceError:
+        except ResourceConflictError:
             session = await get_data_from_req(req).sessions.get_anonymous(session_id)
         except ResourceNotFoundError:
             session_id, session = await get_data_from_req(

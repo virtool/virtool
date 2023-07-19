@@ -374,9 +374,10 @@ async def test_logout(spawn_client):
         ("DELETE", "/account/keys"),
     ],
 )
-async def test_requires_authorization(method, path, spawn_client):
+async def test_requires_authorization(method: str, path: str, spawn_client):
     """
-    Test that a requires authorization 401 response is sent when the session is not authenticated.
+    Test that a '401 Requires authorization' response is sent when the session is not
+    authenticated.
 
     """
     client = await spawn_client()

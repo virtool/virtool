@@ -12,7 +12,11 @@ from virtool_core.models.session import (
 import virtool.utils
 from virtool.api.custom_json import dump_string
 from virtool.api.custom_json import isoformat_to_datetime, loads
-from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.errors import (
+    ResourceError,
+    ResourceNotFoundError,
+    ResourceConflictError,
+)
 from virtool.data.piece import DataLayerPiece
 from virtool.utils import hash_key
 
@@ -107,10 +111,10 @@ class SessionData(DataLayerPiece):
 
     async def _get(self, session_id: str) -> Session:
         """
-        Get a session provided with only the session id
-        NB: Permits access to all sessions using only session id.
+        Get a session provided with the session id.
 
         :param session_id: the session id
+        :raises ResourceNotFoundError: if the session is not found
         :return: the session object and token
         """
         session = await self.redis.get(session_id)
@@ -119,6 +123,7 @@ class SessionData(DataLayerPiece):
             raise ResourceNotFoundError("Session is invalid")
 
         session = loads(session)
+
         return Session(
             **{
                 **session,
@@ -137,13 +142,12 @@ class SessionData(DataLayerPiece):
 
         session = await self._get(session_id)
 
-        if session.authentication is None:
-            raise ResourceError("Session not authenticated")
+        if session.authentication is None or session.authentication.token != hash_key(
+            session_token
+        ):
+            raise ResourceConflictError("Session not authenticated")
 
-        if session.authentication.token == hash_key(session_token):
-            return session
-
-        raise ResourceError("Session not authenticated")
+        return session
 
     async def get_anonymous(self, session_id: str) -> Session:
         """
@@ -153,12 +157,10 @@ class SessionData(DataLayerPiece):
         :return: the session object
         """
 
-        session = await self._get(session_id)
-
-        if session.authentication is not None:
+        try:
+            return await self._get(session_id)
+        except ResourceNotFoundError:
             raise ResourceError("Invalid session")
-
-        return session
 
     async def delete(self, session_id) -> None:
         """

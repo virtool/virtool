@@ -1,4 +1,6 @@
 """Fixtures"""
+import asyncio
+
 import openfga_sdk
 import pytest
 
@@ -28,10 +30,11 @@ async def authorization_client(
     )
 
     await write_openfga_authorization_model(api_instance)
-    await delete_openfga_tuples(api_instance, ResourceType.SPACE, 0)
-    await delete_openfga_tuples(api_instance, ResourceType.APP, "virtool")
 
-    yield AuthorizationClient(api_instance)
+    await asyncio.gather(
+        delete_openfga_tuples(api_instance, ResourceType.SPACE, 0),
+        delete_openfga_tuples(api_instance, ResourceType.APP, "virtool"),
+    )
 
     authorization_client = AuthorizationClient(api_instance)
 
