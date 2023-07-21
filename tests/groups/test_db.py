@@ -36,40 +36,49 @@ async def test_attach_group_transform(snapshot, fake2, mongo, quantity):
 async def test_attach_groups_transform(snapshot, fake2, mongo, quantity):
     match quantity:
         case "one":
-            groups = [
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-            ]
-
-            doc = {"_id": "doc", "groups": [groups[0].id, groups[1].id, groups[2].id]}
+            doc = {
+                "_id": "doc",
+                "groups": [
+                    (await fake2.groups.create()).id,
+                    (await fake2.groups.create()).id,
+                    (await fake2.groups.create()).id,
+                ],
+            }
 
             complete_doc = await apply_transforms(doc, [AttachGroupsTransform(mongo)])
 
             assert complete_doc == snapshot
-
 
             assert (
                 await apply_transforms(doc, [AttachGroupsTransform(mongo)]) == snapshot
             )
 
         case "many":
-            groups = [
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-                await fake2.groups.create(),
-            ]
-
             docs = [
-                {"_id": "doc_0", "groups": [groups[0].id, groups[1].id, groups[2].id]},
-                {"_id": "doc_1", "groups": [groups[3].id, groups[4].id, groups[5].id]},
-                {"_id": "doc_2", "groups": [groups[6].id, groups[7].id, groups[8].id]},
+                {
+                    "_id": "doc_0",
+                    "groups": [
+                        (await fake2.groups.create()).id,
+                        (await fake2.groups.create()).id,
+                        (await fake2.groups.create()).id,
+                    ],
+                },
+                {
+                    "_id": "doc_1",
+                    "groups": [
+                        (await fake2.groups.create()).id,
+                        (await fake2.groups.create()).id,
+                        (await fake2.groups.create()).id,
+                    ],
+                },
+                {
+                    "_id": "doc_2",
+                    "groups": [
+                        (await fake2.groups.create()).id,
+                        (await fake2.groups.create()).id,
+                        (await fake2.groups.create()).id,
+                    ],
+                },
             ]
 
             complete_docs = await apply_transforms(docs, [AttachGroupsTransform(mongo)])
