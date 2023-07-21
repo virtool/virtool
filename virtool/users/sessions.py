@@ -153,10 +153,15 @@ class SessionData(DataLayerPiece):
         Gets an anonymous session by its id.
 
         :param session_id: the session id
-        :raises ResourceNotFoundError: if the session is not found
+        :raises ResourceNotFoundError: if the session is not found or is authenticated
         :return: the session object
         """
-        return await self._get(session_id)
+        session = await self._get(session_id)
+
+        if session.authentication is not None:
+            raise ResourceNotFoundError("Session not valid")
+
+        return session
 
     async def delete(self, session_id) -> None:
         """
