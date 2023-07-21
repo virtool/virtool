@@ -390,7 +390,7 @@ class ResetView(PydanticView):
                 data,
                 virtool.http.authentication.get_ip(self.request),
             )
-        except (ResourceError, ResourceNotFoundError):
+        except ResourceNotFoundError:
             raise HTTPBadRequest(text="Invalid session")
 
         try:
