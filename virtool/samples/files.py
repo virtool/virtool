@@ -4,9 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.caches.models import SampleArtifactCache, SampleReadsCache
-from virtool.samples.models import SampleArtifact, SampleReads
-from virtool.uploads.models import Upload
+from virtool.caches.models import SQLSampleArtifactCache, SQLSampleReadsCache
+from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
+from virtool.uploads.models import SQLUpload
 
 
 async def get_existing_reads(
@@ -23,9 +23,9 @@ async def get_existing_reads(
     """
     async with AsyncSession(pg) as session:
         statement = (
-            select(SampleReads).filter_by(sample=sample)
+            select(SQLSampleReads).filter_by(sample=sample)
             if not key
-            else select(SampleReadsCache).filter_by(sample=sample, key=key)
+            else select(SQLSampleReadsCache).filter_by(sample=sample, key=key)
         )
 
         query = await session.execute(statement)
@@ -55,7 +55,7 @@ async def create_artifact_file(
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        artifact = SampleArtifactCache(key=key) if key else SampleArtifact()
+        artifact = SQLSampleArtifactCache(key=key) if key else SQLSampleArtifact()
 
         artifact.name = name
         artifact.name_on_disk = name_on_disk
@@ -97,7 +97,7 @@ async def create_reads_file(
 
     """
     async with AsyncSession(pg) as session:
-        reads = SampleReadsCache(key=key) if cache else SampleReads()
+        reads = SQLSampleReadsCache(key=key) if cache else SQLSampleReads()
 
         reads.sample = sample_id
         reads.name = name
@@ -107,7 +107,7 @@ async def create_reads_file(
 
         if upload_id and (
             upload := (
-                await session.execute(select(Upload).filter_by(id=upload_id))
+                await session.execute(select(SQLUpload).filter_by(id=upload_id))
             ).scalar()
         ):
             upload.reads.append(reads)

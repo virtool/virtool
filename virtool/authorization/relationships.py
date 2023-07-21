@@ -122,6 +122,36 @@ class AdministratorRoleAssignment(AbstractRelationship):
     def user_type(self) -> str:
         return "user"
 
+    async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
+
+        for request in add_list:
+            relation_tuple = request.writes.tuple_keys[0]
+
+            if (
+                relation_tuple.object == f"{self.object_type}:{self.object_id}"
+                and relation_tuple.user == f"{self.user_type}:{self.user_id}"
+                and relation_tuple.relation in iter(AdministratorRole)
+            ):
+                add_list.remove(request)
+
+        response = await openfga.read(
+            ReadRequest(
+                tuple_key=TupleKey(
+                    user=f"{self.user_type}:{self.user_id}",
+                    object=f"{self.object_type}:{self.object_id}",
+                ),
+            )
+        )
+
+        if response.tuples:
+            await openfga.write(
+                WriteRequest(
+                    deletes=TupleKeys(
+                        [response_tuple.key for response_tuple in response.tuples]
+                    )
+                )
+            )
+
 
 class SpaceMembership(AbstractRelationship):
     exclusive = True
@@ -159,6 +189,54 @@ class SpaceMembership(AbstractRelationship):
     def user_type(self) -> str:
         return "user"
 
+    async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
+
+        for request in add_list:
+            relation_tuple = request.writes.tuple_keys[0]
+
+            if (
+                relation_tuple.object == f"{self.object_type}:{self.object_id}"
+                and relation_tuple.user == f"{self.user_type}:{self.user_id}"
+                and relation_tuple.relation in iter(SpaceRole)
+            ):
+                add_list.remove(request)
+
+        member_response = await openfga.read(
+            ReadRequest(
+                tuple_key=TupleKey(
+                    user=f"{self.user_type}:{self.user_id}",
+                    relation=SpaceRole.MEMBER,
+                    object=f"{self.object_type}:{self.object_id}",
+                ),
+            )
+        )
+
+        owner_response = await openfga.read(
+            ReadRequest(
+                tuple_key=TupleKey(
+                    user=f"{self.user_type}:{self.user_id}",
+                    relation=SpaceRole.OWNER,
+                    object=f"{self.object_type}:{self.object_id}",
+                ),
+            )
+        )
+
+        if member_response.tuples or owner_response.tuples:
+            await openfga.write(
+                WriteRequest(
+                    deletes=TupleKeys(
+                        [
+                            response_tuple.key
+                            for response_tuple in member_response.tuples
+                        ]
+                        + [
+                            response_tuple.key
+                            for response_tuple in owner_response.tuples
+                        ]
+                    )
+                )
+            )
+
 
 class SpaceRoleAssignment(AbstractRelationship):
     """Represents a space having the given base role."""
@@ -194,7 +272,7 @@ class UserRoleAssignment(AbstractRelationship):
 
     """
 
-    def __init__(self, space_id: int, user_id: str, role: SpaceRoleType):
+    def __init__(self, user_id: str, space_id: int, role: SpaceRoleType):
         self._space_id = space_id
         self._user_id = user_id
         self._role = role

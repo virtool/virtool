@@ -2,7 +2,7 @@ import logging
 
 from aiohttp import web
 
-import virtool.dispatcher.dispatcher
+import virtool.ws.connection
 from virtool.http.policy import policy, WebSocketRoutePolicy
 
 logger = logging.getLogger(__name__)
@@ -18,13 +18,13 @@ async def root(req: web.Request) -> web.WebSocketResponse:
 
     await ws.prepare(req)
 
-    connection = virtool.dispatcher.dispatcher.Connection(ws, req["client"])
+    connection = virtool.ws.connection.WSConnection(ws, req["client"])
 
     if not req["client"].authenticated:
         await connection.close(4000)
         return ws
 
-    req.app["dispatcher"].add_connection(connection)
+    req.app["ws"].add_connection(connection)
 
     try:
         async for _ in ws:
@@ -35,6 +35,6 @@ async def root(req: web.Request) -> web.WebSocketResponse:
 
     logger.info("Connection closed")
 
-    req.app["dispatcher"].remove_connection(connection)
+    req.app["ws"].remove_connection(connection)
 
     return ws

@@ -186,21 +186,25 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
             }
         )
 
-    contributors = [
-        {"id": "fred", "count": 1, "handle": "fred", "administrator": True},
-        {"id": "igboyes", "count": 3, "handle": "ian", "administrator": True},
-    ]
-
-    otus = [
-        {"id": "kjs8sa99", "name": "Foo", "change_count": 1},
-        {"id": "zxbbvngc", "name": "Test", "change_count": 3},
-    ]
-
     m_get_contributors = mocker.patch(
-        "virtool.history.db.get_contributors", make_mocked_coro(contributors)
+        "virtool.history.db.get_contributors",
+        make_mocked_coro(
+            [
+                {"id": "fred", "count": 1, "handle": "fred", "administrator": True},
+                {"id": "igboyes", "count": 3, "handle": "ian", "administrator": True},
+            ]
+        ),
     )
 
-    m_get_otus = mocker.patch("virtool.indexes.db.get_otus", make_mocked_coro(otus))
+    m_get_otus = mocker.patch(
+        "virtool.indexes.db.get_otus",
+        make_mocked_coro(
+            [
+                {"id": "kjs8sa99", "name": "Foo", "change_count": 1},
+                {"id": "zxbbvngc", "name": "Test", "change_count": 3},
+            ]
+        ),
+    )
 
     resp = await client.get("/indexes/foobar")
 
@@ -209,7 +213,6 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
         return
 
     m_get_contributors.assert_called_with(client.db, {"index.id": "foobar"})
-
     m_get_otus.assert_called_with(client.db, "foobar")
 
     assert resp.status == 200
@@ -430,33 +433,53 @@ async def test_find_history(error, fake2, static_time, snapshot, spawn_client, r
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 404])
-async def test_delete_index(spawn_job_client, error):
+async def test_delete_index(error, fake2, spawn_job_client, static_time):
     index_id = "index1"
 
-    index_document = {
-        "_id": index_id,
-    }
-
-    mock_history_documents = [
-        {"_id": _id, "index": {"id": index_id, "version": "test_version"}}
-        for _id in ("history1", "history2", "history3")
-    ]
-
     client = await spawn_job_client(authorize=True)
-    indexes = client.db.indexes
-    history = client.db.history
+
+    user = await fake2.users.create()
 
     if error != 404:
-        await indexes.insert_one(index_document)
-        await history.insert_many(mock_history_documents, session=None)
+        await asyncio.gather(
+            client.db.references.insert_one(
+                {"_id": "foo", "data_type": "genome", "name": "Foo"}
+            ),
+            client.db.indexes.insert_one(
+                {
+                    "_id": index_id,
+                    "created_at": static_time.iso,
+                    "has_files": True,
+                    "manifest": {"foo": 2},
+                    "ready": True,
+                    "reference": {"id": "foo"},
+                    "user": {"id": user.id},
+                    "version": 4,
+                }
+            ),
+            client.db.history.insert_many(
+                [
+                    {
+                        "_id": _id,
+                        "index": {
+                            "id": index_id,
+                            "version": "test_version",
+                        },
+                        "user": {"id": user.id},
+                    }
+                    for _id in ("history1", "history2", "history3")
+                ],
+                session=None,
+            ),
+        )
 
     response = await client.delete(f"/indexes/{index_id}")
 
-    if error is not None:
+    if error:
         assert error == response.status
     else:
         assert 204 == response.status
-        async for doc in history.find({"index.id": index_id}):
+        async for doc in client.db.history.find({"index.id": index_id}):
             assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
 
 

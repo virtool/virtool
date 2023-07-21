@@ -9,11 +9,12 @@ from virtool_core.models.user import User
 
 import virtool.http.authentication
 import virtool.users.db
+from virtool.data.transforms import apply_transforms
 from virtool.users.oas import UpdateUserRequest
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.relationships import UserRoleAssignment
-from virtool.authorization.utils import get_authorization_client_from_req
+from virtool.authorization.client import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import (
@@ -30,6 +31,7 @@ from virtool.users.oas import (
     PermissionsResponse,
     PermissionResponse,
 )
+from virtool.users.transforms import AttachPermissionsTransform
 
 routes = Routes()
 
@@ -52,16 +54,21 @@ class UsersView(PydanticView):
             200: Successful operation
             403: Not permitted
         """
-        db = self.request.app["db"]
+        mongo = self.request.app["db"]
+        pg = self.request.app["pg"]
 
-        db_query = compose_regex_query(find, ["handle"]) if find else {}
+        mongo_query = compose_regex_query(find, ["handle"]) if find else {}
 
         data = await paginate(
-            db.users,
-            db_query,
+            mongo.users,
+            mongo_query,
             self.request.query,
             sort="handle",
             projection=virtool.users.db.PROJECTION,
+        )
+
+        data["documents"] = await apply_transforms(
+            data["documents"], [AttachPermissionsTransform(mongo, pg)]
         )
 
         return json_response(data)
@@ -244,7 +251,7 @@ class PermissionView(PydanticView):
             200: Successful operation
         """
         await get_authorization_client_from_req(self.request).add(
-            UserRoleAssignment(0, user_id, role)
+            UserRoleAssignment(user_id, 0, role)
         )
 
         return json_response(True)
@@ -262,7 +269,7 @@ class PermissionView(PydanticView):
             200: Successful operation
         """
         await get_authorization_client_from_req(self.request).remove(
-            UserRoleAssignment(0, user_id, role)
+            UserRoleAssignment(user_id, 0, role)
         )
 
         return json_response(True)

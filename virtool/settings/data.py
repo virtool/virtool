@@ -7,6 +7,8 @@ PROJECTION = {"_id": False}
 
 
 class SettingsData:
+    name = "settings"
+
     def __init__(self, db):
         self._db: Mongo = db
 

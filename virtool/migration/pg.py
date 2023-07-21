@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.migration.cls import AppliedRevision
 from virtool.pg.base import Base
 
-REQUIRED_VIRTOOL_REVISION = "1zg28cpib2uj"
+REQUIRED_VIRTOOL_REVISION = "011389a5ae19"
 
 logger = getLogger("migration")
 

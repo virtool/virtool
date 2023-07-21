@@ -7,7 +7,7 @@ from virtool.users.utils import Permission
 
 
 @pytest.fixture
-def bob(no_permissions, static_time):
+def bob(static_time):
     return {
         "_id": "abc123",
         "handle": "bob",
@@ -17,7 +17,6 @@ def bob(no_permissions, static_time):
         "last_password_change": static_time.datetime,
         "invalidate_sessions": False,
         "password": "hashed_password",
-        "permissions": no_permissions,
         "primary_group": "",
         "settings": {
             "skip_quick_analyze_dialog": True,
@@ -36,10 +35,8 @@ def create_user(static_time):
         handle="bob",
         administrator=False,
         groups=None,
-        permissions=None,
         authorization_client: AuthorizationClient = None,
     ):
-        permissions = permissions or []
 
         if authorization_client and administrator:
             await authorization_client.add(
@@ -50,9 +47,6 @@ def create_user(static_time):
             "_id": user_id,
             "handle": handle,
             "administrator": administrator,
-            "permissions": {
-                perm.value: perm.value in permissions for perm in Permission
-            },
             "groups": groups or [],
             "invalidate_sessions": False,
             "last_password_change": static_time.datetime,

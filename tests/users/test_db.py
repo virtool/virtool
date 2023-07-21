@@ -3,7 +3,7 @@ import hashlib
 import pytest
 
 import virtool.errors
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.users.db import (
     AttachUserTransform,
     compose_groups_update,
@@ -55,7 +55,6 @@ async def test_compose_groups_update(
     else:
         assert update == {
             "groups": groups,
-            "permissions": no_permissions if groups == [] else all_permissions,
         }
 
 

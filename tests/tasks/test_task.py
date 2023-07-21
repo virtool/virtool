@@ -1,27 +1,21 @@
 import os
-from asyncio import to_thread, wait_for
-from datetime import datetime
+from asyncio import to_thread
+from datetime import timedelta
 from typing import TYPE_CHECKING, Dict
 
+import arrow
 import pytest
 from humanfriendly.testing import TemporaryDirectory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy.matchers import path_type
 
-from virtool.config.cls import TaskSpawnerConfig
-from virtool.data.errors import ResourceError
 from virtool.pg.utils import get_row_by_id
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
-from virtool.tasks.models import Task as SQLTask
-from virtool.tasks.spawn import spawn
-from virtool.tasks.spawner import (
-    TaskSpawnerService,
-    PeriodicTask,
-)
+from virtool.tasks.models import SQLTask
+from virtool.tasks.spawner import TaskSpawnerService, PeriodicTask
 from virtool.tasks.task import BaseTask
-from virtool.utils import get_temp_dir, timestamp
+from virtool.utils import get_temp_dir
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -137,70 +131,8 @@ def test_channel():
 
 
 @pytest.fixture
-def spawn_task(
-    pg_connection_string: str,
-    redis_connection_string: str,
-    mocker,
-    test_channel,
-    openfga_store_name: str,
-):
-    async def func(task_name: str):
-        mocker.patch("virtool.tasks.client.REDIS_TASKS_LIST_KEY", test_channel)
-
-        await spawn(
-            TaskSpawnerConfig(
-                postgres_connection_string=pg_connection_string,
-                redis_connection_string=redis_connection_string,
-            ),
-            task_name,
-        )
-
-    return func
-
-
-@pytest.fixture
 def tasks_client(redis):
     return TasksClient(redis)
-
-
-@pytest.mark.parametrize("valid_task", [True, False])
-async def test_spawn(
-    valid_task,
-    spawn_task,
-    tasks_client: TasksClient,
-    pg: AsyncEngine,
-    snapshot,
-):
-    task_name = "dummy_task" if valid_task else "nonexistent-task"
-
-    error = None
-
-    try:
-        await spawn_task(task_name)
-    except ResourceError as e:
-        error = e
-
-    if not valid_task:
-        assert error
-
-    if valid_task:
-        task_id = await wait_for(tasks_client.pop(), 2)
-
-        async with AsyncSession(pg) as session:
-            result = (
-                (
-                    await session.execute(
-                        select(SQLTask).filter_by(id=int(task_id), type=task_name)
-                    )
-                )
-                .scalar()
-                .to_dict()
-            )
-
-            assert result == snapshot(
-                matcher=path_type({"created_at": (datetime,)}),
-                name=f"test_spawn_task_{task_name}",
-            )
 
 
 async def test_progress_handler_set_progress(task: BaseTask, pg: AsyncEngine):
@@ -233,9 +165,7 @@ async def test_register(pg: AsyncEngine, tasks_data: TasksData):
     await tasks_data.create(DummyTask)
     await tasks_data.create(DummyBaseTask)
 
-    results = await tasks_data.find()
-    result = results[2]
-    created_at = result.created_at
+    last_run_task = (await tasks_data.find())[-1]
 
     task_spawner_service = TaskSpawnerService(pg, tasks_data)
 
@@ -243,32 +173,37 @@ async def test_register(pg: AsyncEngine, tasks_data: TasksData):
 
     await task_spawner_service.register(tasks)
 
-    assert task_spawner_service._registered[0].last_triggered == created_at
+    assert task_spawner_service.registered[0].last_triggered == last_run_task.created_at
 
 
-async def test_check_or_spawn_task(pg: AsyncEngine, tasks_data: TasksData, static_time):
+async def test_check_or_spawn_task(pg: AsyncEngine, tasks_data: TasksData):
     """
     First case tests that the task has spawned, second case ensures that it does not
     """
     task_spawner_service = TaskSpawnerService(pg, tasks_data)
 
-    task_spawner_service._registered.append(
-        PeriodicTask(DummyTask, interval=60, last_triggered=static_time.datetime)
+    # This time should trigger a spawn as it is greater than the interval.
+    long_last_triggered = (arrow.utcnow() - timedelta(seconds=180)).naive
+
+    task_spawner_service.registered.append(
+        PeriodicTask(DummyTask, interval=60, last_triggered=long_last_triggered)
     )
 
     spawned_task = await task_spawner_service.check_or_spawn_task(
-        task_spawner_service._registered[0]
+        task_spawner_service.registered[0]
     )
 
-    assert spawned_task.last_triggered != static_time.datetime
+    assert spawned_task.last_triggered != long_last_triggered
 
-    recent_time = timestamp()
-    task_spawner_service._registered.append(
-        PeriodicTask(DummyBaseTask, interval=60, last_triggered=recent_time)
+    # This time should prevent a task being spawned as it is less than the interval.
+    short_last_triggered = (arrow.utcnow() - timedelta(seconds=20)).naive
+
+    task_spawner_service.registered.append(
+        PeriodicTask(DummyBaseTask, interval=60, last_triggered=short_last_triggered)
     )
 
     not_spawned_task = await task_spawner_service.check_or_spawn_task(
-        task_spawner_service._registered[1]
+        task_spawner_service.registered[1]
     )
 
-    assert not_spawned_task.last_triggered == recent_time
+    assert not_spawned_task.last_triggered == short_last_triggered

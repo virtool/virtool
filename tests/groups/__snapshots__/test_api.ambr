@@ -33,76 +33,11 @@
 ---
 # name: TestUpdate.test[users]
   <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'handle': 'bob',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': '7cf872dc',
-      'handle': 'qtaylor',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': '3cbb22cc',
-      'handle': 'fcarpenter',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': True,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': True,
-      },
-    },
-    <class 'dict'> {
-      '_id': 'da42dca3',
-      'handle': 'chelsea34',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': True,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': True,
-      },
-    },
-    <class 'dict'> {
-      '_id': '09d01419',
-      'handle': 'michelle34',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': True,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': True,
-      },
-    },
+    User(id='test', administrator=True, handle='bob', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=False, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False), primary_group=None, administrator_role=<AdministratorRole.FULL: 'full'>),
+    User(id='7cf872dc', administrator=False, handle='qtaylor', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=False, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False), primary_group=None, administrator_role=None),
+    User(id='3cbb22cc', administrator=False, handle='fcarpenter', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
+    User(id='da42dca3', administrator=False, handle='chelsea34', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
+    User(id='09d01419', administrator=False, handle='michelle34', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
   ]
 ---
 # name: TestUpdate.test_not_found[json]
@@ -114,7 +49,7 @@
 # name: test_create[201][json]
   <class 'dict'> {
     'id': 'fb085f7f',
-    'name': 'test',
+    'name': 'Test',
     'permissions': <class 'dict'> {
       'cancel_job': False,
       'create_ref': False,
@@ -189,55 +124,25 @@
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
+      'groups': <class 'list'> [
+      ],
     },
     <class 'dict'> {
       '_id': '7cf872dc',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': True,
-      },
+      'groups': <class 'list'> [
+        'fb085f7f',
+      ],
     },
     <class 'dict'> {
       '_id': '3cbb22cc',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
+      'groups': <class 'list'> [
+      ],
     },
     <class 'dict'> {
       '_id': 'da42dca3',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': True,
-      },
+      'groups': <class 'list'> [
+        'fb085f7f',
+      ],
     },
   ]
 ---
@@ -251,55 +156,27 @@
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
+      'groups': <class 'list'> [
+      ],
     },
     <class 'dict'> {
       '_id': '7cf872dc',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': True,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': True,
-        'remove_job': False,
-        'upload_file': True,
-      },
+      'groups': <class 'list'> [
+        'bf1b993c',
+        'fb085f7f',
+      ],
     },
     <class 'dict'> {
       '_id': '3cbb22cc',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': True,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': True,
-        'remove_job': False,
-        'upload_file': False,
-      },
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
     },
     <class 'dict'> {
       '_id': 'da42dca3',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': True,
-      },
+      'groups': <class 'list'> [
+        'fb085f7f',
+      ],
     },
   ]
 ---

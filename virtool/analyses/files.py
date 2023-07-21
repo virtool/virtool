@@ -5,7 +5,7 @@ from typing import Dict
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.utils import file_stats
 
-from virtool.analyses.models import AnalysisFile
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.analyses.utils import check_nuvs_file_type
 
 
@@ -23,7 +23,7 @@ async def create_analysis_file(
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        analysis_file = AnalysisFile(
+        analysis_file = SQLAnalysisFile(
             name=name, analysis=analysis_id, format=analysis_format, size=size
         )
 
@@ -62,7 +62,7 @@ async def create_nuvs_analysis_files(
         size = (await to_thread(file_stats, file_path / filename))["size"]
 
         analysis_files.append(
-            AnalysisFile(
+            SQLAnalysisFile(
                 name=filename, analysis=analysis_id, format=file_type, size=size
             )
         )

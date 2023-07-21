@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.utils
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ async def test_uploads(pg, fake2, static_time):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                Upload(
+                SQLUpload(
                     id=1,
                     name="test.fq.gz",
                     type="reads",
@@ -25,7 +25,7 @@ async def test_uploads(pg, fake2, static_time):
                     size=9081,
                     uploaded_at=virtool.utils.timestamp(),
                 ),
-                Upload(
+                SQLUpload(
                     id=2,
                     name="test.fq.gz",
                     ready=True,
@@ -36,7 +36,7 @@ async def test_uploads(pg, fake2, static_time):
                     size=9081,
                     uploaded_at=virtool.utils.timestamp(),
                 ),
-                Upload(
+                SQLUpload(
                     id=3,
                     name="test.fq.gz",
                     user=user_2.id,
@@ -53,7 +53,7 @@ async def test_uploads(pg, fake2, static_time):
 
 @pytest.fixture
 async def test_upload():
-    return Upload(
+    return SQLUpload(
         id=1,
         name="test.fq.gz",
         size=123456,
@@ -72,7 +72,7 @@ async def hmm_uploads(fake2, pg, static_time):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                Upload(
+                SQLUpload(
                     id=1,
                     name="test.fq.gz",
                     ready=True,
@@ -83,7 +83,7 @@ async def hmm_uploads(fake2, pg, static_time):
                     size=9081,
                     uploaded_at=virtool.utils.timestamp(),
                 ),
-                Upload(
+                SQLUpload(
                     id=2,
                     name="test.fq.gz",
                     ready=True,
@@ -94,7 +94,7 @@ async def hmm_uploads(fake2, pg, static_time):
                     size=9081,
                     uploaded_at=datetime(2014, 7, 27),
                 ),
-                Upload(
+                SQLUpload(
                     id=3,
                     name="test.fq.gz",
                     ready=True,

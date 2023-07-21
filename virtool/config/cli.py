@@ -1,18 +1,22 @@
+"""
+The definition of the command line interface for Virtool.
+
+We
+"""
 import asyncio
 import json
 from logging import getLogger
 
 import click
 import uvloop
-
 from virtool_core.logging import configure_logs
+
 from virtool.app import run_api_server
 from virtool.config.cls import (
     MigrationConfig,
     ServerConfig,
     TaskRunnerConfig,
     TaskSpawnerConfig,
-    PeriodicTaskSpawnerConfig,
 )
 from virtool.config.options import (
     address_options,
@@ -27,15 +31,14 @@ from virtool.config.options import (
     postgres_connection_string_option,
     redis_connection_string_option,
     sentry_dsn_option,
+    flags_option,
 )
+from virtool.jobs.main import run_jobs_server
 from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions
-from virtool.jobs.main import run_jobs_server
 from virtool.oas.cmd import show_oas
-from virtool.tasks.main import run_task_runner
-from virtool.tasks.spawn import spawn
-from virtool.tasks.spawner import run_task_spawner
+from virtool.tasks.main import run_task_runner, run_task_spawner
 
 logger = getLogger("config")
 
@@ -71,6 +74,7 @@ def server():
 @base_url_option
 @data_path_option
 @dev_option
+@flags_option
 @mongodb_connection_string_option
 @no_check_db_option
 @no_revision_check_option
@@ -90,6 +94,7 @@ def start_api_server(**kwargs):
 @address_options
 @data_path_option
 @dev_option
+@flags_option
 @mongodb_connection_string_option
 @no_check_db_option
 @no_revision_check_option
@@ -178,21 +183,6 @@ def start_task_runner(**kwargs):
     run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
 
 
-@tasks.command("spawn")
-@postgres_connection_string_option
-@redis_connection_string_option
-@click.option("--task-name", help="Name of the task to spawn", type=str, required=True)
-def spawn_task(task_name: str, **kwargs):
-    """Create and queue a task instance of the given name."""
-    configure_logs(False)
-
-    logger.info("Spawning task %s", task_name)
-
-    asyncio.get_event_loop().run_until_complete(
-        spawn(TaskSpawnerConfig(**kwargs), task_name)
-    )
-
-
 @tasks.command("spawner")
 @postgres_connection_string_option
 @redis_connection_string_option
@@ -205,4 +195,4 @@ def tasks_spawner(**kwargs):
 
     logger.info("Starting task spawner")
 
-    run_task_spawner(PeriodicTaskSpawnerConfig(**kwargs, base_url=""))
+    run_task_spawner(TaskSpawnerConfig(**kwargs, base_url=""))

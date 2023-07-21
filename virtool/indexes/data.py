@@ -1,6 +1,6 @@
 import asyncio
-import logging
 from asyncio import to_thread
+from logging import getLogger
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -23,6 +23,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceNotFoundError,
 )
+from virtool.data.events import emits, Operation, emit
 from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
@@ -35,7 +36,7 @@ from virtool.indexes.tasks import export_index, get_index_file_type_from_name
 from virtool.indexes.utils import join_index_path
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
@@ -44,10 +45,12 @@ from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
-logger = logging.getLogger("indexes")
+logger = getLogger("indexes")
 
 
 class IndexData:
+    name = "indexes"
+
     def __init__(self, mongo: Mongo, config: Config, pg: AsyncEngine):
         self._config = config
         self._mongo = mongo
@@ -119,12 +122,7 @@ class IndexData:
             virtool.indexes.db.get_otus(self._mongo, index_id),
         )
 
-        document.update(
-            {
-                "contributors": contributors,
-                "otus": otus,
-            }
-        )
+        document.update({"contributors": contributors, "otus": otus})
 
         document = await virtool.indexes.db.attach_files(
             self._pg, self._config.base_url, document
@@ -225,6 +223,7 @@ class IndexData:
             **index_file_dict, download_url=f"/indexes/{index_id}/files/{name}"
         )
 
+    @emits(Operation.UPDATE)
     async def finalize(self, index_id: str) -> Index:
         """
         Finalize an index document.
@@ -308,9 +307,7 @@ class IndexData:
             )
 
             await self._ensure_json(
-                index_path,
-                index["reference"]["id"],
-                index["manifest"],
+                index_path, index["reference"]["id"], index["manifest"]
             )
 
             async with AsyncSession(self._pg) as session:
@@ -338,12 +335,7 @@ class IndexData:
 
                 await session.commit()
 
-    async def _ensure_json(
-        self,
-        path: Path,
-        ref_id: str,
-        manifest: Dict,
-    ):
+    async def _ensure_json(self, path: Path, ref_id: str, manifest: Dict):
         """
         Ensure that a there is a compressed JSON representation of the index found at
         `path`` exists.
@@ -382,13 +374,18 @@ class IndexData:
 
         :param index_id: the ID of the index to delete
         """
+        index = await self.get(index_id)
+
+        if not index:
+            raise ResourceNotFoundError
+
         async with self._mongo.create_session() as mongo_session:
             delete_result = await self._mongo.indexes.delete_one(
                 {"_id": index_id}, session=mongo_session
             )
 
             if delete_result.deleted_count == 0:
-                raise ResourceNotFoundError()
+                raise ResourceNotFoundError
 
             index_change_ids = await self._mongo.history.distinct(
                 "_id", {"index.id": index_id}
@@ -399,3 +396,5 @@ class IndexData:
                 {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
                 session=mongo_session,
             )
+
+        emit(index, "indexes", "delete", Operation.DELETE)

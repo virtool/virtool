@@ -1,6 +1,7 @@
 from typing import Union, Tuple, List
 
 from aioredis import Redis
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
@@ -44,12 +45,19 @@ PROJECTION = (
 
 
 class AccountData(DataLayerPiece):
+    name = "account"
+
     def __init__(
-        self, db: Mongo, redis: Redis, authorization_client: AuthorizationClient
+        self,
+        mongo: Mongo,
+        redis: Redis,
+        authorization_client: AuthorizationClient,
+        pg: AsyncEngine,
     ):
         self._authorization_client = authorization_client
-        self._db = db
+        self._mongo = mongo
         self._redis = redis
+        self._pg = pg
 
     async def get(self, user_id: str) -> Account:
         """
@@ -62,7 +70,7 @@ class AccountData(DataLayerPiece):
             **{
                 **(
                     await fetch_complete_user(
-                        self._db, self._authorization_client, user_id
+                        self._authorization_client, self._mongo, self._pg, user_id
                     )
                 ).dict(),
                 "settings": {
@@ -88,7 +96,7 @@ class AccountData(DataLayerPiece):
 
         if "password" in data_dict:
             if not await validate_credentials(
-                self._db, user_id, data_dict["old_password"] or ""
+                self._mongo, user_id, data_dict["old_password"] or ""
             ):
                 raise ResourceError("Invalid credentials")
 
@@ -97,10 +105,7 @@ class AccountData(DataLayerPiece):
         if "email" in data_dict:
             update["email"] = data_dict["email"]
 
-        await self._db.users.update_one(
-            {"_id": user_id},
-            {"$set": update},
-        )
+        await self._mongo.users.update_one({"_id": user_id}, {"$set": update})
 
         return await self.get(user_id)
 
@@ -112,7 +117,7 @@ class AccountData(DataLayerPiece):
         :param user_id: the user ID
         :return: the account settings
         """
-        settings = await get_one_field(self._db.users, query_field, user_id)
+        settings = await get_one_field(self._mongo.users, query_field, user_id)
 
         return AccountSettings(**settings)
 
@@ -127,13 +132,15 @@ class AccountData(DataLayerPiece):
         :param user_id: the user ID
         :return: the account settings
         """
-        settings_from_db = await get_one_field(self._db.users, query_field, user_id)
+        settings_from_mongo = await get_one_field(
+            self._mongo.users, query_field, user_id
+        )
 
         data_dict = data.dict(exclude_unset=True)
 
-        settings = {**settings_from_db, **data_dict}
+        settings = {**settings_from_mongo, **data_dict}
 
-        await self._db.users.update_one({"_id": user_id}, {"$set": settings})
+        await self._mongo.users.update_one({"_id": user_id}, {"$set": settings})
 
         return AccountSettings(**settings)
 
@@ -146,7 +153,7 @@ class AccountData(DataLayerPiece):
         """
         return [
             APIKey(**key)
-            async for key in self._db.keys.aggregate(
+            async for key in self._mongo.keys.aggregate(
                 [
                     {"$match": {"user.id": user_id}},
                     *lookup_groups_minimal_by_id(),
@@ -173,40 +180,39 @@ class AccountData(DataLayerPiece):
 
         :param data: the fields to create a new API key
         :param user_id: the user ID
+        :param permissions: the permissions of the requesting user
         :return: the API key
         """
         permissions_dict = data.permissions.dict(exclude_unset=True)
 
-        user = await self._db.users.find_one(
-            user_id, ["administrator", "groups", "permissions"]
-        )
+        user = await self.data.users.get(user_id)
 
         key_permissions = {
             **virtool.users.utils.generate_base_permissions(),
             **permissions_dict,
         }
 
-        if not user["administrator"]:
+        if not user.administrator:
             key_permissions = virtool.users.utils.limit_permissions(
-                key_permissions, user["permissions"]
+                key_permissions, user.permissions.dict()
             )
 
         raw, hashed = virtool.utils.generate_key()
 
         document = {
             "_id": hashed,
-            "id": await virtool.account.db.get_alternate_id(self._db, data.name),
-            "administrator": user["administrator"],
+            "id": await virtool.account.db.get_alternate_id(self._mongo, data.name),
+            "administrator": user.administrator,
             "name": data.name,
-            "groups": user["groups"],
+            "groups": [group.id for group in user.groups],
             "permissions": key_permissions,
             "created_at": virtool.utils.timestamp(),
             "user": {"id": user_id},
         }
 
-        await self._db.keys.insert_one(document)
+        await self._mongo.keys.insert_one(document)
 
-        return raw, await fetch_complete_api_key(self._db, document["id"])
+        return raw, await fetch_complete_api_key(self._mongo, document["id"])
 
     async def delete_keys(self, user_id: str):
         """
@@ -214,7 +220,7 @@ class AccountData(DataLayerPiece):
 
         :param user_id: the user ID
         """
-        await self._db.keys.delete_many({"user.id": user_id})
+        await self._mongo.keys.delete_many({"user.id": user_id})
 
     async def get_key(self, user_id: str, key_id: str) -> APIKey:
         """
@@ -224,7 +230,7 @@ class AccountData(DataLayerPiece):
         :param key_id: the ID of the API key to get
         :return: the API key
         """
-        document = await self._db.keys.find_one(
+        document = await self._mongo.keys.find_one(
             {"id": key_id, "user.id": user_id}, API_KEY_PROJECTION
         )
 
@@ -249,14 +255,16 @@ class AccountData(DataLayerPiece):
         else:
             permissions_update = data.permissions.dict(exclude_unset=True)
 
-        if not await self._db.keys.count_documents({"id": key_id}):
+        if not await self._mongo.keys.count_documents({"id": key_id}):
             raise ResourceNotFoundError()
 
-        user = await self._db.users.find_one(user_id, ["administrator", "permissions"])
+        user = await self._mongo.users.find_one(
+            user_id, ["administrator", "permissions"]
+        )
 
         # The permissions currently assigned to the API key.
         permissions = await get_one_field(
-            self._db.keys, "permissions", {"id": key_id, "user.id": user_id}
+            self._mongo.keys, "permissions", {"id": key_id, "user.id": user_id}
         )
 
         permissions.update(permissions_update)
@@ -264,7 +272,7 @@ class AccountData(DataLayerPiece):
         if not user["administrator"]:
             permissions = limit_permissions(permissions, user["permissions"])
 
-        document = await self._db.keys.find_one_and_update(
+        document = await self._mongo.keys.find_one_and_update(
             {"id": key_id},
             {"$set": {"permissions": permissions}},
             projection=API_KEY_PROJECTION,
@@ -279,7 +287,7 @@ class AccountData(DataLayerPiece):
         :param user_id: the user ID
         :param key_id: the ID of the API key to delete
         """
-        delete_result = await self._db.keys.delete_one(
+        delete_result = await self._mongo.keys.delete_one(
             {"id": key_id, "user.id": user_id}
         )
 
@@ -299,10 +307,10 @@ class AccountData(DataLayerPiece):
         # Re-render the login page with an error message if the username doesn't
         # correlate to a user_id value in
         # the database and/or password are invalid.
-        document = await self._db.users.find_one({"handle": data.username})
+        document = await self._mongo.users.find_one({"handle": data.username})
 
         if not document or not await validate_credentials(
-            self._db, document["_id"], data.password
+            self._mongo, document["_id"], data.password
         ):
             raise ResourceError()
 
@@ -322,7 +330,7 @@ class AccountData(DataLayerPiece):
         should be remembered
         """
 
-        if await get_one_field(self._db.users, "force_reset", user_id):
+        if await get_one_field(self._mongo.users, "force_reset", user_id):
             await self.data.sessions.delete(session_id)
             return await self.data.sessions.create_reset_session(ip, user_id, remember)
 
@@ -358,12 +366,9 @@ class AccountData(DataLayerPiece):
         await self.data.sessions.delete(session_id)
 
         await self.data.administrators.update(
-            reset.user_id,
-            UpdateUserRequest(force_reset=False, password=data.password),
+            reset.user_id, UpdateUserRequest(force_reset=False, password=data.password)
         )
 
         return await self.data.sessions.create(
-            ip,
-            reset.user_id,
-            remember=reset.remember,
+            ip, reset.user_id, remember=reset.remember
         )

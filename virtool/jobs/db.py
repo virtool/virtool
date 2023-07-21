@@ -11,7 +11,7 @@ from virtool_core.models.job import Job, JobAcquired, JobState
 
 from virtool.jobs.client import AbstractJobsClient
 from virtool.jobs.utils import JobRights, compose_status
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.utils import base_processor, get_safely
@@ -68,28 +68,20 @@ class AttachJobsTransform(AbstractTransform):
         return {**document, "job": prepared}
 
 
-async def processor(db, document: dict) -> dict:
+async def fetch_complete_job(db, document, key=None) -> Job:
     """
-    The default document processor for job documents.
-
-    Transforms projected job documents to a structure that can be dispatches to clients.
-
-    1. Removes the ``status`` and ``args`` fields from the job document.
-    2. Adds a ``username`` field.
-    3. Adds a ``created_at`` date taken from the first status entry in the job document.
-    4. Adds ``state`` and ``progress`` fields derived from the most recent ``status``
-       entry in the job document.
+    Fetches the complete job record based on the processed job document.
 
     :param db: the application database object
     :param document: a document to process
-    :return: a processed document
-
+    :param key: key
     """
+
     status = document["status"]
 
     last_update = status[-1]
 
-    return await apply_transforms(
+    processed_document = await apply_transforms(
         base_processor(
             {
                 **document,
@@ -102,14 +94,10 @@ async def processor(db, document: dict) -> dict:
         [AttachUserTransform(db)],
     )
 
-
-async def fetch_complete_job(db, document, key=None) -> Job:
-    document = await processor(db, document)
-
     if key:
-        return JobAcquired(**document, key=key)
+        return JobAcquired(**processed_document, key=key)
 
-    return Job(**document)
+    return Job(**processed_document)
 
 
 def lookup_minimal_job_by_id(

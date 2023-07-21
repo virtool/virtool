@@ -1,8 +1,6 @@
 import math
 import os
-
 from asyncio import gather, CancelledError, to_thread
-
 from datetime import datetime
 from logging import getLogger
 from shutil import rmtree
@@ -10,40 +8,38 @@ from typing import Tuple, Optional
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.analysis import AnalysisSearchResult, Analysis
+from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
 from virtool_core.utils import rm
 
 import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
-
-from virtool.analyses.db import TARGET_FILES
-from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
-from virtool.analyses.models import AnalysisFile
-from virtool.analyses.utils import (
-    attach_analysis_files,
-    join_analysis_path,
-    move_nuvs_files,
-)
 from virtool.analyses.checks import (
     check_analysis_workflow,
     check_analysis_nuvs_sequence,
     check_if_analysis_running,
-    check_if_analysis_ready,
     check_if_analysis_modified,
+)
+from virtool.analyses.db import TARGET_FILES
+from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
+from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.utils import (
+    attach_analysis_files,
+    join_analysis_path,
+    move_nuvs_files,
 )
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceError,
     ResourceConflictError,
 )
+from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
+from virtool.data.transforms import apply_transforms
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
@@ -62,6 +58,8 @@ logger = getLogger("analyses")
 
 
 class AnalysisData(DataLayerPiece):
+    name = "analyses"
+
     def __init__(self, db: Mongo, config, pg: AsyncEngine):
         self._db = db
         self._config = config
@@ -87,12 +85,8 @@ class AnalysisData(DataLayerPiece):
             [
                 {
                     "$facet": {
-                        "total_count": [
-                            {"$count": "total_count"},
-                        ],
-                        "found_count": [
-                            {"$count": "found_count"},
-                        ],
+                        "total_count": [{"$count": "total_count"}],
+                        "found_count": [{"$count": "found_count"}],
                         "data": [
                             {"$sort": sort},
                             {"$skip": skip_count},
@@ -127,7 +121,7 @@ class AnalysisData(DataLayerPiece):
                         },
                     }
                 },
-            ],
+            ]
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
@@ -194,10 +188,7 @@ class AnalysisData(DataLayerPiece):
         analysis = base_processor(analysis)
 
         if analysis["workflow"] == "nuvs":
-            analysis = await apply_transforms(
-                analysis,
-                [AttachNuVsBLAST(self._pg)],
-            )
+            analysis = await apply_transforms(analysis, [AttachNuVsBLAST(self._pg)])
 
         return Analysis(
             **{**analysis, "job": analysis["job"] if analysis["job"] else None}
@@ -215,15 +206,22 @@ class AnalysisData(DataLayerPiece):
         sample = await get_one_field(self._db.analyses, "sample", analysis_id)
 
         if sample is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
+
+        sample_id = sample["id"]
 
         sample = await self._db.samples.find_one(
-            {"_id": sample["id"]},
+            {"_id": sample_id},
             ["user", "group", "all_read", "group_read", "group_write", "all_write"],
         )
 
         if not sample:
-            raise ResourceError()
+            logger.warning(
+                "Parent sample for analysis not found analysis_id=%s sample_id=%s",
+                analysis_id,
+                sample_id,
+            )
+            raise ResourceNotFoundError
 
         read, write = get_sample_rights(sample, client)
 
@@ -240,27 +238,34 @@ class AnalysisData(DataLayerPiece):
         :param analysis_id: the analysis ID
         :param jobs_api_flag: checks if the jobs_api is handling the request
         """
-        document = await self._db.analyses.find_one(
-            {"_id": analysis_id}, ["job", "ready", "sample"]
+
+        analysis = await self.get(analysis_id, None)
+
+        if not analysis:
+            raise ResourceNotFoundError
+
+        if not analysis.ready and not jobs_api_flag:
+            # Only the jobs API is allowed to delete incomplete analyses.
+            raise ResourceConflictError
+
+        await self._db.analyses.delete_one({"_id": analysis.id})
+
+        path = (
+            self._config.data_path
+            / "samples"
+            / analysis.sample.id
+            / "analysis"
+            / analysis_id
         )
-
-        if not document:
-            raise ResourceNotFoundError()
-
-        sample_id = document["sample"]["id"]
-
-        await wait_for_checks(check_if_analysis_ready(jobs_api_flag, document["ready"]))
-
-        await self._db.analyses.delete_one({"_id": analysis_id})
-
-        path = self._config.data_path / "samples" / sample_id / "analysis" / analysis_id
 
         try:
             await to_thread(rm, path, True)
         except FileNotFoundError:
             pass
 
-        await recalculate_workflow_tags(self._db, sample_id)
+        await recalculate_workflow_tags(self._db, analysis.sample.id)
+
+        emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
         self, reader, analysis_id: str, analysis_format: str, name: str
@@ -278,7 +283,7 @@ class AnalysisData(DataLayerPiece):
         document = await self._db.analyses.find_one(analysis_id)
 
         if document is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         analysis_file = await create_analysis_file(
             self._pg, analysis_id, analysis_format, name
@@ -294,12 +299,12 @@ class AnalysisData(DataLayerPiece):
             size = await naive_writer(reader, analysis_file_path)
         except CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
-            await delete_row(self._pg, upload_id, AnalysisFile)
+            await delete_row(self._pg, upload_id, SQLAnalysisFile)
 
             return None
 
         analysis_file = await virtool.uploads.db.finalize(
-            self._pg, size, upload_id, AnalysisFile
+            self._pg, size, upload_id, SQLAnalysisFile
         )
 
         return AnalysisFile(**analysis_file)
@@ -312,7 +317,7 @@ class AnalysisData(DataLayerPiece):
         :return: the name on disk of the analysis file
         """
 
-        analysis_file = await get_row_by_id(self._pg, AnalysisFile, upload_id)
+        analysis_file = await get_row_by_id(self._pg, SQLAnalysisFile, upload_id)
 
         if analysis_file:
             return analysis_file.name_on_disk
@@ -404,6 +409,7 @@ class AnalysisData(DataLayerPiece):
 
         return blast_data
 
+    @emits(Operation.UPDATE)
     async def finalize(self, analysis_id: str, results: dict) -> Analysis:
         """
         Sets the result for an analysis and marks it as ready.
@@ -449,7 +455,7 @@ class AnalysisData(DataLayerPiece):
             async with AsyncSession(self._pg) as session:
                 exists = (
                     await session.execute(
-                        select(AnalysisFile).filter_by(analysis=analysis_id)
+                        select(SQLAnalysisFile).filter_by(analysis=analysis_id)
                     )
                 ).scalar()
 

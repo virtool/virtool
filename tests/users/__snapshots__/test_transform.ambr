@@ -1,0 +1,68 @@
+# name: test_permission_transform[dict_group]
+  <class 'list'> [
+    <class 'dict'> {
+      'groups': <class 'list'> [
+        <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+          'permissions': Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False),
+          'users': <class 'list'> [
+          ],
+        },
+      ],
+      'id': 5,
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      'groups': <class 'list'> [
+        'bf1b993c',
+      ],
+      'id': 2,
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---
+# name: test_permission_transform[postgres_priority]
+  <class 'list'> [
+    <class 'dict'> {
+      'groups': <class 'list'> [
+        <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+          'permissions': Permissions(cancel_job=True, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False),
+          'users': <class 'list'> [
+          ],
+        },
+      ],
+      'id': 5,
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---

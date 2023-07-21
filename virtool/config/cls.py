@@ -1,10 +1,19 @@
+"""
+Configuration classes for the Virtool subcommands.
+
+These will be available in the application context and should be accessed using
+:func:`~virtool.utils.get_config_from_app` or
+:func:`~virtool.utils.get_config_from_request`.
+
+"""
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union
+from typing import TypeAlias
 
 from pymongo.uri_parser import parse_uri
 
 from virtool.authorization.openfga import OpenfgaScheme
+from virtool.flags import FlagName
 
 
 @dataclass
@@ -38,12 +47,13 @@ class MigrationConfig:
 @dataclass
 class ServerConfig:
     base_url: str
-    b2c_client_id: Optional[str]
-    b2c_client_secret: Optional[str]
-    b2c_tenant: Optional[str]
-    b2c_user_flow: Optional[str]
+    b2c_client_id: str | None
+    b2c_client_secret: str | None
+    b2c_tenant: str | None
+    b2c_user_flow: str | None
     data_path: Path
     dev: bool
+    flags: list[FlagName]
     host: str
     mongodb_connection_string: str
     no_check_db: bool
@@ -55,7 +65,7 @@ class ServerConfig:
     postgres_connection_string: str
     redis_connection_string: str
     use_b2c: bool
-    sentry_dsn: Optional[str]
+    sentry_dsn: str | None
 
     @property
     def mongodb_database(self) -> str:
@@ -96,27 +106,14 @@ class TaskRunnerConfig:
 @dataclass
 class TaskSpawnerConfig:
     """
-    Configuration for the task spawner.
-
-    """
-
-    postgres_connection_string: str
-    redis_connection_string: str
-
-
-@dataclass
-class PeriodicTaskSpawnerConfig:
-    """
     Configuration for the periodic task spawner
     """
 
     base_url: str
-    postgres_connection_string: str
-    redis_connection_string: str
     host: str
     port: int
+    postgres_connection_string: str
+    redis_connection_string: str
 
 
-Config = Union[
-    ServerConfig, TaskRunnerConfig, TaskSpawnerConfig, PeriodicTaskSpawnerConfig
-]
+Config: TypeAlias = ServerConfig | TaskRunnerConfig | TaskSpawnerConfig

@@ -2,8 +2,8 @@
 Provides request handlers for managing and viewing analyses.
 
 """
+import asyncio
 from logging import getLogger
-from typing import Union
 
 import arrow
 from aiohttp.web import (
@@ -28,6 +28,7 @@ from virtool.api.response import (
     NotFound,
     json_response,
 )
+from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceNotModifiedError,
@@ -38,7 +39,6 @@ from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.uploads.utils import naive_validator
-
 
 logger = getLogger("analyses")
 
@@ -76,7 +76,7 @@ class AnalysesView(PydanticView):
 class AnalysisView(PydanticView):
     async def get(
         self, analysis_id: str, /
-    ) -> Union[r200[AnalysisResponse], r400, r403, r404]:
+    ) -> r200[AnalysisResponse] | r400 | r403 | r404:
         """
         Get an analysis.
 
@@ -93,34 +93,33 @@ class AnalysisView(PydanticView):
             if not await get_data_from_req(self.request).analyses.has_right(
                 analysis_id, self.request["client"], "read"
             ):
-                raise InsufficientRights()
-        except ResourceError:
-            raise HTTPBadRequest(text="Parent sample does not exist")
+                raise InsufficientRights
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         if_modified_since = self.request.headers.get("If-Modified-Since")
 
-        if if_modified_since is not None:
+        if if_modified_since:
             if_modified_since = arrow.get(if_modified_since).naive
 
         try:
-            document = await get_data_from_req(self.request).analyses.get(
+            analysis = await get_data_from_req(self.request).analyses.get(
                 analysis_id, if_modified_since
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceNotModifiedError:
-            raise HTTPNotModified()
+            raise HTTPNotModified
 
-        headers = {
-            "Cache-Control": "no-cache",
-            "Last-Modified": datetime_to_isoformat(document.created_at),
-        }
+        return json_response(
+            analysis,
+            headers={
+                "Cache-Control": "no-cache",
+                "Last-Modified": datetime_to_isoformat(analysis.created_at),
+            },
+        )
 
-        return json_response(document, headers=headers)
-
-    async def delete(self, analysis_id: str, /) -> Union[r204, r403, r404, r409]:
+    async def delete(self, analysis_id: str, /) -> r204 | r403 | r404 | r409:
         """
         Delete an analysis.
 
@@ -140,8 +139,6 @@ class AnalysisView(PydanticView):
                     right,
                 ):
                     raise InsufficientRights()
-            except ResourceError:
-                raise HTTPBadRequest(text="Parent sample does not exist")
             except ResourceNotFoundError:
                 raise NotFound()
 
@@ -240,14 +237,16 @@ async def upload(req: Request) -> Response:
     if analysis_file is None:
         return Response(status=499)
 
-    headers = {"Location": f"/analyses/{analysis_id}/files/{analysis_file.id}"}
-
-    return json_response(analysis_file.to_dict(), status=201, headers=headers)
+    return json_response(
+        analysis_file.dict(),
+        status=201,
+        headers={"Location": f"/analyses/{analysis_id}/files/{analysis_file.id}"},
+    )
 
 
 @routes.view("/analyses/{analysis_id}/files/{upload_id}")
 class AnalysisFileView(PydanticView):
-    async def get(self, upload_id: int, /) -> Union[r200[FileResponse], r404]:
+    async def get(self, upload_id: int, /) -> r200[FileResponse] | r404:
         """
         Download an analysis file.
 
@@ -263,23 +262,19 @@ class AnalysisFileView(PydanticView):
                 upload_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
-        analysis_file_path = (
-            self.request.app["config"].data_path / "analyses" / name_on_disk
-        )
+        path = get_config_from_req(self.request).data_path / "analyses" / name_on_disk
 
-        if not analysis_file_path.exists():
-            raise NotFound("Uploaded file not found at expected location")
+        if not await asyncio.to_thread(path.exists):
+            raise NotFound
 
-        return FileResponse(analysis_file_path)
+        return FileResponse(path)
 
 
 @routes.view("/analyses/documents/{analysis_id}.{extension}")
 class DocumentDownloadView(PydanticView):
-    async def get(
-        self, analysis_id: str, extension: str, /
-    ) -> Union[r200[Response], r404]:
+    async def get(self, analysis_id: str, extension: str, /) -> r200[Response] | r404:
         """
         Download an analysis.
 
@@ -314,7 +309,7 @@ class DocumentDownloadView(PydanticView):
 class BlastView(PydanticView):
     async def put(
         self, analysis_id: str, sequence_index: int, /
-    ) -> Union[r200[Response], r400, r403, r404, r409]:
+    ) -> r200[Response] | r400 | r403 | r404 | r409:
         """
         BLAST a NuVs contig.
 
@@ -336,11 +331,9 @@ class BlastView(PydanticView):
                 self.request["client"],
                 "write",
             ):
-                raise InsufficientRights()
-        except ResourceError:
-            raise HTTPBadRequest(text="Parent sample does not exist")
+                raise InsufficientRights
         except ResourceNotFoundError:
-            raise NotFound("Analysis not found")
+            raise NotFound
 
         try:
             document = await get_data_from_req(self.request).analyses.blast(

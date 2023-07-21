@@ -5,11 +5,11 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.mongo.transforms import AbstractTransform
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import AbstractTransform
+from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import get_safely, base_processor
 
@@ -33,7 +33,7 @@ class ImportedFromTransform(AbstractTransform):
         except KeyError:
             return None
 
-        row = await get_row_by_id(self._pg, Upload, upload_id)
+        row = await get_row_by_id(self._pg, SQLUpload, upload_id)
 
         return await apply_transforms(row.to_dict(), [AttachUserTransform(self._mongo)])
 

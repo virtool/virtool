@@ -27,7 +27,7 @@ import virtool.utils
 from virtool.data.utils import get_data_from_app
 from virtool.errors import DatabaseError
 from virtool.http.utils import download_file
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
@@ -45,7 +45,7 @@ from virtool.references.utils import (
     load_reference_file,
 )
 from virtool.types import Document
-from virtool.uploads.models import Upload as SQLUpload
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform, extend_user
 
 if TYPE_CHECKING:
@@ -488,9 +488,9 @@ async def fetch_and_update_release(
     return release
 
 
-async def get_contributors(mongo: "Mongo", ref_id: str) -> Optional[List[Document]]:
+async def get_contributors(mongo: "Mongo", ref_id: str) -> list[Document] | None:
     """
-    Return an list of contributors and their contribution count for a specific ref.
+    Return a list of contributors and their contribution count for a specific ref.
 
     :param mongo: the application database client
     :param ref_id: the id of the ref to get contributors for
@@ -501,7 +501,7 @@ async def get_contributors(mongo: "Mongo", ref_id: str) -> Optional[List[Documen
 
 
 async def get_internal_control(
-    mongo: "Mongo", internal_control_id: Optional[str], ref_id: str
+    mongo: "Mongo", internal_control_id: str | None, ref_id: str
 ) -> Optional[Document]:
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
@@ -832,7 +832,6 @@ async def insert_change(
         joined,
         description,
         user_id,
-        silent=True,
         session=session,
     )
 
@@ -870,7 +869,6 @@ async def insert_joined_otu(
             "verified": issues is None,
             "version": 0,
         },
-        silent=True,
         session=session,
     )
 
@@ -897,7 +895,7 @@ async def insert_joined_otu(
             )
 
     for sequence in sequences:
-        await mongo.sequences.insert_one(sequence, session=session, silent=True)
+        await mongo.sequences.insert_one(sequence, session=session)
 
     return document["_id"]
 
@@ -1131,7 +1129,6 @@ async def prepare_remove_otu(
 
     :param otu_id: the ID of the OTU
     :param user_id: the ID of the requesting user
-    :param silent: prevents dispatch of the change
     :return: `True` if the removal was successful
 
     """

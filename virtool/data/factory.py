@@ -14,7 +14,7 @@ from virtool.config import Config
 from virtool.data.layer import DataLayer
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
-from virtool.hmm.data import HmmData
+from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
@@ -24,6 +24,7 @@ from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.settings.data import SettingsData
+from virtool.spaces.data import SpacesData
 from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
@@ -57,13 +58,13 @@ def create_data_layer(
     jobs_client = JobsClient(redis)
 
     data_layer = DataLayer(
-        AccountData(mongo, redis, authorization_client),
-        AdministratorsData(authorization_client, mongo),
+        AccountData(mongo, redis, authorization_client, pg),
+        AdministratorsData(authorization_client, mongo, pg),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
-        GroupsData(authorization_client, mongo),
+        GroupsData(authorization_client, mongo, pg),
         HistoryData(config.data_path, mongo),
-        HmmData(client, config, mongo, pg),
+        HmmsData(client, config, mongo, pg),
         IndexData(mongo, config, pg),
         JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
@@ -74,6 +75,7 @@ def create_data_layer(
         SubtractionsData(config.base_url, config, mongo, pg),
         SessionData(redis),
         SettingsData(mongo),
+        SpacesData(authorization_client, mongo, pg),
         TasksData(pg, TasksClient(redis)),
         UploadsData(config, mongo, pg),
         UsersData(authorization_client, mongo, pg),

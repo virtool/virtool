@@ -1,5 +1,6 @@
 from typing import Optional
 
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User, UserSearchResult
 
@@ -10,19 +11,21 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.api.utils import paginate_aggregate, compose_regex_query
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
-from virtool.data.errors import (
-    ResourceNotFoundError,
-    ResourceConflictError,
-)
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.piece import DataLayerPiece
+from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.db import lookup_groups_minimal_by_id, lookup_group_minimal_by_id
+from virtool.groups.utils import merge_group_permissions
+from virtool.mongo.core import Mongo
 from virtool.users.db import (
     fetch_complete_user,
     compose_primary_group_update,
     update_keys,
     compose_groups_update,
 )
+from virtool.users.transforms import AttachPermissionsTransform
+from virtool.utils import base_processor
 
 PROJECTION = [
     "_id",
@@ -44,9 +47,14 @@ PROJECTION = [
 
 
 class AdministratorsData(DataLayerPiece):
-    def __init__(self, authorization_client: AuthorizationClient, mongo: "DB"):
+    name = "administrators"
+
+    def __init__(
+        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+    ):
         self._authorization_client = authorization_client
         self._mongo = mongo
+        self._pg = pg
 
     async def find(
         self,
@@ -73,10 +81,7 @@ class AdministratorsData(DataLayerPiece):
 
         term_query = compose_regex_query(term, ["handle"]) if term else {}
 
-        client_query = {
-            **administrator_query,
-            **term_query,
-        }
+        client_query = {**administrator_query, **term_query}
 
         result = await paginate_aggregate(
             self._mongo.users,
@@ -93,8 +98,13 @@ class AdministratorsData(DataLayerPiece):
             projection={field: True for field in PROJECTION},
         )
 
+        result["items"] = await apply_transforms(
+            [base_processor(item) for item in result["items"]],
+            [AttachPermissionsTransform(self._mongo, self._pg)],
+        )
+
         result["items"] = [
-            User(**user, administrator_role=administrators.get(user["_id"]))
+            User(**user, administrator_role=administrators.get(user["id"]))
             for user in result["items"]
         ]
 
@@ -109,7 +119,7 @@ class AdministratorsData(DataLayerPiece):
         """
 
         user = await fetch_complete_user(
-            self._mongo, self._authorization_client, user_id
+            self._authorization_client, self._mongo, self._pg, user_id
         )
 
         if not user:
@@ -174,12 +184,18 @@ class AdministratorsData(DataLayerPiece):
                 {"_id": user_id}, {"$set": update}
             )
 
+            permissions = merge_group_permissions(
+                await self._mongo.groups.find(
+                    {"_id": {"$in": [document["groups"]]}}
+                ).to_list(None)
+            )
+
             await update_keys(
                 self._mongo,
                 user_id,
                 document["administrator"],
                 document["groups"],
-                document["permissions"],
+                permissions,
             )
 
         return await self.get(user_id)

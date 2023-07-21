@@ -1,4 +1,4 @@
-from typing import List, Union, Optional
+from typing import List, Union
 
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
@@ -13,7 +13,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.routes import Routes
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
     UpdateOTURequest,
@@ -446,9 +446,7 @@ class SequenceView(PydanticView):
 
         try:
             sequence = await get_data_from_req(self.request).otus.get_sequence(
-                otu_id,
-                isolate_id,
-                sequence_id,
+                otu_id, isolate_id, sequence_id
             )
         except ResourceNotFoundError:
             raise NotFound
@@ -496,11 +494,7 @@ class SequenceView(PydanticView):
             raise HTTPBadRequest(text=message)
 
         sequence_document = await get_data_from_req(self.request).otus.update_sequence(
-            otu_id,
-            isolate_id,
-            sequence_id,
-            self.request["client"].user_id,
-            data,
+            otu_id, isolate_id, sequence_id, self.request["client"].user_id, data
         )
 
         return json_response(sequence_document)

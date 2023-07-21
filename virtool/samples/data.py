@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import math
-from asyncio import to_thread
+from asyncio import gather, to_thread
 from typing import List, Optional
 
 import virtool_core.utils
@@ -9,21 +9,19 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import SampleSearchResult, Sample
-from virtool.mongo.core import Mongo
 
 import virtool.utils
 from virtool.api.utils import compose_regex_query
-from virtool.caches.db import lookup_caches
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
+from virtool.data.transforms import apply_transforms
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.db import lookup_minimal_job_by_id, create_job
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
-from virtool.mongo.migrate import recalculate_all_workflow_tags
-from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
     check_labels_do_not_exist,
@@ -34,6 +32,7 @@ from virtool.samples.db import (
     compose_sample_workflow_query,
     LIST_PROJECTION,
     ArtifactsAndReadsTransform,
+    recalculate_workflow_tags,
     validate_force_choice_group,
     define_initial_workflows,
     NameGenerator,
@@ -46,13 +45,17 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.users.db import lookup_nested_user_by_id
-from virtool.utils import base_processor, wait_for_checks
+from virtool.utils import base_processor, chunk_list, wait_for_checks
 
 logger = logging.getLogger(__name__)
 
 
 class SamplesData(DataLayerPiece):
-    def __init__(self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient):
+    name = "samples"
+
+    def __init__(
+        self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient
+    ):
         self._config = config
         self._mongo = mongo
         self._pg = pg
@@ -115,17 +118,13 @@ class SamplesData(DataLayerPiece):
             [
                 {
                     "$facet": {
-                        "total_count": [
-                            {"$count": "total_count"},
-                        ],
+                        "total_count": [{"$count": "total_count"}],
                         "found_count": [
                             {"$match": search_query},
                             {"$count": "found_count"},
                         ],
                         "data": [
-                            {
-                                "$match": search_query,
-                            },
+                            {"$match": search_query},
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
@@ -144,7 +143,7 @@ class SamplesData(DataLayerPiece):
                         },
                     }
                 },
-            ],
+            ]
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
@@ -170,8 +169,7 @@ class SamplesData(DataLayerPiece):
                 {"$match": {"_id": sample_id}},
                 *lookup_nested_user_by_id(local_field="user.id"),
                 *lookup_nested_subtractions(local_field="subtractions"),
-                *lookup_caches(local_field="_id"),
-                *lookup_minimal_job_by_id(local_field="job.id")
+                *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
 
@@ -182,12 +180,10 @@ class SamplesData(DataLayerPiece):
 
         document = await apply_transforms(
             base_processor(document),
-            [
-                ArtifactsAndReadsTransform(self._pg),
-                AttachLabelsTransform(self._pg),
-            ],
+            [ArtifactsAndReadsTransform(self._pg), AttachLabelsTransform(self._pg)],
         )
 
+        document["caches"] = []
         document["paired"] = len(document["reads"]) == 2
 
         return Sample(**document)
@@ -253,9 +249,7 @@ class SamplesData(DataLayerPiece):
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
-                        "job": {
-                            "id": job_id
-                        },
+                        "job": {"id": job_id},
                         "labels": data.labels,
                         "library_type": data.library_type,
                         "locale": data.locale,
@@ -298,7 +292,7 @@ class SamplesData(DataLayerPiece):
                 rights=JobRights(),
                 space_id=0,
                 job_id=job_id,
-                session=session
+                session=session,
             )
 
         return await self.get(sample_id)
@@ -316,10 +310,7 @@ class SamplesData(DataLayerPiece):
         if "name" in data:
             aws.append(
                 check_name_is_in_use(
-                    self._mongo,
-                    data["name"],
-                    sample_id=sample_id,
-                    session=session,
+                    self._mongo, data["name"], sample_id=sample_id, session=session
                 )
             )
 
@@ -436,7 +427,9 @@ class SamplesData(DataLayerPiece):
             if sample is None:
                 break
 
-            await virtool.samples.db.move_sample_files_to_pg(self._mongo, self._pg, sample)
+            await virtool.samples.db.move_sample_files_to_pg(
+                self._mongo, self._pg, sample
+            )
             await tracker.add(1)
 
     async def deduplicate_sample_names(self):
@@ -490,4 +483,12 @@ class SamplesData(DataLayerPiece):
                     )
 
     async def update_sample_workflows(self):
-        await recalculate_all_workflow_tags(self._mongo)
+        sample_ids = await self._mongo.samples.distinct("_id")
+
+        for chunk in chunk_list(sample_ids, 50):
+            await gather(
+                *[
+                    recalculate_workflow_tags(self._mongo, sample_id)
+                    for sample_id in chunk
+                ]
+            )
