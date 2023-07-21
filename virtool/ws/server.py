@@ -78,6 +78,24 @@ class WSServer:
         except ValueError:
             pass
 
+    async def close_connections_with_session_id(self, session_id):
+        """
+        Closes connections associated with a session_id
+        """
+        for connection in self._connections:
+            if connection.session_id == session_id:
+                await connection.close(1000)
+
+    async def close_expired_websocket_connections(self):
+        """
+        Closes connections with expired sessions.
+        """
+        while True:
+            for connection in self._connections:
+                if not connection.user_id:
+                    await connection.close(1001)
+            await asyncio.sleep(300)
+
     @property
     def authenticated_connections(self) -> list[WSConnection]:
         """

@@ -20,6 +20,7 @@ def ws(mocker):
     client.user_id = "test"
     client.groups = ["admin", "test"]
     client.permissions = [Permission.create_sample.value]
+    client.session_id = "test_session_id"
 
     return WSConnection(ws, client)
 
@@ -33,6 +34,7 @@ def test_init(ws):
     assert ws.user_id == "test"
     assert ws.groups == ["admin", "test"]
     assert ws.permissions == [Permission.create_sample.value]
+    assert ws.session_id == "test_session_id"
 
 
 async def test_send(ws):
