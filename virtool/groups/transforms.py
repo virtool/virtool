@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Union
 from virtool.mongo.core import Mongo
-from virtool.mongo.transforms import AbstractTransform
+from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
 from virtool.utils import base_processor
 

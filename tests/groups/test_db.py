@@ -1,7 +1,7 @@
 import pytest
 
 from virtool.groups.transforms import AttachGroupTransform, AttachGroupsTransform
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 
 
 @pytest.mark.parametrize("quantity", ["one", "many"])
