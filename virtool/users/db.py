@@ -310,7 +310,7 @@ async def fetch_complete_user(
         mongo.users.aggregate(
             [
                 {"$match": {"_id": user_id}},
-                # *lookup_groups_minimal_by_id(),
+                *lookup_groups_minimal_by_id(),
                 *lookup_group_minimal_by_id(
                     local_field="primary_group", set_as="primary_group"
                 ),

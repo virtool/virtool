@@ -55,7 +55,7 @@
 ---
 # name: test_attach_group_transform[one]
   <class 'dict'> {
-    '_id': 'doc',
+    '_id': 'doc_0',
     'group': <class 'dict'> {
       'id': 'bf1b993c',
       'name': 'musicians',
