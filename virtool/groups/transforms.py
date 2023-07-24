@@ -1,82 +1,125 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 from virtool.mongo.core import Mongo
 from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
 from virtool.utils import base_processor
-
-
-def extract_group_id(document: Document):
-    try:
-        return document["group"]["id"]
-
-    except KeyError:
-        raise ValueError("Document must contain a valid group with field `id`")
+from virtool_core.models.group import GroupMinimal
 
 
 class AttachGroupTransform(AbstractTransform):
-    def __init__(self, mongo: Mongo):
+    def __init__(self, mongo: Mongo, ignore_errors: bool = False):
         self._mongo = mongo
+        self._ignore_errors = ignore_errors
 
-    async def prepare_one(self, document: Document):
-        group_id = extract_group_id(document)
-        group_doc = base_processor(await self._mongo.groups.find_one(group_id))
+    def _extract_primary_group_id(self, document: Document) -> Optional[str]:
+        try:
+            primary_group = document["primary_group"]
 
-        if not group_doc:
-            raise KeyError(f"Document contains non-existent user: {group_id}.")
+        except KeyError:
+            if not self._ignore_errors:
+                raise KeyError("Document needs a value at group or group.id")
 
-        return group_doc
+            return None
+
+        try:
+            return primary_group["id"]
+        except TypeError:
+            if isinstance(primary_group, str):
+                return primary_group
+
+            return None
+
+    async def prepare_one(self, document: Document) -> Optional[GroupMinimal]:
+        group_id = self._extract_primary_group_id(document)
+
+        group_data = base_processor(await self._mongo.groups.find_one(group_id))
+
+        return group_data
 
     async def attach_one(self, document: Document, prepared: Any):
-        return {**document, "group": prepared}
+        if not prepared:
+            return {**document, "primary_group": None}
 
-    async def prepare_many(self, documents: List[Document]):
-        user_ids = [extract_group_id(document) for document in documents]
+        try:
+            group_data = document["primary_group"]
+        except KeyError:
+            if self._ignore_errors:
+                return document
+
+            raise
+
+        if isinstance(group_data, str):
+            return {
+                **document,
+                "primary_group": GroupMinimal(**prepared),
+            }
+
+        return {**document, "primary_group": GroupMinimal(**prepared)}
+
+    async def prepare_many(
+        self, documents: List[Document]
+    ) -> Dict[Union[int, str], Any]:
+        group_ids = list(
+            {self._extract_primary_group_id(document) for document in documents}
+        )
 
         return {
-            group_doc["_id"]: base_processor(group_doc)
-            async for group_doc in self._mongo.groups.find({"_id": {"$in": user_ids}})
+            document["_id"]: base_processor(document)
+            async for document in self._mongo.groups.find({"_id": {"$in": group_ids}})
         }
 
-    async def attach_many(self, documents: List[Document], prepared: Dict[str, Any]):
+    async def attach_many(
+        self, documents: List[Document], prepared: Dict[int, Any]
+    ) -> List[Document]:
         return [
-            await self.attach_one(document, prepared[extract_group_id(document)])
+            await self.attach_one(
+                document, prepared.get(self._extract_primary_group_id(document))
+            )
             for document in documents
         ]
 
 
-def extract_group_ids(document: Document) -> List[str]:
-    try:
-        return document["groups"]
-
-    except KeyError:
-        raise ValueError("Document must contain a list of group ids")
-
-
 class AttachGroupsTransform(AbstractTransform):
-    def __init__(self, mongo: Mongo):
+    def __init__(self, mongo: Mongo, ignore_errors: bool = False):
         self._mongo = mongo
+        self._ignore_errors = ignore_errors
+
+    def _extract_group_ids(self, document: Document) -> List[str]:
+        try:
+            return document["groups"]
+
+        except (KeyError, ValueError):
+            return None
 
     async def prepare_one(self, document: Document) -> Dict[str, Dict]:
-        group_ids = extract_group_ids(document)
+        group_ids = self._extract_group_ids(document)
 
-        return {
-            group_doc["_id"]: base_processor(group_doc)
+        to_return = [
+            base_processor(group_doc)
             async for group_doc in self._mongo.groups.find({"_id": {"$in": group_ids}})
-        }
+        ]
+
+        return to_return
 
     async def attach_one(self, document: Document, prepared: Any):
-        return {**document, "groups": prepared}
+        to_return = {**document, "groups": [GroupMinimal(**doc) for doc in prepared]}
+
+        return to_return
 
     async def prepare_many(self, documents: List[Document]):
         prepared = dict()
 
         for document in documents:
-            prepared[document["_id"]] = await self.prepare_one(document)
+            prepared[base_processor(document).get("id")] = await self.prepare_one(
+                document
+            )
 
         return prepared
 
     async def attach_many(self, documents: List[Document], prepared: Dict[str, Any]):
         return [
-            await self.attach_one(document, prepared[document["_id"]])
+            await self.attach_one(
+                document, prepared.get(base_processor(document).get("id"))
+            )
             for document in documents
         ]
