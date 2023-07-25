@@ -372,3 +372,6 @@ class AccountData(DataLayerPiece):
         return await self.data.sessions.create(
             ip, reset.user_id, remember=reset.remember
         )
+
+    async def close_ws_connection(self, session_id: str):
+        self._redis.publish("close_websocket_connections", session_id)

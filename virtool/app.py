@@ -31,7 +31,6 @@ from virtool.startup import (
     startup_settings,
     startup_version,
     startup_ws,
-    startup_cleanup_ws,
 )
 
 
@@ -85,7 +84,6 @@ def create_app(config: Config):
             startup_routes,
             startup_executors,
             startup_ws,
-            startup_cleanup_ws,
             startup_data,
             startup_settings,
             startup_sentry,

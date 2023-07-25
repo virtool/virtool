@@ -248,15 +248,13 @@ async def startup_ws(app: App):
     logger.info("Starting websocket server")
 
     ws = WSServer(app["redis"])
-    await get_scheduler_from_app(app).spawn(ws.run())
-    app["ws"] = ws
 
+    scheduler = get_scheduler_from_app(app)
 
-async def startup_cleanup_ws(app: App):
-    """Closes expired websocket connections periodically"""
-
-    await get_scheduler_from_app(app).spawn(
-        app["ws"].close_expired_websocket_connections()
-    )
+    await scheduler.spawn(ws.run())
+    await scheduler.spawn(ws.periodically_close_expired_websocket_connections())
+    await scheduler.spawn(ws.handle_redis_ws_messages())
 
     logger.info("Closing expired WS connections")
+
+    app["ws"] = ws
