@@ -242,6 +242,4 @@ class UsersData(DataLayerPiece):
         """
         Checks if any users exist.
         """
-        return (
-            True if await self._mongo.users.count_documents({}, limit=1) == 0 else False
-        )
+        return await self._mongo.users.count_documents({}, limit=1) == 0
