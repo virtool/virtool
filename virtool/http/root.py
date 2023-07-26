@@ -1,6 +1,7 @@
 from virtool.api.response import json_response
 from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.routes import Routes
+from virtool.data.utils import get_data_from_req
 
 API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"
 
@@ -15,7 +16,7 @@ async def get(req):
     Returns a generic message. Used during testing for acquiring a ``session_id``.
 
     """
-    first_user = await req.app["db"].users.count_documents({}) == 0
+    first_user = await get_data_from_req(req).users.check_is_empty()
 
     app_data = {
         "dev": req.app["config"].dev,

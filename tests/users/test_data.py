@@ -174,3 +174,15 @@ async def test_find_or_create_b2c_user(
         assert int(user.handle.split("-")[-1])
 
     assert user == snapshot(matcher=path_type({"handle": (str,)}))
+
+
+async def test_check_is_empty(mongo, users_data, fake2, authorization_client, pg):
+    first_user_exists = not await users_data.check_is_empty()
+
+    assert first_user_exists is False
+
+    await users_data.create(password="hello_world", handle="bill")
+
+    first_user_exists = not await users_data.check_is_empty()
+
+    assert first_user_exists is True

@@ -126,7 +126,7 @@ class FirstUserView(PydanticView):
         """
         db = self.request.app["db"]
 
-        if await db.users.count_documents({}, limit=1):
+        if not await db.users.check_is_empty():
             raise HTTPConflict(text="Virtool already has at least one user")
 
         if data.handle == "virtool":
