@@ -71,12 +71,12 @@
     'force_reset': True,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
         'id': 'bf1b993c',
         'name': 'musicians',
+      },
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
       },
     ],
     'handle': 'qtaylor',
@@ -403,12 +403,12 @@
     'force_reset': False,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
         'id': 'bf1b993c',
         'name': 'musicians',
+      },
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
       },
     ],
     'handle': 'qtaylor',

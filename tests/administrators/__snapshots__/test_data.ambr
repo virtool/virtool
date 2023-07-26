@@ -87,12 +87,12 @@
     'force_reset': False,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'peasants',
-        'name': 'peasants',
-      },
-      <class 'dict'> {
         'id': 'kings',
         'name': 'kings',
+      },
+      <class 'dict'> {
+        'id': 'peasants',
+        'name': 'peasants',
       },
     ],
     'handle': 'leeashley',

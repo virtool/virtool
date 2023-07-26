@@ -8,6 +8,8 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.user import User
 
+from virtool.groups.transforms import AttachGroupTransform, AttachGroupsTransform
+
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.db import (
@@ -310,10 +312,6 @@ async def fetch_complete_user(
         mongo.users.aggregate(
             [
                 {"$match": {"_id": user_id}},
-                *lookup_groups_minimal_by_id(),
-                *lookup_group_minimal_by_id(
-                    local_field="primary_group", set_as="primary_group"
-                ),
             ]
         ).to_list(1),
         authorization_client.get_administrator(user_id),
@@ -322,14 +320,21 @@ async def fetch_complete_user(
     if len(user) == 0:
         return None
 
-    return User(
+    to_return = User(
         **(
             await apply_transforms(
-                base_processor(user[0]), [AttachPermissionsTransform(mongo, pg)]
+                base_processor(user[0]),
+                [
+                    AttachPermissionsTransform(mongo, pg),
+                    AttachGroupTransform(mongo),
+                    AttachGroupsTransform(mongo),
+                ],
             )
         ),
         administrator_role=role,
     )
+
+    return to_return
 
 
 def lookup_nested_user_by_id(

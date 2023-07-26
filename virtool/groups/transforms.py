@@ -1,13 +1,15 @@
-from typing import Any, Dict, List, Optional, Union
-from virtool.mongo.core import Mongo
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
 from virtool.utils import base_processor
 from virtool_core.models.group import GroupMinimal
 
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
+
 
 class AttachGroupTransform(AbstractTransform):
-    def __init__(self, mongo: Mongo, ignore_errors: bool = False):
+    def __init__(self, mongo: "Mongo", ignore_errors: bool = False):
         self._mongo = mongo
         self._ignore_errors = ignore_errors
 
@@ -31,6 +33,9 @@ class AttachGroupTransform(AbstractTransform):
 
     async def prepare_one(self, document: Document) -> Optional[GroupMinimal]:
         group_id = self._extract_primary_group_id(document)
+
+        if not group_id:
+            return None
 
         group_data = base_processor(await self._mongo.groups.find_one(group_id))
 
@@ -80,7 +85,7 @@ class AttachGroupTransform(AbstractTransform):
 
 
 class AttachGroupsTransform(AbstractTransform):
-    def __init__(self, mongo: Mongo, ignore_errors: bool = False):
+    def __init__(self, mongo: "Mongo", ignore_errors: bool = False):
         self._mongo = mongo
         self._ignore_errors = ignore_errors
 

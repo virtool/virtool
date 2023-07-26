@@ -32,8 +32,8 @@
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -86,8 +86,8 @@
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -140,8 +140,8 @@
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -194,8 +194,8 @@
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',
