@@ -1,7 +1,48 @@
+"""
+SessionsData is responsible for creating, updating, and deleting user sessions.
+
+**Important:** Session data should not be directly accessed outside of the datalayer. When session information is required,
+the data layer should be queried for the session information. Datalayer methods are written to ensure that security
+practices regarding authenticated sessions are respected. Session data 
+
+As part of managing different possible authentication states, sessions come in three variant types. Regardless of type
+sessions should be treated as immutable. ie: sessions can be created and destroyed but not modified.
+
+Ex: if a user logs in, a new authenticated session should be created and the old anonymous session should be deleted.
+
+
+There are three types of sessions:
+    1. Anonymous sessions
+    2. Password reset sessions
+    3. Authenticated sessions
+
+Anonymous sessions have the least associated data logging only the clients ip address and the data the session was 
+created at. These sessions should be used when the client is not authenticated. Since these sessions are 
+anonymous, they should only be used to access public resources.
+
+Password reset sessions should be treated similarly to anonymous sessions. They should only be used to access public
+resources with the sole exclusion of requests to change the users password. These sessions are associate with a user via
+the reset field of a session object. These sessions should have a short lifetime and should be deleted if either:
+    1. The client resets their password
+    2. The client makes a request to any non-password reset endpoint
+
+Authenticated sessions relate the session_id and session_token to the user's id. When a user is logged in, an 
+authenticated session must be created to ensure the session_id can be associated with the user. Authenticated sessions
+can be returned from the data layer if and only if:
+    1. The session_id has a valid entry in redis
+    2. The hashed session_token matches the session token stored in redis
+
+If either condition is not met the data_layer must raise an error.
+
+Authenticated sessions and non-authenticated sessions should be treated as separate resources. For example, if a client 
+makes a request to get a session via the anonymous session api and the passed session_id is associated with an 
+authenticated session, the data layer should raise a generic ResourceNotFound error.
+
+"""
+
 import secrets
 from datetime import timedelta
 from typing import Tuple
-
 from aioredis import Redis
 from virtool_core.models.session import (
     Session,
@@ -111,6 +152,8 @@ class SessionData(DataLayerPiece):
         """
         Get a session provided with the session id.
 
+        Note: _get is a private method, all external methods should use get_authenticated or get_anonymous
+
         :param session_id: the session id
         :raises ResourceNotFoundError: if the session is not found
         :return: the session object and token
@@ -151,6 +194,8 @@ class SessionData(DataLayerPiece):
     async def get_anonymous(self, session_id: str) -> Session:
         """
         Gets an anonymous session by its id.
+
+        Note: get_anonymous will only return sessions that are not authenticated
 
         :param session_id: the session id
         :raises ResourceNotFoundError: if the session is not found or is authenticated
