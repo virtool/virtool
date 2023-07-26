@@ -124,9 +124,8 @@ class FirstUserView(PydanticView):
             400: Bad request
             403: Not permitted
         """
-        db = self.request.app["db"]
 
-        if not await db.users.check_is_empty():
+        if not await get_data_from_req(self.request).users.check_if_any_exist():
             raise HTTPConflict(text="Virtool already has at least one user")
 
         if data.handle == "virtool":

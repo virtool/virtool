@@ -149,12 +149,9 @@ async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is, data
     document = await client.db.users.find_one(resp_json["id"])
     password = document.pop("password")
 
-
     assert document == snapshot(name="db")
     assert check_password("hello_world", password)
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
-
-
 
 
 @pytest.mark.apitest
@@ -295,3 +292,16 @@ async def test_remove_permission(spawn_client, role, status, snapshot):
 
     assert resp.status == status
     assert await resp.json() == snapshot()
+
+
+async def test_first_user_view(spawn_client, snapshot):
+    """
+    Checks response when there already is a user.
+    """
+    client = await spawn_client(authorize=True, administrator=True)
+
+    data = {"handle": "fred", "password": "hello_world"}
+
+    resp = await client.put("/users/first", data)
+
+    assert resp.status == 409

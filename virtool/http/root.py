@@ -16,7 +16,7 @@ async def get(req):
     Returns a generic message. Used during testing for acquiring a ``session_id``.
 
     """
-    first_user = await get_data_from_req(req).users.check_is_empty()
+    first_user = await get_data_from_req(req).users.check_if_any_exist()
 
     app_data = {
         "dev": req.app["config"].dev,

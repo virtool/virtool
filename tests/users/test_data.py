@@ -176,13 +176,17 @@ async def test_find_or_create_b2c_user(
     assert user == snapshot(matcher=path_type({"handle": (str,)}))
 
 
-async def test_check_is_empty(mongo, users_data, fake2, authorization_client, pg):
-    first_user_exists = not await users_data.check_is_empty()
+async def test_check_user_does_not_exist(users_data):
+    """
+    Checks that users don't exist.
+    """
+    assert await users_data.check_if_any_exist() is True
 
-    assert first_user_exists is False
 
+async def test_check_user_exists(users_data):
+    """
+    Checks that a user exists.
+    """
     await users_data.create(password="hello_world", handle="bill")
 
-    first_user_exists = not await users_data.check_is_empty()
-
-    assert first_user_exists is True
+    assert await users_data.check_if_any_exist() is False
