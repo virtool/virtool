@@ -2978,13 +2978,13 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "mypy (>=0.800)", "psutil", "pyOp
 
 [[package]]
 name = "virtool-core"
-version = "4.13.0"
+version = "4.13.1"
 description = "Core utilities for Virtool."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "virtool_core-4.13.0-py3-none-any.whl", hash = "sha256:41039ae3b74b9cdf5422d0d537c049a7731a70c13a98398de8e4c9789518b8fe"},
-    {file = "virtool_core-4.13.0.tar.gz", hash = "sha256:9d57d93884fc54c6f43efe0439bde720e9fdc91a692cd470b5a5cbfb3975acff"},
+    {file = "virtool_core-4.13.1-py3-none-any.whl", hash = "sha256:5f3d518a9c97ff941b1d3a329a7e97be5d6b10d0aabf1d329f8eb2d02fb2cbd9"},
+    {file = "virtool_core-4.13.1.tar.gz", hash = "sha256:da9e8b3327dce73d4dfd9dd9985f953c789f60d072240934a0f2ca2a3f4ea5c6"},
 ]
 
 [package.dependencies]

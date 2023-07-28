@@ -1,42 +1,43 @@
 """
-SessionsData is responsible for creating, updating, and deleting user sessions.
+The sessions data layer is used for managing and querying sessions.
 
-**Important:** Session data should not be directly accessed outside of the datalayer. When session information is required,
-the data layer should be queried for the session information. Datalayer methods are written to ensure that security
-practices regarding authenticated sessions are respected. Session data 
+Sessions are immutable, meaning they can be created and destroyed but not modified. For
+example, if a user logs in, a new authenticated session should be created and the old
+anonymous session should be deleted.
 
-As part of managing different possible authentication states, sessions come in three variant types. Regardless of type
-sessions should be treated as immutable. ie: sessions can be created and destroyed but not modified.
+Sessions have unique IDs that are stored in the browser as the ``session_id`` cookie.
 
-Ex: if a user logs in, a new authenticated session should be created and the old anonymous session should be deleted.
+There are three session types:
 
+1. Anonymous sessions
 
-There are three types of sessions:
-    1. Anonymous sessions
-    2. Password reset sessions
-    3. Authenticated sessions
+   These sessions are used when the client is not authenticated (anonymous) and they
+   should only be used to access public resources.
 
-Anonymous sessions have the least associated data logging only the clients ip address and the data the session was 
-created at. These sessions should be used when the client is not authenticated. Since these sessions are 
-anonymous, they should only be used to access public resources.
+2. Password reset sessions
 
-Password reset sessions should be treated similarly to anonymous sessions. They should only be used to access public
-resources with the sole exclusion of requests to change the users password. These sessions are associate with a user via
-the reset field of a session object. These sessions should have a short lifetime and should be deleted if either:
-    1. The client resets their password
-    2. The client makes a request to any non-password reset endpoint
+   These sessions are used when a user requests a password reset. They should grant 
+   access to protected resources.
 
-Authenticated sessions relate the session_id and session_token to the user's id. When a user is logged in, an 
-authenticated session must be created to ensure the session_id can be associated with the user. Authenticated sessions
-can be returned from the data layer if and only if:
-    1. The session_id has a valid entry in redis
-    2. The hashed session_token matches the session token stored in redis
+   These sessions have a short lifetime and are deleted if the client resets their
+   password or makes a request to any other endpoint before resetting their password.
 
-If either condition is not met the data_layer must raise an error.
+3. Authenticated sessions
 
-Authenticated sessions and non-authenticated sessions should be treated as separate resources. For example, if a client 
-makes a request to get a session via the anonymous session api and the passed session_id is associated with an 
-authenticated session, the data layer should raise a generic ResourceNotFound error.
+   Authenticated sessions are created when a client logs in successfully.
+   
+   Prior to login, a client will have an anonymous session. After login, the session
+   will be replaced with a new authenticated session that has a unique `session_token`
+   that identifies it as being authenticated.
+   
+   Authenticated sessions can be returned from the data layer if both the ``session_id``
+   and ``session_token`` match a valid session.
+
+When creating a new session authenticated sessions and anonymous sessions should be
+treated as separate resources. For example, if a client makes a request to get a session
+via the anonymous session API and the passed ``session_id`` is associated with an
+authenticated session, the data layer should raise a generic
+:exception:``ResourceNotFound`` error.
 
 """
 
@@ -46,8 +47,6 @@ from typing import Tuple
 from aioredis import Redis
 from virtool_core.models.session import (
     Session,
-    SessionAuthentication,
-    SessionPasswordReset,
 )
 
 import virtool.utils
@@ -57,124 +56,114 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.piece import DataLayerPiece
-from virtool.utils import hash_key
+from virtool.utils import get_safely, hash_key
 
 
 class SessionData(DataLayerPiece):
+    """
+    The data layer piece for user sessions.
+
+    It is responsible for creating, querying, and deleting user sessions.
+    """
+
     def __init__(self, redis: Redis):
         self.redis = redis
 
-    async def create(
+    async def create_anonymous(
+        self,
+        ip: str,
+    ) -> Session:
+        """
+        Creates an anonymous session with the given ``ip`` and ``user_id``.
+
+        :param ip: the ip address of the client
+        :return: the session id, the session model, and the session token
+        """
+        session_id = await self._create_session_id()
+
+        session = Session(created_at=virtool.utils.timestamp(), ip=ip, id=session_id)
+
+        await self.redis.set(session_id, dump_string(session), expire=600)
+
+        return session
+
+    async def create_authenticated(
         self,
         ip: str,
         user_id: str,
         remember: bool = False,
-    ) -> Tuple[str, Session, str]:
+    ) -> Tuple[Session, str]:
         """
-        Creates a new session with the given ip and user_id
+        Creates a new authenticated session with the given ``ip`` and ``user_id``.
+
+        When an authenticated session is created, the anonymous session used to make the
+        login request should be deleted with :meth:`delete`.
 
         :param ip: the ip address of the client
         :param user_id: the user id of the client
-        :param remember: Boolean indicating if a session should be saved long term
+        :param remember: whether the session should be saved long term
         :return: the session id, the session model, and the session token
         """
-        session_id = await self.create_session_id()
+        session_id = await self._create_session_id()
 
         if remember:
             expires_after = timedelta(days=30).total_seconds()
         else:
             expires_after = timedelta(minutes=60).total_seconds()
 
-        new_session = Session(created_at=virtool.utils.timestamp(), ip=ip)
-
         token, hashed = virtool.utils.generate_key()
-        new_session.authentication = SessionAuthentication(
-            token=hashed, user_id=user_id
-        )
+
+        session = {
+            "authentication": {"user_id": user_id, "token": hashed},
+            "created_at": virtool.utils.timestamp(),
+            "id": session_id,
+            "ip": ip,
+        }
 
         await self.redis.set(
-            session_id, dump_string(new_session), expire=int(expires_after)
+            session_id,
+            dump_string(session),
+            expire=int(expires_after),
         )
 
-        return session_id, new_session, token
+        return Session(**session), token
 
-    async def create_anonymous(
-        self,
-        ip: str,
-    ) -> Tuple[str, Session]:
+    async def create_reset(
+        self, ip: str, user_id: str, remember: bool
+    ) -> Tuple[Session, str]:
         """
-        Creates a new session with the given ip and user_id
+        Creates a new reset session.
 
         :param ip: the ip address of the client
+        :param user_id: the user id of the client
+        :param remember: whether the session should be saved long term
         :return: the session id, the session model, and the session token
         """
-        session_id = await self.create_session_id()
-
-        new_session = Session(created_at=virtool.utils.timestamp(), ip=ip)
-
-        await self.redis.set(session_id, dump_string(new_session), expire=600)
-
-        return session_id, new_session
-
-    async def create_reset_session(self, ip, user_id, remember) -> Tuple[str, Session]:
         reset_code = secrets.token_hex(32)
-        session_id = await self.create_session_id()
+        session_id = await self._create_session_id()
 
-        session = Session(
-            created_at=virtool.utils.timestamp(),
-            ip=ip,
-            reset=SessionPasswordReset(
-                code=reset_code,
-                remember=remember,
-                user_id=user_id,
-            ),
+        session = {
+            "created_at": virtool.utils.timestamp(),
+            "id": session_id,
+            "ip": ip,
+            "reset": {
+                "code": reset_code,
+                "remember": remember,
+                "user_id": user_id,
+            },
+        }
+
+        await self.redis.set(
+            session_id,
+            dump_string(session),
+            expire=600,
         )
 
-        await self.redis.set(session_id, dump_string(session), expire=600)
-
-        return session_id, session
-
-    async def create_session_id(self) -> str:
-        """
-        Create a new unique session id.
-
-        :return: a session id
-
-        """
-        session_id = "session_" + secrets.token_hex(32)
-
-        if await self.redis.get(session_id):
-            return await self.create_session_id()
-
-        return session_id
-
-    async def _get(self, session_id: str) -> Session:
-        """
-        Get a session provided with the session id.
-
-        Note: _get is a private method, all external methods should use get_authenticated or get_anonymous
-
-        :param session_id: the session id
-        :raises ResourceNotFoundError: if the session is not found
-        :return: the session object and token
-        """
-        session = await self.redis.get(session_id)
-
-        if session is None:
-            raise ResourceNotFoundError("Session is invalid")
-
-        session = loads(session)
-
-        return Session(
-            **{
-                **session,
-                "created_at": isoformat_to_datetime(session["created_at"]),
-            }
-        )
+        return Session(**session), reset_code
 
     async def get_authenticated(self, session_id: str, session_token: str) -> Session:
         """
-        Get an authenticated session and token by its id and token.
+        Get an authenticated session by its ``session_id`` and ``session_token``.
 
         :param session_id: the session id
         :param session_token: the secure token for an authenticated session
@@ -184,66 +173,97 @@ class SessionData(DataLayerPiece):
 
         session = await self._get(session_id)
 
-        if session.authentication is None or session.authentication.token != hash_key(
-            session_token
-        ):
-            raise ResourceNotFoundError("Session not authenticated")
+        if not session.get("authentication") or session.get("reset"):
+            raise ResourceNotFoundError("Session not found")
 
-        return session
+        if session["authentication"]["token"] != hash_key(session_token):
+            raise ResourceNotFoundError("Invalid session token")
+
+        return Session(**session)
 
     async def get_anonymous(self, session_id: str) -> Session:
         """
-        Gets an anonymous session by its id.
-
-        Note: get_anonymous will only return sessions that are not authenticated
+        Gets an anonymous session with the passed ``session_id``.
 
         :param session_id: the session id
-        :raises ResourceNotFoundError: if the session is not found or is authenticated
+        :raises ResourceNotFoundError: if the session is not found or is not anonymous
         :return: the session object
         """
         session = await self._get(session_id)
 
-        if session.authentication is not None:
-            raise ResourceNotFoundError("Session not valid")
+        if session.get("authentication") or session.get("reset"):
+            raise ResourceNotFoundError("Session not found")
 
-        return session
+        return Session(**session)
 
-    async def delete(self, session_id) -> None:
+    async def get_reset(self, session_id: str, reset_code: str) -> Session:
         """
-        Deletes the session matching the provided id
+        Gets a session with a pending password reset given its ``session_id`` and its
+        valid ``reset_code``.
+
+        If the passed ``reset_code`` is not valid for the session with the passed
+        ``session_id``, :exception:``ResourceNotFound` will be raised.
+
+        :param session_id: the session id
+        :param reset_code: the reset code fopr
+        :raises:
+        :return: the associated user_id and remember boolean
+        """
+        session = await self._get(session_id)
+
+        stored_reset_code: str = get_safely(session, "reset", "code")
+
+        if (
+            not reset_code
+            or session.get("authentication")
+            or stored_reset_code != reset_code
+        ):
+            raise ResourceNotFoundError("Session not found")
+
+        if stored_reset_code != reset_code:
+            raise ResourceNotFoundError("Invalid reset code")
+
+        return Session(**session)
+
+    async def delete(self, session_id: str):
+        """
+        Deletes the session with the provided ``session_id``.
 
         :param session_id: the id of the session to remove
         """
         await self.redis.delete(session_id)
 
-    async def clear_reset_session(self, session_id: str) -> str:
+    async def _create_session_id(self) -> str:
         """
-        Clear the reset information attached to the session associated with the passed
-        `session_id`.
+        Create a unique session id.
 
-        :param session_id: the session id
+        :return: a session id
+
         """
-        try:
-            session = await self._get(session_id)
-        except ResourceNotFoundError:
-            return session_id
+        session_id = "session_" + secrets.token_hex(32)
 
-        if session.reset is None:
-            return session_id
-
-        await self.delete(session_id)
-        session_id, _ = await self.create_anonymous(session.ip)
+        if await self.redis.get(session_id):
+            return await self._create_session_id()
 
         return session_id
 
-    async def get_reset_data(self, session_id: str) -> SessionPasswordReset:
+    async def _get(self, session_id: str) -> dict:
         """
-        Gets any reset data associated with the passed session if the passed reset code
-        matches the stored reset code.
+        Get a session provided a ``session_id``.
 
         :param session_id: the session id
-        :return: the associated user_id and remember boolean
+        :raises ResourceNotFoundError: if the session does not exist
+        :return: the session object and token
         """
-        session = await self.get_anonymous(session_id)
+        session = await self.redis.get(session_id)
 
-        return session.reset
+        if session is None:
+            raise ResourceNotFoundError("Session is invalid")
+
+        session = loads(session)
+
+        return {
+            **session,
+            "created_at": isoformat_to_datetime(session["created_at"]),
+            "id": session_id,
+        }
