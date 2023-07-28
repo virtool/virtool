@@ -16,7 +16,6 @@ from aiohttp import BasicAuth
 from aiohttp.web import Response, RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
-from virtool_core.models.session import Session
 
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes, dump_string

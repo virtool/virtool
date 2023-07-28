@@ -59,7 +59,7 @@ class TestAuthenticated:
         """
         Test that a ``ResourceNotFound`` error is raised when the token is invalid.
         """
-        session, token = await data_layer.sessions.create_authenticated(
+        session, _ = await data_layer.sessions.create_authenticated(
             "1.1.1.1", "user_id", False
         )
 

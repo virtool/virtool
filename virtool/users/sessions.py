@@ -16,7 +16,7 @@ There are three session types:
 
 2. Password reset sessions
 
-   These sessions are used when a user requests a password reset. They should grant 
+   These sessions are used when a user requests a password reset. They should grant
    access to protected resources.
 
    These sessions have a short lifetime and are deleted if the client resets their
@@ -25,11 +25,11 @@ There are three session types:
 3. Authenticated sessions
 
    Authenticated sessions are created when a client logs in successfully.
-   
+
    Prior to login, a client will have an anonymous session. After login, the session
    will be replaced with a new authenticated session that has a unique `session_token`
    that identifies it as being authenticated.
-   
+
    Authenticated sessions can be returned from the data layer if both the ``session_id``
    and ``session_token`` match a valid session.
 
