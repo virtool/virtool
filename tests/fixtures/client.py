@@ -181,16 +181,15 @@ def spawn_client(
             await redis.set(
                 session_id,
                 dump_bytes(
-                    Session(
-                        **{
-                            "created_at": virtool.utils.timestamp(),
-                            "ip": "127.0.0.1",
-                            "authentication": {
-                                "token": hash_key(session_token),
-                                "user_id": "test",
-                            },
-                        }
-                    )
+                    {
+                        "id": session_id,
+                        "created_at": virtool.utils.timestamp(),
+                        "ip": "127.0.0.1",
+                        "authentication": {
+                            "token": hash_key(session_token),
+                            "user_id": "test",
+                        },
+                    }
                 ),
                 expire=3600,
             )

@@ -336,7 +336,7 @@ class AccountData(DataLayerPiece):
 
         raise ResourceError
 
-    async def logout(self, old_session_id: str, ip: str) -> Tuple[Session]:
+    async def logout(self, old_session_id: str, ip: str) -> Session:
         """
         Invalidates the requesting session, effectively logging out the user.
 
@@ -358,17 +358,15 @@ class AccountData(DataLayerPiece):
         :param ip: the ip address of the client
         """
 
-        reset = await self.data.sessions.get_reset_data(session_id, data.reset_code)
-
-        if reset is None or data.reset_code != reset.code:
-            raise ResourceError()
+        session = await self.data.sessions.get_reset(session_id, data.reset_code)
 
         await self.data.sessions.delete(session_id)
 
         await self.data.administrators.update(
-            reset.user_id, UpdateUserRequest(force_reset=False, password=data.password)
+            session.reset.user_id,
+            UpdateUserRequest(force_reset=False, password=data.password),
         )
 
         return await self.data.sessions.create_authenticated(
-            ip, reset.user_id, remember=reset.remember
+            ip, session.reset.user_id, remember=session.reset.remember
         )

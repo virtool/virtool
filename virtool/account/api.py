@@ -348,14 +348,14 @@ class LogoutView(PydanticView):
         Status Codes:
             204: Successful operation
         """
-        session_id, _ = await get_data_from_req(self.request).account.logout(
+        session = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
             virtool.http.authentication.get_ip(self.request),
         )
 
         resp = Response(status=200)
 
-        set_session_id_cookie(resp, session_id)
+        set_session_id_cookie(resp, session.id)
         resp.del_cookie("session_token")
 
         return resp
@@ -385,7 +385,7 @@ class ResetView(PydanticView):
                 data,
                 virtool.http.authentication.get_ip(self.request),
             )
-        except (ResourceError, ResourceNotFoundError):
+        except ResourceNotFoundError:
             raise HTTPBadRequest(text="Invalid session")
 
         try:
