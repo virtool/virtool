@@ -8,6 +8,8 @@ This is great!
 
    authorization
    data
+   sessions
+   transforms
    types
 
    testing/faking

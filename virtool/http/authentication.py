@@ -201,14 +201,12 @@ async def middleware(req, handler) -> Response:
                     session_id
                 )
             except ResourceNotFoundError:
-                session_id, session = await get_data_from_req(
-                    req
-                ).sessions.create_anonymous(get_ip(req))
+                session = await get_data_from_req(req).sessions.create_anonymous(
+                    get_ip(req)
+                )
 
     else:
-        session_id, session = await get_data_from_req(req).sessions.create_anonymous(
-            get_ip(req)
-        )
+        session = await get_data_from_req(req).sessions.create_anonymous(get_ip(req))
 
     if session.authentication:
         user = await get_data_from_req(req).users.get(session.authentication.user_id)
@@ -240,11 +238,15 @@ async def middleware(req, handler) -> Response:
 
     resp = await handler(req)
 
-    if req.path != "/account/reset":
-        session_id = await get_data_from_req(req).sessions.clear_reset_session(
-            session_id
-        )
+    if req.path != "/account/reset" and session.reset:
+        try:
+            await get_data_from_req(req).sessions.delete(session_id)
+            session = await get_data_from_req(req).sessions.create_anonymous(
+                get_ip(req)
+            )
+        except ResourceNotFoundError:
+            pass
 
-    set_session_id_cookie(resp, session_id)
+    set_session_id_cookie(resp, session.id)
 
     return resp
