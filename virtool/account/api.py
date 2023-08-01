@@ -353,10 +353,6 @@ class LogoutView(PydanticView):
             virtool.http.authentication.get_ip(self.request),
         )
 
-        await get_data_from_req(self.request).account.close_ws_connection(
-            self.request.cookies.get("session_id")
-        )
-
         resp = Response(status=200)
 
         set_session_id_cookie(resp, session.id)

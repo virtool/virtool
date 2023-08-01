@@ -10,7 +10,10 @@ from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
 from virtool_core.redis import connect as connect_redis, periodically_ping_redis
 
-from virtool.authorization.client import AuthorizationClient, get_authorization_client_from_app
+from virtool.authorization.client import (
+    AuthorizationClient,
+    get_authorization_client_from_app,
+)
 from virtool.authorization.openfga import connect_openfga
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
@@ -253,7 +256,6 @@ async def startup_ws(app: App):
 
     await scheduler.spawn(ws.run())
     await scheduler.spawn(ws.periodically_close_expired_websocket_connections())
-    await scheduler.spawn(ws.handle_redis_ws_messages())
 
     logger.info("Closing expired WS connections")
 

@@ -80,21 +80,6 @@ class WSServer:
         except ValueError:
             pass
 
-    async def handle_redis_ws_messages(self):
-        channel = self._redis.subscribe("close_websocket_connections")
-
-        while await channel.wait_message():
-            session_id = await channel.get(encoding="utf-8")
-            await self.close_connections_with_session_id(session_id)
-
-    async def close_connections_with_session_id(self, session_id):
-        """
-        Closes connections associated with a session_id
-        """
-        for connection in self._connections:
-            if connection.session_id == session_id:
-                await connection.close(1000)
-
     async def periodically_close_expired_websocket_connections(self):
         """
         Periodically closes connections with expired sessions.
@@ -104,9 +89,7 @@ class WSServer:
         while True:
             for connection in self._connections:
                 try:
-                    session = await session_data.get_anonymous(connection.session_id)
-                    if session.authentication is None:
-                        await connection.close(1001)
+                    await session_data.validate_session(connection.session_id)
                 except ResourceNotFoundError:
                     await connection.close(1001)
             await asyncio.sleep(300)

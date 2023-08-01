@@ -181,6 +181,14 @@ class SessionData(DataLayerPiece):
 
         return Session(**session)
 
+    async def validate_session(self, session_id: str):
+        """
+        Validates a session with a given ``session_id``.
+
+        :param session_id: the session id
+        """
+        await self._get(session_id)
+
     async def get_anonymous(self, session_id: str) -> Session:
         """
         Gets an anonymous session with the passed ``session_id``.
