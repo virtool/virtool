@@ -1,78 +1,225 @@
-# name: test_attach_group_transform[many]
+# name: TestAttachGroupTransform.test_multiple_documents
   <class 'list'> [
     <class 'dict'> {
-      '_id': 'doc_0',
-      'primary_group': GroupMinimal(id='bf1b993c', name='musicians'),
+      'id': 'doc_0',
+      'primary_group': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
     },
     <class 'dict'> {
-      '_id': 'doc_1',
-      'primary_group': GroupMinimal(id='fb085f7f', name='hydrogeologists'),
+      'id': 'doc_1',
+      'primary_group': <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
     },
     <class 'dict'> {
-      '_id': 'doc_2',
-      'primary_group': GroupMinimal(id='7cf872dc', name='architects'),
+      'id': 'doc_2',
+      'primary_group': <class 'dict'> {
+        'id': '7cf872dc',
+        'name': 'architects',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
     },
   ]
 ---
-# name: test_attach_group_transform[none]
+# name: TestAttachGroupTransform.test_primary_group_missing
   <class 'dict'> {
-    '_id': 'doc_0',
+    'id': 'doc_0',
     'primary_group': None,
   }
 ---
-# name: test_attach_group_transform[one]
+# name: TestAttachGroupTransform.test_primary_group_present
   <class 'dict'> {
-    '_id': 'doc_0',
-    'primary_group': GroupMinimal(id='bf1b993c', name='musicians'),
+    'id': 'doc_0',
+    'primary_group': <class 'dict'> {
+      'id': 'bf1b993c',
+      'name': 'musicians',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
   }
 ---
-# name: test_attach_groups_transform[many]
+# name: TestAttachGroupsTransform.test_groups_missing
+  <class 'dict'> {
+    'groups': <class 'list'> [
+    ],
+    'id': 'doc',
+  }
+---
+# name: TestAttachGroupsTransform.test_groups_present
+  <class 'dict'> {
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    ],
+    'id': 'doc',
+  }
+---
+# name: TestAttachGroupsTransform.test_multiple_documents
   <class 'list'> [
     <class 'dict'> {
-      '_id': 'doc_0',
       'groups': <class 'list'> [
-        GroupMinimal(id='3cbb22cc', name='secretary/administrators'),
-        GroupMinimal(id='bf1b993c', name='musicians'),
-        GroupMinimal(id='da42dca3', name='orthoptists'),
+        <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+          'permissions': <class 'dict'> {
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          },
+        },
+        <class 'dict'> {
+          'id': 'fb085f7f',
+          'name': 'hydrogeologists',
+          'permissions': <class 'dict'> {
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          },
+        },
       ],
-      'primary_group': GroupMinimal(id='bf1b993c', name='musicians'),
+      'id': 'doc_0',
     },
     <class 'dict'> {
-      '_id': 'doc_1',
       'groups': <class 'list'> [
-        GroupMinimal(id='09d01419', name='dietitians'),
-        GroupMinimal(id='f60bae36', name='contractors'),
-        GroupMinimal(id='fb085f7f', name='hydrogeologists'),
+        <class 'dict'> {
+          'id': '7cf872dc',
+          'name': 'architects',
+          'permissions': <class 'dict'> {
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          },
+        },
+        <class 'dict'> {
+          'id': '3cbb22cc',
+          'name': 'secretary/administrators',
+          'permissions': <class 'dict'> {
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          },
+        },
       ],
-      'primary_group': GroupMinimal(id='fb085f7f', name='hydrogeologists'),
+      'id': 'doc_1',
     },
     <class 'dict'> {
-      '_id': 'doc_2',
       'groups': <class 'list'> [
-        GroupMinimal(id='153ff459', name='haematologists'),
-        GroupMinimal(id='7aa59bf4', name='firefighters'),
-        GroupMinimal(id='7cf872dc', name='architects'),
+        <class 'dict'> {
+          'id': 'da42dca3',
+          'name': 'orthoptists',
+          'permissions': <class 'dict'> {
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          },
+        },
+        <class 'dict'> {
+          'id': '09d01419',
+          'name': 'dietitians',
+          'permissions': <class 'dict'> {
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          },
+        },
       ],
-      'primary_group': GroupMinimal(id='7cf872dc', name='architects'),
+      'id': 'doc_2',
     },
   ]
----
-# name: test_attach_groups_transform[none]
-  <class 'dict'> {
-    '_id': 'doc',
-    'groups': <class 'list'> [
-    ],
-    'primary_group': None,
-  }
----
-# name: test_attach_groups_transform[one]
-  <class 'dict'> {
-    '_id': 'doc',
-    'groups': <class 'list'> [
-      GroupMinimal(id='7cf872dc', name='architects'),
-      GroupMinimal(id='bf1b993c', name='musicians'),
-      GroupMinimal(id='fb085f7f', name='hydrogeologists'),
-    ],
-    'primary_group': GroupMinimal(id='bf1b993c', name='musicians'),
-  }
 ---

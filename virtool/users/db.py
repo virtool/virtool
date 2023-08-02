@@ -8,7 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.user import User
 
-from virtool.groups.transforms import AttachGroupTransform, AttachGroupsTransform
+from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
 
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
@@ -326,7 +326,7 @@ async def fetch_complete_user(
                 base_processor(user[0]),
                 [
                     AttachPermissionsTransform(mongo, pg),
-                    AttachGroupTransform(mongo),
+                    AttachPrimaryGroupTransform(mongo),
                     AttachGroupsTransform(mongo),
                 ],
             )

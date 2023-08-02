@@ -8,123 +8,125 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
-class AttachGroupTransform(AbstractTransform):
-    def __init__(self, mongo: "Mongo", ignore_errors: bool = False):
+class AttachPrimaryGroupTransform(AbstractTransform):
+    def __init__(self, mongo: "Mongo"):
         self._mongo = mongo
-        self._ignore_errors = ignore_errors
-
-    def _extract_primary_group_id(self, document: Document) -> Optional[str]:
-        try:
-            primary_group = document["primary_group"]
-
-        except KeyError:
-            if not self._ignore_errors:
-                raise KeyError("Document needs a value at group or group.id")
-
-            return None
-
-        try:
-            return primary_group["id"]
-        except TypeError:
-            if isinstance(primary_group, str):
-                return primary_group
-
-            return None
 
     async def prepare_one(self, document: Document) -> Optional[GroupMinimal]:
-        group_id = self._extract_primary_group_id(document)
+        """
+        Prepares a group with an id matching the input document's `primary_group` field
 
-        if not group_id:
-            return None
+            Parameters:
+                document (Document): The input document missing a primary group
 
-        group_data = base_processor(await self._mongo.groups.find_one(group_id))
+            Returns:
+                A complete group
+        """
+        group_id = document.get("primary_group", None)
 
-        return group_data
+        if group_id:
+            return base_processor(await self._mongo.groups.find_one(group_id))
+
+        return None
 
     async def attach_one(self, document: Document, prepared: Any):
-        if not prepared:
-            return {**document, "primary_group": None}
+        """
+        Attaches a group to the input document
 
-        try:
-            group_data = document["primary_group"]
-        except KeyError:
-            if self._ignore_errors:
-                return document
+            Parameters:
+                document (Document): The input document missing a primary group
+                prepared (Any): The group to be attached
 
-            raise
-
-        if isinstance(group_data, str):
-            return {
-                **document,
-                "primary_group": GroupMinimal(**prepared),
-            }
-
-        return {**document, "primary_group": GroupMinimal(**prepared)}
+            Returns:
+                The input document with a complete group keyed by "primary_group"
+        """
+        return {**document, "primary_group": prepared}
 
     async def prepare_many(
         self, documents: List[Document]
     ) -> Dict[Union[int, str], Any]:
-        group_ids = list(
-            {self._extract_primary_group_id(document) for document in documents}
+        """
+        Prepares groups with ids matching the input documents' `primary_group` fields;
+        accepts multiple input documents
+
+            Parameters:
+                documents (List[Document]): The input documents missing primary groups
+
+            Returns:
+                A dictionary of complete groups indexed by the input documents' `id` fields
+        """
+        group_ids: List[str | None] = list(
+            {document.get("primary_group", None) for document in documents}
         )
 
-        return {
-            document["_id"]: base_processor(document)
-            async for document in self._mongo.groups.find({"_id": {"$in": group_ids}})
+        group_dict = {
+            group["_id"]: base_processor(group)
+            async for group in self._mongo.groups.find({"_id": {"$in": group_ids}})
         }
 
-    async def attach_many(
-        self, documents: List[Document], prepared: Dict[int, Any]
-    ) -> List[Document]:
-        return [
-            await self.attach_one(
-                document, prepared.get(self._extract_primary_group_id(document))
-            )
+        return {
+            document["id"]: group_dict.get(document.get("primary_group"))
             for document in documents
-        ]
+        }
 
 
 class AttachGroupsTransform(AbstractTransform):
-    def __init__(self, mongo: "Mongo", ignore_errors: bool = False):
+    def __init__(self, mongo: "Mongo"):
         self._mongo = mongo
-        self._ignore_errors = ignore_errors
 
-    def _extract_group_ids(self, document: Document) -> List[str]:
-        try:
-            return document["groups"]
+    async def prepare_one(self, document: Document) -> List[Dict]:
+        """
+        Prepares a list of groups with ids matching the input document's `groups` field
 
-        except (KeyError, ValueError):
-            return None
+            Parameters:
+                document (Document): The input document missing a list of groups
 
-    async def prepare_one(self, document: Document) -> Dict[str, Dict]:
-        group_ids = self._extract_group_ids(document)
-
-        to_return = [
+            Returns:
+                A list of complete groups
+        """
+        return [
             base_processor(group_doc)
-            async for group_doc in self._mongo.groups.find({"_id": {"$in": group_ids}})
+            async for group_doc in self._mongo.groups.find(
+                {"_id": {"$in": document.get("groups", [])}}
+            )
         ]
-
-        return to_return
 
     async def attach_one(self, document: Document, prepared: Any):
-        to_return = {**document, "groups": [GroupMinimal(**doc) for doc in prepared]}
+        """
+        Attaches groups to the input document
 
-        return to_return
+            Parameters:
+                document (Document): The input document missing a list of groups
+                prepared (Any): The list of groups to be attached
 
-    async def prepare_many(self, documents: List[Document]):
-        prepared = dict()
+            Returns:
+                The input document with a list of complete groups keyed by "groups"
+        """
+        return {**document, "groups": prepared}
 
-        for document in documents:
-            prepared[base_processor(document).get("id")] = await self.prepare_one(
-                document
-            )
+    async def prepare_many(
+        self, documents: List[Document]
+    ) -> Dict[Union[int, str], Any]:
+        """
+        Prepares lists of groups with ids matching the input documents' `primary_group` fields;
+        accepts multiple input documents
 
-        return prepared
+            Parameters:
+                documents (List[Document]): The input documents missing lists of groups
 
-    async def attach_many(self, documents: List[Document], prepared: Dict[str, Any]):
-        return [
-            await self.attach_one(
-                document, prepared.get(base_processor(document).get("id"))
-            )
+            Returns:
+                A dictionary of lists of complete groups indexed by the input documents' `id` fields
+        """
+        group_ids = list(
+            {group for document in documents for group in document["groups"]}
+        )
+
+        group_dict = {
+            group["_id"]: base_processor(group)
+            async for group in self._mongo.groups.find({"_id": {"$in": group_ids}})
+        }
+
+        return {
+            document["id"]: [group_dict[group] for group in document["groups"]]
             for document in documents
-        ]
+        }

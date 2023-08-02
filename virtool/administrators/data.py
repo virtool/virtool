@@ -16,7 +16,7 @@ from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.db import lookup_groups_minimal_by_id, lookup_group_minimal_by_id
-from virtool.groups.transforms import AttachGroupTransform, AttachGroupsTransform
+from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
 from virtool.groups.utils import merge_group_permissions
 from virtool.mongo.core import Mongo
 from virtool.users.db import (
@@ -99,8 +99,8 @@ class AdministratorsData(DataLayerPiece):
             result["items"],
             [
                 AttachPermissionsTransform(self._mongo, self._pg),
-                AttachGroupTransform(self._mongo, ignore_errors=True),
-                AttachGroupsTransform(self._mongo, ignore_errors=True),
+                AttachPrimaryGroupTransform(self._mongo),
+                AttachGroupsTransform(self._mongo),
             ],
         )
 
