@@ -8,8 +8,6 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.user import User
 
-from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
-
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.db import (

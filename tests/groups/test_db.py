@@ -1,5 +1,3 @@
-import pytest
-
 from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
 from virtool.data.transforms import apply_transforms
 

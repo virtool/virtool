@@ -53,7 +53,8 @@ class AttachPrimaryGroupTransform(AbstractTransform):
                 documents (List[Document]): The input documents missing primary groups
 
             Returns:
-                A dictionary of complete groups indexed by the input documents' `id` fields
+                A dictionary of complete groups indexed
+                by the input documents' `id` fields
         """
         group_ids: List[str | None] = list(
             {document.get("primary_group", None) for document in documents}
@@ -108,14 +109,16 @@ class AttachGroupsTransform(AbstractTransform):
         self, documents: List[Document]
     ) -> Dict[Union[int, str], Any]:
         """
-        Prepares lists of groups with ids matching the input documents' `primary_group` fields;
+        Prepares lists of groups with ids matching
+        the input documents' `primary_group` fields;
         accepts multiple input documents
 
             Parameters:
                 documents (List[Document]): The input documents missing lists of groups
 
             Returns:
-                A dictionary of lists of complete groups indexed by the input documents' `id` fields
+                A dictionary of lists of complete groups
+                indexed by the input documents' `id` fields
         """
         group_ids = list(
             {group for document in documents for group in document["groups"]}
