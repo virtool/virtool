@@ -10,9 +10,9 @@ from virtool_core.models.user import User
 
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
-from virtool.groups.db import (
-    lookup_groups_minimal_by_id,
-    lookup_group_minimal_by_id,
+from virtool.groups.transforms import (
+    AttachGroupsTransform,
+    AttachPrimaryGroupTransform,
 )
 from virtool.mongo.utils import (
     get_non_existent_ids,
