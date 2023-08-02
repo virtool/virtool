@@ -92,10 +92,8 @@ class AdministratorsData(DataLayerPiece):
             projection={field: True for field in PROJECTION},
         )
 
-        result["items"] = [base_processor(item) for item in result["items"]]
-
         result["items"] = await apply_transforms(
-            result["items"],
+            [base_processor(item) for item in result["items"]],
             [
                 AttachPermissionsTransform(self._mongo, self._pg),
                 AttachPrimaryGroupTransform(self._mongo),
