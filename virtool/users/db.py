@@ -318,7 +318,7 @@ async def fetch_complete_user(
     if len(user) == 0:
         return None
 
-    to_return = User(
+    return User(
         **(
             await apply_transforms(
                 base_processor(user[0]),
@@ -331,8 +331,6 @@ async def fetch_complete_user(
         ),
         administrator_role=role,
     )
-
-    return to_return
 
 
 def lookup_nested_user_by_id(
