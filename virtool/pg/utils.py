@@ -43,7 +43,6 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
         )
 
         await check_version(pg)
-        await create_tables(pg)
 
         return pg
     except ConnectionRefusedError:
@@ -63,18 +62,6 @@ async def check_version(engine: AsyncEngine):
 
     version = info.first()[0].split()[0]
     logger.info("Found PostgreSQL %s", version)
-
-
-async def create_tables(engine: AsyncEngine):
-    """
-    Create PostgreSQL tables based of the models in the `Base` declarative base.
-
-    :param engine: an AsyncConnection object
-    """
-    logger.info("Creating PostgreSQL tables")
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
 
 async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):

@@ -17,14 +17,14 @@ class ReleaseManifestItem:
     body: str
     """
     The release notes from GitHub.
-    
+
     This likely contains Markdown.
     """
 
     content_type: str
     """
     The MIME type of the release asset.
-    
+
     This will likely be ``application/gzip``.
     """
 
@@ -43,8 +43,8 @@ class ReleaseManifestItem:
     prerelease: bool
     """
     Whether or not the release is a pre-release.
-    
-    This is sourced from the GitHub release record.    
+
+    This is sourced from the GitHub release record.
     """
 
     published_at: datetime.datetime

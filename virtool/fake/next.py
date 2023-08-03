@@ -1,19 +1,11 @@
 """
 Easily create fake data.
 
-# Dependencies
-
-A sample needs a user and upload to exist.
-```py
-
-```
-
 """
 from typing import Dict, List, Optional, Type
 
 from faker import Faker
 from faker.providers import BaseProvider, color, lorem, python
-from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.group import Group
 from virtool_core.models.hmm import HMM
 from virtool_core.models.job import Job
