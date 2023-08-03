@@ -2,6 +2,7 @@ import asyncio
 from copy import deepcopy
 from pathlib import Path
 from typing import Optional, Tuple, Mapping
+from pydantic import constr
 
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
@@ -623,6 +624,9 @@ class OTUData:
         sequence_id: Optional[str] = None,
         target: Optional[str] = None,
     ):
+        
+        validated_sequence = (str(constr(regex=r'^[ATCGRYKM \n]+$')(sequence)))
+        
         async with self._mongo.create_session() as session:
             old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
@@ -634,7 +638,7 @@ class OTUData:
                 "host": host,
                 "reference": {"id": old["reference"]["id"]},
                 "segment": segment,
-                "sequence": sequence.replace(" ", "").replace("\n", ""),
+                "sequence": validated_sequence.replace(" ", "").replace("\n", ""),
                 "target": target,
             }
 
@@ -710,7 +714,8 @@ class OTUData:
         }
 
         if "sequence" in data:
-            update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
+            validated_sequence = (str(constr(regex=r'^[ATCGRYKM \n]+$')(data["sequence"])))
+            update["sequence"] = validated_sequence.replace(" ", "").replace("\n", "")
 
         old = await virtool.otus.db.join(self._mongo, otu_id)
 
