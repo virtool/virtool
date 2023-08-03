@@ -9,6 +9,9 @@ async def create_fake_users_with_groups(
     use_primary_group: bool = False,
     use_groups: bool = False,
 ) -> list[dict] | dict:
+    if quantity <= 0:
+        return None
+    
     fake_users: list[dict] = []
 
     for i in range(0, quantity):
@@ -25,9 +28,6 @@ async def create_fake_users_with_groups(
             )
 
         fake_users.append(fake_user)
-
-    if len(fake_users) == 0:
-        return None
 
     if len(fake_users) == 1:
         return fake_users[0]
