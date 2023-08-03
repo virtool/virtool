@@ -8,11 +8,13 @@ async def create_fake_users_with_groups(
     quantity: int = 1,
     use_primary_group: bool = False,
     use_groups: bool = False,
-):
+) -> list[dict] | dict:
     fake_users: list[dict] = []
 
     for i in range(0, quantity):
-        fake_user: dict = {"id": "doc_{}".format(i)}
+        fake_user: dict = {}
+
+        fake_user.update({"id": "doc_{}".format(i)})
 
         if use_primary_group:
             fake_user.update({"primary_group": (await faker.groups.create()).id})
