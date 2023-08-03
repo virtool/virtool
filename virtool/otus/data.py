@@ -711,9 +711,8 @@ class OTUData:
             if key in data
         }
 
-        ValidateSequence(sequence=data["sequence"])
-
         if "sequence" in data:
+            ValidateSequence(sequence=data["sequence"])
             update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
         old = await virtool.otus.db.join(self._mongo, otu_id)
