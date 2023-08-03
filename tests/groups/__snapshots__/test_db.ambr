@@ -82,7 +82,7 @@
   <class 'dict'> {
     'groups': <class 'list'> [
     ],
-    'id': 'doc',
+    'id': 'doc_0',
   }
 ---
 # name: TestAttachGroupsTransform.test_groups_present
@@ -117,7 +117,7 @@
         },
       },
     ],
-    'id': 'doc',
+    'id': 'doc_0',
   }
 ---
 # name: TestAttachGroupsTransform.test_multiple_documents
