@@ -4,14 +4,12 @@ Work with references in the database
 """
 import asyncio
 import datetime
-from enum import Enum
-import logging
 from asyncio import to_thread
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import pymongo
-from aiohttp import ClientConnectorError, ClientSession
+from aiohttp import ClientConnectorError
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo import DeleteMany, DeleteOne, UpdateOne
@@ -44,14 +42,17 @@ from virtool.references.utils import (
     get_owner_user,
     load_reference_file,
 )
+from virtool.releases import (
+    fetch_release_manifest_from_virtool,
+    ReleaseType,
+    GetReleaseError,
+)
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.users.db import AttachUserTransform, extend_user
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-logger = logging.getLogger(__name__)
 
 SLUG_TO_RELEASE_TYPE = {"virtool/ref-plant-viruses": "ref_plant_viruses"}
 
@@ -371,42 +372,6 @@ async def edit_group_or_user(
             return subdocument
 
 
-class GetReleaseError(Exception):
-    pass
-
-
-class ReleaseTypes(Enum):
-    references = "references"
-    hmms = "hmms"
-
-
-async def get_releases_from_virtool(
-    session: ClientSession, release_type: ReleaseTypes
-) -> Optional[dict]:
-    """
-    Get releases from virtool.ca/releases
-
-    :param session: the application HTTP client session
-    :param release_type: the repository to fetch
-
-    :return: the releases of the requested repository
-    """
-
-    url = f"https://www.virtool.ca/releases/{release_type.value}.json"
-
-    logger.debug("Making request to %s", url)
-
-    async with session.get(url) as resp:
-        if resp.status == 200:
-            return await resp.json(content_type=None)
-
-        if resp.status == 304:
-            return None
-
-        logger.warning("Encountered error %s: %s", resp.status, await resp.json())
-        raise GetReleaseError("release does not exist")
-
-
 async def fetch_and_update_release(
     mongo: "Mongo", client, ref_id: str, ignore_errors: bool = False
 ) -> dict:
@@ -437,10 +402,12 @@ async def fetch_and_update_release(
 
     errors = []
 
-    updated_release = None
+    updated_release: Dict | None = None
 
     try:
-        releases = await get_releases_from_virtool(client, ReleaseTypes.references)
+        releases = await fetch_release_manifest_from_virtool(
+            client, ReleaseType.REFERENCES
+        )
 
         if releases:
             latest_release = releases["ref-plant-viruses"][0]

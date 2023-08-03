@@ -119,6 +119,8 @@ async def pg(engine: AsyncEngine):
                                 sample_reads_cache,
                                 index_files,
                                 instance_messages,
+                                ml_models,
+                                ml_model_releases,
                                 uploads,
                                 nuvs_blast,
                                 sample_reads,

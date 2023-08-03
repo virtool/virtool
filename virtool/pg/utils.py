@@ -71,6 +71,8 @@ async def create_tables(engine: AsyncEngine):
 
     :param engine: an AsyncConnection object
     """
+    logger.info("Creating PostgreSQL tables")
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

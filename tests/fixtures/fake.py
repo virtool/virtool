@@ -1,14 +1,20 @@
 import datetime
+import shutil
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import arrow
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
 
+from virtool.data.http import HTTPClient
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
+from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
@@ -261,5 +267,16 @@ def fake(mongo, pg):
 
 
 @pytest.fixture
-def fake2(data_layer, mongo):
+def fake2(data_layer: "DataLayer", example_path: Path, mocker, mongo: Mongo):
+    """A fixture for generating deterministic fake data."""
+
+    # Use a local example ML model instead of downloading from GitHub.
+    mocker.patch.object(
+        HTTPClient,
+        "download",
+        side_effect=lambda url, target: shutil.copy(
+            example_path / "ml/model.tar.gz", target
+        ),
+    )
+
     return DataFaker(data_layer, mongo)
