@@ -16,19 +16,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from virtool.analyses.models import SQLAnalysisFile
 from virtool.api.custom_json import dump_string
 from virtool.authorization.openfga import OpenfgaScheme
-from virtool.caches.models import SQLSampleArtifactCache, SQLSampleReadsCache
 from virtool.config.cls import MigrationConfig
-from virtool.indexes.models import SQLIndexFile
-from virtool.labels.models import SQLLabel
 from virtool.migration.ctx import create_migration_context, MigrationContext
 from virtool.migration.pg import SQLRevision
-from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
-from virtool.subtractions.models import SQLSubtractionFile
-from virtool.tasks.models import SQLTask
-from virtool.uploads.models import SQLUpload
 
 
 @pytest.fixture
@@ -73,19 +65,6 @@ async def migration_pg_connection_string(
 
     async with engine.connect() as conn:
         await conn.run_sync(SQLRevision.__table__.create)
-        await conn.run_sync(SQLAnalysisFile.__table__.create)
-        await conn.run_sync(SQLSampleArtifact.__table__.create)
-        await conn.run_sync(
-            lambda c: SQLSampleArtifactCache.__table__.create(c, checkfirst=True)
-        )
-        await conn.run_sync(SQLUpload.__table__.create)
-        await conn.run_sync(SQLSampleReads.__table__.create)
-        await conn.run_sync(SQLSampleReadsCache.__table__.create)
-        await conn.run_sync(SQLSubtractionFile.__table__.create)
-        await conn.run_sync(SQLIndexFile.__table__.create)
-        await conn.run_sync(SQLTask.__table__.create)
-        await conn.run_sync(SQLLabel.__table__.create)
-
         await conn.commit()
 
     return connection_string

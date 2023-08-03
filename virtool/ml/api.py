@@ -1,12 +1,12 @@
 """Request handlers for querying and downloading machine learning models."""
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r404
 
 from virtool.api.response import json_response
 from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.ml.models import MLModel, MLModelListResult
-from aiohttp_pydantic.oas.typing import r200, r404
 
 routes = Routes()
 
@@ -56,7 +56,7 @@ class MLModelFileView(PydanticView):
         return FileResponse(
             file_descriptor.path,
             headers={
-                "Content-Disposition": f"attachment; filename='model.tar.gz'",
+                "Content-Disposition": "attachment; filename='model.tar.gz'",
                 "Content-Type": "application/octet-stream",
             },
         )

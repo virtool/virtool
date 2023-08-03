@@ -5,7 +5,6 @@ from pathlib import Path
 
 import arrow
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState

@@ -6,7 +6,8 @@ from pathlib import Path
 import alembic.command
 import alembic.config
 import arrow
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.config.cls import MigrationConfig
 from virtool.migration.cls import RevisionSource, GenericRevision
@@ -45,6 +46,8 @@ async def apply(config: MigrationConfig):
         )
 
     ctx = await create_migration_context(config)
+
+    await ensure_revisions_table(ctx.pg)
 
     last_applied_revision = await fetch_last_applied_revision(ctx.pg)
 
@@ -135,3 +138,27 @@ async def apply_alembic(revision: str):
         False,
         None,
     )
+
+
+async def ensure_revisions_table(pg: AsyncEngine):
+    """
+    Ensure that the `revisions` table exists in the database.
+
+    :param pg: the PostgreSQL database connection
+    """
+
+    async with AsyncSession(pg) as session:
+        async with session.begin():
+            await session.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS revisions (
+                        id SERIAL PRIMARY KEY,
+                        name varchar(64) NOT NULL,
+                        revision varchar(18) NOT NULL,
+                        created_at timestamp without time zone NOT NULL,
+                        applied_at timestamp without time zone NOT NULL
+                    )
+                    """
+                )
+            )

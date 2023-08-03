@@ -2,7 +2,6 @@
 An HTTP client for the data layer.
 
 """
-import functools
 from pathlib import Path
 
 import aiofiles
@@ -28,7 +27,8 @@ class HTTPClient:
 
         :param url: the download URL for the release
         :param target: the path to write the downloaded file to.
-        :param progress_handler: a callable that will be called with the current progress when it changes.
+        :param progress_handler: a callable that will be called with the current
+                                 progress when it changes.
 
         """
         async with self._session.get(url) as resp:
