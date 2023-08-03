@@ -1,8 +1,19 @@
 from copy import deepcopy
 from typing import List, Optional, Tuple, Union
 
+from pydantic import constr, BaseModel as PydanticBaseModel
+
 from virtool.types import Document
 from virtool.utils import base_processor
+
+
+class ValidateSequence(PydanticBaseModel):
+    """
+    Ensures the input sequence only contains the characters:
+    A, T, C, G, R, Y, K, M, Space, and Newline
+    """
+
+    sequence: constr(regex=r"^[ATCGRYKM \n]+$")
 
 
 def evaluate_changes(data: dict, document: dict) -> Tuple[str, str, Document]:
