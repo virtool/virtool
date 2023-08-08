@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
+from tests.fixtures.fake import fake2
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -32,6 +33,24 @@ async def test_create(
     assert doc["name"] == group.name == row.name
     assert doc["permissions"] == group.permissions == row.permissions
     assert doc["_id"] == group.id == row.legacy_id
+
+
+@pytest.mark.parametrize("id_type", ["str", "int"])
+async def test_get(groups_data: GroupsData, fake2, snapshot, id_type: str):
+    match id_type:
+        case "str":
+            fake_group = await fake2.groups.create()
+
+            group = await groups_data.get(fake_group.id)
+
+            assert group == snapshot
+
+        case "int":
+            fake_group = await fake2.groups.create()
+
+            group = await groups_data.get(1)
+
+            assert group == snapshot
 
 
 async def test_create_duplicate(groups_data: GroupsData):

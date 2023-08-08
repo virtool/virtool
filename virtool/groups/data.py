@@ -1,12 +1,14 @@
 import asyncio
 from logging import getLogger
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Type
+
+import builtins
 
 from pymongo.errors import DuplicateKeyError
 from sqlalchemy import update, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.group import GroupMinimal, Group
+from virtool_core.models.group import GroupMinimal, Group, Permissions
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
@@ -16,6 +18,7 @@ from virtool.groups.db import update_member_users, fetch_complete_group
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.utils import get_one_field, id_exists
+from virtool.pg.utils import get_row, get_row_by_id
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
@@ -47,19 +50,44 @@ class GroupsData:
             async for document in self._mongo.groups.find()
         ]
 
-    async def get(self, group_id: str) -> Group:
+    async def get(self, group_id: str | int) -> Group:
         """
         Get a single group by its ID.
 
         :param group_id: the group's ID
         :return: the group
         """
-        group = await fetch_complete_group(self._mongo, group_id)
+        match type(group_id):
+            case builtins.int:
+                row = await get_row_by_id(self._pg, SQLGroup, group_id)
 
-        if group:
-            return group
+                if row:
+                    return Group(
+                        id=row.legacy_id,
+                        name=row.name,
+                        permissions=Permissions(**row.permissions),
+                        users=getattr(row, "users", []),
+                    )
 
-        raise ResourceNotFoundError()
+                raise ResourceNotFoundError()
+
+            case builtins.str:
+                row = await get_row(self._pg, SQLGroup, ("legacy_id", group_id))
+
+                if row:
+                    return Group(
+                        id=row.legacy_id,
+                        name=row.name,
+                        permissions=Permissions(**row.permissions),
+                        users=getattr(row, "users", []),
+                    )
+
+                doc = await fetch_complete_group(self._mongo, group_id)
+
+                if doc:
+                    return Group(**base_processor(doc))
+
+                raise ResourceNotFoundError()
 
     @emits(Operation.CREATE)
     async def create(self, name: str) -> Group:
