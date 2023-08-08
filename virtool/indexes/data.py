@@ -298,7 +298,13 @@ class IndexData:
         return HistorySearchResult(**data)
 
     async def ensure_files(self):
-        """Ensure all data files associated with indexes are tracked."""
+        """
+        Ensure all data files associated with indexes are tracked.
+
+        If a JSON file does not exist for an index, create it. If creation fails, the
+        error will be logged and the index will be skipped.
+
+        """
         async for index in self._mongo.indexes.find({"ready": True}):
             index_id = index["_id"]
 
@@ -306,9 +312,13 @@ class IndexData:
                 self._config.data_path, index["reference"]["id"], index_id
             )
 
-            await self._ensure_json(
-                index_path, index["reference"]["id"], index["manifest"]
-            )
+            try:
+                await self._ensure_json(
+                    index_path, index["reference"]["id"], index["manifest"]
+                )
+            except IndexError:
+                logger.exception("Could not create JSON file for index id=%s", index_id)
+                continue
 
             async with AsyncSession(self._pg) as session:
                 first = (
