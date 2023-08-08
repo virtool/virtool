@@ -35,22 +35,24 @@ async def test_create(
     assert doc["_id"] == group.id == row.legacy_id
 
 
-@pytest.mark.parametrize("id_type", ["str", "int"])
-async def test_get(groups_data: GroupsData, fake2, snapshot, id_type: str):
-    match id_type:
-        case "str":
-            fake_group = await fake2.groups.create()
+class TestGet:
+    async def test_get_str(self, groups_data: GroupsData, fake2, snapshot):
+        fake_group = await fake2.groups.create()
 
-            group = await groups_data.get(fake_group.id)
+        await fake2.users.create(groups=[fake_group])
 
-            assert group == snapshot
+        group = await groups_data.get(fake_group.id)
 
-        case "int":
-            fake_group = await fake2.groups.create()
+        assert group == snapshot
 
-            group = await groups_data.get(1)
+    async def test_get_int(self, groups_data: GroupsData, fake2, snapshot):
+        fake_group = await fake2.groups.create()
 
-            assert group == snapshot
+        await fake2.users.create(groups=[fake_group])
+
+        group = await groups_data.get(1)
+
+        assert group == snapshot
 
 
 async def test_create_duplicate(groups_data: GroupsData):
