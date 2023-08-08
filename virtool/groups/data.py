@@ -1,8 +1,6 @@
 import asyncio
 from logging import getLogger
-from typing import List, TYPE_CHECKING, Type
-
-import builtins
+from typing import List, TYPE_CHECKING
 
 from pymongo.errors import DuplicateKeyError
 from sqlalchemy import update, delete
@@ -61,7 +59,7 @@ class GroupsData:
         :param group_id: the group's ID
         :return: the group
         """
-        if type(group_id) == builtins.int:
+        if type(group_id) is int:
             row = await get_row_by_id(self._pg, SQLGroup, group_id)
             users = await fetch_group_users(self._mongo, row.legacy_id)
         else:
@@ -76,13 +74,12 @@ class GroupsData:
                 users=users,
             )
 
-        else:
-            doc = await fetch_complete_group(self._mongo, group_id)
+        doc = await fetch_complete_group(self._mongo, group_id)
 
-            if doc:
-                return doc
+        if doc:
+            return doc
 
-            raise ResourceNotFoundError()
+        raise ResourceNotFoundError()
 
     @emits(Operation.CREATE)
     async def create(self, name: str) -> Group:

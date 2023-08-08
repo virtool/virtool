@@ -1,6 +1,5 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
-from tests.fixtures.fake import fake2
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -17,7 +16,6 @@ def groups_data(authorization_client, mongo, pg):
 
 
 async def test_create(
-    authorization_client: AuthorizationClient,
     groups_data: GroupsData,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -36,7 +34,7 @@ async def test_create(
 
 
 class TestGet:
-    async def test_get_str(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_id_is_str(self, groups_data: GroupsData, fake2, snapshot):
         fake_group = await fake2.groups.create()
 
         await fake2.users.create(groups=[fake_group])
@@ -45,7 +43,7 @@ class TestGet:
 
         assert group == snapshot
 
-    async def test_get_int(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_id_is_int(self, groups_data: GroupsData, fake2, snapshot):
         fake_group = await fake2.groups.create()
 
         await fake2.users.create(groups=[fake_group])
