@@ -22,7 +22,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import increment_otu_version, update_otu_verification
 from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
-from virtool.otus.utils import ValidateSequence, find_isolate, format_isolate_name
+from virtool.otus.utils import find_isolate, format_isolate_name
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
@@ -623,8 +623,6 @@ class OTUData:
         sequence_id: Optional[str] = None,
         target: Optional[str] = None,
     ):
-        ValidateSequence(sequence=sequence)
-
         async with self._mongo.create_session() as session:
             old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
@@ -712,7 +710,6 @@ class OTUData:
         }
 
         if "sequence" in data:
-            ValidateSequence(sequence=data["sequence"])
             update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
         old = await virtool.otus.db.join(self._mongo, otu_id)
