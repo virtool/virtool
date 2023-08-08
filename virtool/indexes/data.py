@@ -317,7 +317,7 @@ class IndexData:
                     index_path, index["reference"]["id"], index["manifest"]
                 )
             except IndexError:
-                logger.exception(f"Could not create JSON file for index {index_id}")
+                logger.exception("Could not create JSON file for index id=%s", index_id)
                 continue
 
             async with AsyncSession(self._pg) as session:
