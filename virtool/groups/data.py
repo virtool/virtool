@@ -85,7 +85,7 @@ class GroupsData:
                 doc = await fetch_complete_group(self._mongo, group_id)
 
                 if doc:
-                    return Group(**base_processor(doc))
+                    return doc
 
                 raise ResourceNotFoundError()
 
