@@ -1,4 +1,4 @@
-import logging
+from logging import getLogger
 
 import virtool.account.api
 import virtool.administrators.api
@@ -15,6 +15,8 @@ import virtool.http.ws
 import virtool.indexes.api
 import virtool.jobs.api
 import virtool.labels.api
+import virtool.messages.api
+import virtool.ml.api
 import virtool.oidc.api
 import virtool.otus.api
 import virtool.references.api
@@ -25,10 +27,8 @@ import virtool.subtractions.api
 import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
-import virtool.messages.api
 
-
-logger = logging.getLogger(__name__)
+logger = getLogger("startup")
 
 ROUTES = (
     virtool.account.api.routes,
@@ -45,6 +45,7 @@ ROUTES = (
     virtool.jobs.api.routes,
     virtool.labels.api.routes,
     virtool.messages.api.routes,
+    virtool.ml.api.routes,
     virtool.otus.api.routes,
     virtool.oidc.api.routes,
     virtool.references.api.routes,

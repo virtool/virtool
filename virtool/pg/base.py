@@ -1,9 +1,9 @@
 from enum import Enum
-from sqlalchemy.orm import registry
+
+from sqlalchemy.orm import DeclarativeBase
 
 
-@registry().as_declarative_base()
-class Base:
+class Base(DeclarativeBase):
     __allow_unmapped__ = True
 
     def __repr__(self):

@@ -9,6 +9,8 @@ from virtool.account.data import AccountData
 from virtool.administrators.data import AdministratorsData
 from virtool.analyses.data import AnalysisData
 from virtool.authorization.client import AuthorizationClient
+from virtool.data.http import HTTPClient
+from virtool.ml.data import MLData
 from virtool.blast.data import BLASTData
 from virtool.config import Config
 from virtool.groups.data import GroupsData
@@ -53,6 +55,7 @@ class DataLayer:
     jobs: JobsData
     labels: LabelsData
     messages: MessagesData
+    ml: "MLData"
     otus: OTUData
     references: ReferencesData
     samples: SamplesData
@@ -74,6 +77,7 @@ class DataLayer:
         self.sessions.bind_layer(self)
         self.account.bind_layer(self)
         self.administrators.bind_layer(self)
+        self.ml.bind_layer(self)
 
 
 def create_data_layer(
@@ -109,6 +113,7 @@ def create_data_layer(
         JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
         MessagesData(pg, mongo),
+        MLData(config, HTTPClient(client), pg),
         OTUData(mongo, config.data_path),
         ReferencesData(mongo, pg, config, client),
         SamplesData(config, mongo, pg, jobs_client),

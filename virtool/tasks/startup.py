@@ -11,6 +11,7 @@ from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.tasks import TimeoutJobsTask
+from virtool.ml.tasks import SyncMLModelsTask
 from virtool.pg.utils import connect_pg
 from virtool.references.tasks import CleanReferencesTask, RefreshReferenceReleasesTask
 from virtool.samples.tasks import (
@@ -72,6 +73,7 @@ async def startup_task_spawner(app: Application):
         (PromoteAdministratorsTask, 3600),
         (RefreshReferenceReleasesTask, 600),
         (StoreNuvsFilesTask, 3600),
+        (SyncMLModelsTask, 600),
         (TimeoutJobsTask, 3600),
         (UpdateSampleWorkflowsTask, 3600),
     ]

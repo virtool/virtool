@@ -8,7 +8,7 @@ import virtool.errors
 import virtool.utils
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("github")
 
 BASE_URL = "https://api.github.com/repos"
 

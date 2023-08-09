@@ -22,7 +22,6 @@ async def test_find_users(
     administrator,
     term,
 ):
-
     group_1 = await fake2.groups.create()
     group_2 = await fake2.groups.create()
 
