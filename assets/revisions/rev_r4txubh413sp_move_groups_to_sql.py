@@ -17,7 +17,7 @@ name = "Move groups to SQL"
 created_at = arrow.get("2023-08-08 21:57:09.069211")
 revision_id = "r4txubh413sp"
 
-alembic_down_revision = "e694fb270acb"
+alembic_down_revision = "814389ec5021"
 virtool_down_revision = None
 
 # Change this if an Alembic revision is required to run this migration.
