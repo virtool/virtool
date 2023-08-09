@@ -126,5 +126,12 @@
       'name': 'Create ML model tables.',
       'revision': '814389ec5021',
     },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 19,
+      'name': 'Move groups to SQL',
+      'revision': 'r4txubh413sp',
+    },
   ]
 ---
