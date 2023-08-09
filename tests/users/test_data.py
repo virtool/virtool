@@ -176,17 +176,15 @@ async def test_find_or_create_b2c_user(
     assert user == snapshot(matcher=path_type({"handle": (str,)}))
 
 
-async def test_check_user_does_not_exist(users_data):
+@pytest.mark.parametrize(
+    "no_user_exists, sample_user_data",
+    [(True, None), (False, {"password": "hello_world", "handle": "bill"})],
+)
+async def test_check_no_users_exist(users_data, no_user_exists, sample_user_data):
     """
-    Checks that users don't exist.
+    Checks user existence based on input data.
     """
-    assert await users_data.check_no_users_exist() is True
+    if sample_user_data:
+        await users_data.create(**sample_user_data)
 
-
-async def test_check_user_exists(users_data):
-    """
-    Checks that a user exists.
-    """
-    await users_data.create(password="hello_world", handle="bill")
-
-    assert await users_data.check_no_users_exist() is False
+    assert await users_data.check_no_users_exist() is no_user_exists
