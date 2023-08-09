@@ -294,14 +294,14 @@ async def test_remove_permission(spawn_client, role, status, snapshot):
     assert await resp.json() == snapshot()
 
 
-async def test_first_user_view(spawn_client, snapshot):
+async def test_first_user_view(spawn_client):
     """
     Checks response when there already is a user.
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    data = {"handle": "fred", "password": "hello_world"}
-
-    resp = await client.put("/users/first", data)
+    resp = await client.put(
+        "/users/first", {"handle": "fred", "password": "hello_world"}
+    )
 
     assert resp.status == 409

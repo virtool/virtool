@@ -180,7 +180,7 @@ async def test_check_user_does_not_exist(users_data):
     """
     Checks that users don't exist.
     """
-    assert await users_data.check_if_any_exist() is True
+    assert await users_data.check_no_users_exist() is True
 
 
 async def test_check_user_exists(users_data):
@@ -189,4 +189,4 @@ async def test_check_user_exists(users_data):
     """
     await users_data.create(password="hello_world", handle="bill")
 
-    assert await users_data.check_if_any_exist() is False
+    assert await users_data.check_no_users_exist() is False

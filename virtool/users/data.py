@@ -76,7 +76,7 @@ class UsersData(DataLayerPiece):
         :param password: the password
         :return:
         """
-        if not await self.check_if_any_exist():
+        if not await self.check_no_users_exist():
             raise ResourceConflictError("Virtool already has at least one user")
 
         if handle == "virtool":
@@ -238,8 +238,8 @@ class UsersData(DataLayerPiece):
 
         return user
 
-    async def check_if_any_exist(self) -> bool:
+    async def check_no_users_exist(self) -> bool:
         """
-        Checks if any users exist.
+        Checks that no users exist.
         """
         return await self._mongo.users.count_documents({}, limit=1) == 0
