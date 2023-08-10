@@ -12,6 +12,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.config import get_config_from_app
 
 from virtool.data.utils import get_data_from_app
 from virtool.indexes.db import INDEX_FILE_NAMES
@@ -233,7 +234,7 @@ async def test_download_otus_json(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     index_dir = tmp_path / "references" / "foo" / "bar"
     index_dir.mkdir(parents=True)
@@ -256,7 +257,7 @@ async def test_download_otus_json(
 
     if not file_exists:
         m_get_patched_otus.assert_called_with(
-            client.app["db"], client.app["config"], manifest
+            client.app["db"], get_config_from_app(client.app), manifest
         )
 
 
@@ -500,7 +501,7 @@ async def test_upload(
 
     files = {"file": open(path, "rb")}
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     user, _ = await asyncio.gather(
         fake2.users.create(),
@@ -624,7 +625,7 @@ async def test_finalize(
 async def test_download(status, spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     await asyncio.gather(
         client.db.indexes.insert_one(

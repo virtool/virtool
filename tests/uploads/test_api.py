@@ -2,6 +2,7 @@ import os
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.config import get_config_from_app
 
 import virtool.utils
 from virtool.uploads.models import SQLUpload, UploadType
@@ -34,7 +35,7 @@ class TestUpload:
             authorize=True, permissions=[Permission.upload_file]
         )
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         if upload_type:
             resp = await client.post_form(
@@ -144,7 +145,7 @@ class TestGet:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         if exists:
             await client.post_form("/uploads?name=test.fq.gz&type=hmm", data=files)
@@ -163,7 +164,7 @@ class TestGet:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         async with AsyncSession(pg) as session:
             session.add(
@@ -198,7 +199,7 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
         await client.post_form("/uploads?name=test.fq.gz&type=hmm", data=files)
 
         resp = await client.delete("/uploads/1")
@@ -217,7 +218,7 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         async with AsyncSession(pg) as session:
             session.add(
@@ -257,7 +258,7 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         if exists:
             async with AsyncSession(pg) as session:

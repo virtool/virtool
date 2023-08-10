@@ -12,6 +12,7 @@ import dictdiffer
 import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.enums import HistoryMethod
+from virtool.config import get_config_from_app
 
 import virtool.history.utils
 import virtool.otus.db
@@ -239,7 +240,7 @@ async def get(app, change_id: str) -> Optional[Document]:
     if document:
         return await apply_transforms(
             virtool.utils.base_processor(document),
-            [AttachUserTransform(db), DiffTransform(app["config"].data_path)],
+            [AttachUserTransform(db), DiffTransform(get_config_from_app(app).data_path)],
         )
 
     return None
