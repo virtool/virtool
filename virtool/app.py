@@ -5,7 +5,7 @@ from aiohttp_pydantic import oas
 
 import virtool.http.accept
 import virtool.http.authentication
-import virtool.http.errors
+import virtool.api.response
 from virtool.config.cls import Config
 from virtool.flags import feature_flag_middleware, FeatureFlags
 from virtool.http.headers import headers_middleware, on_prepare_location
@@ -39,7 +39,7 @@ def create_app_without_startup():
         headers_middleware,
         virtool.http.authentication.middleware,
         virtool.http.accept.middleware,
-        virtool.http.errors.middleware,
+        virtool.api.response.middleware,
         route_policy_middleware,
     ]
 
@@ -60,7 +60,7 @@ def create_app(config: Config):
         headers_middleware,
         virtool.http.authentication.middleware,
         virtool.http.accept.middleware,
-        virtool.http.errors.middleware,
+        virtool.api.response.middleware,
         route_policy_middleware,
         feature_flag_middleware,
     ]

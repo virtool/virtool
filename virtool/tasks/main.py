@@ -6,7 +6,7 @@ from aiohttp.web import Application
 
 import virtool.http
 import virtool.http.accept
-import virtool.http.errors
+import virtool.api.response
 from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
 from virtool.shutdown import (
     shutdown_authorization_client,
@@ -40,7 +40,7 @@ def run_task_runner(config: TaskRunnerConfig):
     :param config: the task runner configuration object
     """
     app = Application(
-        middlewares=[virtool.http.accept.middleware, virtool.http.errors.middleware]
+        middlewares=[virtool.http.accept.middleware, virtool.api.response.middleware]
     )
 
     app["config"] = config
@@ -83,7 +83,7 @@ def run_task_spawner(config: TaskSpawnerConfig):
     :param config: the task spawner configuration object
     """
     app = Application(
-        middlewares=[virtool.http.accept.middleware, virtool.http.errors.middleware]
+        middlewares=[virtool.http.accept.middleware, virtool.api.response.middleware]
     )
 
     app["config"] = config
