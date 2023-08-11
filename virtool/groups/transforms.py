@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class AttachPrimaryGroupTransform(AbstractTransform):
     """
-    Attaches Groups to User documents
+    Attaches Groups to a User document
     """
 
     def __init__(self, mongo: "Mongo"):
