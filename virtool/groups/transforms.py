@@ -44,7 +44,8 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         accepts multiple input documents
 
         :param documents: the input documents missing primary groups
-        :return: a dictionary of complete groups indexed by the input documents' `id` fields
+        :return: a dictionary of complete groups 
+            indexed by the input documents' `id` fields
         """
         group_ids: List[str] = list(
             {
@@ -89,8 +90,8 @@ class AttachGroupsTransform(AbstractTransform):
 
         :param document: the input document missing a list of groups
         :param prepared: the list of groups to be attached
-
-        :param returns: the input document with a list of complete groups keyed by "groups"
+        :return: the input document with
+        a list of complete groups keyed by "groups"
         """
         return {**document, "groups": prepared}
 
@@ -103,8 +104,8 @@ class AttachGroupsTransform(AbstractTransform):
         accepts multiple input documents
 
         :param documents: the input documents missing lists of groups
-
-        :return: a dictionary of lists of complete groups indexed by the input documents' `id` fields
+        :return: a dictionary of lists of complete
+        groups indexed by the input documents' `id` fields
         """
         group_ids = list(
             {group for document in documents for group in document["groups"]}
