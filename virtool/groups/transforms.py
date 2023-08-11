@@ -9,6 +9,10 @@ if TYPE_CHECKING:
 
 
 class AttachPrimaryGroupTransform(AbstractTransform):
+    """
+    Attaches Groups to User documents
+    """
+
     def __init__(self, mongo: "Mongo"):
         self._mongo = mongo
 
@@ -44,8 +48,8 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         accepts multiple input documents
 
         :param documents: the input documents missing primary groups
-        :return: a dictionary of complete groups 
-            indexed by the input documents' `id` fields
+        :return: a dictionary of complete groups
+        indexed by the input documents' `id` fields
         """
         group_ids: List[str] = list(
             {
