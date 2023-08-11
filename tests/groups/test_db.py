@@ -8,16 +8,21 @@ async def create_fake_users_with_groups(
     quantity: int = 1,
     use_primary_group: bool = False,
     use_groups: bool = False,
-) -> list[dict] | dict:
-    if quantity <= 0:
-        return None
-    
+) -> list[dict]:
+    """
+    Create a list of unique fake users
+
+    :param faker: data faker used to create fake data
+    :quantity: number of users to create
+    :use_primary_group: attach a primary group to each user
+    :use_groups: attach a list of groups to each user
+    :return: a list of fake users
+    """
+
     fake_users: list[dict] = []
 
     for i in range(0, quantity):
-        fake_user: dict = {}
-
-        fake_user.update({"id": f"doc_{i}"})
+        fake_user: dict = {"id": f"doc_{i}"}
 
         if use_primary_group:
             fake_user.update({"primary_group": (await faker.groups.create()).id})
@@ -29,22 +34,19 @@ async def create_fake_users_with_groups(
 
         fake_users.append(fake_user)
 
-    if len(fake_users) == 1:
-        return fake_users[0]
-
     return fake_users
 
 
 class TestAttachGroupTransform:
     async def test_primary_group_missing(self, snapshot, mongo):
-        doc = await create_fake_users_with_groups(None, 1, False, False)
+        doc = (await create_fake_users_with_groups(None, 1, False, False))[0]
 
         complete_doc = await apply_transforms(doc, [AttachPrimaryGroupTransform(mongo)])
 
         assert complete_doc == snapshot
 
     async def test_primary_group_present(self, snapshot, fake2, mongo):
-        doc = await create_fake_users_with_groups(fake2, 1, True, False)
+        doc = (await create_fake_users_with_groups(fake2, 1, True, False))[0]
 
         complete_doc = await apply_transforms(doc, [AttachPrimaryGroupTransform(mongo)])
 
@@ -62,14 +64,14 @@ class TestAttachGroupTransform:
 
 class TestAttachGroupsTransform:
     async def test_groups_missing(self, snapshot, mongo):
-        doc = await create_fake_users_with_groups(None, 1, False, False)
+        doc = (await create_fake_users_with_groups(None, 1, False, False))[0]
 
         complete_doc = await apply_transforms(doc, [AttachGroupsTransform(mongo)])
 
         assert complete_doc == snapshot
 
     async def test_groups_present(self, snapshot, fake2, mongo):
-        doc = await create_fake_users_with_groups(fake2, 1, False, True)
+        doc = (await create_fake_users_with_groups(fake2, 1, False, True))[0]
 
         complete_doc = await apply_transforms(doc, [AttachGroupsTransform(mongo)])
 

@@ -16,13 +16,10 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         """
         Prepares a group with an id matching the input document's `primary_group` field
 
-            Parameters:
-                document (Document): The input document missing a primary group
-
-            Returns:
-                A complete group
+        :param document: the input document missing a primary group
+        :return: a complete group
         """
-        group_id = document.get("primary_group", None)
+        group_id = document.get("primary_group")
 
         if group_id:
             return base_processor(await self._mongo.groups.find_one(group_id))
@@ -33,12 +30,9 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         """
         Attaches a group to the input document
 
-            Parameters:
-                document (Document): The input document missing a primary group
-                prepared (Any): The group to be attached
-
-            Returns:
-                The input document with a complete group keyed by "primary_group"
+        :param document: the input document missing a primary group
+        :param prepared: the group to be attached
+        :return: the input document with a complete group keyed by "primary_group"
         """
         return {**document, "primary_group": prepared}
 
@@ -49,24 +43,24 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         Prepares groups with ids matching the input documents' `primary_group` fields;
         accepts multiple input documents
 
-            Parameters:
-                documents (List[Document]): The input documents missing primary groups
-
-            Returns:
-                A dictionary of complete groups indexed
-                by the input documents' `id` fields
+        :param documents: the input documents missing primary groups
+        :return: a dictionary of complete groups indexed by the input documents' `id` fields
         """
-        group_ids: List[str | None] = list(
-            {document.get("primary_group", None) for document in documents}
+        group_ids: List[str] = list(
+            {
+                document.get("primary_group")
+                for document in documents
+                if document.get("primary_group")
+            }
         )
 
-        group_dict = {
+        groups = {
             group["_id"]: base_processor(group)
             async for group in self._mongo.groups.find({"_id": {"$in": group_ids}})
         }
 
         return {
-            document["id"]: group_dict.get(document.get("primary_group"))
+            document["id"]: groups.get(document.get("primary_group"))
             for document in documents
         }
 
@@ -79,11 +73,8 @@ class AttachGroupsTransform(AbstractTransform):
         """
         Prepares a list of groups with ids matching the input document's `groups` field
 
-            Parameters:
-                document (Document): The input document missing a list of groups
-
-            Returns:
-                A list of complete groups
+        :param document: the input document missing a list of groups
+        :return: a list of complete groups
         """
         return [
             base_processor(group_doc)
@@ -96,12 +87,10 @@ class AttachGroupsTransform(AbstractTransform):
         """
         Attaches groups to the input document
 
-            Parameters:
-                document (Document): The input document missing a list of groups
-                prepared (Any): The list of groups to be attached
+        :param document: the input document missing a list of groups
+        :param prepared: the list of groups to be attached
 
-            Returns:
-                The input document with a list of complete groups keyed by "groups"
+        :param returns: the input document with a list of complete groups keyed by "groups"
         """
         return {**document, "groups": prepared}
 
@@ -113,12 +102,9 @@ class AttachGroupsTransform(AbstractTransform):
         the input documents' `primary_group` fields;
         accepts multiple input documents
 
-            Parameters:
-                documents (List[Document]): The input documents missing lists of groups
+        :param documents: the input documents missing lists of groups
 
-            Returns:
-                A dictionary of lists of complete groups
-                indexed by the input documents' `id` fields
+        :return: a dictionary of lists of complete groups indexed by the input documents' `id` fields
         """
         group_ids = list(
             {group for document in documents for group in document["groups"]}
