@@ -1,3 +1,9 @@
+"""
+Virtool API Response
+
+DESCRIPTION HERE
+"""
+
 from typing import Optional, Dict, Any
 
 from aiohttp.web import Response
@@ -7,11 +13,6 @@ from typing import Callable
 
 from aiohttp import web
 
-"""
-Virtool API Response
-
-DESCRIPTION HERE
-"""
 
 def json_response(
     data: Any, status: int = 200, headers: Optional[Dict[str, str]] = None
@@ -38,6 +39,7 @@ class InsufficientRights(HTTPForbidden):
     """
     Virtool API wrapper for HTTP code 403
     """
+
     def __init__(self, message="Insufficient rights"):
         super().__init__(text=message, reason="insufficient_rights")
 
@@ -46,6 +48,7 @@ class NotFound(HTTPNotFound):
     """
     Virtool API wrapper for HTTP code 404
     """
+
     def __init__(self, message="Not found"):
         super().__init__(text=message, reason="not_found")
 
@@ -56,6 +59,7 @@ class EmptyRequest(HTTPUnprocessableEntity):
 
     Virtool API wrapper around HTTP code 422
     """
+
     def __init__(self, message="Empty request"):
         super().__init__(text=message, reason="empty_request")
 
@@ -66,6 +70,7 @@ class InvalidQuery(HTTPUnprocessableEntity):
 
     Virtool API wrapper around HTTP code 422
     """
+
     def __init__(self, errors, message="Invalid query"):
         super().__init__(text=message, reason="invalid_query")
         self.errors = errors
@@ -77,10 +82,10 @@ class InvalidInput(HTTPUnprocessableEntity):
 
     Virtool API wrapper around HTTP code 422
     """
+
     def __init__(self, errors, message="Invalid input"):
         super().__init__(text=message, reason="invalid_input")
         self.errors = errors
-
 
 
 @web.middleware
@@ -88,7 +93,7 @@ async def middleware(req: web.Request, handler: Callable):
     """
     INCOMPLETE FUNCTION DOCSTRING
 
-    :param req: 
+    :param req:
     :param handler:
     """
     try:

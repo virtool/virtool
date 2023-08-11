@@ -15,6 +15,8 @@ from virtool.shutdown import (
     shutdown_redis,
     shutdown_scheduler,
 )
+
+
 from virtool.startup import (
     startup_data,
     startup_databases,
