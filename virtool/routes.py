@@ -34,6 +34,7 @@ ROUTES = (
     virtool.account.api.routes,
     virtool.administrators.api.routes,
     virtool.analyses.api.routes,
+    virtool.caches.api.routes,
     virtool.downloads.api.routes,
     virtool.genbank.api.routes,
     virtool.groups.api.routes,
