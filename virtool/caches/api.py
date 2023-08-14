@@ -1,5 +1,6 @@
 """
 API request handlers for sample caches.
+
 """
 import aiohttp.web
 
@@ -15,6 +16,7 @@ routes = Routes()
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Return the complete representation for the cache with the given `cache_id`.
+    
     """
     db = req.app["db"]
     cache_id = req.match_info["cache_id"]
