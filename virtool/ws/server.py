@@ -88,9 +88,9 @@ class WSServer:
 
         while True:
             for connection in self._connections:
-                try:
-                    await session_data.validate_session(connection.session_id)
-                except ResourceNotFoundError:
+                if not await session_data.check_session_is_authenticated(
+                    connection.session_id
+                ):
                     await connection.close(1001)
             await asyncio.sleep(300)
 

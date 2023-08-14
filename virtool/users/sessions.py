@@ -181,13 +181,19 @@ class SessionData(DataLayerPiece):
 
         return Session(**session)
 
-    async def validate_session(self, session_id: str):
+    async def check_session_is_authenticated(self, session_id: str) -> bool:
         """
-        Validates a session with a given ``session_id``.
+        Checks whether a session is authenticated a given ``session_id``.
 
         :param session_id: the session id
+        :return: True if the session is authenticated, False otherwise
         """
-        await self._get(session_id)
+        try:
+            session = await self._get(session_id)
+        except ResourceNotFoundError:
+            return False
+
+        return True if session.get("authentication") else False
 
     async def get_anonymous(self, session_id: str) -> Session:
         """
