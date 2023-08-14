@@ -4,7 +4,6 @@ from logging import getLogger
 
 from aioredis import Redis
 
-from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import EventListener, Operation
 from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSInsertMessage, WSDeleteMessage

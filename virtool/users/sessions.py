@@ -193,7 +193,7 @@ class SessionData(DataLayerPiece):
         except ResourceNotFoundError:
             return False
 
-        return True if session.get("authentication") else False
+        return bool(session.get("authentication"))
 
     async def get_anonymous(self, session_id: str) -> Session:
         """
