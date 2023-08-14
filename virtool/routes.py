@@ -3,6 +3,7 @@ from logging import getLogger
 import virtool.account.api
 import virtool.administrators.api
 import virtool.analyses.api
+import virtool.caches.api
 import virtool.dev.api
 import virtool.downloads.api
 import virtool.genbank.api
