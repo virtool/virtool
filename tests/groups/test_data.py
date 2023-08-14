@@ -34,7 +34,7 @@ async def test_create(
 
 
 class TestGet:
-    async def test_id_is_str(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_legacy_id(self, groups_data: GroupsData, fake2, snapshot):
         fake_group = await fake2.groups.create()
 
         await fake2.users.create(groups=[fake_group])
@@ -43,7 +43,7 @@ class TestGet:
 
         assert group == snapshot
 
-    async def test_id_is_int(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_single_user(self, groups_data: GroupsData, fake2, snapshot):
         fake_group = await fake2.groups.create()
 
         await fake2.users.create(groups=[fake_group])
@@ -51,6 +51,19 @@ class TestGet:
         group = await groups_data.get(1)
 
         assert group == snapshot
+
+    async def test_group_dne(self, groups_data: GroupsData, snapshot):
+        try:
+            group = await groups_data.get("group_dne")
+
+        except ResourceNotFoundError:
+            pass
+
+        try:
+            group = await groups_data.get(0xBEEF)
+
+        except ResourceNotFoundError:
+            pass
 
 
 async def test_create_duplicate(groups_data: GroupsData):

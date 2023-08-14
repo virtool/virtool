@@ -59,27 +59,30 @@ class GroupsData:
         :param group_id: the group's ID
         :return: the group
         """
-        if type(group_id) is int:
-            row = await get_row_by_id(self._pg, SQLGroup, group_id)
-            users = await fetch_group_users(self._mongo, row.legacy_id)
-        else:
-            row = await get_row(self._pg, SQLGroup, ("legacy_id", group_id))
-            users = await fetch_group_users(self._mongo, group_id)
 
-        if row:
+        if type(group_id) is int:
+            pg_group = await get_row_by_id(self._pg, SQLGroup, group_id)
+
+            if pg_group is None:
+                raise ResourceNotFoundError()
+
+        elif type(group_id) is str:
+            pg_group = await get_row(self._pg, SQLGroup, ("legacy_id", group_id))
+            mongo_group = await fetch_complete_group(self._mongo, group_id)
+
+        if pg_group:
             return Group(
-                id=row.legacy_id,
-                name=row.name,
-                permissions=Permissions(**row.permissions),
-                users=users,
+                id=pg_group.legacy_id,
+                name=pg_group.name,
+                permissions=Permissions(**pg_group.permissions),
+                users=await fetch_group_users(self._mongo, pg_group.legacy_id),
             )
 
-        doc = await fetch_complete_group(self._mongo, group_id)
+        elif mongo_group:
+            return mongo_group
 
-        if doc:
-            return doc
-
-        raise ResourceNotFoundError()
+        else:
+            raise ResourceNotFoundError()
 
     @emits(Operation.CREATE)
     async def create(self, name: str) -> Group:

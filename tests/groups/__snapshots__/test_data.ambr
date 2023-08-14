@@ -1,4 +1,4 @@
-# name: TestGet.test_id_is_int
+# name: TestGet.test_legacy_id
   <class 'dict'> {
     'id': 'bf1b993c',
     'name': 'musicians',
@@ -21,7 +21,7 @@
     ],
   }
 ---
-# name: TestGet.test_id_is_str
+# name: TestGet.test_single_user
   <class 'dict'> {
     'id': 'bf1b993c',
     'name': 'musicians',
