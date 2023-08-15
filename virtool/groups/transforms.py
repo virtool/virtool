@@ -47,7 +47,7 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         Prepare primary groups to be attached to passed documents
 
         :param documents: input documents with a `primary_group` field
-        :return: a dictionary of groups keyed by the input documents' id
+        :return: a dictionary of groups keyed by each input document's id
         """
         group_ids: List[str] = list(
             {
@@ -107,8 +107,8 @@ class AttachGroupsTransform(AbstractTransform):
         Bulk prepare groups for attachment to passed documents
 
         :param documents: A list of input documents with `groups` fields
-        :return: a dictionary of `document["id"]:list[group]` pairs based on the documents
-        `groups` field
+        :return: a dictionary of `document["id"]:list[group]`
+        pairs based on each document's `groups` field
         """
         group_ids = list(
             {group for document in documents for group in document["groups"]}
