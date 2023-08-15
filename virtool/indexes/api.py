@@ -11,7 +11,7 @@ from pydantic import Field
 from virtool_core.models.index import IndexSearchResult
 
 from virtool.api.response import InsufficientRights, NotFound, json_response
-from virtool.config import get_config_from_app, get_config_from_req
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
@@ -129,7 +129,7 @@ class IndexFileView(PydanticView):
 
         path = (
             join_index_path(
-                get_config_from_app(self.request.app).data_path, reference.id, index_id
+                get_config_from_req(self.request).data_path, reference.id, index_id
             )
             / filename
         )

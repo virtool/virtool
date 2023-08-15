@@ -12,7 +12,7 @@ from pydantic import Field, conint
 
 from virtool.api.response import InvalidQuery, json_response, NotFound
 from virtool.authorization.permissions import LegacyPermission
-from virtool.config import get_config_from_app, get_config_from_req
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionRoutePolicy
@@ -89,8 +89,8 @@ class UploadsView(PydanticView):
             name, upload_type, reserved, user=self.request["client"].user_id
         )
 
-        file_path = get_config_from_app(self.request.app).data_path / "files" / upload.name_on_disk
-        files_path = get_config_from_app(self.request.app).data_path / "files"
+        file_path = get_config_from_req(self.request).data_path / "files" / upload.name_on_disk
+        files_path = get_config_from_req(self.request).data_path / "files"
         await asyncio.to_thread(files_path.mkdir, parents=True, exist_ok=True)
 
         try:
@@ -136,7 +136,7 @@ class UploadView(PydanticView):
         try:
             upload = await get_data_from_req(self.request).uploads.get(upload_id)
             upload_path = await get_upload_path(
-                get_config_from_app(self.request.app), upload.name_on_disk
+                get_config_from_req(self.request), upload.name_on_disk
             )
         except ResourceNotFoundError:
             raise NotFound
