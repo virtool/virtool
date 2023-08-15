@@ -129,7 +129,7 @@ class IndexFileView(PydanticView):
 
         path = (
             join_index_path(
-                self.request.app["config"].data_path, reference.id, index_id
+                get_config_from_req(self.request).data_path, reference.id, index_id
             )
             / filename
         )

@@ -695,7 +695,7 @@ async def test_finalize(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     data = {field: {}}
 
@@ -785,7 +785,7 @@ async def test_job_remove(
 
     """
     client = await spawn_job_client(authorize=True)
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     user = await fake2.users.create()
 
@@ -1002,7 +1002,7 @@ async def test_analyze(
 async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, resp_is):
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     path = tmp_path / "caches" / "foo"
     path.mkdir(parents=True)
@@ -1041,7 +1041,7 @@ async def test_upload_artifact(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
     sample_file_path = tmp_path / "samples" / "test"
 
     await client.db.samples.insert_one(
@@ -1103,7 +1103,7 @@ class TestUploadReads:
 
         client = await spawn_job_client(authorize=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         await client.db.samples.insert_one(
             {
@@ -1147,7 +1147,7 @@ class TestUploadReads:
 
         client = await spawn_job_client(authorize=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
         sample_file_path = tmp_path / "samples" / "test"
 
         await client.db.samples.insert_one(
@@ -1208,8 +1208,8 @@ async def test_download_reads(
     client = await spawn_client(authorize=True)
     job_client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
-    job_client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
+    get_config_from_app(job_client.app).data_path = tmp_path
 
     file_name = f"reads_{suffix}.fq.gz"
 
@@ -1238,7 +1238,7 @@ async def test_download_reads(
     resp = await client.get(f"/samples/foo/reads/{file_name}")
     job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
 
-    expected_path = client.app["config"].data_path / "samples" / "foo" / file_name
+    expected_path = get_config_from_app(client.app).data_path / "samples" / "foo" / file_name
 
     if error:
         assert resp.status == job_resp.status == 404
@@ -1257,7 +1257,7 @@ async def test_download_reads(
 async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     if error != "404_file":
         path = tmp_path / "samples" / "foo"
@@ -1288,7 +1288,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
     resp = await client.get("/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = client.app["config"].data_path / "samples" / "foo" / "fastqc.txt"
+    expected_path = get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
 
     if error:
         assert resp.status == 404
@@ -1381,9 +1381,9 @@ async def test_upload_artifact_cache(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
-    cache_path = join_cache_path(client.app["config"], "aodp-abcdefgh")
+    cache_path = join_cache_path(get_config_from_app(client.app), "aodp-abcdefgh")
 
     await client.db.samples.insert_one(
         {
@@ -1439,8 +1439,8 @@ async def test_upload_reads_cache(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
-    cache_path = join_cache_path(client.app["config"], "aodp-abcdefgh")
+    get_config_from_app(client.app).data_path = tmp_path
+    cache_path = join_cache_path(get_config_from_app(client.app), "aodp-abcdefgh")
 
     await client.db.samples.insert_one(
         {
@@ -1486,7 +1486,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     filename = "reads_1.fq.gz"
     key = "aodp-abcdefgh"
@@ -1521,7 +1521,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
 
     resp = await client.get(f"/samples/foo/caches/{key}/reads/{filename}")
 
-    expected_path = client.app["config"].data_path / "caches" / key / filename
+    expected_path = get_config_from_app(client.app).data_path / "caches" / key / filename
 
     if error:
         assert resp.status == 404
@@ -1542,7 +1542,7 @@ async def test_download_artifact_cache(
 
     """
     client = await spawn_job_client(authorize=True)
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     key = "aodp-abcdefgh"
     name = "fastqc.txt"
@@ -1580,7 +1580,7 @@ async def test_download_artifact_cache(
         await client.db.caches.insert_one({"key": key, "sample": {"id": "test"}})
 
     resp = await client.get(f"/samples/foo/caches/{key}/artifacts/{name}")
-    expected_path = client.app["config"].data_path / "caches" / key / name_on_disk
+    expected_path = get_config_from_app(client.app).data_path / "caches" / key / name_on_disk
 
     if error:
         assert resp.status == 404

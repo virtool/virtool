@@ -6,6 +6,8 @@ import jwt
 from aiohttp.web import Application
 from jose.jwt import decode, get_unverified_header
 
+from virtool.config import get_config_from_app
+
 
 @dataclass
 class JWKArgs:
@@ -31,7 +33,7 @@ async def validate_token(app: Application, token: jwt) -> dict:
         token,
         asdict(jwk_args),
         algorithms=["RS256"],
-        audience=app["config"].b2c_client_id,
+        audience=get_config_from_app(app).b2c_client_id,
     )
 
 

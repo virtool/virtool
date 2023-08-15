@@ -5,6 +5,8 @@ import aiofiles
 import pytest
 from virtool_core.utils import decompress_file
 
+from virtool.config import get_config_from_app
+
 
 @pytest.fixture
 async def fake_hmm_status(mongo, fake2, static_time):
@@ -119,7 +121,7 @@ async def test_get(error, snapshot, spawn_client, hmm_document, resp_is):
 @pytest.mark.apitest
 async def test_get_hmm_annotations(spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
     db = client.app["db"]
 
     await db.hmm.insert_one({"_id": "foo"})
@@ -160,7 +162,7 @@ async def test_get_hmm_profiles(
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
     hmms_path = tmp_path / "hmm"
     profiles_path = hmms_path / "profiles.hmm"
 

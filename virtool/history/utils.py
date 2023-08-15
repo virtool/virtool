@@ -10,6 +10,8 @@ import arrow
 import dictdiffer
 from virtool_core.models.enums import HistoryMethod
 
+from virtool.config import get_config_from_app
+
 
 def calculate_diff(old: dict, new: dict) -> list:
     """
@@ -231,7 +233,7 @@ async def remove_diff_files(app, id_list: List[str]):
     :param id_list: a list of change IDs to remove diff files for
 
     """
-    data_path = app["config"].data_path
+    data_path = get_config_from_app(app).data_path
 
     for change_id in id_list:
         otu_id, otu_version = change_id.split(".")
