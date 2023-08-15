@@ -1,13 +1,6 @@
 """
 Easily create fake data.
 
-# Dependencies
-
-A sample needs a user and upload to exist.
-```py
-
-```
-
 """
 from typing import Dict, List, Optional, Type
 
@@ -26,7 +19,9 @@ from virtool.data.layer import DataLayer
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
+from virtool.ml.models import MLModel
 from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
+from virtool.releases import ReleaseManifestItem
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
 
@@ -56,11 +51,12 @@ class DataFaker:
         self.faker.add_provider(python)
 
         self.groups = GroupsFakerPiece(self)
-        self.labels = LabelsFakerPiece(self)
+        self.hmm = HMMFakerPiece(self)
         self.jobs = JobsFakerPiece(self)
+        self.labels = LabelsFakerPiece(self)
+        self.ml = MLFakerPiece(self)
         self.tasks = TasksFakerPiece(self)
         self.users = UsersFakerPiece(self)
-        self.hmm = HMMFakerPiece(self)
 
         self.mongo = mongo
 
@@ -112,6 +108,42 @@ class LabelsFakerPiece(DataFakerPiece):
             self.faker.word().capitalize(),
             self.faker.hex_color(),
             self.faker.sentence(),
+        )
+
+
+class MLFakerPiece(DataFakerPiece):
+    model = MLModel
+
+    async def populate(self):
+        """Populate the ML model collection with fake data."""
+        return await self.layer.ml.load(
+            {
+                "ml-plant-viruses": [
+                    self.create_release_manifest_item() for _ in range(3)
+                ],
+                "ml-insect-viruses": [
+                    self.create_release_manifest_item() for _ in range(3)
+                ],
+            },
+        )
+
+    def create_release_manifest_item(self) -> ReleaseManifestItem:
+        """
+        Create a fake release manifest item like you would receive from the
+        www.virtool.ca releases endpoints
+
+        """
+        return ReleaseManifestItem(
+            id=self.faker.pyint(),
+            body=self.faker.paragraph(),
+            content_type=self.faker.pystr(),
+            download_url=self.faker.url(),
+            filename=self.faker.pystr(),
+            html_url=self.faker.url(),
+            name=self.faker.pystr(),
+            prerelease=self.faker.pybool(),
+            published_at=self.faker.date_time(),
+            size=self.faker.pyint(),
         )
 
 

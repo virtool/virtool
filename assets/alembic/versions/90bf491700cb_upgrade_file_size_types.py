@@ -1,7 +1,7 @@
 """upgrade file size types
 
 Revision ID: 90bf491700cb
-Revises: 
+Revises: e694fb270acb
 Create Date: 2022-01-12 16:14:01.280566
 
 """
@@ -10,7 +10,7 @@ from sqlalchemy import BigInteger, Integer
 
 # revision identifiers, used by Alembic.
 revision = "90bf491700cb"
-down_revision = None
+down_revision = "e694fb270acb"
 branch_labels = None
 depends_on = None
 
