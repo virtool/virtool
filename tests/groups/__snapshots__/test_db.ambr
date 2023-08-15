@@ -1,125 +1,3 @@
-# name: TestAttachGroupTransform.test_multiple_documents
-  <class 'list'> [
-    <class 'dict'> {
-      'id': 'doc_0',
-      'primary_group': <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-      },
-    },
-    <class 'dict'> {
-      'id': 'doc_1',
-      'primary_group': <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-      },
-    },
-    <class 'dict'> {
-      'id': 'doc_2',
-      'primary_group': <class 'dict'> {
-        'id': '7cf872dc',
-        'name': 'architects',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-      },
-    },
-  ]
----
-# name: TestAttachGroupTransform.test_primary_group_missing
-  <class 'dict'> {
-    'id': 'doc_0',
-    'primary_group': None,
-  }
----
-# name: TestAttachGroupTransform.test_primary_group_present
-  <class 'dict'> {
-    'id': 'doc_0',
-    'primary_group': <class 'dict'> {
-      'id': 'bf1b993c',
-      'name': 'musicians',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-  }
----
-# name: TestAttachGroupsTransform.test_groups_missing
-  <class 'dict'> {
-    'groups': <class 'list'> [
-    ],
-    'id': 'doc_0',
-  }
----
-# name: TestAttachGroupsTransform.test_groups_present
-  <class 'dict'> {
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-      },
-      <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-      },
-    ],
-    'id': 'doc_0',
-  }
----
 # name: TestAttachGroupsTransform.test_multiple_documents
   <class 'list'> [
     <class 'dict'> {
@@ -222,4 +100,126 @@
       'id': 'doc_2',
     },
   ]
+---
+# name: TestAttachGroupsTransform.test_no_groups
+  <class 'dict'> {
+    'groups': <class 'list'> [
+    ],
+    'id': 'doc_0',
+  }
+---
+# name: TestAttachGroupsTransform.test_single_document
+  <class 'dict'> {
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    ],
+    'id': 'doc_0',
+  }
+---
+# name: TestAttachPrimaryGroupTransform.test_multiple_documents
+  <class 'list'> [
+    <class 'dict'> {
+      'id': 'doc_0',
+      'primary_group': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    },
+    <class 'dict'> {
+      'id': 'doc_1',
+      'primary_group': <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    },
+    <class 'dict'> {
+      'id': 'doc_2',
+      'primary_group': <class 'dict'> {
+        'id': '7cf872dc',
+        'name': 'architects',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    },
+  ]
+---
+# name: TestAttachPrimaryGroupTransform.test_no_primary_group
+  <class 'dict'> {
+    'id': 'doc_0',
+    'primary_group': None,
+  }
+---
+# name: TestAttachPrimaryGroupTransform.test_single_document
+  <class 'dict'> {
+    'id': 'doc_0',
+    'primary_group': <class 'dict'> {
+      'id': 'bf1b993c',
+      'name': 'musicians',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  }
 ---

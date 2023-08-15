@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class AttachPrimaryGroupTransform(AbstractTransform):
     """
-    Attaches a Primary Group to a User document
+    Attach primary groups to document(s) with a `primary_group` field
     """
 
     def __init__(self, mongo: "Mongo"):
@@ -18,10 +18,10 @@ class AttachPrimaryGroupTransform(AbstractTransform):
 
     async def prepare_one(self, document: Document) -> Optional[GroupMinimal]:
         """
-        Prepares a group with an id matching the input document's `primary_group` field
+        Prepare the primary group of a document for attachment
 
-        :param document: the input document missing a primary group
-        :return: a complete group
+        :param document: an input document with a `primary_group` field
+        :return: the group associated with the document
         """
         group_id = document.get("primary_group")
 
@@ -32,11 +32,11 @@ class AttachPrimaryGroupTransform(AbstractTransform):
 
     async def attach_one(self, document: Document, prepared: Any):
         """
-        Attaches a group to the input document
+        Attach a group to the input document
 
-        :param document: the input document missing a primary group
+        :param document: the input document associated with the passed group
         :param prepared: the group to be attached
-        :return: the input document with a complete group keyed by "primary_group"
+        :return: the input document with an attached primary_group
         """
         return {**document, "primary_group": prepared}
 
@@ -44,12 +44,10 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         self, documents: List[Document]
     ) -> Dict[Union[int, str], Any]:
         """
-        Prepares groups with ids matching the input documents' `primary_group` fields;
-        accepts multiple input documents
+        Prepare primary groups to be attached to passed documents
 
-        :param documents: the input documents missing primary groups
-        :return: a dictionary of complete groups
-        indexed by the input documents' `id` fields
+        :param documents: input documents with a `primary_group` field
+        :return: a dictionary of groups keyed by the input documents' id
         """
         group_ids: List[str] = list(
             {
@@ -72,7 +70,7 @@ class AttachPrimaryGroupTransform(AbstractTransform):
 
 class AttachGroupsTransform(AbstractTransform):
     """
-    Attaches Groups to a User document
+    Attach Groups to document(s) containing a `groups` field
     """
 
     def __init__(self, mongo: "Mongo"):
@@ -80,10 +78,10 @@ class AttachGroupsTransform(AbstractTransform):
 
     async def prepare_one(self, document: Document) -> List[Dict]:
         """
-        Prepares a list of groups with ids matching the input document's `groups` field
+        Prepare a list of groups to be attached to a document
 
-        :param document: the input document missing a list of groups
-        :return: a list of complete groups
+        :param document: an input document with a `groups` field
+        :return: a list of groups
         """
         return [
             base_processor(group_doc)
@@ -94,12 +92,11 @@ class AttachGroupsTransform(AbstractTransform):
 
     async def attach_one(self, document: Document, prepared: Any):
         """
-        Attaches groups to the input document
+        Attach groups to the document
 
-        :param document: the input document missing a list of groups
+        :param document: the input document associated with the passed groups
         :param prepared: the list of groups to be attached
-        :return: the input document with
-        a list of complete groups keyed by "groups"
+        :return: the input document with an attached list of groups
         """
         return {**document, "groups": prepared}
 
@@ -107,13 +104,11 @@ class AttachGroupsTransform(AbstractTransform):
         self, documents: List[Document]
     ) -> Dict[Union[int, str], Any]:
         """
-        Prepares lists of groups with ids matching
-        the input documents' `primary_group` fields;
-        accepts multiple input documents
+        Bulk prepare groups for attachment to passed documents
 
-        :param documents: the input documents missing lists of groups
-        :return: a dictionary of lists of complete
-        groups indexed by the input documents' `id` fields
+        :param documents: A list of input documents with `groups` fields
+        :return: a dictionary of `document["id"]:list[group]` pairs based on the documents
+        `groups` field
         """
         group_ids = list(
             {group for document in documents for group in document["groups"]}

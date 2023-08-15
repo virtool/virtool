@@ -37,15 +37,15 @@ async def create_fake_users_with_groups(
     return fake_users
 
 
-class TestAttachGroupTransform:
-    async def test_primary_group_missing(self, snapshot, mongo):
+class TestAttachPrimaryGroupTransform:
+    async def test_no_primary_group(self, snapshot, mongo):
         doc = (await create_fake_users_with_groups(None, 1, False, False))[0]
 
         complete_doc = await apply_transforms(doc, [AttachPrimaryGroupTransform(mongo)])
 
         assert complete_doc == snapshot
 
-    async def test_primary_group_present(self, snapshot, fake2, mongo):
+    async def test_single_document(self, snapshot, fake2, mongo):
         doc = (await create_fake_users_with_groups(fake2, 1, True, False))[0]
 
         complete_doc = await apply_transforms(doc, [AttachPrimaryGroupTransform(mongo)])
@@ -63,14 +63,14 @@ class TestAttachGroupTransform:
 
 
 class TestAttachGroupsTransform:
-    async def test_groups_missing(self, snapshot, mongo):
+    async def test_no_groups(self, snapshot, mongo):
         doc = (await create_fake_users_with_groups(None, 1, False, False))[0]
 
         complete_doc = await apply_transforms(doc, [AttachGroupsTransform(mongo)])
 
         assert complete_doc == snapshot
 
-    async def test_groups_present(self, snapshot, fake2, mongo):
+    async def test_single_document(self, snapshot, fake2, mongo):
         doc = (await create_fake_users_with_groups(fake2, 1, False, True))[0]
 
         complete_doc = await apply_transforms(doc, [AttachGroupsTransform(mongo)])
