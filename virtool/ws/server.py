@@ -81,7 +81,7 @@ class WSServer:
 
     async def periodically_close_expired_websocket_connections(self):
         """
-        Periodically closes connections with expired sessions.
+        Periodically check for and close connections with expired sessions.
         """
         session_data = SessionData(self._redis)
 

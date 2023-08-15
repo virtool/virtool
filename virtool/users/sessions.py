@@ -183,7 +183,7 @@ class SessionData(DataLayerPiece):
 
     async def check_session_is_authenticated(self, session_id: str) -> bool:
         """
-        Checks whether a session is authenticated a given ``session_id``.
+        Checks whether a session is authenticated.
 
         :param session_id: the session id
         :return: True if the session is authenticated, False otherwise
