@@ -114,12 +114,12 @@ class AttachGroupsTransform(AbstractTransform):
             {group for document in documents for group in document["groups"]}
         )
 
-        group_dict = {
+        groups = {
             group["_id"]: base_processor(group)
             async for group in self._mongo.groups.find({"_id": {"$in": group_ids}})
         }
 
         return {
-            document["id"]: [group_dict[group] for group in document["groups"]]
+            document["id"]: [groups[group] for group in document["groups"]]
             for document in documents
         }
