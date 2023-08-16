@@ -178,9 +178,9 @@ async def test_find_or_create_b2c_user(
 
 async def test_check_no_users_exist(users_data):
     """
-    Checks user existence before and after user creation.
+    Verifies user existence checks work as expected with and without existing users.
     """
-    assert await users_data.check_no_users_exist() is True
+    assert await users_data.check_users_exist() is False
 
     await users_data.create(password="hello_world", handle="bill")
-    assert await users_data.check_no_users_exist() is False
+    assert await users_data.check_users_exist() is True

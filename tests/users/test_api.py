@@ -294,10 +294,11 @@ async def test_remove_permission(spawn_client, role, status, snapshot):
     assert await resp.json() == snapshot()
 
 
-async def test_first_user_view(spawn_client):
+async def test_first_user_view(spawn_client, mongo):
     """
-    Checks response when there already is a user.
+    Checks response when first user exists and does not exist.
     """
+
     client = await spawn_client(authorize=True, administrator=True)
 
     resp = await client.put(
@@ -305,3 +306,11 @@ async def test_first_user_view(spawn_client):
     )
 
     assert resp.status == 409
+
+    await mongo.users.delete_many({})
+
+    resp = await client.put(
+        "/users/first", {"handle": "fred", "password": "hello_world"}
+    )
+
+    assert resp.status == 201
