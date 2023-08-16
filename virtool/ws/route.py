@@ -1,24 +1,26 @@
-import logging
+"""
+This module manages Websocket connection requests.
+"""
 
-from aiohttp import web
-
-import virtool.ws.connection
+from aiohttp.web import Request, WebSocketResponse
+from logging import getLogger
+from virtool.ws.connection import WSConnection
 from virtool.http.policy import policy, WebSocketRoutePolicy
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 @policy(WebSocketRoutePolicy)
-async def root(req: web.Request) -> web.WebSocketResponse:
+async def root(req: Request) -> WebSocketResponse:
     """
     Handles requests for WebSocket connections.
 
     """
-    ws = web.WebSocketResponse(autoping=True, heartbeat=5)
+    ws = WebSocketResponse(autoping=True, heartbeat=5)
 
     await ws.prepare(req)
 
-    connection = virtool.ws.connection.WSConnection(ws, req["client"])
+    connection = WSConnection(ws, req["client"])
 
     if not req["client"].authenticated:
         await connection.close(4000)
