@@ -2,6 +2,8 @@ from aiohttp.web import middleware
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 
+from virtool.config import get_config_from_req
+
 
 @middleware
 async def headers_middleware(req, handler):
@@ -21,7 +23,7 @@ async def on_prepare_location(req: Request, resp: Response):
     Signal handler that adds base URL to Location header or Content-Location if possible
     """
     location = resp.headers.get("Location")
-    base_url = req.app["config"].base_url
+    base_url = get_config_from_req(req).base_url
 
     if location and base_url not in location:
         resp.headers["Location"] = base_url + location

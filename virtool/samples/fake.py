@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy.exc import IntegrityError
 
 from virtool_core.models.settings import Settings
+from virtool.config import get_config_from_app
 
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
@@ -134,7 +135,7 @@ async def create_fake_sample(
             sample_id=sample_id,
             quality=await create_fake_quality(fake),
             _run_in_thread=to_thread,
-            data_path=app["config"].data_path,
+            data_path=get_config_from_app(app).data_path,
         )
 
     sample["_id"] = sample.pop("id")
@@ -152,7 +153,7 @@ async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: s
     :param sample_id: the id of the sample
 
     """
-    reads_path = app["config"].data_path / "samples" / sample_id
+    reads_path = get_config_from_app(app).data_path / "samples" / sample_id
     reads_path.mkdir(parents=True, exist_ok=True)
 
     await to_thread(shutil.copy, file_path, reads_path / filename)

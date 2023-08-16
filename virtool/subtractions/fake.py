@@ -3,6 +3,7 @@ from shutil import copytree
 from typing import Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from virtool.config import get_config_from_app
 
 from virtool.example import example_path
 from virtool.subtractions.files import create_subtraction_files
@@ -49,7 +50,7 @@ async def create_fake_finalized_subtraction(
     )
 
     subtractions_path = (
-        app["config"].data_path
+        get_config_from_app(app).data_path
         / "subtractions"
         / subtraction_id.replace(" ", "_").lower()
     )

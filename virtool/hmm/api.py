@@ -216,7 +216,7 @@ async def get_hmm_profiles(req):
     Downloads the HMM profiles file if HMM data is available.
 
     """
-    hmm_path = req.app["config"].data_path / "hmm"
+    hmm_path = get_config_from_req(req).data_path / "hmm"
     await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
 
     try:

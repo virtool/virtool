@@ -70,16 +70,16 @@ async def startup_b2c(app: App):
     authority = f"https://{config.b2c_tenant}.b2clogin.com/{config.b2c_tenant}.onmicrosoft.com/{config.b2c_user_flow}"
 
     msal = ClientApplication(
-        client_id=app["config"].b2c_client_id,
+        client_id=get_config_from_app(app).b2c_client_id,
         authority=authority,
-        client_credential=app["config"].b2c_client_secret,
+        client_credential=get_config_from_app(app).b2c_client_secret,
     )
 
     app["b2c"] = B2C(msal, authority)
 
 
 async def startup_check_db(app: App):
-    if app["config"].no_check_db:
+    if get_config_from_app(app).no_check_db:
         return logger.info("Skipping database checks")
 
     db = app["db"]
@@ -188,7 +188,7 @@ async def startup_http_client_session(app: App):
 
 
 async def startup_routes(app: App):
-    setup_routes(app, dev=app["config"].dev)
+    setup_routes(app, dev=get_config_from_app(app).dev)
 
 
 async def startup_sentry(app: App):
@@ -197,9 +197,9 @@ async def startup_sentry(app: App):
 
     :param app: the application object
     """
-    if app["config"].sentry_dsn:
+    if get_config_from_app(app).sentry_dsn:
         logger.info("Configuring Sentry")
-        setup(app["version"], app["config"].sentry_dsn)
+        setup(app["version"], get_config_from_app(app).sentry_dsn)
     else:
         logger.info("Skipped configuring Sentry")
 

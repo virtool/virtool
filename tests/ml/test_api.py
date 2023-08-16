@@ -3,6 +3,8 @@ import hashlib
 from aiohttp import ClientResponse
 from syrupy.matchers import path_type
 
+from virtool.config import get_config_from_app
+
 
 async def test_list(fake2, snapshot, spawn_client):
     """Test that a GET request to `/ml` returns a list of HMMs."""
@@ -38,7 +40,7 @@ async def test_download_release(config, fake2, snapshot, spawn_client):
     download of the model archive for that release.
     """
     client = await spawn_client(authorize=True)
-    client.app["config"].data_path = config.data_path
+    get_config_from_app(client.app).data_path = config.data_path
 
     await fake2.ml.populate()
 
