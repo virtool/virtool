@@ -307,7 +307,7 @@ async def test_first_user_view(spawn_client, mongo):
 
     assert resp.status == 409
 
-    await mongo.users.delete_many({})
+    await mongo.users.delete_one({"handle": "bob"})
 
     resp = await client.put(
         "/users/first", {"handle": "fred", "password": "hello_world"}

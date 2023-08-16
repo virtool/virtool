@@ -83,10 +83,13 @@ def spawn_client(
     mongo_connection_string,
     mongo_name,
     openfga_host,
+    openfga_scheme,
     openfga_store_name,
     pg_connection_string,
+    pg,
     redis,
     redis_connection_string,
+    test_motor,
 ):
     """A factory for spawning test clients."""
 
