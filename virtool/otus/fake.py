@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 from virtool_core.models.otu import OTU
+from virtool.config import get_config_from_app
 
 from virtool.fake.wrapper import FakerWrapper
 from virtool.otus.data import OTUData
@@ -44,7 +45,7 @@ class FakeSequence:
 class FakeOTU:
     def __init__(self, app: App, ref_id: str, user_id: str, document: OTU):
         self._app = app
-        self._data = OTUData(app["db"], app["config"])
+        self._data = OTUData(app["db"], get_config_from_app(app))
         self._ref_id = ref_id
         self._user_id = user_id
         self._document = document
@@ -85,7 +86,7 @@ class FakeOTUCreator:
         self._user_id = user_id
 
     async def create(self, name: str, abbreviation: str):
-        otu_data = OTUData(self._app["db"], self._app["config"])
+        otu_data = OTUData(self._app["db"], get_config_from_app(self._app))
 
         document = await otu_data.create(
             self._ref_id,

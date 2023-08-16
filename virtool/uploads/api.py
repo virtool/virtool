@@ -89,8 +89,8 @@ class UploadsView(PydanticView):
             name, upload_type, reserved, user=self.request["client"].user_id
         )
 
-        file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
-        files_path = self.request.app["config"].data_path / "files"
+        file_path = get_config_from_req(self.request).data_path / "files" / upload.name_on_disk
+        files_path = get_config_from_req(self.request).data_path / "files"
         await asyncio.to_thread(files_path.mkdir, parents=True, exist_ok=True)
 
         try:
@@ -136,7 +136,7 @@ class UploadView(PydanticView):
         try:
             upload = await get_data_from_req(self.request).uploads.get(upload_id)
             upload_path = await get_upload_path(
-                self.request.app["config"], upload.name_on_disk
+                get_config_from_req(self.request), upload.name_on_disk
             )
         except ResourceNotFoundError:
             raise NotFound

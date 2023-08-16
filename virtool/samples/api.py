@@ -280,7 +280,7 @@ async def finalize(req):
         sample_id,
         data["quality"],
         to_thread,
-        req.app["config"].data_path,
+        get_config_from_req(req).data_path,
     )
 
     return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
@@ -759,10 +759,10 @@ async def upload_cache_artifact(req):
 
     name = req.query.get("name")
 
-    caches_path = req.app["config"].data_path / "caches"
+    caches_path = get_config_from_req(req).data_path / "caches"
     await asyncio.to_thread(caches_path.mkdir, parents=True, exist_ok=True)
 
-    cache_path = join_cache_path(req.app["config"], key) / name
+    cache_path = join_cache_path(get_config_from_req(req), key) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
         raise HTTPBadRequest(text="Unsupported sample artifact type")
@@ -840,7 +840,7 @@ async def download_reads(req: aiohttp.web.Request):
     if file_name not in existing_reads:
         raise NotFound()
 
-    file_path = req.app["config"].data_path / "samples" / sample_id / file_name
+    file_path = get_config_from_req(req).data_path / "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
         raise NotFound()
@@ -882,7 +882,7 @@ async def download_artifact(req: aiohttp.web.Request):
     artifact = result.to_dict()
 
     file_path = (
-        req.app["config"].data_path / f"samples/{sample_id}/{artifact['name_on_disk']}"
+        get_config_from_req(req).data_path / f"samples/{sample_id}/{artifact['name_on_disk']}"
     )
 
     if not os.path.isfile(file_path):
@@ -922,7 +922,7 @@ async def download_cache_reads(req):
     if file_name not in existing_reads:
         raise NotFound()
 
-    file_path = req.app["config"].data_path / "caches" / key / file_name
+    file_path = get_config_from_req(req).data_path / "caches" / key / file_name
 
     if not os.path.isfile(file_path):
         raise NotFound()
@@ -968,7 +968,7 @@ async def download_cache_artifact(req):
 
     artifact = result.to_dict()
 
-    file_path = req.app["config"].data_path / "caches" / key / artifact["name_on_disk"]
+    file_path = get_config_from_req(req).data_path / "caches" / key / artifact["name_on_disk"]
 
     if not file_path.exists():
         raise NotFound()

@@ -5,6 +5,7 @@ from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
 from jose.exceptions import JWTError, JWTClaimsError, ExpiredSignatureError
+from virtool.config import get_config_from_req
 
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -179,7 +180,7 @@ async def middleware(req, handler) -> Response:
     if req.headers.get("AUTHORIZATION"):
         return await authenticate_with_key(req, handler)
 
-    if req.app["config"].use_b2c:
+    if get_config_from_req(req).use_b2c:
         try:
             return await authenticate_with_b2c(req, handler)
         except HTTPUnauthorized:

@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from virtool.config import get_config_from_app
 
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import LIST_PROJECTION
@@ -42,6 +43,6 @@ async def test_copy_reads_file(app):
 
     await copy_reads_file(app, file_path, "reads_1.fq.gz", "sample_1")
 
-    assert os.listdir(app["config"].data_path / "samples" / "sample_1") == [
+    assert os.listdir(get_config_from_app(app).data_path / "samples" / "sample_1") == [
         "reads_1.fq.gz"
     ]

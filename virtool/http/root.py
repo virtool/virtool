@@ -1,4 +1,5 @@
 from virtool.api.response import json_response
+from virtool.config import get_config_from_req
 from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.routes import Routes
 
@@ -18,7 +19,7 @@ async def get(req):
     first_user = await req.app["db"].users.count_documents({}) == 0
 
     app_data = {
-        "dev": req.app["config"].dev,
+        "dev": get_config_from_req(req).dev,
         "first_user": first_user,
         "endpoints": {
             "account": {"url": "/account", "doc": f"{API_URL_ROOT}/account"},

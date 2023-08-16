@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.task import Task
+from virtool.config import get_config_from_app
 
 import virtool.utils
 from virtool.data.utils import get_data_from_app
@@ -188,7 +189,7 @@ class TestCreate:
 
         tmpdir.mkdir("files")
 
-        client.app["config"].data_path = Path(tmpdir)
+        get_config_from_app(client.app).data_path = Path(tmpdir)
 
         with open(test_files_path / "reference.json.gz", "rb") as f:
             resp = await client.post_form(

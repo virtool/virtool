@@ -241,7 +241,7 @@ async def test_get(
 
         if ready:
             args = m_format_analysis.call_args[0]
-            assert args[0] == client.app["config"]
+            assert args[0] == get_config_from_app(client.app)
             assert args[2] == snapshot
         else:
             assert not m_format_analysis.called
