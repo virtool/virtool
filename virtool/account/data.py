@@ -5,8 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
+from virtool.data.transforms import apply_transforms
+from virtool.groups.transforms import AttachGroupsTransform
 
 import virtool.utils
+from virtool.utils import base_processor
 from virtool.account.db import (
     compose_password_update,
     API_KEY_PROJECTION,
@@ -24,7 +27,6 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
-from virtool.groups.db import lookup_groups_minimal_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
@@ -151,12 +153,11 @@ class AccountData(DataLayerPiece):
         :param user_id: the user ID
         :return: the api keys
         """
-        return [
-            APIKey(**key)
+        keys = [
+            key
             async for key in self._mongo.keys.aggregate(
                 [
                     {"$match": {"user.id": user_id}},
-                    *lookup_groups_minimal_by_id(),
                     {
                         "$project": {
                             "_id": False,
@@ -171,6 +172,15 @@ class AccountData(DataLayerPiece):
                 ]
             )
         ]
+
+        keys = await apply_transforms(
+            [base_processor(key) for key in keys],
+            [
+                AttachGroupsTransform(self._mongo),
+            ],
+        )
+
+        return [APIKey(**key) for key in keys]
 
     async def create_key(
         self, data: CreateKeysRequest, user_id: str
@@ -294,7 +304,7 @@ class AccountData(DataLayerPiece):
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, data: CreateLoginRequest) -> Union[str]:
+    async def login(self, data: CreateLoginRequest) -> Union[str, int]:
         """
         Create a new session for the user with `username`.
 

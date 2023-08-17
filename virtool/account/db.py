@@ -5,10 +5,12 @@ Work with the current user account and its API keys.
 from typing import Any, Dict, Optional
 
 from virtool_core.models.account import APIKey
+from virtool.data.transforms import apply_transforms
+from virtool.groups.transforms import AttachGroupsTransform
 
 import virtool.users.utils
 import virtool.utils
-from virtool.groups.db import lookup_groups_minimal_by_id
+from virtool.utils import base_processor
 
 ACCOUNT_PROJECTION = (
     "_id",
@@ -76,7 +78,6 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
     async for key in mongo.keys.aggregate(
         [
             {"$match": {"id": key_id}},
-            *lookup_groups_minimal_by_id(),
             {
                 "$project": {
                     "_id": False,
@@ -90,6 +91,13 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
             },
         ]
     ):
+        key = await apply_transforms(
+            base_processor(key),
+            [
+                AttachGroupsTransform(mongo),
+            ],
+        )
+
         return APIKey(
             **{**key, "groups": sorted(key["groups"], key=lambda g: g["name"])}
         )
