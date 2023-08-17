@@ -420,13 +420,7 @@
     'total_count': 3,
   }
 ---
-# name: test_first_user_view[False-409]
-  <class 'dict'> {
-    'id': 'conflict',
-    'message': 'Virtool already has at least one user',
-  }
----
-# name: test_first_user_view[True-201]
+# name: test_first_user_view[False-201]
   <class 'dict'> {
     'active': True,
     'administrator': True,
@@ -453,6 +447,12 @@
       'upload_file': False,
     },
     'primary_group': None,
+  }
+---
+# name: test_first_user_view[True-409]
+  <class 'dict'> {
+    'id': 'conflict',
+    'message': 'Virtool already has at least one user',
   }
 ---
 # name: test_get[200]

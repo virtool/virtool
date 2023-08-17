@@ -294,18 +294,16 @@ async def test_remove_permission(spawn_client, role, status, snapshot):
     assert await resp.json() == snapshot()
 
 
-@pytest.mark.parametrize(
-    "first_user_does_not_exist, status", [(False, 409), (True, 201)]
-)
+@pytest.mark.parametrize("first_user_exists, status", [(True, 409), (False, 201)])
 async def test_first_user_view(
-    spawn_client, mongo, first_user_does_not_exist, status, snapshot
+    spawn_client, mongo, first_user_exists, status, snapshot
 ):
     """
     Checks response when first user exists and does not exist.
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    if first_user_does_not_exist:
+    if not first_user_exists:
         await mongo.users.delete_one({"handle": "bob"})
 
     resp = await client.put(
