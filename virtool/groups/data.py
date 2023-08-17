@@ -63,10 +63,7 @@ class GroupsData:
         if type(group_id) is int:
             pg_group = await get_row_by_id(self._pg, SQLGroup, group_id)
 
-            if pg_group is None:
-                raise ResourceNotFoundError()
-
-        elif type(group_id) is str:
+        else:
             pg_group = await get_row(self._pg, SQLGroup, ("legacy_id", group_id))
             mongo_group = await fetch_complete_group(self._mongo, group_id)
 
@@ -78,11 +75,10 @@ class GroupsData:
                 users=await fetch_group_users(self._mongo, pg_group.legacy_id),
             )
 
-        elif mongo_group:
+        if mongo_group:
             return mongo_group
 
-        else:
-            raise ResourceNotFoundError()
+        raise ResourceNotFoundError()
 
     @emits(Operation.CREATE)
     async def create(self, name: str) -> Group:

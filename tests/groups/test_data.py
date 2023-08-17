@@ -54,7 +54,7 @@ class TestGet:
 
     async def test_group_dne(self, groups_data: GroupsData, snapshot):
         try:
-            group = await groups_data.get("group_dne")
+            await groups_data.get("group_dne")
 
         except ResourceNotFoundError:
             pass
