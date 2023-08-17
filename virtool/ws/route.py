@@ -1,5 +1,5 @@
 """
-This module manages Websocket connection requests.
+Provides handlers for managing Websocket related requests.
 """
 
 from aiohttp.web import Request, WebSocketResponse
