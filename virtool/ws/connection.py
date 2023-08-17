@@ -15,6 +15,7 @@ class WSConnection:
         self.user_id = session.user_id
         self.groups = session.groups
         self.permissions = session.permissions
+        self.session_id = session.session_id
 
     async def send(self, message: WSMessage):
         """
