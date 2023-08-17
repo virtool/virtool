@@ -138,11 +138,11 @@ class FirstUserView(PydanticView):
             data.handle, data.password
         )
 
-        _, token = await get_data_from_req(self.request).sessions.create_authenticated(
+        session, token = await get_data_from_req(
+            self.request
+        ).sessions.create_authenticated(
             virtool.http.authentication.get_ip(self.request), user.id
         )
-
-        session_id = self.request.cookies.get("session_id")
 
         response = json_response(
             user.dict(),
@@ -150,7 +150,7 @@ class FirstUserView(PydanticView):
             status=201,
         )
 
-        set_session_id_cookie(response, session_id)
+        set_session_id_cookie(response, session.id)
         set_session_token_cookie(response, token)
 
         return response

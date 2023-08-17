@@ -301,7 +301,7 @@ async def test_first_user_view(
     """
     Checks response when first user exists and does not exist.
     """
-    client = await spawn_client(authorize=True, administrator=True)
+    client = await spawn_client()
 
     if not first_user_exists:
         await mongo.users.delete_one({"handle": "bob"})
