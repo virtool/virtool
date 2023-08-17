@@ -5,6 +5,7 @@ from logging import getLogger
 from aioredis import Redis
 
 from virtool.data.events import EventListener, Operation
+from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSInsertMessage, WSDeleteMessage
 from virtool.ws.connection import WSConnection
 
@@ -77,6 +78,20 @@ class WSServer:
             logger.info("Closed WebSocket connection user_id=%s", connection.user_id)
         except ValueError:
             pass
+
+    async def periodically_close_expired_websocket_connections(self):
+        """
+        Periodically check for and close connections with expired sessions.
+        """
+        session_data = SessionData(self._redis)
+
+        while True:
+            for connection in self._connections:
+                if not await session_data.check_session_is_authenticated(
+                    connection.session_id
+                ):
+                    await connection.close(1001)
+            await asyncio.sleep(300)
 
     @property
     def authenticated_connections(self) -> list[WSConnection]:
