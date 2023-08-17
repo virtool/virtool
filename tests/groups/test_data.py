@@ -60,7 +60,7 @@ class TestGet:
             pass
 
         try:
-            group = await groups_data.get(0xBEEF)
+            await groups_data.get(0xBEEF)
 
         except ResourceNotFoundError:
             pass

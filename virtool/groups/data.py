@@ -6,21 +6,19 @@ from pymongo.errors import DuplicateKeyError
 from sqlalchemy import update, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.group import GroupMinimal, Group, Permissions
+from virtool_core.models.group import GroupMinimal, Group
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.events import emits, Operation, emit
 from virtool.data.topg import both_transactions
 from virtool.groups.db import (
-    fetch_group_users,
     update_member_users,
     fetch_complete_group,
 )
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.utils import get_one_field, id_exists
-from virtool.pg.utils import get_row, get_row_by_id
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
@@ -60,23 +58,10 @@ class GroupsData:
         :return: the group
         """
 
-        if type(group_id) is int:
-            pg_group = await get_row_by_id(self._pg, SQLGroup, group_id)
+        group = await fetch_complete_group(self._mongo, self._pg, group_id)
 
-        else:
-            pg_group = await get_row(self._pg, SQLGroup, ("legacy_id", group_id))
-            mongo_group = await fetch_complete_group(self._mongo, group_id)
-
-        if pg_group:
-            return Group(
-                id=pg_group.legacy_id,
-                name=pg_group.name,
-                permissions=Permissions(**pg_group.permissions),
-                users=await fetch_group_users(self._mongo, pg_group.legacy_id),
-            )
-
-        if mongo_group:
-            return mongo_group
+        if group:
+            return group
 
         raise ResourceNotFoundError()
 
@@ -159,7 +144,7 @@ class GroupsData:
 
                 await update_member_users(self._mongo, group_id, session=mongo_session)
 
-        return await fetch_complete_group(self._mongo, group_id)
+        return await fetch_complete_group(self._mongo, self._pg, group_id)
 
     async def delete(self, group_id: str):
         """
