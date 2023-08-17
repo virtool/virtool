@@ -176,11 +176,16 @@ async def test_find_or_create_b2c_user(
     assert user == snapshot(matcher=path_type({"handle": (str,)}))
 
 
-async def test_check_no_users_exist(users_data):
-    """
-    Verifies user existence checks work as expected with and without existing users.
-    """
-    assert await users_data.check_users_exist() is False
+class TestUserExistenceChecks:
+    async def test_no_users_exist(self, users_data):
+        """
+        Verifies that user existence check returns False when no users exist.
+        """
+        assert not await users_data.check_users_exist()
 
-    await users_data.create(password="hello_world", handle="bill")
-    assert await users_data.check_users_exist() is True
+    async def test_users_exist(self, users_data):
+        """
+        Verifies that user existence check returns True when users exist.
+        """
+        await users_data.create(password="hello_world", handle="bill")
+        assert await users_data.check_users_exist()

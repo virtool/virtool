@@ -241,6 +241,7 @@ class UsersData(DataLayerPiece):
     async def check_users_exist(self) -> bool:
         """
         Checks that users exist.
+
         :returns: True if users exist otherwise False
         """
         return await self._mongo.users.count_documents({}, limit=1) > 0
