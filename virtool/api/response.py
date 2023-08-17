@@ -1,7 +1,8 @@
 """
 Virtool API Response
 
-DESCRIPTION HERE
+Exports HTTP Errors and request handling middleware for
+reformatting reporting errors to the client.
 """
 
 from typing import Optional, Dict, Any
@@ -18,8 +19,8 @@ def json_response(
     data: Any, status: int = 200, headers: Optional[Dict[str, str]] = None
 ) -> Response:
     """
-    Return a response object whose attached JSON dict will be formatted by middleware
-    depending on the request's `Accept` header.
+    Return a response object whose attached JSON dict will be formatted
+    by middleware depending on the request's `Accept` header.
 
     :param data: the data to send in the response as JSON
     :param status: the HTTP status code for the response
@@ -37,7 +38,8 @@ def json_response(
 
 class InsufficientRights(HTTPForbidden):
     """
-    Virtool API wrapper for HTTP code 403
+    Reusable exception for returning an HTTP status `403`
+    (insufficient rights) message to the client.
     """
 
     def __init__(self, message="Insufficient rights"):
@@ -46,7 +48,8 @@ class InsufficientRights(HTTPForbidden):
 
 class NotFound(HTTPNotFound):
     """
-    Virtool API wrapper for HTTP code 404
+    Reusable exception for returning an HTTP status `404`
+    (not found) message to the client.
     """
 
     def __init__(self, message="Not found"):
@@ -55,9 +58,8 @@ class NotFound(HTTPNotFound):
 
 class EmptyRequest(HTTPUnprocessableEntity):
     """
-    SOMETHING HERE
-
-    Virtool API wrapper around HTTP code 422
+    Reusable exception for returning an HTTP status `422`
+    (empty request) message to the client.
     """
 
     def __init__(self, message="Empty request"):
@@ -66,9 +68,8 @@ class EmptyRequest(HTTPUnprocessableEntity):
 
 class InvalidQuery(HTTPUnprocessableEntity):
     """
-    SOMETHING HERE
-
-    Virtool API wrapper around HTTP code 422
+    Reusable exception for returning an HTTP status `422`
+    (invalid query) message to the client.
     """
 
     def __init__(self, errors, message="Invalid query"):
@@ -78,9 +79,8 @@ class InvalidQuery(HTTPUnprocessableEntity):
 
 class InvalidInput(HTTPUnprocessableEntity):
     """
-    SOMETHING HERE
-
-    Virtool API wrapper around HTTP code 422
+    Reusable exception for returning an HTTP status `422`
+    (invalid input) message to the client.
     """
 
     def __init__(self, errors, message="Invalid input"):
@@ -91,10 +91,11 @@ class InvalidInput(HTTPUnprocessableEntity):
 @web.middleware
 async def middleware(req: web.Request, handler: Callable):
     """
-    INCOMPLETE FUNCTION DOCSTRING
+    Request handling middleware for converting HTTP
+    exceptions into HTTP responses.
 
-    :param req:
-    :param handler:
+    :param req: the incoming request
+    :param handler: the next middleware to be executed
     """
     try:
         resp = await handler(req)
