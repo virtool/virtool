@@ -304,7 +304,7 @@ async def test_first_user_view(
     client = await spawn_client()
 
     if not first_user_exists:
-        await mongo.users.delete_one({"handle": "bob"})
+        await mongo.users.delete_many({})
 
     resp = await client.put(
         "/users/first", {"handle": "fred", "password": "hello_world"}
