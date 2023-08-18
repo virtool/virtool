@@ -1,8 +1,8 @@
 """
 Virtool API Response
 
-Exports HTTP Errors and request handling middleware for
-reformatting and reporting errors to the client.
+Exports HTTP Errors and request handling middleware for reformatting and reporting
+errors to the client.
 """
 
 from typing import Optional, Dict, Any
@@ -19,8 +19,8 @@ def json_response(
     data: Any, status: int = 200, headers: Optional[Dict[str, str]] = None
 ) -> Response:
     """
-    Return a response object whose attached JSON dict will be formatted
-    by middleware depending on the request's `Accept` header.
+    Return a response object whose attached JSON dict will be formatted by middleware
+    depending on the request's `Accept` header.
 
     :param data: the data to send in the response as JSON
     :param status: the HTTP status code for the response
@@ -38,8 +38,8 @@ def json_response(
 
 class InsufficientRights(HTTPForbidden):
     """
-    Reusable exception for returning an HTTP status `403`
-    (Insufficient Rights) message to the client.
+    Reusable exception for returning an HTTP status `403` (Insufficient Rights) message
+    to the client.
     """
 
     def __init__(self, message="Insufficient rights"):
@@ -58,8 +58,8 @@ class NotFound(HTTPNotFound):
 
 class EmptyRequest(HTTPUnprocessableEntity):
     """
-    Reusable exception for returning an HTTP status `422`
-    (Empty Request) message to the client.
+    Reusable exception for returning an HTTP status `422` (Empty Request) message to the
+    client.
     """
 
     def __init__(self, message="Empty request"):
@@ -68,8 +68,8 @@ class EmptyRequest(HTTPUnprocessableEntity):
 
 class InvalidQuery(HTTPUnprocessableEntity):
     """
-    Reusable exception for returning an HTTP status `422`
-    (Invalid Query) message to the client.
+    Reusable exception for returning an HTTP status `422` (Invalid Query) message to the
+    client.
     """
 
     def __init__(self, errors, message="Invalid query"):
@@ -79,8 +79,8 @@ class InvalidQuery(HTTPUnprocessableEntity):
 
 class InvalidInput(HTTPUnprocessableEntity):
     """
-    Reusable exception for returning an HTTP status `422`
-    (Invalid Input) message to the client.
+    Reusable exception for returning an HTTP status `422` (Invalid Input) message to the
+    client.
     """
 
     def __init__(self, errors, message="Invalid input"):
@@ -91,8 +91,7 @@ class InvalidInput(HTTPUnprocessableEntity):
 @web.middleware
 async def middleware(req: web.Request, handler: Callable):
     """
-    Request handling middleware for converting HTTP
-    exceptions into HTTP responses.
+    Request handling middleware for converting HTTP exceptions into HTTP responses.
 
     :param req: the incoming request
     :param handler: the next middleware to be executed
