@@ -48,8 +48,8 @@ class InsufficientRights(HTTPForbidden):
 
 class NotFound(HTTPNotFound):
     """
-    Reusable exception for returning an HTTP status `404`
-    (Not Found) message to the client.
+    Reusable exception for returning an HTTP status `404` (Not Found) message to the
+    client.
     """
 
     def __init__(self, message="Not found"):
