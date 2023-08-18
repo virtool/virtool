@@ -39,29 +39,6 @@
     ],
   }
 ---
-# name: TestGet.test_single_user
-  <class 'dict'> {
-    'id': 'bf1b993c',
-    'name': 'musicians',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
-        'handle': 'laura56',
-        'id': 'fb085f7f',
-      },
-    ],
-  }
----
 # name: TestGet.test_user
   <class 'dict'> {
     'id': 'bf1b993c',
