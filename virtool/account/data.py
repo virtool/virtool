@@ -153,28 +153,12 @@ class AccountData(DataLayerPiece):
         :param user_id: the user ID
         :return: the api keys
         """
-        keys = [
-            key
-            async for key in self._mongo.keys.aggregate(
-                [
-                    {"$match": {"user.id": user_id}},
-                    {
-                        "$project": {
-                            "_id": False,
-                            "id": True,
-                            "administrator": True,
-                            "name": True,
-                            "groups": True,
-                            "permissions": True,
-                            "created_at": True,
-                        }
-                    },
-                ]
-            )
-        ]
 
         keys = await apply_transforms(
-            [base_processor(key) for key in keys],
+            [
+                base_processor(key)
+                async for key in self._mongo.keys.find({"user.id": user_id})
+            ],
             [
                 AttachGroupsTransform(self._mongo),
             ],
@@ -304,7 +288,7 @@ class AccountData(DataLayerPiece):
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, data: CreateLoginRequest) -> Union[str, int]:
+    async def login(self, data: CreateLoginRequest) -> str:
         """
         Create a new session for the user with `username`.
 

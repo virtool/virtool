@@ -19,10 +19,10 @@ async def create_fake_users_with_groups(
     :return: a list of fake users
     """
 
-    fake_users: list[dict] = []
+    fake_users = []
 
     for i in range(0, quantity):
-        fake_user: dict = {"id": f"doc_{i}"}
+        fake_user = {"id": f"doc_{i}"}
 
         if use_primary_group:
             fake_user.update({"primary_group": (await faker.groups.create()).id})

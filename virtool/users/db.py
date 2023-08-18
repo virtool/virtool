@@ -307,21 +307,19 @@ async def fetch_complete_user(
     user_id: str,
 ) -> Optional[User]:
     user, (user_id, role) = await gather(
-        mongo.users.aggregate(
-            [
-                {"$match": {"_id": user_id}},
-            ]
-        ).to_list(1),
+        mongo.users.find_one(
+            {"_id": user_id},
+        ),
         authorization_client.get_administrator(user_id),
     )
 
-    if len(user) == 0:
+    if not user:
         return None
 
     return User(
         **(
             await apply_transforms(
-                base_processor(user[0]),
+                base_processor(user),
                 [
                     AttachPermissionsTransform(mongo, pg),
                     AttachPrimaryGroupTransform(mongo),
