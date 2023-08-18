@@ -34,7 +34,20 @@ async def test_create(
 
 
 class TestGet:
+    async def test_get(self, groups_data: GroupsData, fake2, snapshot):
+        """
+        Ensure the correct group is returned when passed an postgres integer ID
+        """
+        await fake2.groups.create()
+
+        group = await groups_data.get(1)
+
+        assert group == snapshot
+
     async def test_legacy_id(self, groups_data: GroupsData, fake2, snapshot):
+        """
+        Ensure the correct group is returned when passed a legacy mongo id
+        """
         fake_group = await fake2.groups.create()
 
         await fake2.users.create(groups=[fake_group])
@@ -43,7 +56,10 @@ class TestGet:
 
         assert group == snapshot
 
-    async def test_single_user(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_user(self, groups_data: GroupsData, fake2, snapshot):
+        """
+        Ensure that users are correctly attached to the returned groups
+        """
         fake_group = await fake2.groups.create()
 
         await fake2.users.create(groups=[fake_group])
@@ -52,18 +68,14 @@ class TestGet:
 
         assert group == snapshot
 
-    async def test_group_dne(self, groups_data: GroupsData, snapshot):
-        try:
-            await groups_data.get("group_dne")
-
-        except ResourceNotFoundError:
-            pass
-
-        try:
-            await groups_data.get(0xBEEF)
-
-        except ResourceNotFoundError:
-            pass
+    @pytest.mark.parametrize("group_id", ["group_dne", 0xBEEF])
+    async def test_group_dne(self, groups_data: GroupsData, group_id: str | int):
+        """
+        Ensure the correct exception is raised when the group does not exist
+        using either a postgres or mongo id
+        """
+        with pytest.raises(ResourceNotFoundError):
+            await groups_data.get(group_id)
 
 
 async def test_create_duplicate(groups_data: GroupsData):

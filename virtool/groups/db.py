@@ -8,7 +8,7 @@ from asyncio import gather
 from typing import List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from virtool_core.models.group import Group, Permissions
+from virtool_core.models.group import Group
 from virtool_core.models.user import UserNested
 from virtool.groups.pg import SQLGroup
 from virtool.pg.utils import get_row, get_row_by_id
@@ -19,53 +19,55 @@ from virtool.groups.utils import merge_group_permissions
 from virtool.utils import base_processor
 
 
-async def create_group_from_row(mongo, pg_group) -> Group:
-    return Group(
-        id=pg_group.legacy_id,
-        name=pg_group.name,
-        permissions=Permissions(**pg_group.permissions),
-        users=await fetch_group_users(mongo, pg_group.legacy_id),
-    )
-
-
-async def fetch_group_from_mongo(mongo, group_id) -> Optional[Group]:
-    document, users = await gather(
-        mongo.groups.find_one({"_id": group_id}), fetch_group_users(mongo, group_id)
-    )
-
-    if document:
-        return Group(**base_processor(document), users=users)
-
-    return None
-
-
 async def fetch_complete_group(mongo, pg, group_id: str | int) -> Optional[Group]:
     """
     Search Mongo and Postgres for a Group by its ID.
 
     :param mongo: The MongoDB client
     :param pg: PostgreSQL AsyncEngine object
+    :param group_id: ID to search group by
     """
-    if type(group_id) is int:
-        pg_group = await get_row_by_id(pg, SQLGroup, group_id)
 
-        if pg_group:
-            return await create_group_from_row(mongo, pg_group)
+    if type(group_id) is str:
+        return await fetch_complete_group_by_legacy_id(mongo, pg, group_id)
 
-        return None
+    pg_group = await get_row_by_id(pg, SQLGroup, group_id)
 
-    pg_group, mongo_group = await gather(
+    if pg_group:
+        return Group(
+            **{
+                **pg_group.to_dict(),
+                "id": pg_group.legacy_id,
+                "users": await fetch_group_users(mongo, pg_group.legacy_id),
+            }
+        )
+
+
+async def fetch_complete_group_by_legacy_id(
+    mongo, pg, group_id: str
+) -> Optional[Group]:
+    """
+    Search Mongo and Postgres for a Group by its legacy mongo id
+
+    :param mongo: The MongoDB client
+    :param pg: PostgreSQL AsyncEngine object
+    :param group_id: ID to search group by
+    """
+    pg_group, mongo_group, users = await gather(
         get_row(pg, SQLGroup, ("legacy_id", group_id)),
-        fetch_group_from_mongo(mongo, group_id),
+        mongo.groups.find_one({"_id": group_id}),
+        fetch_group_users(mongo, group_id),
     )
 
     if pg_group:
-        return await create_group_from_row(mongo, pg_group)
+        group = pg_group.to_dict()
+        group["id"] = pg_group.legacy_id
+    else:
+        group = mongo_group
 
-    if mongo_group:
-        return mongo_group
-
-    return None
+    if group:
+        group["users"] = users
+        return Group(**group)
 
 
 async def get_merged_permissions(mongo, id_list: List[str]) -> dict:
