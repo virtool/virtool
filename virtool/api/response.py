@@ -2,7 +2,7 @@
 Virtool API Response
 
 Exports HTTP Errors and request handling middleware for
-reformatting reporting errors to the client.
+reformatting and reporting errors to the client.
 """
 
 from typing import Optional, Dict, Any
@@ -39,7 +39,7 @@ def json_response(
 class InsufficientRights(HTTPForbidden):
     """
     Reusable exception for returning an HTTP status `403`
-    (insufficient rights) message to the client.
+    (Insufficient Rights) message to the client.
     """
 
     def __init__(self, message="Insufficient rights"):
@@ -49,7 +49,7 @@ class InsufficientRights(HTTPForbidden):
 class NotFound(HTTPNotFound):
     """
     Reusable exception for returning an HTTP status `404`
-    (not found) message to the client.
+    (Not Found) message to the client.
     """
 
     def __init__(self, message="Not found"):
@@ -59,7 +59,7 @@ class NotFound(HTTPNotFound):
 class EmptyRequest(HTTPUnprocessableEntity):
     """
     Reusable exception for returning an HTTP status `422`
-    (empty request) message to the client.
+    (Empty Request) message to the client.
     """
 
     def __init__(self, message="Empty request"):
@@ -69,7 +69,7 @@ class EmptyRequest(HTTPUnprocessableEntity):
 class InvalidQuery(HTTPUnprocessableEntity):
     """
     Reusable exception for returning an HTTP status `422`
-    (invalid query) message to the client.
+    (Invalid Query) message to the client.
     """
 
     def __init__(self, errors, message="Invalid query"):
@@ -80,7 +80,7 @@ class InvalidQuery(HTTPUnprocessableEntity):
 class InvalidInput(HTTPUnprocessableEntity):
     """
     Reusable exception for returning an HTTP status `422`
-    (invalid input) message to the client.
+    (Invalid Input) message to the client.
     """
 
     def __init__(self, errors, message="Invalid input"):
