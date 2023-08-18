@@ -54,7 +54,7 @@ async def fetch_complete_group(mongo, pg, group_id: str | int) -> Optional[Group
 
         return None
 
-    pg_group, mongo_group = await asyncio.gather(
+    pg_group, mongo_group = await gather(
         get_row(pg, SQLGroup, ("legacy_id", group_id)),
         fetch_group_from_mongo(mongo, group_id),
     )
