@@ -75,34 +75,20 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
     :param mongo: the application database object
     :param key_id: the API key id
     """
-    async for key in mongo.keys.aggregate(
+
+    key = mongo.keys.find_one({"id": key_id})
+
+    if not key:
+        return None
+
+    key = await apply_transforms(
+        base_processor(key),
         [
-            {"$match": {"id": key_id}},
-            {
-                "$project": {
-                    "_id": False,
-                    "id": True,
-                    "administrator": True,
-                    "name": True,
-                    "groups": True,
-                    "permissions": True,
-                    "created_at": True,
-                }
-            },
-        ]
-    ):
-        key = await apply_transforms(
-            base_processor(key),
-            [
-                AttachGroupsTransform(mongo),
-            ],
-        )
+            AttachGroupsTransform(mongo),
+        ],
+    )
 
-        return APIKey(
-            **{**key, "groups": sorted(key["groups"], key=lambda g: g["name"])}
-        )
-
-    return None
+    return APIKey(**{**key, "groups": sorted(key["groups"], key=lambda g: g["name"])})
 
 
 API_KEY_PROJECTION = {
