@@ -76,7 +76,7 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
     :param key_id: the API key id
     """
 
-    key = mongo.keys.find_one({"id": key_id})
+    key = await mongo.keys.find_one({"id": key_id})
 
     if not key:
         return None
