@@ -388,8 +388,7 @@ class TestCreate:
 
         assert data.jobs._client.enqueued == [("create_sample", "bf1b993c")]
 
-        async with pg.begin() as conn:
-            upload = await get_row_by_id(conn, SQLUpload, 1)
+        upload = await get_row_by_id(pg, SQLUpload, 1)
 
         assert upload.reserved is True
 
