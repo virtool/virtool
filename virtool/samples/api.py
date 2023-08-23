@@ -17,7 +17,6 @@ from virtool_core.models.job import JobMinimal
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
-import virtool.analyses.db
 import virtool.caches.db
 import virtool.mongo.utils
 import virtool.samples.db
