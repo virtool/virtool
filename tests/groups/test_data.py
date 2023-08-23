@@ -40,33 +40,25 @@ class TestGet:
         """
         await fake2.groups.create()
 
-        group = await groups_data.get(1)
-
-        assert group == snapshot
+        assert await groups_data.get(1) == snapshot
 
     async def test_legacy_id(self, groups_data: GroupsData, fake2, snapshot):
         """
         Ensure the correct group is returned when passed a legacy mongo id
         """
-        fake_group = await fake2.groups.create()
+        group = await fake2.groups.create()
 
-        await fake2.users.create(groups=[fake_group])
-
-        group = await groups_data.get(fake_group.id)
-
-        assert group == snapshot
+        assert await groups_data.get(group.id) == snapshot
 
     async def test_user(self, groups_data: GroupsData, fake2, snapshot):
         """
         Ensure that users are correctly attached to the returned groups
         """
-        fake_group = await fake2.groups.create()
+        group = await fake2.groups.create()
 
-        await fake2.users.create(groups=[fake_group])
+        await fake2.users.create(groups=[group])
 
-        group = await groups_data.get(1)
-
-        assert group == snapshot
+        assert await groups_data.get(1) == snapshot
 
     @pytest.mark.parametrize("group_id", ["group_dne", 0xBEEF])
     async def test_group_dne(self, groups_data: GroupsData, group_id: str | int):

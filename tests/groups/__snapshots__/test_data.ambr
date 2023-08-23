@@ -31,11 +31,6 @@
       'upload_file': False,
     },
     'users': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
-        'handle': 'laura56',
-        'id': 'fb085f7f',
-      },
     ],
   }
 ---
