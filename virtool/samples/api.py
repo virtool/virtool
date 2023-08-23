@@ -476,8 +476,7 @@ class AnalysesView(PydanticView):
 
         job_id = await get_new_id(db.jobs)
 
-        document = await virtool.analyses.db.create(
-            self.request.app["db"],
+        document = await get_data_from_req(self.request).analyses.create(
             sample_id,
             ref_id,
             subtractions,
@@ -882,7 +881,8 @@ async def download_artifact(req: aiohttp.web.Request):
     artifact = result.to_dict()
 
     file_path = (
-        get_config_from_req(req).data_path / f"samples/{sample_id}/{artifact['name_on_disk']}"
+        get_config_from_req(req).data_path
+        / f"samples/{sample_id}/{artifact['name_on_disk']}"
     )
 
     if not os.path.isfile(file_path):
@@ -968,7 +968,9 @@ async def download_cache_artifact(req):
 
     artifact = result.to_dict()
 
-    file_path = get_config_from_req(req).data_path / "caches" / key / artifact["name_on_disk"]
+    file_path = (
+        get_config_from_req(req).data_path / "caches" / key / artifact["name_on_disk"]
+    )
 
     if not file_path.exists():
         raise NotFound()

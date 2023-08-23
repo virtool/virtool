@@ -4,7 +4,7 @@ from asyncio import gather, CancelledError, to_thread
 from datetime import datetime
 from logging import getLogger
 from shutil import rmtree
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -38,6 +38,7 @@ from virtool.data.errors import (
 from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
+from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
@@ -193,6 +194,66 @@ class AnalysisData(DataLayerPiece):
         return Analysis(
             **{**analysis, "job": analysis["job"] if analysis["job"] else None}
         )
+
+    async def create(
+        self,
+        sample_id: str,
+        ref_id: str,
+        subtractions: List[str],
+        user_id: str,
+        workflow: str,
+        job_id: str,
+        space_id: int,
+        analysis_id: str | None = None,
+    ) -> dict:
+        """
+        Creates a new analysis.
+
+        Ensures that a valid subtraction host was the submitted. Configures read and write
+        permissions on the sample document and assigns it a creator username based on the
+        requesting connection.
+
+        :param db: the application database object
+        :param sample_id: the ID of the sample to create an analysis for
+        :param ref_id: the ID of the reference to analyze against
+        :param subtractions: the list of the subtraction IDs to remove from the analysis
+        :param user_id: the ID of the user starting the job
+        :param workflow: the analysis workflow to run
+        :param job_id: the ID of the job
+        :param space_id: the ID of the parent space
+        :param analysis_id: the ID of the analysis
+        :return: the analysis document
+
+        """
+        index_id, index_version = await get_current_id_and_version(self._db, ref_id)
+
+        created_at = virtool.utils.timestamp()
+
+        document = {
+            "created_at": created_at,
+            "files": [],
+            "job": {"id": job_id},
+            "index": {"id": index_id, "version": index_version},
+            "reference": {
+                "id": ref_id,
+                "name": await virtool.mongo.utils.get_one_field(
+                    self._db.references, "name", ref_id
+                ),
+            },
+            "ready": False,
+            "results": None,
+            "sample": {"id": sample_id},
+            "space": {"id": space_id},
+            "subtractions": subtractions,
+            "updated_at": created_at,
+            "user": {"id": user_id},
+            "workflow": workflow,
+        }
+
+        if analysis_id:
+            document["_id"] = analysis_id
+
+        return base_processor(await self._db.analyses.insert_one(document))
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """
