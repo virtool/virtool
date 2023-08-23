@@ -57,8 +57,8 @@ async def check_version(engine: AsyncEngine):
     :param engine: an AsyncConnection object
 
     """
-    async with engine.connect() as conn:
-        info = await conn.execute(text("SHOW server_version"))
+    async with AsyncSession(engine) as session:
+        info = await session.execute(text("SHOW server_version"))
 
     version = info.first()[0].split()[0]
     logger.info("Found PostgreSQL %s", version)

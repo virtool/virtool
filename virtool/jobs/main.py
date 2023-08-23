@@ -1,21 +1,22 @@
 import aiohttp
+import aiohttp.web
 import aiojobs.aiohttp
 from aiohttp.web import Application
-import aiohttp.web
+
 import virtool.http.accept
-import virtool.http.errors
 import virtool.jobs.auth
+from virtool.api.response import error_middleware
 from virtool.config.cls import ServerConfig
 from virtool.jobs.routes import startup_routes
 from virtool.startup import (
     startup_data,
     startup_databases,
+    startup_events,
     startup_executors,
     startup_http_client_session,
     startup_sentry,
     startup_settings,
     startup_version,
-    startup_events,
 )
 from virtool.types import App
 
@@ -27,7 +28,7 @@ async def create_app(config: ServerConfig):
         middlewares=[
             virtool.http.accept.middleware,
             virtool.jobs.auth.middleware,
-            virtool.http.errors.middleware,
+            error_middleware,
         ],
     )
 
