@@ -2,7 +2,7 @@
 from logging import getLogger
 from typing import List, Type
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
 
@@ -34,7 +34,13 @@ class TasksData:
         async with AsyncSession(self._pg) as session:
             return [
                 Task(**task.to_dict())
-                for task in (await session.execute(select(SQLTask))).scalars().all()
+                for task in (
+                    await session.execute(
+                        select(SQLTask).order_by(desc(SQLTask.created_at))
+                    )
+                )
+                .scalars()
+                .all()
             ]
 
     async def get(self, task_id: int) -> Task:

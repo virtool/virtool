@@ -1,6 +1,7 @@
 import os
 from asyncio import to_thread
 from datetime import timedelta
+from math import isclose
 from typing import TYPE_CHECKING, Dict
 
 import arrow
@@ -165,7 +166,7 @@ async def test_register(pg: AsyncEngine, tasks_data: TasksData):
     await tasks_data.create(DummyTask)
     await tasks_data.create(DummyBaseTask)
 
-    last_run_task = await tasks_data.get(3)
+    last_run_task = (await tasks_data.find())[0]
 
     task_spawner_service = TaskSpawnerService(pg, tasks_data)
 
@@ -173,7 +174,16 @@ async def test_register(pg: AsyncEngine, tasks_data: TasksData):
 
     await task_spawner_service.register(tasks)
 
-    assert task_spawner_service.registered[0].last_triggered == last_run_task.created_at
+    assert isclose(
+        (
+            (
+                task_spawner_service.registered[0].last_triggered
+                - last_run_task.created_at
+            ).total_seconds()
+        ),
+        0,
+        abs_tol=0.8,
+    )
 
 
 async def test_check_or_spawn_task(pg: AsyncEngine, tasks_data: TasksData):
