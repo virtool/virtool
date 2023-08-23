@@ -28,6 +28,7 @@ class TestAttachPrimaryGroup:
         user = await fake2.users.create(groups=[group], primary_group=group)
 
         incomplete_user = base_processor(await mongo.users.find_one({"_id": user.id}))
+
         assert await apply_transforms(
             incomplete_user,
             [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
@@ -49,17 +50,15 @@ class TestAttachPrimaryGroup:
             base_processor(await mongo.users.find_one({"_id": user_1.id})),
         ]
 
-        complete_users = await apply_transforms(
+        assert await apply_transforms(
             incomplete_users,
             [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
-        )
-
-        for user in complete_users:
-            assert user == snapshot(
-                matcher=path_type(
-                    {"last_password_change": (datetime,), "password": (bytes,)}
-                )
+        ) == snapshot(
+            matcher=path_type(
+                {".*last_password_change": (datetime,), ".*password": (bytes,)},
+                regex=True,
             )
+        )
 
 
 class TestAttachGroups:
@@ -116,14 +115,12 @@ class TestAttachGroups:
             base_processor(await mongo.users.find_one({"_id": user_1.id})),
         ]
 
-        complete_users = await apply_transforms(
+        assert await apply_transforms(
             incomplete_users,
             [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
-        )
-
-        for user in complete_users:
-            assert user == snapshot(
-                matcher=path_type(
-                    {"last_password_change": (datetime,), "password": (bytes,)}
-                )
+        ) == snapshot(
+            matcher=path_type(
+                {".*last_password_change": (datetime,), ".*password": (bytes,)},
+                regex=True,
             )
+        )
