@@ -1,128 +1,128 @@
 # name: TestAttachGroups.test_multiple_documents
-  <class 'list'> [
-    <class 'dict'> {
-      'active': True,
-      'administrator': False,
-      'force_reset': False,
-      'groups': <class 'list'> [
-        <class 'dict'> {
-          'id': 'bf1b993c',
-          'name': 'musicians',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
         },
-        <class 'dict'> {
-          'id': 'fb085f7f',
-          'name': 'hydrogeologists',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
-        },
-        <class 'dict'> {
-          'id': '7cf872dc',
-          'name': 'architects',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
-        },
-      ],
-      'handle': 'kelsey56',
-      'id': '3cbb22cc',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 32, 127000),
-      'password': b'$2b$12$eMukN16d32Epzpn19NoGKehwY.dRyqxno6hLk.PqA3v9yRBZ3KCq.',
-      'primary_group': None,
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
       },
-    },
-    <class 'dict'> {
-      'active': True,
-      'administrator': False,
-      'force_reset': False,
-      'groups': <class 'list'> [
-        <class 'dict'> {
-          'id': 'da42dca3',
-          'name': 'neurosurgeons',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
         },
-        <class 'dict'> {
-          'id': '09d01419',
-          'name': 'optometrists',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
-        },
-        <class 'dict'> {
-          'id': 'f60bae36',
-          'name': 'haematologists',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
-        },
-      ],
-      'handle': 'darrellmorris',
-      'id': '153ff459',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 32, 436000),
-      'password': b'$2b$12$H1ixiHoHwjIogAAWmDrj6.QjjuGoftWw9o9Vv.LtpJis2aSzaGLc.',
-      'primary_group': None,
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
       },
+      <class 'dict'> {
+        'id': '7cf872dc',
+        'name': 'architects',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    ],
+    'handle': 'kelsey56',
+    'id': '3cbb22cc',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
     },
-  ]
+  }
+---
+# name: TestAttachGroups.test_multiple_documents.1
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'da42dca3',
+        'name': 'neurosurgeons',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+      <class 'dict'> {
+        'id': '09d01419',
+        'name': 'optometrists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+      <class 'dict'> {
+        'id': 'f60bae36',
+        'name': 'haematologists',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+      },
+    ],
+    'handle': 'darrellmorris',
+    'id': '153ff459',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
 ---
 # name: TestAttachGroups.test_no_groups
   <class 'dict'> {
@@ -134,8 +134,8 @@
     'handle': 'leeashley',
     'id': 'bf1b993c',
     'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 30, 871000),
-    'password': b'$2b$12$x90itBSuW1uqXzbKuahQo.ZBLkRtmF5izM2u4ld9mWCq0dKMmzokC',
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
     'primary_group': None,
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
@@ -197,8 +197,8 @@
     'handle': 'kelsey56',
     'id': '3cbb22cc',
     'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 31, 530000),
-    'password': b'$2b$12$Ir8lgiMAPI5wXPBbNuZeKOknZEuihcA57/24I02tgT.KYmY1F8DyS',
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
     'primary_group': None,
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
@@ -209,33 +209,12 @@
   }
 ---
 # name: TestAttachPrimaryGroup.test_multiple_documents
-  <class 'list'> [
-    <class 'dict'> {
-      'active': True,
-      'administrator': False,
-      'force_reset': False,
-      'groups': <class 'list'> [
-        <class 'dict'> {
-          'id': 'bf1b993c',
-          'name': 'musicians',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
-        },
-      ],
-      'handle': 'qtaylor',
-      'id': '7cf872dc',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 30, 674000),
-      'password': b'$2b$12$AVQe33DcBQ0sJEvMuqj1PuJncIZ2Mter3OKKBcWsPBjG0SgyxYVme',
-      'primary_group': <class 'dict'> {
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
         'id': 'bf1b993c',
         'name': 'musicians',
         'permissions': <class 'dict'> {
@@ -249,39 +228,41 @@
           'upload_file': False,
         },
       },
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
+    ],
+    'handle': 'qtaylor',
+    'id': '7cf872dc',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
+    'primary_group': <class 'dict'> {
+      'id': 'bf1b993c',
+      'name': 'musicians',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
       },
     },
-    <class 'dict'> {
-      'active': True,
-      'administrator': False,
-      'force_reset': False,
-      'groups': <class 'list'> [
-        <class 'dict'> {
-          'id': 'fb085f7f',
-          'name': 'hydrogeologists',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
-        },
-      ],
-      'handle': 'fcarpenter',
-      'id': '3cbb22cc',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 30, 332000),
-      'password': b'$2b$12$pJCVkYZ35h3DLKJ4JAws6OJZvX2achzpO/g8tUcVUZbBx0jpUmz6G',
-      'primary_group': <class 'dict'> {
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: TestAttachPrimaryGroup.test_multiple_documents.1
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
         'id': 'fb085f7f',
         'name': 'hydrogeologists',
         'permissions': <class 'dict'> {
@@ -295,14 +276,33 @@
           'upload_file': False,
         },
       },
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
+    ],
+    'handle': 'fcarpenter',
+    'id': '3cbb22cc',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
+    'primary_group': <class 'dict'> {
+      'id': 'fb085f7f',
+      'name': 'hydrogeologists',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
       },
     },
-  ]
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
 ---
 # name: TestAttachPrimaryGroup.test_no_primary_group
   <class 'dict'> {
@@ -314,8 +314,8 @@
     'handle': 'leeashley',
     'id': 'bf1b993c',
     'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 28, 845000),
-    'password': b'$2b$12$iXU1khDKmyyuwNHd5yPBTOty/yMYC27DvtOfmFuE6AaGLyQF6GMLC',
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
     'primary_group': None,
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
@@ -349,8 +349,8 @@
     'handle': 'laura56',
     'id': 'fb085f7f',
     'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2023, 8, 23, 20, 34, 29, 469000),
-    'password': b'$2b$12$/94GLS5pHg9flLL41.Uqf.4ZYcqDOYLaPL2jKAa3b0vUn6WCnci6e',
+    'last_password_change': <class 'datetime'>,
+    'password': <class 'bytes'>,
     'primary_group': <class 'dict'> {
       'id': 'bf1b993c',
       'name': 'musicians',

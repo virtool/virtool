@@ -1,3 +1,7 @@
+from datetime import datetime
+
+from syrupy.matchers import path_type
+
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
 from virtool.utils import base_processor
@@ -9,12 +13,13 @@ class TestAttachPrimaryGroup:
 
         incomplete_user = base_processor(await mongo.users.find_one({"_id": user.id}))
 
-        assert (
-            await apply_transforms(
-                incomplete_user,
-                [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
+        assert await apply_transforms(
+            incomplete_user,
+            [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
+        ) == snapshot(
+            matcher=path_type(
+                {"last_password_change": (datetime,), "password": (bytes,)}
             )
-            == snapshot
         )
 
     async def test_single_document(self, snapshot, fake2, mongo):
@@ -23,12 +28,13 @@ class TestAttachPrimaryGroup:
         user = await fake2.users.create(groups=[group], primary_group=group)
 
         incomplete_user = base_processor(await mongo.users.find_one({"_id": user.id}))
-        assert (
-            await apply_transforms(
-                incomplete_user,
-                [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
+        assert await apply_transforms(
+            incomplete_user,
+            [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
+        ) == snapshot(
+            matcher=path_type(
+                {"last_password_change": (datetime,), "password": (bytes,)}
             )
-            == snapshot
         )
 
     async def test_multiple_documents(self, snapshot, fake2, mongo):
@@ -43,13 +49,17 @@ class TestAttachPrimaryGroup:
             base_processor(await mongo.users.find_one({"_id": user_1.id})),
         ]
 
-        assert (
-            await apply_transforms(
-                incomplete_users,
-                [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
-            )
-            == snapshot
+        complete_users = await apply_transforms(
+            incomplete_users,
+            [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
         )
+
+        for user in complete_users:
+            assert user == snapshot(
+                matcher=path_type(
+                    {"last_password_change": (datetime,), "password": (bytes,)}
+                )
+            )
 
 
 class TestAttachGroups:
@@ -58,9 +68,12 @@ class TestAttachGroups:
 
         incomplete_user = base_processor(await mongo.users.find_one({"_id": user.id}))
 
-        assert (
-            await apply_transforms(incomplete_user, [AttachGroupsTransform(mongo)])
-            == snapshot
+        assert await apply_transforms(
+            incomplete_user, [AttachGroupsTransform(mongo)]
+        ) == snapshot(
+            matcher=path_type(
+                {"last_password_change": (datetime,), "password": (bytes,)}
+            )
         )
 
     async def test_single_document(self, snapshot, fake2, mongo):
@@ -74,9 +87,12 @@ class TestAttachGroups:
 
         incomplete_user = base_processor(await mongo.users.find_one({"_id": user.id}))
 
-        assert (
-            await apply_transforms(incomplete_user, [AttachGroupsTransform(mongo)])
-            == snapshot
+        assert await apply_transforms(
+            incomplete_user, [AttachGroupsTransform(mongo)]
+        ) == snapshot(
+            matcher=path_type(
+                {"last_password_change": (datetime,), "password": (bytes,)}
+            )
         )
 
     async def test_multiple_documents(self, snapshot, fake2, mongo):
@@ -100,7 +116,14 @@ class TestAttachGroups:
             base_processor(await mongo.users.find_one({"_id": user_1.id})),
         ]
 
-        assert (
-            await apply_transforms(incomplete_users, [AttachGroupsTransform(mongo)])
-            == snapshot
+        complete_users = await apply_transforms(
+            incomplete_users,
+            [AttachGroupsTransform(mongo), AttachPrimaryGroupTransform(mongo)],
         )
+
+        for user in complete_users:
+            assert user == snapshot(
+                matcher=path_type(
+                    {"last_password_change": (datetime,), "password": (bytes,)}
+                )
+            )
