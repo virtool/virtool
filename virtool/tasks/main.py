@@ -6,26 +6,24 @@ from aiohttp.web import Application
 
 import virtool.http
 import virtool.http.accept
-import virtool.api.response
+from virtool.api.response import error_middleware
 from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
 from virtool.shutdown import (
     shutdown_authorization_client,
-    shutdown_http_client,
     shutdown_executors,
+    shutdown_http_client,
     shutdown_redis,
     shutdown_scheduler,
 )
-
-
 from virtool.startup import (
     startup_data,
     startup_databases,
+    startup_events,
     startup_executors,
     startup_http_client_session,
     startup_sentry,
     startup_task_runner,
     startup_version,
-    startup_events,
 )
 from virtool.tasks.api import TaskServicesRootView
 from virtool.tasks.startup import (
@@ -41,9 +39,7 @@ def run_task_runner(config: TaskRunnerConfig):
 
     :param config: the task runner configuration object
     """
-    app = Application(
-        middlewares=[virtool.http.accept.middleware, virtool.api.response.middleware]
-    )
+    app = Application(middlewares=[virtool.http.accept.middleware, error_middleware])
 
     app["config"] = config
     app["mode"] = "task_runner"
@@ -84,9 +80,7 @@ def run_task_spawner(config: TaskSpawnerConfig):
 
     :param config: the task spawner configuration object
     """
-    app = Application(
-        middlewares=[virtool.http.accept.middleware, virtool.api.response.middleware]
-    )
+    app = Application(middlewares=[virtool.http.accept.middleware, error_middleware])
 
     app["config"] = config
     app["mode"] = "task_spawner"
