@@ -133,5 +133,12 @@
       'name': 'Move groups to SQL',
       'revision': 'r4txubh413sp',
     },
+    <class 'dict'> {
+      'applied_at': <class 'datetime'>,
+      'created_at': <class 'datetime'>,
+      'id': 20,
+      'name': 'Add ML model release size',
+      'revision': 'f8ad70032e9c',
+    },
   ]
 ---
