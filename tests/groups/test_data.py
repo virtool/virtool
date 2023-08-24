@@ -16,7 +16,6 @@ def groups_data(authorization_client, mongo, pg):
 
 
 async def test_create(
-    authorization_client: AuthorizationClient,
     groups_data: GroupsData,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -32,6 +31,43 @@ async def test_create(
     assert doc["name"] == group.name == row.name
     assert doc["permissions"] == group.permissions == row.permissions
     assert doc["_id"] == group.id == row.legacy_id
+
+
+class TestGet:
+    async def test_get(self, groups_data: GroupsData, fake2, snapshot):
+        """
+        Ensure the correct group is returned when passed an postgres integer ID
+        """
+        await fake2.groups.create()
+
+        assert await groups_data.get(1) == snapshot
+
+    async def test_legacy_id(self, groups_data: GroupsData, fake2, snapshot):
+        """
+        Ensure the correct group is returned when passed a legacy mongo id
+        """
+        group = await fake2.groups.create()
+
+        assert await groups_data.get(group.id) == snapshot
+
+    async def test_user(self, groups_data: GroupsData, fake2, snapshot):
+        """
+        Ensure that users are correctly attached to the returned groups
+        """
+        group = await fake2.groups.create()
+
+        await fake2.users.create(groups=[group])
+
+        assert await groups_data.get(1) == snapshot
+
+    @pytest.mark.parametrize("group_id", ["group_dne", 0xBEEF])
+    async def test_group_dne(self, groups_data: GroupsData, group_id: str | int):
+        """
+        Ensure the correct exception is raised when the group does not exist
+        using either a postgres or mongo id
+        """
+        with pytest.raises(ResourceNotFoundError):
+            await groups_data.get(group_id)
 
 
 async def test_create_duplicate(groups_data: GroupsData):

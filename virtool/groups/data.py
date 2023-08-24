@@ -12,7 +12,10 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.events import emits, Operation, emit
 from virtool.data.topg import both_transactions
-from virtool.groups.db import update_member_users, fetch_complete_group
+from virtool.groups.db import (
+    update_member_users,
+    fetch_complete_group,
+)
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.utils import get_one_field, id_exists
@@ -47,14 +50,15 @@ class GroupsData:
             async for document in self._mongo.groups.find()
         ]
 
-    async def get(self, group_id: str) -> Group:
+    async def get(self, group_id: str | int) -> Group:
         """
         Get a single group by its ID.
 
         :param group_id: the group's ID
         :return: the group
         """
-        group = await fetch_complete_group(self._mongo, group_id)
+
+        group = await fetch_complete_group(self._mongo, self._pg, group_id)
 
         if group:
             return group
@@ -140,7 +144,7 @@ class GroupsData:
 
                 await update_member_users(self._mongo, group_id, session=mongo_session)
 
-        return await fetch_complete_group(self._mongo, group_id)
+        return await fetch_complete_group(self._mongo, self._pg, group_id)
 
     async def delete(self, group_id: str):
         """
