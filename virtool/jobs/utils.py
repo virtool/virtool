@@ -1,9 +1,8 @@
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Optional
 
 from virtool_core.models.job import JobState
 
 import virtool.utils
-from virtool.http.rights import MODIFY, READ, REMOVE, Right
 from virtool.types import Document
 
 WORKFLOW_NAMES = (
