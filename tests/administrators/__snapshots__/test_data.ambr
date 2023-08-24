@@ -87,12 +87,12 @@
     'force_reset': False,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'peasants',
-        'name': 'peasants',
-      },
-      <class 'dict'> {
         'id': 'kings',
         'name': 'kings',
+      },
+      <class 'dict'> {
+        'id': 'peasants',
+        'name': 'peasants',
       },
     ],
     'handle': 'leeashley',
@@ -293,12 +293,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'fb085f7f',
-            'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
             'id': 'bf1b993c',
             'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
           },
         ],
         'handle': 'test_user',
@@ -353,12 +353,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'fb085f7f',
-            'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
             'id': 'bf1b993c',
             'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
           },
         ],
         'handle': 'test_user',
@@ -429,12 +429,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'fb085f7f',
-            'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
             'id': 'bf1b993c',
             'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
           },
         ],
         'handle': 'test_user',
@@ -489,12 +489,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'fb085f7f',
-            'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
             'id': 'bf1b993c',
             'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
           },
         ],
         'handle': 'test_user',
