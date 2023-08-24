@@ -1,53 +1,51 @@
 import asyncio
 import math
+import os
 import shutil
 from asyncio import CancelledError, to_thread
 from logging import getLogger
 from typing import Optional
 
 from aiohttp import MultipartReader
-import os
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.subtraction import (
     Subtraction,
-    SubtractionSearchResult,
     SubtractionFile,
+    SubtractionSearchResult,
 )
-from virtool_core.utils import rm, compress_file
+from virtool_core.utils import compress_file, rm
 
 import virtool.mongo.utils
 import virtool.subtractions.files
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config import Config
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.data.events import emits, Operation
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.events import Operation, emits
 from virtool.data.file import FileDescriptor
 from virtool.data.piece import DataLayerPiece
-from virtool.jobs.utils import JobRights
 from virtool.jobs.db import lookup_minimal_job_by_id
-from virtool.users.db import lookup_nested_user_by_id
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
     attach_computed,
-    unlink_default_subtractions,
     check_subtraction_fasta_files,
+    unlink_default_subtractions,
 )
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
-    UpdateSubtractionRequest,
     FinalizeSubtractionRequest,
+    UpdateSubtractionRequest,
 )
 from virtool.subtractions.utils import (
-    join_subtraction_path,
     FILES,
     check_subtraction_file_type,
     join_subtraction_index_path,
+    join_subtraction_path,
 )
 from virtool.tasks.progress import (
     AbstractProgressHandler,
@@ -55,6 +53,7 @@ from virtool.tasks.progress import (
 )
 from virtool.uploads.models import SQLUpload
 from virtool.uploads.utils import naive_writer
+from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import base_processor
 
 logger = getLogger(__name__)
@@ -219,7 +218,7 @@ class SubtractionsData(DataLayerPiece):
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
-            JobRights(),
+            {},
             0,
             job_id,
         )

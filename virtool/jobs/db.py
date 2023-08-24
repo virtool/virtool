@@ -9,9 +9,9 @@ from typing import Optional
 
 from virtool_core.models.job import Job, JobAcquired, JobState
 
-from virtool.jobs.client import AbstractJobsClient
-from virtool.jobs.utils import JobRights, compose_status
 from virtool.data.transforms import AbstractTransform, apply_transforms
+from virtool.jobs.client import AbstractJobsClient
+from virtool.jobs.utils import compose_status
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.utils import base_processor, get_safely
@@ -160,7 +160,7 @@ async def create_job(
     workflow: str,
     job_args: Document,
     user_id: str,
-    rights: JobRights,
+    rights: dict,
     space_id: int,
     job_id: Optional[str] = None,
     session=None,
@@ -186,7 +186,7 @@ async def create_job(
         "workflow": workflow,
         "args": job_args,
         "key": None,
-        "rights": rights.as_dict(),
+        "rights": rights,
         "space": {"id": space_id},
         "state": JobState.WAITING.value,
         "status": [compose_status(JobState.WAITING, None)],

@@ -18,7 +18,7 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.layer import DataLayer
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.indexes.tasks import EnsureIndexFilesTask
-from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
+from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.models import MLModel
 from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
 from virtool.releases import ReleaseManifestItem
@@ -76,7 +76,7 @@ class JobsFakerPiece(DataFakerPiece):
             workflow or self.faker.workflow(),
             self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
-            JobRights(),
+            {},
             0,
         )
 

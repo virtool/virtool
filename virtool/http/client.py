@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Sequence, Union
 
-from virtool.jobs.utils import JobRights
-
 
 class AbstractClient(ABC):
     @property
@@ -63,7 +61,7 @@ class UserClient(AbstractClient):
 
 
 class JobClient(AbstractClient):
-    def __init__(self, job_id, rights: JobRights):
+    def __init__(self, job_id, rights: dict):
         self._rights = rights
         self.job_id = job_id
 

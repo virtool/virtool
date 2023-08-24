@@ -47,16 +47,6 @@
     'key': None,
     'ping': None,
     'rights': <class 'dict'> {
-      'indexes': <class 'dict'> {
-        'modify': <class 'list'> [
-          'fb085f7f',
-        ],
-      },
-      'references': <class 'dict'> {
-        'read': <class 'list'> [
-          'foo',
-        ],
-      },
     },
     'space': <class 'dict'> {
       'id': 0,

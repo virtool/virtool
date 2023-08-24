@@ -2,26 +2,21 @@ import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
-from typing import List
-from typing import Optional, Dict
+from typing import Dict, List, Optional
 
 import arrow
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.job import JobMinimal, JobSearchResult, Job, JobPing, JobState
+from virtool_core.models.job import Job, JobMinimal, JobPing, JobSearchResult, JobState
 from virtool_core.models.user import UserNested
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import emits, emit, Operation
-from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
-from virtool.jobs.db import PROJECTION, fetch_complete_job, create_job
-from virtool.jobs.utils import (
-    JobRights,
-    compose_status,
-    check_job_is_running_or_waiting,
-)
-from virtool.mongo.core import Mongo
+from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
+from virtool.jobs.client import JOB_REMOVED_FROM_QUEUE, AbstractJobsClient
+from virtool.jobs.db import PROJECTION, create_job, fetch_complete_job
+from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
@@ -168,7 +163,7 @@ class JobsData:
         workflow: str,
         job_args: Document,
         user_id: str,
-        rights: JobRights,
+        rights: dict,
         space_id: int,
         job_id: Optional[str] = None,
     ) -> Job:
