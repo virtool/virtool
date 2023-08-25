@@ -4,7 +4,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
     ],
-    'id': 'foobar_0',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -53,7 +53,7 @@
         'name': 'musicians',
       },
     ],
-    'id': 'foobar_0',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -99,7 +99,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
     ],
-    'id': 'foobar_0',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -148,7 +148,7 @@
         'name': 'musicians',
       },
     ],
-    'id': 'foobar_0',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -194,7 +194,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
     ],
-    'id': 'foobar_1',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -764,7 +764,7 @@
           'name': 'musicians',
         },
       ],
-      'id': 'foobar_0',
+      'id': 'abc123',
       'name': 'Foobar',
       'permissions': <class 'dict'> {
         'cancel_job': False,
@@ -782,7 +782,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'groups': <class 'list'> [
       ],
-      'id': 'baz_1',
+      'id': 'xyz321',
       'name': 'Baz',
       'permissions': <class 'dict'> {
         'cancel_job': False,

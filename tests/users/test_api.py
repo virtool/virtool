@@ -149,12 +149,9 @@ async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is, data
     document = await client.db.users.find_one(resp_json["id"])
     password = document.pop("password")
 
-
     assert document == snapshot(name="db")
     assert check_password("hello_world", password)
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
-
-
 
 
 @pytest.mark.apitest
@@ -295,3 +292,23 @@ async def test_remove_permission(spawn_client, role, status, snapshot):
 
     assert resp.status == status
     assert await resp.json() == snapshot()
+
+
+@pytest.mark.parametrize("first_user_exists, status", [(True, 409), (False, 201)])
+async def test_first_user_view(
+    spawn_client, mongo, first_user_exists, status, snapshot
+):
+    """
+    Checks response when first user exists and does not exist.
+    """
+    client = await spawn_client()
+
+    if not first_user_exists:
+        await mongo.users.delete_many({})
+
+    resp = await client.put(
+        "/users/first", {"handle": "fred", "password": "hello_world"}
+    )
+
+    assert resp.status == status
+    assert await resp.json() == snapshot

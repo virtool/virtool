@@ -10,9 +10,9 @@ from virtool_core.models.user import User
 
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
-from virtool.groups.db import (
-    lookup_groups_minimal_by_id,
-    lookup_group_minimal_by_id,
+from virtool.groups.transforms import (
+    AttachGroupsTransform,
+    AttachPrimaryGroupTransform,
 )
 from virtool.mongo.utils import (
     get_non_existent_ids,
@@ -307,25 +307,24 @@ async def fetch_complete_user(
     user_id: str,
 ) -> Optional[User]:
     user, (user_id, role) = await gather(
-        mongo.users.aggregate(
-            [
-                {"$match": {"_id": user_id}},
-                *lookup_groups_minimal_by_id(),
-                *lookup_group_minimal_by_id(
-                    local_field="primary_group", set_as="primary_group"
-                ),
-            ]
-        ).to_list(1),
+        mongo.users.find_one(
+            {"_id": user_id},
+        ),
         authorization_client.get_administrator(user_id),
     )
 
-    if len(user) == 0:
+    if not user:
         return None
 
     return User(
         **(
             await apply_transforms(
-                base_processor(user[0]), [AttachPermissionsTransform(mongo, pg)]
+                base_processor(user),
+                [
+                    AttachPermissionsTransform(mongo, pg),
+                    AttachPrimaryGroupTransform(mongo),
+                    AttachGroupsTransform(mongo),
+                ],
             )
         ),
         administrator_role=role,

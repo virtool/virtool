@@ -15,7 +15,7 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
-from virtool.groups.db import lookup_groups_minimal_by_id, lookup_group_minimal_by_id
+from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
 from virtool.groups.utils import merge_group_permissions
 from virtool.mongo.core import Mongo
 from virtool.users.db import (
@@ -89,18 +89,16 @@ class AdministratorsData(DataLayerPiece):
             per_page,
             client_query,
             sort="handle",
-            lookup_steps=[
-                *lookup_groups_minimal_by_id(local_field="groups"),
-                *lookup_group_minimal_by_id(
-                    local_field="primary_group", set_as="primary_group"
-                ),
-            ],
             projection={field: True for field in PROJECTION},
         )
 
         result["items"] = await apply_transforms(
             [base_processor(item) for item in result["items"]],
-            [AttachPermissionsTransform(self._mongo, self._pg)],
+            [
+                AttachPermissionsTransform(self._mongo, self._pg),
+                AttachPrimaryGroupTransform(self._mongo),
+                AttachGroupsTransform(self._mongo),
+            ],
         )
 
         result["items"] = [

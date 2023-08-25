@@ -5,10 +5,12 @@ Work with the current user account and its API keys.
 from typing import Any, Dict, Optional
 
 from virtool_core.models.account import APIKey
+from virtool.data.transforms import apply_transforms
+from virtool.groups.transforms import AttachGroupsTransform
 
 import virtool.users.utils
 import virtool.utils
-from virtool.groups.db import lookup_groups_minimal_by_id
+from virtool.utils import base_processor
 
 ACCOUNT_PROJECTION = (
     "_id",
@@ -73,28 +75,20 @@ async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
     :param mongo: the application database object
     :param key_id: the API key id
     """
-    async for key in mongo.keys.aggregate(
-        [
-            {"$match": {"id": key_id}},
-            *lookup_groups_minimal_by_id(),
-            {
-                "$project": {
-                    "_id": False,
-                    "id": True,
-                    "administrator": True,
-                    "name": True,
-                    "groups": True,
-                    "permissions": True,
-                    "created_at": True,
-                }
-            },
-        ]
-    ):
-        return APIKey(
-            **{**key, "groups": sorted(key["groups"], key=lambda g: g["name"])}
-        )
 
-    return None
+    key = await mongo.keys.find_one({"id": key_id})
+
+    if not key:
+        return None
+
+    key = await apply_transforms(
+        base_processor(key),
+        [
+            AttachGroupsTransform(mongo),
+        ],
+    )
+
+    return APIKey(**{**key, "groups": sorted(key["groups"], key=lambda g: g["name"])})
 
 
 API_KEY_PROJECTION = {

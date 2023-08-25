@@ -12,7 +12,7 @@
         'name': 'musicians',
       },
     ],
-    'id': 'foo_0',
+    'id': 'baz',
     'name': 'Foo',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -32,8 +32,8 @@
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -66,7 +66,7 @@
         'name': 'musicians',
       },
     ],
-    'id': 'foo_0',
+    'id': 'baz',
     'name': 'Foo',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -86,8 +86,8 @@
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -120,7 +120,7 @@
         'name': 'musicians',
       },
     ],
-    'id': 'foo_0',
+    'id': 'baz',
     'name': 'Foo',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -140,8 +140,8 @@
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',
@@ -174,7 +174,7 @@
         'name': 'musicians',
       },
     ],
-    'id': 'foo_0',
+    'id': 'baz',
     'name': 'Foo',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -194,8 +194,8 @@
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
-      'fb085f7f',
       'bf1b993c',
+      'fb085f7f',
     ],
     'id': 'foo_0',
     'name': 'Foo',

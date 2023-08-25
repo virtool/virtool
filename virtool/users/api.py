@@ -124,9 +124,8 @@ class FirstUserView(PydanticView):
             400: Bad request
             403: Not permitted
         """
-        db = self.request.app["db"]
 
-        if await db.users.count_documents({}, limit=1):
+        if await get_data_from_req(self.request).users.check_users_exist():
             raise HTTPConflict(text="Virtool already has at least one user")
 
         if data.handle == "virtool":
@@ -139,13 +138,11 @@ class FirstUserView(PydanticView):
             data.handle, data.password
         )
 
-        session_id, session, token = await get_data_from_req(
+        session, token = await get_data_from_req(
             self.request
         ).sessions.create_authenticated(
             virtool.http.authentication.get_ip(self.request), user.id
         )
-
-        self.request["client"].authorize(session, is_api=False)
 
         response = json_response(
             user.dict(),
@@ -153,7 +150,7 @@ class FirstUserView(PydanticView):
             status=201,
         )
 
-        set_session_id_cookie(response, session_id)
+        set_session_id_cookie(response, session.id)
         set_session_token_cookie(response, token)
 
         return response
