@@ -8,13 +8,11 @@ from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 from virtool_core.models.user import User, UserNested
 
 import virtool.http.authentication
-import virtool.users.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.client import get_authorization_client_from_req
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import AdministratorRoutePolicy, PublicRoutePolicy, policy
 from virtool.http.routes import Routes
@@ -27,7 +25,6 @@ from virtool.users.oas import (
     PermissionsResponse,
     UpdateUserRequest,
 )
-from virtool.users.transforms import AttachPermissionsTransform
 
 routes = Routes()
 
@@ -51,7 +48,6 @@ class UsersView(PydanticView):
             403: Not permitted
         """
         mongo = self.request.app["db"]
-        pg = self.request.app["pg"]
 
         mongo_query = compose_regex_query(find, ["handle"]) if find else {}
 
@@ -170,9 +166,6 @@ class UserView(PydanticView):
             user = await get_data_from_req(self.request).users.get(user_id)
         except ResourceNotFoundError:
             raise NotFound()
-
-        except Exception as e:
-            pass
 
         return json_response(user)
 
