@@ -208,31 +208,9 @@
 ---
 # name: test_create[None]
   <class 'dict'> {
-    'active': True,
     'administrator': False,
-    'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
-    'force_reset': False,
-    'groups': <class 'list'> [
-    ],
     'handle': 'fred',
     'id': 'fb085f7f',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'primary_group': None,
   }
 ---
 # name: test_create[None][data_layer]
@@ -292,64 +270,18 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'administrator': True,
-        'force_reset': False,
-        'groups': <class 'list'> [
-          'perms_group',
-        ],
         'handle': 'bob',
         'id': 'test',
-        'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': True,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-        'primary_group': 'technician',
       },
       <class 'dict'> {
         'administrator': False,
-        'force_reset': False,
-        'groups': <class 'list'> [
-        ],
         'handle': 'leeashley',
         'id': 'bf1b993c',
-        'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-        'primary_group': None,
       },
       <class 'dict'> {
         'administrator': False,
-        'force_reset': False,
-        'groups': <class 'list'> [
-        ],
         'handle': 'zclark',
         'id': 'fb085f7f',
-        'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-        'primary_group': None,
       },
     ],
     'found_count': 3,
@@ -364,23 +296,8 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'administrator': False,
-        'force_reset': False,
-        'groups': <class 'list'> [
-        ],
         'handle': 'fred',
         'id': 'bf1b993c',
-        'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-        'primary_group': None,
       },
     ],
     'found_count': 1,
