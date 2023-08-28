@@ -4,7 +4,6 @@
     'drivername': 'postgresql+asyncpg',
     'host': 'localhost',
     'password': 'virtool',
-    'port': 9002,
     'query': <class 'immutabledict'> {
     },
     'username': 'virtool',
