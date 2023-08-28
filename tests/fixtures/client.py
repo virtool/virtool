@@ -22,7 +22,7 @@ from virtool.api.custom_json import dump_bytes, dump_string
 from virtool.app import create_app
 from virtool.authorization.client import AuthorizationClient
 from virtool.config.cls import ServerConfig
-from virtool.flags import FlagName, FeatureFlags
+from virtool.flags import FeatureFlags, FlagName
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
@@ -90,6 +90,7 @@ def spawn_client(
     redis,
     redis_connection_string,
     test_motor,
+    mocker,
 ):
     """A factory for spawning test clients."""
 
@@ -105,6 +106,8 @@ def spawn_client(
         groups: list[str] | None = None,
         permissions: list[Permission] | None = None,
     ):
+        mocker.patch("virtool.pg.utils.connect_pg", pg)
+
         authenticated = authenticated or authorize
 
         config = ServerConfig(
@@ -226,6 +229,7 @@ def spawn_job_client(
     openfga_store_name: str,
     openfga_host: str,
     authorization_client: AuthorizationClient,
+    mocker,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
@@ -234,6 +238,8 @@ def spawn_job_client(
         dev: bool = False,
         add_route_table: RouteTableDef = None,
     ):
+        mocker.patch("virtool.pg.utils.connect_pg", pg)
+
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
