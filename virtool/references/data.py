@@ -491,8 +491,6 @@ class ReferencesData(DataLayerPiece):
 
         document = await virtool.indexes.db.create(self._mongo, ref_id, user_id, job_id)
 
-        rights = {}
-
         await self.data.jobs.create(
             "build_index",
             {
@@ -503,7 +501,6 @@ class ReferencesData(DataLayerPiece):
                 "manifest": document["manifest"],
             },
             user_id,
-            rights,
             0,
             job_id=job_id,
         )

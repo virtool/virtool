@@ -76,7 +76,6 @@ class JobsFakerPiece(DataFakerPiece):
             workflow or self.faker.workflow(),
             self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
-            {},
             0,
         )
 

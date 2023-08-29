@@ -288,7 +288,6 @@ class SamplesData(DataLayerPiece):
                     ],
                 },
                 user_id=user_id,
-                rights={},
                 space_id=0,
                 job_id=job_id,
                 session=session,

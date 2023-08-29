@@ -61,8 +61,7 @@ class UserClient(AbstractClient):
 
 
 class JobClient(AbstractClient):
-    def __init__(self, job_id, rights: dict):
-        self._rights = rights
+    def __init__(self, job_id):
         self.job_id = job_id
 
     @property

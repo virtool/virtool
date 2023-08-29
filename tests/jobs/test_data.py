@@ -58,13 +58,11 @@ async def test_create(
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
-    rights = {}
-
     user = await fake.users.insert()
 
     assert (
         await jobs_data.create(
-            "create_sample", {"sample_id": "foo"}, user["_id"], rights, 0, job_id=job_id
+            "create_sample", {"sample_id": "foo"}, user["_id"], 0, job_id=job_id
         )
         == snapshot
     )

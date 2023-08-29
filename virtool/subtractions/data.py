@@ -218,7 +218,6 @@ class SubtractionsData(DataLayerPiece):
                 "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
-            {},
             0,
             job_id,
         )

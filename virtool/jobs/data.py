@@ -163,7 +163,6 @@ class JobsData:
         workflow: str,
         job_args: Document,
         user_id: str,
-        rights: dict,
         space_id: int,
         job_id: Optional[str] = None,
     ) -> Job:
@@ -187,7 +186,6 @@ class JobsData:
             workflow,
             job_args,
             user_id,
-            rights,
             space_id,
             job_id,
         )

@@ -48,6 +48,6 @@ async def middleware(request: Request, handler: RouteHandler):
     if not job:
         raise HTTPUnauthorized(text="Invalid authorization header.")
 
-    request["client"] = JobClient(job_id, {})
+    request["client"] = JobClient(job_id)
 
     return await handler(request)

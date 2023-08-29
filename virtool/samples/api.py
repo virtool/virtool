@@ -499,10 +499,8 @@ class AnalysesView(PydanticView):
             "subtractions": subtractions,
         }
 
-        rights = {}
-
         job = await get_data_from_req(self.request).jobs.create(
-            document["workflow"], task_args, document["user"]["id"], rights, 0, job_id
+            document["workflow"], task_args, document["user"]["id"], 0, job_id
         )
 
         document["job"] = JobMinimal(**job.dict())
