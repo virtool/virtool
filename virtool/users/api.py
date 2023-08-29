@@ -9,7 +9,7 @@ from virtool_core.models.user import User, UserNested
 
 import virtool.http.authentication
 from virtool.api.response import NotFound, json_response
-from virtool.api.utils import compose_regex_query, paginate
+from virtool.api.utils import compose_regex_query
 from virtool.authorization.client import get_authorization_client_from_req
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -47,12 +47,12 @@ class UsersView(PydanticView):
             200: Successful operation
             403: Not permitted
         """
-        mongo = self.request.app["db"]
+
+        users = get_data_from_req(self.request).users
 
         mongo_query = compose_regex_query(find, ["handle"]) if find else {}
 
-        data = await paginate(
-            mongo.users,
+        data = await users.paginate_users(
             mongo_query,
             self.request.query,
             sort="handle",

@@ -6,22 +6,23 @@ from virtool_core.models.user import User
 
 import virtool.users.utils
 import virtool.utils
-from virtool.data.events import emits, Operation
-from virtool.data.piece import DataLayerPiece
-from virtool.groups.utils import merge_group_permissions
-from virtool.users.oas import UpdateUserRequest
+from virtool.api.utils import paginate
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.events import Operation, emits
+from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError
+from virtool.groups.utils import merge_group_permissions
 from virtool.users.db import (
     B2CUserAttributes,
-    update_keys,
     compose_groups_update,
     compose_primary_group_update,
     fetch_complete_user,
+    update_keys,
 )
 from virtool.users.mongo import create_user
+from virtool.users.oas import UpdateUserRequest
 from virtool.utils import base_processor
 
 
@@ -245,3 +246,22 @@ class UsersData(DataLayerPiece):
         :returns: True if users exist otherwise False
         """
         return await self._mongo.users.count_documents({}, limit=1) > 0
+
+    async def paginate_users(
+        self,
+        mongo_query,
+        url_query,
+        sort=None,
+        projection=None,
+        base_query=None,
+        reverse=False,
+    ):
+        return await paginate(
+            self._mongo.users,
+            mongo_query,
+            url_query,
+            sort,
+            projection,
+            base_query,
+            reverse,
+        )
