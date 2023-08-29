@@ -182,3 +182,21 @@ def lookup_nested_subtractions(
             }
         },
     ]
+
+
+async def get_subtraction_names(subtraction_ids: List, db) -> List[dict]:
+    """
+    Retrieve a list of subtraction names given subtraction ids.
+
+    :param subtraction_ids: list containing subtraction ids
+    :param db: the application database client
+    :return: list of subtraction names and ids
+    """
+    subtractions = []
+
+    for sub_id in subtraction_ids:
+        sub_name = await get_one_field(db.subtraction, "name", {"_id": sub_id})
+        if sub_name is not None:
+            sub = {"_id": sub_id, "name": sub_name}
+            subtractions.append(sub)
+    return subtractions

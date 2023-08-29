@@ -2098,21 +2098,24 @@
     },
     'ready': False,
     'reference': <class 'dict'> {
+      'data_type': 'genome',
       'id': 'foo',
-      'name': None,
+      'name': 'foo',
     },
     'results': None,
     'sample': <class 'dict'> {
       'id': 'test',
     },
-    'space': <class 'dict'> {
-      'id': 0,
-    },
     'subtractions': <class 'list'> [
-      'bar',
+      <class 'dict'> {
+        'id': 'bar',
+        'name': 'bar',
+      },
     ],
     'updated_at': '2015-10-06T20:00:00Z',
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
     'workflow': 'pathoscope_bowtie',

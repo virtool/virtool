@@ -9,6 +9,8 @@ from typing import Tuple, Optional, List
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
+from virtool_core.models.enums import QuickAnalyzeWorkflow
+from virtool_core.models.job import JobState
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -41,12 +43,15 @@ from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
-from virtool.subtractions.db import lookup_nested_subtractions
+from virtool.subtractions.db import (
+    lookup_nested_subtractions,
+    get_subtraction_names,
+)
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
@@ -201,11 +206,11 @@ class AnalysisData(DataLayerPiece):
         ref_id: str,
         subtractions: List[str],
         user_id: str,
-        workflow: str,
+        workflow: QuickAnalyzeWorkflow,
         job_id: str,
         space_id: int,
         analysis_id: str | None = None,
-    ) -> dict:
+    ) -> Analysis:
         """
         Creates a new analysis.
 
@@ -222,38 +227,63 @@ class AnalysisData(DataLayerPiece):
         :param job_id: the ID of the job
         :param space_id: the ID of the parent space
         :param analysis_id: the ID of the analysis
-        :return: the analysis document
+        :return: the analysis
 
         """
         index_id, index_version = await get_current_id_and_version(self._db, ref_id)
 
         created_at = virtool.utils.timestamp()
 
-        document = {
-            "created_at": created_at,
-            "files": [],
-            "job": {"id": job_id},
-            "index": {"id": index_id, "version": index_version},
-            "reference": {
-                "id": ref_id,
-                "name": await virtool.mongo.utils.get_one_field(
-                    self._db.references, "name", ref_id
-                ),
-            },
-            "ready": False,
-            "results": None,
-            "sample": {"id": sample_id},
-            "space": {"id": space_id},
-            "subtractions": subtractions,
-            "updated_at": created_at,
-            "user": {"id": user_id},
-            "workflow": workflow,
-        }
+        user_info = await self._db.users.find_one(
+            {"_id": user_id},
+        )
 
-        if analysis_id:
-            document["_id"] = analysis_id
+        subtractions_list = await get_subtraction_names(subtractions, self._db)
 
-        return base_processor(await self._db.analyses.insert_one(document))
+        async with self._db.create_session() as session:
+            document = {
+                "_id": analysis_id
+                or await get_new_id(self._db.analyses, session=session),
+                "created_at": created_at,
+                "files": [],
+                "job": {
+                    "id": job_id,
+                    "archived": False,
+                    "created_at": created_at,
+                    "progress": 0,
+                    "state": JobState.WAITING.value,
+                    "user": {
+                        "id": user_id,
+                        "handle": user_info["handle"],
+                        "administrator": user_info["administrator"],
+                    },
+                    "workflow": workflow.value,
+                },
+                "index": {"id": index_id, "version": index_version},
+                "reference": {
+                    "id": ref_id,
+                    "name": await get_one_field(self._db.references, "name", ref_id),
+                    "data_type": await get_one_field(
+                        self._db.references, "data_type", ref_id
+                    ),
+                },
+                "ready": False,
+                "results": None,
+                "sample": {"id": sample_id},
+                "space": {"id": space_id},
+                "subtractions": subtractions_list,
+                "updated_at": created_at,
+                "user": {
+                    "id": user_id,
+                    "handle": user_info["handle"],
+                    "administrator": user_info["administrator"],
+                },
+                "workflow": workflow,
+            }
+
+            await self._db.analyses.insert_one(document)
+
+        return Analysis(**base_processor(document))
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """

@@ -484,7 +484,7 @@ class AnalysesView(PydanticView):
             0,
         )
 
-        analysis_id = document["id"]
+        analysis_id = document.id
 
         sample = await db.samples.find_one(sample_id, ["name"])
 
@@ -493,20 +493,20 @@ class AnalysesView(PydanticView):
             "ref_id": ref_id,
             "sample_id": sample_id,
             "sample_name": sample["name"],
-            "index_id": document["index"]["id"],
+            "index_id": document.index.id,
             "subtractions": subtractions,
         }
 
         job = await get_data_from_req(self.request).jobs.create(
-            document["workflow"], task_args, document["user"]["id"], 0, job_id
+            document.workflow, task_args, document.user.id, 0, job_id
         )
 
-        document["job"] = JobMinimal(**job.dict())
+        document.job = JobMinimal(**job.dict())
 
         await recalculate_workflow_tags(db, sample_id)
 
         return json_response(
-            base_processor(document),
+            document,
             status=201,
             headers={"Location": f"/analyses/{analysis_id}"},
         )

@@ -1,0 +1,55 @@
+# name: test_create
+  <class 'dict'> {
+    '_id': 'test_analysis',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'index': <class 'dict'> {
+      'id': 'test_index',
+      'version': 11,
+    },
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': 'test_job',
+      'progress': 0,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bill',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'nuvs',
+    },
+    'ready': False,
+    'reference': <class 'dict'> {
+      'data_type': 'genome',
+      'id': 'test_ref',
+      'name': 'ref_name',
+    },
+    'results': None,
+    'sample': <class 'dict'> {
+      'id': 'test_sample',
+    },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        '_id': 'subtraction_1',
+        'name': 's1',
+      },
+      <class 'dict'> {
+        '_id': 'subtraction_2',
+        'name': 's2',
+      },
+    ],
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bill',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'nuvs',
+  }
+---

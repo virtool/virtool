@@ -930,7 +930,6 @@ async def test_analyze(
     spawn_client,
     static_time,
     resp_is,
-    test_random_alphanumeric,
 ):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -938,7 +937,13 @@ async def test_analyze(
     client.app["jobs"] = MockJobInterface()
 
     if error != "400_reference":
-        await client.db.references.insert_one({"_id": "foo"})
+        await client.db.references.insert_one(
+            {
+                "_id": "foo",
+                "name": "foo",
+                "data_type": "genome",
+            }
+        )
 
     if error != "400_index":
         await client.db.indexes.insert_one(
@@ -951,7 +956,7 @@ async def test_analyze(
         )
 
     if error != "400_subtraction":
-        await client.db.subtraction.insert_one({"_id": "bar"})
+        await client.db.subtraction.insert_one({"_id": "bar", "name": "bar"})
 
     if error != "404":
         await client.db.samples.insert_one(
@@ -970,7 +975,9 @@ async def test_analyze(
         data={
             "workflow": "pathoscope_bowtie",
             "ref_id": "foo",
-            "subtractions": ["bar"],
+            "subtractions": [
+                "bar",
+            ],
         },
     )
 
@@ -1237,7 +1244,9 @@ async def test_download_reads(
     resp = await client.get(f"/samples/foo/reads/{file_name}")
     job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
 
-    expected_path = get_config_from_app(client.app).data_path / "samples" / "foo" / file_name
+    expected_path = (
+        get_config_from_app(client.app).data_path / "samples" / "foo" / file_name
+    )
 
     if error:
         assert resp.status == job_resp.status == 404
@@ -1287,7 +1296,9 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
     resp = await client.get("/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
+    expected_path = (
+        get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
+    )
 
     if error:
         assert resp.status == 404
@@ -1520,7 +1531,9 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
 
     resp = await client.get(f"/samples/foo/caches/{key}/reads/{filename}")
 
-    expected_path = get_config_from_app(client.app).data_path / "caches" / key / filename
+    expected_path = (
+        get_config_from_app(client.app).data_path / "caches" / key / filename
+    )
 
     if error:
         assert resp.status == 404
@@ -1579,7 +1592,9 @@ async def test_download_artifact_cache(
         await client.db.caches.insert_one({"key": key, "sample": {"id": "test"}})
 
     resp = await client.get(f"/samples/foo/caches/{key}/artifacts/{name}")
-    expected_path = get_config_from_app(client.app).data_path / "caches" / key / name_on_disk
+    expected_path = (
+        get_config_from_app(client.app).data_path / "caches" / key / name_on_disk
+    )
 
     if error:
         assert resp.status == 404
