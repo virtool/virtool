@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 from aiohttp import BasicAuth
+from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web import Response, RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
@@ -89,7 +90,6 @@ def spawn_client(
     pg,
     redis,
     redis_connection_string,
-    test_motor,
     mocker,
 ):
     """A factory for spawning test clients."""
@@ -106,8 +106,6 @@ def spawn_client(
         groups: list[str] | None = None,
         permissions: list[Permission] | None = None,
     ):
-        mocker.patch("virtool.pg.utils.connect_pg", pg)
-
         authenticated = authenticated or authorize
 
         config = ServerConfig(
@@ -136,6 +134,8 @@ def spawn_client(
         if config_overrides:
             for key, value in config_overrides.items():
                 setattr(config, key, value)
+
+        mocker.patch("virtool.startup.connect_pg", return_value=pg)
 
         app = create_app(config)
 
@@ -212,7 +212,11 @@ def spawn_client(
         if flags:
             test_client.app["flags"] = FeatureFlags(flags)
 
-        return VirtoolTestClient(test_client)
+        client = VirtoolTestClient(test_client)
+
+        assert client.app["pg"] is pg
+
+        return client
 
     return func
 
@@ -238,8 +242,6 @@ def spawn_job_client(
         dev: bool = False,
         add_route_table: RouteTableDef = None,
     ):
-        mocker.patch("virtool.pg.utils.connect_pg", pg)
-
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
@@ -249,6 +251,8 @@ def spawn_job_client(
             auth = BasicAuth(login=f"job-{job_id}", password=key)
         else:
             auth = None
+
+        mocker.patch("virtool.startup.connect_pg", return_value=pg)
 
         app = await virtool.jobs.main.create_app(
             ServerConfig(
@@ -280,6 +284,8 @@ def spawn_job_client(
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
         client.db = mongo
+
+        assert client.app["pg"] is pg
 
         return client
 
