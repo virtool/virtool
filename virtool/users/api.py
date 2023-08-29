@@ -48,23 +48,19 @@ class UsersView(PydanticView):
             403: Not permitted
         """
 
-        users = get_data_from_req(self.request).users
-
         mongo_query = compose_regex_query(find, ["handle"]) if find else {}
 
-        data = await users.paginate_users(
+        search_result = await get_data_from_req(self.request).users.paginate_users(
             mongo_query,
             self.request.query,
             sort="handle",
             projection={"_id": True, "handle": True, "administrator": True},
         )
 
-        return json_response(data)
+        return json_response(search_result)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def post(
-        self, data: CreateUserRequest
-    ) -> Union[r201[UserNested], r400, r403]:
+    async def post(self, data: CreateUserRequest) -> Union[r201[User], r400, r403]:
         """
         Create a user.
 
@@ -83,16 +79,14 @@ class UsersView(PydanticView):
             raise HTTPBadRequest(text=error)
 
         try:
-            user: User = await get_data_from_req(self.request).users.create(
+            user = await get_data_from_req(self.request).users.create(
                 data.handle, data.password, data.force_reset
             )
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
         return json_response(
-            UserNested(
-                id=user.id, administrator=user.administrator, handle=user.handle
-            ),
+            user,
             headers={"Location": f"/users/{user.id}"},
             status=201,
         )

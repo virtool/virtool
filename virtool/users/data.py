@@ -1,5 +1,7 @@
 import random
+from typing import Dict, List, Optional, Tuple, Union
 
+from multidict import MultiDictProxy
 from pymongo.errors import DuplicateKeyError
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User
@@ -14,6 +16,7 @@ from virtool.data.events import Operation, emits
 from virtool.data.piece import DataLayerPiece
 from virtool.errors import DatabaseError
 from virtool.groups.utils import merge_group_permissions
+from virtool.types import Projection
 from virtool.users.db import (
     B2CUserAttributes,
     compose_groups_update,
@@ -249,13 +252,24 @@ class UsersData(DataLayerPiece):
 
     async def paginate_users(
         self,
-        mongo_query,
-        url_query,
-        sort=None,
-        projection=None,
-        base_query=None,
-        reverse=False,
+        mongo_query: Union[Dict, MultiDictProxy[str]],
+        url_query: Union[Dict, MultiDictProxy[str]],
+        sort: Optional[Union[List[Tuple[str, int]], str]] = None,
+        projection: Optional[Projection] = None,
+        base_query: Optional[Dict] = None,
+        reverse: bool = False,
     ):
+        """
+        Find, filter, and sort multiple users
+
+        :param mongo_query: Query derived from user supplied
+        :param url_query: Raw URL query
+        :param sort: Field to sort by
+        :param projection: Fields to appear on found documents
+        :param base_query: Query always applied to search
+        :param reverse: Reverse the sort order
+        """
+
         return await paginate(
             self._mongo.users,
             mongo_query,

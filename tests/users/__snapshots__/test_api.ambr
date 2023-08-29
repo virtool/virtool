@@ -208,9 +208,31 @@
 ---
 # name: test_create[None]
   <class 'dict'> {
+    'active': True,
     'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
     'handle': 'fred',
     'id': 'fb085f7f',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
   }
 ---
 # name: test_create[None][data_layer]
