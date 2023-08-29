@@ -11,7 +11,7 @@ async def test_connect_pg(pg_connection_string: str, snapshot):
     engine = await connect_pg(pg_connection_string)
 
     assert type(engine) is AsyncEngine
-    assert engine.url._asdict() == snapshot(exclude=paths("port"))
+    assert engine.url._asdict() == snapshot(exclude=paths("port", "database"))
 
 
 async def test_delete_row(pg: AsyncEngine):

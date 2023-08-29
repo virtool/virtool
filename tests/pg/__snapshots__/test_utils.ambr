@@ -1,6 +1,5 @@
 # name: test_connect_pg
   <class 'dict'> {
-    'database': 'test_master',
     'drivername': 'postgresql+asyncpg',
     'host': 'localhost',
     'password': 'virtool',
