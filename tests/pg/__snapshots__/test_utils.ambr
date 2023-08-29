@@ -1,3 +1,13 @@
+# name: test_connect_pg
+  <class 'dict'> {
+    'drivername': 'postgresql+asyncpg',
+    'host': 'localhost',
+    'password': 'virtool',
+    'query': <class 'immutabledict'> {
+    },
+    'username': 'virtool',
+  }
+---
 # name: test_get_row
   <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
 ---

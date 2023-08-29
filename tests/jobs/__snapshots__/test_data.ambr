@@ -188,17 +188,6 @@
     'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
     },
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
@@ -232,17 +221,6 @@
     'key': None,
     'ping': None,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
     },
     'space': <class 'dict'> {
       'id': 0,
@@ -277,17 +255,6 @@
     'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
     },
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
@@ -321,17 +288,6 @@
     'key': None,
     'ping': None,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
     },
     'space': <class 'dict'> {
       'id': 0,

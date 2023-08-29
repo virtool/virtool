@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 from asyncio import to_thread
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import aiohttp.web
 import pymongo.errors
@@ -10,7 +10,7 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
-from pydantic import constr, conint, Field
+from pydantic import Field, conint, constr
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.job import JobMinimal
@@ -38,11 +38,10 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
-from virtool.http.policy import policy, PermissionRoutePolicy
+from virtool.http.policy import PermissionRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.jobs.utils import JobRights
-from virtool.mongo.utils import get_one_field, get_new_id
+from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     RIGHTS_PROJECTION,
@@ -57,16 +56,16 @@ from virtool.samples.files import (
 )
 from virtool.samples.models import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.oas import (
-    GetSampleResponse,
+    CreateAnalysisRequest,
+    CreateAnalysisResponse,
     CreateSampleRequest,
     CreateSampleResponse,
-    UpdateSampleRequest,
-    UpdateSampleResponse,
+    GetSampleAnalysesResponse,
+    GetSampleResponse,
     UpdateRightsRequest,
     UpdateRightsResponse,
-    CreateAnalysisRequest,
-    GetSampleAnalysesResponse,
-    CreateAnalysisResponse,
+    UpdateSampleRequest,
+    UpdateSampleResponse,
 )
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
@@ -498,18 +497,8 @@ class AnalysesView(PydanticView):
             "subtractions": subtractions,
         }
 
-        rights = JobRights()
-
-        rights.analyses.can_read(analysis_id)
-        rights.analyses.can_modify(analysis_id)
-        rights.analyses.can_remove(analysis_id)
-        rights.samples.can_read(sample_id)
-        rights.indexes.can_read(document["index"]["id"])
-        rights.references.can_read(ref_id)
-        rights.subtractions.can_read(*subtractions)
-
         job = await get_data_from_req(self.request).jobs.create(
-            document["workflow"], task_args, document["user"]["id"], rights, 0, job_id
+            document["workflow"], task_args, document["user"]["id"], 0, job_id
         )
 
         document["job"] = JobMinimal(**job.dict())

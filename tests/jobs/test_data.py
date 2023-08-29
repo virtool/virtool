@@ -9,7 +9,7 @@ from virtool_core.models.job import JobState
 
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
-from virtool.jobs.utils import JobRights, compose_status
+from virtool.jobs.utils import compose_status
 
 
 @pytest.fixture
@@ -58,16 +58,11 @@ async def test_create(
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
-    rights = JobRights()
-    rights.samples.can_read("foo")
-    rights.samples.can_modify("foo")
-    rights.samples.can_remove("foo")
-
     user = await fake.users.insert()
 
     assert (
         await jobs_data.create(
-            "create_sample", {"sample_id": "foo"}, user["_id"], rights, 0, job_id=job_id
+            "create_sample", {"sample_id": "foo"}, user["_id"], 0, job_id=job_id
         )
         == snapshot
     )
@@ -140,7 +135,6 @@ async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
     now = arrow.utcnow()
 
     async with mongo.create_session() as session:
-
         await mongo.jobs.insert_many(
             [
                 # Ok: Newer than 30 days.
