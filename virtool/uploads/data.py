@@ -111,19 +111,14 @@ class UploadsData(DataLayerPiece):
                 .limit(per_page)
             )
 
-            count, results = await asyncio.gather(
-                session.execute(select(total_query, found_query)),
+            total_count_results, found_count_results, results = await asyncio.gather(
+                session.execute(select(total_query)),
+                session.execute(select(found_query)),
                 session.execute(query),
             )
 
-            total_count = 0
-            found_count = 0
-
-            count = count.unique().all()
-
-            if count:
-                total_count = count[0].total
-                found_count = count[0].found
+            total_count = total_count_results.scalar()
+            found_count = found_count_results.scalar()
 
             uploads = [row.to_dict() for row in results.unique().scalars()]
 
