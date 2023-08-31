@@ -1,11 +1,9 @@
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
-from virtool.data.utils import get_data_from_app
 from tests.users.test_data import users_data
 
 
 async def test_create(
-    app,
     data_layer,
     fake2,
     mongo,

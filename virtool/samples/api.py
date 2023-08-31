@@ -13,12 +13,10 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import Field, conint, constr
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.job import JobMinimal
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
 import virtool.caches.db
-import virtool.mongo.utils
 import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
@@ -45,7 +43,7 @@ from virtool.errors import DatabaseError
 from virtool.http.policy import PermissionRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.mongo.utils import get_new_id, get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     RIGHTS_PROJECTION,

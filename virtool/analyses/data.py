@@ -10,7 +10,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.job import JobState, JobMinimal
+from virtool_core.models.job import JobMinimal
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -41,7 +41,6 @@ from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
-from virtool.jobs.data import create_job
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
