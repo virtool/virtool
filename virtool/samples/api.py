@@ -34,7 +34,11 @@ from virtool.authorization.permissions import LegacyPermission
 from virtool.caches.models import SQLSampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.config import get_config_from_req
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceNotFoundError,
+    ResourceError,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
@@ -439,7 +443,6 @@ class AnalysesView(PydanticView):
             404: Not found
         """
         db = self.request.app["db"]
-        ref_id = data.ref_id
 
         try:
             if not await check_rights(db, sample_id, self.request["client"]):
@@ -450,63 +453,28 @@ class AnalysesView(PydanticView):
 
             raise
 
-        if not await db.references.count_documents({"_id": ref_id}):
-            raise HTTPBadRequest(text="Reference does not exist")
+        try:
+            await get_data_from_req(
+                self.request
+            ).samples.has_resources_for_analysis_job(data.ref_id, data.subtractions)
+        except ResourceError as err:
+            raise HTTPBadRequest(text=str(err))
 
-        if not await db.indexes.count_documents(
-            {"reference.id": ref_id, "ready": True}
-        ):
-            raise HTTPBadRequest(text="No ready index")
-
-        subtractions = data.subtractions
-
-        if subtractions is None:
-            subtractions = []
-        else:
-            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-                db.subtraction, subtractions
-            )
-
-            if non_existent_subtractions:
-                raise HTTPBadRequest(
-                    text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
-                )
-
-        job_id = await get_new_id(db.jobs)
-
-        document = await get_data_from_req(self.request).analyses.create(
+        analysis = await get_data_from_req(self.request).analyses.create(
             sample_id,
-            ref_id,
-            subtractions,
+            data.ref_id,
+            data.subtractions,
             self.request["client"].user_id,
             data.workflow,
-            job_id,
             0,
         )
 
-        analysis_id = document.id
-
-        sample = await db.samples.find_one(sample_id, ["name"])
-
-        task_args = {
-            "analysis_id": analysis_id,
-            "ref_id": ref_id,
-            "sample_id": sample_id,
-            "sample_name": sample["name"],
-            "index_id": document.index.id,
-            "subtractions": subtractions,
-        }
-
-        job = await get_data_from_req(self.request).jobs.create(
-            document.workflow, task_args, document.user.id, 0, job_id
-        )
-
-        document.job = JobMinimal(**job.dict())
+        analysis_id = analysis.id
 
         await recalculate_workflow_tags(db, sample_id)
 
         return json_response(
-            document,
+            analysis,
             status=201,
             headers={"Location": f"/analyses/{analysis_id}"},
         )

@@ -11,11 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
+from virtool.api.response import NotFound, InsufficientRights
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
+from virtool.errors import DatabaseError
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.db import create_job, lookup_minimal_job_by_id
@@ -35,6 +37,7 @@ from virtool.samples.db import (
     define_initial_workflows,
     recalculate_workflow_tags,
     validate_force_choice_group,
+    check_rights,
 )
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
@@ -390,6 +393,31 @@ class SamplesData(DataLayerPiece):
             )
 
         raise ValueError(f"Invalid sample right: {right}")
+
+    async def has_resources_for_analysis_job(self, ref_id, subtractions):
+        """
+        Checks that resources for analysis job exist.
+        :param ref_id: the reference id
+        :param subtractions: list of subtractions
+        """
+
+        if not await self._mongo.references.count_documents({"_id": ref_id}):
+            raise ResourceConflictError("Reference does not exist")
+
+        if not await self._mongo.indexes.count_documents(
+            {"reference.id": ref_id, "ready": True}
+        ):
+            raise ResourceConflictError("No ready index")
+
+        if subtractions is not None:
+            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
+                self._mongo.subtraction, subtractions
+            )
+
+            if non_existent_subtractions:
+                raise ResourceConflictError(
+                    f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+                )
 
     async def compress_samples(self, progress_handler: AbstractProgressHandler):
         query = {"is_legacy": True, "is_compressed": {"$exists": False}}

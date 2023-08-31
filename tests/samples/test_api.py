@@ -939,8 +939,8 @@ async def test_analyze(
     if error != "400_reference":
         await client.db.references.insert_one(
             {
-                "_id": "foo",
-                "name": "foo",
+                "_id": "test_ref",
+                "name": "Test Reference",
                 "data_type": "genome",
             }
         )
@@ -949,14 +949,16 @@ async def test_analyze(
         await client.db.indexes.insert_one(
             {
                 "_id": "test",
-                "reference": {"id": "foo"},
+                "reference": {"id": "test_ref"},
                 "ready": error != "400_ready_index",
                 "version": 4,
             }
         )
 
     if error != "400_subtraction":
-        await client.db.subtraction.insert_one({"_id": "bar", "name": "bar"})
+        await client.db.subtraction.insert_one(
+            {"_id": "subtraction_1", "name": "Subtraction 1"}
+        )
 
     if error != "404":
         await client.db.samples.insert_one(
@@ -974,9 +976,9 @@ async def test_analyze(
         "/samples/test/analyses",
         data={
             "workflow": "pathoscope_bowtie",
-            "ref_id": "foo",
+            "ref_id": "test_ref",
             "subtractions": [
-                "bar",
+                "subtraction_1",
             ],
         },
     )
@@ -990,7 +992,7 @@ async def test_analyze(
         return
 
     if error == "400_subtraction":
-        await resp_is.bad_request(resp, "Subtractions do not exist: bar")
+        await resp_is.bad_request(resp, "Subtractions do not exist: subtraction_1")
         return
 
     if error == "404":
@@ -998,7 +1000,7 @@ async def test_analyze(
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/analyses/fb085f7f"
+    assert resp.headers["Location"] == "/analyses/bf1b993c"
     assert await resp.json() == snapshot
 
 

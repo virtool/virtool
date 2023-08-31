@@ -13,6 +13,7 @@ from virtool_core.models.subtraction import Subtraction
 import virtool.utils
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform, apply_transforms
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import Document
@@ -184,19 +185,18 @@ def lookup_nested_subtractions(
     ]
 
 
-async def get_subtraction_names(subtraction_ids: List, db) -> List[dict]:
+async def get_subtraction_names(
+    mongo: Mongo, subtraction_ids: List[str]
+) -> List[Dict[str, str]]:
     """
-    Retrieve a list of subtraction names given subtraction ids.
+    Retrieve a list of subtraction names and ids.
 
     :param subtraction_ids: list containing subtraction ids
-    :param db: the application database client
-    :return: list of subtraction names and ids
+    :param mongo: the application database client
+    :return: list of dictionaries containing {"_id": sub_id, "name": sub_name}
     """
-    subtractions = []
+    subtractions = await mongo.subtraction.find(
+        {"_id": {"$in": subtraction_ids}}, projection=["_id", "name"]
+    ).to_list(length=len(subtraction_ids))
 
-    for sub_id in subtraction_ids:
-        sub_name = await get_one_field(db.subtraction, "name", {"_id": sub_id})
-        if sub_name is not None:
-            sub = {"_id": sub_id, "name": sub_name}
-            subtractions.append(sub)
     return subtractions

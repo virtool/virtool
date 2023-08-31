@@ -1,5 +1,58 @@
 # name: test_create
   <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'id': 'test_analysis',
+    'index': <class 'dict'> {
+      'id': 'test_index',
+      'version': 11,
+    },
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.WAITING: 'waiting'>,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'nuvs',
+    },
+    'ready': False,
+    'reference': <class 'dict'> {
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'test_ref',
+      'name': 'Test Reference',
+    },
+    'results': None,
+    'sample': <class 'dict'> {
+      'id': 'test_sample',
+    },
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'subtraction_1',
+        'name': 'Subtraction 1',
+      },
+      <class 'dict'> {
+        'id': 'subtraction_2',
+        'name': 'Subtraction 2',
+      },
+    ],
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'nuvs',
+  }
+---
+# name: test_create.1
+  <class 'dict'> {
     '_id': 'test_analysis',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
@@ -8,24 +61,11 @@
       'id': 'test_index',
       'version': 11,
     },
-    'job': <class 'dict'> {
-      'archived': False,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'id': 'test_job',
-      'progress': 0,
-      'state': 'waiting',
-      'user': <class 'dict'> {
-        'administrator': False,
-        'handle': 'bill',
-        'id': 'bf1b993c',
-      },
-      'workflow': 'nuvs',
-    },
     'ready': False,
     'reference': <class 'dict'> {
       'data_type': 'genome',
       'id': 'test_ref',
-      'name': 'ref_name',
+      'name': 'Test Reference',
     },
     'results': None,
     'sample': <class 'dict'> {
@@ -37,17 +77,17 @@
     'subtractions': <class 'list'> [
       <class 'dict'> {
         '_id': 'subtraction_1',
-        'name': 's1',
+        'name': 'Subtraction 1',
       },
       <class 'dict'> {
         '_id': 'subtraction_2',
-        'name': 's2',
+        'name': 'Subtraction 2',
       },
     ],
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
     'user': <class 'dict'> {
       'administrator': False,
-      'handle': 'bill',
+      'handle': 'leeashley',
       'id': 'bf1b993c',
     },
     'workflow': 'nuvs',

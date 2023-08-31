@@ -10,7 +10,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.job import JobState
+from virtool_core.models.job import JobState, JobMinimal
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -41,6 +41,7 @@ from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
+from virtool.jobs.data import create_job
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
@@ -207,7 +208,6 @@ class AnalysisData(DataLayerPiece):
         subtractions: List[str],
         user_id: str,
         workflow: QuickAnalyzeWorkflow,
-        job_id: str,
         space_id: int,
         analysis_id: str | None = None,
     ) -> Analysis:
@@ -234,11 +234,24 @@ class AnalysisData(DataLayerPiece):
 
         created_at = virtool.utils.timestamp()
 
-        user_info = await self._db.users.find_one(
+        user = await self._db.users.find_one(
             {"_id": user_id},
         )
+        if subtractions is None:
+            subtractions_list = []
+        else:
+            subtractions_list = await get_subtraction_names(self._db, subtractions)
 
-        subtractions_list = await get_subtraction_names(subtractions, self._db)
+        sample = await self._db.samples.find_one(sample_id, ["name"])
+
+        task_args = {
+            "analysis_id": analysis_id,
+            "ref_id": ref_id,
+            "sample_id": sample_id,
+            "sample_name": sample["name"],
+            "index_id": index_id,
+            "subtractions": subtractions,
+        }
 
         async with self._db.create_session() as session:
             document = {
@@ -246,19 +259,6 @@ class AnalysisData(DataLayerPiece):
                 or await get_new_id(self._db.analyses, session=session),
                 "created_at": created_at,
                 "files": [],
-                "job": {
-                    "id": job_id,
-                    "archived": False,
-                    "created_at": created_at,
-                    "progress": 0,
-                    "state": JobState.WAITING.value,
-                    "user": {
-                        "id": user_id,
-                        "handle": user_info["handle"],
-                        "administrator": user_info["administrator"],
-                    },
-                    "workflow": workflow.value,
-                },
                 "index": {"id": index_id, "version": index_version},
                 "reference": {
                     "id": ref_id,
@@ -275,13 +275,19 @@ class AnalysisData(DataLayerPiece):
                 "updated_at": created_at,
                 "user": {
                     "id": user_id,
-                    "handle": user_info["handle"],
-                    "administrator": user_info["administrator"],
+                    "handle": user["handle"],
+                    "administrator": user["administrator"],
                 },
                 "workflow": workflow,
             }
-
             await self._db.analyses.insert_one(document)
+
+            job_id = await get_new_id(self._db.jobs, session=session)
+
+            job = await self.data.jobs.create(
+                workflow.value, task_args, user_id, space_id, job_id
+            )
+            document["job"] = JobMinimal(**job.dict())
 
         return Analysis(**base_processor(document))
 
