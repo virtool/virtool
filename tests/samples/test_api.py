@@ -1,14 +1,18 @@
 import asyncio
+import datetime
 import os
 from pathlib import Path
+from typing import List, Union
 
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from pydantic import BaseModel
+from pydantic_factories import ModelFactory
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import LibraryType, Permission
-from virtool_core.models.samples import WorkflowState
+from virtool_core.models.samples import WorkflowState, Quality
 
 import virtool.caches.db
 import virtool.pg.utils
@@ -60,6 +64,7 @@ async def get_sample_data(mongo, fake2, pg, static_time):
                     }
                 ],
                 "format": "fastq",
+                "group": "none",
                 "group": "none",
                 "group_read": True,
                 "group_write": True,
@@ -644,7 +649,6 @@ class TestEdit:
                 "ready": True,
             }
         )
-
         resp = await client.patch("/samples/foo", {"labels": [1]})
 
         assert resp.status == 400
@@ -690,16 +694,68 @@ async def test_finalize(
     Test that sample can be finalized using the Jobs API.
 
     """
+
+    class QualityFactory(ModelFactory):
+        __model__ = Quality
+
+    label = await fake2.labels.create()
+    await fake2.labels.create()
+
     user = await fake2.users.create()
 
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
-
-    data = {field: {}}
+    data = {
+        field: {
+            "bases": [[1543]],
+            "composition": [[6372]],
+            "count": 7069,
+            "encoding": "OuBQPPuwYimrxkNpPWUx",
+            "gc": 34222440,
+            "length": [3237],
+            "sequences": [7091],
+        }
+    }
 
     await client.db.samples.insert_one(
-        {"_id": "test", "ready": True, "user": {"id": user.id}, "subtractions": []}
+        {
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "created_at": 13,
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz",
+                }
+            ],
+            "format": "fastq",
+            "group": "none",
+            "group_read": True,
+            "group_write": True,
+            "hold": False,
+            "host": "",
+            "is_legacy": False,
+            "isolate": "",
+            "labels": [label.id],
+            "library_type": LibraryType.normal.value,
+            "locale": "",
+            "name": "Test",
+            "notes": "",
+            "nuvs": False,
+            "pathoscope": True,
+            "ready": True,
+            "subtractions": ["apple", "pear"],
+            "user": {"id": user.id},
+            "workflows": {
+                "aodp": WorkflowState.INCOMPATIBLE.value,
+                "pathoscope": WorkflowState.COMPLETE.value,
+                "nuvs": WorkflowState.PENDING.value,
+            },
+            "quality": None,
+        }
     )
 
     async with AsyncSession(pg) as session:
@@ -713,7 +769,11 @@ async def test_finalize(
         )
 
         reads = SQLSampleReads(
-            name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
+            name="reads_1.fq.gz",
+            name_on_disk="reads_1.fq.gz",
+            sample="test",
+            size=12,
+            uploaded_at=datetime.datetime(2023, 9, 1, 1, 1),
         )
 
         upload.reads.append(reads)
@@ -1237,7 +1297,9 @@ async def test_download_reads(
     resp = await client.get(f"/samples/foo/reads/{file_name}")
     job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
 
-    expected_path = get_config_from_app(client.app).data_path / "samples" / "foo" / file_name
+    expected_path = (
+        get_config_from_app(client.app).data_path / "samples" / "foo" / file_name
+    )
 
     if error:
         assert resp.status == job_resp.status == 404
@@ -1287,7 +1349,9 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
     resp = await client.get("/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
+    expected_path = (
+        get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
+    )
 
     if error:
         assert resp.status == 404
@@ -1520,7 +1584,9 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
 
     resp = await client.get(f"/samples/foo/caches/{key}/reads/{filename}")
 
-    expected_path = get_config_from_app(client.app).data_path / "caches" / key / filename
+    expected_path = (
+        get_config_from_app(client.app).data_path / "caches" / key / filename
+    )
 
     if error:
         assert resp.status == 404
@@ -1579,7 +1645,9 @@ async def test_download_artifact_cache(
         await client.db.caches.insert_one({"key": key, "sample": {"id": "test"}})
 
     resp = await client.get(f"/samples/foo/caches/{key}/artifacts/{name}")
-    expected_path = get_config_from_app(client.app).data_path / "caches" / key / name_on_disk
+    expected_path = (
+        get_config_from_app(client.app).data_path / "caches" / key / name_on_disk
+    )
 
     if error:
         assert resp.status == 404
