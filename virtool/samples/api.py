@@ -272,14 +272,12 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    await get_data_from_req(req).samples.finalize(
+    sample = await get_data_from_req(req).samples.finalize(
         sample_id,
         data["quality"],
-        to_thread,
-        get_config_from_req(req).data_path,
     )
 
-    return json_response(await get_data_from_req(req).samples.get(sample_id))
+    return json_response(sample)
 
 
 @routes.view("/samples/{sample_id}/rights")

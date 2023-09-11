@@ -195,19 +195,15 @@ class SamplesData(DataLayerPiece):
         self,
         sample_id: str,
         quality: Dict[str, Any],
-        _run_in_thread: callable,
-        data_path: Path,
-    ) -> Dict[str, Any]:
+    ) -> Sample:
         """
-        Finalize a sample document by setting a ``quality`` field
+        Finalize a sample by setting a ``quality`` field
         and ``ready`` to ``True``
 
         :param sample_id: the id of the sample
-        :param quality: a dict contains quality data
-        :param _run_in_thread: the application thread running function
-        :param data_path: the application data path settings
+        :param quality: a dict containing quality data
 
-        :return: the sample document after finalizing
+        :return: the sample after finalizing
 
         """
 
@@ -235,7 +231,8 @@ class SamplesData(DataLayerPiece):
 
                 try:
                     await to_thread(
-                        virtool_core.utils.rm, data_path / "files" / row.name_on_disk
+                        virtool_core.utils.rm,
+                        self._config.data_path / "files" / row.name_on_disk,
                     )
                 except FileNotFoundError:
                     pass
