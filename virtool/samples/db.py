@@ -555,6 +555,64 @@ async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str
         await db.samples.update_one({"_id": sample_id}, {"$unset": {"files": ""}})
 
 
+async def finalize(
+    db,
+    pg: AsyncEngine,
+    sample_id: str,
+    quality: Dict[str, Any],
+    _run_in_thread: callable,
+    data_path: Path,
+) -> Dict[str, Any]:
+    """
+    Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
+
+    :param db: the application database object
+    :param pg: the PostgreSQL AsyncEngine object
+    :param sample_id: the id of the sample
+    :param quality: a dict contains quality data
+    :param _run_in_thread: the application thread running function
+    :param data_path: the application data path settings
+
+    :return: the sample document after finalizing
+
+    """
+    document = await db.samples.find_one_and_update(
+        {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
+    )
+
+    async with AsyncSession(pg) as session:
+        rows = (
+            (
+                await session.execute(
+                    select(SQLUpload)
+                    .filter(SQLSampleReads.sample == sample_id)
+                    .join_from(SQLSampleReads, SQLUpload)
+                )
+            )
+            .unique()
+            .scalars()
+        )
+
+        for row in rows:
+            row.reads.clear()
+            row.removed = True
+            row.removed_at = virtool.utils.timestamp()
+
+            try:
+                await to_thread(rm, data_path / "files" / row.name_on_disk)
+            except FileNotFoundError:
+                pass
+
+            session.add(row)
+
+        await session.commit()
+
+    return await apply_transforms(
+        base_processor(document),
+        [ArtifactsAndReadsTransform(pg), AttachUserTransform(db)],
+    )
+
+
 async def get_sample(app, sample_id: str):
     """
     Get the sample document with subtractions, labels, and reads attached.

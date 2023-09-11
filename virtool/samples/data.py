@@ -9,7 +9,7 @@ import virtool_core.utils
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
@@ -195,6 +195,7 @@ class SamplesData(DataLayerPiece):
         self,
         sample_id: str,
         quality: Dict[str, Any],
+        _run_in_thread: callable,
         data_path: Path,
     ) -> Dict[str, Any]:
         """
@@ -202,6 +203,7 @@ class SamplesData(DataLayerPiece):
 
         :param sample_id: the id of the sample
         :param quality: a dict contains quality data
+        :param _run_in_thread: the application thread running function
         :param data_path: the application data path settings
 
         :return: the sample document after finalizing
@@ -212,7 +214,7 @@ class SamplesData(DataLayerPiece):
             {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
         )
 
-        async with self._pg as session:
+        async with AsyncSession(self._pg) as session:
             rows = (
                 (
                     await session.execute(
@@ -232,9 +234,7 @@ class SamplesData(DataLayerPiece):
 
                 try:
                     await to_thread(
-                        virtool_core.utils.rm,
-                        data_path / "files" / row.name_on_disk,
-                        recursive=False,
+                        virtool_core.utils.rm, data_path / "files" / row.name_on_disk
                     )
                 except FileNotFoundError:
                     pass
