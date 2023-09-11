@@ -199,7 +199,8 @@ class SamplesData(DataLayerPiece):
         data_path: Path,
     ) -> Dict[str, Any]:
         """
-        Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
+        Finalize a sample document by setting a ``quality`` field
+        and ``ready`` to ``True``
 
         :param sample_id: the id of the sample
         :param quality: a dict contains quality data

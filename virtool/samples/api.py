@@ -20,7 +20,6 @@ from virtool_core.utils import file_stats
 import virtool.analyses.db
 import virtool.caches.db
 import virtool.mongo.utils
-import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
 from virtool.analyses.db import PROJECTION
@@ -44,7 +43,6 @@ from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row, get_rows
-from virtool.samples.data import SamplesData
 from virtool.samples.db import (
     RIGHTS_PROJECTION,
     check_rights,

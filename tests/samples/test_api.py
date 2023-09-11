@@ -692,10 +692,6 @@ async def test_finalize(
     Test that sample can be finalized using the Jobs API.
 
     """
-
-    class QualityFactory(ModelFactory):
-        __model__ = Quality
-
     label = await fake2.labels.create()
     await fake2.labels.create()
 
