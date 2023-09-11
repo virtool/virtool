@@ -2,7 +2,6 @@ import asyncio
 import logging
 import math
 from asyncio import gather, to_thread
-from pathlib import Path
 from typing import List, Optional, Any, Dict
 
 import virtool_core.utils
