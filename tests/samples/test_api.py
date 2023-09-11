@@ -10,7 +10,7 @@ from aiohttp.test_utils import make_mocked_coro
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import LibraryType, Permission
-from virtool_core.models.samples import WorkflowState, Quality
+from virtool_core.models.samples import WorkflowState
 
 import virtool.caches.db
 import virtool.pg.utils
@@ -62,7 +62,6 @@ async def get_sample_data(mongo, fake2, pg, static_time):
                     }
                 ],
                 "format": "fastq",
-                "group": "none",
                 "group": "none",
                 "group_read": True,
                 "group_write": True,
