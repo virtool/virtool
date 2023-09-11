@@ -212,6 +212,12 @@ class SampleView(PydanticView):
         ):
             raise InsufficientRights
 
+        if (
+            await get_one_field(self.request.app["db"].samples, "ready", sample_id)
+            is False
+        ):
+            raise HTTPBadRequest(text="Only finalized samples can be deleted")
+
         try:
             await get_data_from_req(self.request).samples.delete(sample_id)
         except ResourceNotFoundError:

@@ -1,10 +1,11 @@
 import os
 
 import pytest
-from virtool.config import get_config_from_app
 
+from virtool.config import get_config_from_app
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
-from virtool.samples.db import LIST_PROJECTION
 from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_sample
 
 
@@ -20,22 +21,31 @@ def app(mongo, pg, tmp_path, config):
 
 @pytest.mark.parametrize("paired", [True, False])
 @pytest.mark.parametrize("finalized", [True, False])
-async def test_create_fake_unpaired(
-    paired, finalized, app, fake, snapshot, static_time
+async def test_create_fake_sample(
+    paired,
+    finalized,
+    app,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    spawn_client,
+    snapshot,
+    static_time,
 ):
-    user = await fake.users.insert()
+    client = await spawn_client(authorize=True)
 
-    fake_sample = await create_fake_sample(
-        app, "sample_1", user["_id"], paired=paired, finalized=finalized
+    user = await fake2.users.create()
+
+    await create_fake_sample(
+        client.app, "sample_1", user.id, finalized=finalized, paired=paired
     )
 
-    assert set(LIST_PROJECTION) <= set(fake_sample.keys())
+    sample = await data_layer.samples.get("sample_1")
 
     if finalized is True:
-        assert len(fake_sample["reads"]) == (2 if paired else 1)
-        assert fake_sample["ready"] is True
+        assert len(sample.reads) == (2 if paired else 1)
+        assert sample.ready is True
 
-    assert fake_sample == snapshot
+    assert sample == snapshot
 
 
 async def test_copy_reads_file(app):

@@ -1,3 +1,4 @@
+import asyncio
 import math
 import os
 from asyncio import gather, CancelledError, to_thread
@@ -9,6 +10,7 @@ from typing import Tuple, Optional
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
+from virtool_core.models.samples import Sample
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -238,7 +240,6 @@ class AnalysisData(DataLayerPiece):
         :param analysis_id: the analysis ID
         :param jobs_api_flag: checks if the jobs_api is handling the request
         """
-
         analysis = await self.get(analysis_id, None)
 
         if not analysis:
@@ -265,6 +266,9 @@ class AnalysisData(DataLayerPiece):
 
         await recalculate_workflow_tags(self._db, analysis.sample.id)
 
+        sample = await self.data.samples.get(analysis.sample.id)
+
+        emit(sample, "samples", "recalculate_workflow_tags", Operation.UPDATE)
         emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
@@ -416,24 +420,37 @@ class AnalysisData(DataLayerPiece):
 
         :param analysis_id: the analysis ID
         :param results: the analysis results
-        :return: the processed analysis document
+        :return: the analysis
         """
 
         document = await self._db.analyses.find_one({"_id": analysis_id}, ["ready"])
 
         if not document:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         if "ready" in document and document["ready"]:
-            raise ResourceConflictError()
+            raise ResourceConflictError
 
         document = await self._db.analyses.find_one_and_update(
             {"_id": analysis_id}, {"$set": {"results": results, "ready": True}}
         )
 
-        await recalculate_workflow_tags(self._db, document["sample"]["id"])
+        sample_id = document["sample"]["id"]
 
-        return await self.get(analysis_id, None)
+        await recalculate_workflow_tags(self._db, sample_id)
+
+        analysis = await self.get(analysis_id, None)
+
+        sample = await self.data.samples.get(sample_id)
+
+        emit(
+            sample,
+            "samples",
+            "recalculate_workflow_tags",
+            Operation.UPDATE,
+        )
+
+        return analysis
 
     async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
         """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""

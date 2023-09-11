@@ -113,6 +113,41 @@
     'workflow': 'nuvs',
   }
 ---
+# name: test_finalize_large
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+    ],
+    'id': 'analysis1',
+    'index': <class 'dict'> {
+      'id': 'foo',
+      'version': 2,
+    },
+    'job': None,
+    'ready': True,
+    'reference': <class 'dict'> {
+      'data_type': 'genome',
+      'id': 'baz',
+      'name': 'Baz',
+    },
+    'results': <class 'dict'> {
+      'hits': <class 'list'> [
+      ],
+    },
+    'sample': <class 'dict'> {
+      'id': 'sample1',
+    },
+    'subtractions': <class 'list'> [
+    ],
+    'updated_at': '2015-10-06T20:00:00Z',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'nuvs',
+  }
+---
 # name: test_find
   <class 'dict'> {
     'documents': <class 'list'> [

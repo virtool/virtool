@@ -338,12 +338,23 @@ async def test_remove(
                 "_id": "baz",
                 "all_read": True,
                 "all_write": error != "403",
+                "created_at": static_time.datetime,
+                "format": "fastq",
                 "group": "tech",
                 "group_read": True,
                 "group_write": True,
+                "hold": False,
+                "host": "",
+                "is_legacy": False,
+                "isolate": "",
+                "library_type": "normal",
+                "locale": "",
+                "name": "Sample 1",
+                "notes": "",
+                "ready": True,
                 "user": {"id": user.id},
             }
-        )
+        ),
 
     if error != "404_analysis":
         await client.db.analyses.insert_one(
@@ -590,11 +601,8 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_finalize(
-    fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is
-):
+async def test_finalize(error, fake2, snapshot, spawn_job_client, static_time):
     user_1 = await fake2.users.create()
-
     user_2 = await fake2.users.create()
 
     job = await fake2.jobs.create(user=user_2)
@@ -607,9 +615,30 @@ async def test_finalize(
     client = await spawn_job_client(authorize=True)
 
     await asyncio.gather(
-        client.db.samples.insert_one({"_id": "sample1"}),
         client.db.references.insert_one(
             {"_id": "baz", "name": "Baz", "data_type": "genome"}
+        ),
+        client.db.samples.insert_one(
+            {
+                "_id": "sample1",
+                "all_read": True,
+                "all_write": True,
+                "created_at": static_time.datetime,
+                "format": "fastq",
+                "group": "none",
+                "group_read": False,
+                "group_write": False,
+                "hold": False,
+                "host": "",
+                "is_legacy": False,
+                "isolate": "",
+                "library_type": "normal",
+                "locale": "",
+                "name": "Sample 1",
+                "notes": "",
+                "ready": True,
+                "user": {"id": user_1.id},
+            }
         ),
     )
 
@@ -619,14 +648,14 @@ async def test_finalize(
                 "_id": "analysis1",
                 "sample": {"id": "sample1"},
                 "created_at": static_time.datetime,
-                "job": {"id": job.id},
-                "index": {"version": 2, "id": "foo"},
-                "workflow": "nuvs",
-                "reference": {"id": "baz"},
                 "files": [],
-                "user": {"id": user_1.id},
+                "index": {"version": 2, "id": "foo"},
+                "job": {"id": job.id},
                 "ready": error == 409,
+                "reference": {"id": "baz"},
                 "subtractions": [],
+                "user": {"id": user_1.id},
+                "workflow": "nuvs",
             }
         )
 
@@ -645,7 +674,7 @@ async def test_finalize(
 
 
 @pytest.mark.apitest
-async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
+async def test_finalize_large(fake2, snapshot, spawn_job_client, static_time):
     user = await fake2.users.create()
 
     faker = Faker(1)
@@ -666,7 +695,7 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
         for _ in range(100)
     ]
 
-    patch_json = {"results": {"hits": [], "result": profiles * 500}}
+    patch_json = {"results": {"hits": [], "extra_data": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
     assert len(json.dumps(patch_json)) > 1024**2
@@ -674,28 +703,49 @@ async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
     client = await spawn_job_client(authorize=True)
 
     await asyncio.gather(
-        client.db.samples.insert_one({"_id": "sample1"}),
+        client.db.analyses.insert_one(
+            {
+                "_id": "analysis1",
+                "created_at": static_time.datetime,
+                "sample": {"id": "sample1"},
+                "job": {"id": "test"},
+                "index": {"version": 2, "id": "foo"},
+                "workflow": "nuvs",
+                "reference": {"id": "baz", "name": "Baz"},
+                "files": [],
+                "user": {"id": user.id},
+                "ready": False,
+                "subtractions": [],
+            }
+        ),
         client.db.references.insert_one(
             {"_id": "baz", "name": "Baz", "data_type": "genome"}
         ),
-    )
-
-    await client.db.analyses.insert_one(
-        {
-            "_id": "analysis1",
-            "created_at": static_time.datetime,
-            "sample": {"id": "sample1"},
-            "job": {"id": "test"},
-            "index": {"version": 2, "id": "foo"},
-            "workflow": "nuvs",
-            "reference": {"id": "baz", "name": "Baz"},
-            "files": [],
-            "user": {"id": user.id},
-            "ready": False,
-            "subtractions": [],
-        }
+        client.db.samples.insert_one(
+            {
+                "_id": "sample1",
+                "all_read": True,
+                "all_write": True,
+                "created_at": static_time.datetime,
+                "format": "fastq",
+                "group": "none",
+                "group_read": False,
+                "group_write": False,
+                "hold": False,
+                "host": "",
+                "is_legacy": False,
+                "isolate": "",
+                "library_type": "normal",
+                "locale": "",
+                "name": "Sample 1",
+                "notes": "",
+                "ready": True,
+                "user": {"id": user.id},
+            }
+        ),
     )
 
     resp = await client.patch("/analyses/analysis1", json=patch_json)
 
     assert resp.status == 200
+    assert await resp.json() == snapshot

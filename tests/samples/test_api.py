@@ -1,8 +1,6 @@
 import asyncio
 import datetime
 import os
-from pathlib import Path
-from typing import List, Union
 
 import arrow
 import pytest
@@ -17,11 +15,13 @@ import virtool.pg.utils
 from virtool.caches.models import SQLSampleArtifactCache, SQLSampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.config import get_config_from_app
+from virtool.config.cls import ServerConfig
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_app
+from virtool.fake.next import DataFaker
 from virtool.jobs.client import DummyJobsClient
 from virtool.pg.utils import get_row_by_id
-from virtool.samples.files import create_reads_file
+from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.uploads.models import SQLUpload
@@ -186,6 +186,7 @@ async def setup_find_samples_client(fake2, spawn_client, static_time):
             ],
             session=None,
         )
+
         return client
 
     return setup()
@@ -195,9 +196,7 @@ async def setup_find_samples_client(fake2, spawn_client, static_time):
 class TestFindSamples:
     @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
-    async def test_term(
-        self, find, fake2, path, spawn_client, snapshot, setup_find_samples_client
-    ):
+    async def test_term(self, find, path, snapshot, setup_find_samples_client):
         client = await setup_find_samples_client
 
         if find is not None:
@@ -225,9 +224,7 @@ class TestFindSamples:
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize("labels", [None, [3], [2, 3], [0]])
-    async def test_labels(
-        self, labels, fake2, spawn_client, snapshot, setup_find_samples_client
-    ):
+    async def test_labels(self, labels, snapshot, setup_find_samples_client):
         client = await setup_find_samples_client
         path = "/samples"
 
@@ -248,9 +245,7 @@ class TestFindSamples:
             ["nuvs:none", "pathoscope:none", "pathoscope:ready"],
         ],
     )
-    async def test_workflows(
-        self, workflows, fake2, spawn_client, snapshot, setup_find_samples_client
-    ):
+    async def test_workflows(self, workflows, snapshot, setup_find_samples_client):
         client = await setup_find_samples_client
         path = "/samples"
 
@@ -294,12 +289,11 @@ class TestGet:
         all_read,
         group_read,
         group,
-        get_sample_data,
         status,
+        get_sample_data,
         snapshot,
         spawn_client,
         static_time,
-        pg: AsyncEngine,
     ):
         client = await spawn_client(
             authorize=True, administrator=administrator, groups=["technicians"]
@@ -567,7 +561,7 @@ class TestCreate:
 
 @pytest.mark.apitest
 class TestEdit:
-    async def test(self, get_sample_data, snapshot, spawn_client, pg: AsyncEngine):
+    async def test(self, get_sample_data, snapshot, spawn_client):
         """
         Test that an existing sample can be edited correctly.
 
@@ -587,7 +581,7 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_name_exists(self, snapshot, spawn_client, resp_is):
+    async def test_name_exists(self, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name``
         already exists.
@@ -626,7 +620,11 @@ class TestEdit:
         assert resp.status == 400
         await resp_is.bad_request(resp, "Sample name is already in use")
 
-    async def test_label_exists(self, snapshot, spawn_client, pg: AsyncEngine):
+    async def test_label_exists(
+        self,
+        snapshot,
+        spawn_client,
+    ):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does
         not exist.
@@ -789,87 +787,78 @@ async def test_finalize(
 
 
 @pytest.mark.apitest
-async def test_remove(spawn_client, create_delete_result, tmpdir):
+async def test_delete(fake2, spawn_client, tmpdir):
+    """Test the ability to delete a sample."""
     client = await spawn_client(authorize=True)
-
-    config = get_config_from_app(client.app)
-    config.data_path = Path(tmpdir)
-
-    sample_path = config.data_path / "samples/test"
-
-    os.makedirs(sample_path, exist_ok=True)
-
-    await client.db.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "ready": True,
-            "user": {"id": "test"},
-        }
-    )
-
-    resp = await client.delete("/samples/test")
-
-    assert resp.status == 204
-
-    assert await client.db.samples.count_documents({}) == 0
-    assert not sample_path.exists()
-
-
-@pytest.mark.apitest
-@pytest.mark.parametrize("ready", [False])
-@pytest.mark.parametrize("exists", [True, False])
-async def test_job_remove(
-    exists,
-    ready,
-    mocker,
-    resp_is,
-    static_time,
-    spawn_job_client,
-    pg,
-    tmp_path,
-    test_upload,
-    fake2,
-):
-    """
-    Test that a sample can be removed when called using the Jobs API.
-
-    """
-    client = await spawn_job_client(authorize=True)
-    get_config_from_app(client.app).data_path = tmp_path
 
     user = await fake2.users.create()
 
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    await create_fake_sample(client.app, "test", user.id, finalized=True)
 
-    if exists:
-        file = await get_data_from_app(client.app).uploads.create(
-            "test", "reads", reserved=True, user=user.id
-        )
-        await get_data_from_app(client.app).uploads.finalize(9000, file.id)
-        await create_reads_file(pg, 0, "test", "test", "test", upload_id=1)
-
-        await client.db.samples.insert_one(
-            {
-                "_id": "test",
-                "all_read": True,
-                "all_write": True,
-                "ready": ready,
-            }
-        )
-
-    mocker.patch("virtool_core.utils.rm", return_value=True)
+    resp = await client.get("/samples/test")
+    assert resp.status == 200
 
     resp = await client.delete("/samples/test")
+    assert resp.status == 204
 
-    if exists and not ready:
-        await resp_is.no_content(resp)
-        upload = await get_data_from_app(client.app).uploads.get(file.id)
-        assert not upload.reserved
-    elif exists:
-        await resp_is.bad_request(resp, "Only unfinalized samples can be deleted")
-    else:
+    resp = await client.get("/samples/test")
+    assert resp.status == 404
+
+
+class TestDelete:
+    @pytest.mark.parametrize("finalized", [True, False])
+    async def test(
+        self,
+        config: ServerConfig,
+        finalized: bool,
+        fake2: DataFaker,
+        spawn_client,
+        tmp_path,
+    ):
+        client = await spawn_client(authorize=True)
+
+        (config.data_path / "samples/test").mkdir(parents=True)
+
+        user = await fake2.users.create()
+
+        await create_fake_sample(client.app, "test", user.id, finalized=finalized)
+
+        resp = await client.delete("/samples/test")
+
+        assert resp.status == 204 if finalized else 400
+
+    @pytest.mark.parametrize("finalized", [True, False])
+    async def test_from_job(
+        self,
+        finalized: bool,
+        config: ServerConfig,
+        fake2: DataFaker,
+        spawn_job_client,
+    ):
+        """Test that job client can delete a sample only when it is unfinalized."""
+        client = await spawn_job_client(authorize=True)
+
+        (config.data_path / "samples/test").mkdir(parents=True)
+
+        user = await fake2.users.create()
+
+        await create_fake_sample(client.app, "test", user.id, finalized=finalized)
+
+        resp = await client.delete("/samples/test")
+
+        if finalized:
+            assert resp.status == 400
+        else:
+            assert resp.status == 204
+
+    async def test_not_found(self, spawn_client):
+        client = await spawn_client(authorize=True)
+        resp = await client.delete("/samples/test")
+        assert resp.status == 404
+
+    async def test_not_found_from_job(self, spawn_job_client):
+        client = await spawn_job_client(authorize=True)
+        resp = await client.delete("/samples/test")
         assert resp.status == 404
 
 
@@ -897,78 +886,78 @@ async def test_find_analyses(
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
-    await client.db.subtraction.insert_one(
-        {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
-    )
+    job = await fake2.jobs.create(user=user_1)
 
-    job_1 = await fake2.jobs.create(user=user_1)
-
-    await client.db.references.insert_many(
-        [
-            {"_id": "foo", "data_type": "genome", "name": "Foo"},
-            {"_id": "baz", "data_type": "genome", "name": "Baz"},
-        ],
-        session=None,
-    )
-
-    await client.db.analyses.insert_many(
-        [
-            {
-                "_id": "test_1",
-                "workflow": "pathoscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": {"id": job_1.id},
-                "index": {"version": 2, "id": "foo"},
-                "reference": {"id": "baz", "name": "Baz"},
-                "sample": {"id": "test"},
-                "subtractions": [],
-                "user": {"id": user_1.id},
-                "foobar": True,
-            },
-            {
-                "_id": "test_2",
-                "workflow": "pathoscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": {"id": "foo"},
-                "index": {"version": 2, "id": "foo"},
-                "user": {"id": user_1.id},
-                "reference": {"id": "baz", "name": "Baz"},
-                "sample": {"id": "test"},
-                "subtractions": ["foo"],
-                "foobar": True,
-            },
-            {
-                "_id": "test_3",
-                "workflow": "pathoscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": None,
-                "index": {"version": 2, "id": "foo"},
-                "reference": {"id": "foo", "name": "Foo"},
-                "sample": {"id": "test"},
-                "subtractions": ["foo"],
-                "user": {"id": user_2.id},
-                "foobar": False,
-            },
-        ],
-        session=None,
+    await asyncio.gather(
+        client.db.subtraction.insert_one(
+            {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
+        ),
+        client.db.references.insert_many(
+            [
+                {"_id": "foo", "data_type": "genome", "name": "Foo"},
+                {"_id": "baz", "data_type": "genome", "name": "Baz"},
+            ],
+            session=None,
+        ),
+        client.db.analyses.insert_many(
+            [
+                {
+                    "_id": "test_1",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": {"id": job.id},
+                    "index": {"version": 2, "id": "foo"},
+                    "reference": {"id": "baz", "name": "Baz"},
+                    "sample": {"id": "test"},
+                    "subtractions": [],
+                    "user": {"id": user_1.id},
+                    "foobar": True,
+                },
+                {
+                    "_id": "test_2",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": {"id": "foo"},
+                    "index": {"version": 2, "id": "foo"},
+                    "user": {"id": user_1.id},
+                    "reference": {"id": "baz", "name": "Baz"},
+                    "sample": {"id": "test"},
+                    "subtractions": ["foo"],
+                    "foobar": True,
+                },
+                {
+                    "_id": "test_3",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": None,
+                    "index": {"version": 2, "id": "foo"},
+                    "reference": {"id": "foo", "name": "Foo"},
+                    "sample": {"id": "test"},
+                    "subtractions": ["foo"],
+                    "user": {"id": user_2.id},
+                    "foobar": False,
+                },
+            ],
+            session=None,
+        ),
     )
 
     url = "/samples/test/analyses"
 
     if term:
-        url += f"?term={term}"
+        url = f"{url}?term={term}"
 
     resp = await client.get(url)
 
     if error:
         await resp_is.not_found(resp)
-        return
 
-    assert resp.status == 200
-    assert await resp.json() == snapshot
+    else:
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
@@ -1140,7 +1129,6 @@ class TestUploadReads:
         spawn_job_client,
         static_time,
         resp_is,
-        pg,
         test_files_path,
         tmp_path,
         fake2,

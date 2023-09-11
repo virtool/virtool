@@ -343,67 +343,34 @@ def get_workflow_name(workflow_name: str) -> str:
 
 
 async def recalculate_workflow_tags(
-    db, sample_id: str, session: Optional[AsyncIOMotorClientSession] = None
-) -> dict:
+    mongo: "Mongo", sample_id: str, session: AsyncIOMotorClientSession | None = None
+):
     """
     Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param sample_id: the id of the sample to recalculate tags for
     :param session: an optional MongoDB session to use
     :return: the updated sample document
 
     """
-    analyses = await asyncio.shield(
-        db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(None)
+    analyses, library_type = await asyncio.gather(
+        mongo.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(
+            None
+        ),
+        get_one_field(mongo.samples, "library_type", sample_id),
     )
 
-    library_type = await get_one_field(db.samples, "library_type", sample_id)
-
-    update = {
-        **virtool.samples.utils.calculate_workflow_tags(analyses),
-        **derive_workflow_state(analyses, library_type),
-    }
-
-    document = await db.samples.find_one_and_update(
+    await mongo.samples.update_one(
         {"_id": sample_id},
-        {"$set": update},
-        projection=LIST_PROJECTION,
+        {
+            "$set": {
+                **virtool.samples.utils.calculate_workflow_tags(analyses),
+                **derive_workflow_state(analyses, library_type),
+            }
+        },
         session=session,
     )
-
-    return document
-
-
-async def remove_samples(db, config: Config, id_list: List[str]) -> DeleteResult:
-    """
-    Complete removes the samples identified by the document ids in ``id_list``.
-
-    In order, it:
-    - removes all analyses associated with the sample from the analyses collection
-    - removes the sample from the samples collection
-    - removes the sample directory from the file system
-
-    :param db: a Motor client
-    :param config: the application config object
-    :param id_list: a list sample ids to remove
-    :return: the result from the samples collection remove operation
-
-    """
-    # Remove all analysis documents associated with the sample.
-    await db.analyses.delete_many({"sample.id": {"$in": id_list}})
-
-    # Remove the samples described by id_list from the database.
-    result = await db.samples.delete_many({"_id": {"$in": id_list}})
-
-    for sample_id in id_list:
-        try:
-            path = virtool.samples.utils.join_sample_path(config, sample_id)
-            rm(path, recursive=True)
-        except FileNotFoundError:
-            pass
-
-    return result
 
 
 async def validate_force_choice_group(
@@ -437,33 +404,6 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
         and files[0]["name"] == "reads_1.fastq"
         and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
-
-
-async def update_is_compressed(db, sample: Dict[str, Any]):
-    """
-    Update the ``is_compressed`` field for the passed ``sample`` in the database if all
-    of its files are compressed.
-
-    :param db: the application database
-    :param sample: the sample document
-
-    """
-    files = sample["files"]
-
-    names = [file["name"] for file in files]
-
-    is_compressed = names in (
-        ["reads_1.fq.gz"],
-        [
-            "reads_1.fq.gz",
-            "reads_2.fq.gz",
-        ],
-    )
-
-    if is_compressed:
-        await db.samples.update_one(
-            {"_id": sample["_id"]}, {"$set": {"is_compressed": True}}
-        )
 
 
 async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, Any]):
@@ -555,96 +495,31 @@ async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str
         await db.samples.update_one({"_id": sample_id}, {"$unset": {"files": ""}})
 
 
-async def finalize(
-    db,
-    pg: AsyncEngine,
-    sample_id: str,
-    quality: Dict[str, Any],
-    _run_in_thread: callable,
-    data_path: Path,
-) -> Dict[str, Any]:
+async def update_is_compressed(db, sample: Dict[str, Any]):
     """
-    Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
+    Update the ``is_compressed`` field for the passed ``sample`` in the database if all
+    of its files are compressed.
 
-    :param db: the application database object
-    :param pg: the PostgreSQL AsyncEngine object
-    :param sample_id: the id of the sample
-    :param quality: a dict contains quality data
-    :param _run_in_thread: the application thread running function
-    :param data_path: the application data path settings
-
-    :return: the sample document after finalizing
+    :param db: the application database
+    :param sample: the sample document
 
     """
-    document = await db.samples.find_one_and_update(
-        {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
-    )
+    files = sample["files"]
 
-    async with AsyncSession(pg) as session:
-        rows = (
-            (
-                await session.execute(
-                    select(SQLUpload)
-                    .filter(SQLSampleReads.sample == sample_id)
-                    .join_from(SQLSampleReads, SQLUpload)
-                )
-            )
-            .unique()
-            .scalars()
-        )
+    names = [file["name"] for file in files]
 
-        for row in rows:
-            row.reads.clear()
-            row.removed = True
-            row.removed_at = virtool.utils.timestamp()
-
-            try:
-                await to_thread(rm, data_path / "files" / row.name_on_disk)
-            except FileNotFoundError:
-                pass
-
-            session.add(row)
-
-        await session.commit()
-
-    return await apply_transforms(
-        base_processor(document),
-        [ArtifactsAndReadsTransform(pg), AttachUserTransform(db)],
-    )
-
-
-async def get_sample(app, sample_id: str):
-    """
-    Get the sample document with subtractions, labels, and reads attached.
-
-    # TODO: Attach caches using an attacher.
-    """
-    db = app["db"]
-    pg = app["pg"]
-
-    document = await db.samples.find_one({"_id": sample_id})
-
-    if not document:
-        raise ValueError(f"Sample {sample_id} does not exist.")
-
-    document["caches"] = [
-        base_processor(cache)
-        async for cache in db.caches.find({"sample.id": sample_id})
-    ]
-
-    document = await apply_transforms(
-        base_processor(document),
+    is_compressed = names in (
+        ["reads_1.fq.gz"],
         [
-            ArtifactsAndReadsTransform(pg),
-            AttachLabelsTransform(pg),
-            AttachSubtractionTransform(db),
-            AttachUserTransform(db),
+            "reads_1.fq.gz",
+            "reads_2.fq.gz",
         ],
     )
 
-    document["paired"] = len(document["reads"]) == 2
-
-    return document
+    if is_compressed:
+        await db.samples.update_one(
+            {"_id": sample["_id"]}, {"$set": {"is_compressed": True}}
+        )
 
 
 class NameGenerator:

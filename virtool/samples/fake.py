@@ -1,19 +1,20 @@
-from asyncio import to_thread
 import shutil
+from asyncio import to_thread
 from contextlib import suppress
 from pathlib import Path
 from typing import Optional
 
 from sqlalchemy.exc import IntegrityError
-
 from virtool_core.models.settings import Settings
-from virtool.config import get_config_from_app
 
+from virtool.config import get_config_from_app
+from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
-from virtool.samples.db import create_sample, finalize
+from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
 from virtool.types import App
+from virtool.utils import base_processor
 
 READ_FILES_PATH = example_path / "reads"
 
@@ -68,9 +69,9 @@ async def create_fake_sample(
     app: App,
     sample_id: str,
     user_id: str,
-    paired=False,
-    finalized=False,
-) -> dict:
+    paired: bool = False,
+    finalized: bool = False,
+):
     fake = app.get("fake", FakerWrapper())
 
     db = app["db"]
@@ -79,32 +80,31 @@ async def create_fake_sample(
     subtraction_ids = [doc["_id"] async for doc in db.subtraction.find()][:2]
 
     if finalized is True:
-        with suppress(IntegrityError):
-            if paired:
-                for n in (1, 2):
-                    file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
+        if paired:
+            for n in (1, 2):
+                file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
 
-                    await copy_reads_file(app, file_path, f"reads_{n}.fq.gz", sample_id)
-
-                    await create_reads_file(
-                        pg,
-                        file_path.stat().st_size,
-                        f"reads_{n}.fq.gz",
-                        f"reads_{n}.fq.gz",
-                        sample_id,
-                    )
-            else:
-                file_path = READ_FILES_PATH / "single.fq.gz"
-
-                await copy_reads_file(app, file_path, "reads_1.fq.gz", sample_id)
+                await copy_reads_file(app, file_path, f"reads_{n}.fq.gz", sample_id)
 
                 await create_reads_file(
                     pg,
                     file_path.stat().st_size,
-                    "reads_1.fq.gz",
-                    "reads_1.fq.gz",
+                    f"reads_{n}.fq.gz",
+                    f"reads_{n}.fq.gz",
                     sample_id,
                 )
+        else:
+            file_path = READ_FILES_PATH / "single.fq.gz"
+
+            await copy_reads_file(app, file_path, "reads_1.fq.gz", sample_id)
+
+            await create_reads_file(
+                pg,
+                file_path.stat().st_size,
+                "reads_1.fq.gz",
+                "reads_1.fq.gz",
+                sample_id,
+            )
 
     settings = Settings()
     settings.sample_group_read = True
@@ -112,7 +112,7 @@ async def create_fake_sample(
     settings.sample_all_read = True
     settings.sample_all_write = True
 
-    sample = await create_sample(
+    await create_sample(
         _id=sample_id,
         db=db,
         name=f"Fake {sample_id.upper()}",
@@ -129,18 +129,10 @@ async def create_fake_sample(
     )
 
     if finalized is True:
-        sample = await finalize(
-            db=db,
-            pg=pg,
+        await get_data_from_app(app).samples.finalize(
             sample_id=sample_id,
             quality=await create_fake_quality(fake),
-            _run_in_thread=to_thread,
-            data_path=get_config_from_app(app).data_path,
         )
-
-    sample["_id"] = sample.pop("id")
-
-    return sample
 
 
 async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: str):
