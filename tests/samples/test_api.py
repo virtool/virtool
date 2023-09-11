@@ -7,8 +7,6 @@ from typing import List, Union
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from pydantic import BaseModel
-from pydantic_factories import ModelFactory
 from pymongo import ASCENDING
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import LibraryType, Permission
