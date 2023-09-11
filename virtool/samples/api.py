@@ -44,6 +44,7 @@ from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row, get_rows
+from virtool.samples.data import SamplesData
 from virtool.samples.db import (
     RIGHTS_PROJECTION,
     check_rights,
@@ -273,16 +274,14 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    await virtool.samples.db.finalize(
-        req.app["db"],
-        req.app["pg"],
+    await get_data_from_req(req).samples.finalize(
         sample_id,
         data["quality"],
         to_thread,
         get_config_from_req(req).data_path,
     )
 
-    return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
+    return json_response(await get_data_from_req(req).samples.get(sample_id))
 
 
 @routes.view("/samples/{sample_id}/rights")
