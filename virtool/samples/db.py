@@ -129,7 +129,9 @@ class ArtifactsAndReadsTransform(AbstractTransform):
                 if upload := reads_file.get("upload"):
                     reads_file["upload"] = (
                         (
-                            await session.execute(select(SQLUpload).filter_by(id=upload))
+                            await session.execute(
+                                select(SQLUpload).filter_by(id=upload)
+                            )
                         ).scalar()
                     ).to_dict()
 
