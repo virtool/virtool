@@ -222,7 +222,6 @@ class AnalysisData(DataLayerPiece):
         :param subtractions: the list of the subtraction IDs to remove from the analysis
         :param user_id: the ID of the user starting the job
         :param workflow: the analysis workflow to run
-        :param job_id: the ID of the job
         :param space_id: the ID of the parent space
         :param analysis_id: the ID of the analysis
         :return: the analysis
