@@ -2,12 +2,13 @@ import asyncio
 import logging
 import math
 from asyncio import gather, to_thread
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 
 import virtool_core.utils
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
@@ -36,6 +37,7 @@ from virtool.samples.db import (
     recalculate_workflow_tags,
     validate_force_choice_group,
 )
+from virtool.samples.models import SQLSampleReads
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import lookup_nested_subtractions
@@ -43,7 +45,8 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
-from virtool.users.db import lookup_nested_user_by_id
+from virtool.uploads.models import SQLUpload
+from virtool.users.db import lookup_nested_user_by_id, AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
 logger = logging.getLogger(__name__)
@@ -186,6 +189,62 @@ class SamplesData(DataLayerPiece):
         document["paired"] = len(document["reads"]) == 2
 
         return Sample(**document)
+
+    async def finalize(
+        self,
+        sample_id: str,
+        quality: Dict[str, Any],
+    ) -> Sample:
+        """
+        Finalize a sample by setting a ``quality`` field
+        and ``ready`` to ``True``
+
+        :param sample_id: the id of the sample
+        :param quality: a dict containing quality data
+
+        :return: the sample after finalizing
+
+        """
+
+        document = await self._mongo.samples.find_one_and_update(
+            {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
+        )
+
+        async with AsyncSession(self._pg) as session:
+            rows = (
+                (
+                    await session.execute(
+                        select(SQLUpload)
+                        .filter(SQLSampleReads.sample == sample_id)
+                        .join_from(SQLSampleReads, SQLUpload)
+                    )
+                )
+                .unique()
+                .scalars()
+            )
+
+            for row in rows:
+                row.reads.clear()
+                row.removed = True
+                row.removed_at = virtool.utils.timestamp()
+
+                try:
+                    await to_thread(
+                        virtool_core.utils.rm,
+                        self._config.data_path / "files" / row.name_on_disk,
+                    )
+                except FileNotFoundError:
+                    pass
+
+                session.add(row)
+
+            await session.commit()
+
+        await apply_transforms(
+            base_processor(document),
+            [ArtifactsAndReadsTransform(self._pg), AttachUserTransform(self._mongo)],
+        )
+        return await self.get(sample_id)
 
     async def create(
         self,

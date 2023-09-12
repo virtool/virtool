@@ -3,63 +3,91 @@
     'dev': False,
     'endpoints': <class 'dict'> {
       'account': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/account',
+        'doc': 'https://www.virtool.ca/docs/api/account',
         'url': '/account',
       },
+      'admin': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/admin',
+        'url': '/admin',
+      },
       'analyses': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/analyses',
+        'doc': 'https://www.virtool.ca/docs/api/analyses',
         'url': '/analyses',
       },
-      'genbank': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/genbank',
-        'url': '/genbank',
+      'authentication': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/authentication',
+        'url': '/overview/authentication',
+      },
+      'errors': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/errors',
+        'url': '/overview/errors',
       },
       'groups': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/groups',
+        'doc': 'https://www.virtool.ca/docs/api/groups',
         'url': '/groups',
       },
       'history': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/history',
+        'doc': 'https://www.virtool.ca/docs/api/history',
         'url': '/history',
       },
-      'hmm': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/hmm',
-        'url': '/hmm',
+      'hmms': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/hmms',
+        'url': '/hmms',
       },
       'indexes': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/indexes',
+        'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       },
+      'instance_message': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/instance_message',
+        'url': '/instance_message',
+      },
       'jobs': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/jobs',
+        'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
       },
+      'labels': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/labels',
+        'url': '/labels',
+      },
+      'ml': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/ml',
+        'url': '/ml',
+      },
       'otus': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/otus',
+        'doc': 'https://www.virtool.ca/docs/api/otus',
         'url': '/otus',
       },
       'references': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/refs',
+        'doc': 'https://www.virtool.ca/docs/api/refs',
         'url': '/references',
       },
       'samples': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/samples',
+        'doc': 'https://www.virtool.ca/docs/api/samples',
         'url': '/samples',
       },
       'settings': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/settings',
+        'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
       },
+      'spaces': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/spaces',
+        'url': '/spaces',
+      },
       'subtraction': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/subtraction',
+        'doc': 'https://www.virtool.ca/docs/api/subtraction',
         'url': '/subtraction',
       },
       'tasks': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/tasks',
+        'doc': 'https://www.virtool.ca/docs/api/tasks',
         'url': '/tasks',
       },
+      'uploads': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/uploads',
+        'url': '/uploads',
+      },
       'users': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/users',
+        'doc': 'https://www.virtool.ca/docs/api/users',
         'url': '/users',
       },
     },
@@ -72,63 +100,91 @@
     'dev': True,
     'endpoints': <class 'dict'> {
       'account': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/account',
+        'doc': 'https://www.virtool.ca/docs/api/account',
         'url': '/account',
       },
+      'admin': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/admin',
+        'url': '/admin',
+      },
       'analyses': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/analyses',
+        'doc': 'https://www.virtool.ca/docs/api/analyses',
         'url': '/analyses',
       },
-      'genbank': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/genbank',
-        'url': '/genbank',
+      'authentication': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/authentication',
+        'url': '/overview/authentication',
+      },
+      'errors': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/errors',
+        'url': '/overview/errors',
       },
       'groups': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/groups',
+        'doc': 'https://www.virtool.ca/docs/api/groups',
         'url': '/groups',
       },
       'history': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/history',
+        'doc': 'https://www.virtool.ca/docs/api/history',
         'url': '/history',
       },
-      'hmm': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/hmm',
-        'url': '/hmm',
+      'hmms': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/hmms',
+        'url': '/hmms',
       },
       'indexes': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/indexes',
+        'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       },
+      'instance_message': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/instance_message',
+        'url': '/instance_message',
+      },
       'jobs': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/jobs',
+        'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
       },
+      'labels': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/labels',
+        'url': '/labels',
+      },
+      'ml': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/ml',
+        'url': '/ml',
+      },
       'otus': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/otus',
+        'doc': 'https://www.virtool.ca/docs/api/otus',
         'url': '/otus',
       },
       'references': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/refs',
+        'doc': 'https://www.virtool.ca/docs/api/refs',
         'url': '/references',
       },
       'samples': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/samples',
+        'doc': 'https://www.virtool.ca/docs/api/samples',
         'url': '/samples',
       },
       'settings': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/settings',
+        'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
       },
+      'spaces': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/spaces',
+        'url': '/spaces',
+      },
       'subtraction': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/subtraction',
+        'doc': 'https://www.virtool.ca/docs/api/subtraction',
         'url': '/subtraction',
       },
       'tasks': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/tasks',
+        'doc': 'https://www.virtool.ca/docs/api/tasks',
         'url': '/tasks',
       },
+      'uploads': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/uploads',
+        'url': '/uploads',
+      },
       'users': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/users',
+        'doc': 'https://www.virtool.ca/docs/api/users',
         'url': '/users',
       },
     },
@@ -141,63 +197,91 @@
     'dev': False,
     'endpoints': <class 'dict'> {
       'account': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/account',
+        'doc': 'https://www.virtool.ca/docs/api/account',
         'url': '/account',
       },
+      'admin': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/admin',
+        'url': '/admin',
+      },
       'analyses': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/analyses',
+        'doc': 'https://www.virtool.ca/docs/api/analyses',
         'url': '/analyses',
       },
-      'genbank': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/genbank',
-        'url': '/genbank',
+      'authentication': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/authentication',
+        'url': '/overview/authentication',
+      },
+      'errors': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/errors',
+        'url': '/overview/errors',
       },
       'groups': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/groups',
+        'doc': 'https://www.virtool.ca/docs/api/groups',
         'url': '/groups',
       },
       'history': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/history',
+        'doc': 'https://www.virtool.ca/docs/api/history',
         'url': '/history',
       },
-      'hmm': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/hmm',
-        'url': '/hmm',
+      'hmms': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/hmms',
+        'url': '/hmms',
       },
       'indexes': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/indexes',
+        'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       },
+      'instance_message': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/instance_message',
+        'url': '/instance_message',
+      },
       'jobs': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/jobs',
+        'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
       },
+      'labels': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/labels',
+        'url': '/labels',
+      },
+      'ml': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/ml',
+        'url': '/ml',
+      },
       'otus': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/otus',
+        'doc': 'https://www.virtool.ca/docs/api/otus',
         'url': '/otus',
       },
       'references': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/refs',
+        'doc': 'https://www.virtool.ca/docs/api/refs',
         'url': '/references',
       },
       'samples': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/samples',
+        'doc': 'https://www.virtool.ca/docs/api/samples',
         'url': '/samples',
       },
       'settings': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/settings',
+        'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
       },
+      'spaces': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/spaces',
+        'url': '/spaces',
+      },
       'subtraction': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/subtraction',
+        'doc': 'https://www.virtool.ca/docs/api/subtraction',
         'url': '/subtraction',
       },
       'tasks': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/tasks',
+        'doc': 'https://www.virtool.ca/docs/api/tasks',
         'url': '/tasks',
       },
+      'uploads': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/uploads',
+        'url': '/uploads',
+      },
       'users': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/users',
+        'doc': 'https://www.virtool.ca/docs/api/users',
         'url': '/users',
       },
     },
@@ -210,63 +294,91 @@
     'dev': True,
     'endpoints': <class 'dict'> {
       'account': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/account',
+        'doc': 'https://www.virtool.ca/docs/api/account',
         'url': '/account',
       },
+      'admin': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/admin',
+        'url': '/admin',
+      },
       'analyses': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/analyses',
+        'doc': 'https://www.virtool.ca/docs/api/analyses',
         'url': '/analyses',
       },
-      'genbank': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/genbank',
-        'url': '/genbank',
+      'authentication': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/authentication',
+        'url': '/overview/authentication',
+      },
+      'errors': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/overview/errors',
+        'url': '/overview/errors',
       },
       'groups': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/groups',
+        'doc': 'https://www.virtool.ca/docs/api/groups',
         'url': '/groups',
       },
       'history': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/history',
+        'doc': 'https://www.virtool.ca/docs/api/history',
         'url': '/history',
       },
-      'hmm': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/hmm',
-        'url': '/hmm',
+      'hmms': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/hmms',
+        'url': '/hmms',
       },
       'indexes': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/indexes',
+        'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       },
+      'instance_message': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/instance_message',
+        'url': '/instance_message',
+      },
       'jobs': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/jobs',
+        'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
       },
+      'labels': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/labels',
+        'url': '/labels',
+      },
+      'ml': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/ml',
+        'url': '/ml',
+      },
       'otus': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/otus',
+        'doc': 'https://www.virtool.ca/docs/api/otus',
         'url': '/otus',
       },
       'references': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/refs',
+        'doc': 'https://www.virtool.ca/docs/api/refs',
         'url': '/references',
       },
       'samples': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/samples',
+        'doc': 'https://www.virtool.ca/docs/api/samples',
         'url': '/samples',
       },
       'settings': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/settings',
+        'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
       },
+      'spaces': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/spaces',
+        'url': '/spaces',
+      },
       'subtraction': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/subtraction',
+        'doc': 'https://www.virtool.ca/docs/api/subtraction',
         'url': '/subtraction',
       },
       'tasks': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/tasks',
+        'doc': 'https://www.virtool.ca/docs/api/tasks',
         'url': '/tasks',
       },
+      'uploads': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/api/uploads',
+        'url': '/uploads',
+      },
       'users': <class 'dict'> {
-        'doc': 'https://www.virtool.ca/docs/developer/api/users',
+        'doc': 'https://www.virtool.ca/docs/api/users',
         'url': '/users',
       },
     },

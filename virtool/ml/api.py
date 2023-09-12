@@ -56,7 +56,7 @@ class MLModelFileView(PydanticView):
         return FileResponse(
             file_descriptor.path,
             headers={
-                "Content-Disposition": "attachment; filename='model.tar.gz'",
+                "Content-Disposition": "attachment; filename=model.tar.gz",
                 "Content-Type": "application/octet-stream",
             },
         )

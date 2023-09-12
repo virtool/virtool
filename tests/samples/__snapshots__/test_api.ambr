@@ -2123,6 +2123,8 @@
 ---
 # name: test_finalize[quality]
   <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
     'artifacts': <class 'list'> [
       <class 'dict'> {
         'download_url': '/samples/test/artifacts/reference.fa.gz',
@@ -2137,11 +2139,52 @@
     ],
     'caches': <class 'list'> [
     ],
+    'created_at': '1970-01-01T00:00:13Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
     'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
     ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
     'paired': False,
+    'pathoscope': True,
     'quality': <class 'dict'> {
+      'bases': <class 'list'> [
+        <class 'list'> [
+          1543,
+        ],
+      ],
+      'composition': <class 'list'> [
+        <class 'list'> [
+          6372,
+        ],
+      ],
+      'count': 7069,
+      'encoding': 'OuBQPPuwYimrxkNpPWUx',
+      'gc': 34222440,
+      'length': <class 'list'> [
+        3237,
+      ],
+      'sequences': <class 'list'> [
+        7091,
+      ],
     },
     'reads': <class 'list'> [
       <class 'dict'> {
@@ -2150,9 +2193,9 @@
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
         'sample': 'test',
-        'size': None,
+        'size': 12,
         'upload': None,
-        'uploaded_at': None,
+        'uploaded_at': '2023-09-01T01:01:00Z',
       },
     ],
     'ready': True,
@@ -2160,8 +2203,13 @@
     ],
     'user': <class 'dict'> {
       'administrator': False,
-      'handle': 'leeashley',
+      'handle': 'kellylopez',
       'id': 'bf1b993c',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     },
   }
 ---

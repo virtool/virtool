@@ -9,7 +9,7 @@ import virtool.genbank.api
 import virtool.groups.api
 import virtool.history.api
 import virtool.hmm.api
-import virtool.http.root
+import virtool.api.root
 import virtool.indexes.api
 import virtool.jobs.api
 import virtool.labels.api
@@ -39,7 +39,7 @@ ROUTES = (
     virtool.history.api.routes,
     virtool.hmm.api.routes,
     virtool.indexes.api.routes,
-    virtool.http.root.routes,
+    virtool.api.root.routes,
     virtool.jobs.api.routes,
     virtool.labels.api.routes,
     virtool.messages.api.routes,

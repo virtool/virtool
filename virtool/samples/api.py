@@ -17,6 +17,7 @@ from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
 import virtool.caches.db
+import virtool.mongo.utils
 import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
@@ -274,16 +275,12 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    await virtool.samples.db.finalize(
-        req.app["db"],
-        req.app["pg"],
+    sample = await get_data_from_req(req).samples.finalize(
         sample_id,
         data["quality"],
-        to_thread,
-        get_config_from_req(req).data_path,
     )
 
-    return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
+    return json_response(sample)
 
 
 @routes.view("/samples/{sample_id}/rights")

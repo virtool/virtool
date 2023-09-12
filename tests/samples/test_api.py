@@ -1,6 +1,8 @@
 import asyncio
+import datetime
 import os
 from pathlib import Path
+from typing import List, Union
 
 import arrow
 import pytest
@@ -644,7 +646,6 @@ class TestEdit:
                 "ready": True,
             }
         )
-
         resp = await client.patch("/samples/foo", {"labels": [1]})
 
         assert resp.status == 400
@@ -690,16 +691,64 @@ async def test_finalize(
     Test that sample can be finalized using the Jobs API.
 
     """
+    label = await fake2.labels.create()
+    await fake2.labels.create()
+
     user = await fake2.users.create()
 
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
-
-    data = {field: {}}
+    data = {
+        field: {
+            "bases": [[1543]],
+            "composition": [[6372]],
+            "count": 7069,
+            "encoding": "OuBQPPuwYimrxkNpPWUx",
+            "gc": 34222440,
+            "length": [3237],
+            "sequences": [7091],
+        }
+    }
 
     await client.db.samples.insert_one(
-        {"_id": "test", "ready": True, "user": {"id": user.id}, "subtractions": []}
+        {
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "created_at": 13,
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz",
+                }
+            ],
+            "format": "fastq",
+            "group": "none",
+            "group_read": True,
+            "group_write": True,
+            "hold": False,
+            "host": "",
+            "is_legacy": False,
+            "isolate": "",
+            "labels": [label.id],
+            "library_type": LibraryType.normal.value,
+            "locale": "",
+            "name": "Test",
+            "notes": "",
+            "nuvs": False,
+            "pathoscope": True,
+            "ready": True,
+            "subtractions": ["apple", "pear"],
+            "user": {"id": user.id},
+            "workflows": {
+                "aodp": WorkflowState.INCOMPATIBLE.value,
+                "pathoscope": WorkflowState.COMPLETE.value,
+                "nuvs": WorkflowState.PENDING.value,
+            },
+            "quality": None,
+        }
     )
 
     async with AsyncSession(pg) as session:
@@ -713,7 +762,11 @@ async def test_finalize(
         )
 
         reads = SQLSampleReads(
-            name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
+            name="reads_1.fq.gz",
+            name_on_disk="reads_1.fq.gz",
+            sample="test",
+            size=12,
+            uploaded_at=datetime.datetime(2023, 9, 1, 1, 1),
         )
 
         upload.reads.append(reads)
