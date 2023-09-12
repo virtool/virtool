@@ -2134,14 +2134,9 @@
         'uploaded_at': None,
       },
     ],
-    'created_at': 13,
-    'files': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/download/samples/files/file_1.fq.gz',
-        'id': 'foo',
-        'name': 'Bar.fq.gz',
-      },
+    'caches': <class 'list'> [
     ],
+    'created_at': '1970-01-01T00:00:13Z',
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
@@ -2151,14 +2146,21 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
-      1,
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
     ],
     'library_type': 'normal',
     'locale': '',
     'name': 'Test',
     'notes': '',
     'nuvs': False,
+    'paired': False,
     'pathoscope': True,
     'quality': <class 'dict'> {
       'bases': <class 'list'> [
@@ -2195,8 +2197,6 @@
     ],
     'ready': True,
     'subtractions': <class 'list'> [
-      'apple',
-      'pear',
     ],
     'user': <class 'dict'> {
       'administrator': False,
