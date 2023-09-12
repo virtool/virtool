@@ -8,7 +8,6 @@ async def test_create(
     fake2,
     mongo,
     snapshot,
-    static_time,
     users_data,
 ):
     """
@@ -62,5 +61,5 @@ async def test_create(
         analysis_id="test_analysis",
     )
 
-    assert analysis == snapshot
-    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot
+    assert analysis == snapshot(name="obj")
+    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(name="mongo")

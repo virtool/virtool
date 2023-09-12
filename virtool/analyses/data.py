@@ -217,7 +217,6 @@ class AnalysisData(DataLayerPiece):
         write permissions on the sample document and assigns it a creator username
         based on the requesting connection.
 
-        :param db: the application database object
         :param sample_id: the ID of the sample to create an analysis for
         :param ref_id: the ID of the reference to analyze against
         :param subtractions: the list of the subtraction IDs to remove from the analysis

@@ -191,8 +191,8 @@ async def get_subtraction_names(
     """
     Retrieve a list of subtraction names and ids.
 
-    :param subtraction_ids: list containing subtraction ids
     :param mongo: the application database client
+    :param subtraction_ids: list containing subtraction ids
     :return: list of dictionaries containing {"_id": sub_id, "name": sub_name}
     """
     subtractions = await mongo.subtraction.find(
