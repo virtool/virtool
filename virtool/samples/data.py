@@ -240,10 +240,11 @@ class SamplesData(DataLayerPiece):
 
             await session.commit()
 
-        return await apply_transforms(
+        await apply_transforms(
             base_processor(document),
             [ArtifactsAndReadsTransform(self._pg), AttachUserTransform(self._mongo)],
         )
+        return await self.get(sample_id)
 
     async def create(
         self,
