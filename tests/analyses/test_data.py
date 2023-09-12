@@ -1,3 +1,4 @@
+from syrupy.filters import props
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
 from tests.users.test_data import users_data
@@ -61,5 +62,7 @@ async def test_create(
         analysis_id="test_analysis",
     )
 
-    assert analysis == snapshot(name="obj")
-    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(name="mongo")
+    assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
+    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
+        name="mongo", exclude=props("created_at", "updated_at")
+    )
