@@ -17,8 +17,6 @@ from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
 import virtool.caches.db
-import virtool.mongo.utils
-import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
 from virtool.analyses.db import PROJECTION
