@@ -1,39 +1,22 @@
-import logging
+from logging import getLogger
 
 from aiohttp.web import Application
 
-from virtool.pg.base import Base
+from virtool.authorization.client import get_authorization_client_from_app
 from virtool.startup import get_scheduler_from_app
+from virtool.utils import get_http_session_from_app
 
-logger = logging.getLogger(__name__)
+logger = getLogger("shutdown")
 
 
-async def shutdown_client(app: Application):
+async def shutdown_authorization_client(app: Application):
     """
-    Attempt to close the async HTTP client session.
+    Attempt to close the OpenFGA client session.
 
     :param app: The application object
     """
-    logger.info("Stopping HTTP client")
-
-    try:
-        await app["client"].close()
-    except KeyError:
-        pass
-
-
-async def shutdown_dispatcher(app: Application):
-    """
-    Attempt to close the app's `Dispatcher` object.
-
-    :param app: The application object
-    """
-    logger.info("Stopping dispatcher")
-
-    try:
-        await app["dispatcher"].close()
-    except KeyError:
-        pass
+    logger.info("Closing authorization client")
+    await get_authorization_client_from_app(app).openfga.close()
 
 
 async def shutdown_executors(app: Application):
@@ -43,12 +26,31 @@ async def shutdown_executors(app: Application):
     :param app: the application object
     """
     try:
-        app["executor"].shutdown(wait=True)
+        app["process_executor"].shutdown(wait=True)
     except KeyError:
         pass
 
+
+async def shutdown_http_client(app: Application):
+    """
+    Attempt to close the async HTTP client session.
+
+    :param app: The application object
+    """
+    logger.info("Closing HTTP client session")
+    await get_http_session_from_app(app).close()
+
+
+async def shutdown_redis(app: Application):
+    """
+    Attempt to close the application :class:`Redis` instance.
+
+    :param app: the application object
+    """
+    logger.info("Closing Redis connection")
     try:
-        app["process_executor"].shutdown(wait=True)
+        app["redis"].close()
+        await app["redis"].wait_closed()
     except KeyError:
         pass
 
@@ -59,33 +61,4 @@ async def shutdown_scheduler(app: Application):
 
     :param app: The application object
     """
-    scheduler = get_scheduler_from_app(app)
-    await scheduler.close()
-
-
-async def shutdown_redis(app: Application):
-    """
-    Attempt to close the app's `redis` instance.
-
-    :param app: The application object
-    """
-    logger.info("Closing Redis connection")
-
-    try:
-        app["redis"].close()
-        await app["redis"].wait_closed()
-    except KeyError:
-        pass
-
-
-async def drop_fake_postgres(app: Application):
-    """
-    Drop a fake PostgreSQL database if the instance was run with the ``--fake`` option.
-
-    :param app: the application object
-
-    """
-    if app["config"].fake and "fake_" in app["config"].postgres_connection_string:
-        async with app["pg"].begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-            logger.debug("Dropped fake PostgreSQL database.")
+    await get_scheduler_from_app(app).close()

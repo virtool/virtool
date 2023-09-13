@@ -1,571 +1,209 @@
+from __future__ import annotations
+
 import json
-import os
-import shutil
-from asyncio import gather, to_thread
-from datetime import timedelta
+from asyncio import to_thread
 from logging import getLogger
 from pathlib import Path
+from typing import Dict, Optional, TYPE_CHECKING
 
-import aiohttp
-import arrow
-from semver import VersionInfo
+from aiohttp import ClientConnectorError
+from humanfriendly.testing import TemporaryDirectory
 
-from virtool.data.utils import get_data_from_app
-from virtool.mongo.utils import get_one_field
-from virtool.errors import GitHubError
-from virtool.github import create_update_subdocument
-from virtool.history.db import patch_to_version
-from virtool.history.utils import remove_diff_files
+from virtool.api.custom_json import dump_string
+from virtool.errors import WebError
 from virtool.http.utils import download_file
-from virtool.references.db import (
-    download_and_parse_release,
-    fetch_and_update_release,
-    insert_change,
-    insert_joined_otu,
-    update_joined_otu,
-)
 from virtool.references.utils import (
     check_import_data,
     load_reference_file,
+    ReferenceSourceData,
 )
-from virtool.tasks.task import Task
-from virtool.utils import chunk_list, get_temp_dir
-from virtool_core.models.enums import HistoryMethod
+from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
+from virtool.tasks.task import BaseTask
 
 logger = getLogger(__name__)
 
 
-class CloneReferenceTask(Task):
-    task_type = "clone_reference"
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
 
-        self.steps = [self.copy_otus, self.create_history]
+class CloneReferenceTask(BaseTask):
+    """
+    Clone an existing reference.
 
-    async def copy_otus(self):
-        manifest = self.context["manifest"]
-        created_at = self.context["created_at"]
-        ref_id = self.context["ref_id"]
-        user_id = self.context["user_id"]
+    """
 
-        tracker = await self.get_tracker(len(manifest))
+    name = "clone_reference"
 
-        inserted_otu_ids = []
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
-        await get_data_from_app(self.app).tasks.update(self.id, step="copy_otus")
+        self.steps = [self.clone]
 
-        for source_otu_id, version in manifest.items():
-            _, patched, _ = await patch_to_version(
-                self.app["config"].data_path, self.db, source_otu_id, version
-            )
-
-            otu_id = await insert_joined_otu(
-                self.db, patched, created_at, ref_id, user_id
-            )
-
-            inserted_otu_ids.append(otu_id)
-
-            await tracker.add(1)
-
-        await self.update_context({"inserted_otu_ids": inserted_otu_ids})
-
-    async def create_history(self):
-        user_id = self.context["user_id"]
-        inserted_otu_ids = self.context["inserted_otu_ids"]
-
-        tracker = await self.get_tracker(len(inserted_otu_ids))
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="create_history")
-
-        for otu_id in inserted_otu_ids:
-            await insert_change(self.app, otu_id, HistoryMethod.clone, user_id)
-            await tracker.add(1)
-
-    async def cleanup(self):
-        ref_id = self.context["ref_id"]
-
-        query = {"reference.id": ref_id}
-
-        diff_file_change_ids = await self.db.history.distinct(
-            "_id", {**query, "diff": "file"}
-        )
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="cleanup")
-
-        await gather(
-            self.db.references.delete_one({"_id": ref_id}),
-            self.db.history.delete_many(query),
-            self.db.otus.delete_many(query),
-            self.db.sequences.delete_many(query),
-            remove_diff_files(self.app, diff_file_change_ids),
+    async def clone(self):
+        await self.data.references.populate_cloned_reference(
+            self.context["manifest"],
+            self.context["ref_id"],
+            self.context["user_id"],
+            self.create_progress_handler(),
         )
 
 
-class ImportReferenceTask(Task):
-    task_type = "import_reference"
+class ImportReferenceTask(BaseTask):
+    name = "import_reference"
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+    def __init__(self, task_id: int, data, context, temp_dir):
+        super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [
-            self.load_file,
-            self.validate,
-            self.import_reference,
-        ]
+        self.steps = [self.load_file, self.import_reference]
 
-        self.import_data = None
+        self.import_data: ReferenceSourceData | None = None
 
     async def load_file(self):
         path = Path(self.context["path"])
 
         try:
-            self.import_data = await self.run_in_thread(load_reference_file, path)
+            import_data = await to_thread(load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
-            return await self.error(str(err).split("JSONDecodeError: ")[1])
+            return await self._set_error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
             if "Not a gzipped file" in str(err):
-                return await self.error("Not a gzipped file")
+                return await self._set_error("Not a gzipped file")
 
-            return await self.error(str(err))
+            return await self._set_error(str(err))
 
-    async def validate(self):
-        if errors := check_import_data(self.import_data, strict=False, verify=True):
-            return await self.error(errors)
+        if errors := check_import_data(import_data, strict=False, verify=True):
+            return await self._set_error(errors)
+
+        self.import_data = ReferenceSourceData(**import_data)
 
     async def import_reference(self):
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
-        try:
-            data_type = self.import_data["data_type"]
-        except (TypeError, KeyError):
-            data_type = "genome"
-
-        try:
-            organism = self.import_data["organism"]
-        except (TypeError, KeyError):
-            organism = ""
-
-        try:
-            targets = self.import_data["targets"]
-        except (TypeError, KeyError):
-            targets = None
-
-        update_dict = {"data_type": data_type, "organism": organism}
-
-        if targets:
-            update_dict["targets"] = targets
-
-        await self.db.references.update_one({"_id": ref_id}, {"$set": update_dict})
-
-        created_at = await get_one_field(self.db.references, "created_at", ref_id)
-
-        otus = self.import_data["otus"]
-
-        tracker = await self.get_tracker(len(otus) * 2)
-
-        inserted_otu_ids = []
-
-        async with self.db.create_session() as session:
-            for chunk in chunk_list(otus, 10):
-                chunk_otu_ids = await gather(
-                    *[
-                        insert_joined_otu(
-                            self.db, otu, created_at, ref_id, user_id, session
-                        )
-                        for otu in chunk
-                    ]
-                )
-                inserted_otu_ids.extend(chunk_otu_ids)
-                await tracker.add(len(chunk))
-
-            for chunk in chunk_list(inserted_otu_ids, 10):
-                await gather(
-                    *[
-                        insert_change(
-                            self.app,
-                            otu_id,
-                            HistoryMethod.import_otu,
-                            user_id,
-                            session=session,
-                        )
-                        for otu_id in chunk
-                    ]
-                )
-                await tracker.add(len(chunk))
+        await self.data.references.populate_imported_reference(
+            ref_id, user_id, self.import_data, self.create_progress_handler()
+        )
 
 
-class RemoteReferenceTask(Task):
-    task_type = "remote_reference"
+class RemoteReferenceTask(BaseTask):
+    name = "remote_reference"
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [self.download, self.create_history, self.update_reference]
+        self.steps = [self.download, self.populate]
 
-        self.import_data = None
-        self.inserted_otu_ids = []
+        self.import_data: Optional[ReferenceSourceData] = None
 
     async def download(self):
-        tracker = await self.get_tracker(self.context["release"]["size"])
+        tracker = AccumulatingProgressHandlerWrapper(
+            self.create_progress_handler(), self.context["release"]["size"]
+        )
+
+        path = self.temp_path / "reference.json.gz"
 
         try:
-            self.import_data = await download_and_parse_release(
-                self.app, self.context["release"]["download_url"], self.id, tracker.add
+            await download_file(
+                self.context["release"]["download_url"], path, tracker.add
             )
-        except (aiohttp.ClientConnectorError, GitHubError):
-            return await get_data_from_app(self.app).tasks.update(
-                self.id, error="Could not download reference data"
-            )
+        except (ClientConnectorError, WebError):
+            await self._set_error("Could not download reference data")
+
+        import_data = await to_thread(load_reference_file, path)
+
+        if error := check_import_data(import_data, strict=True, verify=True):
+            await self._set_error(dump_string(error))
+
+        self.import_data = ReferenceSourceData(**import_data)
+
+    async def populate(self):
+        await self.data.references.populate_remote_reference(
+            self.context["ref_id"],
+            self.import_data,
+            self.context["user_id"],
+            self.context["release"],
+            self.create_progress_handler(),
+        )
+
+
+class UpdateRemoteReferenceTask(BaseTask):
+    name = "update_remote_reference"
+
+    def __init__(
+        self, task_id: int, data: DataLayer, context: Dict, temp_dir: TemporaryDirectory
+    ):
+        super().__init__(task_id, data, context, temp_dir)
+
+        self.steps = [self.download, self.update]
+
+        self.download_url = self.context["release"]["download_url"]
+        self.download_size = self.context["release"]["size"]
+        self.source_data: Optional[ReferenceSourceData] = None
+
+    async def download(self):
+        tracker = AccumulatingProgressHandlerWrapper(
+            self.create_progress_handler(), self.download_size
+        )
+
+        path = self.temp_path / "reference.json.gz"
 
         try:
-            data_type = self.import_data["data_type"]
-        except KeyError:
-            return await get_data_from_app(self.app).tasks.update(
-                self.id, error="Could not infer data type"
-            )
+            await download_file(self.download_url, path, tracker.add)
+        except (ClientConnectorError, WebError):
+            return await self._set_error("Could not download reference data")
 
-        await self.db.references.update_one(
-            {"_id": self.context["ref_id"]},
-            {
-                "$set": {
-                    "data_type": data_type,
-                    "organism": self.import_data.get("organism", "Unknown"),
-                }
-            },
-        )
+        data = await to_thread(load_reference_file, path)
 
-        error = check_import_data(self.import_data, strict=True, verify=True)
+        self.source_data = ReferenceSourceData(**data)
 
-        if error:
-            return await get_data_from_app(self.app).tasks.update(self.id, error=error)
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="import")
-
-    async def create_history(self):
-        otus = self.import_data["otus"]
-
-        tracker = await self.get_tracker(len(otus))
-
-        for otu in otus:
-            otu_id = await insert_joined_otu(
-                self.db,
-                otu,
-                self.context["created_at"],
-                self.context["ref_id"],
-                self.context["user_id"],
-            )
-            self.inserted_otu_ids.append(otu_id)
-            await tracker.add(1)
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="create_history")
-
-    async def update_reference(self):
-        tracker = await self.get_tracker(len(self.import_data["otus"]))
-
-        for otu_id in self.inserted_otu_ids:
-            await insert_change(
-                self.app, otu_id, HistoryMethod.remote, self.context["user_id"]
-            )
-
-            await tracker.add(1)
-
-        await self.db.references.update_one(
-            {
-                "_id": self.context["ref_id"],
-                "updates.id": self.context["release"]["id"],
-            },
-            {
-                "$set": {
-                    "installed": create_update_subdocument(
-                        self.context["release"], True, self.context["user_id"]
-                    ),
-                    "updates.$.ready": True,
-                    "updating": False,
-                }
-            },
-        )
-
-        await fetch_and_update_release(self.app, self.context["ref_id"])
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="Update_reference")
-
-
-class DeleteReferenceTask(Task):
-    task_type = "delete_reference"
-
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
-
-        self.steps = [
-            self.remove_directory,
-            self.remove_indexes,
-            self.remove_unreferenced_otus,
-            self.remove_referenced_otus,
-        ]
-
-        self.non_existent_references = []
-
-    async def remove_directory(self):
-        tracker = await self.get_tracker()
-
-        path = self.app["config"].data_path / "references"
-
-        reference_ids = os.listdir(path)
-        existent_references = await self.db.references.distinct(
-            "_id", {"_id": {"$in": reference_ids}}
-        )
-        self.non_existent_references = [
-            ref_id for ref_id in reference_ids if ref_id not in existent_references
-        ]
-
-        for dir_name in self.non_existent_references:
-            await to_thread(shutil.rmtree, path / dir_name, True)
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=tracker.step_completed, step="remove_directory"
-        )
-
-    async def remove_indexes(self):
-        tracker = await self.get_tracker()
-
-        await self.db.indexes.delete_many(
-            {"reference.id": {"$in": self.non_existent_references}}
-        )
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=tracker.step_completed, step="remove_indexes"
-        )
-
-    async def remove_unreferenced_otus(self):
-        tracker = await self.get_tracker()
-
-        for ref_id in self.non_existent_references:
-            referenced_otu_ids = await self.db.analyses.distinct(
-                "results.otu.id", {"reference.id": ref_id}
-            )
-
-            unreferenced_otu_ids = await self.db.otus.distinct(
-                "_id",
-                {"reference.id": ref_id, "_id": {"$not": {"$in": referenced_otu_ids}}},
-            )
-
-            diff_file_change_ids = await self.db.history.distinct(
-                "_id", {"diff": "file", "otu.id": {"$in": unreferenced_otu_ids}}
-            )
-
-            await gather(
-                self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
-                self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
-                self.db.sequences.delete_many(
-                    {"otu_id": {"$in": unreferenced_otu_ids}}
-                ),
-                remove_diff_files(self.app, diff_file_change_ids),
-            )
-
-            await get_data_from_app(self.app).tasks.update(
-                self.id,
-                progress=tracker.step_completed,
-                step="remove_unreferenced_otus",
-            )
-
-    async def remove_referenced_otus(self):
-        tracker = await self.get_tracker()
-
-        user_id = self.context["user_id"]
-
-        for ref_id in self.non_existent_references:
-            async for document in self.db.otus.find({"reference.id": ref_id}):
-                await get_data_from_app(self.app).otus.remove(
-                    document["_id"], user_id, silent=True
-                )
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id,
-            progress=tracker.step_completed,
-            step="remove_referenced_otus",
+    async def update(self):
+        await self.data.references.update_remote_reference(
+            self.context["ref_id"],
+            self.source_data,
+            self.context["release"],
+            self.context["user_id"],
+            self.create_progress_handler(),
         )
 
 
-class UpdateRemoteReferenceTask(Task):
-    task_type = "update_remote_reference"
+class CleanReferencesTask(BaseTask):
+    name = "clean_references"
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [
-            self.download_and_extract,
-            self.update_otus,
-            self.create_history,
-            self.remove_otus,
-            self.update_reference,
-        ]
+        self.steps = [self.clean]
 
-    async def download_and_extract(self):
-        url = self.context["release"]["download_url"]
-        file_size = self.context["release"]["size"]
-
-        tracker = await self.get_tracker(file_size)
-
-        try:
-            with get_temp_dir() as tempdir:
-                download_path = Path(tempdir) / "reference.tar.gz"
-
-                await download_file(self.app, url, download_path, tracker.add)
-
-                self.intermediate["update_data"] = await self.run_in_thread(
-                    load_reference_file, download_path
-                )
-
-        except (aiohttp.ClientConnectorError, GitHubError):
-            return await self.error("Could not download reference data")
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id, step="download_and_extract"
-        )
-
-    async def update_otus(self):
-        update_data = self.intermediate["update_data"]
-
-        tracker = await self.get_tracker(len(update_data["otus"]))
-
-        # The remote ids in the update otus.
-        otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
-
-        updated_list = []
-
-        for otu in update_data["otus"]:
-            old_or_id = await update_joined_otu(
-                self.db,
-                otu,
-                self.context["created_at"],
-                self.context["ref_id"],
-                self.context["user_id"],
-            )
-
-            if old_or_id is not None:
-                updated_list.append(old_or_id)
-
-            await tracker.add(1)
-
-        self.intermediate.update(
-            {"otu_ids_in_update": otu_ids_in_update, "updated_list": updated_list}
-        )
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="update_otus")
-
-    async def create_history(self):
-        updated_list = self.intermediate["updated_list"]
-
-        tracker = await self.get_tracker(len(updated_list))
-
-        for old_or_id in updated_list:
-            try:
-                otu_id = old_or_id["_id"]
-                old = old_or_id
-            except TypeError:
-                otu_id = old_or_id
-                old = None
-
-            await insert_change(
-                self.app,
-                otu_id,
-                HistoryMethod.update if old else HistoryMethod.remote,
-                self.context["user_id"],
-                old,
-            )
-
-            await tracker.add(1)
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="create_history")
-
-    async def remove_otus(self):
-        """Delete OTUs with remote ids that were not in the update."""
-        to_delete = await self.db.otus.distinct(
-            "_id",
-            {
-                "reference.id": self.context["ref_id"],
-                "remote.id": {"$nin": list(self.intermediate["otu_ids_in_update"])},
-            },
-        )
-
-        tracker = await self.get_tracker(len(to_delete))
-
-        for otu_id in to_delete:
-            await get_data_from_app(self.app).otus.remove(
-                otu_id, self.context["user_id"]
-            )
-            await tracker.add(1)
-
-        await get_data_from_app(self.app).tasks.update(self.id, step="remove_otus")
-
-    async def update_reference(self):
-        tracker = await self.get_tracker()
-        ref_id = self.context["ref_id"]
-        release = self.context["release"]
-
-        await self.db.references.update_one(
-            {"_id": ref_id, "updates.id": release["id"]},
-            {
-                "$set": {
-                    "installed": create_update_subdocument(
-                        release, True, self.context["user_id"]
-                    ),
-                    "updates.$.ready": True,
-                }
-            },
-        )
-
-        await fetch_and_update_release(self.app, ref_id)
-
-        await self.db.references.update_one(
-            {"_id": ref_id}, {"$set": {"updating": False}}
-        )
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=tracker.step_completed, step="update_reference"
-        )
+    async def clean(self):
+        await self.data.references.clean_all()
 
 
-class CleanReferencesTask(Task):
-    task_type = "clean_references"
+class RefreshReferenceReleasesTask(BaseTask):
+    name = "refresh_reference_releases"
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+    def __init__(self, task_id: int, data: "DataLayer", context, temp_dir):
+        super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [self.clean_timed_out_updates]
+        self.steps = [self.refresh_remote_releases]
 
-    async def _remove_latest_update(self, ref_id):
-        await self.db.references.update_one(
-            {"_id": ref_id}, {"$pop": {"updates": -1}, "$set": {"updating": False}}
-        )
-
-    async def clean_timed_out_updates(self):
-        async for reference in self.db.references.find(
-            {"remotes_from": {"$exists": True}}, ["installed", "task", "updates"]
-        ):
-            if len(reference["updates"]) == 0:
-                continue
-
-            latest_update = reference["updates"][-1]
-
-            if latest_update["ready"]:
-                continue
-
-            try:
-                raw_version = reference["installed"]["name"].lstrip("v")
-            except (KeyError, TypeError):
-                continue
-
-            installed_version = VersionInfo.parse(raw_version)
-
-            latest_update_version = VersionInfo.parse(latest_update["name"].lstrip("v"))
-
-            if latest_update_version <= installed_version:
-                continue
-
-            if arrow.utcnow() - arrow.get(latest_update["created_at"]) > timedelta(
-                minutes=15
-            ):
-                await self._remove_latest_update(reference["_id"])
+    async def refresh_remote_releases(self):
+        await self.data.references.fetch_and_update_reference_releases()

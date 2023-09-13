@@ -1,10 +1,13 @@
 import pytest
+from virtool_core.models.roles import AdministratorRole
 
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.users.utils import Permission
 
 
 @pytest.fixture
-def bob(no_permissions, static_time):
+def bob(static_time):
     return {
         "_id": "abc123",
         "handle": "bob",
@@ -14,7 +17,6 @@ def bob(no_permissions, static_time):
         "last_password_change": static_time.datetime,
         "invalidate_sessions": False,
         "password": "hashed_password",
-        "permissions": no_permissions,
         "primary_group": "",
         "settings": {
             "skip_quick_analyze_dialog": True,
@@ -22,23 +24,29 @@ def bob(no_permissions, static_time):
             "show_versions": True,
             "quick_analyze_workflow": "pathoscope_bowtie",
         },
-        "active": True
+        "active": True,
     }
 
 
 @pytest.fixture
 def create_user(static_time):
-    def func(
-        user_id="test", handle="bob", administrator=False, groups=None, permissions=None
+    async def func(
+        user_id="test",
+        handle="bob",
+        administrator=False,
+        groups=None,
+        authorization_client: AuthorizationClient = None,
     ):
 
-        permissions = permissions or []
+        if authorization_client and administrator:
+            await authorization_client.add(
+                AdministratorRoleAssignment("test", AdministratorRole.FULL)
+            )
 
         return {
             "_id": user_id,
             "handle": handle,
             "administrator": administrator,
-            "permissions": {perm.value: perm.value in permissions for perm in Permission},
             "groups": groups or [],
             "invalidate_sessions": False,
             "last_password_change": static_time.datetime,
@@ -52,7 +60,7 @@ def create_user(static_time):
             },
             "force_reset": False,
             "password": "$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.".encode(),
-            "active": True
+            "active": True,
         }
 
     return func

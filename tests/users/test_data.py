@@ -2,19 +2,18 @@ from asyncio import gather
 from datetime import datetime
 
 import pytest
-
 from syrupy.filters import props
 from syrupy.matchers import path_type
 
+from virtool.users.oas import UpdateUserRequest
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.users.data import UsersData
 from virtool.users.db import validate_credentials, B2CUserAttributes
-from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture
-def users_data(mongo, pg):
-    return UsersData(mongo, pg)
+def users_data(authorization_client, mongo, pg):
+    return UsersData(authorization_client, mongo, pg)
 
 
 class TestCreate:
@@ -51,7 +50,9 @@ class TestCreate:
             matcher=path_type({"last_password_change": (datetime,)}),
         )
 
-    async def test_already_exists(self, fake2, users_data):
+    async def test_already_exists(self, fake2, mongo, users_data):
+        await mongo.users.create_index("handle", unique=True, sparse=True)
+
         user = await fake2.users.create()
 
         with pytest.raises(ResourceConflictError) as err:
@@ -100,12 +101,19 @@ class TestUpdate:
                         "_id": "kings",
                         "permissions": {**no_permissions, "create_ref": True},
                     },
-                ]
+                ],
+                session=None,
             ),
         )
 
         assert await users_data.update(bob["_id"], update) == snapshot(name="obj")
         assert await mongo.users.find_one() == snapshot(name="db")
+
+        assert (
+            await users_data._authorization_client.list_administrators() == []
+            if not update.administrator
+            else [(bob["_id"], "full")]
+        )
 
     async def test_password(self, bob, mongo, snapshot, users_data):
         """
@@ -166,3 +174,18 @@ async def test_find_or_create_b2c_user(
         assert int(user.handle.split("-")[-1])
 
     assert user == snapshot(matcher=path_type({"handle": (str,)}))
+
+
+class TestCheckUsersExist:
+    async def test_no_users_exist(self, users_data):
+        """
+        Verify that the user existence check returns False when no users exist.
+        """
+        assert not await users_data.check_users_exist()
+
+    async def test_users_exist(self, users_data):
+        """
+        Verify that the user existence check returns True when users exist.
+        """
+        await users_data.create(password="hello_world", handle="bill")
+        assert await users_data.check_users_exist()

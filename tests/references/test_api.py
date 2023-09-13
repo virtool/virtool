@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import gather
 from pathlib import Path
 
 import pytest
@@ -8,15 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.task import Task
+from virtool.config import get_config_from_app
 
 import virtool.utils
 from virtool.data.utils import get_data_from_app
-from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.tasks.models import Task as SQLTask
+from virtool.tasks.models import SQLTask
 
 
+@pytest.mark.apitest
 async def test_find(spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authorize=True, administrator=True)
 
@@ -48,7 +48,8 @@ async def test_find(spawn_client, pg, snapshot, fake2, static_time):
                 "user": {"id": user_1.id},
                 "groups": [],
             },
-        ]
+        ],
+        session=None,
     )
 
     task_1 = SQLTask(
@@ -85,6 +86,7 @@ async def test_find(spawn_client, pg, snapshot, fake2, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [404, None])
 async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authorize=True, administrator=True)
@@ -147,6 +149,7 @@ async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestCreate:
     @pytest.mark.parametrize("data_type", ["genome", "barcode"])
     async def test_create(self, data_type, snapshot, spawn_client, static_time):
@@ -186,7 +189,7 @@ class TestCreate:
 
         tmpdir.mkdir("files")
 
-        client.app["config"].data_path = Path(tmpdir)
+        get_config_from_app(client.app).data_path = Path(tmpdir)
 
         with open(test_files_path / "reference.json.gz", "rb") as f:
             resp = await client.post_form(
@@ -207,26 +210,10 @@ class TestCreate:
             matcher=path_type({"id": (str,)}),
         )
 
-        task_id = reference["task"]["id"]
-
-        while True:
-            await asyncio.sleep(1)
-
-            task: SQLTask = await get_row_by_id(pg, SQLTask, task_id)
-
-            if task.complete:
-                assert await gather(
-                    client.db.otus.count_documents({}),
-                    client.db.sequences.count_documents({}),
-                    client.db.history.count_documents({}),
-                ) == [20, 26, 20]
-
-                break
-
     async def test_clone_reference(
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
     ):
-        client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+        client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
 
         user_1 = await fake2.users.create()
         user_2 = await fake2.users.create()
@@ -272,7 +259,7 @@ class TestCreate:
     async def test_remote_reference(
         self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
     ):
-        client = await spawn_client(authorize=True, permissions=Permission.create_ref)
+        client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
 
         data = {
             "name": "Test Remote",
@@ -290,6 +277,7 @@ class TestCreate:
         )
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize(
     "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
@@ -358,7 +346,7 @@ async def test_edit(
     can_modify = error != "403"
 
     mocker.patch(
-        "virtool.references.db.check_right", make_mocked_coro(return_value=can_modify)
+        "virtool.references.api.check_right", make_mocked_coro(return_value=can_modify)
     )
 
     resp = await client.patch("/refs/foo", data)
@@ -391,6 +379,7 @@ async def test_edit(
     assert await client.db.references.find_one() == snapshot(name="db")
 
 
+@pytest.mark.apitest
 async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
@@ -402,13 +391,14 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
             "_id": "foo",
             "created_at": virtool.utils.timestamp(),
             "data_type": "genome",
+            "description": "This is a test reference.",
+            "groups": [],
+            "internal_control": None,
             "name": "Foo",
             "organism": "virus",
-            "internal_control": None,
             "restrict_source_types": False,
             "source_types": ["isolate", "strain"],
             "user": {"id": user_1.id},
-            "groups": [],
             "users": [
                 {
                     "id": user_2.id,
@@ -429,10 +419,11 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
     resp = await client.delete("/refs/foo")
 
     assert await client.db.references.count_documents({}) == 0
-    assert await resp.json() == snapshot
-    assert resp.status == 202
+    assert await resp.text() == ""
+    assert resp.status == 204
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
     client = await spawn_client(authorize=True)
@@ -494,11 +485,16 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
 
     assert resp.status == 200
 
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot(
+        matcher=path_type({".*etag": (str,)}, regex=True)
+    )
 
-    m_fetch_and_update_release.assert_called_with(client.app, "foo")
+    m_fetch_and_update_release.assert_called_with(
+        client.app["db"], client.app["client"], "foo"
+    )
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
 async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, snapshot):
     client = await spawn_client(authorize=True)
@@ -544,6 +540,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, sna
     m_get_one_field.assert_called_with(client.db.references, "updates", "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400"])
 async def test_update(
     error,
@@ -632,10 +629,13 @@ async def test_update(
     )
 
     assert resp.status == 201
-    assert await resp.json() == snapshot(name="json")
+    assert await resp.json() == snapshot(
+        name="json", matcher=path_type({".*etag": (str,)}, regex=True)
+    )
     assert m_update.call_args[0] == snapshot(name="call")
 
 
+@pytest.mark.apitest
 class TestCreateOTU:
     @pytest.mark.parametrize("exists", [True, False])
     @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
@@ -746,6 +746,7 @@ class TestCreateOTU:
         assert resp.status == 201
 
 
+@pytest.mark.apitest
 async def test_create_index(
     fake2, mocker, snapshot, spawn_client, check_ref_right, resp_is
 ):
@@ -786,12 +787,13 @@ async def test_create_index(
         return
 
     assert resp.status == 201
-    assert await resp.json() == snapshot(name="json")
-    assert await client.db.indexes.find_one() == snapshot(name="index")
+    assert await resp.json() == snapshot
+    assert await client.db.indexes.find_one() == snapshot
 
     m_create_manifest.assert_called_with(client.db, "foo")
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_add_group_or_user(
@@ -808,16 +810,28 @@ async def test_add_group_or_user(
     """
     client = await spawn_client(authorize=True)
 
-    document = {"_id": "foo", "groups": [], "users": []}
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    user = await fake2.users.create()
+    document = {
+        "_id": "foo",
+        "created_at": static_time.datetime,
+        "data_type": "genome",
+        "description": "This is a test reference.",
+        "groups": [],
+        "name": "Test",
+        "organism": "virus",
+        "restrict_source_types": False,
+        "source_types": [],
+        "user": {"id": user_2.id},
+        "users": [],
+    }
 
     # Add group and user subdocuments to make sure a 400 is returned complaining about the user or group already
     # existing in the ref.
     if error == "400_exists":
         document["groups"].append({"id": "tech"})
-
-        document["users"].append({"id": user.id})
+        document["users"].append({"id": user_1.id})
 
     # Add group and user document to their collections unless we want to trigger a 400 complaining about the user or
     # group already not existing.
@@ -832,9 +846,10 @@ async def test_add_group_or_user(
 
     if field == "group":
         resp = await client.post(url, {"group_id": "tech", "modify": True})
-    if field == "user":
+    else:
         resp = await client.post(
-            url, {"user_id": user.id if error != "400_dne" else "fred", "modify": True}
+            url,
+            {"user_id": "fred" if error == "400_dne" else user_1.id, "modify": True},
         )
 
     if error == "404":
@@ -858,6 +873,7 @@ async def test_add_group_or_user(
     assert await client.db.references.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_edit_group_or_user(
@@ -865,9 +881,22 @@ async def test_edit_group_or_user(
 ):
     client = await spawn_client(authorize=True)
 
-    document = {"_id": "foo", "groups": [], "users": []}
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    user = await fake2.users.create()
+    document = {
+        "_id": "foo",
+        "created_at": static_time.datetime,
+        "data_type": "genome",
+        "description": "This is a test reference.",
+        "groups": [],
+        "name": "Test",
+        "organism": "virus",
+        "restrict_source_types": False,
+        "source_types": [],
+        "user": {"id": user_2.id},
+        "users": [],
+    }
 
     if error != "404_field":
         document["groups"].append(
@@ -883,7 +912,7 @@ async def test_edit_group_or_user(
 
         document["users"].append(
             {
-                "id": user.id,
+                "id": user_1.id,
                 "build": False,
                 "modify": False,
                 "modify_otu": False,
@@ -898,7 +927,7 @@ async def test_edit_group_or_user(
     if field == "group":
         subdocument_id = "tech"
     else:
-        subdocument_id = user.id if error != "404_field" else "fred"
+        subdocument_id = "fred" if error == "404_field" else user_1.id
 
     url = f"/refs/foo/{field}s/{subdocument_id}"
 
@@ -918,20 +947,37 @@ async def test_edit_group_or_user(
     assert await client.db.references.find_one() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_delete_group_or_user(
-    error, field, snapshot, spawn_client, check_ref_right, resp_is
+    error, field, check_ref_right, fake2, resp_is, spawn_client, snapshot, static_time
 ):
     client = await spawn_client(authorize=True)
 
-    document = {"_id": "foo", "groups": [], "users": []}
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+
+    document = {
+        "_id": "foo",
+        "created_at": static_time.datetime,
+        "data_type": "genome",
+        "description": "This is a test reference.",
+        "groups": [],
+        "name": "Test",
+        "organism": "virus",
+        "restrict_source_types": False,
+        "source_types": [],
+        "user": {"id": user_1.id},
+        "users": [],
+    }
 
     if error != "404_field":
         document["groups"].append(
             {
                 "id": "tech",
                 "build": False,
+                "created_at": static_time.datetime,
                 "modify": False,
                 "modify_otu": False,
                 "remove": False,
@@ -940,8 +986,9 @@ async def test_delete_group_or_user(
 
         document["users"].append(
             {
-                "id": "fred",
+                "id": user_2.id,
                 "build": False,
+                "created_at": static_time.datetime,
                 "modify": False,
                 "modify_otu": False,
                 "remove": False,
@@ -951,7 +998,7 @@ async def test_delete_group_or_user(
     if error != "404_ref":
         await client.db.references.insert_one(document)
 
-    subdocument_id = "tech" if field == "group" else "fred"
+    subdocument_id = "tech" if field == "group" else user_2.id
 
     url = f"/refs/foo/{field}s/{subdocument_id}"
 
@@ -968,3 +1015,62 @@ async def test_delete_group_or_user(
     await resp_is.no_content(resp)
 
     assert await client.db.references.find_one() == snapshot
+
+
+@pytest.mark.apitest
+@pytest.mark.parametrize("find", [None, "Prunus", "virus", "PVF", "VF"])
+@pytest.mark.parametrize("verified", [None, True, False])
+async def test_find_otus(find, verified, spawn_client, snapshot):
+    """Test to check that the api returns the correct OTUs based on how the results are filtered"""
+
+    client = await spawn_client(authorize=True)
+
+    await client.db.references.insert_one(
+        {"_id": "foo", "name": "Foo", "data_type": "genome"}
+    )
+
+    await client.db.otus.insert_many(
+        [
+            {
+                "_id": "6116cba1",
+                "name": "Prunus virus F",
+                "abbreviation": "PVF",
+                "last_indexed_version": None,
+                "verified": True,
+                "lower_name": "prunus virus f",
+                "isolates": [],
+                "version": 0,
+                "reference": {"id": "foo"},
+                "schema": [],
+            },
+            {
+                "_id": "5316cbz2",
+                "name": "Papaya virus q",
+                "abbreviation": "P",
+                "last_indexed_version": None,
+                "verified": False,
+                "lower_name": "papaya virus q",
+                "isolates": [],
+                "version": 0,
+                "reference": {"id": "foo"},
+                "schema": [],
+            },
+        ],
+        session=None,
+    )
+
+    path = "/refs/foo/otus"
+    query = []
+
+    if find is not None:
+        query.append(f"find={find}")
+
+    if verified is not None:
+        query.append(f"verified={verified}")
+
+    if query:
+        path += f"?{'&'.join(query)}"
+
+    resp = await client.get(path)
+    assert resp.status == 200
+    assert await resp.json() == snapshot

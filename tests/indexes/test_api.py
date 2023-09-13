@@ -12,9 +12,10 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.config import get_config_from_app
 
 from virtool.data.utils import get_data_from_app
-from virtool.indexes.db import FILES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
@@ -23,18 +24,27 @@ from virtool.jobs.client import DummyJobsClient
 OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 
 
+@pytest.mark.apitest
 class TestFind:
     async def test(self, mocker, snapshot, fake2, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
         user = await fake2.users.create()
 
+        job_1 = await fake2.jobs.create(user=user, workflow="build_index")
+        job_2 = await fake2.jobs.create(user=user, workflow="build_index")
+
         await asyncio.gather(
-            client.db.references.insert_many(
+            client.db.history.insert_many(
                 [
-                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
-                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
-                ]
+                    {"_id": "0", "index": {"id": "bar"}, "otu": {"id": "baz"}},
+                    {"_id": "1", "index": {"id": "foo"}, "otu": {"id": "baz"}},
+                    {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
+                    {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
+                    {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
+                    {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
+                ],
+                session=None,
             ),
             client.db.indexes.insert_many(
                 [
@@ -45,7 +55,7 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": False,
                         "has_files": True,
-                        "job": {"id": "bar"},
+                        "job": {"id": job_1.id},
                         "reference": {"id": "bar"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"foo": "bar_otu"},
@@ -57,22 +67,20 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": False,
                         "has_files": True,
-                        "job": {"id": "foo"},
+                        "job": {"id": job_2.id},
                         "reference": {"id": "foo"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"foo": "foo_otu"},
                     },
-                ]
+                ],
+                session=None,
             ),
-            client.db.history.insert_many(
+            client.db.references.insert_many(
                 [
-                    {"_id": "0", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                    {"_id": "1", "index": {"id": "foo"}, "otu": {"id": "baz"}},
-                    {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-                    {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                    {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
-                    {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
-                ]
+                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
+                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                ],
+                session=None,
             ),
         )
 
@@ -93,6 +101,8 @@ class TestFind:
 
         user = await fake2.users.create()
 
+        job = await fake2.jobs.create(user=user)
+
         await asyncio.gather(
             client.db.indexes.insert_many(
                 [
@@ -103,7 +113,7 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": True,
                         "has_files": True,
-                        "job": {"id": "bar"},
+                        "job": {"id": job.id},
                         "reference": {"id": "bar"},
                         "user": {"id": user.id},
                     },
@@ -114,17 +124,19 @@ class TestFind:
                         "manifest": {"foo": 2},
                         "ready": True,
                         "has_files": True,
-                        "job": {"id": "foo"},
+                        "job": {"id": job.id},
                         "reference": {"id": "foo"},
                         "user": {"id": user.id},
                     },
-                ]
+                ],
+                session=None,
             ),
             client.db.references.insert_many(
                 [
                     {"_id": "bar", "name": "Bar", "data_type": "genome"},
                     {"_id": "foo", "name": "Foo", "data_type": "genome"},
-                ]
+                ],
+                session=None,
             ),
         )
 
@@ -134,25 +146,31 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    user, _, _ = await asyncio.gather(
-        fake2.users.create(),
+    user = await fake2.users.create()
+
+    await asyncio.gather(
         client.db.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
         client.db.history.insert_many(
             [
                 {"_id": "0", "index": {"id": "foobar"}, "otu": {"id": "foo"}},
                 {"_id": "1", "index": {"id": "foobar"}, "otu": {"id": "baz"}},
                 {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-            ]
+            ],
+            session=None,
         ),
     )
+
+    job = await fake2.jobs.create(user=user, workflow="build_index")
 
     if not error:
         await client.db.indexes.insert_one(
@@ -165,25 +183,29 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
                 "manifest": {"foo": 2},
                 "has_files": True,
                 "user": {"id": user.id},
-                "job": {"id": "sj82la"},
+                "job": {"id": job.id},
             }
         )
 
-    contributors = [
-        {"id": "fred", "count": 1, "handle": "fred", "administrator": True},
-        {"id": "igboyes", "count": 3, "handle": "ian", "administrator": True},
-    ]
-
-    otus = [
-        {"id": "kjs8sa99", "name": "Foo", "change_count": 1},
-        {"id": "zxbbvngc", "name": "Test", "change_count": 3},
-    ]
-
     m_get_contributors = mocker.patch(
-        "virtool.history.db.get_contributors", make_mocked_coro(contributors)
+        "virtool.history.db.get_contributors",
+        make_mocked_coro(
+            [
+                {"id": "fred", "count": 1, "handle": "fred", "administrator": True},
+                {"id": "igboyes", "count": 3, "handle": "ian", "administrator": True},
+            ]
+        ),
     )
 
-    m_get_otus = mocker.patch("virtool.indexes.db.get_otus", make_mocked_coro(otus))
+    m_get_otus = mocker.patch(
+        "virtool.indexes.db.get_otus",
+        make_mocked_coro(
+            [
+                {"id": "kjs8sa99", "name": "Foo", "change_count": 1},
+                {"id": "zxbbvngc", "name": "Test", "change_count": 3},
+            ]
+        ),
+    )
 
     resp = await client.get("/indexes/foobar")
 
@@ -192,13 +214,13 @@ async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static
         return
 
     m_get_contributors.assert_called_with(client.db, {"index.id": "foobar"})
-
     m_get_otus.assert_called_with(client.db, "foobar")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_download_otus_json(
     file_exists, mocker, tmp_path, mongo, spawn_job_client
@@ -212,7 +234,7 @@ async def test_download_otus_json(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     index_dir = tmp_path / "references" / "foo" / "bar"
     index_dir.mkdir(parents=True)
@@ -235,10 +257,11 @@ async def test_download_otus_json(
 
     if not file_exists:
         m_get_patched_otus.assert_called_with(
-            client.app["db"], client.app["config"], manifest
+            client.app["db"], get_config_from_app(client.app), manifest
         )
 
 
+@pytest.mark.apitest
 class TestCreate:
     async def test(
         self,
@@ -333,6 +356,7 @@ class TestCreate:
             return
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_find_history(error, fake2, static_time, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
@@ -386,13 +410,15 @@ async def test_find_history(error, fake2, static_time, snapshot, spawn_client, r
                     "method_name": "edit_sequence",
                     "index": {"version": 0, "id": "foobar"},
                 },
-            ]
+            ],
+            session=None,
         ),
         client.db.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
                 {"_id": "foo", "name": "Foo", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -406,37 +432,59 @@ async def test_find_history(error, fake2, static_time, snapshot, spawn_client, r
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 404])
-async def test_delete_index(spawn_job_client, error):
+async def test_delete_index(error, fake2, spawn_job_client, static_time):
     index_id = "index1"
 
-    index_document = {
-        "_id": index_id,
-    }
-
-    mock_history_documents = [
-        {"_id": _id, "index": {"id": index_id, "version": "test_version"}}
-        for _id in ("history1", "history2", "history3")
-    ]
-
     client = await spawn_job_client(authorize=True)
-    indexes = client.db.indexes
-    history = client.db.history
+
+    user = await fake2.users.create()
 
     if error != 404:
-        await indexes.insert_one(index_document)
-        await history.insert_many(mock_history_documents)
+        await asyncio.gather(
+            client.db.references.insert_one(
+                {"_id": "foo", "data_type": "genome", "name": "Foo"}
+            ),
+            client.db.indexes.insert_one(
+                {
+                    "_id": index_id,
+                    "created_at": static_time.iso,
+                    "has_files": True,
+                    "manifest": {"foo": 2},
+                    "ready": True,
+                    "reference": {"id": "foo"},
+                    "user": {"id": user.id},
+                    "version": 4,
+                }
+            ),
+            client.db.history.insert_many(
+                [
+                    {
+                        "_id": _id,
+                        "index": {
+                            "id": index_id,
+                            "version": "test_version",
+                        },
+                        "user": {"id": user.id},
+                    }
+                    for _id in ("history1", "history2", "history3")
+                ],
+                session=None,
+            ),
+        )
 
     response = await client.delete(f"/indexes/{index_id}")
 
-    if error is not None:
+    if error:
         assert error == response.status
     else:
         assert 204 == response.status
-        async for doc in history.find({"index.id": index_id}):
+        async for doc in client.db.history.find({"index.id": index_id}):
             assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
     error,
@@ -453,7 +501,7 @@ async def test_upload(
 
     files = {"file": open(path, "rb")}
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     user, _ = await asyncio.gather(
         fake2.users.create(),
@@ -461,7 +509,8 @@ async def test_upload(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
                 {"_id": "foo", "name": "Foo", "data_type": "genome"},
-            ]
+            ],
+            session=None,
         ),
     )
 
@@ -508,6 +557,7 @@ async def test_upload(
         ).scalar() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error,
@@ -525,13 +575,14 @@ async def test_finalize(
     client = await spawn_job_client(authorize=True)
 
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user=user, workflow="build_index")
 
     if error == "409_genome":
         files = ["reference.fa.gz"]
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = FILES
+        files = INDEX_FILE_NAMES
 
     if error != "404_reference":
         await client.db.references.insert_one(
@@ -548,7 +599,7 @@ async def test_finalize(
                 "version": 2,
                 "created_at": static_time.datetime,
                 "has_files": True,
-                "job": {"id": "sj82la"},
+                "job": {"id": job.id},
             }
         ),
         # change `version` that should be reflected in `last_indexed_version` after calling
@@ -569,11 +620,12 @@ async def test_finalize(
         assert await client.db.otus.find_one("6116cba1") == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_download(status, spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
 
-    client.app["config"].data_path = tmp_path
+    get_config_from_app(client.app).data_path = tmp_path
 
     await asyncio.gather(
         client.db.indexes.insert_one(

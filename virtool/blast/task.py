@@ -1,17 +1,17 @@
 import asyncio
 from logging import getLogger
-from typing import Optional
-from zipfile import BadZipFile
+from tempfile import TemporaryDirectory
+from typing import Optional, Dict, TYPE_CHECKING
 
-import virtool.blast.utils
-import virtool.utils
-from virtool.analyses.utils import find_nuvs_sequence_by_index
-from virtool.data.utils import get_data_from_app
-from virtool.tasks.task import Task
+from virtool.tasks.task import BaseTask
+
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
+
 
 logger = getLogger("blast")
 
-#: Parameters passed in BLAST request URL strings (eg. ?CMD=Put&DATABASE=nr).
+
 BLAST_PARAMS = {
     "CMD": "Put",
     "DATABASE": "nr",
@@ -21,115 +21,115 @@ BLAST_PARAMS = {
     "FILTER": "mL",
     "FORMAT_TYPE": "JSON2",
 }
+"""Parameters passed in BLAST request URL strings (eg. ?CMD=Put&DATABASE=nr)."""
 
 
-class BLASTTask(Task):
+class BLASTTask(BaseTask):
 
-    """Run a BLAST search against NCBI."""
+    """Runs a BLAST search against NCBI."""
 
-    task_type = "blast"
+    name = "blast"
 
-    def __init__(self, app, task_id: str):
-        super().__init__(app, task_id)
-
-        self.analysis_id = None
-        self.sequence_index = None
-
-        self.error = None
-        self.interval = 3
-        self.ready = False
-        self.result = None
-        self.rid = None
-        self.steps = [self.request, self.wait]
-
-    async def init_db(self):
-        await super().init_db()
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.analysis_id = self.context["analysis_id"]
         self.sequence_index = self.context["sequence_index"]
+        self.steps = [self.request]
+        self.rid: Optional[str] = None
 
     async def request(self):
-        analysis = await get_data_from_app(self.app).analyses.get(
-            self.analysis_id, None
-        )
+        """
+        Make the initial request to NCBI to start a BLAST search.
 
-        sequence = find_nuvs_sequence_by_index(
-            analysis.dict(by_alias=True), self.sequence_index
-        )
+        Checks are conducted by the data layer and will store the results or error
+        when the search completes. The task completes when either an error or
 
-        rid, _ = await virtool.blast.utils.initialize_ncbi_blast(sequence)
+        The BLAST will be retried up to 3 times if a single BLAST
+        search exceeds 10 minutes.
+        """
 
-        self.rid = rid
+        blast_timeout_count: int = 0
 
-        await self._update(False, None, None)
+        while True:
+            try:
+                blast = await self.data.blast.initialize_on_ncbi(
+                    self.analysis_id, self.sequence_index
+                )
 
-    async def wait(self):
-        try:
-            while not self.ready:
-                await self._sleep()
+                self.rid = blast.rid
 
-                self.ready = await virtool.blast.utils.check_rid(self.rid)
+                await asyncio.wait_for(self.wait_for_blast_search(), 600)
 
-                logger.debug("Checked BLAST %s (%ss)", self.rid, self.interval)
+                break
 
-                if self.ready:
-                    try:
-                        result_json = await virtool.blast.utils.get_ncbi_blast_result(
-                            self.app["run_in_process"], self.rid
-                        )
-                    except BadZipFile:
-                        await self._update(
-                            False, None, error="Unable to interpret NCBI result"
-                        )
-                        return
+            except asyncio.TimeoutError:
+                await self.data.blast.delete_nuvs_blast(
+                    self.analysis_id, self.sequence_index
+                )
 
-                    logger.info("Retrieved result for BLAST %s", self.rid)
-                    result = virtool.blast.utils.format_blast_content(result_json)
+                logger.info("Deleted BLAST due to timeout: %s", self.rid)
 
-                    return await self._update(True, result, None)
+                blast_timeout_count += 1
 
-                await self._update(False, None, None)
+                if blast_timeout_count >= 3:
+                    logger.info("BLAST exceeded allowed attempts: %s", self.rid)
 
-        except asyncio.CancelledError:
-            await get_data_from_app(self.app).blast.remove_nuvs_blast(
+                    break
+
+                logger.info("Restarting BLAST: %s", self.rid)
+
+                continue
+
+            except asyncio.CancelledError:
+                await self.data.blast.delete_nuvs_blast(
+                    self.analysis_id, self.sequence_index
+                )
+
+                logger.info("Deleted BLAST due to cancellation: %s", self.rid)
+
+                break
+
+    async def wait_for_blast_search(self):
+        """
+        Wait until the BLAST search completes.
+
+        Keep check the BLAST status on NCBI with increasingly longer intervals between
+        checks.
+        """
+
+        interval = 3
+
+        while True:
+            await asyncio.sleep(interval)
+
+            blast = await self.data.blast.check_nuvs_blast(
                 self.analysis_id, self.sequence_index
             )
 
-            logger.info("Removed BLAST due to cancellation: %s", self.rid)
+            if blast.ready:
+                logger.info("Retrieved result for BLAST %s", blast.rid)
+                break
 
-    async def _sleep(self):
-        """
-        Sleep for the current interval and increase the interval by 5 seconds after
-        sleeping.
+            if blast.error:
+                logger.info(
+                    "Encountered error for BLAST %s: %s",
+                    blast.rid,
+                    blast.error,
+                )
+                await self._set_error(blast.error)
+                break
 
-        """
-        await asyncio.sleep(self.interval)
-        self.interval += 5
+            interval += 5
 
-    async def _update(self, ready: bool, result: Optional[dict], error: Optional[str]):
-        """
-        Update the BLAST data. Returns the BLAST data and the complete analysis
-        document.
-
-        :param ready: indicates whether the BLAST request is complete
-        :param result: the formatted result of a successful BLAST request
-        :param error: and error message to add to the BLAST record
-        :return: the BLAST data and the complete analysis document
-
-        """
-        self.result = result
-
-        if ready is None:
-            self.ready = await virtool.blast.utils.check_rid(self.rid)
-        else:
-            self.ready = ready
-
-        await get_data_from_app(self.app).blast.update_nuvs_blast(
-            self.analysis_id,
-            self.sequence_index,
-            self.error,
-            virtool.utils.timestamp(),
-            self.rid,
-            self.ready,
-            self.result,
-        )
+            logger.debug(
+                "Checked BLAST %s. Waiting %s seconds",
+                blast.rid,
+                interval,
+            )

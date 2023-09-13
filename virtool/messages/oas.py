@@ -16,7 +16,7 @@ class UpdateMessageRequest(BaseModel):
     message: Optional[str]
     active: Optional[bool]
 
-    _prevent_none = prevent_none('*')
+    _prevent_none = prevent_none("*")
 
     @validator("active")
     def active_must_be_false(cls, active: bool) -> bool:
@@ -35,7 +35,7 @@ class MessageResponse(InstanceMessage):
                 "message": "Administrative instance message",
                 "created_at": "2021-11-24T19:40:03.320000Z",
                 "updated_at": "2021-11-24T19:40:03.320000Z",
-                "user": {"id": "ian", "handle": "ianboyes", "administrator": True}
+                "user": {"id": "ian", "handle": "ianboyes", "administrator": True},
             }
         }
 
@@ -50,7 +50,7 @@ class CreateMessageResponse(InstanceMessage):
                 "message": "Third instance message",
                 "created_at": "2022-11-24T19:40:03.320000Z",
                 "updated_at": "2022-11-24T19:40:03.320000Z",
-                "user": {"id": "ian", "handle": "ianboyes", "administrator": True}
+                "user": {"id": "ian", "handle": "ianboyes", "administrator": True},
             }
         }
 
@@ -65,6 +65,6 @@ class UpdateMessageResponse(InstanceMessage):
                 "message": "Changed the third instance message",
                 "created_at": "2022-11-24T19:40:03.320000Z",
                 "updated_at": "2022-11-24T19:40:03.320000Z",
-                "user": {"id": "ian", "handle": "ianboyes", "administrator": True}
+                "user": {"id": "ian", "handle": "ianboyes", "administrator": True},
             }
         }

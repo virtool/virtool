@@ -1,0 +1,683 @@
+# name: TestUpdate.test[force_reset][db]
+  <class 'dict'> {
+    '_id': 'bf1b993c',
+    'active': True,
+    'administrator': False,
+    'force_reset': True,
+    'groups': <class 'list'> [
+      'peasants',
+    ],
+    'handle': 'leeashley',
+    'invalidate_sessions': True,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: TestUpdate.test[force_reset][obj]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': True,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'peasants',
+        'name': 'peasants',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: TestUpdate.test[groups][db]
+  <class 'dict'> {
+    '_id': 'bf1b993c',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'handle': 'leeashley',
+    'invalidate_sessions': False,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'primary_group': 'peasants',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: TestUpdate.test[groups][obj]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'kings',
+        'name': 'kings',
+      },
+      <class 'dict'> {
+        'id': 'peasants',
+        'name': 'peasants',
+      },
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': True,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': <class 'dict'> {
+      'id': 'peasants',
+      'name': 'peasants',
+    },
+  }
+---
+# name: TestUpdate.test_password[db]
+  <class 'dict'> {
+    '_id': 'bf1b993c',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'leeashley',
+    'invalidate_sessions': True,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: TestUpdate.test_password[obj]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: test_find_users[False-None]
+  <class 'dict'> {
+    'found_count': 1,
+    'items': <class 'list'> [
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'diamond21',
+        'id': 'da42dca3',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
+      },
+    ],
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[False-missing-handle]
+  <class 'dict'> {
+    'found_count': 0,
+    'items': <class 'list'> [
+    ],
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[False-test_user]
+  <class 'dict'> {
+    'found_count': 0,
+    'items': <class 'list'> [
+    ],
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[None-None]
+  <class 'dict'> {
+    'found_count': 3,
+    'items': <class 'list'> [
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'diamond21',
+        'id': 'da42dca3',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
+      },
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': <AdministratorRole.FULL: 'full'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'juliewilliams',
+        'id': '3cbb22cc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
+      },
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
+          },
+        ],
+        'handle': 'test_user',
+        'id': '7cf872dc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+        },
+      },
+    ],
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[None-missing-handle]
+  <class 'dict'> {
+    'found_count': 0,
+    'items': <class 'list'> [
+    ],
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[None-test_user]
+  <class 'dict'> {
+    'found_count': 1,
+    'items': <class 'list'> [
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
+          },
+        ],
+        'handle': 'test_user',
+        'id': '7cf872dc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+        },
+      },
+    ],
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[True-None]
+  <class 'dict'> {
+    'found_count': 2,
+    'items': <class 'list'> [
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': <AdministratorRole.FULL: 'full'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'juliewilliams',
+        'id': '3cbb22cc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
+      },
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
+          },
+        ],
+        'handle': 'test_user',
+        'id': '7cf872dc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+        },
+      },
+    ],
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[True-missing-handle]
+  <class 'dict'> {
+    'found_count': 0,
+    'items': <class 'list'> [
+    ],
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_users[True-test_user]
+  <class 'dict'> {
+    'found_count': 1,
+    'items': <class 'list'> [
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
+          },
+          <class 'dict'> {
+            'id': 'fb085f7f',
+            'name': 'hydrogeologists',
+          },
+        ],
+        'handle': 'test_user',
+        'id': '7cf872dc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+        },
+      },
+    ],
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_get_user[False]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
+    ],
+    'handle': 'laura56',
+    'id': 'fb085f7f',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': <class 'dict'> {
+      'id': 'bf1b993c',
+      'name': 'musicians',
+    },
+  }
+---
+# name: test_get_user[True]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': <AdministratorRole.BASE: 'base'>,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
+    ],
+    'handle': 'laura56',
+    'id': 'fb085f7f',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': <class 'dict'> {
+      'id': 'bf1b993c',
+      'name': 'musicians',
+    },
+  }
+---
+# name: test_set_admin_role[None][obj]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: test_set_admin_role[base][obj]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': <AdministratorRole.BASE: 'base'>,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: test_set_admin_role[full][obj]
+  <class 'dict'> {
+    'active': True,
+    'administrator': True,
+    'administrator_role': <AdministratorRole.FULL: 'full'>,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---

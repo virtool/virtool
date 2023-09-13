@@ -1,4 +1,4 @@
-# name: TestUpdate.test_active[uvloop]
+# name: TestUpdate.test_active
   <class 'dict'> {
     'active': True,
     'color': 'grey',
@@ -13,7 +13,7 @@
     },
   }
 ---
-# name: TestUpdate.test_deactivate[uvloop]
+# name: TestUpdate.test_deactivate
   <class 'dict'> {
     'active': False,
     'color': 'grey',
@@ -28,7 +28,7 @@
     },
   }
 ---
-# name: test_create[uvloop]
+# name: test_create
   <class 'dict'> {
     'active': True,
     'color': 'red',
@@ -43,7 +43,7 @@
     },
   }
 ---
-# name: test_get[uvloop-None]
+# name: test_get[None]
   <class 'dict'> {
     'active': True,
     'color': 'yellow',

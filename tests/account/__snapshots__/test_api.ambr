@@ -1,10 +1,10 @@
-# name: TestCreateAPIKey.test[uvloop-False-False]
+# name: TestCreateAPIKey.test[False-False]
   <class 'dict'> {
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
     ],
-    'id': 'foobar_0',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -19,7 +19,7 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test[uvloop-False-False].1
+# name: TestCreateAPIKey.test[False-False].1
   <class 'dict'> {
     '_id': 'hashed_key',
     'administrator': False,
@@ -43,13 +43,17 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test[uvloop-False-True]
+# name: TestCreateAPIKey.test[False-True]
   <class 'dict'> {
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
     ],
-    'id': 'foobar_0',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -64,7 +68,53 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test[uvloop-False-True].1
+# name: TestCreateAPIKey.test[False-True].1
+  <class 'dict'> {
+    '_id': 'hashed_key',
+    'administrator': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+      'bf1b993c',
+    ],
+    'id': 'foobar_0',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreateAPIKey.test[True-False]
+  <class 'dict'> {
+    'administrator': False,
+    'created_at': '2015-10-06T20:00:00Z',
+    'groups': <class 'list'> [
+    ],
+    'id': 'hashed_key',
+    'key': 'raw_key',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: TestCreateAPIKey.test[True-False].1
   <class 'dict'> {
     '_id': 'hashed_key',
     'administrator': False,
@@ -88,58 +138,17 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test[uvloop-True-False]
+# name: TestCreateAPIKey.test[True-True]
   <class 'dict'> {
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
     ],
-    'id': 'foobar_0',
-    'key': 'raw_key',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-  }
----
-# name: TestCreateAPIKey.test[uvloop-True-False].1
-  <class 'dict'> {
-    '_id': 'hashed_key',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
----
-# name: TestCreateAPIKey.test[uvloop-True-True]
-  <class 'dict'> {
-    'administrator': False,
-    'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
-    'id': 'foobar_0',
+    'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
@@ -154,12 +163,13 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test[uvloop-True-True].1
+# name: TestCreateAPIKey.test[True-True].1
   <class 'dict'> {
     '_id': 'hashed_key',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
+      'bf1b993c',
     ],
     'id': 'foobar_0',
     'name': 'Foobar',
@@ -178,35 +188,35 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test_naming[uvloop]
+# name: TestCreateAPIKey.test_naming
   <class 'dict'> {
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
+    'groups': <class 'list'> [
+    ],
+    'id': 'hashed_key',
+    'key': 'raw_key',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: TestCreateAPIKey.test_naming.1
+  <class 'dict'> {
+    '_id': 'hashed_key',
+    'administrator': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': <class 'list'> [
     ],
     'id': 'foobar_1',
-    'key': 'raw_key',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-  }
----
-# name: TestCreateAPIKey.test_naming[uvloop].1
-  <class 'dict'> {
-    '_id': 'hashed_key',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
-    'id': 'foobar_1',
     'name': 'Foobar',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -223,7 +233,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-False-False]
+# name: TestUpdateAPIKey.test[False-False]
   <class 'dict'> {
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
@@ -243,7 +253,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-False-False].1
+# name: TestUpdateAPIKey.test[False-False].1
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -267,7 +277,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-False-True]
+# name: TestUpdateAPIKey.test[False-True]
   <class 'dict'> {
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
@@ -287,7 +297,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-False-True].1
+# name: TestUpdateAPIKey.test[False-True].1
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -311,7 +321,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-True-False]
+# name: TestUpdateAPIKey.test[True-False]
   <class 'dict'> {
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
@@ -331,7 +341,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-True-False].1
+# name: TestUpdateAPIKey.test[True-False].1
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -355,7 +365,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-True-True]
+# name: TestUpdateAPIKey.test[True-True]
   <class 'dict'> {
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
@@ -375,7 +385,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-True-True].1
+# name: TestUpdateAPIKey.test[True-True].1
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -399,7 +409,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-missing-False]
+# name: TestUpdateAPIKey.test[missing-False]
   <class 'dict'> {
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
@@ -419,51 +429,7 @@
     },
   }
 ---
-# name: TestUpdateAPIKey.test[uvloop-missing-False].1
-  <class 'dict'> {
-    '_id': 'foobar',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
----
-# name: TestUpdateAPIKey.test[uvloop-missing-True]
-  <class 'dict'> {
-    'administrator': True,
-    'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-  }
----
-# name: TestUpdateAPIKey.test[uvloop-missing-True].1
+# name: TestUpdateAPIKey.test[missing-False].1
   <class 'dict'> {
     '_id': 'foobar',
     'administrator': True,
@@ -487,10 +453,55 @@
     },
   }
 ---
-# name: test_edit[uvloop-all_valid][response]
+# name: TestUpdateAPIKey.test[missing-True]
+  <class 'dict'> {
+    'administrator': True,
+    'created_at': '2015-10-06T20:00:00Z',
+    'groups': <class 'list'> [
+    ],
+    'id': 'foobar_0',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: TestUpdateAPIKey.test[missing-True].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+    ],
+    'id': 'foobar_0',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_edit[all_valid][response]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -522,10 +533,11 @@
     },
   }
 ---
-# name: test_edit[uvloop-good_email][response]
+# name: test_edit[good_email][response]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -557,13 +569,13 @@
     },
   }
 ---
-# name: test_edit[uvloop-invalid_credentials][response]
+# name: test_edit[invalid_credentials][response]
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Invalid credentials',
   }
 ---
-# name: test_edit[uvloop-invalid_email][response]
+# name: test_edit[invalid_email][response]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -575,10 +587,11 @@
     },
   ]
 ---
-# name: test_edit[uvloop-missing_all][response]
+# name: test_edit[missing_all][response]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -610,10 +623,11 @@
     },
   }
 ---
-# name: test_edit[uvloop-missing_email][response]
+# name: test_edit[missing_email][response]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -645,7 +659,7 @@
     },
   }
 ---
-# name: test_edit[uvloop-missing_old_password][response]
+# name: test_edit[missing_old_password][response]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -657,7 +671,7 @@
     },
   ]
 ---
-# name: test_edit[uvloop-missing_password][response]
+# name: test_edit[missing_password][response]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -669,7 +683,7 @@
     },
   ]
 ---
-# name: test_edit[uvloop-none_all][response]
+# name: test_edit[none_all][response]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -697,16 +711,17 @@
     },
   ]
 ---
-# name: test_edit[uvloop-short_password][response]
+# name: test_edit[short_password][response]
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Password does not meet minimum length requirement (8)',
   }
 ---
-# name: test_get[uvloop]
+# name: test_get
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -738,17 +753,61 @@
     },
   }
 ---
-# name: test_login[uvloop-all_valid]
+# name: test_get_api_keys
+  <class 'list'> [
+    <class 'dict'> {
+      'administrator': True,
+      'created_at': '2015-10-06T20:00:00Z',
+      'groups': <class 'list'> [
+        <class 'dict'> {
+          'id': 'bf1b993c',
+          'name': 'musicians',
+        },
+      ],
+      'id': 'abc123',
+      'name': 'Foobar',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      'administrator': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'groups': <class 'list'> [
+      ],
+      'id': 'xyz321',
+      'name': 'Baz',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---
+# name: test_login[all_valid]
   <class 'dict'> {
     'reset': False,
   }
 ---
-# name: test_login[uvloop-missing_remember]
+# name: test_login[missing_remember]
   <class 'dict'> {
     'reset': False,
   }
 ---
-# name: test_login[uvloop-remember_is_none]
+# name: test_login[remember_is_none]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -760,19 +819,19 @@
     },
   ]
 ---
-# name: test_login[uvloop-wrong_handle]
+# name: test_login[wrong_handle]
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Invalid username or password',
   }
 ---
-# name: test_login[uvloop-wrong_password]
+# name: test_login[wrong_password]
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Invalid username or password',
   }
 ---
-# name: test_update_settings[uvloop-invalid_input][response]
+# name: test_update_settings[invalid_input][response]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -784,7 +843,7 @@
     },
   ]
 ---
-# name: test_update_settings[uvloop-null_values][response]
+# name: test_update_settings[null_values][response]
   <class 'list'> [
     <class 'dict'> {
       'in': 'body',
@@ -820,7 +879,7 @@
     },
   ]
 ---
-# name: test_update_settings[uvloop-valid_input][response]
+# name: test_update_settings[valid_input][response]
   <class 'dict'> {
     'quick_analyze_workflow': 'pathoscope_bowtie',
     'show_ids': False,

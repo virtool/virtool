@@ -16,7 +16,7 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
 from virtool.http.routes import Routes
-from virtool.indexes.db import FILES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.oas import (
     ListIndexesResponse,
     GetIndexResponse,
@@ -41,11 +41,10 @@ class IndexesView(PydanticView):
         """
         Find indexes.
 
-        Retrieves a list of indexes.
+        Lists all existing indexes.
 
         Status Codes:
             200: Successful operation
-
         """
         data = await get_data_from_req(self.request).index.find(
             ready, self.request.query
@@ -64,7 +63,7 @@ class IndexView(PydanticView):
         """
         Get an index.
 
-        Retrieves the details for an index.
+        Fetches the details for an index.
 
         Status Codes:
             200: Successful operation
@@ -82,7 +81,9 @@ class IndexView(PydanticView):
 @routes.jobs_api.get("/indexes/{index_id}/files/otus.json.gz")
 async def download_otus_json(req):
     """
-    Download a complete compressed JSON representation of the index OTUs.
+    Download OTUs json.
+
+    Downloads a complete compressed JSON representation of the index OTUs.
 
     """
     try:
@@ -105,13 +106,15 @@ async def download_otus_json(req):
 class IndexFileView(PydanticView):
     async def get(self, index_id: str, filename: str, /) -> Union[r200, r404]:
         """
-        Download files relating to a given index.
+        Download index files.
+
+        Downloads files relating to a given index.
 
         Status Codes:
             200: Successful operation
             404: Not found
         """
-        if filename not in FILES:
+        if filename not in INDEX_FILE_NAMES:
             raise NotFound()
 
         try:
@@ -126,7 +129,7 @@ class IndexFileView(PydanticView):
 
         path = (
             join_index_path(
-                self.request.app["config"].data_path, reference.id, index_id
+                get_config_from_req(self.request).data_path, reference.id, index_id
             )
             / filename
         )
@@ -145,11 +148,16 @@ class IndexFileView(PydanticView):
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
 async def download_index_file_for_jobs(req: Request):
-    """Download files relating to a given index for jobs."""
+    """
+    Download index files for jobs.
+
+    Downloads files relating to a given index for jobs.
+
+    """
     index_id = req.match_info["index_id"]
     filename = req.match_info["filename"]
 
-    if filename not in FILES:
+    if filename not in INDEX_FILE_NAMES:
         raise NotFound()
 
     try:
@@ -170,11 +178,15 @@ async def download_index_file_for_jobs(req: Request):
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
 async def upload(req):
-    """Upload a new index file."""
+    """
+    Upload an index file.
+
+    Uploads a new index file.
+    """
     index_id = req.match_info["index_id"]
     name = req.match_info["filename"]
 
-    if name not in FILES:
+    if name not in INDEX_FILE_NAMES:
         raise NotFound("Index file not found")
 
     try:
@@ -224,7 +236,7 @@ class IndexHistoryView(PydanticView):
         """
         List history.
 
-        Find history changes for a specific index.
+        Lists history changes for a specific index.
 
         Status Codes:
             200: Successful operation
@@ -243,7 +255,11 @@ class IndexHistoryView(PydanticView):
 
 @routes.jobs_api.delete("/indexes/{index_id}")
 async def delete_index(req: Request):
-    """Delete the index with the given id and reset history relating to that index."""
+    """
+    Delete an index.
+
+    Deletes the index with the given id and reset history relating to that index.
+    """
     index_id = req.match_info["index_id"]
 
     try:

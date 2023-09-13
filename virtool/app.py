@@ -1,57 +1,46 @@
-import asyncio
-import logging
-
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
 from aiohttp_pydantic import oas
 
 import virtool.http.accept
-import virtool.http.auth
-import virtool.http.errors
-import virtool.http.query
+import virtool.http.authentication
+from virtool.api.response import error_middleware
 from virtool.config.cls import Config
+from virtool.flags import FeatureFlags, feature_flag_middleware
 from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.http.policy import route_policy_middleware
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.routes import setup_routes
 from virtool.shutdown import (
-    shutdown_client,
-    shutdown_dispatcher,
+    shutdown_authorization_client,
     shutdown_executors,
+    shutdown_http_client,
     shutdown_redis,
     shutdown_scheduler,
 )
 from virtool.startup import (
     startup_b2c,
     startup_check_db,
-    startup_task_runner,
-    startup_tasks,
-    startup_databases,
     startup_data,
-    startup_dispatcher,
+    startup_databases,
     startup_events,
     startup_executors,
-    startup_http_client,
-    startup_paths,
-    startup_refresh,
+    startup_http_client_session,
     startup_routes,
     startup_sentry,
     startup_settings,
     startup_version,
+    startup_ws,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def create_app_without_startup():
     middlewares = [
         headers_middleware,
-        virtool.http.auth.middleware,
+        virtool.http.authentication.middleware,
         virtool.http.accept.middleware,
-        virtool.http.errors.middleware,
+        error_middleware,
         route_policy_middleware,
-        virtool.http.query.middleware,
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
@@ -69,11 +58,11 @@ def create_app(config: Config):
     """
     middlewares = [
         headers_middleware,
-        virtool.http.auth.middleware,
+        virtool.http.authentication.middleware,
         virtool.http.accept.middleware,
-        virtool.http.errors.middleware,
+        error_middleware,
         route_policy_middleware,
-        virtool.http.query.middleware,
+        feature_flag_middleware,
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
@@ -82,38 +71,33 @@ def create_app(config: Config):
 
     app["config"] = config
     app["mode"] = "server"
+    app["flags"] = FeatureFlags(config.flags)
 
     aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend(
         [
             startup_version,
-            startup_events,
+            startup_http_client_session,
             startup_databases,
-            startup_dispatcher,
-            startup_http_client,
-            startup_paths,
+            startup_events,
             startup_routes,
             startup_executors,
-            startup_task_runner,
+            startup_ws,
             startup_data,
-            startup_tasks,
             startup_settings,
             startup_sentry,
             startup_check_db,
-            startup_refresh,
+            startup_b2c,
         ]
     )
-
-    if config.use_b2c:
-        app.on_startup.append(startup_b2c)
 
     app.on_response_prepare.append(on_prepare_location)
 
     app.on_shutdown.extend(
         [
-            shutdown_client,
-            shutdown_dispatcher,
+            shutdown_authorization_client,
+            shutdown_http_client,
             shutdown_executors,
             shutdown_scheduler,
             shutdown_redis,
@@ -123,18 +107,6 @@ def create_app(config: Config):
     return app
 
 
-async def run_app(config: Config):
+def run_api_server(config: Config):
     app = create_app(config)
-
-    runner = await create_app_runner(app, config.host, config.port)
-
-    _, pending = await asyncio.wait(
-        [
-            wait_for_restart(runner, app["events"]),
-            wait_for_shutdown(runner, app["events"]),
-        ],
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-
-    for task in pending:
-        task.cancel()
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port)

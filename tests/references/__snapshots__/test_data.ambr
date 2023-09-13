@@ -1,4 +1,4 @@
-# name: TestEdit.test_control[uvloop--False]
+# name: TestEdit.test_control[-False]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -24,7 +24,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop--False].1
+# name: TestEdit.test_control[-False].1
   <class 'dict'> {
     '_id': 'foo',
     'data_type': 'genome',
@@ -41,7 +41,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop--True]
+# name: TestEdit.test_control[-True]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -69,7 +69,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop--True].1
+# name: TestEdit.test_control[-True].1
   <class 'dict'> {
     '_id': 'foo',
     'data_type': 'genome',
@@ -86,7 +86,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-None-False]
+# name: TestEdit.test_control[None-False]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -112,7 +112,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-None-False].1
+# name: TestEdit.test_control[None-False].1
   <class 'dict'> {
     '_id': 'foo',
     'data_type': 'genome',
@@ -131,7 +131,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-None-True]
+# name: TestEdit.test_control[None-True]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -159,7 +159,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-None-True].1
+# name: TestEdit.test_control[None-True].1
   <class 'dict'> {
     '_id': 'foo',
     'data_type': 'genome',
@@ -178,7 +178,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-baz-False]
+# name: TestEdit.test_control[baz-False]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -204,7 +204,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-baz-False].1
+# name: TestEdit.test_control[baz-False].1
   <class 'dict'> {
     '_id': 'foo',
     'data_type': 'genome',
@@ -221,7 +221,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-baz-True]
+# name: TestEdit.test_control[baz-True]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -249,7 +249,7 @@
     ],
   }
 ---
-# name: TestEdit.test_control[uvloop-baz-True].1
+# name: TestEdit.test_control[baz-True].1
   <class 'dict'> {
     '_id': 'foo',
     'data_type': 'genome',
@@ -266,7 +266,7 @@
     ],
   }
 ---
-# name: TestEdit.test_reference_name[uvloop]
+# name: TestEdit.test_reference_name
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -291,7 +291,7 @@
     ],
   }
 ---
-# name: TestEdit.test_reference_name[uvloop].1
+# name: TestEdit.test_reference_name.1
   <class 'dict'> {
     '_id': 'foo',
     'data_type': 'genome',
@@ -309,7 +309,7 @@
     ],
   }
 ---
-# name: TestEdit.test_reference_name[uvloop].2
+# name: TestEdit.test_reference_name.2
   <class 'list'> [
     <class 'dict'> {
       '_id': 'baz',

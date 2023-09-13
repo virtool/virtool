@@ -1,10 +1,38 @@
-# name: TestRemoveSamples.test[uvloop-id_list0]
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[amplicon]
+  <class 'dict'> {
+    'aodp': 'none',
+    'nuvs': 'incompatible',
+    'pathoscope': 'incompatible',
+  }
+---
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[normal]
+  <class 'dict'> {
+    'aodp': 'incompatible',
+    'nuvs': 'none',
+    'pathoscope': 'none',
+  }
+---
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[other]
+  <class 'dict'> {
+    'aodp': 'incompatible',
+    'nuvs': 'none',
+    'pathoscope': 'none',
+  }
+---
+# name: TestDeriveWorkflowStates.test_define_initial_workflows[srna]
+  <class 'dict'> {
+    'aodp': 'incompatible',
+    'nuvs': 'none',
+    'pathoscope': 'none',
+  }
+---
+# name: TestRemoveSamples.test[id_list0]
   <class 'set'> {
     'test_2',
     'test_3',
   }
 ---
-# name: TestRemoveSamples.test[uvloop-id_list0].1
+# name: TestRemoveSamples.test[id_list0].1
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test_2',
@@ -14,7 +42,7 @@
     },
   ]
 ---
-# name: TestRemoveSamples.test[uvloop-id_list0].2
+# name: TestRemoveSamples.test[id_list0].2
   <class 'list'> [
     <class 'dict'> {
       '_id': 'a_3',
@@ -60,19 +88,19 @@
     },
   ]
 ---
-# name: TestRemoveSamples.test[uvloop-id_list1]
+# name: TestRemoveSamples.test[id_list1]
   <class 'set'> {
     'test_3',
   }
 ---
-# name: TestRemoveSamples.test[uvloop-id_list1].1
+# name: TestRemoveSamples.test[id_list1].1
   <class 'list'> [
     <class 'dict'> {
       '_id': 'test_3',
     },
   ]
 ---
-# name: TestRemoveSamples.test[uvloop-id_list1].2
+# name: TestRemoveSamples.test[id_list1].2
   <class 'list'> [
     <class 'dict'> {
       '_id': 'a_6',
@@ -100,7 +128,7 @@
     },
   ]
 ---
-# name: test_attach_labels[uvloop]
+# name: test_attach_labels
   <class 'dict'> {
     'id': 'foo',
     'labels': <class 'list'> [
@@ -120,12 +148,12 @@
     'name': 'Foo',
   }
 ---
-# name: test_compress_sample_reads[uvloop-False]
+# name: test_compress_sample_reads[False]
   <class 'set'> {
     'reads_1.fq.gz',
   }
 ---
-# name: test_compress_sample_reads[uvloop-False].1
+# name: test_compress_sample_reads[False].1
   <class 'dict'> {
     '_id': 'foo',
     'files': <class 'list'> [
@@ -144,13 +172,13 @@
     'paired': False,
   }
 ---
-# name: test_compress_sample_reads[uvloop-True]
+# name: test_compress_sample_reads[True]
   <class 'set'> {
     'reads_1.fq.gz',
     'reads_2.fq.gz',
   }
 ---
-# name: test_compress_sample_reads[uvloop-True].1
+# name: test_compress_sample_reads[True].1
   <class 'dict'> {
     '_id': 'foo',
     'files': <class 'list'> [
@@ -180,7 +208,7 @@
     'paired': True,
   }
 ---
-# name: test_create_sample[uvloop]
+# name: test_create_sample
   <class 'dict'> {
     'all_read': True,
     'all_write': False,
@@ -210,9 +238,14 @@
     'user': <class 'dict'> {
       'id': 'bob',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
-# name: test_create_sample[uvloop].1
+# name: test_create_sample.1
   <class 'dict'> {
     '_id': 'a2oj3gfd',
     'all_read': True,
@@ -242,9 +275,14 @@
     'user': <class 'dict'> {
       'id': 'bob',
     },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
   }
 ---
-# name: test_finalize[uvloop]
+# name: test_finalize
   <class 'dict'> {
     'artifacts': <class 'list'> [
     ],
@@ -273,7 +311,7 @@
     },
   }
 ---
-# name: test_update_is_compressed[uvloop]
+# name: test_update_is_compressed
   <class 'list'> [
     <class 'dict'> {
       '_id': 'foo',

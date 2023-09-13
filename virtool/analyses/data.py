@@ -1,12 +1,14 @@
+import math
+import os
 from asyncio import gather, CancelledError, to_thread
 from datetime import datetime
 from logging import getLogger
-from typing import Union, Tuple, Dict, Optional
+from shutil import rmtree
+from typing import Tuple, Optional
 
-from multidict import MultiDictProxy
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.analysis import AnalysisSearchResult, Analysis
+from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -16,92 +18,142 @@ from virtool.analyses.checks import (
     check_analysis_workflow,
     check_analysis_nuvs_sequence,
     check_if_analysis_running,
-    check_if_analysis_ready,
     check_if_analysis_modified,
 )
-from virtool.analyses.db import PROJECTION, processor
-from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import AnalysisFile
-from virtool.analyses.utils import attach_analysis_files
-from virtool.api.utils import paginate
-from virtool.blast.models import NuVsBlast
+from virtool.analyses.db import TARGET_FILES
+from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
+from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.utils import (
+    attach_analysis_files,
+    join_analysis_path,
+    move_nuvs_files,
+)
+from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
     ResourceNotFoundError,
-    ResourceError,
     ResourceConflictError,
 )
+from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
-from virtool.mongo.core import DB
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
+from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
-from virtool.references.transforms import AttachReferenceTransform
+from virtool.references.db import lookup_nested_reference_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import naive_writer, file_chunks
 from virtool.users.db import AttachUserTransform
 from virtool.utils import wait_for_checks
+from virtool.subtractions.db import lookup_nested_subtractions
+from virtool.tasks.progress import (
+    AccumulatingProgressHandlerWrapper,
+    AbstractProgressHandler,
+)
+from virtool.uploads.utils import naive_writer
+from virtool.users.db import lookup_nested_user_by_id
+from virtool.utils import wait_for_checks, base_processor
 
 logger = getLogger("analyses")
 
 
 class AnalysisData(DataLayerPiece):
-    def __init__(self, db: DB, config, pg: AsyncEngine):
+    name = "analyses"
 
+    def __init__(self, db: Mongo, config, pg: AsyncEngine):
         self._db = db
         self._config = config
         self._pg = pg
 
-    async def find(
-        self, query: Union[Dict, MultiDictProxy[str]], client
-    ) -> AnalysisSearchResult:
+    async def find(self, page: int, per_page: int, client) -> AnalysisSearchResult:
         """
         List all analysis documents.
 
-        :param query: the request query
+        :param page: the page number
+        :param per_page: the number of documents per page
         :param client: the client object
         :return: a list of all analysis documents
         """
-        db_query = {}
+        sort = {"created_at": -1}
 
-        data = await paginate(
-            self._db.analyses,
-            db_query,
-            query,
-            projection=PROJECTION,
-            sort=[("created_at", -1)],
-        )
+        skip_count = 0
+
+        if page > 1:
+            skip_count = (page - 1) * per_page
+
+        async for paginate_dict in self._db.analyses.aggregate(
+            [
+                {
+                    "$facet": {
+                        "total_count": [{"$count": "total_count"}],
+                        "found_count": [{"$count": "found_count"}],
+                        "data": [
+                            {"$sort": sort},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
+                            *lookup_minimal_job_by_id(),
+                            *lookup_nested_subtractions(),
+                            *lookup_nested_reference_by_id(),
+                            *lookup_nested_user_by_id(),
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "data": {
+                            "_id": True,
+                            "workflow": True,
+                            "created_at": True,
+                            "index": True,
+                            "job": True,
+                            "ready": True,
+                            "reference": True,
+                            "sample": True,
+                            "subtractions": True,
+                            "updated_at": True,
+                            "user": True,
+                        },
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0]
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0]
+                        },
+                    }
+                },
+            ]
+        ):
+            data = paginate_dict["data"]
+            found_count = paginate_dict.get("found_count", 0)
+            total_count = paginate_dict.get("total_count", 0)
 
         per_document_can_read = await gather(
             *[
                 virtool.samples.db.check_rights(
                     self._db, document["sample"]["id"], client, write=False
                 )
-                for document in data["documents"]
+                for document in data
             ]
         )
 
         documents = [
             document
-            for document, can_write in zip(data["documents"], per_document_can_read)
+            for document, can_write in zip(data, per_document_can_read)
             if can_write
         ]
 
-        documents = await apply_transforms(
-            documents,
-            [
-                AttachReferenceTransform(self._db),
-                AttachUserTransform(self._db),
-                AttachSubtractionTransform(self._db),
-            ],
+        return AnalysisSearchResult(
+            documents=documents,
+            found_count=found_count,
+            total_count=total_count,
+            page=page,
+            page_count=int(math.ceil(found_count / per_page)),
+            per_page=per_page,
         )
-
-        data["documents"] = documents
-
-        return AnalysisSearchResult(**data)
 
     async def get(
         self, analysis_id: str, if_modified_since: Optional[datetime]
@@ -113,46 +165,38 @@ class AnalysisData(DataLayerPiece):
         :param if_modified_since: the date the document should have been last modified
         :return: the analysis
         """
-        document = await self._db.analyses.find_one(analysis_id)
+        result = await self._db.analyses.aggregate(
+            [
+                {"$match": {"_id": analysis_id}},
+                *lookup_minimal_job_by_id(),
+                *lookup_nested_subtractions(),
+                *lookup_nested_reference_by_id(),
+                *lookup_nested_user_by_id(),
+            ]
+        ).to_list(length=1)
 
-        if document is None:
+        if not result:
             raise ResourceNotFoundError()
 
-        await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
+        analysis = result[0]
 
-        document = await attach_analysis_files(self._pg, analysis_id, document)
+        await wait_for_checks(check_if_analysis_modified(if_modified_since, analysis))
 
-        document_before_formatting = document
+        analysis = await attach_analysis_files(self._pg, analysis_id, analysis)
 
-        sample = await self._db.samples.find_one(
-            {"_id": document["sample"]["id"]}, {"quality": False}
-        )
-
-        if not sample:
-            raise ResourceError()
-
-        if document["ready"]:
-            document = await virtool.analyses.format.format_analysis(
-                self._config, self._db, document
+        if analysis["ready"]:
+            analysis = await virtool.analyses.format.format_analysis(
+                self._config, self._db, analysis
             )
 
-        document = await processor(self._db, document)
+        analysis = base_processor(analysis)
 
-        if document["workflow"] == "nuvs":
-            document = await apply_transforms(
-                document,
-                [AttachNuVsBLAST(self._pg)],
-            )
+        if analysis["workflow"] == "nuvs":
+            analysis = await apply_transforms(analysis, [AttachNuVsBLAST(self._pg)])
 
-        for key in document_before_formatting:
-            if key not in document:
-                document.update({key: document_before_formatting[key]})
-
-        document = await apply_transforms(
-            document, [AttachReferenceTransform(self._db)]
+        return Analysis(
+            **{**analysis, "job": analysis["job"] if analysis["job"] else None}
         )
-
-        return Analysis(**document)
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """
@@ -166,15 +210,22 @@ class AnalysisData(DataLayerPiece):
         sample = await get_one_field(self._db.analyses, "sample", analysis_id)
 
         if sample is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
+
+        sample_id = sample["id"]
 
         sample = await self._db.samples.find_one(
-            {"_id": sample["id"]},
+            {"_id": sample_id},
             ["user", "group", "all_read", "group_read", "group_write", "all_write"],
         )
 
         if not sample:
-            raise ResourceError()
+            logger.warning(
+                "Parent sample for analysis not found analysis_id=%s sample_id=%s",
+                analysis_id,
+                sample_id,
+            )
+            raise ResourceNotFoundError
 
         read, write = get_sample_rights(sample, client)
 
@@ -191,27 +242,34 @@ class AnalysisData(DataLayerPiece):
         :param analysis_id: the analysis ID
         :param jobs_api_flag: checks if the jobs_api is handling the request
         """
-        document = await self._db.analyses.find_one(
-            {"_id": analysis_id}, ["job", "ready", "sample"]
+
+        analysis = await self.get(analysis_id, None)
+
+        if not analysis:
+            raise ResourceNotFoundError
+
+        if not analysis.ready and not jobs_api_flag:
+            # Only the jobs API is allowed to delete incomplete analyses.
+            raise ResourceConflictError
+
+        await self._db.analyses.delete_one({"_id": analysis.id})
+
+        path = (
+            self._config.data_path
+            / "samples"
+            / analysis.sample.id
+            / "analysis"
+            / analysis_id
         )
-
-        if not document:
-            raise ResourceNotFoundError()
-
-        sample_id = document["sample"]["id"]
-
-        await wait_for_checks(check_if_analysis_ready(jobs_api_flag, document["ready"]))
-
-        await self._db.analyses.delete_one({"_id": analysis_id})
-
-        path = self._config.data_path / "samples" / sample_id / "analysis" / analysis_id
 
         try:
             await to_thread(rm, path, True)
         except FileNotFoundError:
             pass
 
-        await recalculate_workflow_tags(self._db, sample_id)
+        await recalculate_workflow_tags(self._db, analysis.sample.id)
+
+        emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
         self, reader, analysis_id: str, analysis_format: str, name: str
@@ -229,7 +287,7 @@ class AnalysisData(DataLayerPiece):
         document = await self._db.analyses.find_one(analysis_id)
 
         if document is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         analysis_file = await create_analysis_file(
             self._pg, analysis_id, analysis_format, name
@@ -245,12 +303,12 @@ class AnalysisData(DataLayerPiece):
             size = await naive_writer(file_chunks(reader), analysis_file_path)
         except CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
-            await delete_row(self._pg, upload_id, AnalysisFile)
+            await delete_row(self._pg, upload_id, SQLAnalysisFile)
 
             return None
 
         analysis_file = await virtool.uploads.db.finalize(
-            self._pg, size, upload_id, AnalysisFile
+            self._pg, size, upload_id, SQLAnalysisFile
         )
 
         return AnalysisFile(**analysis_file)
@@ -263,7 +321,7 @@ class AnalysisData(DataLayerPiece):
         :return: the name on disk of the analysis file
         """
 
-        analysis_file = await get_row_by_id(self._pg, AnalysisFile, upload_id)
+        analysis_file = await get_row_by_id(self._pg, SQLAnalysisFile, upload_id)
 
         if analysis_file:
             return analysis_file.name_on_disk
@@ -320,9 +378,9 @@ class AnalysisData(DataLayerPiece):
 
         async with AsyncSession(self._pg) as session:
             await session.execute(
-                delete(NuVsBlast)
-                .where(NuVsBlast.analysis_id == analysis_id)
-                .where(NuVsBlast.sequence_index == sequence_index)
+                delete(SQLNuVsBlast)
+                .where(SQLNuVsBlast.analysis_id == analysis_id)
+                .where(SQLNuVsBlast.sequence_index == sequence_index)
             )
             await session.commit()
 
@@ -333,7 +391,7 @@ class AnalysisData(DataLayerPiece):
 
             await session.flush()
 
-            blast = NuVsBlast(
+            blast = SQLNuVsBlast(
                 analysis_id=analysis_id,
                 created_at=timestamp,
                 last_checked_at=timestamp,
@@ -355,6 +413,7 @@ class AnalysisData(DataLayerPiece):
 
         return blast_data
 
+    @emits(Operation.UPDATE)
     async def finalize(self, analysis_id: str, results: dict) -> Analysis:
         """
         Sets the result for an analysis and marks it as ready.
@@ -379,3 +438,49 @@ class AnalysisData(DataLayerPiece):
         await recalculate_workflow_tags(self._db, document["sample"]["id"])
 
         return await self.get(analysis_id, None)
+
+    async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
+        """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
+
+        count = await self._db.analyses.count_documents({"workflow": "nuvs"})
+
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
+
+        async for analysis in self._db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+
+            old_path = join_analysis_path(
+                self._config.data_path, analysis_id, sample_id
+            )
+
+            target_path = self._config.data_path / "analyses" / analysis_id
+
+            async with AsyncSession(self._pg) as session:
+                exists = (
+                    await session.execute(
+                        select(SQLAnalysisFile).filter_by(analysis=analysis_id)
+                    )
+                ).scalar()
+
+            if await to_thread(old_path.is_dir) and not exists:
+                try:
+                    await to_thread(os.makedirs, target_path)
+                except FileExistsError:
+                    pass
+
+                analysis_files = []
+
+                for filename in sorted(os.listdir(old_path)):
+                    if filename in TARGET_FILES:
+                        analysis_files.append(filename)
+
+                        await move_nuvs_files(filename, old_path, target_path)
+
+                await create_nuvs_analysis_files(
+                    self._pg, analysis_id, analysis_files, target_path
+                )
+
+                await to_thread(rmtree, old_path, ignore_errors=True)
+
+            await tracker.add(1)

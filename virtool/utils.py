@@ -8,9 +8,12 @@ import tempfile
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Any, Iterable, Optional, Tuple, Dict
+from typing import Any, Iterable, Optional, Tuple, Dict, Type
 
 import arrow
+from aiohttp import ClientSession
+from aiohttp.web import Application
+from pydantic import BaseModel
 
 SUB_DIRS = [
     "caches",
@@ -47,24 +50,6 @@ def base_processor(document: Optional[Dict]) -> Optional[Dict]:
     return document
 
 
-def get_safely(dct: Dict, *keys) -> Any:
-    """
-    Get values from nested dictionaries while returning ``None`` when a ``KeyError`` or
-    ``TypeError`` is raised.
-
-    """
-    for key in keys:
-        try:
-            dct = dct[key]
-        except (
-            KeyError,
-            TypeError,
-        ):
-            return None
-
-    return dct
-
-
 def chunk_list(lst: list, n: int):
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):
@@ -85,7 +70,7 @@ def coerce_list(obj: Any) -> list:
     return [obj] if not isinstance(obj, list) else obj
 
 
-def compress_json_with_gzip(json_string: str, target: str):
+def compress_json_with_gzip(json_bytes: bytes, target: Path):
     """
     Compress the JSON string to a gzipped file at `target`.
 
@@ -95,7 +80,7 @@ def compress_json_with_gzip(json_string: str, target: str):
     target.parent.mkdir(exist_ok=True, parents=True)
 
     with gzip.open(target, "wb") as f:
-        f.write(json_string)
+        f.write(json_bytes)
 
 
 def ensure_data_dir(data_path: Path):
@@ -112,6 +97,39 @@ def ensure_data_dir(data_path: Path):
 def generate_key() -> Tuple[str, str]:
     key = secrets.token_hex(32)
     return key, hash_key(key)
+
+
+def get_safely(dct: Dict, *keys) -> Any:
+    """
+    Get values from nested dictionaries while returning ``None`` when a ``KeyError`` or
+    ``TypeError`` is raised.
+
+    """
+    for key in keys:
+        try:
+            dct = dct[key]
+        except (KeyError, TypeError):
+            return None
+
+    return dct
+
+
+def get_all_subclasses(cls):
+    all_subclasses = []
+
+    for subclass in cls.__subclasses__():
+        all_subclasses.append(subclass)
+        all_subclasses.extend(get_all_subclasses(subclass))
+
+    return all_subclasses
+
+
+def get_model_by_name(name: str) -> Type[BaseModel]:
+    for cls in get_all_subclasses(BaseModel):
+        if cls.__name__ == name:
+            return cls
+
+    raise ValueError(f"Could not find model with name {name}")
 
 
 def get_temp_dir():
@@ -187,3 +205,12 @@ async def wait_for_checks(*aws):
             raise result
         if result is not None:
             raise TypeError("Check functions may only return a NoneType object.")
+
+
+def get_http_session_from_app(app: Application) -> ClientSession:
+    """
+    Get the application shared :class:`aiohttp.ClientSession` object.
+
+    :param app: the application object
+    """
+    return app["client"]

@@ -1,4 +1,4 @@
-# name: test_attach_subtractions[uvloop-documents0]
+# name: test_attach_subtractions[documents0]
   <class 'dict'> {
     'id': 'sub_1',
     'subtractions': <class 'list'> [
@@ -13,7 +13,7 @@
     ],
   }
 ---
-# name: test_attach_subtractions[uvloop-documents1]
+# name: test_attach_subtractions[documents1]
   <class 'list'> [
     <class 'dict'> {
       'id': 'sub_1',

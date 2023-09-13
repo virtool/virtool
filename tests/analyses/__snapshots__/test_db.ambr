@@ -1,4 +1,4 @@
-# name: test_create[uvloop-None]
+# name: test_create[None]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
@@ -20,6 +20,9 @@
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'subtraction_1',
       'subtraction_2',
@@ -31,7 +34,7 @@
     'workflow': 'nuvs',
   }
 ---
-# name: test_create[uvloop-None].1
+# name: test_create[None].1
   <class 'dict'> {
     '_id': 'bf1b993c',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -53,6 +56,9 @@
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'subtraction_1',
       'subtraction_2',
@@ -64,7 +70,7 @@
     'workflow': 'nuvs',
   }
 ---
-# name: test_create[uvloop-test_analysis]
+# name: test_create[test_analysis]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
@@ -86,6 +92,9 @@
     'sample': <class 'dict'> {
       'id': 'test_sample',
     },
+    'space': <class 'dict'> {
+      'id': 0,
+    },
     'subtractions': <class 'list'> [
       'subtraction_1',
       'subtraction_2',
@@ -97,7 +106,7 @@
     'workflow': 'nuvs',
   }
 ---
-# name: test_create[uvloop-test_analysis].1
+# name: test_create[test_analysis].1
   <class 'dict'> {
     '_id': 'test_analysis',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -118,6 +127,9 @@
     'results': None,
     'sample': <class 'dict'> {
       'id': 'test_sample',
+    },
+    'space': <class 'dict'> {
+      'id': 0,
     },
     'subtractions': <class 'list'> [
       'subtraction_1',

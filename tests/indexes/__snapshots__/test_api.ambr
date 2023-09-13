@@ -1,4 +1,4 @@
-# name: TestCreate.test[True-uvloop][enqueued]
+# name: TestCreate.test[True][enqueued]
   <class 'list'> [
     <class 'tuple'> (
       'build_index',
@@ -6,7 +6,7 @@
     ),
   ]
 ---
-# name: TestCreate.test[True-uvloop][index]
+# name: TestCreate.test[True][index]
   <class 'dict'> {
     '_id': 'fb085f7f',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -29,7 +29,7 @@
     'version': 0,
   }
 ---
-# name: TestCreate.test[True-uvloop][job]
+# name: TestCreate.test[True][job]
   <class 'dict'> {
     '_id': 'bf1b993c',
     'acquired': False,
@@ -47,16 +47,9 @@
     'key': None,
     'ping': None,
     'rights': <class 'dict'> {
-      'indexes': <class 'dict'> {
-        'modify': <class 'list'> [
-          'fb085f7f',
-        ],
-      },
-      'references': <class 'dict'> {
-        'read': <class 'list'> [
-          'foo',
-        ],
-      },
+    },
+    'space': <class 'dict'> {
+      'id': 0,
     },
     'state': 'waiting',
     'status': <class 'list'> [
@@ -76,7 +69,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: TestCreate.test[True-uvloop][json]
+# name: TestCreate.test[True][json]
   <class 'dict'> {
     'change_count': 1,
     'contributors': <class 'list'> [
@@ -93,7 +86,18 @@
     'has_files': True,
     'id': 'fb085f7f',
     'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'test',
+      },
+      'workflow': 'build_index',
     },
     'manifest': <class 'dict'> {
       'bar': 2,
@@ -116,10 +120,10 @@
     'version': 0,
   }
 ---
-# name: TestCreate.test[True-uvloop][location]
+# name: TestCreate.test[True][location]
   'https://virtool.example.com/indexes/fb085f7f'
 ---
-# name: TestFind.test[uvloop]
+# name: TestFind.test
   <class 'dict'> {
     'change_count': 12,
     'documents': <class 'list'> [
@@ -129,7 +133,18 @@
         'has_files': True,
         'id': 'bar',
         'job': <class 'dict'> {
-          'id': 'bar',
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 'fb085f7f',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'build_index',
         },
         'modified_otu_count': 3,
         'ready': False,
@@ -151,7 +166,18 @@
         'has_files': True,
         'id': 'foo',
         'job': <class 'dict'> {
-          'id': 'foo',
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          },
+          'workflow': 'build_index',
         },
         'modified_otu_count': 2,
         'ready': False,
@@ -177,7 +203,7 @@
     'total_otu_count': 123,
   }
 ---
-# name: TestFind.test_ready[uvloop]
+# name: TestFind.test_ready
   <class 'list'> [
     <class 'dict'> {
       'change_count': 0,
@@ -185,7 +211,18 @@
       'has_files': True,
       'id': 'daz',
       'job': <class 'dict'> {
-        'id': 'foo',
+        'archived': False,
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'fb085f7f',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
       },
       'modified_otu_count': 0,
       'ready': True,
@@ -207,7 +244,18 @@
       'has_files': True,
       'id': 'bot',
       'job': <class 'dict'> {
-        'id': 'bar',
+        'archived': False,
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'fb085f7f',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
       },
       'modified_otu_count': 0,
       'ready': True,
@@ -225,25 +273,25 @@
     },
   ]
 ---
-# name: test_finalize[uvloop-404_reference]
+# name: test_finalize[404_reference]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_finalize[uvloop-409_fasta]
+# name: test_finalize[409_fasta]
   <class 'dict'> {
     'id': 'conflict',
     'message': 'A FASTA file must be uploaded in order to finalize index',
   }
 ---
-# name: test_finalize[uvloop-409_genome]
+# name: test_finalize[409_genome]
   <class 'dict'> {
     'id': 'conflict',
     'message': 'Reference requires that all Bowtie2 index files have been uploaded. Missing files: reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2',
   }
 ---
-# name: test_finalize[uvloop-None]
+# name: test_finalize[None]
   <class 'dict'> {
     'change_count': 0,
     'contributors': <class 'list'> [
@@ -318,7 +366,18 @@
     'has_files': True,
     'id': 'test_index',
     'job': <class 'dict'> {
-      'id': 'sj82la',
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'build_index',
     },
     'manifest': <class 'dict'> {
       'foo': 4,
@@ -340,7 +399,7 @@
     'version': 2,
   }
 ---
-# name: test_finalize[uvloop-None].1
+# name: test_finalize[None].1
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -365,7 +424,7 @@
     'version': 1,
   }
 ---
-# name: test_find_history[uvloop-None]
+# name: test_find_history[None]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -476,7 +535,7 @@
     'total_count': 4,
   }
 ---
-# name: test_get[uvloop-None]
+# name: test_get[None]
   <class 'dict'> {
     'change_count': 2,
     'contributors': <class 'list'> [
@@ -499,7 +558,18 @@
     'has_files': True,
     'id': 'foobar',
     'job': <class 'dict'> {
-      'id': 'sj82la',
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'build_index',
     },
     'manifest': <class 'dict'> {
       'foo': 2,
@@ -531,7 +601,7 @@
     'version': 0,
   }
 ---
-# name: test_upload[uvloop-None]
+# name: test_upload[None]
   <class 'dict'> {
     'download_url': '/indexes/foo/files/reference.1.bt2',
     'id': 1,
@@ -541,7 +611,7 @@
     'type': 'bowtie2',
   }
 ---
-# name: test_upload[uvloop-None].1
+# name: test_upload[None].1
   <class 'dict'> {
     '_id': 'foo',
     'reference': <class 'dict'> {
@@ -552,6 +622,6 @@
     },
   }
 ---
-# name: test_upload[uvloop-None].2
+# name: test_upload[None].2
   <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=7205747)>
 ---

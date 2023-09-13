@@ -1,11 +1,15 @@
+from datetime import datetime
 from unittest.mock import call
 
+import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
+from syrupy.matchers import path_type
+from virtool_core.models.job import JobState
 
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
-from virtool.jobs.utils import JobRights, compose_status
+from virtool.jobs.utils import compose_status
 
 
 @pytest.fixture
@@ -54,16 +58,11 @@ async def test_create(
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
-    rights = JobRights()
-    rights.samples.can_read("foo")
-    rights.samples.can_modify("foo")
-    rights.samples.can_remove("foo")
-
     user = await fake.users.insert()
 
     assert (
         await jobs_data.create(
-            "create_sample", {"sample_id": "foo"}, user["_id"], rights, job_id=job_id
+            "create_sample", {"sample_id": "foo"}, user["_id"], 0, job_id=job_id
         )
         == snapshot
     )
@@ -98,7 +97,7 @@ async def test_acquire(
 async def test_archive(mongo, fake2, jobs_data: JobsData, pg, snapshot, static_time):
     user = await fake2.users.create()
 
-    status = compose_status("waiting", None)
+    status = compose_status(JobState.WAITING, None)
 
     await mongo.jobs.insert_one(
         {
@@ -119,7 +118,7 @@ async def test_archive(mongo, fake2, jobs_data: JobsData, pg, snapshot, static_t
 
 
 async def test_force_delete_jobs(mongo, jobs_data: JobsData):
-    await mongo.jobs.insert_many([{"_id": "foo"}, {"_id": "bar"}])
+    await mongo.jobs.insert_many([{"_id": "foo"}, {"_id": "bar"}], session=None)
 
     await jobs_data.force_delete()
 
@@ -128,3 +127,182 @@ async def test_force_delete_jobs(mongo, jobs_data: JobsData):
     )
 
     assert await mongo.jobs.count_documents({}) == 0
+
+
+async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
+    user = await fake2.users.create()
+
+    now = arrow.utcnow()
+
+    async with mongo.create_session() as session:
+        await mongo.jobs.insert_many(
+            [
+                # Ok: Newer than 30 days.
+                {
+                    "_id": "ok_new",
+                    "archived": False,
+                    "args": {},
+                    "ping": None,
+                    "rights": {},
+                    "state": JobState.RUNNING.value,
+                    "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-10).naive,
+                        },
+                        {
+                            "state": JobState.RUNNING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(minutes=-1).naive,
+                        },
+                    ],
+                    "user": {"id": user.id},
+                    "workflow": "build_index",
+                },
+                # Ok: Pinged with the past 5 minutes.
+                {
+                    "_id": "ok_ping",
+                    "archived": False,
+                    "args": {},
+                    "ping": {"pinged_at": now.shift(minutes=-1).naive},
+                    "rights": {},
+                    "state": JobState.RUNNING.value,
+                    "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-10).naive,
+                        },
+                        {
+                            "state": JobState.RUNNING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(minutes=-1).naive,
+                        },
+                    ],
+                },
+                # Ok: Not in running or preparing state.
+                {
+                    "_id": "ok_state",
+                    "archived": False,
+                    "args": {},
+                    "ping": {"pinged_at": now.shift(minutes=-1).naive},
+                    "rights": {},
+                    "state": JobState.COMPLETE.value,
+                    "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-10).naive,
+                        },
+                        {
+                            "state": JobState.RUNNING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(minutes=-4).naive,
+                        },
+                        {
+                            "state": JobState.COMPLETE.value,
+                            "stage": "Bar",
+                            "step_name": "bar",
+                            "step_description": "bar a foo",
+                            "error": None,
+                            "progress": 1,
+                            "timestamp": now.shift(minutes=-2).naive,
+                        },
+                    ],
+                },
+                # Bad: Older than 30 days.
+                {
+                    "_id": "bad_old",
+                    "archived": False,
+                    "args": {},
+                    "ping": None,
+                    "rights": {},
+                    "state": JobState.RUNNING.value,
+                    "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-42).naive,
+                        },
+                        {
+                            "state": JobState.RUNNING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(minutes=-1).naive,
+                        },
+                    ],
+                    "user": {"id": user.id},
+                    "workflow": "build_index",
+                },
+                # Bad: Pinged more than 5 minutes ago.
+                {
+                    "_id": "bad_ping",
+                    "archived": False,
+                    "args": {},
+                    "ping": {"pinged_at": now.shift(minutes=-6).naive},
+                    "rights": {},
+                    "state": JobState.RUNNING.value,
+                    "status": [
+                        {
+                            "state": JobState.WAITING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(days=-1).naive,
+                        },
+                        {
+                            "state": JobState.RUNNING.value,
+                            "stage": "foo",
+                            "step_name": "foo",
+                            "step_description": "Foo a bar",
+                            "error": None,
+                            "progress": 0.33,
+                            "timestamp": now.shift(minutes=-10).naive,
+                        },
+                    ],
+                    "user": {"id": user.id},
+                    "workflow": "build_index",
+                },
+            ],
+            session=session,
+        )
+
+    await jobs_data.timeout()
+
+    jobs = await mongo.jobs.find({}, ["_id", "state", "status"]).to_list(None)
+
+    assert jobs == snapshot(matcher=path_type({".*timestamp": (datetime,)}, regex=True))

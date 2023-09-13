@@ -1,36 +1,39 @@
+from datetime import timedelta
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool.samples.models import SampleReads
-from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
-from virtool.tasks.models import Task
-from virtool.uploads.models import Upload
+from virtool.samples.models import SQLSampleReads
+from virtool.samples.tasks import (
+    CompressSamplesTask,
+    MoveSampleFilesTask,
+    DeduplicateSampleNamesTask,
+    UpdateSampleWorkflowsTask,
+)
+from virtool.tasks.models import SQLTask
+from virtool.uploads.models import SQLUpload
 from virtool.data.layer import DataLayer
+from virtool.utils import get_temp_dir
+
 
 async def test_compress_samples_task(
-    mocker, mongo, pg: AsyncEngine, data_layer: DataLayer, static_time
+    mocker, mongo, pg: AsyncEngine, data_layer: DataLayer, static_time, config
 ):
     """
     Ensure `compress_reads` is called correctly given a samples collection.
 
     """
-    app_dict = {
-        "db": mongo,
-        "pg": pg,
-        "settings": {},
-        "data": data_layer,
-    }
-
     await mongo.samples.insert_many(
         [
             {"_id": "foo", "is_legacy": True},
             {"_id": "fab", "is_legacy": False},
             {"_id": "bar", "is_legacy": True},
-        ]
+        ],
+        session=None,
     )
 
     async with AsyncSession(pg) as session:
-        task = Task(
+        task = SQLTask(
             id=1,
             complete=False,
             context={},
@@ -45,24 +48,24 @@ async def test_compress_samples_task(
 
     calls = []
 
-    async def compress_reads(app, sample):
-        calls.append((app, sample))
+    async def compress_reads(db, app_config, sample):
+        calls.append((db, app_config, sample))
 
         # Set is_compressed on the sample as would be expected after a successful compression
-        await app["db"].samples.update_one(
+        await db.samples.update_one(
             {"_id": sample["_id"]}, {"$set": {"is_compressed": True}}
         )
 
     mocker.patch("virtool.samples.db.compress_sample_reads", compress_reads)
 
-    task = CompressSamplesTask(app_dict, 1)
+    task = CompressSamplesTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 
     assert calls == (
         [
-            (app_dict, {"_id": "foo", "is_legacy": True}),
-            (app_dict, {"_id": "bar", "is_legacy": True}),
+            (mongo, config, {"_id": "foo", "is_legacy": True}),
+            (mongo, config, {"_id": "bar", "is_legacy": True}),
         ]
     )
 
@@ -71,15 +74,15 @@ async def test_compress_samples_task(
 @pytest.mark.parametrize("compressed", [True, False])
 @pytest.mark.parametrize("paired", [True, False])
 async def test_move_sample_files_task(
-    legacy, compressed, paired, mongo, pg: AsyncEngine, data_layer: DataLayer, snapshot, static_time
+    legacy,
+    compressed,
+    data_layer: DataLayer,
+    mongo,
+    paired,
+    pg: AsyncEngine,
+    snapshot,
+    static_time,
 ):
-    app_dict = {
-        "db": mongo,
-        "pg": pg,
-        "settings": {},
-        "data": data_layer
-    }
-
     sample = {
         "_id": "foo",
         "is_legacy": legacy,
@@ -120,7 +123,7 @@ async def test_move_sample_files_task(
 
     async with AsyncSession(pg) as session:
         session.add(
-            Task(
+            SQLTask(
                 id=1,
                 complete=False,
                 context={},
@@ -133,7 +136,7 @@ async def test_move_sample_files_task(
         )
         await session.commit()
 
-    task = MoveSampleFilesTask(app_dict, 1)
+    task = MoveSampleFilesTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 
@@ -142,9 +145,138 @@ async def test_move_sample_files_task(
     if not legacy or (legacy and compressed):
         async with AsyncSession(pg) as session:
             sample_reads = (
-                await session.execute(select(SampleReads).filter_by(id=1))
+                await session.execute(select(SQLSampleReads).filter_by(id=1))
             ).scalar()
-            upload = (await session.execute(select(Upload).filter_by(id=1))).scalar()
+            upload = (await session.execute(select(SQLUpload).filter_by(id=1))).scalar()
 
         assert sample_reads in upload.reads
         assert sample_reads.upload == upload.id
+
+
+@pytest.mark.parametrize("spaces", [True, False])
+async def test_deduplicate_sample_names(
+    data_layer: DataLayer,
+    mongo,
+    pg: AsyncEngine,
+    snapshot,
+    static_time,
+    spaces,
+):
+    samples = [
+        {
+            "_id": "test_id",
+            "name": "test_name",
+            "created_at": static_time.datetime,
+            "space_id": "0",
+        },
+        {
+            "_id": "test_id_2",
+            "name": "test_name (2)",
+            "created_at": static_time.datetime + timedelta(days=3),
+            "space_id": "0",
+        },
+        {
+            "_id": "test_id_3",
+            "name": "test_name",
+            "created_at": static_time.datetime + timedelta(days=2),
+            "space_id": "0",
+        },
+        {
+            "_id": "test_id_4",
+            "name": "test_name",
+            "created_at": static_time.datetime + timedelta(days=1),
+            "space_id": "1",
+        },
+    ]
+
+    if not spaces:
+        for sample in samples:
+            sample.pop("space_id")
+
+    async with mongo.create_session() as session:
+        await mongo.samples.insert_many(samples, session)
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLTask(
+                id=1,
+                complete=False,
+                context={},
+                count=0,
+                progress=0,
+                step="deduplicate_sample_names",
+                type="deduplicate_sample_names",
+                created_at=static_time.datetime,
+            )
+        )
+        await session.commit()
+
+    task = DeduplicateSampleNamesTask(1, data_layer, {}, get_temp_dir())
+
+    await task.run()
+
+    assert await mongo.samples.find().to_list(None) == snapshot
+
+
+@pytest.mark.parametrize("ready", [True, False])
+async def test_update_workflows_fields(
+    data_layer: DataLayer,
+    mongo,
+    pg: AsyncEngine,
+    ready,
+    static_time,
+    snapshot,
+):
+    await mongo.samples.insert_one(
+        {
+            "_id": "test_id",
+            "library_type": "normal",
+            "nuvs": False,
+            "pathoscope": True,
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "none",
+                "pathoscope": "none",
+            },
+        },
+        session=None,
+    )
+
+    await mongo.analyses.insert_many(
+        [
+            {
+                "_id": "test",
+                "sample": {"id": "test_id"},
+                "ready": ready,
+                "workflow": "pathoscope_bowtie",
+            },
+            {
+                "_id": "test1",
+                "sample": {"id": "test_id"},
+                "ready": False,
+                "workflow": "nuvs",
+            },
+        ],
+        session=None,
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLTask(
+                id=1,
+                complete=False,
+                context={},
+                count=0,
+                progress=0,
+                step="populate_workflows_field",
+                type="populate_workflows_field",
+                created_at=static_time.datetime,
+            )
+        )
+        await session.commit()
+
+    task = UpdateSampleWorkflowsTask(1, data_layer, {}, get_temp_dir())
+
+    await task.run()
+
+    assert await mongo.samples.find().to_list(None) == snapshot

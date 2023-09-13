@@ -1,24 +1,27 @@
 import json
 import logging
-import shutil
-from pathlib import Path
+from asyncio import to_thread
+from tempfile import TemporaryDirectory
+from typing import Dict, TYPE_CHECKING
 
 import aiofiles
 from virtool_core.utils import decompress_tgz
 
-from virtool.data.utils import get_data_from_app
-from virtool.github import create_update_subdocument
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
+
 from virtool.http.utils import download_file
-from virtool.tasks.task import Task
+from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
+from virtool.tasks.task import BaseTask
 
 logger = logging.getLogger(__name__)
 
 
-class HMMInstallTask(Task):
+class HMMInstallTask(BaseTask):
     """
     Runs a background Task that:
         - downloads the official profiles.hmm.gz file
-        - decompresses the vthmm.tar.gz file
+        - decompresses the hmm.tar.gz file
         - moves the file to the correct data path
         - downloads the official annotations.json.gz file
         - imports the annotations into the database
@@ -29,104 +32,82 @@ class HMMInstallTask(Task):
         4. install_profiles
         5. import_annotations
 
-    :param app: the app object
-    :param task_id: the id for the process document
-
     """
 
-    task_type = "install_hmms"
+    name = "install_hmms"
 
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [
             self.download,
             self.decompress,
-            self.install_profiles,
-            self.import_annotations,
+            self.install,
         ]
 
-        self.temp_path = Path(self.temp_dir.name)
-
     async def download(self):
+        """
+        Download the HMM release archive.
+
+        """
         release = self.context["release"]
 
-        await get_data_from_app(self.app).tasks.update(self.id, 0, step="download")
-
-        tracker = await self.get_tracker(release["size"])
-
-        path = self.temp_path / "hmm.tar.gz"
+        tracker = AccumulatingProgressHandlerWrapper(
+            self.create_progress_handler(), release["size"]
+        )
 
         try:
-            await download_file(self.app, release["download_url"], path, tracker.add)
+            await download_file(
+                release["download_url"],
+                self.temp_path / "hmm.tar.gz",
+                tracker.add,
+            )
         except Exception as err:
             logger.warning("Request for HMM release encountered exception: %s", err)
-            await self.error("Could not download HMM data.")
+            await self._set_error("Could not download HMM data.")
 
     async def decompress(self):
-        tracker = await self.get_tracker()
+        await to_thread(decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path)
 
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=tracker.step_completed, step="unpack"
-        )
-
-        await self.run_in_thread(
-            decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path
-        )
-
-    async def install_profiles(self):
-        tracker = await self.get_tracker()
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=tracker.step_completed, step="install_profiles"
-        )
-
-        decompressed_path = self.temp_path / "hmm"
-
-        install_path = self.app["config"].data_path / "hmm" / "profiles.hmm"
-
-        await self.run_in_thread(
-            shutil.move, decompressed_path / "profiles.hmm", install_path
-        )
-
-    async def import_annotations(self):
-        release = self.context["release"]
-        await get_data_from_app(self.app).tasks.update(
-            self.id, step="import_annotations"
-        )
-
+    async def install(self):
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
 
-        tracker = await self.get_tracker(len(annotations))
-
-        for annotation in annotations:
-            await self.db.hmm.insert_one(dict(annotation, hidden=False))
-            await tracker.add(1)
-
-        logger.debug("Inserted %s annotations", len(annotations))
-
-        try:
-            release_id = int(release["id"])
-        except TypeError:
-            release_id = release["id"]
-
-        await self.db.status.update_one(
-            {"_id": "hmm", "updates.id": release_id},
-            {
-                "$set": {
-                    "installed": create_update_subdocument(
-                        release, True, self.context["user_id"]
-                    ),
-                    "updates.$.ready": True,
-                }
-            },
+        await self.data.hmms.install(
+            annotations,
+            self.context["release"],
+            self.context["user_id"],
+            self.create_progress_handler(),
+            self.temp_path / "hmm" / "profiles.hmm",
         )
 
     async def cleanup(self):
-        async with self.db.create_session() as session:
-            await self.db.status.find_one_and_update(
-                {"_id": "hmm"},
-                {"$set": {"installed": None, "task": None, "updates": []}},
-                session=session,
-            )
+        await self.data.hmms.clean_status()
+
+
+class HMMRefreshTask(BaseTask):
+    """
+    Periodically refreshes the release information for HMMs.
+    """
+
+    name = "refresh_hmms"
+
+    def __init__(
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context,
+        temp_dir,
+    ):
+        super().__init__(task_id, data, context, temp_dir)
+
+        self.steps = [self.refresh]
+
+    async def refresh(self):
+        await self.data.hmms.update_release()

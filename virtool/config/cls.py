@@ -1,32 +1,119 @@
+"""
+Configuration classes for the Virtool subcommands.
+
+These will be available in the application context and should be accessed using
+:func:`~virtool.utils.get_config_from_app` or
+:func:`~virtool.utils.get_config_from_request`.
+
+"""
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypeAlias
+
+from pymongo.uri_parser import parse_uri
+
+from virtool.authorization.openfga import OpenfgaScheme
+from virtool.flags import FlagName
 
 
 @dataclass
-class Config:
-    db_connection_string: str
-    db_name: str
+class MigrationConfig:
+    """
+    Configuration for the migration service.
+
+    """
+
+    data_path: Path
+    mongodb_connection_string: str
+    openfga_host: str
+    openfga_scheme: OpenfgaScheme
+    openfga_store_name: str
+    postgres_connection_string: str
+
+    @property
+    def mongodb_name(self) -> str:
+        """
+        Get the name of the MongoDB database.
+
+        :return: the database name
+
+        """
+        return parse_uri(self.mongodb_connection_string)["database"]
+
+    def __post_init__(self):
+        self.data_path = Path(self.data_path)
+
+
+@dataclass
+class ServerConfig:
+    base_url: str
+    b2c_client_id: str | None
+    b2c_client_secret: str | None
+    b2c_tenant: str | None
+    b2c_user_flow: str | None
+    data_path: Path
     dev: bool
+    flags: list[FlagName]
+    host: str
+    mongodb_connection_string: str
+    no_check_db: bool
+    no_revision_check: bool
     openfga_host: str
     openfga_scheme: str
+    openfga_store_name: str
+    port: int
     postgres_connection_string: str
     redis_connection_string: str
-    b2c_client_id: str = None
-    b2c_client_secret: str = None
-    b2c_tenant: str = None
-    b2c_user_flow: str = None
-    base_url: str = ""
-    data_path: Path = None
-    fake: bool = False
-    fake_path: Path = None
-    force_version: str = None
-    host: str = None
-    no_check_files: bool = False
-    no_check_db: bool = False
-    no_fetching: bool = False
-    no_sentry: bool = False
-    no_tasks: bool = False
-    port: int = 9950
-    use_b2c: bool = False
-    verbose: bool = False
-    sentry_dsn: str = "https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532"
+    use_b2c: bool
+    sentry_dsn: str | None
+
+    @property
+    def mongodb_database(self) -> str:
+        return parse_uri(self.mongodb_connection_string)["database"]
+
+    def __post_init__(self):
+        self.data_path = Path(self.data_path)
+
+
+@dataclass
+class TaskRunnerConfig:
+    """
+    Configuration for the task runner service.
+
+    """
+
+    base_url: str
+    data_path: Path
+    host: str
+    mongodb_connection_string: str
+    no_revision_check: bool
+    openfga_host: str
+    openfga_scheme: str
+    openfga_store_name: str
+    port: int
+    postgres_connection_string: str
+    redis_connection_string: str
+    sentry_dsn: str
+
+    @property
+    def mongodb_database(self) -> str:
+        return parse_uri(self.mongodb_connection_string)["database"]
+
+    def __post_init__(self):
+        self.data_path = Path(self.data_path)
+
+
+@dataclass
+class TaskSpawnerConfig:
+    """
+    Configuration for the periodic task spawner
+    """
+
+    base_url: str
+    host: str
+    port: int
+    postgres_connection_string: str
+    redis_connection_string: str
+
+
+Config: TypeAlias = ServerConfig | TaskRunnerConfig | TaskSpawnerConfig

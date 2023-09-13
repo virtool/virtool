@@ -5,7 +5,7 @@ from virtool.pg.base import Base
 from virtool.samples.models import ArtifactType
 
 
-class SampleArtifactCache(Base):
+class SQLSampleArtifactCache(Base):
     """
     SQL model to store a cached sample artifact
 
@@ -24,7 +24,7 @@ class SampleArtifactCache(Base):
     uploaded_at = Column(DateTime)
 
 
-class SampleReadsCache(Base):
+class SQLSampleReadsCache(Base):
     """
     SQL model to store cached sample reads files
 

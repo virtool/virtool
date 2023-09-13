@@ -1,0 +1,102 @@
+# name: TestGet.test_get
+  <class 'dict'> {
+    'id': 'bf1b993c',
+    'name': 'musicians',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'users': <class 'list'> [
+    ],
+  }
+---
+# name: TestGet.test_legacy_id
+  <class 'dict'> {
+    'id': 'bf1b993c',
+    'name': 'musicians',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'users': <class 'list'> [
+    ],
+  }
+---
+# name: TestGet.test_user
+  <class 'dict'> {
+    'id': 'bf1b993c',
+    'name': 'musicians',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'laura56',
+        'id': 'fb085f7f',
+      },
+    ],
+  }
+---
+# name: test_create[mongo]
+  <class 'dict'> {
+    '_id': 'bf1b993c',
+    'name': 'test',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: test_create[pg]
+  <SQLGroup(id=1, legacy_id=bf1b993c, name=test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
+---
+# name: test_update_permissions[mongo_added]
+  <class 'dict'> {
+    'cancel_job': False,
+    'create_ref': False,
+    'create_sample': True,
+    'modify_hmm': False,
+    'modify_subtraction': True,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---
+# name: test_update_permissions[mongo_removed]
+  <class 'dict'> {
+    'cancel_job': False,
+    'create_ref': False,
+    'create_sample': False,
+    'modify_hmm': False,
+    'modify_subtraction': True,
+    'remove_file': False,
+    'remove_job': False,
+    'upload_file': False,
+  }
+---

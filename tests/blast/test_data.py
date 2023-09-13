@@ -1,27 +1,40 @@
-from datetime import timedelta
+from zipfile import BadZipFile
 
+import arrow
 import pytest
-from sqlalchemy import select
+from aiohttp import ClientSession
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.blast.data import BLASTData
-from virtool.blast.models import NuVsBlast
-from virtool.tasks.models import Task
+from virtool.blast.models import SQLNuVsBlast
+from virtool.blast.task import BLASTTask
+from virtool.data.layer import DataLayer
+from virtool.tasks.data import TasksData
+from virtool.tasks.models import SQLTask
 
 
 @pytest.fixture
-async def blast_data(mongo, pg, static_time, redis):
+async def blast_data(mocker, mongo, pg: AsyncEngine, static_time, redis):
+    blast_data = BLASTData(mocker.Mock(spec=ClientSession), mongo, pg)
+    blast_data.bind_layer(mocker.Mock(spec=DataLayer))
+    blast_data.data.tasks = mocker.Mock(spec=TasksData)
 
-    blast_data = BLASTData(mongo, pg)
+    await mongo.analyses.insert_one(
+        {
+            "_id": "analysis",
+            "results": {"hits": [{"sequence_index": 12, "sequence": "ATAGAGACACC"}]},
+        }
+    )
 
     async with AsyncSession(pg) as session:
-        task = Task(created_at=static_time.datetime, type="blast")
+        task = SQLTask(created_at=static_time.datetime, type="blast")
         session.add(task)
         await session.flush()
 
         session.add_all(
             [
-                NuVsBlast(
+                SQLNuVsBlast(
                     analysis_id="analysis",
                     sequence_index=21,
                     task_id=task.id,
@@ -30,7 +43,7 @@ async def blast_data(mongo, pg, static_time, redis):
                     last_checked_at=static_time.datetime,
                     ready=False,
                 ),
-                NuVsBlast(
+                SQLNuVsBlast(
                     analysis_id="analysis_2",
                     sequence_index=13,
                     task_id=task.id,
@@ -39,7 +52,7 @@ async def blast_data(mongo, pg, static_time, redis):
                     last_checked_at=static_time.datetime,
                     ready=False,
                 ),
-                NuVsBlast(
+                SQLNuVsBlast(
                     analysis_id="analysis_2",
                     sequence_index=4,
                     task_id=task.id,
@@ -56,35 +69,104 @@ async def blast_data(mongo, pg, static_time, redis):
     return blast_data
 
 
-async def test_update_nuvs_blast(
-    blast_data: BLASTData, pg: AsyncEngine, snapshot, static_time
-):
-    assert (
-        await blast_data.update_nuvs_blast(
-            "analysis",
-            21,
-            None,
-            static_time.datetime + timedelta(minutes=25),
-            "rid",
-            True,
-            result={"foo": "bar"},
-        )
-        == snapshot
+async def test_create_nuvs_blast(blast_data: BLASTData, pg, snapshot):
+    await blast_data.create_nuvs_blast("analysis", 12)
+
+    async with AsyncSession(pg) as session:
+        result = await session.execute(select(SQLNuVsBlast))
+        assert result.scalars().first() == snapshot
+
+    blast_data.data.tasks.create.assert_called_with(
+        BLASTTask, {"sequence_index": 12, "analysis_id": "analysis"}
     )
 
-    async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(NuVsBlast).where(NuVsBlast.sequence_index == 21)
+
+class TestCheckNuvsBlast:
+    async def test_running(self, blast_data: BLASTData, mocker, pg, snapshot):
+        """
+        Check that the ``last_checked_at`` field is updated when the BLAST is still
+        running on NCBI.
+        """
+        mocker.patch("virtool.blast.data.check_rid", return_value=False)
+
+        await blast_data.create_nuvs_blast("analysis", 12)
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLNuVsBlast)
+                .where(SQLNuVsBlast.id == 4)
+                .values(rid="RID_12345", last_checked_at=arrow.get(1367900664).naive)
+            )
+            await session.commit()
+
+        assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot(
+            name="before"
         )
 
-        assert result.one() == snapshot
+        await blast_data.check_nuvs_blast("analysis", 12)
+
+        assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot(name="after")
+
+    async def test_result(self, blast_data: BLASTData, mocker, pg, snapshot):
+        """
+        Check that the following occur when the BLAST is complete on NCBI:
+
+        1. The ``last_checked_at`` field is updated.
+        2. The ``ready`` field is set to ``True``.
+        3. The ``results`` field is set with the output of ``fetch_nuvs_blast_result``.
+
+        """
+        mocker.patch("virtool.blast.data.check_rid", return_value=True)
+
+        mocker.patch(
+            "virtool.blast.data.fetch_nuvs_blast_result",
+            return_value={
+                "BlastOutput2": {
+                    "report": {
+                        "params": [],
+                        "program": "blast",
+                        "results": {"search": {"hits": [], "stat": "stat"}},
+                        "search_target": {"name": "foo", "sequence": "ATAGAQGAGATAGAG"},
+                        "version": "1.2.3",
+                    },
+                }
+            },
+        )
+
+        await blast_data.create_nuvs_blast("analysis", 12)
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLNuVsBlast).where(SQLNuVsBlast.id == 4).values(rid="RID_12345")
+            )
+            await session.commit()
+
+        await blast_data.check_nuvs_blast("analysis", 12)
+
+        assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot
+
+    async def test_bad_zip_file(self, blast_data: BLASTData, mocker, pg, snapshot):
+        """
+        Test that the error field on the BLAST record is set when a BadZipFile error is
+        encountered.
+
+        """
+        mocker.patch("virtool.blast.data.check_rid", return_value=True)
+        mocker.patch(
+            "virtool.blast.data.fetch_nuvs_blast_result", side_effect=BadZipFile()
+        )
+
+        await blast_data.create_nuvs_blast("analysis", 12)
+        await blast_data.check_nuvs_blast("analysis", 12)
+
+        assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot
 
 
-async def test_remove_nuvs_blast(blast_data: BLASTData, pg: AsyncEngine):
-    assert await blast_data.remove_nuvs_blast("analysis", 21) == 1
+async def test_delete_nuvs_blast(blast_data: BLASTData, pg: AsyncEngine):
+    assert await blast_data.delete_nuvs_blast("analysis", 21) == 1
 
     async with AsyncSession(pg) as session:
-        result = await session.execute(select(NuVsBlast))
+        result = await session.execute(select(SQLNuVsBlast))
         assert len(result.scalars().all()) == 2
 
 

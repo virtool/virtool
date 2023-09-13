@@ -6,12 +6,14 @@ from aiohttp.web_exceptions import (
     HTTPConflict,
     HTTPNoContent,
 )
+from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
-from virtool_core.models.enums import Permission
 from virtool_core.models.otu import OTU
 
+from virtool.api.response import InsufficientRights
 from virtool.api.response import NotFound, json_response
+from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
@@ -19,11 +21,12 @@ from virtool.data.errors import (
     ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
 from virtool.otus.oas import CreateOTURequest
 from virtool.otus.oas import FindOTUsResponse
+from virtool.references.db import check_right
 from virtool.references.oas import (
     CreateReferenceRequest,
     UpdateReferenceRequest,
@@ -54,11 +57,14 @@ RIGHTS_SCHEMA = {
 }
 
 
+@routes.view("/spaces/{space_id}/refs")
 @routes.view("/refs")
 class ReferencesView(PydanticView):
     async def get(self, find: Optional[str]) -> r200[FindReferencesResponse]:
         """
         Find references.
+
+        Lists references that match the find term.
 
         Status Codes:
             200: Successful operation
@@ -73,7 +79,7 @@ class ReferencesView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy(Permission.create_ref))
+    @policy(PermissionRoutePolicy(LegacyPermission.CREATE_REF))
     async def post(
         self, data: CreateReferenceRequest
     ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:
@@ -96,7 +102,7 @@ class ReferencesView(PydanticView):
             if "Source reference does not exist" in str(err):
                 raise HTTPBadRequest(text=str(err))
             if "File not found" in str(err):
-                raise NotFound(str(err))
+                raise HTTPBadRequest(text=str(err))
 
             raise
         except ResourceRemoteError as err:
@@ -114,6 +120,7 @@ class ReferencesView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}")
 @routes.view("/refs/{ref_id}")
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
@@ -121,7 +128,7 @@ class ReferenceView(PydanticView):
         """
         Get a reference.
 
-        Retrieves the details of a reference.
+        Fetches the details of a reference.
 
         Status Codes:
             200: Successful operation
@@ -153,12 +160,16 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
+
+        if not await check_right(self.request, ref_id, "modify"):
+            raise InsufficientRights
+
         try:
             reference = await get_data_from_req(self.request).references.update(
-                ref_id, data, self.request
+                ref_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -179,15 +190,13 @@ class ReferenceView(PydanticView):
         """
 
         try:
-            task = await get_data_from_req(self.request).references.remove(
+            await get_data_from_req(self.request).references.remove(
                 ref_id, self.request["client"].user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
-        return json_response(
-            task, status=202, headers={"Content-Location": f"/tasks/{task.id}"}
-        )
+        return Response(status=204)
 
 
 @routes.view("/refs/{ref_id}/release")
@@ -196,7 +205,7 @@ class ReferenceReleaseView(PydanticView):
         """
         Get latest update.
 
-        Retrieves the latest remote reference update from GitHub.
+        Fetches the latest remote reference update from GitHub.
 
         Also updates the reference document. This is the only way of doing so without
         waiting for an automatic refresh every 10 minutes.
@@ -210,7 +219,7 @@ class ReferenceReleaseView(PydanticView):
                 ref_id, self.request.app
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
         except ResourceRemoteError as err:
@@ -219,6 +228,7 @@ class ReferenceReleaseView(PydanticView):
         return json_response(release)
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/updates")
 @routes.view("/refs/{ref_id}/updates")
 class ReferenceUpdatesView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[GetReferenceUpdateResponse]:
@@ -235,7 +245,7 @@ class ReferenceUpdatesView(PydanticView):
                 ref_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(updates)
 
@@ -259,27 +269,27 @@ class ReferenceUpdatesView(PydanticView):
                 ref_id, self.request["client"].user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceError as err:
             raise HTTPBadRequest(text=str(err))
 
         return json_response(sub_document, status=201)
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/otus")
 @routes.view("/refs/{ref_id}/otus")
 class ReferenceOTUsView(PydanticView):
     async def get(
         self,
-        find: Optional[str],
-        verified: Optional[bool],
-        names: Optional[Union[bool, str]],
         ref_id: str,
         /,
+        find: Optional[str],
+        verified: Optional[bool],
     ) -> Union[r200[FindOTUsResponse], r404]:
         """
         Find OTUs.
 
-        Finds OTUs by name or abbreviation. Results are paginated.
+        Lists OTUs by name or abbreviation. Results are paginated.
 
         Status Codes:
             200: Successful operation
@@ -287,31 +297,33 @@ class ReferenceOTUsView(PydanticView):
         """
         try:
             data = await get_data_from_req(self.request).references.find_otus(
-                find, verified, names, ref_id, self.request.query
+                find, verified, ref_id, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         return json_response(data)
 
     async def post(
         self, ref_id: str, /, data: CreateOTURequest
     ) -> Union[r201[OTU], r400, r403, r404]:
         """
-        Create an OTU.
+        Create OTU.
 
+        Creates an OTU.
         """
         try:
             otu = await get_data_from_req(self.request).references.create_otu(
                 ref_id, data, self.request, self.request["client"].user_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceError as err:
             raise HTTPBadRequest(text=str(err))
 
         return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/history")
 @routes.view("/refs/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
     async def get(
@@ -320,7 +332,7 @@ class ReferenceHistoryView(PydanticView):
         """
         List history.
 
-        Retrieves a paginated list of changes made to OTUs in the reference.
+        Lists changes made to OTUs in the reference.
 
         Status Codes:
             200: Successful operation
@@ -331,18 +343,19 @@ class ReferenceHistoryView(PydanticView):
                 ref_id, unbuilt, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(data)
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/indexes")
 @routes.view("/refs/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
     async def get(self, ref_id: str, /) -> Union[r200[ListIndexesResponse], r404]:
         """
         List indexes.
 
-        Retrieves a paginated list of indexes that have been created for the reference.
+        Lists indexes that have been created for the reference.
 
         Status Codes:
             200: Successful operation
@@ -353,7 +366,7 @@ class ReferenceIndexesView(PydanticView):
                 ref_id, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(data)
 
@@ -379,7 +392,7 @@ class ReferenceIndexesView(PydanticView):
                 ref_id, self.request, self.request["client"].user_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPConflict(text=str(err))
         except ResourceError as err:
@@ -409,7 +422,7 @@ class ReferenceGroupsView(PydanticView):
                 ref_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(groups)
 
@@ -432,7 +445,7 @@ class ReferenceGroupsView(PydanticView):
                 ref_id, data, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -451,7 +464,7 @@ class ReferenceGroupView(PydanticView):
         """
         Get a group.
 
-        Retrieves the details of a group that has access to the reference.
+        Fetches the details of a group that has access to the reference.
 
         Status Codes:
             200: Successful operation
@@ -462,7 +475,7 @@ class ReferenceGroupView(PydanticView):
                 ref_id, group_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(group)
 
@@ -488,7 +501,7 @@ class ReferenceGroupView(PydanticView):
                 data, ref_id, group_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(group)
 
@@ -508,11 +521,12 @@ class ReferenceGroupView(PydanticView):
                 ref_id, group_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         raise HTTPNoContent
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/users")
 @routes.view("/refs/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
     async def post(
@@ -534,7 +548,7 @@ class ReferenceUsersView(PydanticView):
                 data, ref_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -543,6 +557,7 @@ class ReferenceUsersView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/refs/{ref_id}/users/{user_id}")
 @routes.view("/refs/{ref_id}/users/{user_id}")
 class ReferenceUserView(PydanticView):
     async def patch(
@@ -563,7 +578,7 @@ class ReferenceUserView(PydanticView):
                 data, ref_id, user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         return json_response(user)
 
@@ -583,6 +598,6 @@ class ReferenceUserView(PydanticView):
                 ref_id, user_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         raise HTTPNoContent

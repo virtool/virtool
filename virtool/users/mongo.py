@@ -7,7 +7,7 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError
 from virtool.types import Document
 from virtool.users.db import B2CUserAttributes
-from virtool.users.utils import generate_base_permissions, hash_password
+from virtool.users.utils import hash_password
 
 
 async def create_user(
@@ -28,12 +28,11 @@ async def create_user(
             "show_versions": True,
             "quick_analyze_workflow": "pathoscope_bowtie",
         },
-        "permissions": generate_base_permissions(),
         "primary_group": None,
         "force_reset": force_reset,
         "last_password_change": virtool.utils.timestamp(),
         "invalidate_sessions": False,
-        "active": True
+        "active": True,
     }
 
     if password is None:

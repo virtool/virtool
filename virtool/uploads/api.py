@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import CancelledError
 from logging import getLogger
 from typing import List, Union, Optional
@@ -10,22 +11,24 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
 from pydantic import Field, conint
 
 from virtool.api.response import InvalidQuery, json_response, NotFound
+from virtool.authorization.permissions import LegacyPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import PermissionsRoutePolicy, policy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
 from virtool.uploads.utils import naive_validator, naive_writer, get_upload_path, file_chunks
 from virtool.users.utils import Permission
-
+from virtool.uploads.utils import naive_validator, naive_writer, get_upload_path
 
 logger = getLogger(__name__)
 
 routes = Routes()
 
 
+@routes.view("/spaces/{space_id}/uploads")
 @routes.view("/uploads")
 class UploadsView(PydanticView):
     async def get(
@@ -39,7 +42,7 @@ class UploadsView(PydanticView):
         """
         List uploads.
 
-        Returns JSON details of all files uploaded to the instance.
+        Lists JSON details of all files uploaded to the instance.
 
         Status Codes:
             200: Successful operation
@@ -54,7 +57,7 @@ class UploadsView(PydanticView):
 
         return json_response({"documents": uploads})
 
-    @policy(PermissionsRoutePolicy(Permission.upload_file))
+    @policy(PermissionRoutePolicy(LegacyPermission.UPLOAD_FILE))
     async def post(
         self,
         name: str,
@@ -88,7 +91,9 @@ class UploadsView(PydanticView):
             name, upload_type, reserved, user=self.request["client"].user_id
         )
 
-        file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
+        file_path = get_config_from_req(self.request).data_path / "files" / upload.name_on_disk
+        files_path = get_config_from_req(self.request).data_path / "files"
+        await asyncio.to_thread(files_path.mkdir, parents=True, exist_ok=True)
 
         try:
             size = await naive_writer(file_chunks(await self.request.multipart()), file_path)
@@ -112,13 +117,14 @@ class UploadsView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/uploads/{upload_id}")
 @routes.view("/uploads/{upload_id}")
 class UploadView(PydanticView):
     async def get(self, upload_id: int, /) -> Union[r200[FileResponse], r404]:
         """
         Download an upload.
 
-        Returns a previously uploaded file.
+        Downloads a previously uploaded file.
 
         Headers:
             Content-Disposition: attachment; filename=<name>
@@ -132,7 +138,7 @@ class UploadView(PydanticView):
         try:
             upload = await get_data_from_req(self.request).uploads.get(upload_id)
             upload_path = await get_upload_path(
-                self.request.app["config"], upload.name_on_disk
+                get_config_from_req(self.request), upload.name_on_disk
             )
         except ResourceNotFoundError:
             raise NotFound
@@ -145,12 +151,12 @@ class UploadView(PydanticView):
             },
         )
 
-    @policy(PermissionsRoutePolicy(Permission.remove_file))
+    @policy(PermissionRoutePolicy(LegacyPermission.REMOVE_FILE))
     async def delete(self, upload_id: int, /) -> Union[r204, r401, r403, r404]:
         """
         Delete an upload.
 
-        Deletes an upload.
+        Deletes an upload using its 'upload id'.
 
         Status Codes:
             204: Successful operation
@@ -170,8 +176,9 @@ class UploadView(PydanticView):
 @routes.jobs_api.get("/uploads/{id}")
 async def download(req):
     """
-    Downloads an upload.
+    Download an upload.
 
+    Downloads an upload using its 'upload id'.
     """
     upload_id = int(req.match_info["id"])
 

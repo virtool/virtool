@@ -1,4 +1,4 @@
-# name: test_create_index_file[uvloop]
+# name: test_create_index_file
   <class 'dict'> {
     'id': 1,
     'index': 'foo',
@@ -7,6 +7,6 @@
     'type': 'bowtie2',
   }
 ---
-# name: test_create_index_file[uvloop].1
+# name: test_create_index_file.1
   <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=9000)>
 ---

@@ -1,4 +1,4 @@
-# name: test_attach_analysis_files[uvloop-False]
+# name: test_attach_analysis_files[False]
   <class 'dict'> {
     '_id': 'foobar',
     'files': <class 'list'> [
@@ -6,7 +6,7 @@
     'ready': True,
   }
 ---
-# name: test_attach_analysis_files[uvloop-True]
+# name: test_attach_analysis_files[True]
   <class 'dict'> {
     '_id': 'foobar',
     'files': <class 'list'> [

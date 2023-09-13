@@ -216,7 +216,7 @@ def test_get_owner_user(static_time):
         "modify": True,
         "modify_otu": True,
         "remove": True,
-        "created_at": static_time.datetime
+        "created_at": static_time.datetime,
     }
 
 

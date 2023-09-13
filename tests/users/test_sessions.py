@@ -1,232 +1,242 @@
+import asyncio
 from datetime import datetime
 from math import isclose
 
-import arrow
 import pytest
 from syrupy.matchers import path_type
 
-from virtool.api.custom_json import loads
-from virtool.data.errors import ResourceError, ResourceNotFoundError
-from virtool.utils import hash_key
+from virtool.data.errors import ResourceNotFoundError
+from virtool.data.layer import DataLayer
 
 
-@pytest.fixture
-def ip():
-    return "1.1.1.1"
-
-
-@pytest.fixture
-def session_id():
-    return "session_id"
-
-
-@pytest.fixture
-def session_manager(mocker, data_layer, session_id, redis):
-    mocker.patch(
-        "virtool.users.sessions.SessionData.create_session_id",
-        return_value=session_id,
-    )
-
-    token = "token"
-    mocker.patch("virtool.utils.generate_key", return_value=(token, hash_key(token)))
-
-    reset_code = "reset_code"
-    mocker.patch("virtool.users.sessions.secrets.token_hex", return_value=reset_code)
-
-    class SessionManager:
-        def __init__(self):
-            self.start_time = None
-
-        async def create(self, ip, user_id=None, remember=False, reset=False):
-            if self.start_time is None:
-                self.start_time = arrow.utcnow()
-            if reset:
-                return await data_layer.sessions.create_reset_session(
-                    ip, user_id, remember
-                )
-
-            if user_id:
-                return await data_layer.sessions.create(ip, user_id, remember)
-
-            return await data_layer.sessions.create_anonymous(ip)
-
-        async def test_ttl(self, starting_ttl, session_id=session_id):
-            time_elapsed = (arrow.utcnow() - self.start_time).total_seconds()
-            expected_ttl = starting_ttl - time_elapsed
-            assert isclose(await redis.ttl(session_id), expected_ttl, abs_tol=1)
-
-    return SessionManager()
+async def test_remember_anonymous(data_layer, redis):
+    """Test that anonymous session objects in Redis get a TTL of 600."""
+    session = await data_layer.sessions.create_anonymous("1.1.1.1")
+    assert isclose(await redis.ttl(session.id), 600, abs_tol=10)
 
 
 @pytest.mark.parametrize("remember", [False, True])
-async def test_create_session(
-    snapshot,
-    redis,
+async def test_remember_authenticated(
     data_layer,
+    fake2,
+    redis,
     remember,
-    session_id,
-    fake2,
-    ip,
-    session_manager,
 ):
-
+    """
+    Test that the session object gets the correct TTL in Redis based on whether
+    ``remember`` is set.
+    """
     user = await fake2.users.create()
 
-    await session_manager.create(ip, user.id, remember=remember)
-
-    assert loads(await redis.get(session_id)) == snapshot(
-        matcher=path_type({"created_at": (str,)})
+    session, _ = await data_layer.sessions.create_authenticated(
+        "1.1.1.1", user.id, remember=remember
     )
 
-    if remember:
-        starting_ttl = 2592000
-    else:
-        starting_ttl = 3600
-
-    await session_manager.test_ttl(starting_ttl)
-
-
-async def test_create_anonymous_session(
-    snapshot,
-    redis,
-    data_layer,
-    session_id,
-    ip,
-    session_manager,
-):
-
-    await session_manager.create(ip)
-
-    assert loads(await redis.get(session_id)) == snapshot(
-        matcher=path_type({"created_at": (str,)})
+    assert isclose(
+        await redis.ttl(session.id), 2592000 if remember else 3600, abs_tol=10
     )
 
-    await session_manager.test_ttl(600)
+
+class TestAuthenticated:
+    async def test_get_and_create(
+        self,
+        data_layer: DataLayer,
+        snapshot,
+    ):
+        """Test that an authenticated session can be created and then retrieved."""
+        session, token = await data_layer.sessions.create_authenticated(
+            "1.1.1.1", "user_id", False
+        )
+
+        assert (
+            await data_layer.sessions.get_authenticated(session.id, token)
+        ) == snapshot(
+            name="snapshot",
+            matcher=path_type({"id": (str,), "created_at": (datetime,)}),
+        )
+
+    async def test_invalid_token(self, data_layer: DataLayer, snapshot):
+        """
+        Test that a ``ResourceNotFound`` error is raised when the token is invalid.
+        """
+        session, _ = await data_layer.sessions.create_authenticated(
+            "1.1.1.1", "user_id", False
+        )
+
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_authenticated(session.id, "invalid_token")
+            assert str(err) == "Invalid session token"
+
+    async def test_invalid_session(self, data_layer):
+        """
+        Test that ``ResourceNotFound`` is raised when the session ID does not exist.
+        """
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_authenticated("invalid_session", "token")
+            assert str(err) == "Session not found"
+
+    async def test_anonymous_session(self, data_layer, snapshot):
+        """
+        Test that an anonymous session cannot be retrieved using get_authenticated.
+        """
+        session = await data_layer.sessions.create_anonymous("1.1.1.1")
+
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_authenticated(session.id, "invalid_token")
+            assert str(err) == "Session not found"
+
+    async def test_reset_session(self, data_layer, snapshot):
+        """Test that a reset session cannot be retrieved using get_authenticated."""
+        session, code = await data_layer.sessions.create_reset(
+            "1.1.1.1", "user_id", False
+        )
+
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_authenticated(session.id, code)
+            assert str(err) == "Session not found"
 
 
-async def test_create_reset_session(
-    snapshot,
-    redis,
-    data_layer,
-    session_id,
-    fake2,
-    ip,
-    session_manager,
-):
-    user = await fake2.users.create()
+class TestAnonymous:
+    async def test_get_and_create(
+        self,
+        data_layer,
+        snapshot,
+    ):
+        """Test that the method works for a true anonymous session."""
+        session = await data_layer.sessions.create_anonymous("1.1.1.1")
 
-    await session_manager.create(ip, user_id=user.id, reset=True)
+        assert (await data_layer.sessions.get_anonymous(session.id)) == snapshot(
+            matcher=path_type({"id": (str,), "created_at": (datetime,)})
+        )
 
-    assert loads(await redis.get(session_id)) == snapshot(
-        matcher=path_type({"created_at": (str,)})
-    )
+    async def test_no_session(self, data_layer):
+        """
+        Test that ``ResourceNotFound`` is raised when the session ID does not exist.
+        """
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_anonymous("invalid_session")
+            assert str(err) == "Session not found"
 
-    await session_manager.test_ttl(600)
+    async def test_authenticated_session(self, data_layer, snapshot):
+        """
+        Test that an exception is raised when we attempt to get a session that is
+        actually authenticated instead of anonymous.
+        """
+        session, _ = await data_layer.sessions.create_authenticated(
+            "1.1.1.1", "user_id"
+        )
+
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_anonymous(session.id)
+            assert str(err) == "Session not found"
+
+    async def test_reset_session(self, data_layer, snapshot):
+        """
+        Test that an exception is raised when and we attempt to get a session that is
+        actually a reset session instead of an anonymous one.
+        """
+        session, _ = await data_layer.sessions.create_reset("1.1.1.1", "user_id", False)
+
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_anonymous(session.id)
+            assert str(err) == "Session not found"
 
 
-async def test_get_authenticated(
-    data_layer,
-    ip,
-    fake2,
-    snapshot,
-    session_manager,
-):
+class TestReset:
+    async def test_create_and_get(
+        self,
+        data_layer,
+        fake2,
+        redis,
+        snapshot,
+    ):
+        """
+        Test that a reset session can be created and retrieved using its ID and reset
+        code.
+        """
+        user = await fake2.users.create()
 
-    user = await fake2.users.create()
-    session_id, _, token = await session_manager.create(ip, user.id)
+        created_session, reset_code = await data_layer.sessions.create_reset(
+            "1.1.1.1", user.id, remember=True
+        )
 
-    assert (await data_layer.sessions.get_authenticated(session_id, token)) == snapshot(
-        matcher=path_type({"created_at": (datetime,)})
-    )
+        session = await data_layer.sessions.get_reset(created_session.id, reset_code)
 
-    try:
-        await data_layer.sessions.get_authenticated(session_id, "invalid_token")
-    except ResourceError as err:
-        assert err == snapshot()
+        assert session == snapshot(
+            matcher=path_type({"id": (str,), "created_at": (datetime,)})
+        )
 
+        assert session.id == created_session.id
 
-async def test_get_anonymous(
-    data_layer,
-    ip,
-    snapshot,
-    session_manager,
-):
+    async def test_no_session(self, data_layer, fake2):
+        """
+        Test that ``ResourceNotFound`` is raised when the session doesn't exist.
+        """
+        user = await fake2.users.create()
 
-    session_id, _ = await session_manager.create(ip)
+        session, reset_code = await data_layer.sessions.create_reset(
+            "1.1.1.1", user.id, remember=True
+        )
 
-    assert (await data_layer.sessions.get_anonymous(session_id)) == snapshot(
-        matcher=path_type({"created_at": (datetime,)})
-    )
+        await data_layer.sessions.delete(session.id)
 
-    try:
-        await data_layer.sessions.get_anonymous("invalid_session")
-    except ResourceNotFoundError as err:
-        assert err == snapshot()
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_reset(session.id, reset_code)
+            assert str(err) == "Session not found"
+
+    async def test_invalid_reset_code(self, data_layer, fake2):
+        """
+        Test that ``ResourceNotFound`` is raised when the provided reset code is invalid
+        for the session.
+        """
+        user = await fake2.users.create()
+
+        session, _ = await data_layer.sessions.create_reset(
+            "1.1.1.1", user.id, remember=True
+        )
+
+        with pytest.raises(ResourceNotFoundError) as err:
+            await data_layer.sessions.get_reset(session.id, "invalid_code")
+            assert str(err) == "Invalid reset code"
 
 
 async def test_delete(
-    data_layer,
-    ip,
+    data_layer: DataLayer,
+    fake2,
     snapshot,
-    session_manager,
 ):
-
-    session_id, _ = await session_manager.create(ip)
-
-    # Check that the session exists
-    assert (await data_layer.sessions.get_anonymous(session_id)) == snapshot(
-        matcher=path_type({"created_at": (datetime,)})
-    )
-
-    await data_layer.sessions.delete(session_id)
-
-    # Check that the session has been removed
-    try:
-        await data_layer.sessions.get_anonymous(session_id)
-    except ResourceNotFoundError as err:
-        assert err == snapshot()
-
-
-@pytest.mark.parametrize("reset", [False, True])
-async def test_clear_reset_session(
-    data_layer, ip, fake2, snapshot, session_manager, reset, mocker
-):
+    """Test that all types of sessions can be deleted by their IDs."""
     user = await fake2.users.create()
-    result = await session_manager.create(ip, user.id, reset=reset)
 
-    assert await data_layer.sessions._get(result[0]) == snapshot(
-        matcher=path_type({"created_at": (datetime,)})
+    session_anonymous = await data_layer.sessions.create_anonymous("1.1.1.1")
+    session_authenticated, token = await data_layer.sessions.create_authenticated(
+        "2.2.2.2", user.id, remember=True
     )
-    mocker.patch(
-        "virtool.users.sessions.SessionData.create_session_id",
-        return_value="new_session_id",
-    )
-    new_session_id = await data_layer.sessions.clear_reset_session(result[0])
-
-    assert (await data_layer.sessions._get(new_session_id)) == snapshot(
-        matcher=path_type({"created_at": (datetime,)})
+    session_reset, reset_code = await data_layer.sessions.create_reset(
+        "3.3.3.3", user.id, remember=True
     )
 
-    if reset:
-        try:
-            await data_layer.sessions._get(result[0])
-            assert 0
-        except ResourceNotFoundError as err:
-            assert err == snapshot()
+    # Make sure get method don't raise ``ResourceNotFound``.
+    assert all(
+        await asyncio.gather(
+            data_layer.sessions.get_anonymous(session_anonymous.id),
+            data_layer.sessions.get_authenticated(session_authenticated.id, token),
+            data_layer.sessions.get_reset(session_reset.id, reset_code),
+        )
+    )
 
-    if reset:
-        expected_ttl = 600
-    else:
-        expected_ttl = 3600
+    await asyncio.gather(
+        data_layer.sessions.delete(session_anonymous.id),
+        data_layer.sessions.delete(session_authenticated.id),
+        data_layer.sessions.delete(session_reset.id),
+    )
 
-    await session_manager.test_ttl(expected_ttl, new_session_id)
+    # Now, make sure get methods do raise ``ResourceNotFound``.
+    with pytest.raises(ResourceNotFoundError):
+        await data_layer.sessions.get_anonymous(session_anonymous.id)
 
+    with pytest.raises(ResourceNotFoundError):
+        await data_layer.sessions.get_authenticated(session_authenticated.id, token)
 
-async def test_get_reset_data(
-    snapshot, redis, data_layer, session_id, ip, session_manager, fake2
-):
-
-    user = await fake2.users.create()
-    session_id, _ = await session_manager.create(ip, user.id, reset=True)
-
-    assert await data_layer.sessions.get_reset_data(session_id) == snapshot
+    with pytest.raises(ResourceNotFoundError):
+        await data_layer.sessions.get_reset(session_reset.id, reset_code)

@@ -4,12 +4,17 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
+from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 from virtool_core.models.user import User
 
-import virtool.http.auth
+import virtool.http.authentication
 import virtool.users.db
+from virtool.data.transforms import apply_transforms
+from virtool.users.oas import UpdateUserRequest
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.authorization.relationships import UserRoleAssignment
+from virtool.authorization.client import get_authorization_client_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import (
@@ -21,47 +26,54 @@ from virtool.http.routes import Routes
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.oas import (
-    UpdateUserRequest,
     CreateUserRequest,
     CreateFirstUserRequest,
+    PermissionsResponse,
+    PermissionResponse,
 )
+from virtool.users.transforms import AttachPermissionsTransform
 
 routes = Routes()
 
 
 @routes.view("/users")
 class UsersView(PydanticView):
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
         self,
         find: Optional[str] = Field(
-            description="Provide text to filter by partial matches to the id field."
+            description="Provide text to filter by partial matches to the handle field."
         ),
     ) -> Union[r200[User], r403]:
         """
         List all users.
 
-        Returns a paginated list of all users in the instance.
+        Lists all users in the instance.
 
         Status Codes:
             200: Successful operation
             403: Not permitted
         """
-        db = self.request.app["db"]
+        mongo = self.request.app["db"]
+        pg = self.request.app["pg"]
 
-        db_query = compose_regex_query(find, ["_id"]) if find else {}
+        mongo_query = compose_regex_query(find, ["handle"]) if find else {}
 
         data = await paginate(
-            db.users,
-            db_query,
+            mongo.users,
+            mongo_query,
             self.request.query,
             sort="handle",
             projection=virtool.users.db.PROJECTION,
         )
 
+        data["documents"] = await apply_transforms(
+            data["documents"], [AttachPermissionsTransform(mongo, pg)]
+        )
+
         return json_response(data)
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def post(self, data: CreateUserRequest) -> Union[r201[User], r400, r403]:
         """
         Create a user.
@@ -112,9 +124,8 @@ class FirstUserView(PydanticView):
             400: Bad request
             403: Not permitted
         """
-        db = self.request.app["db"]
 
-        if await db.users.count_documents({}, limit=1):
+        if await get_data_from_req(self.request).users.check_users_exist():
             raise HTTPConflict(text="Virtool already has at least one user")
 
         if data.handle == "virtool":
@@ -127,11 +138,11 @@ class FirstUserView(PydanticView):
             data.handle, data.password
         )
 
-        session_id, session, token = await get_data_from_req(
+        session, token = await get_data_from_req(
             self.request
-        ).sessions.create(virtool.http.auth.get_ip(self.request), user.id)
-
-        self.request["client"].authorize(session, is_api=False)
+        ).sessions.create_authenticated(
+            virtool.http.authentication.get_ip(self.request), user.id
+        )
 
         response = json_response(
             user.dict(),
@@ -139,7 +150,7 @@ class FirstUserView(PydanticView):
             status=201,
         )
 
-        set_session_id_cookie(response, session_id)
+        set_session_id_cookie(response, session.id)
         set_session_token_cookie(response, token)
 
         return response
@@ -147,12 +158,12 @@ class FirstUserView(PydanticView):
 
 @routes.view("/users/{user_id}")
 class UserView(PydanticView):
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(self, user_id: str, /) -> Union[r200[User], r403, r404]:
         """
         Retrieve a user.
 
-        Returns the details for a user.
+        Fetches the details for a user.
 
         Status Codes:
             200: Success
@@ -166,7 +177,7 @@ class UserView(PydanticView):
 
         return json_response(user)
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
         self, user_id: str, /, data: UpdateUserRequest
     ) -> Union[r200[User], r400, r403, r404, r409]:
@@ -203,3 +214,61 @@ class UserView(PydanticView):
             raise NotFound("User does not exist")
 
         return json_response(user)
+
+
+@routes.view("/users/{user_id}/permissions")
+class PermissionsView(PydanticView):
+    async def get(self, user_id: str, /) -> r200[PermissionsResponse]:
+        """
+        List user roles.
+
+        Lists all roles that a user has on the space.
+
+        Status Codes:
+            200: Successful operation
+        """
+
+        permissions = await get_authorization_client_from_req(
+            self.request
+        ).list_user_roles(user_id, 0)
+
+        return json_response([{"id": permission} for permission in permissions])
+
+
+@routes.view("/users/{user_id}/permissions/{role}")
+class PermissionView(PydanticView):
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
+    async def put(
+        self, user_id: str, role: SpaceRoleType, /
+    ) -> r200[PermissionResponse]:
+        """
+        Add user role.
+
+        Adds a role for a user.
+
+        Status Codes:
+            200: Successful operation
+        """
+        await get_authorization_client_from_req(self.request).add(
+            UserRoleAssignment(user_id, 0, role)
+        )
+
+        return json_response(True)
+
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
+    async def delete(
+        self, user_id: str, role: SpaceRoleType, /
+    ) -> r200[PermissionResponse]:
+        """
+        Delete user permission.
+
+        Removes a permission for a user.
+
+        Status Codes:
+            200: Successful operation
+        """
+        await get_authorization_client_from_req(self.request).remove(
+            UserRoleAssignment(user_id, 0, role)
+        )
+
+        return json_response(True)

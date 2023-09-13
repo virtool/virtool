@@ -6,14 +6,13 @@ from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 import virtool.utils
 from virtool.messages.models import SQLInstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
-from virtool.mongo.core import DB
-from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.core import Mongo
+from virtool.data.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
 
 
 class MessagesData:
-
-    def __init__(self, pg: AsyncEngine, mongo: DB):
+    def __init__(self, pg: AsyncEngine, mongo: Mongo):
         self._pg = pg
         self._mongo = mongo
 
@@ -24,7 +23,9 @@ class MessagesData:
 
         async with AsyncSession(self._pg) as session:
             instance_message = (
-                await session.execute(select(SQLInstanceMessage).order_by(SQLInstanceMessage.id.desc()))
+                await session.execute(
+                    select(SQLInstanceMessage).order_by(SQLInstanceMessage.id.desc())
+                )
             ).first()
 
         if not instance_message:
@@ -34,7 +35,9 @@ class MessagesData:
 
         if instance_message.active:
             document = instance_message.to_dict()
-            document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
+            document = await apply_transforms(
+                document, [AttachUserTransform(self._mongo)]
+            )
             return InstanceMessage(**document)
 
         raise ResourceConflictError
@@ -49,7 +52,7 @@ class MessagesData:
             message=data.message,
             created_at=virtool.utils.timestamp(),
             updated_at=virtool.utils.timestamp(),
-            user=user_id
+            user=user_id,
         )
 
         async with AsyncSession(self._pg) as session:
@@ -71,7 +74,9 @@ class MessagesData:
 
         async with AsyncSession(self._pg) as session:
             instance_message = (
-                await session.execute(select(SQLInstanceMessage).order_by(SQLInstanceMessage.id.desc()))
+                await session.execute(
+                    select(SQLInstanceMessage).order_by(SQLInstanceMessage.id.desc())
+                )
             ).first()
 
             if not instance_message:

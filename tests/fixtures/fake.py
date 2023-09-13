@@ -1,16 +1,22 @@
 import datetime
+import shutil
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.models.enums import Permission
+from virtool_core.models.job import JobState
 
+from virtool.data.http import HTTPClient
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
-from virtool.subtractions.models import SubtractionFile
+from virtool.mongo.core import Mongo
+from virtool.subtractions.models import SQLSubtractionFile
 from virtool.types import Document
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 
 
 class AbstractFakeDataGenerator(ABC):
@@ -57,7 +63,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
         else:
             status = [
                 {
-                    "state": "waiting",
+                    "state": JobState.WAITING.value,
                     "stage": None,
                     "error": None,
                     "progress": 0,
@@ -77,7 +83,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
             "args": {},
             "key": None,
             "rights": {},
-            "state": "waiting",
+            "state": JobState.WAITING.value,
             "progress": status[-1]["progress"],
             "status": status,
             "user": {"id": await self.generator.users.get_id()},
@@ -120,7 +126,7 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
         user = await self.generator.users.insert()
 
         async with AsyncSession(self._pg) as session:
-            upload = Upload(
+            upload = SQLUpload(
                 id=1,
                 created_at=self._faker.fake.date_time_between(
                     datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
@@ -141,19 +147,19 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
             session.add_all(
                 [
                     upload,
-                    SubtractionFile(
+                    SQLSubtractionFile(
                         name="subtraction.fq.gz",
                         subtraction=subtraction_id,
                         type="fasta",
                         size=12345,
                     ),
-                    SubtractionFile(
+                    SQLSubtractionFile(
                         name="subtraction.1.bt2",
                         subtraction=subtraction_id,
                         type="bowtie2",
                         size=56437,
                     ),
-                    SubtractionFile(
+                    SQLSubtractionFile(
                         name="subtraction.2.bt2",
                         subtraction=subtraction_id,
                         type="bowtie2",
@@ -260,5 +266,16 @@ def fake(mongo, pg):
 
 
 @pytest.fixture
-def fake2(data_layer):
-    return DataFaker(data_layer)
+def fake2(data_layer: "DataLayer", example_path: Path, mocker, mongo: Mongo):
+    """A fixture for generating deterministic fake data."""
+
+    # Use a local example ML model instead of downloading from GitHub.
+    mocker.patch.object(
+        HTTPClient,
+        "download",
+        side_effect=lambda url, target: shutil.copy(
+            example_path / "ml/model.tar.gz", target
+        ),
+    )
+
+    return DataFaker(data_layer, mongo)

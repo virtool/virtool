@@ -1,22 +1,11 @@
-import asyncio
-from asyncio import to_thread
-import os
+from tempfile import TemporaryDirectory
+from typing import Dict
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.utils import compress_file, rm
-
-import virtool.subtractions.files
-import virtool.subtractions.utils
-import virtool.tasks.task
-from virtool.subtractions.db import ADD_SUBTRACTION_FILES_QUERY
-from virtool.subtractions.models import SubtractionFile
-from virtool.subtractions.utils import FILES
-from virtool.types import App
-from virtool.data.utils import get_data_from_app
+from virtool.data.layer import DataLayer
+from virtool.tasks.task import BaseTask
 
 
-class AddSubtractionFilesTask(virtool.tasks.task.Task):
+class AddSubtractionFilesTask(BaseTask):
     """
     Rename Bowtie2 index name from 'reference' to 'subtraction'.
 
@@ -25,105 +14,55 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
 
     """
 
-    task_type = "add_subtraction_files"
+    name = "add_subtraction_files"
 
-    def __init__(self, app: App, task_id: int):
-        super().__init__(app, task_id)
+    def __init__(self, task_id: int, data, context, temp_dir):
+        super().__init__(task_id, data, context, temp_dir)
+
+        self.steps = [self.add_subtraction_files]
+
+    async def add_subtraction_files(self):
+        """
+        Change Bowtie2 index name from 'reference' to 'subtraction' and add any missing
+        subtraction files to Postgres.
+
+        """
+        await self.data.subtractions.rename_and_track_files(
+            self.create_progress_handler()
+        )
+
+
+class CheckSubtractionsFASTATask(BaseTask):
+    """
+    Write a FASTA file based on a subtraction's existing Bowtie2 index.
+
+    The target subtraction id is provided in the task's context.
+
+    """
+
+    name = "check_subtractions_fasta_files"
+
+    def __init__(
+        self, task_id: int, data: DataLayer, context: Dict, temp_dir: TemporaryDirectory
+    ):
+        super().__init__(task_id, data, context, temp_dir)
+
+        self.subtractions_without_fasta = None
 
         self.steps = [
-            self.rename_index_files,
-            self.store_subtraction_files,
-        ]
-
-    async def rename_index_files(self):
-        """
-        Change Bowtie2 index name from 'reference' to 'subtraction'
-
-        """
-        await get_data_from_app(self.app).tasks.update(self.id, step="rename_index_files")
-
-        async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            path = virtool.subtractions.utils.join_subtraction_path(
-                self.app["config"], subtraction["_id"]
-            )
-            await to_thread(virtool.subtractions.utils.rename_bowtie_files, path)
-
-    async def store_subtraction_files(self):
-        """
-        Add a 'files' field to subtraction documents to list what
-        files can be downloaded for that subtraction
-
-        """
-        await get_data_from_app(self.app).tasks.update(self.id, step="store_subtraction_files")
-
-        async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            path = virtool.subtractions.utils.join_subtraction_path(
-                self.app["config"], subtraction["_id"]
-            )
-            subtraction_files = []
-
-            for filename in sorted(os.listdir(path)):
-                if filename in FILES:
-                    async with AsyncSession(self.app["pg"]) as session:
-                        exists = (
-                            await session.execute(
-                                select(SubtractionFile).filter_by(
-                                    subtraction=subtraction["_id"], name=filename
-                                )
-                            )
-                        ).scalar()
-
-                    if not exists:
-                        subtraction_files.append(filename)
-
-            await virtool.subtractions.files.create_subtraction_files(
-                self.app["pg"], subtraction["_id"], subtraction_files, path
-            )
-
-
-class WriteSubtractionFASTATask(virtool.tasks.task.Task):
-    task_type = "write_subtraction_fasta"
-
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
-
-        self.steps = [
+            self.check_subtraction_fasta_file,
             self.generate_fasta_file,
         ]
 
+    async def check_subtraction_fasta_file(self):
+        """
+        Check if a FASTA file for the subtraction already exists.
+
+        """
+        self.subtractions_without_fasta = (
+            await self.data.subtractions.check_fasta_files()
+        )
+
     async def generate_fasta_file(self):
-        config = self.app["config"]
-        subtraction = self.context["subtraction"]
-
-        index_path = virtool.subtractions.utils.join_subtraction_index_path(
-            config, subtraction
-        )
-        fasta_path = (
-            virtool.subtractions.utils.join_subtraction_path(config, subtraction)
-            / "subtraction.fa"
-        )
-
-        command = f"bowtie2-inspect {index_path} > {fasta_path}"
-
-        proc = await asyncio.create_subprocess_shell(
-            command, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE
-        )
-
-        await proc.communicate()
-
-        target_path = (
-            virtool.subtractions.utils.join_subtraction_path(config, subtraction)
-            / "subtraction.fa.gz"
-        )
-
-        await self.run_in_thread(compress_file, fasta_path, target_path)
-
-        await to_thread(rm, fasta_path)
-
-        await self.db.subtraction.find_one_and_update(
-            {"_id": subtraction}, {"$set": {"has_file": True}}
-        )
-
-        await get_data_from_app(self.app).tasks.update(
-            self.id, progress=100, step="generate_fasta_file"
-        )
+        for subtraction_id in self.subtractions_without_fasta:
+            await self.data.subtractions.generate_fasta_file(subtraction_id)

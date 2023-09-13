@@ -39,7 +39,6 @@ async def fetch(
     }
 
     async with session.get(FETCH_URL, params=params) as resp:
-
         body = await resp.text()
 
         if resp.status != 200:

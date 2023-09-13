@@ -1,50 +1,59 @@
 import asyncio
 from asyncio import to_thread
-import logging
+from logging import getLogger
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import Dict, List, Optional, Union
 
 from multidict import MultiDictProxy
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import IndexMinimal, IndexSearchResult, Index, IndexFile
+from virtool_core.models.index import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool_core.models.reference import ReferenceNested
+from virtool_core.utils import file_stats
 
+import virtool.history.db
 import virtool.indexes.db
-from virtool.api.custom_json import dumps
+from virtool.api.custom_json import dump_bytes
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import (
-    ResourceNotFoundError,
     ResourceConflictError,
     ResourceError,
+    ResourceNotFoundError,
 )
+from virtool.data.events import emits, Operation, emit
 from virtool.history.db import LIST_PROJECTION
-from virtool.indexes.checks import (
-    check_fasta_file_uploaded,
-    check_index_files_uploaded,
-)
+from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
+    INDEX_FILE_NAMES,
+    lookup_index_otu_counts,
     update_last_indexed_versions,
-    IndexCountsTransform,
 )
 from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.tasks import export_index, get_index_file_type_from_name
 from virtool.indexes.utils import join_index_path
-from virtool.mongo.core import DB
-from virtool.mongo.transforms import apply_transforms
+from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.mongo.core import Mongo
+from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
+from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.uploads.utils import naive_writer
+from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
 from virtool.uploads.utils import naive_writer, file_chunks
 from virtool.users.db import AttachUserTransform
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
-logger = logging.getLogger("indexes")
+logger = getLogger("indexes")
 
 
 class IndexData:
-    def __init__(self, mongo: DB, config: Config, pg: AsyncEngine):
+    name = "indexes"
+
+    def __init__(self, mongo: Mongo, config: Config, pg: AsyncEngine):
         self._config = config
         self._mongo = mongo
         self._pg = pg
@@ -63,53 +72,27 @@ class IndexData:
             data = await virtool.indexes.db.find(self._mongo, query)
             return IndexSearchResult(**data)
 
-        pipeline = [
-            {"$match": {"ready": True}},
-            {
-                "$group": {
-                    "_id": "$reference.id",
-                    "index_id": {"$first": "$_id"},
-                    "version": {"$first": "$version"},
-                    "change_count": {"$first": "$change_count"},
-                    "created_at": {"$first": "$created_at"},
-                    "has_files": {"$first": "$has_files"},
-                    "modified_otu_count": {"$first": "$modified_otu_count"},
-                    "user": {"$first": "$user"},
-                    "ready": {"$first": "$ready"},
-                    "job": {"$first": "$job"},
-                }
-            },
-            {"$sort": {"created_at": 1}},
+        return [
+            IndexMinimal(**index)
+            async for index in self._mongo.indexes.aggregate(
+                [
+                    {
+                        "$match": {
+                            "ready": True,
+                            "reference.id": {
+                                "$in": await self._mongo.references.distinct("_id")
+                            },
+                        }
+                    },
+                    *lookup_minimal_job_by_id(),
+                    *lookup_nested_reference_by_id(local_field="reference.id"),
+                    *lookup_nested_user_by_id(),
+                    *lookup_index_otu_counts(local_field="_id"),
+                    {"$sort": {"created_at": 1}},
+                    {"$project": {"counts": False}},
+                ]
+            )
         ]
-
-        items = [
-            {
-                "id": agg["index_id"],
-                "version": agg["version"],
-                "reference": {
-                    "id": agg["_id"],
-                },
-                "change_count": agg["change_count"],
-                "created_at": agg["created_at"],
-                "has_files": agg["has_files"],
-                "modified_otu_count": agg["modified_otu_count"],
-                "user": agg["user"],
-                "ready": agg["ready"],
-                "job": agg["job"],
-            }
-            async for agg in self._mongo.indexes.aggregate(pipeline)
-        ]
-
-        items = await apply_transforms(
-            items,
-            [
-                AttachReferenceTransform(self._mongo),
-                AttachUserTransform(self._mongo),
-                IndexCountsTransform(self._mongo),
-            ],
-        )
-
-        return [IndexMinimal(**index) for index in items]
 
     async def get(self, index_id: str) -> Index:
         """
@@ -118,33 +101,34 @@ class IndexData:
         :param index_id: the index ID
         :return: the index
         """
-        document = await self._mongo.indexes.find_one(index_id)
 
-        if not document:
+        result = await self._mongo.indexes.aggregate(
+            [
+                {"$match": {"_id": index_id}},
+                *lookup_minimal_job_by_id(),
+                *lookup_nested_reference_by_id(local_field="reference.id"),
+                *lookup_nested_user_by_id(),
+                *lookup_index_otu_counts(local_field="_id"),
+                {"$sort": {"created_at": 1}},
+                {"$project": {"counts": False}},
+            ]
+        ).to_list(length=1)
+
+        if not result:
             raise ResourceNotFoundError()
+
+        document = result[0]
 
         contributors, otus = await asyncio.gather(
             virtool.history.db.get_contributors(self._mongo, {"index.id": index_id}),
             virtool.indexes.db.get_otus(self._mongo, index_id),
         )
 
-        document.update(
-            {
-                "change_count": sum(v["change_count"] for v in otus),
-                "contributors": contributors,
-                "otus": otus,
-            }
-        )
+        document.update({"contributors": contributors, "otus": otus})
 
         document = await virtool.indexes.db.attach_files(
             self._pg, self._config.base_url, document
         )
-
-        document = await apply_transforms(
-            document, [AttachReferenceTransform(self._mongo)]
-        )
-
-        document = await virtool.indexes.db.processor(self._mongo, document)
 
         return Index(**document)
 
@@ -192,7 +176,7 @@ class IndexData:
                 self._mongo, self._config, index["manifest"]
             )
 
-            json_string = dumps(patched_otus)
+            json_string = dump_bytes(patched_otus)
 
             await to_thread(compress_json_with_gzip, json_string, json_path)
 
@@ -221,6 +205,8 @@ class IndexData:
             except IntegrityError:
                 raise ResourceConflictError()
 
+            index_path = self._config.data_path / "references" / index_id
+            await asyncio.to_thread(index_path.mkdir, parents=True, exist_ok=True)
             path = (
                 join_index_path(self._config.data_path, reference_id, index_id) / name
             )
@@ -239,6 +225,7 @@ class IndexData:
             **index_file_dict, download_url=f"/indexes/{index_id}/files/{name}"
         )
 
+    @emits(Operation.UPDATE)
     async def finalize(self, index_id: str) -> Index:
         """
         Finalize an index document.
@@ -284,7 +271,6 @@ class IndexData:
     ) -> HistorySearchResult:
         """
         Find the virus changes that are included in a given index build.
-
         :param index_id: the index ID
         :param req_query: the request query object
         :return: the changes
@@ -313,19 +299,105 @@ class IndexData:
 
         return HistorySearchResult(**data)
 
+    async def ensure_files(self):
+        """
+        Ensure all data files associated with indexes are tracked.
+
+        If a JSON file does not exist for an index, create it. If creation fails, the
+        error will be logged and the index will be skipped.
+
+        """
+        async for index in self._mongo.indexes.find({"ready": True}):
+            index_id = index["_id"]
+
+            index_path = join_index_path(
+                self._config.data_path, index["reference"]["id"], index_id
+            )
+
+            try:
+                await self._ensure_json(
+                    index_path, index["reference"]["id"], index["manifest"]
+                )
+            except IndexError:
+                logger.exception("Could not create JSON file for index id=%s", index_id)
+                continue
+
+            async with AsyncSession(self._pg) as session:
+                first = (
+                    await session.execute(
+                        select(SQLIndexFile).where(SQLIndexFile.index == index_id)
+                    )
+                ).first()
+
+                if first:
+                    continue
+
+                session.add_all(
+                    [
+                        SQLIndexFile(
+                            name=path.name,
+                            index=index_id,
+                            type=get_index_file_type_from_name(path.name),
+                            size=(await to_thread(file_stats, path))["size"],
+                        )
+                        for path in sorted(index_path.iterdir())
+                        if path.name in INDEX_FILE_NAMES
+                    ]
+                )
+
+                await session.commit()
+
+    async def _ensure_json(self, path: Path, ref_id: str, manifest: Dict):
+        """
+        Ensure that a there is a compressed JSON representation of the index found at
+        `path`` exists.
+
+        :param path: the path to the index directory
+        :param ref_id: the id of the parent reference
+        :param manifest: the otu id-version manifest for the index
+        """
+        json_path = path / "reference.json.gz"
+
+        if await to_thread(json_path.is_file):
+            return
+
+        reference = await self._mongo.references.find_one(
+            ref_id, ["data_type", "organism", "targets"]
+        )
+
+        index_data = await export_index(self._config.data_path, self._mongo, manifest)
+
+        await to_thread(
+            compress_json_with_gzip,
+            dump_bytes(
+                {
+                    "data_type": reference["data_type"],
+                    "organism": reference["organism"],
+                    "otus": index_data,
+                    "targets": reference.get("targets"),
+                }
+            ),
+            json_path,
+        )
+
     async def delete(self, index_id: str):
         """
         Delete an index given it's id.
 
         :param index_id: the ID of the index to delete
         """
+        index = await self.get(index_id)
+
+        if not index:
+            raise ResourceNotFoundError
+
         async with self._mongo.create_session() as mongo_session:
             delete_result = await self._mongo.indexes.delete_one(
                 {"_id": index_id}, session=mongo_session
             )
 
             if delete_result.deleted_count == 0:
-                raise ResourceNotFoundError()
+                raise ResourceNotFoundError
 
             index_change_ids = await self._mongo.history.distinct(
                 "_id", {"index.id": index_id}
@@ -336,3 +408,5 @@ class IndexData:
                 {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
                 session=mongo_session,
             )
+
+        emit(index, "indexes", "delete", Operation.DELETE)

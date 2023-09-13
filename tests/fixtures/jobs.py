@@ -2,8 +2,6 @@ from typing import MutableMapping
 
 import pytest
 
-from virtool.jobs.utils import JobRights
-
 
 class TestJob(MutableMapping):
     def __init__(self, db, data: dict):
@@ -53,7 +51,7 @@ def test_job(mongo, static_time):
                 "index_id": "465428b0",
             },
             "key": "bar",
-            "rights": JobRights().as_dict(),
+            "rights": {},
             "status": [
                 {
                     "error": None,
@@ -86,6 +84,6 @@ def test_job(mongo, static_time):
             ],
             "workflow": "build_index",
             "user": {"id": "igboyes"},
-            "ping": None
+            "ping": None,
         },
     )

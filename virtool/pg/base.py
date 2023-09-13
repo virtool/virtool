@@ -1,10 +1,11 @@
 from enum import Enum
 
-from sqlalchemy.ext.declarative import as_declarative
+from sqlalchemy.orm import DeclarativeBase
 
 
-@as_declarative()
-class Base:
+class Base(DeclarativeBase):
+    __allow_unmapped__ = True
+
     def __repr__(self):
         params = ", ".join(
             f"{column}={value}" for column, value in self.to_dict().items()
@@ -14,7 +15,6 @@ class Base:
 
     def to_dict(self):
         row = {}
-
         for column in self.__table__.columns:
             value = getattr(self, column.name, None)
 

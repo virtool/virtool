@@ -1,26 +1,26 @@
 from logging import getLogger
 from typing import Union, List, Optional
 
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
+from aiohttp_pydantic.oas.typing import r200, r400, r403, r404, r409
 from pydantic import Field, conint
-from virtool_core.models.job import JobMinimal, JobSearchResult
+from virtool_core.models.job import JobMinimal, JobSearchResult, JobState
 
 from virtool.api.response import NotFound, json_response
+from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.oas import (
     JobResponse,
     ArchiveJobsRequest,
 )
-from virtool.users.utils import Permission
 
 logger = getLogger(__name__)
 
@@ -34,13 +34,13 @@ class JobsView(PydanticView):
         archived: Optional[bool] = None,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        state: List[str] = Field(default_factory=list),
+        state: List[JobState] = Field(default_factory=list),
         user: List[str] = Field(default_factory=list),
     ) -> Union[r200[JobSearchResult], r400]:
         """
         Find jobs.
 
-        Finds jobs on the instance.
+        Lists jobs on the instance.
 
         Jobs can be filtered by their current ``state`` by providing desired states as
         query parameters.
@@ -57,39 +57,12 @@ class JobsView(PydanticView):
             )
         )
 
-    @policy(PermissionsRoutePolicy(Permission.remove_job))
-    async def delete(
-        self,
-        job_filter: Optional[str] = Field(
-            alias="filter",
-            description="Clear jobs that are in a certain state. Acceptable states are finished, complete, failed, terminated",
-        ),
-    ) -> r200:
-        """
-        Clear jobs.
-
-        Clears completed, failed or all finished jobs.
-
-        Status Codes:
-            200: Successful Operation
-        """
-
-        # Remove jobs that completed successfully.
-        complete = job_filter in [None, "finished", "complete"]
-
-        # Remove jobs that errored or were cancelled.
-        failed = job_filter in [None, "failed", "finished" "terminated"]
-
-        removed_job_ids = await get_data_from_req(self.request).jobs.clear(
-            complete=complete, failed=failed
-        )
-
-        return json_response({"removed": removed_job_ids})
-
     async def patch(
         self, data: ArchiveJobsRequest
     ) -> Union[r200[List[JobMinimal]], r400]:
         """
+        Update archived field.
+
         Sets the archived field on job documents.
 
         Status Codes:
@@ -114,7 +87,7 @@ class JobView(PydanticView):
         """
         Get a job.
 
-        Retrieves the details for a job.
+        Fetches the details for a job.
 
         Status Codes:
             200: Successful operation
@@ -127,41 +100,13 @@ class JobView(PydanticView):
 
         return json_response(document)
 
-    @policy(PermissionsRoutePolicy(Permission.remove_job))
-    async def delete(self, job_id: str, /) -> Union[r204, r403, r404, r409]:
-        """
-        Delete a job.
-
-        Deletes a job.
-
-        Jobs that are in an active state (waiting, pending, preparing
-        running) cannot be deleted. A `409` will be returned if this operation is
-        attempted.
-
-        **We recommend archiving jobs instead of deleting them**. In the future, job
-        deletion will not be supported.
-
-        Status Codes:
-            204: Successful operation
-            403: Not permitted
-            404: Not found
-            409: Job is running or waiting and cannot be removed
-        """
-        try:
-            await get_data_from_req(self.request).jobs.delete(job_id)
-        except ResourceConflictError:
-            raise HTTPConflict(text="Job is running or waiting and cannot be removed")
-        except ResourceNotFoundError:
-            raise NotFound()
-
-        raise HTTPNoContent
-
 
 @routes.jobs_api.get("/jobs/{job_id}")
 async def get(req):
     """
     Get a job.
 
+    Fetches a job using the 'job id'.
     """
     try:
         document = await get_data_from_req(req).jobs.get(req.match_info["job_id"])
@@ -196,6 +141,8 @@ async def acquire(req):
 @routes.jobs_api.patch("/jobs/{job_id}/archive")
 async def archive(req):
     """
+    Update archived field.
+
     Sets the archived field on the job document.
     """
     try:
@@ -210,10 +157,12 @@ async def archive(req):
 
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
-    @policy(PermissionsRoutePolicy(Permission.cancel_job))
+    @policy(PermissionRoutePolicy(LegacyPermission.CANCEL_JOB))
     async def put(self, job_id: str, /) -> Union[r200[JobResponse], r403, r404, r409]:
         """
         Cancel a job.
+
+        Cancels a job using its 'job id'.
 
         Status Codes:
             200: Successful operation
@@ -278,19 +227,26 @@ async def ping(req):
         "state": {
             "type": "string",
             "allowed": [
-                "waiting",
-                "running",
-                "complete",
-                "cancelled",
-                "error",
-                "terminated",
+                state.value
+                for state in (
+                    JobState.WAITING,
+                    JobState.RUNNING,
+                    JobState.COMPLETE,
+                    JobState.CANCELLED,
+                    JobState.ERROR,
+                    JobState.TERMINATED,
+                )
             ],
             "required": True,
         },
     }
 )
 async def push_status(req):
-    """Push a status update to a job."""
+    """
+    Push status.
+
+    Push a status update to a job.
+    """
     data = req["data"]
 
     if data["state"] == "error" and not data["error"]:
@@ -299,7 +255,7 @@ async def push_status(req):
     try:
         document = await get_data_from_req(req).jobs.push_status(
             req.match_info["job_id"],
-            data["state"],
+            JobState(data["state"]),
             data["stage"],
             data["step_name"],
             data["step_description"],

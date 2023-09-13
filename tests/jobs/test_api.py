@@ -2,6 +2,7 @@ import pytest
 from virtool_core.models.enums import Permission
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("archived", [True, False, None])
 @pytest.mark.parametrize("state", ["running", None])
 @pytest.mark.parametrize("users", [None, "bob", ["bob", "test"]])
@@ -38,27 +39,7 @@ async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
         assert all(job["state"] == state for job in body["documents"])
 
 
-@pytest.mark.parametrize("job_filter", [None, "finished", "complete", "failed"])
-async def test_delete(job_filter, fake2, spawn_client, test_job, resp_is, snapshot):
-    client = await spawn_client(authorize=True, permissions=[Permission.remove_job])
-
-    user = await fake2.users.create()
-
-    test_job["user"] = {"id": user.id}
-
-    await client.db.jobs.insert_one(test_job)
-
-    url = "/jobs"
-
-    if job_filter:
-        url += f"?filter={job_filter}"
-
-    resp = await client.delete(url)
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-
-
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
@@ -85,6 +66,7 @@ async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
     assert "key" not in body
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_acquire(
     error, mocker, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
@@ -122,6 +104,7 @@ async def test_acquire(
     assert "key" in body
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_archive(
     error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
@@ -153,9 +136,9 @@ async def test_archive(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 404])
 async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is):
-
     user = await fake2.users.create()
 
     test_job["user"] = {"id": user.id}
@@ -176,6 +159,7 @@ async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, r
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error", [None, "not_found", "invalid_archived", "none_archived"]
 )
@@ -244,6 +228,7 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
     assert body == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
@@ -287,10 +272,16 @@ async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test
     assert "key" not in body
 
 
+@pytest.mark.apitest
 class TestPushStatus:
     @pytest.mark.parametrize("error", [None, 404, 409])
-    async def test(self, error, snapshot, resp_is, spawn_client, static_time, test_job):
+    async def test(
+        self, error, fake2, snapshot, resp_is, spawn_client, static_time, test_job
+    ):
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         if error != 409:
             # Removes the last "completed" status entry, imitating a running job.
@@ -315,9 +306,12 @@ class TestPushStatus:
         assert await resp.json() == snapshot
 
     async def test_name_and_description(
-        self, snapshot, spawn_client, static_time, test_job
+        self, fake2, snapshot, spawn_client, static_time, test_job
     ):
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)
@@ -335,12 +329,15 @@ class TestPushStatus:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-    async def test_bad_state(self, snapshot, spawn_client, test_job):
+    async def test_bad_state(self, fake2, snapshot, spawn_client, test_job):
         """
         Check that an unallowed state is rejected with 422.
 
         """
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)
@@ -366,6 +363,7 @@ class TestPushStatus:
         error_type,
         traceback,
         details,
+        fake2,
         snapshot,
         spawn_client,
         static_time,
@@ -376,6 +374,9 @@ class TestPushStatus:
 
         """
         client = await spawn_client(authorize=True)
+
+        user = await fake2.users.create()
+        test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)
@@ -391,9 +392,10 @@ class TestPushStatus:
         if details:
             error["details"] = details
 
-        body = {"error": error, "state": "error", "stage": "fastqc", "progress": 14}
-
-        resp = await client.post(f"/jobs/{test_job.id}/status", body)
+        resp = await client.post(
+            f"/jobs/{test_job.id}/status",
+            {"error": error, "state": "error", "stage": "fastqc", "progress": 14},
+        )
 
         assert (resp.status, await resp.json()) == snapshot
 

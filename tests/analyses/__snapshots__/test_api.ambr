@@ -1,4 +1,4 @@
-# name: test_blast[uvloop-None]
+# name: test_blast[None]
   <class 'dict'> {
     'analysis_id': 'foobar',
     'created_at': '2015-10-06T20:00:00Z',
@@ -14,25 +14,25 @@
     'updated_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_download_analysis_result[uvloop-False-False]
+# name: test_download_analysis_result[False-False]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_download_analysis_result[uvloop-False-True]
+# name: test_download_analysis_result[False-True]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
 ---
-# name: test_download_analysis_result[uvloop-True-False]
+# name: test_download_analysis_result[True-False]
   <class 'dict'> {
     'id': 'not_found',
-    'message': 'Uploaded file not found at expected location',
+    'message': 'Not found',
   }
 ---
-# name: test_finalize[uvloop-None]
+# name: test_finalize[None]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
@@ -43,7 +43,18 @@
       'version': 2,
     },
     'job': <class 'dict'> {
-      'id': 'test',
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': '7cf872dc',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'jobs_aodp',
     },
     'ready': True,
     'reference': <class 'dict'> {
@@ -69,7 +80,7 @@
     'workflow': 'nuvs',
   }
 ---
-# name: test_finalize[uvloop-None].1
+# name: test_finalize[None].1
   <class 'dict'> {
     '_id': 'analysis1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -80,7 +91,7 @@
       'version': 2,
     },
     'job': <class 'dict'> {
-      'id': 'test',
+      'id': '7cf872dc',
     },
     'ready': True,
     'reference': <class 'dict'> {
@@ -102,7 +113,7 @@
     'workflow': 'nuvs',
   }
 ---
-# name: test_find[uvloop]
+# name: test_find
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -113,7 +124,18 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'id': 'test',
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'zclark',
+            'id': 'fb085f7f',
+          },
+          'workflow': 'jobs_aodp',
         },
         'ready': True,
         'reference': <class 'dict'> {
@@ -142,7 +164,18 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'id': 'test',
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': <class 'dict'> {
+            'administrator': False,
+            'handle': 'zclark',
+            'id': 'fb085f7f',
+          },
+          'workflow': 'jobs_aodp',
         },
         'ready': True,
         'reference': <class 'dict'> {
@@ -174,9 +207,7 @@
           'id': 'foo',
           'version': 2,
         },
-        'job': <class 'dict'> {
-          'id': 'test',
-        },
+        'job': None,
         'ready': True,
         'reference': <class 'dict'> {
           'data_type': 'genome',
@@ -204,7 +235,7 @@
     'total_count': 3,
   }
 ---
-# name: test_get[uvloop-None-False]
+# name: test_get[None-False-False]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
@@ -224,9 +255,7 @@
       'id': 'bar',
       'version': 3,
     },
-    'job': <class 'dict'> {
-      'id': 'test',
-    },
+    'job': None,
     'ready': False,
     'reference': <class 'dict'> {
       'data_type': 'genome',
@@ -242,12 +271,12 @@
     },
     'subtractions': <class 'list'> [
       <class 'dict'> {
-        'id': 'plum',
-        'name': 'Plum',
-      },
-      <class 'dict'> {
         'id': 'apple',
         'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'plum',
+        'name': 'Plum',
       },
     ],
     'updated_at': '2015-10-06T20:00:00Z',
@@ -259,7 +288,7 @@
     'workflow': 'pathoscope_bowtie',
   }
 ---
-# name: test_get[uvloop-None-True]
+# name: test_get[None-True-True]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
@@ -280,7 +309,18 @@
       'version': 3,
     },
     'job': <class 'dict'> {
-      'id': 'test',
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': '7cf872dc',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'jobs_aodp',
     },
     'ready': True,
     'reference': <class 'dict'> {
@@ -314,7 +354,7 @@
     'workflow': 'pathoscope_bowtie',
   }
 ---
-# name: test_get[uvloop-None-True].1
+# name: test_get[None-True-True].1
   <class 'dict'> {
     '_id': 'foobar',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -335,11 +375,24 @@
       'version': 3,
     },
     'job': <class 'dict'> {
-      'id': 'test',
+      'archived': False,
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': '7cf872dc',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'jobs_aodp',
     },
     'ready': True,
     'reference': <class 'dict'> {
-      'id': 'baz',
+      '_id': 'baz',
+      'data_type': 'genome',
+      'name': 'Baz',
     },
     'results': <class 'dict'> {
       'hits': <class 'list'> [
@@ -349,16 +402,24 @@
       'id': 'baz',
     },
     'subtractions': <class 'list'> [
-      'plum',
-      'apple',
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'plum',
+        'name': 'Plum',
+      },
     ],
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
       'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }
 ---
-# name: test_upload_file[uvloop-None]
+# name: test_upload_file[None]
   <class 'dict'> {
     'analysis': 'foobar',
     'description': None,

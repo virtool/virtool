@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_app
 from virtool.labels.db import AttachLabelsTransform
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import (
     check_is_legacy,
@@ -24,9 +24,10 @@ from virtool.samples.db import (
     remove_samples,
     update_is_compressed,
 )
-from virtool.samples.models import SampleReads
+from virtool.samples.models import SQLSampleReads
 from virtool.samples.utils import calculate_workflow_tags
-from virtool.uploads.models import Upload
+from virtool.samples.db import define_initial_workflows, derive_workflow_state
+from virtool.uploads.models import SQLUpload
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
 
@@ -122,7 +123,8 @@ class TestRecalculateWorkflowTags:
                     "workflow": "pathoscope_bowtie",
                     "ready": True,
                 }
-            ]
+            ],
+            session=None,
         )
 
         m = mocker.patch(
@@ -141,7 +143,92 @@ class TestRecalculateWorkflowTags:
             "_id": "test",
             "pathoscope": True,
             "nuvs": "ip",
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "complete",
+                "pathoscope": "complete",
+            },
         }
+
+
+class TestDeriveWorkflowStates:
+    @pytest.mark.parametrize("library_type", ["amplicon", "normal", "srna", "other"])
+    def test_define_initial_workflows(self, library_type, snapshot):
+        """
+        Test that initial workflow states are correctly defined.
+        """
+        workflow_states = define_initial_workflows(library_type=library_type)
+        assert workflow_states == snapshot
+
+    @pytest.mark.parametrize("workflow_name", ["nuvs", "pathoscope"])
+    @pytest.mark.parametrize(
+        "analysis_states, final_workflow_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    def test_derive_workflow_states(
+        self, workflow_name, analysis_states, final_workflow_state
+    ):
+        """
+        Test that workflows are set to complete and pending as expected.
+        """
+        index = 0
+        library_type = "other"
+        ready_1, ready_2 = analysis_states
+
+        documents = [
+            {"_id": index, "ready": ready_1, "workflow": workflow_name},
+            {"_id": index, "ready": ready_2, "workflow": workflow_name},
+        ]
+
+        final_workflow_states = derive_workflow_state(documents, library_type)
+
+        expected_workflow_states = {
+            "workflows": {
+                "aodp": "incompatible",
+                "nuvs": "none",
+                "pathoscope": "none",
+            }
+        }
+
+        expected_workflow_states["workflows"][workflow_name] = final_workflow_state
+
+        assert final_workflow_states == expected_workflow_states
+
+    @pytest.mark.parametrize(
+        "analysis_states, final_workflow_state",
+        [
+            ([False, False], "pending"),
+            ([True, False], "complete"),
+            ([False, True], "complete"),
+            ([True, True], "complete"),
+        ],
+    )
+    def test_derive_aodp_workflow_states(self, analysis_states, final_workflow_state):
+        index = 0
+        library_type = "amplicon"
+        ready_1, ready_2 = analysis_states
+
+        documents = [
+            {"_id": index, "ready": ready_1, "workflow": "aodp"},
+            {"_id": index, "ready": ready_2, "workflow": "aodp"},
+        ]
+
+        final_workflow_states = derive_workflow_state(documents, library_type)
+
+        expected_final_workflow_state = {
+            "workflows": {
+                "aodp": final_workflow_state,
+                "nuvs": "incompatible",
+                "pathoscope": "incompatible",
+            }
+        }
+
+        assert final_workflow_states == expected_final_workflow_state
 
 
 class TestGetSampleOwner:
@@ -154,7 +241,8 @@ class TestGetSampleOwner:
             [
                 {"_id": "test", "user": {"id": "foobar"}},
                 {"_id": "baz", "user": {"id": "fred"}},
-            ]
+            ],
+            session=None,
         )
 
         assert await get_sample_owner(mongo, "test") == "foobar"
@@ -193,7 +281,7 @@ class TestRemoveSamples:
             handle.joinpath("text.txt").write_text("hello world")
 
         await mongo.samples.insert_many(
-            [{"_id": "test_1"}, {"_id": "test_2"}, {"_id": "test_3"}]
+            [{"_id": "test_1"}, {"_id": "test_2"}, {"_id": "test_3"}], session=None
         )
 
         await mongo.analyses.insert_many(
@@ -207,7 +295,8 @@ class TestRemoveSamples:
                 {"_id": "a_7", "sample": {"id": "test_3"}},
                 {"_id": "a_8", "sample": {"id": "test_3"}},
                 {"_id": "a_9", "sample": {"id": "test_3"}},
-            ]
+            ],
+            session=None,
         )
 
         await remove_samples(mongo, config, id_list)
@@ -226,7 +315,9 @@ class TestRemoveSamples:
 
         samples_dir.joinpath("test.txt").write_text("hello world")
 
-        await mongo.samples.insert_many([{"_id": "test_1"}, {"_id": "test_2"}])
+        await mongo.samples.insert_many(
+            [{"_id": "test_1"}, {"_id": "test_2"}], session=None
+        )
 
         await remove_samples(mongo, config, ["test_1", "test_2"])
 
@@ -332,7 +423,7 @@ async def test_update_is_compressed(snapshot, mongo):
         {"_id": "bar", "files": [{"name": "reads_1.fq.gz"}]},
     ]
 
-    await mongo.samples.insert_many(samples)
+    await mongo.samples.insert_many(samples, session=None)
     await gather(*[update_is_compressed(mongo, s) for s in samples])
 
     assert await mongo.samples.find().to_list(None) == snapshot
@@ -383,7 +474,7 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
 
     await mongo.samples.insert_one(sample)
 
-    await compress_sample_reads(app_dict, sample)
+    await compress_sample_reads(mongo, config, sample)
 
     assert set(os.listdir(sample_dir)) == snapshot
 
@@ -402,7 +493,9 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(spawn_client, snapshot, tmp_path, mongo, fake2, pg: AsyncEngine):
+async def test_finalize(
+    spawn_client, snapshot, tmp_path, mongo, fake2, pg: AsyncEngine
+):
     client = await spawn_client(authorize=True)
     quality = {"count": 10000000, "gc": 43}
 
@@ -411,9 +504,9 @@ async def test_finalize(spawn_client, snapshot, tmp_path, mongo, fake2, pg: Asyn
     await mongo.samples.insert_one({"_id": "test", "user": {"id": user.id}})
 
     async with AsyncSession(pg) as session:
-        upload = Upload(name="test", name_on_disk="test.fq.gz")
+        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
 
-        reads = SampleReads(
+        reads = SQLSampleReads(
             name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
         )
 
@@ -429,7 +522,7 @@ async def test_finalize(spawn_client, snapshot, tmp_path, mongo, fake2, pg: Asyn
     assert result == snapshot
     with pytest.raises(ResourceNotFoundError):
         await get_data_from_app(client.app).uploads.get(1)
-    assert not (await get_row_by_id(pg, SampleReads, 1)).upload
+    assert not (await get_row_by_id(pg, SQLSampleReads, 1)).upload
 
 
 class TestComposeWorkflowQuery:

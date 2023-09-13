@@ -1,0 +1,11 @@
+# name: test_upgrade
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'task': 'test',
+    },
+  ]
+---

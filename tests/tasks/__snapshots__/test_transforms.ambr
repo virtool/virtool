@@ -1,4 +1,4 @@
-# name: test_attach_task_transform[uvloop]
+# name: test_attach_task_transform
   <class 'list'> [
     <class 'dict'> {
       'id': 1,
@@ -12,8 +12,8 @@
         'file_size': None,
         'id': 3,
         'progress': 0,
-        'step': 'add_index_files',
-        'type': 'add_index_files',
+        'step': 'ensure_index_files',
+        'type': 'ensure_index_files',
       },
     },
     <class 'dict'> {
@@ -28,13 +28,21 @@
         'file_size': None,
         'id': 4,
         'progress': 0,
-        'step': 'add_subtraction_files',
-        'type': 'add_subtraction_files',
+        'step': 'clone_reference',
+        'type': 'clone_reference',
       },
+    },
+    <class 'dict'> {
+      'id': 3,
+      'task': None,
+    },
+    <class 'dict'> {
+      'id': 4,
+      'task': None,
     },
   ]
 ---
-# name: test_attach_task_transform_single[uvloop]
+# name: test_attach_task_transform_single
   <class 'list'> [
     <class 'dict'> {
       'id': 1,
@@ -48,8 +56,8 @@
         'file_size': None,
         'id': 2,
         'progress': 0,
-        'step': 'clone_reference',
-        'type': 'clone_reference',
+        'step': 'clean_references',
+        'type': 'clean_references',
       },
     },
     <class 'dict'> {

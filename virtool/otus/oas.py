@@ -37,7 +37,7 @@ class CreateSequenceRequest(BaseModel):
     definition: constr(min_length=1, strip_whitespace=True)
     host: constr(strip_whitespace=True) = ""
     segment: Optional[str] = None
-    sequence: constr(min_length=1, strip_whitespace=True)
+    sequence: constr(min_length=1, regex=r"^[ATCGNRYKM]+$")
     target: Optional[str] = None
 
 
@@ -46,7 +46,7 @@ class UpdateSequenceRequest(BaseModel):
     definition: Optional[constr(min_length=1, strip_whitespace=True)]
     host: Optional[constr(strip_whitespace=True)]
     segment: Optional[str]
-    sequence: Optional[constr(min_length=1, strip_whitespace=True)]
+    sequence: Optional[constr(min_length=1, regex=r"^[ATCGNRYKM]+$")]
     target: Optional[str]
 
     _prevent_none = prevent_none("accession", "definition", "host", "sequence")

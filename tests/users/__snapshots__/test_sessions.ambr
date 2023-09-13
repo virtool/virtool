@@ -1,130 +1,32 @@
-# name: test_clear_reset_session[uvloop-False]
-  <class 'dict'> {
-    'authentication': <class 'dict'> {
-      'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
-      'user_id': 'bf1b993c',
-    },
-    'created_at': <class 'datetime'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_clear_reset_session[uvloop-False].1
-  <class 'dict'> {
-    'authentication': <class 'dict'> {
-      'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
-      'user_id': 'bf1b993c',
-    },
-    'created_at': <class 'datetime'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_clear_reset_session[uvloop-True]
+# name: TestAnonymous.test_get_and_create
   <class 'dict'> {
     'authentication': None,
     'created_at': <class 'datetime'>,
+    'id': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: TestAuthenticated.test_get_and_create[snapshot]
+  <class 'dict'> {
+    'authentication': <class 'dict'> {
+      'user_id': 'user_id',
+    },
+    'created_at': <class 'datetime'>,
+    'id': <class 'str'>,
+    'ip': '1.1.1.1',
+    'reset': None,
+  }
+---
+# name: TestReset.test_create_and_get
+  <class 'dict'> {
+    'authentication': None,
+    'created_at': <class 'datetime'>,
+    'id': <class 'str'>,
     'ip': '1.1.1.1',
     'reset': <class 'dict'> {
-      'code': 'reset_code',
-      'remember': False,
+      'remember': True,
       'user_id': 'bf1b993c',
     },
-  }
----
-# name: test_clear_reset_session[uvloop-True].1
-  <class 'dict'> {
-    'authentication': None,
-    'created_at': <class 'datetime'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_clear_reset_session[uvloop-True].2
-  ResourceNotFoundError('Session is invalid')
----
-# name: test_create_anonymous_session[uvloop]
-  <class 'dict'> {
-    'authentication': None,
-    'created_at': <class 'str'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_create_reset_session[uvloop]
-  <class 'dict'> {
-    'authentication': None,
-    'created_at': <class 'str'>,
-    'ip': '1.1.1.1',
-    'reset': <class 'dict'> {
-      'code': 'reset_code',
-      'remember': False,
-      'user_id': 'bf1b993c',
-    },
-  }
----
-# name: test_create_session[uvloop-False]
-  <class 'dict'> {
-    'authentication': <class 'dict'> {
-      'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
-      'user_id': 'bf1b993c',
-    },
-    'created_at': <class 'str'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_create_session[uvloop-True]
-  <class 'dict'> {
-    'authentication': <class 'dict'> {
-      'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
-      'user_id': 'bf1b993c',
-    },
-    'created_at': <class 'str'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_delete[uvloop]
-  <class 'dict'> {
-    'authentication': None,
-    'created_at': <class 'datetime'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_delete[uvloop].1
-  ResourceNotFoundError('Session is invalid')
----
-# name: test_get_anonymous[uvloop]
-  <class 'dict'> {
-    'authentication': None,
-    'created_at': <class 'datetime'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_get_anonymous[uvloop].1
-  ResourceNotFoundError('Session is invalid')
----
-# name: test_get_authenticated[uvloop]
-  <class 'dict'> {
-    'authentication': <class 'dict'> {
-      'token': '3c469e9d6c5875d37a43f353d4f88e61fcf812c66eee3457465a40b0da4153e0',
-      'user_id': 'bf1b993c',
-    },
-    'created_at': <class 'datetime'>,
-    'ip': '1.1.1.1',
-    'reset': None,
-  }
----
-# name: test_get_authenticated[uvloop].1
-  ResourceError('Session not authenticated')
----
-# name: test_get_reset_data[uvloop]
-  <class 'dict'> {
-    'code': 'reset_code',
-    'remember': False,
-    'user_id': 'bf1b993c',
   }
 ---

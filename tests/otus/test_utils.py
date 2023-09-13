@@ -83,7 +83,6 @@ def test_split(test_otu, test_sequence, test_merged_otu):
 
 @pytest.mark.parametrize("exists", [True, False])
 def test_find_isolate(exists, test_otu, test_isolate):
-
     new_isolate = {
         **test_isolate,
         "id": "foobar",

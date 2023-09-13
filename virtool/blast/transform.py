@@ -3,9 +3,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.blast.models import NuVsBlast
-from virtool.mongo.transforms import AbstractTransform
+from virtool.blast.models import SQLNuVsBlast
+from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
+from virtool.utils import get_safely
 
 
 class AttachNuVsBLAST(AbstractTransform):
@@ -19,7 +20,7 @@ class AttachNuVsBLAST(AbstractTransform):
     async def prepare_one(self, document: Document) -> Any:
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(NuVsBlast).where(NuVsBlast.analysis_id == document["id"])
+                select(SQLNuVsBlast).where(SQLNuVsBlast.analysis_id == document["id"])
             )
 
             return {
@@ -37,7 +38,10 @@ class AttachNuVsBLAST(AbstractTransform):
             }
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        hits = document["results"]["hits"]
+        hits = get_safely(document, "results", "hits")
+
+        if hits is None:
+            return document
 
         return {
             **document,

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Union, Optional
 
@@ -9,9 +10,11 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
 from virtool_core.models.subtraction import SubtractionSearchResult
 
 from virtool.api.response import NotFound, json_response
+from virtool.authorization.permissions import LegacyPermission
+from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import PermissionsRoutePolicy, policy
+from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.subtractions.oas import (
@@ -21,13 +24,13 @@ from virtool.subtractions.oas import (
     SubtractionResponse,
     FinalizeSubtractionRequest,
 )
-from virtool.users.utils import Permission
 
 logger = logging.getLogger("subtractions")
 
 routes = Routes()
 
 
+@routes.view("/spaces/{space_id}/subtractions")
 @routes.view("/subtractions")
 class SubtractionsView(PydanticView):
     async def get(
@@ -36,7 +39,7 @@ class SubtractionsView(PydanticView):
         """
         Find subtractions.
 
-        Finds subtractions by their `name` or `nickname` by providing a `term` as a
+        Lists subtractions by their `name` or `nickname` by providing a `term` as a
         query parameter. Partial matches are supported.
 
         Supports pagination unless the `short` query parameter is set. In this case, an
@@ -52,7 +55,7 @@ class SubtractionsView(PydanticView):
 
         return json_response(search_result)
 
-    @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
+    @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
     async def post(
         self, data: CreateSubtractionRequest
     ) -> Union[r201[CreateSubtractionResponse], r400, r403]:
@@ -72,7 +75,7 @@ class SubtractionsView(PydanticView):
         """
         try:
             subtraction = await get_data_from_req(self.request).subtractions.create(
-                data, self.request["client"].user_id
+                data, self.request["client"].user_id, 0
             )
         except ResourceNotFoundError as err:
             if "Upload does not exist" in str(err):
@@ -87,6 +90,7 @@ class SubtractionsView(PydanticView):
         )
 
 
+@routes.view("/spaces/{space_id}/subtractions/{subtraction_id}")
 @routes.view("/subtractions/{subtraction_id}")
 @routes.jobs_api.get("/subtractions/{subtraction_id}")
 class SubtractionView(PydanticView):
@@ -96,7 +100,7 @@ class SubtractionView(PydanticView):
         """
         Get a subtraction.
 
-        Retrieves the details of a subtraction.
+        Fetches the details of a subtraction.
 
         Status Codes:
             200: Operation Successful
@@ -112,7 +116,7 @@ class SubtractionView(PydanticView):
 
         return json_response(subtraction)
 
-    @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
+    @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
     async def patch(
         self, subtraction_id: str, /, data: UpdateSubtractionRequest
     ) -> Union[r200[SubtractionResponse], r400, r403, r404]:
@@ -137,7 +141,7 @@ class SubtractionView(PydanticView):
 
         return json_response(subtraction)
 
-    @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
+    @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
     async def delete(self, subtraction_id: str, /) -> Union[r204, r403, r404, r409]:
         """
         Delete a subtraction.
@@ -160,9 +164,16 @@ class SubtractionView(PydanticView):
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
 async def upload(req):
-    """Upload a new subtraction file."""
+    """
+    Upload subtraction file.
+
+    Uploads a new subtraction file.
+    """
     subtraction_id = req.match_info["subtraction_id"]
     filename = req.match_info["filename"]
+
+    subtraction_path = get_config_from_req(req).data_path / "subtractions" / subtraction_id
+    await asyncio.to_thread(subtraction_path.mkdir, parents=True, exist_ok=True)
 
     try:
         subtraction_file = await get_data_from_req(req).subtractions.upload_file(
@@ -191,6 +202,8 @@ async def upload(req):
 )
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
+    Finalize a subtraction.
+
     Sets the GC field for a subtraction and marks it as ready.
 
     """
@@ -241,7 +254,7 @@ class SubtractionFileView(PydanticView):
         self, subtraction_id: str, filename: str, /
     ) -> Union[r200, r400, r404]:
         """
-        Download a file.
+        Download a subtraction file.
 
         Downloads a Bowtie2 index or FASTA file for the given subtraction.
 

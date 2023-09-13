@@ -12,7 +12,7 @@ from virtool_core.models.subtraction import Subtraction
 
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import Document
@@ -30,7 +30,6 @@ PROJECTION = [
     "name",
     "nickname",
     "user",
-    "has_file",
 ]
 
 ADD_SUBTRACTION_FILES_QUERY = {"deleted": False}
@@ -109,29 +108,22 @@ async def fetch_complete_subtraction(
         )
 
 
-async def check_subtraction_fasta_files(db, config: Config) -> list:
+async def check_subtraction_fasta_files(mongo, config: Config) -> list:
     """
-    Check subtraction directories for files and set 'has_file' to boolean based on
-    whether a ``.fa.gz`` file exists.
+    Check subtraction directories for files
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param config: the application configuration
     :return: a list of subtraction IDs without FASTA files
 
     """
     subtractions_without_fasta = []
 
-    async for subtraction in db.subtraction.find({"deleted": False}):
+    async for subtraction in mongo.subtraction.find({"deleted": False}):
         path = join_subtraction_path(config, subtraction["_id"])
-        has_file = True
 
         if not glob.glob(f"{path}/*.fa.gz"):
-            has_file = False
             subtractions_without_fasta.append(subtraction["_id"])
-
-        await db.subtraction.find_one_and_update(
-            {"_id": subtraction["_id"]}, {"$set": {"has_file": has_file}}
-        )
 
     return subtractions_without_fasta
 
@@ -164,3 +156,29 @@ async def unlink_default_subtractions(
         {"$pull": {"subtractions": subtraction_id}},
         session=session,
     )
+
+
+def lookup_nested_subtractions(
+    local_field: str = "subtractions", set_as: str = "subtractions"
+) -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up nested subtractions.
+
+    :param local_field: subtractions field to look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "subtraction",
+                "let": {"subtraction_ids": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$in": ["$_id", "$$subtraction_ids"]}}},
+                    {"$sort": {"_id": 1}},
+                    {"$project": {"id": "$_id", "_id": False, "name": True}},
+                ],
+                "as": set_as,
+            }
+        },
+    ]

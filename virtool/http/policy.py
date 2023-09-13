@@ -6,10 +6,18 @@ from aiohttp import web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
-from virtool_core.models.enums import Permission
 
+from virtool_core.models.roles import (
+    AdministratorRole,
+)
+
+from virtool.authorization.permissions import (
+    ResourceType,
+    LegacyPermission,
+)
+from virtool.authorization.client import get_authorization_client_from_req
 from virtool.errors import PolicyError
-from virtool.http.client import AbstractClient, UserClient, JobClient
+from virtool.http.client import AbstractClient
 
 logger = getLogger(__name__)
 
@@ -17,9 +25,15 @@ logger = getLogger(__name__)
 class DefaultRoutePolicy:
     """Any authenticated client can access the route."""
 
-    allow_unauthenticated = False
+    allow_unauthenticated: bool = False
+    """
+    Allow unauthenticated clients to access the route that this policy applies to.
 
-    def check(self, req, handler, client):
+    Policies that subclass the default policy must explicitly opt-in to allowing
+    unauthenticated clients to access the route.
+    """
+
+    async def check(self, req: Request, handler, client):
         """
         This method is a no-op for the default policy.
 
@@ -31,34 +45,51 @@ class DefaultRoutePolicy:
         """
         ...
 
-    def run_checks(self, req, handler, client):
+    async def run_checks(self, req, handler, client):
         if not self.allow_unauthenticated and not client.authenticated:
             raise HTTPUnauthorized(text="Requires authorization")
 
-        self.check(req, handler, client)
+        await self.check(req, handler, client)
 
 
 class AdministratorRoutePolicy(DefaultRoutePolicy):
     """Only authenticated clients that are administrators can access the route."""
 
-    def check(self, req, handler, client: AbstractClient):
-        if not client.administrator:
-            raise HTTPForbidden(text="Requires administrative privilege")
+    def __init__(self, role: AdministratorRole):
+        self.role = role
 
-
-class PermissionsRoutePolicy(DefaultRoutePolicy):
-    """Only authenticated clients with the set permissions can access the route."""
-
-    def __init__(self, *permissions: Permission):
-        self.permissions = permissions
-
-    def check(self, req, handler, client: Union[UserClient, JobClient]):
+    async def check(self, req, handler, client: AbstractClient):
         if client.administrator:
-            # Administrators bypass permission checks.
             return
-        for permission in self.permissions:
-            if not client.permissions.get(permission.name, False):
-                raise HTTPForbidden(text="Not permitted")
+
+        if await get_authorization_client_from_req(req).check(
+            client.user_id, self.role, ResourceType.APP, "virtool"
+        ):
+            return
+
+        raise HTTPForbidden(text="Requires administrative privilege")
+
+
+class PermissionRoutePolicy(DefaultRoutePolicy):
+    def __init__(self, permission: LegacyPermission):
+        self.permission = permission
+
+    async def check(self, req: Request, handler: Callable, client):
+        """
+        Checks if the client has the required permission for the object.
+
+        Raises ``HTTPForbidden`` if the client does not have the required permission.
+
+        The check will pass if:
+        * The user is an administrator.
+        * The user has the required permission in their legacy MongoDB-based
+          permissions.
+
+        """
+        if client.administrator or client.permissions[self.permission.value]:
+            return
+
+        raise HTTPForbidden(text="Not permitted")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):
@@ -74,6 +105,11 @@ class WebSocketRoutePolicy(DefaultRoutePolicy):
 
 
 def policy(route_policy: Union[DefaultRoutePolicy, Type[DefaultRoutePolicy]]):
+    """
+    Applies the provided route policy to the decorated request handler.
+
+    """
+
     def decorator(func):
         try:
             if func.policy:
@@ -142,6 +178,6 @@ async def route_policy_middleware(req: Request, handler: Callable):
 
     """
     route_policy = get_handler_policy(handler, req.method)
-    route_policy.run_checks(req, handler, req["client"])
+    await route_policy.run_checks(req, handler, req["client"])
 
     return await handler(req)

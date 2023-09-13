@@ -4,6 +4,8 @@ from aiohttp.web import Request, Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r403
 
+from virtool_core.models.roles import AdministratorRole
+
 from virtool.api.response import json_response
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
@@ -23,7 +25,7 @@ class SettingsView(PydanticView):
         """
         Get settings.
 
-        Returns the complete application settings.
+        Fetches the complete application settings.
 
         Status Codes:
             200: Successful operation
@@ -32,7 +34,7 @@ class SettingsView(PydanticView):
 
         return json_response(settings)
 
-    @policy(AdministratorRoutePolicy)
+    @policy(AdministratorRoutePolicy(AdministratorRole.SETTINGS))
     async def patch(
         self, data: UpdateSettingsRequest
     ) -> Union[r200[UpdateSettingsResponse], r403]:
@@ -53,8 +55,9 @@ class SettingsView(PydanticView):
 @routes.jobs_api.get("/settings")
 async def get(req: Request) -> Response:
     """
-    Get a complete document of the application settings.
+    Get settings.
 
+    Fetches a complete document of the application settings.
     """
     settings = await get_data_from_req(req).settings.get_all()
 

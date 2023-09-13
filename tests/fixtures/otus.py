@@ -1,4 +1,3 @@
-import copy
 import gzip
 import json
 from pathlib import Path
@@ -14,11 +13,6 @@ def import_data_file():
         data = json.load(f)
 
     return data
-
-
-@pytest.fixture
-def import_data(import_data_file):
-    return copy.deepcopy(import_data_file)
 
 
 @pytest.fixture
@@ -107,8 +101,3 @@ def test_merged_otu(static_time):
         "schema": [],
         "_id": "6116cba1",
     }
-
-
-@pytest.fixture(scope="function")
-def import_json(import_json_from_file):
-    return copy.deepcopy(import_json_from_file)

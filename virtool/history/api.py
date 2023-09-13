@@ -38,7 +38,10 @@ class ChangesView(PydanticView):
 class ChangeView(PydanticView):
     async def get(self, change_id: str, /) -> Union[r200[HistoryResponse], r404]:
         """
-        Get a specific change document by its ``change_id``.
+        Get a change document.
+
+        Fetches a specific change document by its ``change_id``.
+
         Status Codes:
             200: Successful Operation
             404: Not found
@@ -52,8 +55,11 @@ class ChangeView(PydanticView):
 
     async def delete(self, change_id: str, /) -> Union[r204, r403, r404, r409]:
         """
-        Remove the change document with the given ``change_id`` and
+        Delete a change document.
+
+        Removes the change document with the given ``change_id`` and
         any subsequent changes.
+
         Status Codes:
             204: Successful Operation
             403: Insufficient Rights
@@ -67,7 +73,6 @@ class ChangeView(PydanticView):
         if reference is not None and not await virtool.references.db.check_right(
             self.request, reference["id"], "modify_otu"
         ):
-
             raise InsufficientRights()
 
         try:

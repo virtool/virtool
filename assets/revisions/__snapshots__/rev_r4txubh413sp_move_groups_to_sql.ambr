@@ -1,0 +1,8 @@
+# name: test_upgrade
+  <class 'list'> [
+    <SQLGroup(id=1, legacy_id=group_3, name=Group 3, permissions={'create_sample': True})>,
+    <SQLGroup(id=2, legacy_id=group_1, name=Group 1, permissions={'create_sample': True})>,
+    <SQLGroup(id=3, legacy_id=group_2, name=Group 2, permissions={'create_sample': False})>,
+    <SQLGroup(id=4, legacy_id=group_4, name=Group 4, permissions={'create_sample': False})>,
+  ]
+---

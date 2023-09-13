@@ -1,4 +1,4 @@
-# name: test_find[uvloop]
+# name: test_find
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -59,7 +59,7 @@
     'total_count': 1,
   }
 ---
-# name: test_get[uvloop-None][json]
+# name: test_get[None][json]
   <class 'dict'> {
     'cluster': 3463,
     'count': 4,
@@ -106,7 +106,7 @@
     'total_entropy': 101.49,
   }
 ---
-# name: test_get_release[uvloop][json]
+# name: test_get_release[json]
   <class 'dict'> {
     'body': "- remove some annotations that didn't have corresponding profiles",
     'content_type': 'application/gzip',
@@ -122,7 +122,7 @@
     'size': 85904451,
   }
 ---
-# name: test_get_status[uvloop][json]
+# name: test_get_status[json]
   <class 'dict'> {
     'errors': <class 'list'> [
     ],

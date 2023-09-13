@@ -1,14 +1,16 @@
 from virtool_core.models.settings import Settings
 
-from virtool.mongo.core import DB
+from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 
 PROJECTION = {"_id": False}
 
 
 class SettingsData:
+    name = "settings"
+
     def __init__(self, db):
-        self._db: DB = db
+        self._db: Mongo = db
 
     async def get_all(self) -> Settings:
         """

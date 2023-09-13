@@ -8,6 +8,9 @@ from typing import List, Optional, Tuple, Union
 import aiofiles
 import arrow
 import dictdiffer
+from virtool_core.models.enums import HistoryMethod
+
+from virtool.config import get_config_from_app
 
 
 def calculate_diff(old: dict, new: dict) -> list:
@@ -106,6 +109,27 @@ def compose_remove_description(document: dict) -> str:
 
     if abbreviation:
         return f"{description} ({abbreviation})"
+
+    return description
+
+
+def compose_history_description(
+    history_method: HistoryMethod, name: str, abbreviation: str = None
+) -> str:
+    """
+    Compose a change description for removing an OTU.
+
+    :param document: the OTU document that is being removed
+    :return: a change description
+
+    """
+
+    e = "" if history_method.value[-1] == "e" else "e"
+
+    description = f"{history_method.value.capitalize()}{e}d {name}"
+
+    if abbreviation:
+        description = f"{description} ({abbreviation})"
 
     return description
 
@@ -209,7 +233,7 @@ async def remove_diff_files(app, id_list: List[str]):
     :param id_list: a list of change IDs to remove diff files for
 
     """
-    data_path = app["config"].data_path
+    data_path = get_config_from_app(app).data_path
 
     for change_id in id_list:
         otu_id, otu_version = change_id.split(".")

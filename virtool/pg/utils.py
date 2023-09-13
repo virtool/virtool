@@ -1,6 +1,6 @@
-import logging
 import sys
 from enum import Enum
+from logging import getLogger
 from typing import Optional, Type, Union
 
 import orjson
@@ -8,10 +8,10 @@ from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
-from virtool.api.custom_json import orjson_serializer
+from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base
 
-logger = logging.getLogger(__name__)
+logger = getLogger("pg")
 
 
 class SQLEnum(Enum):
@@ -20,7 +20,7 @@ class SQLEnum(Enum):
         return [e.value for e in cls]
 
 
-async def connect(postgres_connection_string: str) -> AsyncEngine:
+async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
     """
     Create a connection of Postgres.
 
@@ -37,13 +37,12 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
     try:
         pg = create_async_engine(
             postgres_connection_string,
-            json_serializer=orjson_serializer,
+            json_serializer=dump_string,
             json_deserializer=orjson.loads,
             pool_recycle=1800,
         )
 
         await check_version(pg)
-        await create_models(pg)
 
         return pg
     except ConnectionRefusedError:
@@ -58,16 +57,11 @@ async def check_version(engine: AsyncEngine):
     :param engine: an AsyncConnection object
 
     """
-    async with engine.connect() as conn:
-        info = await conn.execute(text("SHOW server_version"))
+    async with AsyncSession(engine) as session:
+        info = await session.execute(text("SHOW server_version"))
 
     version = info.first()[0].split()[0]
     logger.info("Found PostgreSQL %s", version)
-
-
-async def create_models(engine):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
 
 async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):
@@ -86,7 +80,7 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):
             await session.commit()
 
 
-async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int) -> Optional[Base]:
+async def get_row_by_id(pg: AsyncEngine, model: Type[Base], id_: int) -> Optional[Base]:
     """
     Get a row from a SQL `model` by its `id`.
 

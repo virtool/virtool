@@ -1,12 +1,9 @@
 version = 1
 
 test_patterns = [
-  "tests/**"
+  "tests/**",
+  "assets/revisions"
 ]
-
-[[analyzers]]
-name = "test-coverage"
-enabled = true
 
 [[analyzers]]
 name = "python"

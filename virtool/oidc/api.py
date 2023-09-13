@@ -15,7 +15,7 @@ routes = Routes()
 @policy(PublicRoutePolicy)
 async def acquire_tokens(req: Request) -> Response:
     """
-    Gather authentication response from auth uri query string.
+    Gather authentication response from authorization uri query string.
     Fetch tokens from b2c authorization endpoint.
 
     Once tokens are acquired, redirect user back to Virtool homepage.
@@ -90,11 +90,12 @@ async def refresh_tokens(req: Request) -> Response:
 
 @routes.get("/oidc/delete_tokens")
 @policy(PublicRoutePolicy)
-async def delete_tokens(req: Request) -> Response:
+async def delete_tokens(_) -> Response:
     """
     Delete id_token cookie from response.
 
     """
     resp = HTTPFound("/")
     resp.del_cookie("id_token")
+
     return resp

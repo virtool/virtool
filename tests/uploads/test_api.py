@@ -2,9 +2,10 @@ import os
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.config import get_config_from_app
 
 import virtool.utils
-from virtool.uploads.models import Upload, UploadType
+from virtool.uploads.models import SQLUpload, UploadType
 from virtool_core.models.enums import Permission
 
 
@@ -13,6 +14,7 @@ def files(test_files_path):
     return {"file": open(test_files_path / "test.fq.gz", "rb")}
 
 
+@pytest.mark.apitest
 class TestUpload:
     @pytest.mark.parametrize("upload_type", UploadType.to_list())
     async def test(
@@ -33,7 +35,7 @@ class TestUpload:
             authorize=True, permissions=[Permission.upload_file]
         )
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         if upload_type:
             resp = await client.post_form(
@@ -76,6 +78,7 @@ class TestUpload:
         await resp_is.bad_request(resp, "Unsupported upload type")
 
 
+@pytest.mark.apitest
 class TestFind:
     @pytest.mark.parametrize("upload_type", ["reads", "reference", None])
     async def test(self, upload_type, spawn_client, snapshot, test_uploads):
@@ -106,7 +109,9 @@ class TestFind:
             (None, 2),
         ],
     )
-    async def test_pagination(self, per_page, page, test_uploads, spawn_client, snapshot):
+    async def test_pagination(
+        self, per_page, page, test_uploads, spawn_client, snapshot
+    ):
         client = await spawn_client(authorize=True, administrator=True)
 
         url = "/uploads?paginate=True"
@@ -130,6 +135,7 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestGet:
     @pytest.mark.parametrize("exists", [True, False])
     async def test(self, exists, files, resp_is, spawn_client, tmp_path):
@@ -139,7 +145,7 @@ class TestGet:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         if exists:
             await client.post_form("/uploads?name=test.fq.gz&type=hmm", data=files)
@@ -158,11 +164,11 @@ class TestGet:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         async with AsyncSession(pg) as session:
             session.add(
-                Upload(
+                SQLUpload(
                     id=1,
                     created_at=virtool.utils.timestamp(),
                     name="test.fq.gz",
@@ -184,6 +190,7 @@ class TestGet:
         assert resp.status == 404
 
 
+@pytest.mark.apitest
 class TestDelete:
     async def test(self, files, spawn_client, tmp_path, resp_is):
         """
@@ -192,7 +199,7 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
         await client.post_form("/uploads?name=test.fq.gz&type=hmm", data=files)
 
         resp = await client.delete("/uploads/1")
@@ -211,11 +218,11 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         async with AsyncSession(pg) as session:
             session.add(
-                Upload(
+                SQLUpload(
                     id=1,
                     created_at=virtool.utils.timestamp(),
                     name="test.fq.gz",
@@ -251,12 +258,12 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["config"].data_path = tmp_path
+        get_config_from_app(client.app).data_path = tmp_path
 
         if exists:
             async with AsyncSession(pg) as session:
                 session.add(
-                    Upload(
+                    SQLUpload(
                         id=1,
                         created_at=virtool.utils.timestamp(),
                         name="test.fq.gz",

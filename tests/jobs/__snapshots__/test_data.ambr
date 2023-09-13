@@ -1,4 +1,4 @@
-# name: test_acquire[uvloop]
+# name: test_acquire
   <class 'dict'> {
     'acquired': True,
     'archived': False,
@@ -12,13 +12,13 @@
     'rights': <class 'dict'> {
     },
     'stage': None,
-    'state': 'preparing',
+    'state': <JobState.PREPARING: 'preparing'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 3,
         'stage': None,
-        'state': 'preparing',
+        'state': <JobState.PREPARING: 'preparing'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -32,7 +32,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_acquire[uvloop].1
+# name: test_acquire.1
   <class 'dict'> {
     '_id': 'foo',
     'acquired': True,
@@ -59,7 +59,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_archive[uvloop]
+# name: test_archive
   <class 'dict'> {
     'acquired': False,
     'archived': True,
@@ -72,13 +72,13 @@
     'rights': <class 'dict'> {
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -92,7 +92,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_archive[uvloop].1
+# name: test_archive.1
   <class 'dict'> {
     '_id': 'foo',
     'acquired': False,
@@ -119,7 +119,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_cancel[uvloop]
+# name: test_cancel
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -132,13 +132,13 @@
     'rights': <class 'dict'> {
     },
     'stage': 'foo',
-    'state': 'running',
+    'state': <JobState.RUNNING: 'running'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': 'foo',
-        'state': 'running',
+        'state': <JobState.RUNNING: 'running'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -152,7 +152,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_cancel[uvloop].1
+# name: test_cancel.1
   <class 'dict'> {
     '_id': 'foo',
     'archived': False,
@@ -176,7 +176,7 @@
     'workflow': 'build_index',
   }
 ---
-# name: test_create[uvloop-None]
+# name: test_create[None]
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -188,26 +188,15 @@
     'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -221,7 +210,7 @@
     'workflow': 'create_sample',
   }
 ---
-# name: test_create[uvloop-None].1
+# name: test_create[None].1
   <class 'dict'> {
     '_id': 'bf1b993c',
     'acquired': False,
@@ -232,17 +221,9 @@
     'key': None,
     'ping': None,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
+    },
+    'space': <class 'dict'> {
+      'id': 0,
     },
     'state': 'waiting',
     'status': <class 'list'> [
@@ -262,7 +243,7 @@
     'workflow': 'create_sample',
   }
 ---
-# name: test_create[uvloop-bar]
+# name: test_create[bar]
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -274,26 +255,15 @@
     'ping': None,
     'progress': 0,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -307,7 +277,7 @@
     'workflow': 'create_sample',
   }
 ---
-# name: test_create[uvloop-bar].1
+# name: test_create[bar].1
   <class 'dict'> {
     '_id': 'bar',
     'acquired': False,
@@ -318,17 +288,9 @@
     'key': None,
     'ping': None,
     'rights': <class 'dict'> {
-      'samples': <class 'dict'> {
-        'modify': <class 'list'> [
-          'foo',
-        ],
-        'read': <class 'list'> [
-          'foo',
-        ],
-        'remove': <class 'list'> [
-          'foo',
-        ],
-      },
+    },
+    'space': <class 'dict'> {
+      'id': 0,
     },
     'state': 'waiting',
     'status': <class 'list'> [
@@ -347,4 +309,155 @@
     },
     'workflow': 'create_sample',
   }
+---
+# name: test_timeout
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'ok_new',
+      'state': 'running',
+      'status': <class 'list'> [
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'waiting',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'running',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'ok_ping',
+      'state': 'running',
+      'status': <class 'list'> [
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'waiting',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'running',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'ok_state',
+      'state': 'complete',
+      'status': <class 'list'> [
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'waiting',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'running',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 1,
+          'stage': 'Bar',
+          'state': 'complete',
+          'step_description': 'bar a foo',
+          'step_name': 'bar',
+          'timestamp': <class 'datetime'>,
+        },
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'bad_old',
+      'state': 'timeout',
+      'status': <class 'list'> [
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'waiting',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'running',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'timeout',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'bad_ping',
+      'state': 'timeout',
+      'status': <class 'list'> [
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'waiting',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'running',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+        <class 'dict'> {
+          'error': None,
+          'progress': 0.33,
+          'stage': 'foo',
+          'state': 'timeout',
+          'step_description': 'Foo a bar',
+          'step_name': 'foo',
+          'timestamp': <class 'datetime'>,
+        },
+      ],
+    },
+  ]
 ---

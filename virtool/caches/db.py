@@ -8,6 +8,7 @@ from typing import Any, Dict
 
 import pymongo.errors
 from virtool_core.utils import rm
+from virtool.config import get_config_from_app
 
 import virtool.utils
 from virtool.types import App
@@ -83,7 +84,7 @@ async def remove(app: App, cache_id: str):
 
     """
     db = app["db"]
-    config = app["config"]
+    config = get_config_from_app(app)
 
     await db.caches.delete_one({"_id": cache_id})
 

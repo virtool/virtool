@@ -1,15 +1,15 @@
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
-from pydantic import BaseModel, constr, Field, root_validator, validator
+from pydantic import BaseModel, Field, constr, root_validator, validator
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexMinimal
 from virtool_core.models.reference import (
-    ReferenceInstalled,
     Reference,
+    ReferenceGroup,
+    ReferenceInstalled,
+    ReferenceRelease,
     ReferenceSearchResult,
     ReferenceUser,
-    ReferenceRelease,
-    ReferenceGroup,
 )
 from virtool_core.models.validators import prevent_none
 
@@ -324,11 +324,11 @@ class UpdateReferenceRequest(BaseModel):
     description: Optional[constr(strip_whitespace=True)] = Field(
         description="a longer description for the reference"
     )
-    organism: Optional[constr(strip_whitespace=True)] = Field(
-        description="the organism"
-    )
     internal_control: Optional[str] = Field(
         description="set the OTU identified by the passed id as the internal control for the reference"
+    )
+    organism: Optional[constr(strip_whitespace=True)] = Field(
+        description="the organism"
     )
     restrict_source_types: Optional[bool] = Field(
         description="option to restrict source types"
@@ -336,15 +336,18 @@ class UpdateReferenceRequest(BaseModel):
     source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
         description="source types"
     )
-    targets: List[ReferenceTargetRequest] = Field(description="targets")
+    targets: Optional[List[ReferenceTargetRequest]] = Field(
+        description="list of target sequences"
+    )
 
     _prevent_none = prevent_none(
-        "name",
         "description",
-        "organism",
         "internal_control",
+        "name",
+        "organism",
         "restrict_source_types",
         "source_types",
+        "targets",
     )
 
     class Config:
@@ -356,7 +359,7 @@ class UpdateReferenceRequest(BaseModel):
             }
         }
 
-    @validator("targets", always=True)
+    @validator("targets", check_fields=False)
     def check_targets_name(cls, targets):
         """
         Sets `name` to the provided `id` if it is `None`.
@@ -365,6 +368,7 @@ class UpdateReferenceRequest(BaseModel):
 
         if len(names) != len(set(names)):
             raise ValueError("The targets field may not contain duplicate names")
+
         return targets
 
 

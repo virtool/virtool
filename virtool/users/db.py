@@ -1,20 +1,25 @@
 import random
 from asyncio import gather
 from dataclasses import dataclass
-from logging import Logger
-from typing import Any, Dict, List, Optional, Union
+from logging import getLogger
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.user import User
 
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
-from virtool.groups.db import get_merged_permissions
-from virtool.mongo.transforms import AbstractTransform
+from virtool.groups.transforms import (
+    AttachGroupsTransform,
+    AttachPrimaryGroupTransform,
+)
 from virtool.mongo.utils import (
     get_non_existent_ids,
     id_exists,
 )
 from virtool.types import Document
+from virtool.users.transforms import AttachPermissionsTransform
 from virtool.users.utils import (
     check_legacy_password,
     check_password,
@@ -22,7 +27,11 @@ from virtool.users.utils import (
 )
 from virtool.utils import base_processor
 
-logger = Logger(__name__)
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
+    from virtool.authorization.client import AuthorizationClient
+
+logger = getLogger("users")
 
 PROJECTION = [
     "_id",
@@ -31,11 +40,10 @@ PROJECTION = [
     "force_reset",
     "groups",
     "last_password_change",
-    "permissions",
     "primary_group",
 ]
 
-ATTACH_PROJECTION = ["administrator", "handle"]
+ATTACH_PROJECTION = ["_id", "administrator", "handle"]
 
 
 @dataclass
@@ -164,7 +172,7 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     if non_existent_groups:
         raise DatabaseError("Non-existent groups: " + ", ".join(non_existent_groups))
 
-    update = {"groups": groups, "permissions": await get_merged_permissions(db, groups)}
+    update = {"groups": groups}
 
     return update
 
@@ -205,7 +213,7 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
 
     :return: user handle created from B2C user info
     """
-    handle = f"{given_name}-{family_name}-{random.randint(1,100)}"
+    handle = f"{given_name}-{family_name}-{random.randint(1, 100)}"
 
     if await collection.count_documents({"handle": handle}):
         return await generate_handle(collection, given_name, family_name)
@@ -252,7 +260,7 @@ async def validate_credentials(db, user_id: str, password: str) -> bool:
     return False
 
 
-async def update_sessions_and_keys(
+async def update_keys(
     db,
     user_id: str,
     administrator: bool,
@@ -291,39 +299,66 @@ async def update_sessions_and_keys(
         ]
     )
 
-    await db.sessions.update_many(
-        query,
-        {
-            "$set": {
-                "administrator": administrator,
-                "groups": groups,
-                "permissions": permissions,
-            }
-        },
-        session=session,
+
+async def fetch_complete_user(
+    authorization_client: "AuthorizationClient",
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    user_id: str,
+) -> Optional[User]:
+    user, (user_id, role) = await gather(
+        mongo.users.find_one(
+            {"_id": user_id},
+        ),
+        authorization_client.get_administrator(user_id),
+    )
+
+    if not user:
+        return None
+
+    return User(
+        **(
+            await apply_transforms(
+                base_processor(user),
+                [
+                    AttachPermissionsTransform(mongo, pg),
+                    AttachPrimaryGroupTransform(mongo),
+                    AttachGroupsTransform(mongo),
+                ],
+            )
+        ),
+        administrator_role=role,
     )
 
 
-async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
-    user = await mongo.users.find_one(user_id)
+def lookup_nested_user_by_id(
+    local_field: str = "user.id", set_as: str = "user"
+) -> list[dict]:
+    """
+    Create a mongoDB aggregation pipeline step to look up a nested user by id.
 
-    if user:
-        if not user.get("primary_group"):
-            user["primary_group"] = None
-
-        groups = []
-        primary_group = None
-
-        async for group in mongo.groups.find({"_id": {"$in": user["groups"]}}):
-            group = base_processor(group)
-
-            if user["primary_group"] and group["id"] == user["primary_group"]:
-                primary_group = group
-
-            groups.append(group)
-
-        user = base_processor(user)
-
-        return User(**{**user, "groups": groups, "primary_group": primary_group})
-
-    return None
+    :param local_field: user id field to look up
+    :param set_as: desired name of the returned record
+    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    """
+    return [
+        {
+            "$lookup": {
+                "from": "users",
+                "let": {"user_id": f"${local_field}"},
+                "pipeline": [
+                    {"$match": {"$expr": {"$eq": ["$_id", "$$user_id"]}}},
+                    {
+                        "$project": {
+                            "id": "$_id",
+                            "_id": False,
+                            "handle": True,
+                            "administrator": True,
+                        }
+                    },
+                ],
+                "as": set_as,
+            }
+        },
+        {"$set": {set_as: {"$first": f"${set_as}"}}},
+    ]

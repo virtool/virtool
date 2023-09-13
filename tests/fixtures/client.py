@@ -1,15 +1,30 @@
+"""
+Fixtures for creating test clients.
+
+When clients are created, a testing server instance is also created. All methods called
+on the client (eg. ``client.get()``) are directed to the server instance.
+
+"""
+from __future__ import annotations
+
 import json
-from typing import Optional
+from pathlib import Path
+from typing import Any
 
-import aiohttp
 import pytest
-from aiohttp.web_routedef import RouteTableDef
-from virtool_core.models.session import Session
+from aiohttp import BasicAuth
+from aiohttp.test_utils import make_mocked_coro
+from aiohttp.web import Response, RouteTableDef
+from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.models.enums import Permission
 
-import virtool.app
 import virtool.jobs.main
-from virtool.api.custom_json import dumps
-from virtool.config.cls import Config
+from virtool.api.custom_json import dump_bytes, dump_string
+from virtool.app import create_app
+from virtool.authorization.client import AuthorizationClient
+from virtool.config.cls import ServerConfig
+from virtool.flags import FeatureFlags, FlagName
+from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import hash_key
@@ -18,15 +33,15 @@ from virtool.utils import hash_key
 class VirtoolTestClient:
     def __init__(self, test_client):
         self._test_client = test_client
-
         self.server = self._test_client.server
+
         self.app = self.server.app
         self.db = self.app["db"]
 
         self.auth = self._test_client.session.auth
         self.cookie_jar = self._test_client.session.cookie_jar
 
-    def get_cookie(self, key):
+    def get_cookie(self, key) -> Any | None:
         for cookie in self._test_client.session.cookie_jar:
             if cookie.key == key:
                 return cookie.value
@@ -36,135 +51,155 @@ class VirtoolTestClient:
     def has_cookie(self, key, value):
         return self.get_cookie(key) == value
 
-    async def get(self, url, headers=None, params=None):
+    async def get(self, url: str, headers=None, params=None) -> Response:
         return await self._test_client.get(url, headers=headers, params=params)
 
-    async def post(self, url, data=None):
+    async def post(self, url: str, data=None) -> Response:
         payload = None
 
         if data:
-            payload = json.dumps(data)
+            payload = dump_string(data)
 
         return await self._test_client.post(url, data=payload)
 
-    async def post_form(self, url, data):
+    async def post_form(self, url: str, data) -> Response:
         return await self._test_client.post(url, data=data)
 
-    async def patch(self, url, data):
+    async def patch(self, url: str, data) -> Response:
         return await self._test_client.patch(url, data=json.dumps(data))
 
-    async def put(self, url, data):
+    async def put(self, url: str, data) -> Response:
         return await self._test_client.put(url, data=json.dumps(data))
 
-    async def delete(self, url):
+    async def delete(self, url: str) -> Response:
         return await self._test_client.delete(url)
 
 
 @pytest.fixture
-def create_app(
+def spawn_client(
+    aiohttp_client,
+    authorization_client,
     create_user,
     mongo,
+    mongo_connection_string,
+    mongo_name,
+    openfga_host,
+    openfga_scheme,
+    openfga_store_name,
     pg_connection_string,
-    redis_connection_string,
-    test_db_connection_string,
-    test_db_name,
-):
-    def _create_app(dev: bool = False, base_url: str = ""):
-        config = Config(
-            base_url=base_url,
-            db_connection_string=test_db_connection_string,
-            db_name=test_db_name,
-            dev=dev,
-            force_version="v0.0.0",
-            no_check_db=True,
-            no_check_files=True,
-            no_fetching=True,
-            no_sentry=True,
-            openfga_host="localhost:8080",
-            openfga_scheme="http",
-            postgres_connection_string=pg_connection_string,
-            redis_connection_string=redis_connection_string,
-            fake=False,
-        )
-
-        return virtool.app.create_app(config)
-
-    return _create_app
-
-
-@pytest.fixture
-def spawn_client(
     pg,
     redis,
-    aiohttp_client,
-    test_motor,
-    mongo,
-    create_app,
-    create_user,
-    data_layer,
+    redis_connection_string,
+    mocker,
 ):
+    """A factory for spawning test clients."""
+
     async def func(
-        addon_route_table: Optional[RouteTableDef] = None,
-        auth=None,
-        authorize=False,
-        administrator=False,
-        base_url="",
-        dev=False,
-        enable_api=False,
-        groups=None,
-        permissions=None,
-        use_b2c=False,
+        addon_route_table: RouteTableDef | None = None,
+        administrator: bool = False,
+        auth: BasicAuth | None = None,
+        authenticated: bool = False,
+        authorize: bool = False,
+        base_url: str = "",
+        config_overrides: dict[str, Any] | None = None,
+        flags: list[FlagName] | None = None,
+        groups: list[str] | None = None,
+        permissions: list[Permission] | None = None,
     ):
-        app = create_app(dev, base_url)
+        authenticated = authenticated or authorize
 
-        if groups is not None:
-            complete_groups = [
-                {
-                    "_id": group,
-                    "name": group,
-                    "permissions": generate_base_permissions(),
-                }
-                for group in groups
-            ]
-
-            await mongo.groups.insert_many(complete_groups)
-
-        user_document = create_user(
-            user_id="test",
-            administrator=administrator,
-            groups=groups,
-            permissions=permissions,
+        config = ServerConfig(
+            base_url=base_url,
+            b2c_client_id="",
+            b2c_client_secret="",
+            b2c_tenant="",
+            b2c_user_flow="",
+            data_path=Path("data"),
+            dev=False,
+            flags=[],
+            host="localhost",
+            mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
+            no_check_db=True,
+            no_revision_check=True,
+            openfga_host=openfga_host,
+            openfga_scheme="http",
+            openfga_store_name=openfga_store_name,
+            port=9950,
+            postgres_connection_string=pg_connection_string,
+            redis_connection_string=redis_connection_string,
+            sentry_dsn="",
+            use_b2c=False,
         )
-        await mongo.users.insert_one(user_document)
+
+        if config_overrides:
+            for key, value in config_overrides.items():
+                setattr(config, key, value)
+
+        mocker.patch("virtool.startup.connect_pg", return_value=pg)
+
+        app = create_app(config)
 
         if addon_route_table:
             app.add_routes(addon_route_table)
 
-        if authorize:
+        if groups is not None:
+            await mongo.groups.insert_many(
+                [
+                    {
+                        "_id": group,
+                        "name": group,
+                        "permissions": generate_base_permissions(),
+                    }
+                    for group in groups
+                ],
+                session=None,
+            )
+
+        if permissions is not None:
+            await mongo.groups.insert_one(
+                {
+                    "_id": "perms_group",
+                    "name": "perms_group",
+                    "permissions": {
+                        permission.value: True for permission in permissions
+                    },
+                }
+            )
+            groups = ["perms_group"] if groups is None else ["perms_group", *groups]
+
+        await mongo.users.insert_one(
+            await create_user(
+                user_id="test",
+                administrator=administrator,
+                groups=groups,
+                authorization_client=authorization_client if administrator else None,
+            )
+        )
+
+        if authenticated:
             session_token = "bar"
             session_id = "foobar"
+
             await redis.set(
                 session_id,
-                dumps(
-                    Session(
-                        **{
-                            "created_at": virtool.utils.timestamp(),
-                            "ip": "127.0.0.1",
-                            "authentication": {
-                                "token": hash_key(session_token),
-                                "user_id": "test",
-                            },
-                        }
-                    )
+                dump_bytes(
+                    {
+                        "id": session_id,
+                        "created_at": virtool.utils.timestamp(),
+                        "ip": "127.0.0.1",
+                        "authentication": {
+                            "token": hash_key(session_token),
+                            "user_id": "test",
+                        },
+                    }
                 ),
                 expire=3600,
             )
 
             cookies = {"session_id": session_id, "session_token": session_token}
 
-        elif use_b2c:
+        elif config.use_b2c:
             cookies = {"id_token": "foobar"}
-
         else:
             cookies = {"session_id": "dne"}
 
@@ -174,20 +209,31 @@ def spawn_client(
 
         test_client.app["db"].id_provider = FakeIdProvider()
 
-        return VirtoolTestClient(test_client)
+        if flags:
+            test_client.app["flags"] = FeatureFlags(flags)
+
+        client = VirtoolTestClient(test_client)
+
+        assert client.app["pg"] is pg
+
+        return client
 
     return func
 
 
 @pytest.fixture
 def spawn_job_client(
-    mongo,
+    mongo: "Mongo",
     aiohttp_client,
-    test_db_connection_string,
-    redis_connection_string,
-    pg_connection_string,
-    pg,
-    test_db_name,
+    mongo_connection_string,
+    redis_connection_string: str,
+    pg_connection_string: str,
+    pg: AsyncEngine,
+    mongo_name,
+    openfga_store_name: str,
+    openfga_host: str,
+    authorization_client: AuthorizationClient,
+    mocker,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
@@ -199,30 +245,37 @@ def spawn_job_client(
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
-            await mongo.jobs.insert_one(
-                {
-                    "_id": job_id,
-                    "key": hash_key(key),
-                }
-            )
+            await mongo.jobs.insert_one({"_id": job_id, "key": hash_key(key)})
 
             # Create Basic Authentication header.
-            auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)
+            auth = BasicAuth(login=f"job-{job_id}", password=key)
         else:
             auth = None
 
+        mocker.patch("virtool.startup.connect_pg", return_value=pg)
+
         app = await virtool.jobs.main.create_app(
-            Config(
-                db_connection_string=test_db_connection_string,
-                db_name=test_db_name,
+            ServerConfig(
+                base_url="",
+                b2c_client_id="",
+                b2c_client_secret="",
+                b2c_tenant="",
+                b2c_user_flow="",
+                data_path=Path("data"),
                 dev=dev,
-                fake=False,
+                flags=[],
+                host="localhost",
+                mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
+                no_check_db=True,
+                no_revision_check=True,
+                openfga_host=openfga_host,
+                openfga_scheme="http",
+                openfga_store_name=openfga_store_name,
+                port=9950,
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
-                no_sentry=True,
-                openfga_host="localhost:8080",
-                openfga_scheme="http",
-
+                sentry_dsn="",
+                use_b2c=False,
             )
         )
 
@@ -231,6 +284,8 @@ def spawn_job_client(
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
         client.db = mongo
+
+        assert client.app["pg"] is pg
 
         return client
 

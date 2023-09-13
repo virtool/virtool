@@ -3,19 +3,20 @@ from shutil import copytree
 from typing import Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from virtool.config import get_config_from_app
 
 from virtool.example import example_path
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
 from virtool.types import App
-from virtool.uploads.models import Upload
+from virtool.uploads.models import SQLUpload
 
 logger = getLogger(__name__)
 
 
 async def create_fake_fasta_upload(app: App, user_id: str) -> Tuple[int, str]:
     async with AsyncSession(app["pg"]) as session:
-        upload = Upload(name="test.fa.gz", type="subtraction", user=user_id)
+        upload = SQLUpload(name="test.fa.gz", type="subtraction", user=user_id)
 
         session.add(upload)
         await session.flush()
@@ -49,7 +50,7 @@ async def create_fake_finalized_subtraction(
     )
 
     subtractions_path = (
-        app["config"].data_path
+        get_config_from_app(app).data_path
         / "subtractions"
         / subtraction_id.replace(" ", "_").lower()
     )

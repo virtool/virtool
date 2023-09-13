@@ -1,4 +1,4 @@
-# name: test_create[uvloop-paired]
+# name: test_create[paired]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
@@ -14,7 +14,7 @@
     },
   }
 ---
-# name: test_create[uvloop-paired].1
+# name: test_create[paired].1
   <class 'dict'> {
     '_id': '9pfsom1b',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -30,7 +30,7 @@
     },
   }
 ---
-# name: test_create[uvloop-unpaired]
+# name: test_create[unpaired]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
@@ -46,7 +46,7 @@
     },
   }
 ---
-# name: test_create[uvloop-unpaired].1
+# name: test_create[unpaired].1
   <class 'dict'> {
     '_id': '9pfsom1b',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -62,7 +62,7 @@
     },
   }
 ---
-# name: test_create_duplicate[uvloop]
+# name: test_create_duplicate
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
@@ -78,7 +78,7 @@
     },
   }
 ---
-# name: test_create_duplicate[uvloop].1
+# name: test_create_duplicate.1
   <class 'dict'> {
     '_id': 'u3cuwaoq',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),

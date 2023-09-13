@@ -1,9 +1,9 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
-from virtool.labels.models import Label
+from virtool.labels.models import SQLLabel
 
 
 @pytest.mark.parametrize(
@@ -21,8 +21,10 @@ async def test_label_attacher(documents, snapshot, pg: AsyncEngine):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
-                Label(
+                SQLLabel(
+                    id=1, name="Bug", color="#a83432", description="This is a bug"
+                ),
+                SQLLabel(
                     id=2,
                     name="Question",
                     color="#03fc20",
@@ -68,7 +70,8 @@ async def test_sample_count_attacher(labels, snapshot, spawn_client):
             {"_id": "foo", "name": "Foo", "labels": [1, 2, 4]},
             {"_id": "bar", "name": "Bar", "labels": []},
             {"_id": "baz", "name": "Baz", "labels": [2]},
-        ]
+        ],
+        session=None,
     )
 
     assert await apply_transforms(labels, [SampleCountTransform(client.db)]) == snapshot

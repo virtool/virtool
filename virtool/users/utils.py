@@ -1,4 +1,5 @@
 import hashlib
+from typing import Dict
 
 import bcrypt
 
@@ -37,7 +38,7 @@ def check_password(password: str, hashed: bytes) -> bool:
     return bcrypt.checkpw(password.encode(), hashed)
 
 
-def generate_base_permissions() -> dict:
+def generate_base_permissions() -> Dict[str, bool]:
     """
     Return a `dict` keyed with all Virtool permissions where all the values are `False`.
 

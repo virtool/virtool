@@ -1,7 +1,8 @@
-# name: TestCreate.test_force_reset[uvloop-False]
+# name: TestCreate.test_force_reset[False]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -25,10 +26,11 @@
     'primary_group': None,
   }
 ---
-# name: TestCreate.test_force_reset[uvloop-True]
+# name: TestCreate.test_force_reset[True]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -52,10 +54,11 @@
     'primary_group': None,
   }
 ---
-# name: TestCreate.test_no_force_reset[uvloop]
+# name: TestCreate.test_no_force_reset
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -79,7 +82,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[uvloop-administrator][db]
+# name: TestUpdate.test[administrator][db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -92,16 +95,6 @@
     'invalidate_sessions': False,
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'password': 'hashed_password',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
     'primary_group': '',
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
@@ -111,10 +104,11 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-administrator][obj]
+# name: TestUpdate.test[administrator][obj]
   <class 'dict'> {
     'active': True,
     'administrator': True,
+    'administrator_role': <AdministratorRole.FULL: 'full'>,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -133,7 +127,7 @@
     'permissions': <class 'dict'> {
       'cancel_job': False,
       'create_ref': False,
-      'create_sample': False,
+      'create_sample': True,
       'modify_hmm': False,
       'modify_subtraction': False,
       'remove_file': False,
@@ -143,7 +137,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[uvloop-force_reset][db]
+# name: TestUpdate.test[force_reset][db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -156,16 +150,6 @@
     'invalidate_sessions': True,
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'password': 'hashed_password',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
     'primary_group': '',
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
@@ -175,10 +159,11 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-force_reset][obj]
+# name: TestUpdate.test[force_reset][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -197,7 +182,7 @@
     'permissions': <class 'dict'> {
       'cancel_job': False,
       'create_ref': False,
-      'create_sample': False,
+      'create_sample': True,
       'modify_hmm': False,
       'modify_subtraction': False,
       'remove_file': False,
@@ -207,7 +192,7 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[uvloop-groups][db]
+# name: TestUpdate.test[groups][db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -221,16 +206,6 @@
     'invalidate_sessions': False,
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'password': 'hashed_password',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': True,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
     'primary_group': 'peasants',
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
@@ -240,10 +215,11 @@
     },
   }
 ---
-# name: TestUpdate.test[uvloop-groups][obj]
+# name: TestUpdate.test[groups][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -279,7 +255,7 @@
     },
   }
 ---
-# name: TestUpdate.test_password[uvloop][db]
+# name: TestUpdate.test_password[db]
   <class 'dict'> {
     '_id': 'abc123',
     'active': True,
@@ -291,16 +267,6 @@
     'handle': 'bob',
     'invalidate_sessions': True,
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
     'primary_group': '',
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
@@ -310,10 +276,11 @@
     },
   }
 ---
-# name: TestUpdate.test_password[uvloop][obj]
+# name: TestUpdate.test_password[obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -338,10 +305,11 @@
     'primary_group': None,
   }
 ---
-# name: test_find_or_create_b2c_user[uvloop-False]
+# name: test_find_or_create_b2c_user[False]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': 'Fred',
     'b2c_family_name': 'Smith',
@@ -366,10 +334,11 @@
     'primary_group': None,
   }
 ---
-# name: test_find_or_create_b2c_user[uvloop-True]
+# name: test_find_or_create_b2c_user[True]
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': 'Bilbo',
     'b2c_family_name': 'Baggins',

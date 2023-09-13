@@ -1,4 +1,4 @@
-# name: test_fake[uvloop]
+# name: test_fake
   <class 'dict'> {
     'id': 'bf1b993c',
     'name': 'musicians',
@@ -16,10 +16,11 @@
     ],
   }
 ---
-# name: test_fake[uvloop].1
+# name: test_fake.1
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -44,10 +45,11 @@
     'primary_group': None,
   }
 ---
-# name: test_fake[uvloop].2
+# name: test_fake.2
   <class 'dict'> {
     'active': True,
     'administrator': False,
+    'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -76,7 +78,7 @@
     'primary_group': None,
   }
 ---
-# name: test_fake[uvloop][job]
+# name: test_fake[job]
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -95,13 +97,13 @@
     'rights': <class 'dict'> {
     },
     'stage': None,
-    'state': 'waiting',
+    'state': <JobState.WAITING: 'waiting'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
         'progress': 0,
         'stage': None,
-        'state': 'waiting',
+        'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
         'timestamp': <class 'datetime'>,

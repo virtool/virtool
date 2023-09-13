@@ -12,7 +12,7 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
-import virtool.http.auth
+import virtool.http.authentication
 import virtool.http.routes
 from virtool.account.oas import (
     UpdateAccountRequest,
@@ -47,9 +47,9 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 class AccountView(PydanticView):
     async def get(self) -> Union[r200[AccountResponse], r401]:
         """
-        Get account.
+        Get an account.
 
-        Retrieves the details for the account associated with the user agent.
+        Fetches the details for the account associated with the user agent.
 
         Status Codes:
             200: Successful Operation
@@ -66,7 +66,7 @@ class AccountView(PydanticView):
         self, data: UpdateAccountRequest
     ) -> Union[r200[UpdateAccountResponse], r400, r401]:
         """
-        Update account.
+        Update an account.
 
         Updates the account associated with the user agent.
 
@@ -105,7 +105,7 @@ class SettingsView(PydanticView):
         """
         Get account settings.
 
-        Retrieves the settings for the account associated with the user agent.
+        Fetches the settings for the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -189,7 +189,7 @@ class KeysView(PydanticView):
 
     async def delete(self) -> Union[r204, r401]:
         """
-        Purge API keys
+        Purge API keys.
 
         Deletes all API keys registered for the account associated with the user agent.
 
@@ -210,7 +210,7 @@ class KeyView(PydanticView):
         """
         Get an API key.
 
-        Retrieves the details for an API key registered on the account associated with
+        Fetches the details for an API key registered on the account associated with
         the user agent.
 
         Status Codes:
@@ -254,8 +254,9 @@ class KeyView(PydanticView):
 
     async def delete(self, key_id: str, /) -> Union[r204, r401, r404]:
         """
-        Delete
-        Remove an API key by its ID.
+        Delete an API key.
+
+        Removes an API key by its 'key id'.
 
         Status Codes:
             204: Successful operation
@@ -290,44 +291,45 @@ class LoginView(PydanticView):
         """
 
         session_id = self.request.cookies.get("session_id")
-        ip = virtool.http.auth.get_ip(self.request)
+        ip = virtool.http.authentication.get_ip(self.request)
 
         try:
             user_id = await get_data_from_req(self.request).account.login(data)
         except ResourceError:
             raise HTTPBadRequest(text="Invalid username or password")
 
-        reset_session_id = None
+        session = None
+        reset_code = None
         try:
-            reset_session_id, session = await get_data_from_req(
+            session, reset_code = await get_data_from_req(
                 self.request
             ).account.get_reset_session(ip, user_id, session_id, data.remember)
         except ResourceError:
             pass
 
-        if reset_session_id:
+        if reset_code:
             resp = json_response(
                 {
                     "reset": True,
-                    "reset_code": session.reset.code,
+                    "reset_code": reset_code,
                 },
                 status=200,
             )
-            set_session_id_cookie(resp, reset_session_id)
+            set_session_id_cookie(resp, session.id)
             return resp
 
         await get_data_from_req(self.request).sessions.delete(session_id)
 
-        session_id, session, token = await get_data_from_req(
+        session, token = await get_data_from_req(
             self.request
-        ).sessions.create(
+        ).sessions.create_authenticated(
             ip,
             user_id,
             data.remember,
         )
 
         resp = json_response({"reset": False}, status=201)
-        set_session_id_cookie(resp, session_id)
+        set_session_id_cookie(resp, session.id)
         set_session_token_cookie(resp, token)
 
         return resp
@@ -340,20 +342,20 @@ class LogoutView(PydanticView):
         """
         Logout.
 
-        Logout the user by invalidating the session associated with the user agent. A
+        Logs out the user by invalidating the session associated with the user agent. A
         new unauthenticated session ID is returned in cookies.
 
         Status Codes:
             204: Successful operation
         """
-        session_id, _ = await get_data_from_req(self.request).account.logout(
+        session = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
-            virtool.http.auth.get_ip(self.request),
+            virtool.http.authentication.get_ip(self.request),
         )
 
         resp = Response(status=200)
 
-        set_session_id_cookie(resp, session_id)
+        set_session_id_cookie(resp, session.id)
         resp.del_cookie("session_token")
 
         return resp
@@ -368,7 +370,7 @@ class ResetView(PydanticView):
         """
         Reset password.
 
-        Reset the password for the account associated with the requesting session.
+        Resets the password for the account associated with the requesting session.
 
         Status Codes:
             200: Successful operation
@@ -378,14 +380,12 @@ class ResetView(PydanticView):
             raise HTTPBadRequest(text=error)
 
         try:
-            session_id, session, token = await get_data_from_req(
-                self.request
-            ).account.reset(
+            session, token = await get_data_from_req(self.request).account.reset(
                 self.request.cookies.get("session_id"),
                 data,
-                virtool.http.auth.get_ip(self.request),
+                virtool.http.authentication.get_ip(self.request),
             )
-        except (ResourceError, ResourceNotFoundError):
+        except ResourceNotFoundError:
             raise HTTPBadRequest(text="Invalid session")
 
         try:
@@ -395,7 +395,7 @@ class ResetView(PydanticView):
 
         resp = json_response({"login": False, "reset": False}, status=200)
 
-        set_session_id_cookie(resp, session_id)
+        set_session_id_cookie(resp, session.id)
         set_session_token_cookie(resp, token)
 
         return resp

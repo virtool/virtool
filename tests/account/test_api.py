@@ -1,10 +1,12 @@
 import pytest
 
 from virtool.data.utils import get_data_from_app
+from virtool.groups.oas import UpdatePermissionsRequest
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.utils import Permission, hash_password
 
 
+@pytest.mark.apitest
 async def test_get(snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
@@ -14,6 +16,7 @@ async def test_get(snapshot, spawn_client, static_time):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [
@@ -61,6 +64,7 @@ async def test_edit(body, status, snapshot, spawn_client, resp_is, static_time):
     assert await resp.json() == snapshot(name="response")
 
 
+@pytest.mark.apitest
 async def test_get_settings(spawn_client):
     """
     Test that a ``GET /account/settings`` returns the settings for the session user.
@@ -80,6 +84,7 @@ async def test_get_settings(spawn_client):
     }
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "data,status",
     [
@@ -114,8 +119,11 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
     assert await resp.json() == snapshot(name="response")
 
 
-async def test_get_api_keys(spawn_client, static_time):
+@pytest.mark.apitest
+async def test_get_api_keys(spawn_client, static_time, fake2, snapshot):
     client = await spawn_client(authorize=True)
+
+    group = await fake2.groups.create()
 
     await client.db.keys.insert_many(
         [
@@ -126,7 +134,7 @@ async def test_get_api_keys(spawn_client, static_time):
                 "user": {"id": "test"},
                 "created_at": static_time.datetime,
                 "administrator": True,
-                "groups": [],
+                "groups": [group.id],
                 "permissions": {},
             },
             {
@@ -139,49 +147,16 @@ async def test_get_api_keys(spawn_client, static_time):
                 "groups": [],
                 "permissions": {},
             },
-        ]
+        ],
+        session=None,
     )
 
     resp = await client.get("/account/keys")
 
-    assert await resp.json() == [
-        {
-            "administrator": True,
-            "created_at": "2015-10-06T20:00:00Z",
-            "groups": [],
-            "id": "foobar_0",
-            "name": "Foobar",
-            "permissions": {
-                "cancel_job": False,
-                "create_ref": False,
-                "create_sample": False,
-                "modify_hmm": False,
-                "modify_subtraction": False,
-                "remove_file": False,
-                "remove_job": False,
-                "upload_file": False,
-            },
-        },
-        {
-            "administrator": False,
-            "created_at": "2015-10-06T20:00:00Z",
-            "groups": [],
-            "id": "baz_1",
-            "name": "Baz",
-            "permissions": {
-                "cancel_job": False,
-                "create_ref": False,
-                "create_sample": False,
-                "modify_hmm": False,
-                "modify_subtraction": False,
-                "remove_file": False,
-                "remove_job": False,
-                "upload_file": False,
-            },
-        },
-    ]
+    assert await resp.json() == snapshot
 
 
+@pytest.mark.apitest
 class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
@@ -194,6 +169,7 @@ class TestCreateAPIKey:
         spawn_client,
         static_time,
         no_permissions,
+        fake2,
     ):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
@@ -203,19 +179,16 @@ class TestCreateAPIKey:
             "virtool.utils.generate_key", return_value=("raw_key", "hashed_key")
         )
 
+        group = await fake2.groups.create(
+            UpdatePermissionsRequest(**{Permission.create_sample: True})
+        )
+
         client = await spawn_client(authorize=True)
 
         if has_perm:
             await client.db.users.update_one(
                 {"_id": "test"},
-                {
-                    "$set": {
-                        "permissions": {
-                            **no_permissions,
-                            Permission.create_sample.value: True,
-                        }
-                    }
-                },
+                {"$set": {"groups": [group.id]}},
             )
 
         body = {"name": "Foobar"}
@@ -253,6 +226,7 @@ class TestCreateAPIKey:
         assert await client.db.keys.find_one({"id": "foobar_1"}) == snapshot
 
 
+@pytest.mark.apitest
 class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])
     @pytest.mark.parametrize("has_perm", [True, False, "missing"])
@@ -315,6 +289,7 @@ class TestUpdateAPIKey:
         await resp_is.not_found(resp)
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_remove_api_key(error, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
@@ -339,6 +314,7 @@ async def test_remove_api_key(error, spawn_client, resp_is):
     assert await client.db.keys.count_documents({}) == 0
 
 
+@pytest.mark.apitest
 async def test_remove_all_api_keys(spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
@@ -347,7 +323,8 @@ async def test_remove_all_api_keys(spawn_client, resp_is):
             {"_id": "hello_world", "id": "hello_world_0", "user": {"id": "test"}},
             {"_id": "foobar", "id": "foobar_0", "user": {"id": "test"}},
             {"_id": "baz", "id": "baz_0", "user": {"id": "fred"}},
-        ]
+        ],
+        session=None,
     )
 
     resp = await client.delete("/account/keys")
@@ -359,6 +336,7 @@ async def test_remove_all_api_keys(spawn_client, resp_is):
     ]
 
 
+@pytest.mark.apitest
 async def test_logout(spawn_client):
     """
     Test that calling the logout endpoint results in the current session being removed and the user being logged
@@ -380,6 +358,7 @@ async def test_logout(spawn_client):
     assert resp.status == 401
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "method,path",
     [
@@ -395,9 +374,10 @@ async def test_logout(spawn_client):
         ("DELETE", "/account/keys"),
     ],
 )
-async def test_requires_authorization(method, path, spawn_client):
+async def test_requires_authorization(method: str, path: str, spawn_client):
     """
-    Test that a requires authorization 401 response is sent when the session is not authenticated.
+    Test that a '401 Requires authorization' response is sent when the session is not
+    authenticated.
 
     """
     client = await spawn_client()
@@ -419,6 +399,7 @@ async def test_requires_authorization(method, path, spawn_client):
     assert resp.status == 401
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_permissions", "invalid_permissions"])
 async def test_is_permission_dict(value, spawn_client, resp_is):
     """
@@ -446,6 +427,7 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
         assert resp.status == 404
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
 async def test_is_valid_email(value, spawn_client, resp_is):
     """
@@ -475,6 +457,7 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         ]
 
 
+@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [

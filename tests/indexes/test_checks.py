@@ -2,12 +2,11 @@ import pytest
 
 from virtool.data.errors import ResourceConflictError
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
-from virtool.indexes.db import FILES
+from virtool.indexes.db import INDEX_FILE_NAMES
 
 
 @pytest.mark.parametrize("error", [None, 409])
 async def test_check_fasta_file_uploaded(error):
-
     results = {"file1": "gz", "file2": "fasta"}
 
     if error == 409:
@@ -22,8 +21,7 @@ async def test_check_fasta_file_uploaded(error):
 
 @pytest.mark.parametrize("error", [None, 409])
 async def test_check_index_files_uploaded(error):
-
-    results = {file: FILES.index(file) for file in FILES}
+    results = {file: INDEX_FILE_NAMES.index(file) for file in INDEX_FILE_NAMES}
 
     if error == 409:
         del results["reference.2.bt2"]

@@ -2,33 +2,35 @@
 Work with OTU history in the database.
 
 """
+import asyncio
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
-import pymongo.errors
+import bson
 import dictdiffer
+import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.enums import HistoryMethod
+from virtool.config import get_config_from_app
 
 import virtool.history.utils
 import virtool.otus.db
-
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.config import Config
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
     write_diff_file,
+    compose_history_description,
 )
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
 
 if TYPE_CHECKING:
-    from virtool.mongo.core import DB
+    from virtool.mongo.core import Mongo
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -61,7 +63,6 @@ class DiffTransform(AbstractTransform):
         return {**document, "diff": prepared}
 
     async def prepare_one(self, document: Document) -> Any:
-
         if document["diff"] == "file":
             otu_id, otu_version = document["id"].split(".")
 
@@ -87,30 +88,29 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def add(
-    db: "DB",
-    config: Config,
+    db: "Mongo",
+    data_path: Path,
     method_name: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],
     description: str,
     user_id: str,
-    silent: bool = False,
     session: Optional[AsyncIOMotorClientSession] = None,
 ) -> dict:
     """
     Add a change document to the history collection.
 
-    :param db: the mongo database object
-    :param config: the app config object
+    :param data_path: system path to the applications datafolder
+    :param db: the application database object
     :param method_name: the name of the handler method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
     :param description: a human readable description of the change
     :param user_id: the id of the requesting user
-    :param silent: don't dispatch a message
     :return: the change document
 
     """
+
     otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
     document = {
@@ -134,13 +134,69 @@ async def add(
         document["diff"] = calculate_diff(old, new)
 
     try:
-        await db.history.insert_one(document, silent=silent, session=session)
+        await db.history.insert_one(document, session=session)
     except pymongo.errors.DocumentTooLarge:
-        await write_diff_file(config.data_path, otu_id, otu_version, document["diff"])
+        history_path = data_path / "history"
+        await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
 
-        await db.history.insert_one(
-            dict(document, diff="file"), silent=silent, session=session
-        )
+        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
+
+        await db.history.insert_one(dict(document, diff="file"), session=session)
+
+    return document
+
+
+async def prepare_add(
+    history_method: HistoryMethod,
+    old: Optional[dict],
+    new: Optional[dict],
+    user_id: str,
+    data_path: Path,
+) -> Document:
+    """
+    Add a change document to the history collection.
+    :param history_method: the name of the method that executed the change
+    :param old: the otu document prior to the change
+    :param new: the otu document after the change
+    :param user_id: the id of the requesting user
+    :return: the change document
+
+    """
+    otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
+
+    try:
+        abbreviation = new["abbreviation"]
+    except (TypeError, KeyError):
+        abbreviation = old["abbreviation"]
+
+    description = compose_history_description(history_method, otu_name, abbreviation)
+
+    document = {
+        "_id": ".".join([str(otu_id), str(otu_version)]),
+        "method_name": history_method.value,
+        "description": description,
+        "created_at": virtool.utils.timestamp(),
+        "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
+        "reference": {"id": ref_id},
+        "index": {"id": "unbuilt", "version": "unbuilt"},
+        "user": {"id": user_id},
+    }
+
+    if history_method.value == "create":
+        document["diff"] = new
+
+    elif history_method.value == "remove":
+        document["diff"] = old
+
+    else:
+        document["diff"] = calculate_diff(old, new)
+
+    history_path = data_path / "history"
+    await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
+
+    if len(bson.encode(document)) > 16793600:
+        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
+        document["diff"] = "file"
 
     return document
 
@@ -184,7 +240,7 @@ async def get(app, change_id: str) -> Optional[Document]:
     if document:
         return await apply_transforms(
             virtool.utils.base_processor(document),
-            [AttachUserTransform(db), DiffTransform(app["config"].data_path)],
+            [AttachUserTransform(db), DiffTransform(get_config_from_app(app).data_path)],
         )
 
     return None
@@ -204,13 +260,7 @@ async def get_contributors(db, query: dict) -> List[dict]:
         [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}]
     )
 
-    contributors = [
-        {
-            "id": c["_id"],
-            "count": c["count"],
-        }
-        async for c in cursor
-    ]
+    contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
     users = await db.users.find(
         {"_id": {"$in": [c["id"] for c in contributors]}}, projection=ATTACH_PROJECTION

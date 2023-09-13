@@ -11,10 +11,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from virtool.pg.base import Base
-from virtool.tasks.models import Task
+from virtool.tasks.models import SQLTask
 
 
-class NuVsBlast(Base):
+class SQLNuVsBlast(Base):
     __tablename__ = "nuvs_blast"
 
     id = Column(Integer, primary_key=True)
@@ -30,6 +30,6 @@ class NuVsBlast(Base):
     result = Column(JSON)
     task_id = Column(Integer, ForeignKey("tasks.id"))
 
-    task = relationship(Task)
+    task = relationship(SQLTask)
 
     __table_args__ = (UniqueConstraint("analysis_id", "sequence_index"),)

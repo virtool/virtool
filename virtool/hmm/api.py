@@ -2,6 +2,7 @@
 API request handlers for managing and querying HMM data.
 
 """
+import asyncio
 from typing import Union
 
 from aiohttp.web import Response
@@ -14,8 +15,10 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
+from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import NotFound, json_response
+from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
@@ -23,10 +26,9 @@ from virtool.data.errors import (
     ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionsRoutePolicy
+from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
 from virtool.mongo.utils import get_one_field
-from virtool.users.utils import Permission
 
 routes = Routes()
 
@@ -37,7 +39,7 @@ class HmmsView(PydanticView):
         """
         Find HMMs.
 
-        Finds profile hidden Markov model (HMM) annotations that are used in Virtool for
+        Lists profile hidden Markov model (HMM) annotations that are used in Virtool for
         novel virus prediction.
 
         Providing a search term will return HMMs with full or partial matches in the
@@ -63,7 +65,7 @@ class StatusView(PydanticView):
         """
         Get HMM status.
 
-        Retrieves the installation status of the HMM data. Contains the following
+        Lists the installation status of the HMM data. Contains the following
         fields:
 
         | Field      | Type          | Description                                               |
@@ -89,7 +91,7 @@ class ReleaseView(PydanticView):
         """
         Get the latest HMM release.
 
-        Retrieves the latest release for the HMM data.
+        Fetches the latest release for the HMM data.
 
         Status Codes:
             200: Successful operation
@@ -124,7 +126,7 @@ class UpdatesView(PydanticView):
 
         return json_response(updates)
 
-    @policy(PermissionsRoutePolicy(Permission.modify_hmm))
+    @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def post(self) -> Union[r201[HMMInstalled], r400, r403]:
         """
         Install HMMs.
@@ -154,7 +156,7 @@ class HMMView(PydanticView):
         """
         Get an HMM.
 
-        Retrieves the details for an HMM annotation.
+        Fetches the details for an HMM annotation.
 
         Status Codes:
             200: Successful operation
@@ -171,8 +173,9 @@ class HMMView(PydanticView):
 @routes.jobs_api.get("/hmms/{hmm_id}")
 async def get(req):
     """
-    Get a complete individual HMM annotation document.
+    Get a HMM annotation document.
 
+    Fetches a complete individual HMM annotation document.
     """
     try:
         hmm = await get_data_from_req(req).hmms.get(req.match_info["hmm_id"])
@@ -185,7 +188,15 @@ async def get(req):
 @routes.jobs_api.get("/hmms/files/annotations.json.gz")
 @routes.get("/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(req):
-    """Get a compressed json file containing the database documents for all HMMs."""
+    """
+    Get HMM annotations.
+
+    Fetches a compressed json file containing the database documents for all HMMs.
+    """
+
+    hmm_path = get_config_from_req(req).data_path / "hmm"
+    await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
+
     path = await get_data_from_req(req).hmms.get_annotations_path()
 
     return FileResponse(
@@ -200,9 +211,14 @@ async def get_hmm_annotations(req):
 @routes.jobs_api.get("/hmms/files/profiles.hmm")
 async def get_hmm_profiles(req):
     """
-    Download the HMM profiles file if HMM data is available.
+    Get HMM profiles.
+
+    Downloads the HMM profiles file if HMM data is available.
 
     """
+    hmm_path = get_config_from_req(req).data_path / "hmm"
+    await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
+
     try:
         path = await get_data_from_req(req).hmms.get_profiles_path()
     except ResourceNotFoundError:

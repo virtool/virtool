@@ -1,4 +1,4 @@
-# name: test_add[uvloop]
+# name: test_add
   <class 'dict'> {
     'complete': False,
     'context': <class 'dict'> {
@@ -13,13 +13,13 @@
     'type': 'add_subtraction_files',
   }
 ---
-# name: test_find[uvloop]
+# name: test_find
   <class 'list'> [
     Task(id=1, complete=True, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, progress=100, step='download', type='clone_reference', context={'user_id': 'test_1'}, count=40, file_size=1024),
     Task(id=2, complete=False, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, progress=80, step='download', type='import_reference', context={'user_id': 'test_2'}, count=30, file_size=14754),
   ]
 ---
-# name: test_get[uvloop]
+# name: test_get
   <class 'dict'> {
     'complete': True,
     'context': <class 'dict'> {
@@ -33,5 +33,133 @@
     'progress': 100,
     'step': 'download',
     'type': 'clone_reference',
+  }
+---
+# name: test_update[error][pg]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': 'failed_task',
+    'file_size': None,
+    'id': 1,
+    'progress': 22,
+    'step': 'one',
+    'type': 'dummy_task',
+  }
+---
+# name: test_update[error][return_value]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': 'failed_task',
+    'file_size': None,
+    'id': 1,
+    'progress': 22,
+    'step': 'one',
+    'type': 'dummy_task',
+  }
+---
+# name: test_update[progress][pg]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 55,
+    'step': 'one',
+    'type': 'dummy_task',
+  }
+---
+# name: test_update[progress][return_value]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 55,
+    'step': 'one',
+    'type': 'dummy_task',
+  }
+---
+# name: test_update[step][pg]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 22,
+    'step': 'two',
+    'type': 'dummy_task',
+  }
+---
+# name: test_update[step][return_value]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 22,
+    'step': 'two',
+    'type': 'dummy_task',
+  }
+---
+# name: test_update[step_progress][pg]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 55,
+    'step': 'three',
+    'type': 'dummy_task',
+  }
+---
+# name: test_update[step_progress][return_value]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test_1',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 55,
+    'step': 'three',
+    'type': 'dummy_task',
   }
 ---

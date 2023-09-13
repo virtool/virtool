@@ -1,7 +1,8 @@
 from typing import Union, Optional
+
 from pydantic import BaseModel, constr, Field, root_validator, validator
-from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
+from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.validators import prevent_none
 
 from virtool.groups.oas import UpdatePermissionsRequest
@@ -80,6 +81,7 @@ class UpdateAccountResponse(Account):
                     "skip_quick_analyze_dialog": True,
                 },
                 "email": "dev@virtool.ca",
+                "administrator_role": None,
             }
         }
 
@@ -103,15 +105,9 @@ class UpdateSettingsRequest(BaseModel):
     )
 
     class Config:
-        schema_extra = {
-            "example": {
-                "show_ids": False,
-            }
-        }
+        schema_extra = {"example": {"show_ids": False}}
 
-    _prevent_none = prevent_none(
-        "*"
-    )
+    _prevent_none = prevent_none("*")
 
 
 class CreateKeysRequest(BaseModel):
@@ -129,9 +125,7 @@ class CreateKeysRequest(BaseModel):
             "example": {"name": "Foobar", "permissions": {"create_sample": True}}
         }
 
-    _prevent_none = prevent_none(
-        "permissions"
-    )
+    _prevent_none = prevent_none("permissions")
 
 
 class CreateAPIKeyResponse(APIKey):
@@ -168,9 +162,7 @@ class UpdateKeyRequest(BaseModel):
     class Config:
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
 
-    _prevent_none = prevent_none(
-        "permissions"
-    )
+    _prevent_none = prevent_none("permissions")
 
 
 class APIKeyResponse(APIKey):
@@ -213,9 +205,7 @@ class CreateLoginRequest(BaseModel):
             }
         }
 
-    _prevent_none = prevent_none(
-        "remember"
-    )
+    _prevent_none = prevent_none("remember")
 
 
 class LoginResponse(BaseModel):
@@ -267,6 +257,7 @@ class AccountResponse(Account):
                     "show_versions": True,
                     "skip_quick_analyze_dialog": True,
                 },
+                "administrator_role": None,
             }
         }
 
@@ -302,6 +293,6 @@ class ListAPIKeysResponse(APIKey):
                         "remove_job": False,
                         "upload_file": False,
                     },
-                },
+                }
             ]
         }

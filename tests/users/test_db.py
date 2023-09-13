@@ -3,12 +3,12 @@ import hashlib
 import pytest
 
 import virtool.errors
-from virtool.mongo.transforms import apply_transforms
+from virtool.data.transforms import apply_transforms
 from virtool.users.db import (
     AttachUserTransform,
     compose_groups_update,
     compose_primary_group_update,
-    update_sessions_and_keys,
+    update_keys,
     validate_credentials,
 )
 from virtool.users.utils import Permission
@@ -37,7 +37,7 @@ async def test_attach_user_transform(multiple, snapshot, mongo, fake2):
 async def test_compose_groups_update(
     groups, mongo, kings, all_permissions, no_permissions
 ):
-    await mongo.groups.insert_many([kings])
+    await mongo.groups.insert_many([kings], session=None)
 
     coroutine = compose_groups_update(mongo, groups)
 
@@ -55,7 +55,6 @@ async def test_compose_groups_update(
     else:
         assert update == {
             "groups": groups,
-            "permissions": no_permissions if groups == [] else all_permissions,
         }
 
 
@@ -63,7 +62,7 @@ async def test_compose_groups_update(
 async def test_compose_primary_group_update(primary_group, mongo, bob, kings, peasants):
     await mongo.users.insert_one(bob)
 
-    await mongo.groups.insert_many([kings, peasants])
+    await mongo.groups.insert_many([kings, peasants], session=None)
 
     coroutine = compose_primary_group_update(mongo, bob["_id"], primary_group)
 
@@ -128,7 +127,7 @@ async def test_validate_credentials(legacy, user_id, password, result, mongo):
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("elevate", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_update_sessions_and_keys(
+async def test_update_keys(
     administrator, elevate, missing, snapshot, mongo, all_permissions, no_permissions
 ):
     """
@@ -157,21 +156,11 @@ async def test_update_sessions_and_keys(
         }
     )
 
-    await mongo.sessions.insert_one(
-        {
-            "_id": "foobar",
-            "administrator": False,
-            "groups": ["peasants"],
-            "permissions": permissions,
-            "user": {"id": "bob"},
-        }
-    )
-
     target_permissions = all_permissions if elevate else no_permissions
 
-    await update_sessions_and_keys(
+
+    await update_keys(
         mongo, "bob", administrator, ["peasants", "kings"], target_permissions
     )
 
-    assert await mongo.sessions.find_one() == snapshot
     assert await mongo.keys.find_one() == snapshot
