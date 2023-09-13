@@ -1,10 +1,8 @@
 import shutil
 from asyncio import to_thread
-from contextlib import suppress
 from pathlib import Path
 from typing import Optional
 
-from sqlalchemy.exc import IntegrityError
 from virtool_core.models.settings import Settings
 
 from virtool.config import get_config_from_app
@@ -14,7 +12,6 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
 from virtool.types import App
-from virtool.utils import base_processor
 
 READ_FILES_PATH = example_path / "reads"
 

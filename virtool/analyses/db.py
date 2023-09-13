@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.mongo.utils
 import virtool.utils
 from virtool.analyses.models import SQLAnalysisFile
-from virtool.data.events import emit
 from virtool.data.transforms import AbstractTransform
 from virtool.indexes.db import get_current_id_and_version
 from virtool.types import Document

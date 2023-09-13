@@ -10,7 +10,6 @@ from typing import Tuple, Optional
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
-from virtool_core.models.samples import Sample
 from virtool_core.utils import rm
 
 import virtool.analyses.format

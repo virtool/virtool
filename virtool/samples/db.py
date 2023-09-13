@@ -7,31 +7,26 @@ import logging
 import os
 from asyncio import to_thread
 from collections import defaultdict
-from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.samples import WorkflowState
 from virtool_core.models.settings import Settings
-from virtool_core.utils import compress_file, rm, file_stats
+from virtool_core.utils import compress_file, file_stats
 
 import virtool.errors
 import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.labels.db import AttachLabelsTransform
-from virtool.data.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform
 from virtool.mongo.utils import id_exists, get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
-from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:

@@ -354,7 +354,7 @@ async def test_remove(
                 "ready": True,
                 "user": {"id": user.id},
             }
-        ),
+        )
 
     if error != "404_analysis":
         await client.db.analyses.insert_one(
