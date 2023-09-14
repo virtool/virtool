@@ -50,10 +50,8 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
-from virtool.uploads.utils import multipart_file_chunker
-from virtool.uploads.utils import naive_writer
+from virtool.uploads.utils import multipart_file_chunker, naive_writer
 from virtool.users.db import lookup_nested_user_by_id
-from virtool.utils import wait_for_checks
 from virtool.utils import wait_for_checks, base_processor
 
 logger = getLogger("analyses")

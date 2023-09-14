@@ -1,17 +1,14 @@
 from asyncio import to_thread
-import os
-import pathlib
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import aiofiles
 from aiohttp import MultipartReader
 from cerberus import Validator
 
-from virtool.data.errors import ResourceNotFoundError
-
 from virtool.config.cls import Config
+from virtool.data.errors import ResourceNotFoundError
 
 logger = getLogger("uploads")
 
@@ -90,7 +87,7 @@ async def naive_writer(
     return size
 
 
-async def get_upload_path(config: Config, name_on_disk: str) -> pathlib.Path:
+async def get_upload_path(config: Config, name_on_disk: str) -> Path:
     """
     Get the local upload path and return it.
     """

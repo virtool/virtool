@@ -64,7 +64,7 @@ class TestUpload:
         )
 
         resp = await client.post_form(
-            f"/uploads?name=Test.fq.gz&type=bad", data=upload_request_form
+            "/uploads?name=Test.fq.gz&type=bad", data=upload_request_form
         )
 
         assert resp.status == 400

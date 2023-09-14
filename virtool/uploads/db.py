@@ -1,4 +1,3 @@
-import logging
 from logging import getLogger
 from typing import Dict, List, Optional, Type
 

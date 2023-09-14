@@ -1,5 +1,3 @@
-import asyncio
-import logging
 from logging import getLogger
 from typing import Union, Optional
 
@@ -12,7 +10,6 @@ from virtool_core.models.subtraction import SubtractionSearchResult
 
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
-from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionRoutePolicy

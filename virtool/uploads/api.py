@@ -2,7 +2,6 @@ from logging import getLogger
 from pprint import pprint
 from typing import List, Union, Optional
 
-from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
@@ -18,8 +17,8 @@ from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
-from virtool.uploads.utils import multipart_file_chunker
 from virtool.uploads.utils import get_upload_path
+from virtool.uploads.utils import multipart_file_chunker
 
 logger = getLogger("uploads")
 

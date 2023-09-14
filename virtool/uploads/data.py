@@ -2,7 +2,7 @@ import asyncio
 import math
 from asyncio import to_thread
 from logging import getLogger
-from typing import List, Optional, Union
+from typing import List
 
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
@@ -13,9 +13,8 @@ import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import emits, Operation
 from virtool.data.piece import DataLayerPiece
-from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
-from virtool.uploads.db import finalize
+from virtool.mongo.core import Mongo
 from virtool.uploads.models import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
@@ -33,7 +32,7 @@ class UploadsData(DataLayerPiece):
 
     async def find(
         self, user, page: int, per_page: int, upload_type, paginate
-    ) -> Union[List[UploadMinimal], UploadSearchResult]:
+    ) -> List[UploadMinimal] | UploadSearchResult:
         """
         Find and filter uploads.
         """

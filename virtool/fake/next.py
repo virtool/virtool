@@ -20,7 +20,6 @@ from virtool_core.models.task import Task
 from virtool_core.models.upload import Upload
 from virtool_core.models.user import User
 
-from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
