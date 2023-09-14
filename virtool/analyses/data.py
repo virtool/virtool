@@ -241,6 +241,9 @@ class AnalysisData(DataLayerPiece):
 
         sample = await self._db.samples.find_one(sample_id, ["name"])
 
+        if analysis_id is None:
+            analysis_id = await get_new_id(self._db.analyses)
+
         task_args = {
             "analysis_id": analysis_id,
             "ref_id": ref_id,
@@ -252,8 +255,7 @@ class AnalysisData(DataLayerPiece):
 
         async with self._db.create_session() as session:
             document = {
-                "_id": analysis_id
-                or await get_new_id(self._db.analyses, session=session),
+                "_id": analysis_id,
                 "created_at": created_at,
                 "files": [],
                 "index": {"id": index_id, "version": index_version},
