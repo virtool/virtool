@@ -234,7 +234,7 @@ class UploadsData(DataLayerPiece):
 
         return upload
 
-    async def release(self, upload_ids: Union[int, List[int]]):
+    async def release(self, upload_ids: int | List[int]):
         """
         Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
 
