@@ -1,6 +1,6 @@
+import asyncio
 import math
 import os
-from asyncio import gather, CancelledError, to_thread
 from datetime import datetime
 from logging import getLogger
 from shutil import rmtree
@@ -127,7 +127,7 @@ class AnalysisData(DataLayerPiece):
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
 
-        per_document_can_read = await gather(
+        per_document_can_read = await asyncio.gather(
             *[
                 virtool.samples.db.check_rights(
                     self._db, document["sample"]["id"], client, write=False
@@ -238,7 +238,6 @@ class AnalysisData(DataLayerPiece):
         :param analysis_id: the analysis ID
         :param jobs_api_flag: checks if the jobs_api is handling the request
         """
-
         analysis = await self.get(analysis_id, None)
 
         if not analysis:
@@ -259,12 +258,15 @@ class AnalysisData(DataLayerPiece):
         )
 
         try:
-            await to_thread(rm, path, True)
+            await asyncio.to_thread(rm, path, True)
         except FileNotFoundError:
             pass
 
         await recalculate_workflow_tags(self._db, analysis.sample.id)
 
+        sample = await self.data.samples.get(analysis.sample.id)
+
+        emit(sample, "samples", "recalculate_workflow_tags", Operation.UPDATE)
         emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
@@ -297,7 +299,7 @@ class AnalysisData(DataLayerPiece):
 
         try:
             size = await naive_writer(reader, analysis_file_path)
-        except CancelledError:
+        except asyncio.CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
             await delete_row(self._pg, upload_id, SQLAnalysisFile)
 
@@ -416,24 +418,37 @@ class AnalysisData(DataLayerPiece):
 
         :param analysis_id: the analysis ID
         :param results: the analysis results
-        :return: the processed analysis document
+        :return: the analysis
         """
 
         document = await self._db.analyses.find_one({"_id": analysis_id}, ["ready"])
 
         if not document:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         if "ready" in document and document["ready"]:
-            raise ResourceConflictError()
+            raise ResourceConflictError
 
         document = await self._db.analyses.find_one_and_update(
             {"_id": analysis_id}, {"$set": {"results": results, "ready": True}}
         )
 
-        await recalculate_workflow_tags(self._db, document["sample"]["id"])
+        sample_id = document["sample"]["id"]
 
-        return await self.get(analysis_id, None)
+        await recalculate_workflow_tags(self._db, sample_id)
+
+        analysis = await self.get(analysis_id, None)
+
+        sample = await self.data.samples.get(sample_id)
+
+        emit(
+            sample,
+            "samples",
+            "recalculate_workflow_tags",
+            Operation.UPDATE,
+        )
+
+        return analysis
 
     async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
         """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
@@ -459,9 +474,9 @@ class AnalysisData(DataLayerPiece):
                     )
                 ).scalar()
 
-            if await to_thread(old_path.is_dir) and not exists:
+            if await asyncio.to_thread(old_path.is_dir) and not exists:
                 try:
-                    await to_thread(os.makedirs, target_path)
+                    await asyncio.to_thread(os.makedirs, target_path)
                 except FileExistsError:
                     pass
 
@@ -477,6 +492,6 @@ class AnalysisData(DataLayerPiece):
                     self._pg, analysis_id, analysis_files, target_path
                 )
 
-                await to_thread(rmtree, old_path, ignore_errors=True)
+                await asyncio.to_thread(rmtree, old_path, ignore_errors=True)
 
             await tracker.add(1)

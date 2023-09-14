@@ -118,4 +118,6 @@ async def create(
     if analysis_id:
         document["_id"] = analysis_id
 
-    return base_processor(await db.analyses.insert_one(document))
+    document = await db.analyses.insert_one(document)
+
+    return base_processor(document)

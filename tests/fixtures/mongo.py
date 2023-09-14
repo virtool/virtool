@@ -15,11 +15,6 @@ class MockDeleteResult:
 
 
 @pytest.fixture
-def create_delete_result():
-    return MockDeleteResult
-
-
-@pytest.fixture
 def mongo_connection_string(request):
     """The connection string for the MongoDB testing instance."""
     return request.config.getoption("db_connection_string")

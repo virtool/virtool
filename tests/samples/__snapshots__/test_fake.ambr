@@ -1,84 +1,11 @@
-# name: test_create_fake_unpaired[False-False]
+# name: test_create_fake_sample[False-False]
   <class 'dict'> {
-    '_id': 'sample_1',
-    'all_read': True,
-    'all_write': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'format': 'fastq',
-    'group': 'none',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': 'Vine',
-    'is_legacy': False,
-    'isolate': 'Isolate A1',
-    'labels': <class 'list'> [
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Fake SAMPLE_1',
-    'notes': 'Serious inside else memory if six.',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
-      'id': '7CtBo2yG',
-    },
-    'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    },
-  }
----
-# name: test_create_fake_unpaired[False-True]
-  <class 'dict'> {
-    '_id': 'sample_1',
-    'all_read': True,
-    'all_write': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'format': 'fastq',
-    'group': 'none',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': 'Vine',
-    'is_legacy': False,
-    'isolate': 'Isolate A1',
-    'labels': <class 'list'> [
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Fake SAMPLE_1',
-    'notes': 'Serious inside else memory if six.',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
-      'id': '7CtBo2yG',
-    },
-    'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    },
-  }
----
-# name: test_create_fake_unpaired[True-False]
-  <class 'dict'> {
-    '_id': 'sample_1',
     'all_read': True,
     'all_write': True,
     'artifacts': <class 'list'> [
     ],
+    'caches': <class 'list'> [
+    ],
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
     'group': 'none',
@@ -86,11 +13,105 @@
     'group_write': True,
     'hold': True,
     'host': 'Vine',
+    'id': 'sample_1',
     'is_legacy': False,
     'isolate': 'Isolate A1',
+    'job': None,
     'labels': <class 'list'> [
     ],
-    'library_type': 'normal',
+    'library_type': <LibraryType.normal: 'normal'>,
+    'locale': '',
+    'name': 'Fake SAMPLE_1',
+    'notes': 'Serious inside else memory if six.',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
+    },
+  }
+---
+# name: test_create_fake_sample[False-True]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': 'Vine',
+    'id': 'sample_1',
+    'is_legacy': False,
+    'isolate': 'Isolate A1',
+    'job': None,
+    'labels': <class 'list'> [
+    ],
+    'library_type': <LibraryType.normal: 'normal'>,
+    'locale': '',
+    'name': 'Fake SAMPLE_1',
+    'notes': 'Serious inside else memory if six.',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
+    },
+  }
+---
+# name: test_create_fake_sample[True-False]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': 'Vine',
+    'id': 'sample_1',
+    'is_legacy': False,
+    'isolate': 'Isolate A1',
+    'job': None,
+    'labels': <class 'list'> [
+    ],
+    'library_type': <LibraryType.normal: 'normal'>,
     'locale': '',
     'name': 'Fake SAMPLE_1',
     'notes': 'Serious inside else memory if six.',
@@ -98,8 +119,6 @@
     'paired': False,
     'pathoscope': False,
     'quality': <class 'dict'> {
-      'all_read': False,
-      'all_write': False,
       'bases': <class 'list'> [
         <class 'list'> [
           31,
@@ -169,14 +188,10 @@
   
       ',
       'gc': 90,
-      'group_read': False,
-      'group_write': False,
-      'hold': False,
       'length': <class 'list'> [
         42,
         78,
       ],
-      'paired': True,
       'sequences': <class 'list'> [
         3909,
         8896,
@@ -231,21 +246,22 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
+      'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
     },
   }
 ---
-# name: test_create_fake_unpaired[True-True]
+# name: test_create_fake_sample[True-True]
   <class 'dict'> {
-    '_id': 'sample_1',
     'all_read': True,
     'all_write': True,
     'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
     ],
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
@@ -254,20 +270,20 @@
     'group_write': True,
     'hold': True,
     'host': 'Vine',
+    'id': 'sample_1',
     'is_legacy': False,
     'isolate': 'Isolate A1',
+    'job': None,
     'labels': <class 'list'> [
     ],
-    'library_type': 'normal',
+    'library_type': <LibraryType.normal: 'normal'>,
     'locale': '',
     'name': 'Fake SAMPLE_1',
     'notes': 'Serious inside else memory if six.',
     'nuvs': False,
-    'paired': False,
+    'paired': True,
     'pathoscope': False,
     'quality': <class 'dict'> {
-      'all_read': False,
-      'all_write': False,
       'bases': <class 'list'> [
         <class 'list'> [
           31,
@@ -337,14 +353,10 @@
   
       ',
       'gc': 90,
-      'group_read': False,
-      'group_write': False,
-      'hold': False,
       'length': <class 'list'> [
         42,
         78,
       ],
-      'paired': True,
       'sequences': <class 'list'> [
         3909,
         8896,
@@ -409,12 +421,12 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
+      'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
     },
   }
 ---
