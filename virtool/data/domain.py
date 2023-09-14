@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
 
-class DataLayerPiece:
+class DataLayerDomain:
     data: "DataLayer"
 
     def bind_layer(self, layer: "DataLayer"):

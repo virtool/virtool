@@ -7,7 +7,7 @@ from virtool_core.models.user import User
 import virtool.users.utils
 import virtool.utils
 from virtool.data.events import emits, Operation
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.groups.utils import merge_group_permissions
 from virtool.users.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
@@ -25,7 +25,7 @@ from virtool.users.mongo import create_user
 from virtool.utils import base_processor
 
 
-class UsersData(DataLayerPiece):
+class UsersData(DataLayerDomain):
     name = "users"
 
     def __init__(self, authorization_client: AuthorizationClient, mongo, pg):

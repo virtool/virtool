@@ -12,7 +12,7 @@ from virtool_core.utils import rm
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import emits, Operation
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
 from virtool.uploads.db import finalize
@@ -22,7 +22,7 @@ from virtool.users.db import AttachUserTransform
 logger = getLogger("uploads")
 
 
-class UploadsData(DataLayerPiece):
+class UploadsData(DataLayerDomain):
     name = "uploads"
 
     def __init__(self, config, db, pg):
