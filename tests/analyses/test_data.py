@@ -1,3 +1,6 @@
+import asyncio
+from pprint import pprint
+
 from syrupy.filters import props
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
@@ -18,27 +21,24 @@ async def test_create(
 
     user = await fake2.users.create()
 
-    async with mongo.create_session() as session:
-        await mongo.samples.insert_one({"_id": "test_sample", "name": "Test Sample"})
-
-        await mongo.indexes.insert_one(
+    await asyncio.gather(
+        mongo.samples.insert_one({"_id": "test_sample", "name": "Test Sample"}),
+        mongo.indexes.insert_one(
             {
                 "_id": "test_index",
                 "version": 11,
                 "ready": True,
                 "reference": {"id": "test_ref"},
             }
-        )
-
-        await mongo.references.insert_one(
+        ),
+        mongo.references.insert_one(
             {
                 "_id": "test_ref",
                 "name": "Test Reference",
                 "data_type": "genome",
             }
-        )
-
-        await mongo.subtraction.insert_many(
+        ),
+        mongo.subtraction.insert_many(
             [
                 {
                     "_id": "subtraction_1",
@@ -49,8 +49,9 @@ async def test_create(
                     "name": "Subtraction 2",
                 },
             ],
-            session=session,
-        )
+            session=None,
+        ),
+    )
 
     analysis = await data_layer.analyses.create(
         "test_sample",
@@ -63,6 +64,7 @@ async def test_create(
     )
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
+
     assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
         name="mongo", exclude=props("created_at", "updated_at")
     )

@@ -7,6 +7,9 @@
       'id': 'test_index',
       'version': 11,
     },
+    'job': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
     'ready': False,
     'reference': <class 'dict'> {
       'id': 'test_ref',

@@ -41,7 +41,7 @@ from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
-from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.jobs.db import lookup_minimal_job_by_id, AttachJobsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
@@ -249,44 +249,36 @@ class AnalysisData(DataLayerPiece):
         }
 
         async with self._db.create_session() as session:
-            document = {
-                "_id": analysis_id,
-                "created_at": created_at,
-                "files": [],
-                "index": {"id": index_id, "version": index_version},
-                "reference": {
-                    "id": ref_id,
-                },
-                "ready": False,
-                "results": None,
-                "sample": {"id": sample_id},
-                "space": {"id": space_id},
-                "subtractions": subtractions,
-                "updated_at": created_at,
-                "user": {
-                    "id": user_id,
-                },
-                "workflow": workflow,
-            }
-            await self._db.analyses.insert_one(document)
-
             job_id = await get_new_id(self._db.jobs, session=session)
+
+            await self._db.analyses.insert_one(
+                {
+                    "_id": analysis_id,
+                    "created_at": created_at,
+                    "files": [],
+                    "index": {"id": index_id, "version": index_version},
+                    "job": {"id": job_id},
+                    "reference": {
+                        "id": ref_id,
+                    },
+                    "ready": False,
+                    "results": None,
+                    "sample": {"id": sample_id},
+                    "space": {"id": space_id},
+                    "subtractions": subtractions,
+                    "updated_at": created_at,
+                    "user": {
+                        "id": user_id,
+                    },
+                    "workflow": workflow,
+                }
+            )
 
             job = await self.data.jobs.create(
                 workflow.value, task_args, user_id, space_id, job_id
             )
 
-            document["job"] = JobMinimal(**job.dict())
-
-        analysis = await apply_transforms(
-            document,
-            [
-                AttachUserTransform(self._db),
-                AttachSubtractionTransform(self._db),
-                AttachReferenceTransform(self._db),
-            ],
-        )
-        return Analysis(**base_processor(analysis))
+        return await self.get(analysis_id, None)
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """
