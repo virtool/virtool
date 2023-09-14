@@ -70,7 +70,11 @@ from virtool.samples.oas import (
 )
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.uploads.utils import is_gzip_compressed
+from virtool.uploads.utils import (
+    is_gzip_compressed,
+    multipart_file_chunker,
+    naive_validator,
+)
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -212,6 +216,12 @@ class SampleView(PydanticView):
             sample_id, self.request["client"], SampleRight.write
         ):
             raise InsufficientRights
+
+        if (
+            await get_one_field(self.request.app["db"].samples, "ready", sample_id)
+            is False
+        ):
+            raise HTTPBadRequest(text="Only finalized samples can be deleted")
 
         try:
             await get_data_from_req(self.request).samples.delete(sample_id)
@@ -515,9 +525,7 @@ async def upload_artifact(req):
     if not await db.samples.find_one(sample_id):
         raise NotFound()
 
-    errors = virtool.uploads.utils.naive_validator(req)
-
-    if errors:
+    if errors := naive_validator(req):
         raise InvalidQuery(errors)
 
     name = req.query.get("name")
@@ -541,7 +549,7 @@ async def upload_artifact(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), artifact_file_path
+            multipart_file_chunker(await req.multipart()), artifact_file_path
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file upload aborted for sample: %s", sample_id)
@@ -551,9 +559,11 @@ async def upload_artifact(req):
 
     artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SQLSampleArtifact)
 
-    headers = {"Location": f"/samples/{sample_id}/artifact/{name}"}
-
-    return json_response(artifact, status=201, headers=headers)
+    return json_response(
+        artifact,
+        status=201,
+        headers={"Location": f"/samples/{sample_id}/artifact/{name}"},
+    )
 
 
 @routes.jobs_api.put("/samples/{sample_id}/reads/{filename}")
@@ -587,7 +597,9 @@ async def upload_reads(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), reads_path, is_gzip_compressed
+            multipart_file_chunker(await req.multipart()),
+            reads_path,
+            is_gzip_compressed,
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -656,14 +668,14 @@ async def upload_cache_reads(req):
     cache_path = join_cache_path(get_config_from_req(req), key) / name
     await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
 
-    cache_file_path = cache_path / name
-
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise NotFound("Cache doesn't exist with given key")
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_file_path, is_gzip_compressed
+            multipart_file_chunker(await req.multipart()),
+            cache_path,
+            is_gzip_compressed,
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -728,7 +740,7 @@ async def upload_cache_artifact(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_path
+            multipart_file_chunker(await req.multipart()), cache_path
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)

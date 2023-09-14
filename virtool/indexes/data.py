@@ -24,6 +24,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import emits, Operation, emit
+from virtool.data.transforms import apply_transforms
 from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
@@ -36,13 +37,13 @@ from virtool.indexes.tasks import export_index, get_index_file_type_from_name
 from virtool.indexes.utils import join_index_path
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
-from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.uploads.utils import naive_writer
-from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
+from virtool.uploads.utils import naive_writer, multipart_file_chunker
+from virtool.users.db import AttachUserTransform
+from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
 logger = getLogger("indexes")
@@ -182,7 +183,7 @@ class IndexData:
 
     async def upload_file(
         self, reference_id: str, index_id: str, file_type: str, name: str, multipart
-    ) -> Optional[IndexFile]:
+    ) -> IndexFile:
         """
         Uploads a new index file.
 
@@ -204,12 +205,14 @@ class IndexData:
                 raise ResourceConflictError()
 
             index_path = self._config.data_path / "references" / index_id
+
             await asyncio.to_thread(index_path.mkdir, parents=True, exist_ok=True)
+
             path = (
                 join_index_path(self._config.data_path, reference_id, index_id) / name
             )
 
-            size = await naive_writer(await multipart(), path)
+            size = await naive_writer(multipart_file_chunker(await multipart()), path)
 
             index_file.size = size
             index_file.uploaded_at = virtool.utils.timestamp()

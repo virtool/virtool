@@ -70,7 +70,7 @@
     },
   }
 ---
-# name: TestCreate.test[force_choice].2
+# name: TestCreate.test[force_choice][mongo]
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -188,7 +188,7 @@
     },
   }
 ---
-# name: TestCreate.test[none].2
+# name: TestCreate.test[none][mongo]
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -306,7 +306,7 @@
     },
   }
 ---
-# name: TestCreate.test[users_primary_group].2
+# name: TestCreate.test[users_primary_group][mongo]
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -349,25 +349,6 @@
       'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
-    },
-  }
----
-# name: TestCreateCache.test[key]
-  '/samples/test/caches/a1b2c3d4'
----
-# name: TestCreateCache.test[key].1
-  <class 'dict'> {
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-    ],
-    'id': 'a1b2c3d4',
-    'key': 'aodp-abcdefgh',
-    'legacy': False,
-    'missing': False,
-    'paired': False,
-    'ready': False,
-    'sample': <class 'dict'> {
-      'id': 'test',
     },
   }
 ---
@@ -2061,15 +2042,16 @@
     },
   }
 ---
-# name: TestUploadReads.test_upload_reads[True]
+# name: TestUploadReads.test[409]
   <class 'dict'> {
-    'id': 1,
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'upload': 1,
-    'uploaded_at': '2015-10-06T20:00:00Z',
+    'id': 'conflict',
+    'message': 'Reads file name is already uploaded for this sample',
+  }
+---
+# name: TestUploadReads.test_uncompressed
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'File is not compressed',
   }
 ---
 # name: test_analyze[None]
@@ -2210,18 +2192,6 @@
       'aodp': 'incompatible',
       'nuvs': 'pending',
       'pathoscope': 'complete',
-    },
-  }
----
-# name: test_finalize_cache[quality]
-  <class 'dict'> {
-    'id': 'test',
-    'key': 'aodp-abcdefgh',
-    'quality': <class 'dict'> {
-    },
-    'ready': True,
-    'sample': <class 'dict'> {
-      'id': 'test',
     },
   }
 ---
@@ -2410,40 +2380,6 @@
     'sample': 'test',
     'size': 3130756,
     'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_upload_artifact_cache[None]
-  <class 'dict'> {
-    'id': 1,
-    'key': 'aodp-abcdefgh',
-    'name': 'small.fq',
-    'name_on_disk': 'small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_upload_reads_cache[False]
-  <class 'dict'> {
-    'id': 1,
-    'key': 'aodp-abcdefgh',
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_upload_reads_cache[True]
-  <class 'dict'> {
-    'id': 2,
-    'key': 'aodp-abcdefgh',
-    'name': 'reads_2.fq.gz',
-    'name_on_disk': 'reads_2.fq.gz',
-    'sample': 'test',
-    'size': 9081,
     'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---

@@ -1,5 +1,4 @@
-import asyncio
-import logging
+from logging import getLogger
 from typing import Union, Optional
 
 import aiohttp.web
@@ -11,7 +10,6 @@ from virtool_core.models.subtraction import SubtractionSearchResult
 
 from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
-from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionRoutePolicy
@@ -25,7 +23,7 @@ from virtool.subtractions.oas import (
     FinalizeSubtractionRequest,
 )
 
-logger = logging.getLogger("subtractions")
+logger = getLogger("subtractions")
 
 routes = Routes()
 
@@ -171,9 +169,6 @@ async def upload(req):
     """
     subtraction_id = req.match_info["subtraction_id"]
     filename = req.match_info["filename"]
-
-    subtraction_path = get_config_from_req(req).data_path / "subtractions" / subtraction_id
-    await asyncio.to_thread(subtraction_path.mkdir, parents=True, exist_ok=True)
 
     try:
         subtraction_file = await get_data_from_req(req).subtractions.upload_file(

@@ -1,16 +1,14 @@
-import asyncio
-from asyncio import CancelledError
 from logging import getLogger
+from pprint import pprint
 from typing import List, Union, Optional
 
-from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
 from pydantic import Field, conint
 
-from virtool.api.response import InvalidQuery, json_response, NotFound
+from virtool.api.response import json_response, NotFound
 from virtool.authorization.permissions import LegacyPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
@@ -19,9 +17,10 @@ from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
 from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
-from virtool.uploads.utils import naive_validator, naive_writer, get_upload_path
+from virtool.uploads.utils import get_upload_path
+from virtool.uploads.utils import multipart_file_chunker
 
-logger = getLogger(__name__)
+logger = getLogger("uploads")
 
 routes = Routes()
 
@@ -58,9 +57,9 @@ class UploadsView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.UPLOAD_FILE))
     async def post(
         self,
+        /,
         name: str,
-        upload_type: str = Field(alias="type"),
-        reserved: Optional[bool] = False,
+        upload_type: UploadType = Field(alias="type"),
     ) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
         """
         Upload a file.
@@ -76,37 +75,12 @@ class UploadsView(PydanticView):
             403: Not permitted
             404: Not found
         """
-
-        errors = naive_validator(self.request)
-
-        if errors:
-            raise InvalidQuery(errors)
-
-        if upload_type and upload_type not in UploadType.to_list():
-            raise HTTPBadRequest(text="Unsupported upload type")
-
         upload = await get_data_from_req(self.request).uploads.create(
-            name, upload_type, reserved, user=self.request["client"].user_id
+            multipart_file_chunker(await self.request.multipart()),
+            name,
+            upload_type,
+            user=self.request["client"].user_id,
         )
-
-        file_path = get_config_from_req(self.request).data_path / "files" / upload.name_on_disk
-        files_path = get_config_from_req(self.request).data_path / "files"
-        await asyncio.to_thread(files_path.mkdir, parents=True, exist_ok=True)
-
-        try:
-            size = await naive_writer(await self.request.multipart(), file_path)
-
-            upload = await get_data_from_req(self.request).uploads.finalize(
-                size, upload.id
-            )
-        except CancelledError:
-            logger.debug("Upload aborted: %s", upload.id)
-
-            await get_data_from_req(self.request).uploads.delete(upload.id)
-
-            return Response(status=499)
-
-        logger.debug("Upload succeeded: %s", upload.id)
 
         return json_response(
             upload,
@@ -135,10 +109,13 @@ class UploadView(PydanticView):
 
         try:
             upload = await get_data_from_req(self.request).uploads.get(upload_id)
+
+            pprint(upload)
             upload_path = await get_upload_path(
                 get_config_from_req(self.request), upload.name_on_disk
             )
-        except ResourceNotFoundError:
+        except ResourceNotFoundError as exc:
+            pprint(exc)
             raise NotFound
 
         return FileResponse(
