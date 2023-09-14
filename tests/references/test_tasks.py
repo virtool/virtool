@@ -6,7 +6,7 @@ from typing import Optional, Dict
 
 import arrow
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
@@ -204,7 +204,7 @@ async def test_import_reference_task(
                 id=1,
                 complete=False,
                 context={
-                    "path": config.data_path / "files" / upload.name_on_disk,
+                    "path": str(config.data_path / "files" / upload.name_on_disk),
                     "ref_id": "foo",
                     "user_id": user.id,
                 },
@@ -226,7 +226,6 @@ async def test_import_reference_task(
 
 async def test_remote_reference_task(
     assert_reference_created,
-    caplog,
     data_layer,
     mocker,
     mongo,
@@ -289,12 +288,14 @@ async def create_reference(
 ):
     user = await fake2.users.create()
 
-    await data_layer.uploads.create(
+    upload = await data_layer.uploads.create(
         fake_file_chunker(TEST_FILES_PATH / "reference.json.gz"),
         "import.json.gz",
         UploadType.reference,
         user.id,
     )
+
+    path = tmpdir / "files" / upload.name_on_disk
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -340,21 +341,38 @@ async def create_reference(
 
 
 @pytest.mark.flaky(reruns=2)
-async def test_clone_reference(
+async def test_clone_reference_task(
     assert_reference_created,
-    caplog,
-    create_reference,
-    data_layer,
-    fake2,
+    create_reference: str,
+    data_layer: DataLayer,
+    fake2: DataFaker,
     mongo,
-    pg,
-    snapshot,
+    pg: AsyncEngine,
     static_time,
     tmpdir,
 ):
     manifest = await get_manifest(mongo, create_reference)
 
     user = await fake2.users.create()
+
+    await mongo.references.insert_one(
+        {
+            "_id": "foo",
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "A test reference",
+            "internal_control": None,
+            "groups": [],
+            "name": "Test",
+            "organism": "virus",
+            "restrict_source_types": False,
+            "source_types": [],
+            "user": {
+                "id": user.id,
+            },
+            "users": [],
+        }
+    )
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -374,27 +392,7 @@ async def test_clone_reference(
             )
         )
 
-        await asyncio.gather(
-            session.commit(),
-            mongo.references.insert_one(
-                {
-                    "_id": "foo",
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "A test reference",
-                    "internal_control": None,
-                    "groups": [],
-                    "name": "Test",
-                    "organism": "virus",
-                    "restrict_source_types": False,
-                    "source_types": [],
-                    "user": {
-                        "id": user.id,
-                    },
-                    "users": [],
-                }
-            ),
-        )
+        await session.commit()
 
     task = await CloneReferenceTask.from_task_id(data_layer, 1)
     await task.run()

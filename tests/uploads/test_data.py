@@ -78,7 +78,7 @@ async def test_delete(
 
     assert isclose(after.removed_at.timestamp(), datetime.datetime.utcnow().timestamp())
 
-    assert path.is_file()
+    assert not path.is_file()
 
     with pytest.raises(ResourceNotFoundError):
         await data_layer.uploads.get(before.id)

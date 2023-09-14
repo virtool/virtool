@@ -216,6 +216,12 @@ class SampleView(PydanticView):
         ):
             raise InsufficientRights
 
+        if (
+            await get_one_field(self.request.app["db"].samples, "ready", sample_id)
+            is False
+        ):
+            raise HTTPBadRequest(text="Only finalized samples can be deleted")
+
         try:
             await get_data_from_req(self.request).samples.delete(sample_id)
         except ResourceNotFoundError:
@@ -697,8 +703,6 @@ async def upload_cache_reads(req):
 
     cache_path = join_cache_path(get_config_from_req(req), key) / name
     await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
-
-    cache_file_path = cache_path / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise NotFound("Cache doesn't exist with given key")
