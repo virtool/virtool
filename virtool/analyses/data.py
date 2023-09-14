@@ -45,17 +45,15 @@ from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
-from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.uploads.utils import naive_writer, file_chunks
-from virtool.users.db import AttachUserTransform
-from virtool.utils import wait_for_checks
 from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
+from virtool.uploads.utils import multipart_file_chunker
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import lookup_nested_user_by_id
+from virtool.utils import wait_for_checks
 from virtool.utils import wait_for_checks, base_processor
 
 logger = getLogger("analyses")
@@ -300,7 +298,9 @@ class AnalysisData(DataLayerPiece):
         )
 
         try:
-            size = await naive_writer(file_chunks(reader), analysis_file_path)
+            size = await naive_writer(
+                multipart_file_chunker(reader), analysis_file_path
+            )
         except CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
             await delete_row(self._pg, upload_id, SQLAnalysisFile)

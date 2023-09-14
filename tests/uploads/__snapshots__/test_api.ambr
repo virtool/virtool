@@ -5,13 +5,49 @@
         'created_at': '2015-10-06T20:00:00Z',
         'id': 2,
         'name': 'test.fq.gz',
-        'name_on_disk': '2-Test.fq.gz',
+        'name_on_disk': '2-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 9081,
+        'size': 16700094,
         'type': 'reference',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'reads',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': '3-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
@@ -25,6 +61,24 @@
 # name: TestFind.test[reads]
   <class 'dict'> {
     'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'reads',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
     ],
   }
 ---
@@ -35,12 +89,12 @@
         'created_at': '2015-10-06T20:00:00Z',
         'id': 2,
         'name': 'test.fq.gz',
-        'name_on_disk': '2-Test.fq.gz',
+        'name_on_disk': '2-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 9081,
+        'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
@@ -54,30 +108,48 @@
 ---
 # name: TestFind.test_pagination[1-2]
   <class 'dict'> {
-    'found_count': 1,
+    'found_count': 3,
     'items': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': '3-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'reference',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
     ],
     'page': 2,
-    'page_count': 1,
+    'page_count': 3,
     'per_page': 1,
-    'total_count': 1,
+    'total_count': 3,
   }
 ---
 # name: TestFind.test_pagination[1-None]
   <class 'dict'> {
-    'found_count': 1,
+    'found_count': 3,
     'items': <class 'list'> [
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 2,
+        'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': '2-Test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 9081,
-        'type': 'reference',
+        'size': 16700094,
+        'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
@@ -87,25 +159,43 @@
       },
     ],
     'page': 1,
-    'page_count': 1,
+    'page_count': 3,
     'per_page': 1,
-    'total_count': 1,
+    'total_count': 3,
   }
 ---
 # name: TestFind.test_pagination[2-None]
   <class 'dict'> {
-    'found_count': 1,
+    'found_count': 3,
     'items': <class 'list'> [
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 2,
+        'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': '2-Test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 9081,
+        'size': 16700094,
+        'type': 'reads',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': '3-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
@@ -116,25 +206,61 @@
       },
     ],
     'page': 1,
-    'page_count': 1,
+    'page_count': 2,
     'per_page': 2,
-    'total_count': 1,
+    'total_count': 3,
   }
 ---
 # name: TestFind.test_pagination[3-1]
   <class 'dict'> {
-    'found_count': 1,
+    'found_count': 3,
     'items': <class 'list'> [
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 2,
+        'id': 4,
         'name': 'test.fq.gz',
-        'name_on_disk': '2-Test.fq.gz',
+        'name_on_disk': '4-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 9081,
+        'size': 16700094,
+        'type': 'subtraction',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'reads',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': '3-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
@@ -147,34 +273,70 @@
     'page': 1,
     'page_count': 1,
     'per_page': 3,
-    'total_count': 1,
+    'total_count': 3,
   }
 ---
 # name: TestFind.test_pagination[None-2]
   <class 'dict'> {
-    'found_count': 1,
+    'found_count': 3,
     'items': <class 'list'> [
     ],
     'page': 2,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 1,
+    'total_count': 3,
   }
 ---
 # name: TestFind.test_pagination[None-None]
   <class 'dict'> {
-    'found_count': 1,
+    'found_count': 3,
     'items': <class 'list'> [
       <class 'dict'> {
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 2,
+        'id': 4,
         'name': 'test.fq.gz',
-        'name_on_disk': '2-Test.fq.gz',
+        'name_on_disk': '4-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 9081,
+        'size': 16700094,
+        'type': 'subtraction',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'reads',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': '3-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
@@ -187,7 +349,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 1,
+    'total_count': 3,
   }
 ---
 # name: TestFind.test_uploads_order
@@ -248,6 +410,26 @@
         },
       },
     ],
+  }
+---
+# name: TestUpload.test
+  <class 'dict'> {
+    'created_at': <class 'str'>,
+    'id': 1,
+    'name': 'single.fq.gz',
+    'name_on_disk': '1-single.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': False,
+    'size': 16700094,
+    'type': 'reads',
+    'uploaded_at': '2015-10-06T20:00:00Z',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
   }
 ---
 # name: TestUpload.test[hmm]
@@ -329,4 +511,36 @@
       'id': 'test',
     },
   }
+---
+# name: TestUpload.test_bad_upload_type
+  <class 'list'> [
+    <class 'dict'> {
+      'ctx': <class 'dict'> {
+        'enum_values': <class 'list'> [
+          'hmm',
+          'reference',
+          'reads',
+          'subtraction',
+        ],
+      },
+      'in': 'query string',
+      'loc': <class 'list'> [
+        'type',
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'hmm', 'reference', 'reads', 'subtraction'",
+      'type': 'type_error.enum',
+    },
+  ]
+---
+# name: TestUpload.test_no_upload_type
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'query string',
+      'loc': <class 'list'> [
+        'type',
+      ],
+      'msg': 'field required',
+      'type': 'value_error.missing',
+    },
+  ]
 ---

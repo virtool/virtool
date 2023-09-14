@@ -16,7 +16,8 @@ from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
 from virtool.uploads.db import finalize
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.models import SQLUpload, UploadType
+from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
 
 logger = getLogger("uploads")
@@ -135,20 +136,24 @@ class UploadsData(DataLayerPiece):
 
     @emits(Operation.CREATE)
     async def create(
-        self, name: str, upload_type: str, reserved: bool, user: Optional[str] = None
+        self, chunker, name: str, upload_type: UploadType, user: str | None = None
     ) -> Upload:
         """
         Create an upload.
         """
+        uploads_path = self._config.data_path / "files"
+
+        await asyncio.to_thread(uploads_path.mkdir, parents=True, exist_ok=True)
 
         async with AsyncSession(self._pg) as session:
             upload = SQLUpload(
                 created_at=virtool.utils.timestamp(),
                 name=name,
-                ready=False,
+                ready=True,
                 removed=False,
-                reserved=reserved,
+                reserved=False,
                 type=upload_type,
+                uploaded_at=virtool.utils.timestamp(),
                 user=user,
             )
 
@@ -158,11 +163,18 @@ class UploadsData(DataLayerPiece):
 
             upload.name_on_disk = f"{upload.id}-{upload.name}"
 
-            upload = upload.to_dict()
+            size = await naive_writer(chunker, uploads_path / upload.name_on_disk)
+
+            logger.info("Size=%i", size)
+
+            upload.size = size
+            upload_dict = upload.to_dict()
 
             await session.commit()
 
-        return Upload(**await apply_transforms(upload, [AttachUserTransform(self._db)]))
+        return Upload(
+            **await apply_transforms(upload_dict, [AttachUserTransform(self._db)])
+        )
 
     async def get(self, upload_id: int) -> Upload:
         """
@@ -223,19 +235,6 @@ class UploadsData(DataLayerPiece):
 
         return upload
 
-    @emits(Operation.UPDATE)
-    async def finalize(self, size: int, id_: int) -> Optional[Upload]:
-        """
-        Finalize an upload by marking it as ready.
-
-        :param size: Size of the newly uploaded file in bytes
-        :param id_: id of the upload
-        :return: the upload
-        """
-        upload = await finalize(self._pg, size, id_, SQLUpload)
-
-        return Upload(**await apply_transforms(upload, [AttachUserTransform(self._db)]))
-
     async def release(self, upload_ids: Union[int, List[int]]):
         """
         Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
@@ -257,7 +256,7 @@ class UploadsData(DataLayerPiece):
 
             await session.commit()
 
-    async def reserve(self, upload_ids: Union[int, List[int]]):
+    async def reserve(self, upload_ids: int | List[int]):
         """
         Reserve the uploads in `upload_ids` by setting the `reserved` field to `True`.
 

@@ -9,6 +9,8 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy.matchers import path_type
 
+from virtool.data.layer import DataLayer
+from virtool.fake.next import fake_file_chunker, DataFaker
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
 from virtool.references.tasks import (
@@ -166,21 +168,34 @@ def assert_reference_created(mongo, snapshot):
 @pytest.mark.flaky(reruns=2)
 async def test_import_reference_task(
     assert_reference_created,
-    data_layer,
+    config,
+    data_layer: DataLayer,
     fake2,
     mongo,
     pg,
-    snapshot,
     static_time,
     tmpdir,
 ):
-    path = Path(tmpdir.mkdir("files")) / "reference.json.gz"
-    shutil.copyfile(TEST_FILES_PATH / "reference.json.gz", path)
-
     user = await fake2.users.create()
 
-    await data_layer.uploads.create(
-        "import.json.gz", UploadType.reference, False, user.id
+    upload = await data_layer.uploads.create(
+        fake_file_chunker(TEST_FILES_PATH / "reference.json.gz"),
+        "import.json.gz",
+        UploadType.reference,
+        user.id,
+    )
+
+    await mongo.references.insert_one(
+        {
+            "_id": "foo",
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "A test reference",
+            "internal_control": None,
+            "user": {
+                "id": user.id,
+            },
+        }
     )
 
     async with AsyncSession(pg) as session:
@@ -189,7 +204,7 @@ async def test_import_reference_task(
                 id=1,
                 complete=False,
                 context={
-                    "path": str(path),
+                    "path": config.data_path / "files" / upload.name_on_disk,
                     "ref_id": "foo",
                     "user_id": user.id,
                 },
@@ -201,21 +216,7 @@ async def test_import_reference_task(
             )
         )
 
-        await asyncio.gather(
-            session.commit(),
-            mongo.references.insert_one(
-                {
-                    "_id": "foo",
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "A test reference",
-                    "internal_control": None,
-                    "user": {
-                        "id": user.id,
-                    },
-                }
-            ),
-        )
+        await session.commit()
 
     task = await ImportReferenceTask.from_task_id(data_layer, 1)
 
@@ -230,7 +231,6 @@ async def test_remote_reference_task(
     mocker,
     mongo,
     pg,
-    snapshot,
     static_time,
     tmpdir,
 ):
@@ -279,14 +279,21 @@ async def test_remote_reference_task(
 
 
 @pytest.fixture()
-async def create_reference(pg, tmpdir, fake2, data_layer, static_time, mongo):
-    path = Path(tmpdir.mkdir("files")) / "reference.json.gz"
-    shutil.copyfile(TEST_FILES_PATH / "reference.json.gz", path)
-
+async def create_reference(
+    fake2: DataFaker,
+    data_layer: DataLayer,
+    mongo,
+    pg,
+    static_time,
+    tmpdir,
+):
     user = await fake2.users.create()
 
     await data_layer.uploads.create(
-        "import.json.gz", UploadType.reference, False, user.id
+        fake_file_chunker(TEST_FILES_PATH / "reference.json.gz"),
+        "import.json.gz",
+        UploadType.reference,
+        user.id,
     )
 
     async with AsyncSession(pg) as session:

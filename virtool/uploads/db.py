@@ -1,4 +1,5 @@
 import logging
+from logging import getLogger
 from typing import Dict, List, Optional, Type
 
 from sqlalchemy import select
@@ -11,7 +12,7 @@ from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 
-logger = logging.getLogger("uploads")
+logger = getLogger("uploads")
 
 PROJECTION = ["_id", "name", "size", "user", "uploaded_at", "type", "ready", "reserved"]
 

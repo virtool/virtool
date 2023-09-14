@@ -1,0 +1,56 @@
+# name: test_create[obj]
+  <class 'dict'> {
+    'created_at': <class 'datetime'>,
+    'id': 1,
+    'name': 'sample_1.fq.gz',
+    'name_on_disk': '1-sample_1.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': False,
+    'size': 16700094,
+    'type': 'reads',
+    'uploaded_at': <class 'datetime'>,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_create[sql]
+  <class 'dict'> {
+    'created_at': <class 'datetime'>,
+    'id': 1,
+    'name': 'sample_1.fq.gz',
+    'name_on_disk': '1-sample_1.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': False,
+    'size': 16700094,
+    'type': 'reads',
+    'uploaded_at': <class 'datetime'>,
+    'user': 'bf1b993c',
+  }
+---
+# name: test_delete[after]
+  <class 'dict'> {
+    'created_at': <class 'datetime'>,
+    'id': 1,
+    'name': 'test.fq.gz',
+    'name_on_disk': '1-test.fq.gz',
+    'ready': True,
+    'removed': True,
+    'removed_at': <class 'datetime'>,
+    'reserved': False,
+    'size': 16700094,
+    'type': 'reads',
+    'uploaded_at': <class 'datetime'>,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---

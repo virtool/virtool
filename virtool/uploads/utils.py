@@ -2,6 +2,7 @@ from asyncio import to_thread
 import os
 import pathlib
 from logging import getLogger
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 import aiofiles
@@ -12,7 +13,7 @@ from virtool.data.errors import ResourceNotFoundError
 
 from virtool.config.cls import Config
 
-logger = getLogger(__name__)
+logger = getLogger("uploads")
 
 CHUNK_SIZE = 1024 * 1000 * 50
 
@@ -43,22 +44,26 @@ def naive_validator(req) -> Validator.errors:
         return v.errors
 
 
-async def file_chunks(reader: MultipartReader) -> bytearray:
-    """
-    Read a chunk of size `CHUNK_SIZE` from a file.
-    """
+async def multipart_file_chunker(reader: MultipartReader) -> bytearray:
+    """Iterates through a ``MultipartReader`` as ``bytearray`` chunks."""
     file = await reader.next()
 
-    yield await file.read_chunk(CHUNK_SIZE)
+    while True:
+        chunk = await file.read_chunk(CHUNK_SIZE)
+
+        if not chunk:
+            break
+
+        yield chunk
 
 
 async def naive_writer(
     chunker,
-    path: pathlib.Path,
-    on_first_chunk: Optional[Callable[[bytes], Any]] = None,
-) -> Optional[int]:
+    path: Path,
+    on_first_chunk: Callable[[bytes], Any] | None = None,
+) -> int:
     """
-    Write a new file from a HTTP multipart request.
+    Write a new file from an HTTP multipart request.
 
     :param chunker: yields chunks of a file acquired from a multipart request
     :param path: the file path to write the data to
@@ -67,14 +72,12 @@ async def naive_writer(
     """
     size = 0
 
-    try:
-        await to_thread(os.makedirs, path.parent)
-    except FileExistsError:
-        pass
+    await to_thread(path.parent.mkdir, parents=True, exist_ok=True)
 
     async with aiofiles.open(path, "wb") as f:
         async for chunk in chunker:
             if type(chunk) is str:
+                logger.info("Got string chunk: %s", chunk)
                 break
 
             if size == 0 and on_first_chunk:
@@ -93,7 +96,6 @@ async def get_upload_path(config: Config, name_on_disk: str) -> pathlib.Path:
     """
     upload_path = config.data_path / "files" / name_on_disk
 
-    # check if the file has been manually removed by the user
     if not await to_thread(upload_path.exists):
         raise ResourceNotFoundError("Uploaded file not found at expected location")
 
