@@ -51,7 +51,6 @@ from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     lookup_nested_subtractions,
-    get_subtraction_names,
     AttachSubtractionTransform,
 )
 from virtool.tasks.progress import (
