@@ -215,7 +215,7 @@
     },
   }
 ---
-# name: test_clone_reference[history]
+# name: test_clone_reference_task[history]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -2026,7 +2026,7 @@
     },
   ]
 ---
-# name: test_clone_reference[otus]
+# name: test_clone_reference_task[otus]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,
@@ -2777,7 +2777,7 @@
     },
   ]
 ---
-# name: test_clone_reference[ref]
+# name: test_clone_reference_task[ref]
   <class 'dict'> {
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -2798,7 +2798,7 @@
     ],
   }
 ---
-# name: test_clone_reference[sequences]
+# name: test_clone_reference_task[sequences]
   <class 'list'> [
     <class 'dict'> {
       '_id': <class 'str'>,

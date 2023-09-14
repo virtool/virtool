@@ -1,4 +1,4 @@
-# name: test_fake
+# name: test_groups_and_users
   <class 'dict'> {
     'id': 'bf1b993c',
     'name': 'musicians',
@@ -16,7 +16,7 @@
     ],
   }
 ---
-# name: test_fake.1
+# name: test_groups_and_users.1
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -45,7 +45,7 @@
     'primary_group': None,
   }
 ---
-# name: test_fake.2
+# name: test_groups_and_users.2
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -78,7 +78,7 @@
     'primary_group': None,
   }
 ---
-# name: test_fake[job]
+# name: test_groups_and_users[job]
   <class 'dict'> {
     'acquired': False,
     'archived': False,
@@ -115,5 +115,104 @@
       'id': 'fb085f7f',
     },
     'workflow': 'jobs_aodp',
+  }
+---
+# name: test_jobs[job]
+  <class 'dict'> {
+    'acquired': False,
+    'archived': False,
+    'args': <class 'dict'> {
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    },
+    'created_at': <class 'datetime'>,
+    'id': 'fb085f7f',
+    'ping': None,
+    'progress': 0,
+    'rights': <class 'dict'> {
+    },
+    'stage': None,
+    'state': <JobState.WAITING: 'waiting'>,
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': <JobState.WAITING: 'waiting'>,
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'datetime'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'jobs_pathoscope_bowtie',
+  }
+---
+# name: test_uploads[upload[reserved]]
+  <class 'dict'> {
+    'created_at': <class 'datetime'>,
+    'id': 3,
+    'name': 'test.fq.gz',
+    'name_on_disk': '3-test.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': True,
+    'size': 16700094,
+    'type': 'reads',
+    'uploaded_at': <class 'datetime'>,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_uploads[upload[subtraction]]
+  <class 'dict'> {
+    'created_at': <class 'datetime'>,
+    'id': 2,
+    'name': 'test.fq.gz',
+    'name_on_disk': '2-test.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': False,
+    'size': 16700094,
+    'type': 'subtraction',
+    'uploaded_at': <class 'datetime'>,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: test_uploads[upload]
+  <class 'dict'> {
+    'created_at': <class 'datetime'>,
+    'id': 1,
+    'name': 'test.fq.gz',
+    'name_on_disk': '1-test.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': False,
+    'size': 16700094,
+    'type': 'reads',
+    'uploaded_at': <class 'datetime'>,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
   }
 ---

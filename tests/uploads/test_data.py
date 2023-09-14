@@ -1,24 +1,113 @@
+import datetime
+from math import isclose
+from pathlib import Path
+
 import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy.matchers import path_type
 
-import asyncio
+from virtool.config.cls import ServerConfig
+from virtool.data.errors import ResourceNotFoundError
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker, fake_file_chunker
+from virtool.pg.utils import get_row_by_id
+from virtool.uploads.models import UploadType, SQLUpload
 
-from virtool.data.utils import get_data_from_app
+
+async def test_create(
+    config: ServerConfig,
+    data_layer: DataLayer,
+    example_path: Path,
+    fake2: DataFaker,
+    pg: AsyncEngine,
+    snapshot,
+):
+    user = await fake2.users.create()
+
+    fake_file_path = example_path / "reads/single.fq.gz"
+
+    upload = await data_layer.uploads.create(
+        fake_file_chunker(fake_file_path),
+        "sample_1.fq.gz",
+        UploadType.reads,
+        user=user.id,
+    )
+
+    assert upload == snapshot(
+        name="obj",
+        matcher=path_type(
+            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)}
+        ),
+    )
+
+    assert (await get_row_by_id(pg, SQLUpload, upload.id)).to_dict() == snapshot(
+        name="sql",
+        matcher=path_type(
+            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)}
+        ),
+    )
+
+    path = config.data_path / "files" / upload.name_on_disk
+    assert open(path, "rb").read() == open(fake_file_path, "rb").read()
 
 
-@pytest.mark.parametrize("to_release", [1, [1, 2, 3]])
-async def test_release(spawn_client, test_uploads, to_release):
-    client = await spawn_client(authorize=True)
-    await get_data_from_app(client.app).uploads.release(to_release)
+async def test_delete(
+    config: ServerConfig, data_layer: DataLayer, fake2: DataFaker, snapshot
+):
+    before = await fake2.uploads.create(user=await fake2.users.create())
 
-    if isinstance(to_release, int):
-        upload = await get_data_from_app(client.app).uploads.get(to_release)
-        assert not upload.reserved
-    else:
-        upload_1, upload_2, upload_3 = await asyncio.gather(
-            *[get_data_from_app(client.app).uploads.get(id_) for id_ in to_release]
+    path = config.data_path / "files" / before.name_on_disk
+
+    assert path.is_file()
+
+    assert before.removed_at is None
+
+    after = await data_layer.uploads.delete(before.id)
+
+    assert after == snapshot(
+        name="after",
+        matcher=path_type(
+            {
+                "created_at": (datetime.datetime,),
+                "uploaded_at": (datetime.datetime,),
+                "removed_at": (datetime.datetime,),
+            }
+        ),
+    )
+
+    assert isclose(after.removed_at.timestamp(), datetime.datetime.utcnow().timestamp())
+
+    assert not path.is_file()
+
+    with pytest.raises(ResourceNotFoundError):
+        await data_layer.uploads.get(before.id)
+
+    with pytest.raises(ResourceNotFoundError):
+        await data_layer.uploads.delete(before.id)
+
+
+@pytest.mark.parametrize("multi", [True, False])
+async def test_release(
+    multi: bool, data_layer: DataLayer, fake2: DataFaker, pg: AsyncEngine
+):
+    user = await fake2.users.create()
+
+    upload_1 = await fake2.uploads.create(user=user, reserved=True)
+    upload_2 = await fake2.uploads.create(user=user, reserved=True)
+    upload_3 = await fake2.uploads.create(user=user, reserved=True)
+
+    assert all([upload_1.reserved, upload_2.reserved, upload_3.reserved])
+
+    assert (
+        await data_layer.uploads.release(
+            [upload_1.id, upload_3.id] if multi else upload_2.id
         )
-        assert (upload_1.reserved, upload_2.reserved, upload_3.reserved) == (
-            False,
-            False,
-            False,
-        )
+        is None
+    )
+
+    async with AsyncSession(pg) as session:
+        result = await session.execute(select(SQLUpload).order_by(SQLUpload.id))
+        reserved = [u.reserved for u in result.unique().scalars().all()]
+
+    assert reserved == [False, True, False] if multi else [True, False, True]

@@ -50,7 +50,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
-from virtool.uploads.utils import naive_writer
+from virtool.uploads.utils import multipart_file_chunker, naive_writer
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import wait_for_checks, base_processor
 
@@ -298,7 +298,9 @@ class AnalysisData(DataLayerPiece):
         )
 
         try:
-            size = await naive_writer(reader, analysis_file_path)
+            size = await naive_writer(
+                multipart_file_chunker(reader), analysis_file_path
+            )
         except asyncio.CancelledError:
             logger.debug("Analysis file upload aborted: %s", upload_id)
             await delete_row(self._pg, upload_id, SQLAnalysisFile)
