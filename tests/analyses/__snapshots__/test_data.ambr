@@ -9,9 +9,7 @@
     },
     'ready': False,
     'reference': <class 'dict'> {
-      'data_type': 'genome',
       'id': 'test_ref',
-      'name': 'Test Reference',
     },
     'results': None,
     'sample': <class 'dict'> {
@@ -21,18 +19,10 @@
       'id': 0,
     },
     'subtractions': <class 'list'> [
-      <class 'dict'> {
-        '_id': 'subtraction_1',
-        'name': 'Subtraction 1',
-      },
-      <class 'dict'> {
-        '_id': 'subtraction_2',
-        'name': 'Subtraction 2',
-      },
+      'subtraction_1',
+      'subtraction_2',
     ],
     'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
       'id': 'bf1b993c',
     },
     'workflow': 'nuvs',
@@ -99,9 +89,7 @@
     },
     'ready': False,
     'reference': <class 'dict'> {
-      'data_type': 'genome',
       'id': 'test_ref',
-      'name': 'Test Reference',
     },
     'results': None,
     'sample': <class 'dict'> {
@@ -111,18 +99,10 @@
       'id': 0,
     },
     'subtractions': <class 'list'> [
-      <class 'dict'> {
-        '_id': 'subtraction_1',
-        'name': 'Subtraction 1',
-      },
-      <class 'dict'> {
-        '_id': 'subtraction_2',
-        'name': 'Subtraction 2',
-      },
+      'subtraction_1',
+      'subtraction_2',
     ],
     'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
       'id': 'bf1b993c',
     },
     'workflow': 'nuvs',
