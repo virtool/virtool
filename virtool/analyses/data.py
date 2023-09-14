@@ -46,18 +46,20 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     lookup_nested_subtractions,
     get_subtraction_names,
+    AttachSubtractionTransform,
 )
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import lookup_nested_user_by_id
+from virtool.users.db import lookup_nested_user_by_id, AttachUserTransform
 from virtool.utils import wait_for_checks, base_processor
 
 logger = getLogger("analyses")
@@ -231,14 +233,6 @@ class AnalysisData(DataLayerPiece):
 
         created_at = virtool.utils.timestamp()
 
-        user = await self._db.users.find_one(
-            {"_id": user_id},
-        )
-        if subtractions is None:
-            subtractions_list = []
-        else:
-            subtractions_list = await get_subtraction_names(self._db, subtractions)
-
         sample = await self._db.samples.find_one(sample_id, ["name"])
 
         if analysis_id is None:
@@ -261,21 +255,15 @@ class AnalysisData(DataLayerPiece):
                 "index": {"id": index_id, "version": index_version},
                 "reference": {
                     "id": ref_id,
-                    "name": await get_one_field(self._db.references, "name", ref_id),
-                    "data_type": await get_one_field(
-                        self._db.references, "data_type", ref_id
-                    ),
                 },
                 "ready": False,
                 "results": None,
                 "sample": {"id": sample_id},
                 "space": {"id": space_id},
-                "subtractions": subtractions_list,
+                "subtractions": subtractions,
                 "updated_at": created_at,
                 "user": {
                     "id": user_id,
-                    "handle": user["handle"],
-                    "administrator": user["administrator"],
                 },
                 "workflow": workflow,
             }
@@ -286,9 +274,18 @@ class AnalysisData(DataLayerPiece):
             job = await self.data.jobs.create(
                 workflow.value, task_args, user_id, space_id, job_id
             )
+
             document["job"] = JobMinimal(**job.dict())
 
-        return Analysis(**base_processor(document))
+        analysis = await apply_transforms(
+            document,
+            [
+                AttachUserTransform(self._db),
+                AttachSubtractionTransform(self._db),
+                AttachReferenceTransform(self._db),
+            ],
+        )
+        return Analysis(**base_processor(analysis))
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """
