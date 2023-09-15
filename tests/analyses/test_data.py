@@ -10,11 +10,10 @@ from virtool.mongo.core import Mongo
 
 
 async def test_create(
-    data_layer,
-    fake2,
-    mongo,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
     snapshot,
-    users_data,
 ):
     """
     Tests that an analysis is created with the expected fields.
@@ -123,6 +122,7 @@ async def test_create_analysis_id(
     )
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
+
     assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
         name="mongo", exclude=props("created_at", "updated_at")
     )

@@ -10,7 +10,6 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.job import JobMinimal
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -41,24 +40,20 @@ from virtool.data.events import emits, Operation, emit
 from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
-from virtool.jobs.db import lookup_minimal_job_by_id, AttachJobsTransform
+from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
-from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     lookup_nested_subtractions,
-    AttachSubtractionTransform,
 )
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
-from virtool.uploads.utils import naive_writer
-from virtool.users.db import lookup_nested_user_by_id, AttachUserTransform
 from virtool.uploads.utils import multipart_file_chunker, naive_writer
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import wait_for_checks, base_processor
@@ -274,7 +269,7 @@ class AnalysisData(DataLayerPiece):
                 }
             )
 
-            job = await self.data.jobs.create(
+            await self.data.jobs.create(
                 workflow.value, task_args, user_id, space_id, job_id
             )
 
