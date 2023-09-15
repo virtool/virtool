@@ -6,7 +6,7 @@ from typing import List
 
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-from virtool_core.models.upload import Upload, UploadSearchResult, UploadMinimal
+from virtool_core.models.upload import Upload, UploadSearchResult
 from virtool_core.utils import rm
 
 import virtool.utils
@@ -31,46 +31,11 @@ class UploadsData(DataLayerPiece):
         self._pg: AsyncEngine = pg
 
     async def find(
-        self, user, page: int, per_page: int, upload_type, paginate
-    ) -> List[UploadMinimal] | UploadSearchResult:
+        self, user, page: int, per_page: int, upload_type
+    ) -> UploadSearchResult:
         """
         Find and filter uploads.
         """
-
-        if paginate:
-            return await self._find_beta(user, page, per_page, upload_type)
-
-        filters = [
-            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
-            SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
-        ]
-
-        uploads = []
-
-        async with AsyncSession(self._pg) as session:
-            if user:
-                filters.append(SQLUpload.user == user)
-
-            if upload_type:
-                filters.append(SQLUpload.type == upload_type)
-
-            results = await session.execute(
-                select(SQLUpload).filter(*filters).order_by(SQLUpload.created_at.desc())
-            )
-
-            for result in results.unique().scalars().all():
-                uploads.append(result.to_dict())
-
-            return [
-                UploadMinimal(**upload)
-                for upload in await apply_transforms(
-                    uploads, [AttachUserTransform(self._db)]
-                )
-            ]
-
-    async def _find_beta(
-        self, user, page: int, per_page: int, upload_type
-    ) -> UploadSearchResult:
         base_filters = [
             SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
             SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
