@@ -1,10 +1,12 @@
 import asyncio
-from pprint import pprint
 
 from syrupy.filters import props
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
 from tests.users.test_data import users_data
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 
 
 async def test_create(
@@ -17,8 +19,6 @@ async def test_create(
     """
     Tests that an analysis is created with the expected fields.
     """
-    subtractions = ["subtraction_1", "subtraction_2"]
-
     user = await fake2.users.create()
 
     await asyncio.gather(
@@ -56,7 +56,7 @@ async def test_create(
     analysis = await data_layer.analyses.create(
         "test_sample",
         "test_ref",
-        subtractions,
+        ["subtraction_1", "subtraction_2"],
         user.id,
         QuickAnalyzeWorkflow.nuvs,
         0,
@@ -71,40 +71,34 @@ async def test_create(
 
 
 async def test_create_analysis_id(
-    data_layer,
-    fake2,
-    mongo,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
     snapshot,
-    users_data,
 ):
     """
     Tests that an analysis is created with the expected fields.
     """
-    subtractions = ["subtraction_1", "subtraction_2"]
-
     user = await fake2.users.create()
 
-    async with mongo.create_session() as session:
-        await mongo.samples.insert_one({"_id": "test_sample", "name": "Test Sample"})
-
-        await mongo.indexes.insert_one(
+    await asyncio.gather(
+        mongo.samples.insert_one({"_id": "test_sample", "name": "Test Sample"}),
+        mongo.indexes.insert_one(
             {
                 "_id": "test_index",
                 "version": 11,
                 "ready": True,
                 "reference": {"id": "test_ref"},
             }
-        )
-
-        await mongo.references.insert_one(
+        ),
+        mongo.references.insert_one(
             {
                 "_id": "test_ref",
                 "name": "Test Reference",
                 "data_type": "genome",
             }
-        )
-
-        await mongo.subtraction.insert_many(
+        ),
+        mongo.subtraction.insert_many(
             [
                 {
                     "_id": "subtraction_1",
@@ -115,13 +109,14 @@ async def test_create_analysis_id(
                     "name": "Subtraction 2",
                 },
             ],
-            session=session,
-        )
+            session=None,
+        ),
+    )
 
     analysis = await data_layer.analyses.create(
         "test_sample",
         "test_ref",
-        subtractions,
+        ["subtraction_1", "subtraction_2"],
         user.id,
         QuickAnalyzeWorkflow.nuvs,
         0,
