@@ -180,7 +180,7 @@ class TestCreate:
 
     @pytest.mark.flaky(reruns=2)
     async def test_import_reference(
-        self, pg, snapshot, spawn_client, test_files_path, tmpdir
+        self, snapshot, spawn_client, test_files_path, tmpdir
     ):
         client = await spawn_client(
             authorize=True,
@@ -191,13 +191,12 @@ class TestCreate:
 
         get_config_from_app(client.app).data_path = Path(tmpdir)
 
-        with open(test_files_path / "reference.json.gz", "rb") as f:
-            resp = await client.post_form(
-                "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
-                data={"file": f},
-            )
+        resp = await client.post_form(
+            "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
+            data={"file": open(test_files_path / "reference.json.gz", "rb")},
+        )
 
-            upload = await resp.json()
+        upload = await resp.json()
 
         resp = await client.post(
             "/refs",
@@ -211,7 +210,7 @@ class TestCreate:
         )
 
     async def test_clone_reference(
-        self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
+        self, snapshot, spawn_client, tmpdir, fake2, static_time
     ):
         client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
 
@@ -243,22 +242,21 @@ class TestCreate:
             }
         )
 
-        data = {
-            "name": "Test 1",
-            "organism": "viruses",
-            "data_type": "genome",
-            "clone_from": "foo",
-        }
-
-        resp = await client.post("/refs", data)
+        resp = await client.post(
+            "/refs",
+            {
+                "name": "Test 1",
+                "organism": "viruses",
+                "data_type": "genome",
+                "clone_from": "foo",
+            },
+        )
 
         assert resp.status == 201
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
-    async def test_remote_reference(
-        self, pg, snapshot, spawn_client, test_files_path, tmpdir, fake2, static_time
-    ):
+    async def test_remote_reference(self, snapshot, spawn_client, tmpdir, static_time):
         client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
 
         data = {

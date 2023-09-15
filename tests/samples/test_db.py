@@ -6,28 +6,22 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro, make_mocked_request
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_app
 from virtool.labels.db import AttachLabelsTransform
-from virtool.data.transforms import apply_transforms
-from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import (
     check_is_legacy,
     compose_sample_workflow_query,
     compress_sample_reads,
     create_sample,
-    finalize,
     get_sample_owner,
     recalculate_workflow_tags,
-    remove_samples,
     update_is_compressed,
 )
-from virtool.samples.models import SQLSampleReads
-from virtool.samples.utils import calculate_workflow_tags
 from virtool.samples.db import define_initial_workflows, derive_workflow_state
-from virtool.uploads.models import SQLUpload
+from virtool.samples.utils import calculate_workflow_tags
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
 
@@ -255,76 +249,6 @@ class TestGetSampleOwner:
         assert await get_sample_owner(mongo, "foobar") is None
 
 
-class TestRemoveSamples:
-    @pytest.mark.parametrize(
-        "id_list",
-        [
-            ["test_1"],
-            ["test_1", "test_2"],
-        ],
-    )
-    async def test(self, id_list, snapshot, tmp_path, mongo, config):
-        """
-        Test that the function can remove one or more samples, their analysis documents, and files.
-
-        """
-        samples_dir = tmp_path / "samples"
-        samples_dir.mkdir()
-
-        paths = {}
-
-        for x in range(1, 4):
-            paths[f"sample_{x}_file"] = samples_dir / f"test_{x}"
-            paths[f"sample_{x}_file"].mkdir()
-
-        for handle in paths.values():
-            handle.joinpath("text.txt").write_text("hello world")
-
-        await mongo.samples.insert_many(
-            [{"_id": "test_1"}, {"_id": "test_2"}, {"_id": "test_3"}], session=None
-        )
-
-        await mongo.analyses.insert_many(
-            [
-                {"_id": "a_1", "sample": {"id": "test_1"}},
-                {"_id": "a_2", "sample": {"id": "test_1"}},
-                {"_id": "a_3", "sample": {"id": "test_2"}},
-                {"_id": "a_4", "sample": {"id": "test_2"}},
-                {"_id": "a_5", "sample": {"id": "test_2"}},
-                {"_id": "a_6", "sample": {"id": "test_3"}},
-                {"_id": "a_7", "sample": {"id": "test_3"}},
-                {"_id": "a_8", "sample": {"id": "test_3"}},
-                {"_id": "a_9", "sample": {"id": "test_3"}},
-            ],
-            session=None,
-        )
-
-        await remove_samples(mongo, config, id_list)
-
-        assert set(os.listdir(samples_dir)) == snapshot
-        assert await mongo.samples.find().to_list(None) == snapshot
-        assert await mongo.analyses.find().to_list(None) == snapshot
-
-    async def test_file_not_found(self, tmp_path, mongo, config):
-        """
-        Test that the function does not fail when a sample folder is missing.
-
-        """
-        samples_dir = tmp_path / "samples" / "test_1"
-        samples_dir.mkdir(parents=True)
-
-        samples_dir.joinpath("test.txt").write_text("hello world")
-
-        await mongo.samples.insert_many(
-            [{"_id": "test_1"}, {"_id": "test_2"}], session=None
-        )
-
-        await remove_samples(mongo, config, ["test_1", "test_2"])
-
-        assert not samples_dir.exists()
-        assert not await mongo.samples.count_documents({})
-
-
 async def test_attach_labels(fake2, snapshot, pg: AsyncEngine):
     label_1 = await fake2.labels.create()
     label_2 = await fake2.labels.create()
@@ -491,38 +415,6 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
     assert await mongo.samples.find_one() == snapshot
 
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
-
-
-async def test_finalize(
-    spawn_client, snapshot, tmp_path, mongo, fake2, pg: AsyncEngine
-):
-    client = await spawn_client(authorize=True)
-    quality = {"count": 10000000, "gc": 43}
-
-    user = await fake2.users.create()
-
-    await mongo.samples.insert_one({"_id": "test", "user": {"id": user.id}})
-
-    async with AsyncSession(pg) as session:
-        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
-
-        reads = SQLSampleReads(
-            name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
-        )
-
-        upload.reads.append(reads)
-        session.add_all([upload, reads])
-
-        await session.commit()
-
-    m_run_in_thread = make_mocked_coro()
-
-    result = await finalize(mongo, pg, "test", quality, m_run_in_thread, tmp_path)
-
-    assert result == snapshot
-    with pytest.raises(ResourceNotFoundError):
-        await get_data_from_app(client.app).uploads.get(1)
-    assert not (await get_row_by_id(pg, SQLSampleReads, 1)).upload
 
 
 class TestComposeWorkflowQuery:

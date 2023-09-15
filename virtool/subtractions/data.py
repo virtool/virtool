@@ -47,6 +47,7 @@ from virtool.subtractions.utils import (
     join_subtraction_index_path,
     join_subtraction_path,
 )
+from virtool.uploads.utils import multipart_file_chunker
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
@@ -56,7 +57,7 @@ from virtool.uploads.utils import naive_writer
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import base_processor
 
-logger = getLogger(__name__)
+logger = getLogger("subtractions")
 
 
 class SubtractionsData(DataLayerDomain):
@@ -358,7 +359,11 @@ class SubtractionsData(DataLayerDomain):
 
         file_type = check_subtraction_file_type(filename)
 
-        path = self._config.data_path / "subtractions" / subtraction_id / filename
+        subtraction_path = join_subtraction_path(self._config, subtraction_id)
+
+        await asyncio.to_thread(subtraction_path.mkdir, parents=True, exist_ok=True)
+
+        path = subtraction_path / filename
 
         try:
             async with AsyncSession(self._pg) as session:
@@ -373,7 +378,7 @@ class SubtractionsData(DataLayerDomain):
                 except IntegrityError:
                     raise ResourceConflictError("File name already exists")
 
-                size = await naive_writer(reader, path)
+                size = await naive_writer(multipart_file_chunker(reader), path)
 
                 subtraction_file.size = size
                 subtraction_file.uploaded_at = virtool.utils.timestamp()
