@@ -11,7 +11,7 @@
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
-    'group': 'diagnostics',
+    'group': '7cf872dc',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -29,16 +29,16 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
       },
       'workflow': 'create_sample',
     },
     'labels': <class 'list'> [
       <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
+        'color': '#ab2213',
+        'description': 'A huge three.',
         'id': 1,
-        'name': 'Three',
+        'name': 'Use',
       },
     ],
     'library_type': 'normal',
@@ -61,7 +61,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'workflows': <class 'dict'> {
       'aodp': 'incompatible',
@@ -77,7 +77,7 @@
     'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
-    'group': 'diagnostics',
+    'group': '7cf872dc',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -107,7 +107,7 @@
       'apple',
     ],
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'workflows': <class 'dict'> {
       'aodp': 'incompatible',
@@ -147,16 +147,16 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
       },
       'workflow': 'create_sample',
     },
     'labels': <class 'list'> [
       <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
+        'color': '#ab2213',
+        'description': 'A huge three.',
         'id': 1,
-        'name': 'Three',
+        'name': 'Use',
       },
     ],
     'library_type': 'normal',
@@ -179,7 +179,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'workflows': <class 'dict'> {
       'aodp': 'incompatible',
@@ -225,7 +225,7 @@
       'apple',
     ],
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'workflows': <class 'dict'> {
       'aodp': 'incompatible',
@@ -247,7 +247,7 @@
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
-    'group': 'technician',
+    'group': '7cf872dc',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -265,16 +265,16 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
       },
       'workflow': 'create_sample',
     },
     'labels': <class 'list'> [
       <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
+        'color': '#ab2213',
+        'description': 'A huge three.',
         'id': 1,
-        'name': 'Three',
+        'name': 'Use',
       },
     ],
     'library_type': 'normal',
@@ -297,7 +297,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'workflows': <class 'dict'> {
       'aodp': 'incompatible',
@@ -313,7 +313,7 @@
     'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
-    'group': 'technician',
+    'group': '7cf872dc',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -343,7 +343,589 @@
       'apple',
     ],
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_name_exists[/samples][json]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Sample name is already in use',
+  }
+---
+# name: TestCreate.test_name_exists[/spaces/0/samples][json]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Sample name is already in use',
+  }
+---
+# name: TestCreate.test_ok[force_choice]
+  '/samples/fb085f7f'
+---
+# name: TestCreate.test_ok[force_choice].1
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 'fb085f7f',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'create_sample',
+    },
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#ab2213',
+        'description': 'A huge three.',
+        'id': 1,
+        'name': 'Use',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[force_choice][location]
+  '/samples/fb085f7f'
+---
+# name: TestCreate.test_ok[force_choice][mongo]
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'labels': <class 'list'> [
+      1,
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'results': None,
+    'space': <class 'dict'> {
+      'id': 0,
+    },
+    'subtractions': <class 'list'> [
+      'apple',
+    ],
+    'user': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[force_choice][resp]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 'fb085f7f',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'create_sample',
+    },
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#ab2213',
+        'description': 'A huge three.',
+        'id': 1,
+        'name': 'Use',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[none]
+  '/samples/fb085f7f'
+---
+# name: TestCreate.test_ok[none].1
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 'fb085f7f',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'create_sample',
+    },
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#ab2213',
+        'description': 'A huge three.',
+        'id': 1,
+        'name': 'Use',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[none][location]
+  '/samples/fb085f7f'
+---
+# name: TestCreate.test_ok[none][mongo]
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'labels': <class 'list'> [
+      1,
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'results': None,
+    'space': <class 'dict'> {
+      'id': 0,
+    },
+    'subtractions': <class 'list'> [
+      'apple',
+    ],
+    'user': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[none][resp]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 'fb085f7f',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'create_sample',
+    },
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#ab2213',
+        'description': 'A huge three.',
+        'id': 1,
+        'name': 'Use',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[users_primary_group]
+  '/samples/fb085f7f'
+---
+# name: TestCreate.test_ok[users_primary_group].1
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 'fb085f7f',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'create_sample',
+    },
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#ab2213',
+        'description': 'A huge three.',
+        'id': 1,
+        'name': 'Use',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[users_primary_group][location]
+  '/samples/fb085f7f'
+---
+# name: TestCreate.test_ok[users_primary_group][mongo]
+  <class 'dict'> {
+    '_id': 'fb085f7f',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'id': 'bf1b993c',
+    },
+    'labels': <class 'list'> [
+      1,
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'results': None,
+    'space': <class 'dict'> {
+      'id': 0,
+    },
+    'subtractions': <class 'list'> [
+      'apple',
+    ],
+    'user': <class 'dict'> {
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    },
+  }
+---
+# name: TestCreate.test_ok[users_primary_group][resp]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 'fb085f7f',
+    'is_legacy': False,
+    'isolate': '',
+    'job': <class 'dict'> {
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+      'workflow': 'create_sample',
+    },
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#ab2213',
+        'description': 'A huge three.',
+        'id': 1,
+        'name': 'Use',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
     },
     'workflows': <class 'dict'> {
       'aodp': 'incompatible',
@@ -432,6 +1014,82 @@
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Labels do not exist: [1]',
+  }
+---
+# name: TestEdit.test_ok
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'test_sample',
+    'notes': 'This is a test.',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'peach',
+        'name': 'Peach',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'kellylopez',
+      'id': 'bf1b993c',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
   }
 ---
 # name: TestEdit.test_subtraction_exists[json]
@@ -1716,6 +2374,166 @@
     'total_count': 3,
   }
 ---
+# name: TestGet.test_administrator[resp]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'kellylopez',
+      'id': 'bf1b993c',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
+  }
+---
+# name: TestGet.test_all_read[resp]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'tammybrown',
+      'id': '7cf872dc',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
+  }
+---
 # name: TestGet.test_get[administrator][json]
   <class 'dict'> {
     'all_read': False,
@@ -2042,6 +2860,252 @@
     },
   }
 ---
+# name: TestGet.test_group_read[False][resp]
+  <class 'dict'> {
+    'id': 'insufficient_rights',
+    'message': 'Insufficient rights',
+  }
+---
+# name: TestGet.test_group_read[True][resp]
+  <class 'dict'> {
+    'all_read': False,
+    'all_write': False,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'qtaylor',
+      'id': '3cbb22cc',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
+  }
+---
+# name: TestGet.test_group_read[resp]
+  <class 'dict'> {
+    'all_read': False,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': '7cf872dc',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'qtaylor',
+      'id': '3cbb22cc',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
+  }
+---
+# name: TestGet.test_owner[resp]
+  <class 'dict'> {
+    'all_read': False,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    },
+  }
+---
 # name: TestUploadReads.test[409]
   <class 'dict'> {
     'id': 'conflict',
@@ -2074,7 +3138,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'workflow': 'pathoscope_bowtie',
     },
@@ -2098,7 +3162,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }
@@ -2206,7 +3270,7 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'id': '7cf872dc',
+          'id': '3cbb22cc',
         },
         'ready': True,
         'reference': <class 'dict'> {
@@ -2221,7 +3285,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -2252,7 +3316,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -2275,7 +3339,7 @@
           'version': 2,
         },
         'job': <class 'dict'> {
-          'id': '7cf872dc',
+          'id': '3cbb22cc',
         },
         'ready': True,
         'reference': <class 'dict'> {
@@ -2290,7 +3354,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -2321,7 +3385,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -2350,7 +3414,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'zclark',
-          'id': 'fb085f7f',
+          'id': '7cf872dc',
         },
         'workflow': 'pathoscope_bowtie',
       },

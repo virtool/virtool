@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.fixtures.client import ClientSpawner
 from virtool.messages.models import SQLInstanceMessage
 
 
@@ -28,34 +29,35 @@ async def insert_test_message(fake2, pg, static_time):
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, insert_test_message, snapshot):
+async def test_get(
+    error: str | None, insert_test_message, snapshot, spawn_client: ClientSpawner
+):
     """
     Test that a ``GET /instance_message`` return the active instance message.
 
     """
-    client = await spawn_client(authorize=True, administrator=True)
+    client = await spawn_client(authenticated=True)
 
     if not error:
         await insert_test_message()
 
     resp = await client.get("/instance_message")
 
-    if error:
+    if error is None:
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+    else:
         assert await resp.json() is None
-        return
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
-async def test_create(static_time, spawn_client, snapshot):
+async def test_create(snapshot, spawn_client: ClientSpawner, static_time):
     """
     Test that a newly active instance message can be added
     to the database at ``PUT /instance_message``.
 
     """
-    client = await spawn_client(authorize=True, administrator=True)
+    client = await spawn_client(administrator=True, authenticated=True)
 
     resp = await client.put(
         "/instance_message", {"color": "red", "message": "This is a new message"}
@@ -68,8 +70,10 @@ async def test_create(static_time, spawn_client, snapshot):
 
 @pytest.mark.apitest
 class TestUpdate:
-    async def test_active(self, spawn_client, insert_test_message, snapshot):
-        client = await spawn_client(authorize=True, administrator=True)
+    async def test_active(
+        self, insert_test_message, snapshot, spawn_client: ClientSpawner
+    ):
+        client = await spawn_client(administrator=True, authenticated=True)
 
         await insert_test_message()
 
@@ -81,8 +85,8 @@ class TestUpdate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_not_found(self, spawn_client, snapshot):
-        client = await spawn_client(authorize=True, administrator=True)
+    async def test_not_found(self, spawn_client: ClientSpawner):
+        client = await spawn_client(administrator=True, authenticated=True)
 
         resp = await client.patch(
             "/instance_message",
@@ -91,8 +95,10 @@ class TestUpdate:
 
         assert resp.status == 404
 
-    async def test_inactive(self, spawn_client, insert_test_message, resp_is, snapshot):
-        client = await spawn_client(authorize=True, administrator=True)
+    async def test_inactive(
+        self, insert_test_message, resp_is, spawn_client: ClientSpawner
+    ):
+        client = await spawn_client(administrator=True, authenticated=True)
 
         await insert_test_message(active=False)
 
@@ -103,8 +109,10 @@ class TestUpdate:
 
         await resp_is.conflict(resp, "No active message set")
 
-    async def test_deactivate(self, spawn_client, insert_test_message, snapshot):
-        client = await spawn_client(authorize=True, administrator=True)
+    async def test_deactivate(
+        self, insert_test_message, snapshot, spawn_client: ClientSpawner
+    ):
+        client = await spawn_client(administrator=True, authenticated=True)
 
         await insert_test_message()
 

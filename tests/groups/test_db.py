@@ -3,7 +3,9 @@ from datetime import datetime
 from syrupy.matchers import path_type
 
 from virtool.data.transforms import apply_transforms
+from virtool.fake.next import DataFaker
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
+from virtool.mongo.core import Mongo
 from virtool.utils import base_processor
 
 
@@ -22,9 +24,8 @@ class TestAttachPrimaryGroup:
             )
         )
 
-    async def test_single_document(self, snapshot, fake2, mongo):
+    async def test_single_document(self, snapshot, fake2: DataFaker, mongo: Mongo):
         group = await fake2.groups.create()
-
         user = await fake2.users.create(groups=[group], primary_group=group)
 
         incomplete_user = base_processor(await mongo.users.find_one({"_id": user.id}))

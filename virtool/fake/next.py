@@ -6,14 +6,14 @@ import asyncio
 import gzip
 from pathlib import Path
 from typing import Dict, Type, AsyncGenerator
-from typing import List, Optional
+from typing import List
 
 import aiofiles
 from faker import Faker
 from faker.providers import BaseProvider, python, color, lorem, file
 from virtool_core.models.group import Group
 from virtool_core.models.hmm import HMM
-from virtool_core.models.job import Job
+from virtool_core.models.job import Job, JobState
 from virtool_core.models.label import Label
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.task import Task
@@ -59,16 +59,16 @@ async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
     :return: an async generator that yields chunks of the file
 
     """
-    q = asyncio.Queue()
+    _q = asyncio.Queue()
 
     def reader(gzip_path: Path, q: asyncio.Queue):
         with gzip.open(gzip_path, "rb") as f:
             q.put_nowait(f.read(CHUNK_SIZE))
 
-    task = asyncio.Task(asyncio.to_thread(reader, path, q))
+    task = asyncio.Task(asyncio.to_thread(reader, path, _q))
 
-    while not q.empty():
-        yield await q.get()
+    while not _q.empty():
+        yield await _q.get()
 
     await task
 
@@ -112,7 +112,7 @@ class DataFaker:
 
 class DataFakerPiece:
     def __init__(self, data_faker: DataFaker):
-        self.layer = data_faker.layer
+        self.layer: DataLayer = data_faker.layer
         self.faker = data_faker.faker
         self.history = []
 
@@ -120,19 +120,168 @@ class DataFakerPiece:
 class JobsFakerPiece(DataFakerPiece):
     model = Job
 
-    async def create(self, user: User, workflow: Optional[str] = None) -> Job:
-        return await self.layer.jobs.create(
+    async def create(
+        self,
+        user: User,
+        archived: bool = False,
+        state: JobState | None = None,
+        workflow: str | None = None,
+    ) -> Job:
+        """
+        Create a fake job.
+
+        A completely valid job will be created which follows the rules:
+
+        * The job will be in an archive-able state if ``archived`` is ``True``.
+        * The job status updates will be in a valid order.
+
+        :param user: the user that created the job
+        :param archived: whether the job should be archived
+        :param next_state: the state the most recent status update should have
+        :param workflow: the workflow the job is running
+        :return:
+        """
+        if archived and state in [
+            JobState.WAITING,
+            JobState.PREPARING,
+            JobState.RUNNING,
+        ]:
+            raise ValueError(
+                "Cannot create an archived job in the waiting, preparing, or running states"
+            )
+
+        job = await self.layer.jobs.create(
             workflow or self.faker.workflow(),
             self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
             0,
         )
 
+        if state:
+            target_state = state
+        elif archived:
+            target_state = self.faker.random_element(
+                [
+                    JobState.CANCELLED,
+                    JobState.COMPLETE,
+                    JobState.ERROR,
+                    JobState.TERMINATED,
+                    JobState.TIMEOUT,
+                ]
+            )
+        else:
+            target_state = self.faker.random_element(
+                [
+                    JobState.CANCELLED,
+                    JobState.COMPLETE,
+                    JobState.ERROR,
+                    JobState.PREPARING,
+                    JobState.RUNNING,
+                    JobState.TERMINATED,
+                    JobState.TIMEOUT,
+                    JobState.WAITING,
+                ]
+            )
+
+        previous_status = job.status[0]
+        progress = 0
+
+        while len(job.status) < 6:
+            if previous_status.state == target_state:
+                break
+
+            if len(job.status) == 5:
+                next_state = target_state
+            elif previous_status.state == JobState.WAITING:
+                next_state = JobState.PREPARING
+            elif previous_status.state == JobState.PREPARING:
+                next_state = JobState.RUNNING
+            else:
+                next_state = JobState.RUNNING if self.faker.pybool() else target_state
+
+            progress += 10
+            step_name = self.faker.pystr()
+
+            previous_status = await self.layer.jobs.push_status(
+                job.id,
+                self._generate_next_job_state(previous_status.state, next_state),
+                stage=step_name,
+                step_name=step_name,
+                step_description=self.faker.pystr(),
+                error=None,
+                progress=progress,
+            )
+
+        if archived:
+            return await self.layer.jobs.archive(job.id)
+
+        return await self.layer.jobs.get(job.id)
+
+    def _generate_next_job_state(
+        self, previous: JobState, final: JobState | None
+    ) -> JobState:
+        """
+        Generate the next job state based on the previous state.
+
+        If we want the job to end in a specific state, we can pass it as the ``final``
+        argument. No other final states will be allowed.
+
+        :param previous: the previous job state
+        :param final: the target final job state
+        :return: the next job state
+        """
+
+        if previous == JobState.WAITING:
+            return JobState.PREPARING
+
+        if previous == JobState.PREPARING:
+            return JobState.RUNNING
+
+        if previous == JobState.RUNNING:
+            allowed_states = [JobState.RUNNING, JobState.RUNNING, JobState.RUNNING]
+
+            if final:
+                allowed_states += [final, final]
+            else:
+                allowed_states += [
+                    JobState.COMPLETE,
+                    JobState.COMPLETE,
+                    JobState.CANCELLED,
+                    JobState.ERROR,
+                    JobState.TERMINATED,
+                ]
+
+            return self.faker.random_element(allowed_states)
+
+        raise ValueError(
+            f"Cannot generate next job state from when previous is {previous}"
+        )
+
+    def _generate_status_update(self, previous: dict) -> dict:
+        step_name = self.faker.pystr()
+        return {
+            "state": self.faker.random_element(
+                [
+                    "waiting",
+                    "running",
+                    "complete",
+                    "cancelled",
+                    "error",
+                    "terminated",
+                ]
+            ),
+            "stage": step_name,
+            "step_name": step_name,
+            "step_description": self.faker.pystr(),
+            "progress": self.faker.pyint(min_value=0, max_value=100),
+            "error": self.faker.pystr(),
+        }
+
 
 class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
-    async def create(self, permissions: Optional[UpdatePermissionsRequest] = None):
+    async def create(self, permissions: UpdatePermissionsRequest | None = None):
         name = "contains spaces"
 
         while " " in name:
@@ -277,30 +426,42 @@ class UsersFakerPiece(DataFakerPiece):
 
     async def create(
         self,
-        handle: Optional[str] = None,
-        groups: Optional[List[Group]] = None,
-        primary_group: Optional[Group] = None,
-        administrator_role: Optional[AdministratorRole] = None,
+        handle: str | None = None,
+        groups: List[Group] | None = None,
+        password: str | None = None,
+        primary_group: Group | None = None,
+        administrator_role: AdministratorRole | None = None,
     ):
-        handle = handle or self.faker.profile()["username"]
-        user = await self.layer.users.create(handle, self.faker.password())
+        user = await self.layer.users.create(
+            handle or self.faker.profile()["username"],
+            password or self.faker.password(),
+        )
 
-        if groups or primary_group:
-            if groups:
-                await self.layer.users.update(
-                    user.id, UpdateUserRequest(groups=[group.id for group in groups])
-                )
+        if administrator_role:
+            user = await self.layer.users.set_administrator_role(
+                user.id, administrator_role
+            )
 
-            if primary_group:
-                await self.layer.users.update(
-                    user.id, UpdateUserRequest(primary_group=primary_group.id)
-                )
+        if groups and primary_group:
+            return await self.layer.users.update(
+                user.id,
+                UpdateUserRequest(
+                    groups=list({group.id for group in groups} | {primary_group.id})
+                ),
+            )
 
-            if administrator_role:
-                await self.layer.users.set_administrator_role(
-                    user.id, administrator_role
-                )
+        elif groups:
+            return await self.layer.users.update(
+                user.id,
+                UpdateUserRequest(groups=[group.id for group in groups]),
+            )
 
-            return await self.layer.users.get(user.id)
+        elif primary_group:
+            await self.layer.users.update(
+                user.id,
+                UpdateUserRequest(
+                    groups=[primary_group.id], primary_group=primary_group.id
+                ),
+            )
 
         return user

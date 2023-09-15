@@ -365,13 +365,40 @@
 ---
 # name: test_find_users[False-None]
   <class 'dict'> {
-    'found_count': 0,
+    'found_count': 1,
     'items': <class 'list'> [
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'diamond21',
+        'id': 'da42dca3',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
+      },
     ],
     'page': 1,
-    'page_count': 0,
+    'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[False-missing-handle]
@@ -382,7 +409,7 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[False-test_user]
@@ -393,13 +420,40 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[None-None]
   <class 'dict'> {
-    'found_count': 2,
+    'found_count': 3,
     'items': <class 'list'> [
+      <class 'dict'> {
+        'active': True,
+        'administrator': False,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'diamond21',
+        'id': 'da42dca3',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
+      },
       <class 'dict'> {
         'active': True,
         'administrator': False,
@@ -439,12 +493,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'bf1b993c',
-            'name': 'musicians',
-          },
-          <class 'dict'> {
             'id': 'fb085f7f',
             'name': 'hydrogeologists',
+          },
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
           },
         ],
         'handle': 'test_user',
@@ -460,16 +514,13 @@
           'remove_job': False,
           'upload_file': False,
         },
-        'primary_group': <class 'dict'> {
-          'id': 'bf1b993c',
-          'name': 'musicians',
-        },
+        'primary_group': None,
       },
     ],
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[None-missing-handle]
@@ -480,7 +531,7 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[None-test_user]
@@ -499,12 +550,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'bf1b993c',
-            'name': 'musicians',
-          },
-          <class 'dict'> {
             'id': 'fb085f7f',
             'name': 'hydrogeologists',
+          },
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
           },
         ],
         'handle': 'test_user',
@@ -520,16 +571,13 @@
           'remove_job': False,
           'upload_file': False,
         },
-        'primary_group': <class 'dict'> {
-          'id': 'bf1b993c',
-          'name': 'musicians',
-        },
+        'primary_group': None,
       },
     ],
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[True-None]
@@ -575,12 +623,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'bf1b993c',
-            'name': 'musicians',
-          },
-          <class 'dict'> {
             'id': 'fb085f7f',
             'name': 'hydrogeologists',
+          },
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
           },
         ],
         'handle': 'test_user',
@@ -596,16 +644,13 @@
           'remove_job': False,
           'upload_file': False,
         },
-        'primary_group': <class 'dict'> {
-          'id': 'bf1b993c',
-          'name': 'musicians',
-        },
+        'primary_group': None,
       },
     ],
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[True-missing-handle]
@@ -616,7 +661,7 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_users[True-test_user]
@@ -635,12 +680,12 @@
         'force_reset': False,
         'groups': <class 'list'> [
           <class 'dict'> {
-            'id': 'bf1b993c',
-            'name': 'musicians',
-          },
-          <class 'dict'> {
             'id': 'fb085f7f',
             'name': 'hydrogeologists',
+          },
+          <class 'dict'> {
+            'id': 'bf1b993c',
+            'name': 'musicians',
           },
         ],
         'handle': 'test_user',
@@ -656,16 +701,13 @@
           'remove_job': False,
           'upload_file': False,
         },
-        'primary_group': <class 'dict'> {
-          'id': 'bf1b993c',
-          'name': 'musicians',
-        },
+        'primary_group': None,
       },
     ],
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_set_administrator_role[None][obj]

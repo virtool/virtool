@@ -229,7 +229,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -273,7 +273,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -317,7 +317,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -361,7 +361,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -405,7 +405,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -449,7 +449,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -493,8 +493,14 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
+  }
+---
+# name: TestUpdateAPIKey.test_not_found
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
   }
 ---
 # name: test_edit[all_valid][response]
@@ -512,7 +518,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -548,7 +554,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -602,7 +608,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -638,7 +644,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -732,7 +738,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -760,7 +766,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'groups': <class 'list'> [
         <class 'dict'> {
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
           'name': 'musicians',
         },
       ],
@@ -829,6 +835,12 @@
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Invalid username or password',
+  }
+---
+# name: test_remove_api_key[404]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
   }
 ---
 # name: test_update_settings[invalid_input][response]

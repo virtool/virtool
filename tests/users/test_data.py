@@ -254,7 +254,7 @@ async def test_find_users(
         handle="test_user", groups=[group_1, group_2], primary_group=group_1
     )
     user_2 = await fake2.users.create()
-    fake2.users.create()
+    await fake2.users.create()
 
     await authorization_client.add(
         AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),

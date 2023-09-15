@@ -245,39 +245,37 @@ class UsersData(DataLayerDomain):
         :return: the administrator
         """
 
-        if await id_exists(self._mongo.users, user_id):
-            await update_legacy_administrator(self._mongo, user_id, role)
+        if not await id_exists(self._mongo.users, user_id):
+            raise ResourceNotFoundError("User does not exist")
 
-            if role is None:
-                # Clear the user's administrator role.
-                admin_tuple = await self._authorization_client.get_administrator(
-                    user_id
-                )
+        await update_legacy_administrator(self._mongo, user_id, role)
 
-                if admin_tuple[1] is not None:
-                    await self._authorization_client.remove(
-                        AdministratorRoleAssignment(
-                            user_id, AdministratorRole(admin_tuple[1])
-                        )
+        if role is None:
+            # Clear the user's administrator role.
+            admin_tuple = await self._authorization_client.get_administrator(user_id)
+
+            if admin_tuple[1] is not None:
+                await self._authorization_client.remove(
+                    AdministratorRoleAssignment(
+                        user_id, AdministratorRole(admin_tuple[1])
                     )
-            else:
-                await self._authorization_client.add(
-                    AdministratorRoleAssignment(user_id, AdministratorRole(role))
                 )
-
-            user = await self.get(user_id)
-
-            await update_keys(
-                self._mongo,
-                user.id,
-                user.administrator,
-                user.groups,
-                user.permissions.dict(),
+        else:
+            await self._authorization_client.add(
+                AdministratorRoleAssignment(user_id, AdministratorRole(role))
             )
 
-            return user
+        user = await self.get(user_id)
 
-        raise ResourceNotFoundError("User does not exist")
+        await update_keys(
+            self._mongo,
+            user.id,
+            user.administrator,
+            user.groups,
+            user.permissions.dict(),
+        )
+
+        return user
 
     @emits(Operation.UPDATE)
     async def update(self, user_id: str, data: UpdateUserRequest):

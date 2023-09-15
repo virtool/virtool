@@ -1,5 +1,4 @@
 from logging import getLogger
-from pprint import pprint
 from typing import List, Union, Optional
 
 from aiohttp.web_fileresponse import FileResponse
@@ -110,12 +109,10 @@ class UploadView(PydanticView):
         try:
             upload = await get_data_from_req(self.request).uploads.get(upload_id)
 
-            pprint(upload)
             upload_path = await get_upload_path(
                 get_config_from_req(self.request), upload.name_on_disk
             )
         except ResourceNotFoundError as exc:
-            pprint(exc)
             raise NotFound
 
         return FileResponse(

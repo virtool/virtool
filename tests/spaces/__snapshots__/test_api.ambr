@@ -1,25 +1,13 @@
-# name: test_get_space
+# name: test_get
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'description': '',
     'id': 0,
     'members': <class 'list'> [
       <class 'dict'> {
-        'administrator': False,
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-        'label_role': None,
-        'project_role': 'project_manager',
-        'reference_role': None,
-        'role': 'member',
-        'sample_role': None,
-        'subtraction_role': None,
-        'upload_role': None,
-      },
-      <class 'dict'> {
         'administrator': True,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
         'label_role': None,
         'project_role': None,
         'reference_role': None,
@@ -28,10 +16,36 @@
         'subtraction_role': None,
         'upload_role': None,
       },
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'fb085f7f',
+        'label_role': None,
+        'project_role': 'project_manager',
+        'reference_role': None,
+        'role': 'member',
+        'sample_role': None,
+        'subtraction_role': None,
+        'upload_role': None,
+      },
     ],
     'name': 'Space 0',
     'updated_at': '2015-10-06T20:00:00Z',
   }
+---
+# name: test_list
+  <class 'list'> [
+    <class 'dict'> {
+      'description': '',
+      'id': 0,
+      'name': 'Space 0',
+    },
+    <class 'dict'> {
+      'description': 'A testing space.',
+      'id': 1,
+      'name': 'Space 1',
+    },
+  ]
 ---
 # name: test_list_space_members
   <class 'dict'> {
@@ -147,20 +161,8 @@
     'items': <class 'list'> [
       <class 'dict'> {
         'administrator': False,
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-        'label_role': None,
-        'project_role': None,
-        'reference_role': None,
-        'role': 'member',
-        'sample_role': 'sample_editor',
-        'subtraction_role': None,
-        'upload_role': None,
-      },
-      <class 'dict'> {
-        'administrator': False,
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'label_role': None,
         'project_role': None,
         'reference_role': None,
@@ -172,7 +174,7 @@
       <class 'dict'> {
         'administrator': True,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
         'label_role': None,
         'project_role': None,
         'reference_role': None,
@@ -181,38 +183,22 @@
         'subtraction_role': None,
         'upload_role': None,
       },
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'fb085f7f',
+        'label_role': None,
+        'project_role': None,
+        'reference_role': None,
+        'role': 'member',
+        'sample_role': 'sample_editor',
+        'subtraction_role': None,
+        'upload_role': None,
+      },
     ],
   }
 ---
-# name: test_list_spaces
-  <class 'list'> [
-    <class 'dict'> {
-      'description': '',
-      'id': 0,
-      'name': 'Space 0',
-    },
-    <class 'dict'> {
-      'description': 'A testing space.',
-      'id': 1,
-      'name': 'Space 1',
-    },
-  ]
----
-# name: test_update_member_roles
-  <class 'dict'> {
-    'administrator': False,
-    'handle': 'leeashley',
-    'id': 'bf1b993c',
-    'label_role': 'label_manager',
-    'project_role': 'project_editor',
-    'reference_role': None,
-    'role': 'member',
-    'sample_role': None,
-    'subtraction_role': None,
-    'upload_role': None,
-  }
----
-# name: test_update_space
+# name: test_update
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
     'description': 'New description',
@@ -221,5 +207,19 @@
     ],
     'name': 'New Name',
     'updated_at': '2015-10-06T20:00:00Z',
+  }
+---
+# name: test_update_member_roles
+  <class 'dict'> {
+    'administrator': False,
+    'handle': 'leeashley',
+    'id': 'fb085f7f',
+    'label_role': 'label_manager',
+    'project_role': 'project_editor',
+    'reference_role': None,
+    'role': 'member',
+    'sample_role': None,
+    'subtraction_role': None,
+    'upload_role': None,
   }
 ---

@@ -1,3 +1,1066 @@
+# name: TestAcquire.test_ok
+  <class 'dict'> {
+    'acquired': True,
+    'archived': False,
+    'args': <class 'dict'> {
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    },
+    'created_at': <class 'str'>,
+    'id': 'fb085f7f',
+    'key': <class 'str'>,
+    'ping': None,
+    'progress': 3,
+    'rights': <class 'dict'> {
+    },
+    'stage': None,
+    'state': 'preparing',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'str'>,
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'str'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'jobs_pathoscope_bowtie',
+  }
+---
+# name: TestArchive.test_already_archived
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Job already archived',
+  }
+---
+# name: TestArchive.test_ok
+  <class 'dict'> {
+    'acquired': False,
+    'archived': True,
+    'args': <class 'dict'> {
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    },
+    'created_at': <class 'str'>,
+    'id': '7cf872dc',
+    'ping': None,
+    'progress': 10,
+    'rights': <class 'dict'> {
+    },
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': 'preparing',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'str'>,
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
+        'timestamp': <class 'str'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'fb085f7f',
+    },
+    'workflow': 'jobs_pathoscope_bowtie',
+  }
+---
+# name: TestFind.test_archived[False]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 2,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'f60bae36',
+        'progress': 30,
+        'stage': 'DIkAgfVgUyxrvtDrQmmy',
+        'state': 'terminated',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'da42dca3',
+        'progress': 10,
+        'stage': 'sypWXHjZfEiUXPqmNpvc',
+        'state': 'preparing',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '7cf872dc',
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  }
+---
+# name: TestFind.test_archived[True]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 2,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': True,
+        'created_at': <class 'str'>,
+        'id': '09d01419',
+        'progress': 200,
+        'stage': 'HvmTcGnACunlspFVxYyD',
+        'state': 'timeout',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'created_at': <class 'str'>,
+        'id': '3cbb22cc',
+        'progress': 50,
+        'stage': 'iWmLrWzhUFeKQsbyxfOb',
+        'state': 'error',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_nuvs',
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  }
+---
+# name: TestFind.test_basic
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'error': <class 'dict'> {
+        'jobs_build_index': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_create_subtraction': 2,
+        'jobs_pathoscope_bowtie': 2,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '9c61c0ca',
+        'progress': 30,
+        'stage': 'VcZLZHaJlZWSKnWQGikD',
+        'state': 'error',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_build_index',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '7cce8f87',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '83e4c4f6',
+        'progress': 30,
+        'stage': 'bfLQjQXFCbvyXwaDdZIL',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '606cd773',
+        'progress': 10,
+        'stage': 'ahFNhHiNQGdooyOEZKhY',
+        'state': 'preparing',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '031ff6cb',
+        'progress': 10,
+        'stage': 'KbklJQhxeoHuMWUpIFQt',
+        'state': 'preparing',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_create_subtraction',
+      },
+    ],
+    'found_count': 11,
+    'page': 1,
+    'page_count': 3,
+    'per_page': 5,
+    'total_count': 11,
+  }
+---
+# name: TestFind.test_state[cancelled]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '606cd773',
+        'progress': 40,
+        'stage': 'JYyyWZRluqmAayuXQwcO',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_subtraction',
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state[complete]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '4af2da8b',
+        'progress': 90,
+        'stage': 'qwegICYNsZelwHKodoWl',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '83e4c4f6',
+        'progress': 120,
+        'stage': 'UvOzbGhKHMlkVUcOgMpv',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'f60bae36',
+        'progress': 50,
+        'stage': 'VbGTsMJmpeTNOTvcKIHC',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_create_sample',
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state[error]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '031ff6cb',
+        'progress': 70,
+        'stage': 'kXjEpGpwJnLsgFiwudKJ',
+        'state': 'error',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_create_subtraction',
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state[preparing]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'da42dca3',
+        'progress': 10,
+        'stage': 'lZEijfQSbBNkznHZPGfx',
+        'state': 'preparing',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state[running]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '09d01419',
+        'progress': 20,
+        'stage': 'GABAXhUvefdviXPwvzSq',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_create_subtraction',
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state[terminated]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '0927410c',
+        'progress': 100,
+        'stage': 'JtxXLMnKiDpZjZnuBHqL',
+        'state': 'terminated',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '7cce8f87',
+        'progress': 80,
+        'stage': 'kpKHMuheGijFsETwMgiw',
+        'state': 'terminated',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_sample',
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state[timeout]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '4938a221',
+        'progress': 60,
+        'stage': 'lVypwMSQgYyXiWkToRiS',
+        'state': 'timeout',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_aodp',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '7aa59bf4',
+        'progress': 40,
+        'stage': 'DXsGqOFZahcgWXyXQOMj',
+        'state': 'timeout',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '3cbb22cc',
+        'progress': 30,
+        'stage': 'kEahrPLrGciZpuCpymcj',
+        'state': 'timeout',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_aodp',
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state[waiting]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'cancelled': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'complete': <class 'dict'> {
+        'jobs_create_sample': 3,
+      },
+      'error': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_create_subtraction': 1,
+      },
+      'terminated': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'timeout': <class 'dict'> {
+        'jobs_aodp': 2,
+        'jobs_create_sample': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_create_subtraction': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '9c61c0ca',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_build_index',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '153ff459',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_subtraction',
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 14,
+  }
+---
+# name: TestFind.test_state_invalid
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'query string',
+      'loc': <class 'list'> [
+        'state',
+        0,
+      ],
+      'msg': "value is not a valid enumeration member; permitted: 'cancelled', 'complete', 'error', 'preparing', 'running', 'timeout', 'terminated', 'waiting'",
+      'type': 'type_error.enum',
+    },
+  ]
+---
+# name: TestFind.test_user[user_1]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'error': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_create_sample': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_nuvs': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '7aa59bf4',
+        'progress': 33,
+        'stage': 'wFBnmgOfMmoMIMASgHgM',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_nuvs',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'f60bae36',
+        'progress': 40,
+        'stage': 'dTJMIacGZTKLlNofxriv',
+        'state': 'error',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'da42dca3',
+        'progress': 33,
+        'stage': 'SPTxttBbePAFdwNpUvYR',
+        'state': 'error',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 6,
+  }
+---
+# name: TestFind.test_user[user_1_and_2]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'error': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_create_sample': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_nuvs': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '7aa59bf4',
+        'progress': 33,
+        'stage': 'wFBnmgOfMmoMIMASgHgM',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_nuvs',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '153ff459',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'f60bae36',
+        'progress': 40,
+        'stage': 'dTJMIacGZTKLlNofxriv',
+        'state': 'error',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_create_sample',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '09d01419',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_build_index',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': 'da42dca3',
+        'progress': 33,
+        'stage': 'SPTxttBbePAFdwNpUvYR',
+        'state': 'error',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+    ],
+    'found_count': 5,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 6,
+  }
+---
+# name: TestFind.test_user[user_2]
+  <class 'dict'> {
+    'counts': <class 'dict'> {
+      'error': <class 'dict'> {
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+      'preparing': <class 'dict'> {
+        'jobs_create_sample': 1,
+      },
+      'running': <class 'dict'> {
+        'jobs_nuvs': 1,
+      },
+      'waiting': <class 'dict'> {
+        'jobs_build_index': 1,
+        'jobs_pathoscope_bowtie': 1,
+      },
+    },
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '153ff459',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'archived': False,
+        'created_at': <class 'str'>,
+        'id': '09d01419',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        },
+        'workflow': 'jobs_build_index',
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 6,
+  }
+---
 # name: TestPushStatus.test[None]
   <class 'dict'> {
     'error': None,
@@ -768,7 +1831,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'workflow': 'build_index',
     },
@@ -782,7 +1845,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'workflow': 'build_index',
     },
@@ -796,7 +1859,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'workflow': 'nuvs',
     },
@@ -810,7 +1873,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'workflow': 'pathoscope',
     },
@@ -824,7 +1887,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'workflow': 'create_sample',
     },
@@ -881,8 +1944,8 @@
     ],
     'user': <class 'dict'> {
       'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'handle': 'laura56',
+      'id': '7cf872dc',
     },
     'workflow': 'build_index',
   }
@@ -2312,21 +3375,21 @@
     'acquired': False,
     'archived': False,
     'args': <class 'dict'> {
-      'analysis_id': 'e410429b',
-      'index_id': '465428b0',
-      'name': None,
-      'sample_id': '1e01a382',
-      'username': 'igboyes',
-      'workflow': 'nuvs',
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
     },
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': '4c530449',
+    'created_at': <class 'str'>,
+    'id': '7cf872dc',
     'ping': None,
-    'progress': 1,
+    'progress': 10,
     'rights': <class 'dict'> {
     },
-    'stage': 'import_results',
-    'state': 'complete',
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': 'preparing',
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
@@ -2335,42 +3398,24 @@
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
+        'timestamp': <class 'str'>,
       },
       <class 'dict'> {
         'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': 'mk_analysis_dir',
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 1,
-        'stage': 'import_results',
-        'state': 'complete',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
+        'timestamp': <class 'str'>,
       },
     ],
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
-    'workflow': 'build_index',
+    'workflow': 'jobs_pathoscope_bowtie',
   }
 ---
 # name: test_ping[None]

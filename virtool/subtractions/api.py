@@ -2,7 +2,12 @@ from logging import getLogger
 from typing import Union, Optional
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_exceptions import (
+    HTTPBadRequest,
+    HTTPConflict,
+    HTTPNoContent,
+    HTTPNotFound,
+)
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
@@ -177,7 +182,10 @@ async def upload(req):
     except ResourceConflictError as err:
         raise HTTPConflict(text=str(err))
     except ResourceNotFoundError as err:
-        raise NotFound(str(err))
+        if "Unsupported subtraction file name" in str(err):
+            raise NotFound(str(err))
+
+        raise NotFound
 
     return json_response(
         subtraction_file,

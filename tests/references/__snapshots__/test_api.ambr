@@ -1,5 +1,64 @@
-# name: TestCreate.test_clone_reference
+# name: TestCreate.test_clone[location]
   '/refs/bf1b993c'
+---
+# name: TestCreate.test_clone[resp]
+  <class 'dict'> {
+    'cloned_from': <class 'dict'> {
+      'id': 'foo',
+      'name': 'Foo',
+    },
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test 1',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'complete': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'error': None,
+      'id': 1,
+      'progress': 0,
+      'step': 'clone_reference',
+      'type': 'clone_reference',
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
 ---
 # name: TestCreate.test_clone_reference.1
   <class 'dict'> {
@@ -44,7 +103,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -52,7 +111,69 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_clone_reference[location]
+  '/refs/bf1b993c'
+---
+# name: TestCreate.test_clone_reference[resp]
+  <class 'dict'> {
+    'cloned_from': <class 'dict'> {
+      'id': 'foo',
+      'name': 'Foo',
+    },
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test 1',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'complete': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'error': None,
+      'id': 1,
+      'progress': 0,
+      'step': 'clone_reference',
+      'type': 'clone_reference',
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -96,7 +217,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -104,7 +225,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -147,7 +268,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -155,7 +276,80 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_import
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': '',
+    'groups': <class 'list'> [
+    ],
+    'id': <class 'str'>,
+    'imported_from': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'name': 'reference.json.gz',
+      'name_on_disk': '1-reference.json.gz',
+      'ready': True,
+      'removed': False,
+      'removed_at': None,
+      'reserved': False,
+      'size': 102286,
+      'type': 'reference',
+      'uploaded_at': '2015-10-06T20:00:00Z',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+    },
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': '',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'complete': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'error': None,
+      'id': 1,
+      'progress': 0,
+      'step': 'import_reference',
+      'type': 'import_reference',
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -189,7 +383,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
       },
     },
     'installed': None,
@@ -220,7 +414,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -228,7 +422,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -236,10 +430,216 @@
     ],
   }
 ---
-# name: TestCreate.test_remote_reference
+# name: TestCreate.test_ok[barcode]
+  'https://virtool.example.com/refs/bf1b993c'
+---
+# name: TestCreate.test_ok[barcode].1
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'barcode',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': <class 'list'> [
+    ],
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_ok[barcode][location]
+  'https://virtool.example.com/refs/bf1b993c'
+---
+# name: TestCreate.test_ok[barcode][resp]
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'barcode',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': <class 'list'> [
+    ],
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_ok[genome]
+  'https://virtool.example.com/refs/bf1b993c'
+---
+# name: TestCreate.test_ok[genome].1
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_ok[genome][location]
+  'https://virtool.example.com/refs/bf1b993c'
+---
+# name: TestCreate.test_ok[genome][resp]
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_remote
   '/refs/bf1b993c'
 ---
-# name: TestCreate.test_remote_reference.1
+# name: TestCreate.test_remote.1
   <class 'dict'> {
     'cloned_from': None,
     'contributors': <class 'list'> [
@@ -268,7 +668,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
       },
     },
     'internal_control': None,
@@ -317,7 +717,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -325,7 +725,201 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_remote[location]
+  '/refs/bf1b993c'
+---
+# name: TestCreate.test_remote[resp]
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'The official plant virus reference from the Virtool developers',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': <class 'dict'> {
+      'body': '
+        #### Fixed
+        - fixed uploading to GitHub releases in `.travis.yml`
+      ',
+      'created_at': '2015-10-06T20:00:00Z',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
+      'id': 11447367,
+      'name': 'v0.1.1',
+      'newer': False,
+      'published_at': '2018-06-12T19:20:57Z',
+      'ready': False,
+      'size': 3695872,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+    },
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Plant Viruses',
+    'organism': 'Test Remote',
+    'otu_count': 0,
+    'release': <class 'dict'> {
+      'body': '
+        #### Fixed
+        - fixed uploading to GitHub releases in `.travis.yml`
+      ',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
+      'id': 11447367,
+      'name': 'v0.1.1',
+      'newer': False,
+      'published_at': '2018-06-12T19:20:57Z',
+      'retrieved_at': '2015-10-06T20:00:00Z',
+      'size': 3695872,
+    },
+    'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'complete': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'error': None,
+      'id': 1,
+      'progress': 0,
+      'step': 'remote_reference',
+      'type': 'remote_reference',
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: TestCreate.test_remote_reference
+  '/refs/bf1b993c'
+---
+# name: TestCreate.test_remote_reference.1
+  <class 'dict'> {
+    'cloned_from': None,
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'The official plant virus reference from the Virtool developers',
+    'groups': <class 'list'> [
+    ],
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': <class 'dict'> {
+      'body': '
+        #### Fixed
+        - fixed uploading to GitHub releases in `.travis.yml`
+      ',
+      'created_at': '2015-10-06T20:00:00Z',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
+      'id': 11447367,
+      'name': 'v0.1.1',
+      'newer': False,
+      'published_at': '2018-06-12T19:20:57Z',
+      'ready': False,
+      'size': 3695872,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'fb085f7f',
+      },
+    },
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Plant Viruses',
+    'organism': 'Test Remote',
+    'otu_count': 0,
+    'release': <class 'dict'> {
+      'body': '
+        #### Fixed
+        - fixed uploading to GitHub releases in `.travis.yml`
+      ',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
+      'id': 11447367,
+      'name': 'v0.1.1',
+      'newer': False,
+      'published_at': '2018-06-12T19:20:57Z',
+      'retrieved_at': '2015-10-06T20:00:00Z',
+      'size': 3695872,
+    },
+    'remotes_from': <class 'dict'> {
+      'errors': <class 'list'> [
+      ],
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'targets': None,
+    'task': <class 'dict'> {
+      'complete': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'error': None,
+      'id': 1,
+      'progress': 0,
+      'step': 'remote_reference',
+      'type': 'remote_reference',
+    },
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'fb085f7f',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'bob',
+        'id': 'fb085f7f',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -385,7 +979,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
   ]
@@ -411,7 +1005,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     'name': 'Tobacco mosaic virus',
@@ -482,7 +1076,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
   ]
@@ -508,7 +1102,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     'name': 'Tobacco mosaic virus',
@@ -579,7 +1173,7 @@
         'id': 'foo',
       },
       'user': <class 'dict'> {
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
   ]
@@ -605,7 +1199,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
     },
     'name': 'Tobacco mosaic virus',
@@ -656,7 +1250,7 @@
     'source_types': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'fb085f7f',
+      'id': '7cf872dc',
     },
     'users': <class 'list'> [
     ],
@@ -668,7 +1262,7 @@
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
     'handle': 'leeashley',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'modify': True,
     'modify_otu': False,
     'remove': False,
@@ -688,13 +1282,13 @@
     'source_types': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'fb085f7f',
+      'id': '7cf872dc',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
         'modify': True,
         'modify_otu': False,
         'remove': False,
@@ -710,7 +1304,7 @@
         'administrator': False,
         'count': 1,
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
       },
     ],
     'created_at': '2015-10-06T20:00:00Z',
@@ -728,7 +1322,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
       },
       'workflow': 'build_index',
     },
@@ -748,7 +1342,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'bf1b993c',
     },
     'version': 0,
   }
@@ -771,7 +1365,7 @@
       'id': 'foo',
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
     'version': 0,
   }
@@ -790,13 +1384,13 @@
     'source_types': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'modify': False,
         'modify_otu': False,
         'remove': False,
@@ -826,7 +1420,7 @@
     'source_types': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
     ],
@@ -880,13 +1474,13 @@
       },
     ],
     'user': <class 'dict'> {
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -894,7 +1488,7 @@
       <class 'dict'> {
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': '7cf872dc',
+        'id': '3cbb22cc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -940,7 +1534,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -948,7 +1542,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -958,7 +1552,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'olopez',
-        'id': '7cf872dc',
+        'id': '3cbb22cc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -983,13 +1577,13 @@
       'strain',
     ],
     'user': <class 'dict'> {
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -997,7 +1591,7 @@
       <class 'dict'> {
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': '7cf872dc',
+        'id': '3cbb22cc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1037,7 +1631,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -1045,7 +1639,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1055,7 +1649,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'olopez',
-        'id': '7cf872dc',
+        'id': '3cbb22cc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1095,13 +1689,13 @@
     'source_types': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'fb085f7f',
+      'id': '7cf872dc',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
         'modify': False,
         'modify_otu': False,
         'remove': False,
@@ -1115,7 +1709,7 @@
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
     'handle': 'leeashley',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'modify': False,
     'modify_otu': False,
     'remove': True,
@@ -1143,13 +1737,13 @@
     'source_types': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'fb085f7f',
+      'id': '7cf872dc',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
         'modify': False,
         'modify_otu': False,
         'remove': True,
@@ -1164,7 +1758,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'barcode',
-        'id': 'baz',
+        'id': 'bar',
         'imported_from': None,
         'installed': None,
         'internal_control': None,
@@ -1187,8 +1781,39 @@
         'updating': None,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'handle': 'laura56',
+          'id': '7cf872dc',
+        },
+      },
+      <class 'dict'> {
+        'cloned_from': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'data_type': 'barcode',
+        'id': 'goo',
+        'imported_from': None,
+        'installed': None,
+        'internal_control': None,
+        'latest_build': None,
+        'name': 'Baz',
+        'organism': 'virus',
+        'otu_count': 0,
+        'release': None,
+        'remotes_from': None,
+        'task': <class 'dict'> {
+          'complete': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'error': None,
+          'id': 2,
+          'progress': 80,
+          'step': 'download',
+          'type': 'import_reference',
+        },
+        'unbuilt_change_count': 0,
+        'updating': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'laura56',
+          'id': '7cf872dc',
         },
       },
       <class 'dict'> {
@@ -1218,17 +1843,17 @@
         'updating': None,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'leeashley',
+          'handle': 'bob',
           'id': 'bf1b993c',
         },
       },
     ],
-    'found_count': 2,
+    'found_count': 3,
     'official_installed': False,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
   }
 ---
 # name: test_find_otus[False-None]
@@ -1619,7 +2244,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -1627,7 +2252,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1690,7 +2315,7 @@
     <class 'dict'> {
       'id': 'bar',
     },
-    'test',
+    'bf1b993c',
   )
 ---
 # name: test_update[True-True-None][json]

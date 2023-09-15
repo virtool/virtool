@@ -19,7 +19,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': '7cf872dc',
     },
   }
 ---
@@ -57,7 +57,7 @@
       },
     ],
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': '7cf872dc',
     },
     'workflow': 'create_subtraction',
   }
@@ -560,9 +560,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -632,9 +632,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -704,9 +704,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -776,9 +776,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -848,9 +848,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -927,9 +927,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -1006,9 +1006,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -1085,9 +1085,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -1142,7 +1142,7 @@
     },
   }
 ---
-# name: test_finalize_subtraction[None]
+# name: test_finalize[None]
   <class 'dict'> {
     'count': 100,
     'created_at': '2015-10-06T20:00:00Z',
@@ -1188,9 +1188,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
@@ -1210,7 +1210,7 @@
     },
   }
 ---
-# name: test_finalize_subtraction[None].1
+# name: test_finalize[None].1
   <class 'dict'> {
     '_id': 'foo',
     'count': 100,
@@ -1251,14 +1251,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1268,7 +1268,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -1282,14 +1282,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1299,7 +1299,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
     ],
@@ -1325,14 +1325,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1342,7 +1342,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -1356,14 +1356,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1373,7 +1373,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
     ],
@@ -1399,14 +1399,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1416,7 +1416,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -1430,14 +1430,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1447,7 +1447,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -1461,14 +1461,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1478,7 +1478,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -1492,14 +1492,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1509,7 +1509,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -1523,14 +1523,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'fb085f7f',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '7cf872dc',
+          'progress': 10,
+          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'state': 'preparing',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 'fb085f7f',
           },
           'workflow': 'jobs_pathoscope_bowtie',
         },
@@ -1540,7 +1540,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
       },
     ],
@@ -1586,9 +1586,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',

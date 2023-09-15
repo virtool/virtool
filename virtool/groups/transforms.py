@@ -1,8 +1,11 @@
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+
+import pymongo
+from virtool_core.models.group import GroupMinimal
+
 from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
 from virtool.utils import base_processor
-from virtool_core.models.group import GroupMinimal
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -86,7 +89,8 @@ class AttachGroupsTransform(AbstractTransform):
         return [
             base_processor(group_doc)
             async for group_doc in self._mongo.groups.find(
-                {"_id": {"$in": document.get("groups", [])}}
+                {"_id": {"$in": document.get("groups", [])}},
+                sort=[("name", pymongo.ASCENDING)],
             )
         ]
 
@@ -98,7 +102,7 @@ class AttachGroupsTransform(AbstractTransform):
         :param prepared: the list of groups to be attached
         :return: the input document with an attached list of groups
         """
-        return {**document, "groups": prepared}
+        return {**document, "groups": sorted(prepared, key=lambda d: d["name"])}
 
     async def prepare_many(
         self, documents: List[Document]
@@ -120,6 +124,6 @@ class AttachGroupsTransform(AbstractTransform):
         }
 
         return {
-            document["id"]: [groups[group] for group in document["groups"]]
+            document["id"]: [groups[group_id] for group_id in document["groups"]]
             for document in documents
         }

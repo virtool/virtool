@@ -64,8 +64,6 @@ class JobsData:
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        sort = {"created_at": -1}
-
         match_query = {
             **({"archived": archived} if archived is not None else {}),
             **({"user.id": {"$in": users}} if users else {}),
@@ -109,7 +107,7 @@ class JobsData:
                                 }
                             },
                             {"$match": match_state},
-                            {"$sort": sort},
+                            {"$sort": {"created_at": -1}},
                             {"$skip": skip_count},
                             {"$limit": per_page},
                         ],

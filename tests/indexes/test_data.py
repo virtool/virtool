@@ -1,22 +1,22 @@
 import asyncio
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.indexes.data import IndexData
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.indexes.models import SQLIndexFile
-
-
-@pytest.fixture
-def indexes_data(config, mongo, pg: AsyncEngine):
-    return IndexData(mongo, config, pg)
+from virtool.mongo.core import Mongo
 
 
 async def test_finalize(
-    fake2, indexes_data, snapshot, mongo, pg: AsyncEngine, static_time
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot,
+    static_time,
 ):
     user = await fake2.users.create()
-
     job = await fake2.jobs.create(user=user)
 
     await asyncio.gather(
@@ -94,7 +94,7 @@ async def test_finalize(
         await session.commit()
 
     # Ensure return value is correct.
-    assert await indexes_data.finalize("foo") == snapshot
+    assert await data_layer.index.finalize("foo") == snapshot
 
     # Ensure document in database is correct.
     assert await mongo.indexes.find_one() == snapshot
