@@ -1,11 +1,13 @@
 import pytest
 from virtool_core.models.roles import AdministratorRole
 
+from virtool.authorization.client import (
+    AuthorizationClient,
+)
 from virtool.authorization.relationships import AdministratorRoleAssignment
-from virtool.authorization.client import get_authorization_client_from_app
 from virtool.data.utils import get_data_from_app
+from virtool.fake.next import DataFaker
 from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
-from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials
 
 
@@ -16,19 +18,20 @@ async def test_get_roles(spawn_client, snapshot):
     resp = await client.get("/admin/roles")
 
     assert resp.status == 200
-
     assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
-async def test_list_users(spawn_client, fake2, snapshot, authorization_client):
+async def test_list_users(
+    authorization_client: AuthorizationClient,
+    spawn_client,
+    fake2,
+    snapshot,
+):
     client = await spawn_client(authorize=True, administrator=True)
 
     user_1 = await fake2.users.create()
-
     user_2 = await fake2.users.create()
-
-    authorization_client = client.app["authorization"]
 
     await authorization_client.add(
         AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
@@ -38,17 +41,20 @@ async def test_list_users(spawn_client, fake2, snapshot, authorization_client):
     resp = await client.get("/admin/users")
 
     assert resp.status == 200
-
     assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
-async def test_get_user(spawn_client, fake2, snapshot, static_time):
+async def test_get_user(
+    authorization_client: AuthorizationClient,
+    fake2: DataFaker,
+    spawn_client,
+    snapshot,
+    static_time,
+):
     client = await spawn_client(authorize=True, administrator=True)
 
     user = await fake2.users.create()
-
-    authorization_client = client.app["authorization"]
 
     await authorization_client.add(
         AdministratorRoleAssignment(user.id, AdministratorRole.BASE),
@@ -57,7 +63,6 @@ async def test_get_user(spawn_client, fake2, snapshot, static_time):
     resp = await client.get(f"/admin/users/{user.id}")
 
     assert resp.status == 200
-
     assert await resp.json() == snapshot
 
 
@@ -65,7 +70,9 @@ async def test_get_user(spawn_client, fake2, snapshot, static_time):
 @pytest.mark.parametrize(
     "role", [None, AdministratorRole.USERS, AdministratorRole.FULL]
 )
-async def test_update_admin_role(spawn_client, fake2, snapshot, role, mongo):
+async def test_update_admin_role(
+    fake2: DataFaker, spawn_client, snapshot, role: AdministratorRole
+):
     client = await spawn_client(authorize=True, administrator=True)
 
     user = await fake2.users.create()
@@ -73,19 +80,15 @@ async def test_update_admin_role(spawn_client, fake2, snapshot, role, mongo):
     resp = await client.put(f"/admin/users/{user.id}/role", {"role": role})
 
     assert resp.status == 200
-
-    if role == AdministratorRole.FULL:
-        assert await get_one_field(mongo.users, "administrator", user.id) is True
-
     assert await resp.json() == snapshot
 
 
 @pytest.fixture
-def setup_admin_update_user(fake2, spawn_client):
+def setup_admin_update_user(
+    authorization_client: AuthorizationClient, fake2: DataFaker, spawn_client
+):
     async def func(administrator):
         client = await spawn_client(authorize=True, administrator=administrator)
-
-        authorization_client = client.app["authorization"]
 
         if not administrator:
             await authorization_client.remove(
@@ -139,10 +142,8 @@ class TestUpdateUser:
         )
 
         assert resp.status == 200
-
-        assert await validate_credentials(mongo, user.id, "hello_world")
-
         assert await resp.json() == snapshot
+        assert await validate_credentials(mongo, user.id, "hello_world")
 
     @pytest.mark.parametrize(
         "administrator, target_administrator, status",
@@ -156,15 +157,14 @@ class TestUpdateUser:
     )
     async def test_set_admin_roles(
         self,
+        administrator: AdministratorRole | None,
+        target_administrator: AdministratorRole | None,
+        status: int,
+        authorization_client: AuthorizationClient,
         setup_admin_update_user,
         snapshot,
-        administrator,
-        target_administrator,
-        status,
     ):
         client, _, _, user = await setup_admin_update_user(False)
-
-        authorization_client = get_authorization_client_from_app(client.app)
 
         if administrator is not None:
             await authorization_client.add(
@@ -184,6 +184,7 @@ class TestUpdateUser:
         )
 
         assert resp.status == status
+
         if status == 200:
             body = await resp.json()
             assert body["force_reset"] is True
@@ -192,7 +193,7 @@ class TestUpdateUser:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("name,status", [("relist_jobs", 202), ("foo", 400)])
-async def test_run_actions(spawn_client, fake2, snapshot, mongo, name, status):
+async def test_run_actions(name, status, spawn_client):
     client = await spawn_client(authorize=True, administrator=True)
 
     resp = await client.put("/admin/actions", {"name": name})

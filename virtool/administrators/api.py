@@ -77,7 +77,7 @@ class AdminUsersView(PydanticView):
             per_page = 25
 
         return json_response(
-            await get_data_from_req(self.request).administrators.find(
+            await get_data_from_req(self.request).users.find(
                 page,
                 per_page,
                 administrator,
@@ -101,7 +101,7 @@ class AdminUserView(PydanticView):
         """
 
         try:
-            user = await get_data_from_req(self.request).administrators.get(user_id)
+            user = await get_data_from_req(self.request).users.get(user_id)
         except ResourceNotFoundError:
             raise NotFound()
 
@@ -127,9 +127,7 @@ class AdminUserView(PydanticView):
             raise HTTPForbidden(text="Insufficient privileges")
 
         try:
-            user = await get_data_from_req(self.request).administrators.update(
-                user_id, data
-            )
+            user = await get_data_from_req(self.request).users.update(user_id, data)
         except ResourceNotFoundError:
             raise NotFound()
 
@@ -186,7 +184,7 @@ class AdminRoleView(PydanticView):
         try:
             administrator = await get_data_from_req(
                 self.request
-            ).administrators.set_administrator_role(user_id, data.role)
+            ).users.set_administrator_role(user_id, data.role)
         except ResourceNotFoundError:
             raise NotFound()
 
