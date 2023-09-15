@@ -15,7 +15,6 @@ from virtool.data.events import emits, Operation
 from virtool.data.domain import DataLayerDomain
 from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
-from virtool.mongo.core import Mongo
 from virtool.uploads.models import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
