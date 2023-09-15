@@ -1,19 +1,25 @@
 import random
 
 from pymongo.errors import DuplicateKeyError
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.user import User
+from virtool_core.models.user import User, UserSearchResult
 
 import virtool.users.utils
 import virtool.utils
-from virtool.data.events import emits, Operation
-from virtool.data.domain import DataLayerDomain
-from virtool.groups.utils import merge_group_permissions
-from virtool.users.oas import UpdateUserRequest
+from virtool.administrators.db import update_legacy_administrator
+from virtool.api.utils import compose_regex_query, paginate_aggregate
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.events import emits, Operation
+from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
+from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
+from virtool.groups.utils import merge_group_permissions
+from virtool.mongo.core import Mongo
+from virtool.mongo.utils import id_exists
 from virtool.users.db import (
     B2CUserAttributes,
     update_keys,
@@ -22,16 +28,95 @@ from virtool.users.db import (
     fetch_complete_user,
 )
 from virtool.users.mongo import create_user
+from virtool.users.oas import UpdateUserRequest
+from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
+
+PROJECTION = [
+    "_id",
+    "handle",
+    "administrator",
+    "force_reset",
+    "groups",
+    "last_password_change",
+    "permissions",
+    "primary_group",
+    "administrator_role",
+    "active",
+    "b2c",
+    "b2c_display_name",
+    "b2c_family_name",
+    "b2c_given_name",
+    "b2c_oid",
+]
 
 
 class UsersData(DataLayerDomain):
     name = "users"
 
-    def __init__(self, authorization_client: AuthorizationClient, mongo, pg):
+    def __init__(
+        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+    ):
         self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
+
+    async def find(
+        self,
+        page: int,
+        per_page: int,
+        administrator: bool | None = None,
+        term: str | None = None,
+    ) -> UserSearchResult:
+        """
+        Find users.
+
+        Optionally filter by administrator status or search term.
+
+        :param page: the page number
+        :param per_page: the number of items per page
+        :param administrator: whether to filter by administrator status
+        :param term: a search term to filter by user handle
+        """
+
+        administrator_roles = dict(
+            await self._authorization_client.list_administrators()
+        )
+
+        administrator_query = {}
+
+        if administrator is not None:
+            operator = "$in" if administrator else "$nin"
+            administrator_query = {"_id": {operator: list(administrator_roles.keys())}}
+
+        term_query = compose_regex_query(term, ["handle"]) if term else {}
+
+        client_query = {**administrator_query, **term_query}
+
+        result = await paginate_aggregate(
+            self._mongo.users,
+            page,
+            per_page,
+            client_query,
+            sort="handle",
+            projection={field: True for field in PROJECTION},
+        )
+
+        result["items"] = await apply_transforms(
+            [base_processor(item) for item in result["items"]],
+            [
+                AttachPermissionsTransform(self._mongo, self._pg),
+                AttachPrimaryGroupTransform(self._mongo),
+                AttachGroupsTransform(self._mongo),
+            ],
+        )
+
+        result["items"] = [
+            User(**user, administrator_role=administrator_roles.get(user["id"]))
+            for user in result["items"]
+        ]
+
+        return UserSearchResult(**result)
 
     async def get(self, user_id: str) -> User:
         """
@@ -40,13 +125,14 @@ class UsersData(DataLayerDomain):
         :param user_id: the user's ID
         :return: the user
         """
-
-        if document := await fetch_complete_user(
+        user = await fetch_complete_user(
             self._authorization_client, self._mongo, self._pg, user_id
-        ):
-            return User(**base_processor(document))
+        )
 
-        raise ResourceNotFoundError
+        if not user:
+            raise ResourceNotFoundError("User does not exist")
+
+        return user
 
     @emits(Operation.CREATE)
     async def create(
@@ -144,6 +230,54 @@ class UsersData(DataLayerDomain):
         )
 
         return user
+
+    async def set_administrator_role(
+        self, user_id: str, role: AdministratorRole
+    ) -> User:
+        """
+        Set a user's administrator role.
+
+        Sets the user's legacy administrator flag to ``True`` if the ``FULL`` user role
+        is set. Otherwise, sets the flag to ``False``.
+
+        :param user_id: the id of the user to set the role of
+        :param role: the administrator role
+        :return: the administrator
+        """
+
+        if await id_exists(self._mongo.users, user_id):
+            await update_legacy_administrator(self._mongo, user_id, role)
+
+            if role is None:
+                # Clear the user's administrator role.
+                admin_tuple = await self._authorization_client.get_administrator(
+                    user_id
+                )
+
+                if admin_tuple[1] is not None:
+                    await self._authorization_client.remove(
+                        AdministratorRoleAssignment(
+                            user_id, AdministratorRole(admin_tuple[1])
+                        )
+                    )
+            else:
+                await self._authorization_client.add(
+                    AdministratorRoleAssignment(user_id, AdministratorRole(role))
+                )
+
+            user = await self.get(user_id)
+
+            await update_keys(
+                self._mongo,
+                user.id,
+                user.administrator,
+                user.groups,
+                user.permissions.dict(),
+            )
+
+            return user
+
+        raise ResourceNotFoundError("User does not exist")
 
     @emits(Operation.UPDATE)
     async def update(self, user_id: str, data: UpdateUserRequest):
