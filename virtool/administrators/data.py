@@ -12,7 +12,7 @@ from virtool.api.utils import paginate_aggregate, compose_regex_query
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
@@ -46,7 +46,7 @@ PROJECTION = [
 ]
 
 
-class AdministratorsData(DataLayerPiece):
+class AdministratorsData(DataLayerDomain):
     name = "administrators"
 
     def __init__(

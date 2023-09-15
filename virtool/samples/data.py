@@ -15,8 +15,8 @@ import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.domain import DataLayerDomain
 from virtool.data.events import emits, Operation
-from virtool.data.piece import DataLayerPiece
 from virtool.data.transforms import apply_transforms
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
@@ -53,7 +53,7 @@ from virtool.utils import base_processor, chunk_list, wait_for_checks
 logger = getLogger("samples")
 
 
-class SamplesData(DataLayerPiece):
+class SamplesData(DataLayerDomain):
     name = "samples"
 
     def __init__(

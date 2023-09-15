@@ -19,7 +19,7 @@ from virtool.blast.utils import (
 )
 from virtool.blast.utils import format_blast_content, fetch_nuvs_blast_result
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.types import Document
 
 if TYPE_CHECKING:
@@ -28,10 +28,11 @@ if TYPE_CHECKING:
 logger = getLogger(__name__)
 
 
-class BLASTData(DataLayerPiece):
+class BLASTData(DataLayerDomain):
     """
     A data layer piece for BLAST data.
     """
+
     name = "blast"
 
     def __init__(self, client: ClientSession, mongo: "Mongo", pg: AsyncEngine):

@@ -26,7 +26,7 @@ from virtool.config import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.file import FileDescriptor
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
@@ -60,7 +60,7 @@ from virtool.utils import base_processor
 logger = getLogger("subtractions")
 
 
-class SubtractionsData(DataLayerPiece):
+class SubtractionsData(DataLayerDomain):
     name = "subtractions"
 
     def __init__(self, base_url: str, config: Config, mongo, pg: AsyncEngine):

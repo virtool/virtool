@@ -37,7 +37,7 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.events import emits, Operation, emit
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.db import lookup_minimal_job_by_id
@@ -61,7 +61,7 @@ from virtool.utils import wait_for_checks, base_processor
 logger = getLogger("analyses")
 
 
-class AnalysisData(DataLayerPiece):
+class AnalysisData(DataLayerDomain):
     name = "analyses"
 
     def __init__(self, db: Mongo, config, pg: AsyncEngine):
