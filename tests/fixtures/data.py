@@ -3,7 +3,7 @@ import pytest
 from aiohttp import ClientSession
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool.data.layer import create_data_layer
+from virtool.data.layer import create_data_layer, DataLayer
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 
@@ -11,7 +11,7 @@ from virtool.tasks.data import TasksData
 @pytest.fixture
 def data_layer(
     authorization_client, mongo, config, mocker, pg: AsyncEngine, redis: Redis
-):
+) -> DataLayer:
     """
     A complete data layer backed by testing instances of MongoDB, PostgreSQL, OpenFGA,
     and Redis.

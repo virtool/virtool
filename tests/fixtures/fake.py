@@ -262,12 +262,30 @@ def app(mongo, pg, tmp_path, config, data_layer):
 
 @pytest.fixture
 def fake(mongo, pg):
+    """
+    Provides a :class:`FakeGenerator` object for generating deterministic fake data.
+
+    This is a legacy fixture and should not be used in new tests.
+    """
     return FakeGenerator(mongo, pg)
 
 
 @pytest.fixture
 def fake2(data_layer: "DataLayer", example_path: Path, mocker, mongo: Mongo):
-    """A fixture for generating deterministic fake data."""
+    """
+    Provides a :class:`DataFaker` object for generating deterministic fake data.
+
+    This fixture supercedes :fixture:`fake` and should be used in all new tests.
+
+    .. code-block:: python
+
+        async def test_example(data_layer: DataLayer, fake2: DataFaker):
+            # Create a fake job.
+            job = await fake2.jobs.create()
+
+
+            assert await data_layer.jobs.get(job.id) == job
+    """
 
     # Use a local example ML model instead of downloading from GitHub.
     mocker.patch.object(
