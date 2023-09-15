@@ -3,7 +3,6 @@ import asyncio
 from syrupy.filters import props
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
-from tests.users.test_data import users_data
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
