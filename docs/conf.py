@@ -13,7 +13,13 @@ author = "Ian Boyes"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx", "sphinx_autofixture"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx_autodoc_typehints",
+    "sphinx.ext.intersphinx",
+    "sphinx_autofixture",
+    "sphinx_toolbox.more_autodoc.autoprotocol",
+]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -22,6 +28,9 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "alabaster"
+html_theme_options = {
+    "page_width": "1200px",
+}
 html_static_path = ["_static"]
 
 # -- Autodoc configuration ---------------------------------------------------
