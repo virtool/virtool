@@ -1,5 +1,5 @@
 import sys
-from logging import getLogger
+from structlog import get_logger
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
@@ -7,7 +7,7 @@ from semver import VersionInfo
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 
-logger = getLogger("mongo")
+logger = get_logger("mongo")
 
 
 async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDatabase:

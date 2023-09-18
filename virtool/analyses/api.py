@@ -3,7 +3,7 @@ Provides request handlers for managing and viewing analyses.
 
 """
 import asyncio
-from logging import getLogger
+from structlog import get_logger
 
 import arrow
 from aiohttp.web import (
@@ -40,7 +40,7 @@ from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.uploads.utils import naive_validator
 
-logger = getLogger("analyses")
+logger = get_logger("analyses")
 
 routes = Routes()
 

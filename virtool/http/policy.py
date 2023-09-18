@@ -1,5 +1,5 @@
 from inspect import isclass
-from logging import getLogger
+from structlog import get_logger
 from typing import Callable, Any, Type, Union
 
 from aiohttp import web
@@ -19,7 +19,7 @@ from virtool.authorization.client import get_authorization_client_from_req
 from virtool.errors import PolicyError
 from virtool.http.client import AbstractClient
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DefaultRoutePolicy:

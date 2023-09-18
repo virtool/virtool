@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 from shutil import copytree
 from typing import Tuple
 
@@ -11,7 +11,7 @@ from virtool.subtractions.utils import FILES
 from virtool.types import App
 from virtool.uploads.models import SQLUpload
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def create_fake_fasta_upload(app: App, user_id: str) -> Tuple[int, str]:

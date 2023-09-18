@@ -3,7 +3,7 @@ import math
 import os
 import shutil
 from asyncio import CancelledError, to_thread
-from logging import getLogger
+from structlog import get_logger
 from typing import Optional
 
 from aiohttp import MultipartReader
@@ -57,7 +57,7 @@ from virtool.uploads.utils import naive_writer
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import base_processor
 
-logger = getLogger("subtractions")
+logger = get_logger("subtractions")
 
 
 class SubtractionsData(DataLayerPiece):

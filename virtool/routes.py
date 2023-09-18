@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 
 import virtool.account.api
 import virtool.administrators.api
@@ -27,7 +27,7 @@ import virtool.uploads.api
 import virtool.users.api
 import virtool.ws.route
 
-logger = getLogger("startup")
+logger = get_logger("startup")
 
 ROUTES = (
     virtool.account.api.routes,

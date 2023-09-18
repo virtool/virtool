@@ -1,6 +1,6 @@
 import asyncio
 from enum import EnumMeta
-from logging import getLogger
+from structlog import get_logger
 from typing import List, Union
 
 from virtool_core.models.roles import (
@@ -18,7 +18,7 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.mongo.core import Mongo
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def remove_user_roles(
@@ -27,7 +27,6 @@ async def remove_user_roles(
     space_id: int,
     enums: List[EnumMeta],
 ):
-
     await asyncio.gather(
         *[
             authorization_client.remove(
@@ -78,7 +77,6 @@ def format_user(user: dict, role_list: List):
 async def format_users(
     authorization_client: AuthorizationClient, mongo: Mongo, space_id: int
 ) -> List[SpaceMember]:
-
     member_ids = await authorization_client.list_space_users(space_id)
 
     users = await mongo.users.find(

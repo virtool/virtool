@@ -1,3 +1,3 @@
-from logging import getLogger
+from structlog import get_logger
 
-logger = getLogger("blast")
+logger = get_logger("blast")

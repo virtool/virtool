@@ -3,11 +3,11 @@ Provides handlers for managing Websocket related requests.
 """
 
 from aiohttp.web import Request, WebSocketResponse
-from logging import getLogger
+from structlog import get_logger
 from virtool.ws.connection import WSConnection
 from virtool.http.policy import policy, WebSocketRoutePolicy
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @policy(WebSocketRoutePolicy)

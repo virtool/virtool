@@ -1,6 +1,6 @@
 import asyncio
 import os
-from logging import getLogger
+from structlog import get_logger
 from pathlib import Path
 
 import alembic.command
@@ -19,7 +19,7 @@ from virtool.migration.pg import (
 )
 from virtool.migration.show import load_all_revisions
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 async def apply(config: MigrationConfig):

@@ -1,7 +1,7 @@
 import asyncio
 import math
 from asyncio import to_thread
-from logging import getLogger
+from structlog import get_logger
 from typing import List
 
 from sqlalchemy import select, update, func
@@ -19,7 +19,7 @@ from virtool.uploads.models import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
 
-logger = getLogger("uploads")
+logger = get_logger("uploads")
 
 
 class UploadsData(DataLayerPiece):

@@ -1,6 +1,6 @@
 import sys
 from datetime import datetime
-from logging import getLogger
+from structlog import get_logger
 
 import arrow
 from sqlalchemy import select, Column, Integer, String, DateTime
@@ -11,7 +11,7 @@ from virtool.pg.base import Base
 
 REQUIRED_VIRTOOL_REVISION = "011389a5ae19"
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 class SQLRevision(Base):

@@ -1,12 +1,12 @@
 import logging
-from logging import getLogger
+from structlog import get_logger
 from typing import Dict, Optional
 
 import sentry_sdk
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-logger = getLogger("sentry")
+logger = get_logger("sentry")
 
 
 def traces_sampler(sampling_context: Dict) -> float:

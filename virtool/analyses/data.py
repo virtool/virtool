@@ -2,7 +2,7 @@ import asyncio
 import math
 import os
 from datetime import datetime
-from logging import getLogger
+from structlog import get_logger
 from shutil import rmtree
 from typing import Tuple, Optional
 
@@ -54,7 +54,7 @@ from virtool.uploads.utils import multipart_file_chunker, naive_writer
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import wait_for_checks, base_processor
 
-logger = getLogger("analyses")
+logger = get_logger("analyses")
 
 
 class AnalysisData(DataLayerPiece):

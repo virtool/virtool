@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 from typing import Union, List
 
 from sqlalchemy import select
@@ -40,7 +40,7 @@ from virtool.spaces.utils import (
 
 import virtool.utils
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 AVAILABLE_ROLES = [
@@ -221,7 +221,6 @@ class SpacesData:
                 )
 
         if "reference" in data:
-
             await remove_user_roles(
                 self._authorization_client, member_id, space_id, [SpaceReferenceRole]
             )
@@ -232,7 +231,6 @@ class SpacesData:
                 )
 
         if "sample" in data:
-
             await remove_user_roles(
                 self._authorization_client, member_id, space_id, [SpaceSampleRole]
             )
@@ -253,7 +251,6 @@ class SpacesData:
                 )
 
         if "upload" in data:
-
             await remove_user_roles(
                 self._authorization_client, member_id, space_id, [SpaceUploadRole]
             )
@@ -266,9 +263,7 @@ class SpacesData:
         members = await self._authorization_client.list_space_users(space_id)
 
         for member in members:
-
             if member[0] == member_id:
-
                 return format_user(await self._db.users.find_one(member_id), member[1])
 
         raise ResourceNotFoundError

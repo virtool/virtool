@@ -1,5 +1,5 @@
 from asyncio import to_thread
-from logging import getLogger
+from structlog import get_logger
 from pathlib import Path
 from typing import Any, Callable
 
@@ -10,7 +10,7 @@ from cerberus import Validator
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceNotFoundError
 
-logger = getLogger("uploads")
+logger = get_logger("uploads")
 
 CHUNK_SIZE = 1024 * 1000 * 50
 

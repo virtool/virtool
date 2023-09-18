@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import CancelledError
-from logging import getLogger
+from structlog import get_logger
 
 from aioredis import Redis
 
@@ -9,7 +9,7 @@ from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSInsertMessage, WSDeleteMessage
 from virtool.ws.connection import WSConnection
 
-logger = getLogger("ws")
+logger = get_logger("ws")
 
 
 class WSServer:

@@ -1,5 +1,5 @@
 import asyncio
-from logging import getLogger
+from structlog import get_logger
 from tempfile import TemporaryDirectory
 from typing import Optional, Dict, TYPE_CHECKING
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
 
-logger = getLogger("blast")
+logger = get_logger("blast")
 
 
 BLAST_PARAMS = {

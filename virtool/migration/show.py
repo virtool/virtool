@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 from typing import NamedTuple
 
 import arrow
@@ -12,7 +12,7 @@ from virtool.migration.utils import (
     get_revision_name,
 )
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 class DowngradeSpecifier(NamedTuple):

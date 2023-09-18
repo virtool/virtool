@@ -1,5 +1,5 @@
 import asyncio
-from logging import getLogger
+from structlog import get_logger
 from typing import List, TYPE_CHECKING
 
 from pymongo.errors import DuplicateKeyError
@@ -25,7 +25,7 @@ from virtool.utils import base_processor
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
-logger = getLogger("groups")
+logger = get_logger("groups")
 
 
 class GroupsData:

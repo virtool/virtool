@@ -1,7 +1,7 @@
 """The base class for all Virtool tasks, and associated utilities."""
 import asyncio
 from asyncio import to_thread
-from logging import getLogger
+from structlog import get_logger
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional, Type
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 from virtool.utils import get_temp_dir
 
-logger = getLogger("task")
+logger = get_logger("task")
 
 
 class BaseTask:

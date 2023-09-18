@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from asyncio import gather
-from logging import getLogger
+from structlog import get_logger
 from typing import List
 
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.types import Document
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 JOB_REMOVED_FROM_QUEUE = 0
 JOB_CANCELLATION_DISPATCHED = 1

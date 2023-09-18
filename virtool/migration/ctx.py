@@ -4,7 +4,7 @@ Context for migrations.
 import asyncio
 import sys
 from dataclasses import dataclass
-from logging import getLogger
+from structlog import get_logger
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -20,7 +20,7 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.openfga import connect_openfga
 from virtool.config.cls import MigrationConfig
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 @dataclass

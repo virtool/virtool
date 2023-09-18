@@ -2,7 +2,7 @@
 import asyncio
 import math
 from asyncio import gather, to_thread
-from logging import getLogger
+from structlog import get_logger
 from typing import List, Optional, Any, Dict
 
 import virtool_core.utils
@@ -50,7 +50,7 @@ from virtool.uploads.models import SQLUpload
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
-logger = getLogger("samples")
+logger = get_logger("samples")
 
 
 class SamplesData(DataLayerPiece):

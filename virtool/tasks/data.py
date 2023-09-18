@@ -1,5 +1,5 @@
 """The data layer piece for tasks."""
-from logging import getLogger
+from structlog import get_logger
 from typing import List, Type
 
 from sqlalchemy import select, delete, desc
@@ -14,7 +14,7 @@ from virtool.tasks.models import SQLTask
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.task import BaseTask
 
-logger = getLogger("tasks")
+logger = get_logger("tasks")
 
 
 class TasksData:

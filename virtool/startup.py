@@ -2,7 +2,7 @@ import asyncio
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from logging import getLogger
+from structlog import get_logger
 
 from aiohttp import ClientSession
 from aiojobs.aiohttp import get_scheduler_from_app
@@ -35,7 +35,8 @@ from virtool.utils import get_http_session_from_app
 from virtool.version import determine_server_version, get_version_from_app
 from virtool.ws.server import WSServer
 
-logger = getLogger("startup")
+
+logger = get_logger("startup")
 
 
 @dataclass

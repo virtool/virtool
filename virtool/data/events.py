@@ -5,7 +5,7 @@ from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from logging import getLogger
+from structlog import get_logger
 from typing import Awaitable, Callable, AsyncIterable
 
 from aioredis import Redis, Channel, ChannelClosedError
@@ -15,7 +15,7 @@ from virtool_core.redis import resubscribe
 from virtool.api.custom_json import dump_string
 from virtool.utils import timestamp, get_model_by_name
 
-logger = getLogger("events")
+logger = get_logger("events")
 
 
 class Operation(str, Enum):

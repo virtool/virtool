@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import Task as AsyncioTask, CancelledError
-from logging import getLogger
+from structlog import get_logger
 
 from virtool_core.models.task import Task
 
@@ -8,7 +8,7 @@ from virtool.data.layer import DataLayer
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.task import BaseTask, get_task_from_name
 
-logger = getLogger("tasks")
+logger = get_logger("tasks")
 
 
 class TaskRunner:

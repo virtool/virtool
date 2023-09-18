@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 
 from aiohttp.web_exceptions import HTTPNoContent
 
@@ -11,7 +11,7 @@ from virtool.subtractions.fake import (
 )
 from virtool.utils import random_alphanumeric
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 routes = Routes()
 

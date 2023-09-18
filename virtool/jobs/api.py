@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 from typing import Union, List, Optional
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
@@ -22,7 +22,7 @@ from virtool.jobs.oas import (
     ArchiveJobsRequest,
 )
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 routes = Routes()
 

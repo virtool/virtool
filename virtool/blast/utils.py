@@ -2,7 +2,7 @@ import io
 import json
 import re
 from asyncio import to_thread
-from logging import getLogger
+from structlog import get_logger
 from typing import Tuple
 from zipfile import ZipFile
 
@@ -11,7 +11,7 @@ from aiohttp import ClientSession
 import virtool.errors
 from virtool.errors import NCBIError
 
-logger = getLogger("blast")
+logger = get_logger("blast")
 
 #: The URL to send BLAST requests to.
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"

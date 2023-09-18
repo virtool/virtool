@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import to_thread
-from logging import getLogger
+from structlog import get_logger
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -46,7 +46,7 @@ from virtool.users.db import AttachUserTransform
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
-logger = getLogger("indexes")
+logger = get_logger("indexes")
 
 
 class IndexData:

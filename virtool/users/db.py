@@ -1,7 +1,7 @@
 import random
 from asyncio import gather
 from dataclasses import dataclass
-from logging import getLogger
+from structlog import get_logger
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
     from virtool.authorization.client import AuthorizationClient
 
-logger = getLogger("users")
+logger = get_logger("users")
 
 PROJECTION = [
     "_id",

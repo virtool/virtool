@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 from pprint import pprint
 from typing import List, Union, Optional
 
@@ -20,7 +20,7 @@ from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
 from virtool.uploads.utils import get_upload_path
 from virtool.uploads.utils import multipart_file_chunker
 
-logger = getLogger("uploads")
+logger = get_logger("uploads")
 
 routes = Routes()
 

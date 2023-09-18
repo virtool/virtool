@@ -1,5 +1,5 @@
 import asyncio
-from logging import getLogger
+from structlog import get_logger
 from typing import List, Dict
 
 import arrow
@@ -29,7 +29,7 @@ from virtool.releases import (
 from virtool.tasks.models import SQLTask
 from virtool.utils import timestamp
 
-logger = getLogger("ml")
+logger = get_logger("ml")
 
 
 class MLData(DataLayerPiece):

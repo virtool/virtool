@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 from pathlib import Path
 from random import choice
 from string import ascii_lowercase, digits
@@ -15,7 +15,7 @@ from virtool.migration.utils import (
     derive_revision_filename,
 )
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 def create_revision(name: str):

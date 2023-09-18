@@ -2,7 +2,7 @@ import asyncio
 from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from logging import getLogger
+from structlog import get_logger
 from typing import Type, List, Tuple
 
 from sqlalchemy import select, desc
@@ -13,7 +13,7 @@ from virtool.tasks.models import SQLTask
 from virtool.tasks.task import BaseTask
 from virtool.utils import timestamp
 
-logger = getLogger("spawner")
+logger = get_logger("spawner")
 
 
 @dataclass

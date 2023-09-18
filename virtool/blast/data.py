@@ -1,4 +1,4 @@
-from logging import getLogger
+from structlog import get_logger
 from typing import List, TYPE_CHECKING
 from zipfile import BadZipFile
 
@@ -25,13 +25,14 @@ from virtool.types import Document
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BLASTData(DataLayerPiece):
     """
     A data layer piece for BLAST data.
     """
+
     name = "blast"
 
     def __init__(self, client: ClientSession, mongo: "Mongo", pg: AsyncEngine):
