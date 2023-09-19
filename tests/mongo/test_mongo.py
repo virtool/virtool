@@ -1,4 +1,3 @@
-import logging
 from structlog.testing import capture_logs
 import pytest
 
