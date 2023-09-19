@@ -1,7 +1,4 @@
-"""
-Provides request handlers for managing and viewing analyses.
-
-"""
+"""Request handlers for managing and viewing analyses."""
 import asyncio
 from structlog import get_logger
 

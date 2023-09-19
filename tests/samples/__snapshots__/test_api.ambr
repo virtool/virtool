@@ -2059,7 +2059,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
     ],
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'index': <class 'dict'> {
       'id': 'test',
       'version': 4,
@@ -2067,7 +2067,7 @@
     'job': <class 'dict'> {
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
@@ -2080,21 +2080,24 @@
     },
     'ready': False,
     'reference': <class 'dict'> {
-      'id': 'foo',
-      'name': None,
+      'data_type': 'genome',
+      'id': 'test_ref',
+      'name': 'Test Reference',
     },
     'results': None,
     'sample': <class 'dict'> {
       'id': 'test',
     },
-    'space': <class 'dict'> {
-      'id': 0,
-    },
     'subtractions': <class 'list'> [
-      'bar',
+      <class 'dict'> {
+        'id': 'subtraction_1',
+        'name': 'Subtraction 1',
+      },
     ],
     'updated_at': '2015-10-06T20:00:00Z',
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
     'workflow': 'pathoscope_bowtie',
