@@ -9,7 +9,7 @@ from structlog import get_logger
 
 import click
 import uvloop
-from virtool_core.logging import configure_logs
+from virtool.config.logging import configure_logs
 
 from virtool.app import run_api_server
 from virtool.config.cls import (
@@ -39,6 +39,7 @@ from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
+
 
 logger = get_logger("config")
 
