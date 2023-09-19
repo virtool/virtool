@@ -128,12 +128,12 @@ class BaseTask:
                 ),
             )
 
-            logger.info("Starting task step '%s.%s'", self.name, func.__name__)
+            logger.info("Starting task step", step="{self.name}.{func.__name__}")
 
             try:
                 await func()
             except Exception as err:
-                logger.exception("Encountered error in task id=%s, ", self.task_id)
+                logger.exception("Encountered error in task", id=self.task_id)
                 await self._set_error(f"{type(err)}: {str(err)}")
 
         if self.errored:
