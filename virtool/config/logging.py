@@ -25,11 +25,6 @@ def configure_logs(debug: bool):
             structlog.stdlib.add_log_level,
             structlog.stdlib.PositionalArgumentsFormatter(),
             structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M.%S"),
-            structlog.processors.CallsiteParameterAdder(
-                {
-                    structlog.processors.CallsiteParameter.PATHNAME,
-                }
-            ),
             structlog.dev.ConsoleRenderer(colors=True, sort_keys=True),
         ],
     )
