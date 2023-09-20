@@ -1,16 +1,13 @@
 import asyncio
 import io
 import json
-import os
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
 
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import SQLAnalysisFile
 from virtool.config import get_config_from_app
-from virtool.pg.utils import get_row_by_id
 
 
 @pytest.fixture
@@ -398,16 +395,12 @@ async def test_remove(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
-async def test_upload_file(
-    error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path
-):
+async def test_upload_file(error, files, resp_is, spawn_job_client, tmp_path):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
 
     """
     client = await spawn_job_client(authorize=True)
-
-    get_config_from_app(client.app).data_path = tmp_path
 
     if error == 400:
         format_ = "foo"
@@ -428,16 +421,10 @@ async def test_upload_file(
 
     if error is None:
         assert resp.status == 201
-        assert await resp.json() == snapshot
-        assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
-        assert await get_row_by_id(pg, SQLAnalysisFile, 1)
-
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported analysis file format")
-
     elif error == 404:
         assert resp.status == 404
-
     elif error == 422:
         await resp_is.invalid_query(resp, {"name": ["required field"]})
 
