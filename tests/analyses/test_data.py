@@ -1,20 +1,18 @@
 import asyncio
+import os
 
-from syrupy.filters import props
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-import os
-
-import pytest
-from syrupy import snapshot
-from syrupy.filters import props
-
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.config import get_config_from_app
 from virtool.pg.utils import get_row_by_id
+
+import pytest
+
+from syrupy import snapshot
+from syrupy.filters import props
 from tests.analyses.test_api import files
 
 
