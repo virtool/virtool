@@ -4,25 +4,26 @@ from datetime import datetime
 import pytest
 from syrupy.filters import props
 from syrupy.matchers import path_type
+from virtool_core.models.roles import AdministratorRole
 
-from virtool.users.oas import UpdateUserRequest
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.users.data import UsersData
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
+from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, B2CUserAttributes
-
-
-@pytest.fixture
-def users_data(authorization_client, mongo, pg):
-    return UsersData(authorization_client, mongo, pg)
+from virtool.users.oas import UpdateUserRequest
 
 
 class TestCreate:
-    async def test_no_force_reset(self, mocker, snapshot, users_data):
+    async def test_no_force_reset(self, data_layer: DataLayer, mocker, snapshot):
         mocker.patch(
             "virtool.users.utils.hash_password", return_value="hashed_password"
         )
 
-        user = await users_data.create(password="hello_world", handle="bill")
+        user = await data_layer.users.create(password="hello_world", handle="bill")
 
         assert user.force_reset is False
         assert user == snapshot(
@@ -33,12 +34,14 @@ class TestCreate:
         )
 
     @pytest.mark.parametrize("force_reset", [True, False])
-    async def test_force_reset(self, force_reset, mocker, snapshot, users_data):
+    async def test_force_reset(
+        self, force_reset: bool, data_layer: DataLayer, mocker, snapshot
+    ):
         mocker.patch(
             "virtool.users.utils.hash_password", return_value="hashed_password"
         )
 
-        user = await users_data.create(
+        user = await data_layer.users.create(
             force_reset=force_reset, password="hello_world", handle="bill"
         )
 
@@ -50,13 +53,18 @@ class TestCreate:
             matcher=path_type({"last_password_change": (datetime,)}),
         )
 
-    async def test_already_exists(self, fake2, mongo, users_data):
+    async def test_already_exists(
+        self, data_layer: DataLayer, fake2: DataFaker, mongo: Mongo
+    ):
+        """
+        Test that an error is raised when a user with the same handle already exists.
+        """
         await mongo.users.create_index("handle", unique=True, sparse=True)
 
         user = await fake2.users.create()
 
         with pytest.raises(ResourceConflictError) as err:
-            await users_data.create(password="hello_world", handle=user.handle)
+            await data_layer.users.create(password="hello_world", handle=user.handle)
             assert "User already exists" in str(err)
 
 
@@ -76,14 +84,14 @@ class TestUpdate:
     )
     async def test(
         self,
-        all_permissions,
+        update,
+        authorization_client: AuthorizationClient,
         bob,
-        mongo,
+        data_layer: DataLayer,
+        mongo: Mongo,
         no_permissions,
         snapshot,
         static_time,
-        update,
-        users_data,
     ):
         """
         Ensure updates are applied correctly.
@@ -106,42 +114,50 @@ class TestUpdate:
             ),
         )
 
-        assert await users_data.update(bob["_id"], update) == snapshot(name="obj")
+        assert await data_layer.users.update(bob["_id"], update) == snapshot(name="obj")
         assert await mongo.users.find_one() == snapshot(name="db")
 
         assert (
-            await users_data._authorization_client.list_administrators() == []
+            await authorization_client.list_administrators() == []
             if not update.administrator
             else [(bob["_id"], "full")]
         )
 
-    async def test_password(self, bob, mongo, snapshot, users_data):
+    async def test_password(self, bob, data_layer: DataLayer, mongo: Mongo, snapshot):
         """
         Test editing an existing user.
 
         """
         await mongo.users.insert_one(bob)
 
-        assert await users_data.update(
+        assert await data_layer.users.update(
             bob["_id"], UpdateUserRequest(password="hello_world")
         ) == snapshot(name="obj")
 
-        document = await mongo.users.find_one()
-
-        assert document == snapshot(name="db", exclude=props("password"))
+        assert await mongo.users.find_one() == snapshot(
+            name="db", exclude=props("password")
+        )
 
         # Ensure the newly set password validates.
         assert await validate_credentials(mongo, bob["_id"], "hello_world")
 
-    async def test_does_not_exist(self, users_data: UsersData):
+    async def test_does_not_exist(self, data_layer: DataLayer):
         with pytest.raises(ResourceNotFoundError) as err:
-            await users_data.update("user_id", UpdateUserRequest(administrator=False))
-            assert "User does not exist" == str(err)
+            await data_layer.users.update(
+                "user_id", UpdateUserRequest(administrator=False)
+            )
+
+        assert "User does not exist" == str(err.value)
 
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_find_or_create_b2c_user(
-    exists, mongo, fake2, snapshot, static_time, users_data
+    exists: bool,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
+    snapshot,
+    static_time,
 ):
     fake_user = await fake2.users.create()
 
@@ -159,7 +175,7 @@ async def test_find_or_create_b2c_user(
         },
     )
 
-    user = await users_data.find_or_create_b2c_user(
+    user = await data_layer.users.find_or_create_b2c_user(
         B2CUserAttributes(
             oid="abc123",
             display_name="Fred",
@@ -177,15 +193,75 @@ async def test_find_or_create_b2c_user(
 
 
 class TestCheckUsersExist:
-    async def test_no_users_exist(self, users_data):
+    async def test_no_users_exist(self, data_layer: DataLayer):
         """
         Verify that the user existence check returns False when no users exist.
         """
-        assert not await users_data.check_users_exist()
+        assert not await data_layer.users.check_users_exist()
 
-    async def test_users_exist(self, users_data):
+    async def test_users_exist(self, data_layer: DataLayer):
         """
         Verify that the user existence check returns True when users exist.
         """
-        await users_data.create(password="hello_world", handle="bill")
-        assert await users_data.check_users_exist()
+        await data_layer.users.create(password="hello_world", handle="bill")
+        assert await data_layer.users.check_users_exist()
+
+
+@pytest.mark.parametrize("role", [None, AdministratorRole.BASE, AdministratorRole.FULL])
+async def test_set_administrator_role(
+    role: AdministratorRole | None,
+    authorization_client: AuthorizationClient,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
+    snapshot,
+    static_time,
+):
+    """
+    Test changing the administrator role of a user.
+
+    """
+    user = await fake2.users.create()
+
+    assert await data_layer.users.set_administrator_role(user.id, role) == snapshot(
+        name="obj"
+    )
+
+    assert await get_one_field(mongo.users, "administrator", user.id) == (
+        role == AdministratorRole.FULL
+    )
+
+    assert await authorization_client.list_administrators() == (
+        [(user.id, role)] if role is not None else []
+    )
+
+
+@pytest.mark.parametrize("term", [None, "test_user", "missing-handle"])
+@pytest.mark.parametrize("administrator", [True, False, None])
+async def test_find_users(
+    term: str | None,
+    administrator: bool | None,
+    authorization_client: AuthorizationClient,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    snapshot,
+    static_time,
+):
+    group_1 = await fake2.groups.create()
+    group_2 = await fake2.groups.create()
+
+    user_1 = await fake2.users.create(
+        handle="test_user", groups=[group_1, group_2], primary_group=group_1
+    )
+    user_2 = await fake2.users.create()
+    fake2.users.create()
+
+    await authorization_client.add(
+        AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
+        AdministratorRoleAssignment(user_2.id, AdministratorRole.FULL),
+    )
+
+    assert (
+        await data_layer.users.find(1, 25, term=term, administrator=administrator)
+        == snapshot
+    )

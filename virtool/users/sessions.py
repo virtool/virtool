@@ -55,11 +55,11 @@ from virtool.api.custom_json import isoformat_to_datetime, loads
 from virtool.data.errors import (
     ResourceNotFoundError,
 )
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.utils import get_safely, hash_key
 
 
-class SessionData(DataLayerPiece):
+class SessionData(DataLayerDomain):
     """
     The data layer piece for user sessions.
 

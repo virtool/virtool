@@ -15,7 +15,6 @@ async def test_promote_administrators(
     tmpdir,
     fake2,
 ):
-
     await fake2.users.create()
 
     user = await fake2.users.create()
@@ -47,4 +46,4 @@ async def test_promote_administrators(
     row = await get_row_by_id(pg, SQLTask, 1)
     assert row.complete is True
 
-    assert await data_layer.administrators.find(page=1, per_page=25) == snapshot
+    assert await data_layer.users.find(page=1, per_page=25) == snapshot

@@ -35,7 +35,7 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import create_update_subdocument, format_release
@@ -78,7 +78,7 @@ from virtool.users.db import AttachUserTransform, extend_user
 from virtool.utils import chunk_list, get_http_session_from_app
 
 
-class ReferencesData(DataLayerPiece):
+class ReferencesData(DataLayerDomain):
     name = "references"
 
     def __init__(self, mongo, pg: AsyncEngine, config: Config, client: ClientSession):
