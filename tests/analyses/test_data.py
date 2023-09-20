@@ -138,7 +138,9 @@ async def test_create_analysis_id(
 
 
 @pytest.mark.apitest
-async def test_upload_file(files, spawn_job_client, tmp_path, data_layer, snapshot):
+async def test_upload_file(
+    files, spawn_job_client, tmp_path, data_layer: DataLayer, snapshot
+):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
 
