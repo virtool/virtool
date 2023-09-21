@@ -230,7 +230,7 @@ jobs:
           if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
           run: poetry install --no-interaction
         - name: Run
-          run: mypy . --pretty
+          run: mypy virtool
   release:
     runs-on: ubuntu-22.04
     needs: [test-api, test-unit, build, oas]
