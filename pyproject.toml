@@ -61,6 +61,7 @@ alembic = {extras = ["tz"], version = "^1.10.3"}
 virtool-core = "^4.12.1"
 pytest = "^7.4.0"
 syrupy = "^1.7.4"
+mypy = "^1.5.1"
 
 [tool.poetry.scripts]
 virtool = "virtool.config.cli:entry"
