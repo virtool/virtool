@@ -109,7 +109,7 @@ async def test_get(
         }
     )
 
-    resp = await client.get(f"/subtractions/apple")
+    resp = await client.get("/subtractions/apple")
 
     assert resp.status == 200
     assert await resp.json() == snapshot

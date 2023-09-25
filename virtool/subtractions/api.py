@@ -6,7 +6,6 @@ from aiohttp.web_exceptions import (
     HTTPBadRequest,
     HTTPConflict,
     HTTPNoContent,
-    HTTPNotFound,
 )
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView

@@ -308,20 +308,6 @@ class TestAdministratorRoles:
         }
 
 
-"""
-@pytest.mark.parametrize(
-    "administrator, target_administrator, status",
-    [
-        (None, None, 403),
-        (AdministratorRole.BASE, None, 403),
-        (AdministratorRole.USERS, None, 200),
-        (AdministratorRole.USERS, AdministratorRole.BASE, 403),
-        (AdministratorRole.FULL, AdministratorRole.BASE, 200),
-    ],
-)
-"""
-
-
 @pytest.mark.apitest
 @pytest.mark.parametrize("name,status", [("relist_jobs", 202), ("foo", 400)])
 async def test_run_actions(name: str, status: int, spawn_client: ClientSpawner):

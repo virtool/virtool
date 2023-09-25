@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.groups.data import GroupsData
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo

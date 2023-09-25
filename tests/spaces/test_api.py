@@ -10,7 +10,6 @@ from virtool_core.models.roles import (
 from tests.fixtures.client import ClientSpawner
 from virtool.authorization.client import get_authorization_client_from_app
 from virtool.authorization.relationships import SpaceMembership, UserRoleAssignment
-from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.flags import FlagName
 from virtool.spaces.models import SQLSpace

@@ -390,14 +390,14 @@ class UsersFakerPiece(DataFakerPiece):
                 ),
             )
 
-        elif groups:
+        if groups:
             return await self.layer.users.update(
                 user.id,
                 UpdateUserRequest(groups=[group.id for group in groups]),
             )
 
-        elif primary_group:
-            await self.layer.users.update(
+        if primary_group:
+            return await self.layer.users.update(
                 user.id,
                 UpdateUserRequest(
                     groups=[primary_group.id], primary_group=primary_group.id

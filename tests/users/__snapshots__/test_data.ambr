@@ -231,7 +231,24 @@
   }
 ---
 # name: TestUpdate.test_set_groups[mongo_1]
-  <Future pending cb=[_chain_future.<locals>._call_check_cancel() at /home/igboyes/.pyenv/versions/3.10.11/lib/python3.10/asyncio/futures.py:385]>
+  <class 'dict'> {
+    '_id': '7cf872dc',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'qtaylor',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
 ---
 # name: TestUpdate.test_set_groups[mongo_2]
   <class 'dict'> {

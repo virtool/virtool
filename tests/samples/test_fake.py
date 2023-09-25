@@ -1,13 +1,11 @@
-from tests.fixtures.client import ClientSpawner
-
 import os
 
 import pytest
 
+from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_sample
 
 

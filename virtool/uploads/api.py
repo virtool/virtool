@@ -112,7 +112,7 @@ class UploadView(PydanticView):
             upload_path = await get_upload_path(
                 get_config_from_req(self.request), upload.name_on_disk
             )
-        except ResourceNotFoundError as exc:
+        except ResourceNotFoundError:
             raise NotFound
 
         return FileResponse(

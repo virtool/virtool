@@ -144,7 +144,7 @@ class TestUpdate:
         group_2 = await fake2.groups.create()
 
         user = await fake2.users.create()
-        document = mongo.users.find_one({"_id": user.id})
+        document = await mongo.users.find_one({"_id": user.id})
 
         assert user == snapshot(name="obj_1", matcher=_last_password_change_matcher)
         assert document == snapshot(
