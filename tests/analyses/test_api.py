@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from tests.fixtures.client import ClientSpawner
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import SQLAnalysisFile
 from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
