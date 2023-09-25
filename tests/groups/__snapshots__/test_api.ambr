@@ -111,63 +111,9 @@
 # name: test_remove[204][json]
   None
 ---
-# name: test_remove[204][users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'bf1b993c',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '3cbb22cc',
-      'groups': <class 'list'> [
-        '7cf872dc',
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'da42dca3',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '09d01419',
-      'groups': <class 'list'> [
-        '7cf872dc',
-      ],
-    },
-  ]
----
 # name: test_remove[404][json]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
----
-# name: test_remove[404][users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'bf1b993c',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '3cbb22cc',
-      'groups': <class 'list'> [
-        'fb085f7f',
-        '7cf872dc',
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'da42dca3',
-      'groups': <class 'list'> [
-        'fb085f7f',
-      ],
-    },
-    <class 'dict'> {
-      '_id': '09d01419',
-      'groups': <class 'list'> [
-        '7cf872dc',
-      ],
-    },
-  ]
 ---

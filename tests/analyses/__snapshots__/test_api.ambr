@@ -14,24 +14,6 @@
     'updated_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_download_analysis_result[False-False]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_download_analysis_result[False-True]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_download_analysis_result[True-False]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
 # name: test_finalize[None]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
@@ -46,8 +28,8 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
-      'progress': 30,
-      'stage': 'kEahrPLrGciZpuCpymcj',
+      'progress': 50,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
       'state': 'timeout',
       'user': <class 'dict'> {
         'administrator': False,
@@ -162,8 +144,8 @@
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
-          'progress': 30,
-          'stage': 'kEahrPLrGciZpuCpymcj',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
           'state': 'timeout',
           'user': <class 'dict'> {
             'administrator': False,
@@ -202,8 +184,8 @@
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
-          'progress': 30,
-          'stage': 'kEahrPLrGciZpuCpymcj',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
           'state': 'timeout',
           'user': <class 'dict'> {
             'administrator': False,
@@ -413,8 +395,8 @@
       'archived': False,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': '3cbb22cc',
-      'progress': 30,
-      'stage': 'kEahrPLrGciZpuCpymcj',
+      'progress': 50,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
       'state': 'timeout',
       'user': <class 'dict'> {
         'administrator': False,
@@ -452,5 +434,17 @@
       'id': 'fb085f7f',
     },
     'workflow': 'pathoscope_bowtie',
+  }
+---
+# name: test_upload_file[None]
+  <class 'dict'> {
+    'analysis': 'foobar',
+    'description': None,
+    'format': 'fasta',
+    'id': 1,
+    'name': 'reference.fa',
+    'name_on_disk': '1-reference.fa',
+    'size': 20466,
+    'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---

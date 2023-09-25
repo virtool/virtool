@@ -114,42 +114,6 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdateUser.test
-  <class 'dict'> {
-    'active': True,
-    'administrator': False,
-    'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
-    'force_reset': True,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-      },
-    ],
-    'handle': 'qtaylor',
-    'id': '7cf872dc',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': True,
-    },
-    'primary_group': <class 'dict'> {
-      'id': 'bf1b993c',
-      'name': 'musicians',
-    },
-  }
----
 # name: TestUpdateUser.test_force_reset
   <class 'dict'> {
     'active': True,
@@ -347,72 +311,6 @@
       'id': 'fb085f7f',
       'name': 'musicians',
     },
-  }
----
-# name: TestUpdateUser.test_set_admin_roles[full-base-200]
-  <class 'dict'> {
-    'active': True,
-    'administrator': False,
-    'administrator_role': 'base',
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
-    'force_reset': True,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-      },
-    ],
-    'handle': 'qtaylor',
-    'id': '7cf872dc',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': True,
-    },
-    'primary_group': None,
-  }
----
-# name: TestUpdateUser.test_set_admin_roles[users-None-200]
-  <class 'dict'> {
-    'active': True,
-    'administrator': False,
-    'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
-    'force_reset': True,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-      },
-    ],
-    'handle': 'qtaylor',
-    'id': '7cf872dc',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': True,
-    },
-    'primary_group': None,
   }
 ---
 # name: test_get_roles

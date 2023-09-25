@@ -169,8 +169,8 @@
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
-          'progress': 30,
-          'stage': 'aKMqqBTFitpKyPAVdgpN',
+          'progress': 40,
+          'stage': 'FmSbUMpDrznQOttiWmLr',
           'state': 'cancelled',
           'user': <class 'dict'> {
             'administrator': False,

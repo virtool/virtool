@@ -1,3 +1,100 @@
+# name: TestAcquire.test_ok
+  <class 'dict'> {
+    'acquired': True,
+    'archived': False,
+    'args': <class 'dict'> {
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    },
+    'created_at': <class 'str'>,
+    'id': 'fb085f7f',
+    'key': <class 'str'>,
+    'ping': None,
+    'progress': 3,
+    'rights': <class 'dict'> {
+    },
+    'stage': None,
+    'state': 'preparing',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'str'>,
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'str'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'jobs_pathoscope_bowtie',
+  }
+---
+# name: TestArchive.test_ok
+  <class 'dict'> {
+    'acquired': False,
+    'archived': True,
+    'args': <class 'dict'> {
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    },
+    'created_at': <class 'str'>,
+    'id': '7cf872dc',
+    'ping': None,
+    'progress': 10,
+    'rights': <class 'dict'> {
+    },
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': 'preparing',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'str'>,
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
+        'timestamp': <class 'str'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'fb085f7f',
+    },
+    'workflow': 'jobs_pathoscope_bowtie',
+  }
+---
 # name: TestFind.test_archived[False]
   <class 'dict'> {
     'counts': <class 'dict'> {
@@ -226,6 +323,64 @@
     },
   ]
 ---
+# name: TestPushStatus.test[None]
+  <class 'dict'> {
+    'error': None,
+    'progress': 23,
+    'stage': 'build',
+    'state': 'running',
+    'step_description': None,
+    'step_name': None,
+    'timestamp': '2015-10-06T20:00:00Z',
+  }
+---
+# name: TestPushStatus.test_bad_state
+  <class 'dict'> {
+    'errors': <class 'dict'> {
+      'state': <class 'list'> [
+        'unallowed value bad',
+      ],
+    },
+    'id': 'invalid_input',
+    'message': 'Invalid input',
+  }
+---
+# name: TestPushStatus.test_error[invalid-invalid-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[invalid-invalid-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
 # name: TestPushStatus.test_error[invalid-invalid-valid]
   <class 'tuple'> (
     201,
@@ -248,6 +403,87 @@
     },
   )
 ---
+# name: TestPushStatus.test_error[invalid-missing-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[invalid-missing-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[invalid-missing-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[invalid-valid-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'traceback': <class 'list'> [
+              'must be of list type',
+            ],
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
 # name: TestPushStatus.test_error[invalid-valid-missing]
   <class 'tuple'> (
     422,
@@ -260,6 +496,24 @@
             ],
             'type': <class 'list'> [
               'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[invalid-valid-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'traceback': <class 'list'> [
+              'must be of list type',
             ],
           },
         ],
@@ -289,6 +543,475 @@
       'message': 'Invalid input',
     },
   )
+---
+# name: TestPushStatus.test_error[missing-invalid-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[missing-invalid-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[missing-missing-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[missing-missing-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[missing-missing-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[missing-valid-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+            'traceback': <class 'list'> [
+              'must be of list type',
+            ],
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[missing-valid-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+            'traceback': <class 'list'> [
+              'must be of list type',
+            ],
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[missing-valid-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'required field',
+            ],
+            'traceback': <class 'list'> [
+              'must be of list type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-invalid-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-invalid-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-invalid-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-missing-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-missing-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-missing-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'traceback': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-valid-invalid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'traceback': <class 'list'> [
+              'must be of list type',
+            ],
+            'type': <class 'list'> [
+              'must be of string type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-valid-missing]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'traceback': <class 'list'> [
+              'must be of list type',
+            ],
+            'type': <class 'list'> [
+              'required field',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_error[valid-valid-valid]
+  <class 'tuple'> (
+    422,
+    <class 'dict'> {
+      'errors': <class 'dict'> {
+        'error': <class 'list'> [
+          <class 'dict'> {
+            'details': <class 'list'> [
+              'must be of list type',
+            ],
+            'traceback': <class 'list'> [
+              'must be of list type',
+            ],
+          },
+        ],
+      },
+      'id': 'invalid_input',
+      'message': 'Invalid input',
+    },
+  )
+---
+# name: TestPushStatus.test_missing_error
+  <class 'tuple'> (
+    400,
+    <class 'dict'> {
+      'id': 'bad_request',
+      'message': 'Missing error information',
+    },
+  )
+---
+# name: TestPushStatus.test_name_and_description
+  <class 'dict'> {
+    'error': None,
+    'progress': 14,
+    'stage': 'fastqc',
+    'state': 'running',
+    'step_description': 'Run FastQC on the raw data',
+    'step_name': 'FastQC',
+    'timestamp': '2015-10-06T20:00:00Z',
+  }
+---
+# name: test_bulk_archive[None]
+  <class 'list'> [
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2019-03-07T23:20:30Z',
+      'id': '7467tozj',
+      'progress': 95,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'build_index',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2017-09-21T03:00:07Z',
+      'id': '8cy4mjvp',
+      'progress': 97,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'build_index',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2024-08-23T20:27:15Z',
+      'id': '8vvqvnuk',
+      'progress': 90,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'nuvs',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2021-08-30T04:32:27Z',
+      'id': 'awvuon9b',
+      'progress': 66,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'pathoscope',
+    },
+    <class 'dict'> {
+      'archived': True,
+      'created_at': '2023-02-28T08:11:58Z',
+      'id': 'sk1wj693',
+      'progress': 82,
+      'stage': None,
+      'state': 'waiting',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      },
+      'workflow': 'create_sample',
+    },
+  ]
 ---
 # name: test_cancel[None]
   <class 'dict'> {
@@ -345,5 +1068,53 @@
       'id': '7cf872dc',
     },
     'workflow': 'build_index',
+  }
+---
+# name: test_get[None]
+  <class 'dict'> {
+    'acquired': False,
+    'archived': False,
+    'args': <class 'dict'> {
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    },
+    'created_at': <class 'str'>,
+    'id': '7cf872dc',
+    'ping': None,
+    'progress': 10,
+    'rights': <class 'dict'> {
+    },
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': 'preparing',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'str'>,
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
+        'timestamp': <class 'str'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'fb085f7f',
+    },
+    'workflow': 'jobs_pathoscope_bowtie',
   }
 ---

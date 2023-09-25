@@ -1685,16 +1685,6 @@
     ],
   }
 ---
-# name: test_upload[404]
-  <class 'dict'> {
-    'download_url': '/subtractions/foo/files/subtraction.1.bt2',
-    'id': 1,
-    'name': 'subtraction.1.bt2',
-    'size': 12,
-    'subtraction': 'foo',
-    'type': 'bowtie2',
-  }
----
 # name: test_upload[None]
   <class 'dict'> {
     'download_url': '/subtractions/foo/files/subtraction.1.bt2',

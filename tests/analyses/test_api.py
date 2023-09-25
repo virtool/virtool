@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from tests.fixtures.client import ClientSpawner
 from virtool.analyses.files import create_analysis_file
+from virtool.analyses.models import SQLAnalysisFile
 from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
@@ -403,7 +404,7 @@ async def test_remove(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
-    error,
+    error: str | None,
     files,
     mongo: Mongo,
     pg: AsyncEngine,
