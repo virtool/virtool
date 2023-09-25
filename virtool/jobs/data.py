@@ -53,7 +53,7 @@ class JobsData:
 
     async def find(
         self,
-        archived: bool,
+        archived: bool | None,
         page: int,
         per_page: int,
         states: List[JobState],

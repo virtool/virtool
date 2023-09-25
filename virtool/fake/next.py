@@ -137,7 +137,7 @@ class JobsFakerPiece(DataFakerPiece):
 
         :param user: the user that created the job
         :param archived: whether the job should be archived
-        :param next_state: the state the most recent status update should have
+        :param state: the state the most recent status update should have
         :param workflow: the workflow the job is running
         :return:
         """
@@ -186,96 +186,36 @@ class JobsFakerPiece(DataFakerPiece):
         previous_status = job.status[0]
         progress = 0
 
-        while len(job.status) < 6:
+        while progress <= 50:
             if previous_status.state == target_state:
                 break
 
-            if len(job.status) == 5:
+            if progress == 50:
                 next_state = target_state
             elif previous_status.state == JobState.WAITING:
                 next_state = JobState.PREPARING
             elif previous_status.state == JobState.PREPARING:
                 next_state = JobState.RUNNING
             else:
-                next_state = JobState.RUNNING if self.faker.pybool() else target_state
+                next_state = self.faker.random_element([JobState.RUNNING, target_state])
 
             progress += 10
             step_name = self.faker.pystr()
 
             previous_status = await self.layer.jobs.push_status(
                 job.id,
-                self._generate_next_job_state(previous_status.state, next_state),
+                state=next_state,
                 stage=step_name,
                 step_name=step_name,
                 step_description=self.faker.pystr(),
                 error=None,
-                progress=progress,
+                progress=100 if next_state == JobState.COMPLETE else progress,
             )
 
         if archived:
             return await self.layer.jobs.archive(job.id)
 
         return await self.layer.jobs.get(job.id)
-
-    def _generate_next_job_state(
-        self, previous: JobState, final: JobState | None
-    ) -> JobState:
-        """
-        Generate the next job state based on the previous state.
-
-        If we want the job to end in a specific state, we can pass it as the ``final``
-        argument. No other final states will be allowed.
-
-        :param previous: the previous job state
-        :param final: the target final job state
-        :return: the next job state
-        """
-
-        if previous == JobState.WAITING:
-            return JobState.PREPARING
-
-        if previous == JobState.PREPARING:
-            return JobState.RUNNING
-
-        if previous == JobState.RUNNING:
-            allowed_states = [JobState.RUNNING, JobState.RUNNING, JobState.RUNNING]
-
-            if final:
-                allowed_states += [final, final]
-            else:
-                allowed_states += [
-                    JobState.COMPLETE,
-                    JobState.COMPLETE,
-                    JobState.CANCELLED,
-                    JobState.ERROR,
-                    JobState.TERMINATED,
-                ]
-
-            return self.faker.random_element(allowed_states)
-
-        raise ValueError(
-            f"Cannot generate next job state from when previous is {previous}"
-        )
-
-    def _generate_status_update(self, previous: dict) -> dict:
-        step_name = self.faker.pystr()
-        return {
-            "state": self.faker.random_element(
-                [
-                    "waiting",
-                    "running",
-                    "complete",
-                    "cancelled",
-                    "error",
-                    "terminated",
-                ]
-            ),
-            "stage": step_name,
-            "step_name": step_name,
-            "step_description": self.faker.pystr(),
-            "progress": self.faker.pyint(min_value=0, max_value=100),
-            "error": self.faker.pystr(),
-        }
 
 
 class GroupsFakerPiece(DataFakerPiece):

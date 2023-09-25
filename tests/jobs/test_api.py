@@ -1,4 +1,5 @@
 import datetime
+from pprint import pprint
 
 import arrow
 import pytest
@@ -7,6 +8,7 @@ from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 
 _job_response_matcher = path_type(
@@ -15,7 +17,13 @@ _job_response_matcher = path_type(
 
 
 class TestFind:
-    async def test_basic(self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner):
+    async def test_basic(
+        self,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
+    ):
         client = await spawn_client(authenticated=True)
 
         user_1 = await fake2.users.create()
@@ -28,6 +36,10 @@ class TestFind:
             await fake2.jobs.create(user=user_2)
 
         resp = await client.get("/jobs?per_page=5")
+
+        result = await data_layer.jobs.find(None, 1, 15, [], [])
+
+        pprint([(d.id, d.created_at) for d in result.documents])
 
         assert resp.status == 200
         assert await resp.json() == snapshot(matcher=_job_response_matcher)

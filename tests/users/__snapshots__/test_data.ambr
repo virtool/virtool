@@ -82,20 +82,18 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[administrator][db]
+# name: TestUpdate.test_administrator[False][mongo]
   <class 'dict'> {
-    '_id': 'abc123',
+    '_id': 'bf1b993c',
     'active': True,
     'administrator': True,
     'force_reset': False,
     'groups': <class 'list'> [
-      'peasants',
     ],
-    'handle': 'bob',
+    'handle': 'leeashley',
     'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'password': 'hashed_password',
-    'primary_group': '',
+    'last_password_change': <class 'datetime'>,
+    'primary_group': None,
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -104,7 +102,7 @@
     },
   }
 ---
-# name: TestUpdate.test[administrator][obj]
+# name: TestUpdate.test_administrator[False][obj]
   <class 'dict'> {
     'active': True,
     'administrator': True,
@@ -116,18 +114,14 @@
     'b2c_oid': None,
     'force_reset': False,
     'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'peasants',
-        'name': 'peasants',
-      },
     ],
-    'handle': 'bob',
-    'id': 'abc123',
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': <class 'datetime'>,
     'permissions': <class 'dict'> {
       'cancel_job': False,
       'create_ref': False,
-      'create_sample': True,
+      'create_sample': False,
       'modify_hmm': False,
       'modify_subtraction': False,
       'remove_file': False,
@@ -137,76 +131,18 @@
     'primary_group': None,
   }
 ---
-# name: TestUpdate.test[force_reset][db]
+# name: TestUpdate.test_administrator[True][mongo]
   <class 'dict'> {
-    '_id': 'abc123',
-    'active': True,
-    'administrator': False,
-    'force_reset': True,
-    'groups': <class 'list'> [
-      'peasants',
-    ],
-    'handle': 'bob',
-    'invalidate_sessions': True,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'password': 'hashed_password',
-    'primary_group': '',
-    'settings': <class 'dict'> {
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
-    },
-  }
----
-# name: TestUpdate.test[force_reset][obj]
-  <class 'dict'> {
-    'active': True,
-    'administrator': False,
-    'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
-    'force_reset': True,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'peasants',
-        'name': 'peasants',
-      },
-    ],
-    'handle': 'bob',
-    'id': 'abc123',
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'primary_group': None,
-  }
----
-# name: TestUpdate.test[groups][db]
-  <class 'dict'> {
-    '_id': 'abc123',
+    '_id': 'bf1b993c',
     'active': True,
     'administrator': False,
     'force_reset': False,
     'groups': <class 'list'> [
-      'peasants',
-      'kings',
     ],
-    'handle': 'bob',
+    'handle': 'leeashley',
     'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'password': 'hashed_password',
-    'primary_group': 'peasants',
+    'last_password_change': <class 'datetime'>,
+    'primary_group': None,
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -215,7 +151,7 @@
     },
   }
 ---
-# name: TestUpdate.test[groups][obj]
+# name: TestUpdate.test_administrator[True][obj]
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -227,32 +163,21 @@
     'b2c_oid': None,
     'force_reset': False,
     'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'kings',
-        'name': 'kings',
-      },
-      <class 'dict'> {
-        'id': 'peasants',
-        'name': 'peasants',
-      },
     ],
-    'handle': 'bob',
-    'id': 'abc123',
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': <class 'datetime'>,
     'permissions': <class 'dict'> {
       'cancel_job': False,
-      'create_ref': True,
-      'create_sample': True,
+      'create_ref': False,
+      'create_sample': False,
       'modify_hmm': False,
       'modify_subtraction': False,
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': <class 'dict'> {
-      'id': 'peasants',
-      'name': 'peasants',
-    },
+    'primary_group': None,
   }
 ---
 # name: TestUpdate.test_password[db]
@@ -292,6 +217,200 @@
     'handle': 'bob',
     'id': 'abc123',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: TestUpdate.test_set_groups[mongo_1]
+  <Future pending cb=[_chain_future.<locals>._call_check_cancel() at /home/igboyes/.pyenv/versions/3.10.11/lib/python3.10/asyncio/futures.py:385]>
+---
+# name: TestUpdate.test_set_groups[mongo_2]
+  <class 'dict'> {
+    '_id': '7cf872dc',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      'fb085f7f',
+    ],
+    'handle': 'qtaylor',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: TestUpdate.test_set_groups[mongo_3]
+  <class 'dict'> {
+    '_id': '7cf872dc',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      'fb085f7f',
+      'bf1b993c',
+    ],
+    'handle': 'qtaylor',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: TestUpdate.test_set_groups[mongo_4]
+  <class 'dict'> {
+    '_id': '7cf872dc',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'qtaylor',
+    'invalidate_sessions': False,
+    'last_password_change': <class 'datetime'>,
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: TestUpdate.test_set_groups[obj_1]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'qtaylor',
+    'id': '7cf872dc',
+    'last_password_change': <class 'datetime'>,
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: TestUpdate.test_set_groups[obj_2]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+      },
+    ],
+    'handle': 'qtaylor',
+    'id': '7cf872dc',
+    'last_password_change': <class 'datetime'>,
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: TestUpdate.test_set_groups[obj_3]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
+      },
+      <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'musicians',
+      },
+    ],
+    'handle': 'qtaylor',
+    'id': '7cf872dc',
+    'last_password_change': <class 'datetime'>,
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: TestUpdate.test_set_groups[obj_4]
+  <class 'dict'> {
+    'active': True,
+    'administrator': False,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'qtaylor',
+    'id': '7cf872dc',
+    'last_password_change': <class 'datetime'>,
     'permissions': <class 'dict'> {
       'cancel_job': False,
       'create_ref': False,

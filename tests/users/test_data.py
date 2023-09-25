@@ -1,5 +1,4 @@
-from asyncio import gather
-from datetime import datetime
+import datetime
 
 import pytest
 from syrupy.filters import props
@@ -16,6 +15,10 @@ from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, B2CUserAttributes
 from virtool.users.oas import UpdateUserRequest
 
+_last_password_change_matcher = path_type(
+    {"last_password_change": (datetime.datetime,)}
+)
+
 
 class TestCreate:
     async def test_no_force_reset(self, data_layer: DataLayer, mocker, snapshot):
@@ -30,7 +33,7 @@ class TestCreate:
             exclude=props(
                 "id",
             ),
-            matcher=path_type({"last_password_change": (datetime,)}),
+            matcher=_last_password_change_matcher,
         )
 
     @pytest.mark.parametrize("force_reset", [True, False])
@@ -50,7 +53,7 @@ class TestCreate:
             exclude=props(
                 "id",
             ),
-            matcher=path_type({"last_password_change": (datetime,)}),
+            matcher=_last_password_change_matcher,
         )
 
     async def test_already_exists(
@@ -69,59 +72,127 @@ class TestCreate:
 
 
 class TestUpdate:
-    @pytest.mark.parametrize(
-        "update",
-        [
-            UpdateUserRequest(administrator=True),
-            UpdateUserRequest(force_reset=True),
-            UpdateUserRequest(groups=["peasants", "kings"], primary_group="peasants"),
-        ],
-        ids=[
-            "administrator",
-            "force_reset",
-            "groups",
-        ],
-    )
-    async def test(
+    @pytest.mark.parametrize("is_administrator", [True, False])
+    async def test_administrator(
         self,
-        update,
+        is_administrator: bool,
         authorization_client: AuthorizationClient,
-        bob,
         data_layer: DataLayer,
+        fake2: DataFaker,
         mongo: Mongo,
-        no_permissions,
         snapshot,
-        static_time,
     ):
         """
-        Ensure updates are applied correctly.
-
+        Test that setting a user to administrator and vice versa sets the legacy
+        ``administrator`` flag and gives them the ``AdministratorRole.FULL`` role.
         """
-        await gather(
-            mongo.users.insert_one(bob),
-            mongo.groups.insert_many(
-                [
-                    {
-                        "_id": "peasants",
-                        "permissions": {**no_permissions, "create_sample": True},
-                    },
-                    {
-                        "_id": "kings",
-                        "permissions": {**no_permissions, "create_ref": True},
-                    },
-                ],
-                session=None,
-            ),
+        user = await fake2.users.create(administrator_role=AdministratorRole.FULL)
+
+        assert await data_layer.users.update(
+            user.id, UpdateUserRequest(administrator=not is_administrator)
+        ) == snapshot(
+            name="obj",
+            matcher=_last_password_change_matcher,
         )
 
-        assert await data_layer.users.update(bob["_id"], update) == snapshot(name="obj")
-        assert await mongo.users.find_one() == snapshot(name="db")
+        assert await mongo.users.find_one() == snapshot(
+            name="mongo",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
 
         assert (
             await authorization_client.list_administrators() == []
-            if not update.administrator
-            else [(bob["_id"], "full")]
+            if is_administrator
+            else [(user.id, "full")]
         )
+
+    async def test_force_reset(
+        self,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        mongo: Mongo,
+    ):
+        """
+        Test that setting and unsetting ``force_reset`` works as expected.
+        """
+        user = await fake2.users.create()
+
+        assert await get_one_field(mongo.users, "force_reset", user.id) is False
+
+        user = await data_layer.users.update(
+            user.id, UpdateUserRequest(force_reset=True)
+        )
+
+        assert user.force_reset is True
+        assert await get_one_field(mongo.users, "force_reset", user.id) is True
+
+        user = await data_layer.users.update(
+            user.id, UpdateUserRequest(force_reset=False)
+        )
+
+        assert user.force_reset is False
+        assert await get_one_field(mongo.users, "force_reset", user.id) is False
+
+    async def test_set_groups(
+        self, data_layer: DataLayer, fake2: DataFaker, mongo: Mongo, snapshot
+    ):
+        """
+        Test that setting ``groups`` works as expected.
+        """
+        group_1 = await fake2.groups.create()
+        group_2 = await fake2.groups.create()
+
+        user = await fake2.users.create()
+        document = mongo.users.find_one({"_id": user.id})
+
+        assert user == snapshot(name="obj_1", matcher=_last_password_change_matcher)
+        assert document == snapshot(
+            name="mongo_1",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+        assert user.groups == []
+
+        user = await data_layer.users.update(
+            user.id, UpdateUserRequest(groups=[group_2.id])
+        )
+        document = await mongo.users.find_one({"_id": user.id})
+
+        assert user == snapshot(name="obj_2", matcher=_last_password_change_matcher)
+        assert document == snapshot(
+            name="mongo_2",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+        assert document["groups"] == [group_2.id]
+
+        user = await data_layer.users.update(
+            user.id, UpdateUserRequest(groups=[group_2.id, group_1.id])
+        )
+        document = await mongo.users.find_one({"_id": user.id})
+
+        assert user == snapshot(name="obj_3", matcher=_last_password_change_matcher)
+        assert document == snapshot(
+            name="mongo_3",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+        assert document["groups"] == [
+            group_2.id,
+            group_1.id,
+        ]
+
+        user = await data_layer.users.update(user.id, UpdateUserRequest(groups=[]))
+        document = await mongo.users.find_one({"_id": user.id})
+
+        assert user == snapshot(name="obj_4", matcher=_last_password_change_matcher)
+        assert document == snapshot(
+            name="mongo_4",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+        assert document["groups"] == []
 
     async def test_password(self, bob, data_layer: DataLayer, mongo: Mongo, snapshot):
         """
@@ -141,7 +212,7 @@ class TestUpdate:
         # Ensure the newly set password validates.
         assert await validate_credentials(mongo, bob["_id"], "hello_world")
 
-    async def test_does_not_exist(self, data_layer: DataLayer):
+    async def test_not_found(self, data_layer: DataLayer):
         with pytest.raises(ResourceNotFoundError) as err:
             await data_layer.users.update(
                 "user_id", UpdateUserRequest(administrator=False)
