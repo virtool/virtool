@@ -1,20 +1,21 @@
+# serializer version: 1
 # name: test_create_api_key[has permission-full][dl]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
+    'groups': list([
+      dict({
         'id': 'fb085f7f',
         'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'bf1b993c',
         'name': 'musicians',
-      },
-    ],
+      }),
+    ]),
     'id': 'baz',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -23,21 +24,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_api_key[has permission-full][mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'baz',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'bf1b993c',
       'fb085f7f',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -46,29 +47,29 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': '7cf872dc',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_api_key[has permission-none][dl]
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
+    'groups': list([
+      dict({
         'id': 'fb085f7f',
         'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'bf1b993c',
         'name': 'musicians',
-      },
-    ],
+      }),
+    ]),
     'id': 'baz',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -77,21 +78,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_api_key[has permission-none][mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'baz',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'bf1b993c',
       'fb085f7f',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -100,29 +101,29 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': '7cf872dc',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_api_key[missing permission-full][dl]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
+    'groups': list([
+      dict({
         'id': 'fb085f7f',
         'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'bf1b993c',
         'name': 'musicians',
-      },
-    ],
+      }),
+    ]),
     'id': 'baz',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -131,21 +132,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_api_key[missing permission-full][mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'baz',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'bf1b993c',
       'fb085f7f',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -154,29 +155,29 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': '7cf872dc',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_api_key[missing permission-none][dl]
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
+    'groups': list([
+      dict({
         'id': 'fb085f7f',
         'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'bf1b993c',
         'name': 'musicians',
-      },
-    ],
+      }),
+    ]),
     'id': 'baz',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -185,21 +186,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_api_key[missing permission-none][mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'baz',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'bf1b993c',
       'fb085f7f',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -208,9 +209,9 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': '7cf872dc',
-    },
-  }
----
+    }),
+  })
+# ---

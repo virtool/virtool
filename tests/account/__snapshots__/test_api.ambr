@@ -1,13 +1,14 @@
+# serializer version: 1
 # name: TestCreateAPIKey.test[False-False]
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -16,19 +17,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[False-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'hashed_key',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -37,26 +38,26 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[False-True]
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-      <class 'dict'> {
+    'groups': list([
+      dict({
         'id': 'bf1b993c',
         'name': 'musicians',
-      },
-    ],
+      }),
+    ]),
     'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -65,20 +66,20 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[False-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'hashed_key',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'bf1b993c',
-    ],
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -87,22 +88,22 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[True-False]
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -111,19 +112,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[True-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'hashed_key',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -132,26 +133,26 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[True-True]
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-      <class 'dict'> {
+    'groups': list([
+      dict({
         'id': 'bf1b993c',
         'name': 'musicians',
-      },
-    ],
+      }),
+    ]),
     'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -160,20 +161,20 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[True-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'hashed_key',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'bf1b993c',
-    ],
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -182,22 +183,22 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test_naming
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'hashed_key',
     'key': 'raw_key',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -206,19 +207,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test_naming.1
-  <class 'dict'> {
+  dict({
     '_id': 'hashed_key',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_1',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -227,21 +228,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-False]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -250,19 +251,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -271,21 +272,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-True]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -294,19 +295,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -315,21 +316,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[True-False]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -338,19 +339,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[True-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -359,21 +360,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[True-True]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -382,19 +383,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[True-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -403,21 +404,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[missing-False]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -426,19 +427,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[missing-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -447,21 +448,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[missing-True]
-  <class 'dict'> {
+  dict({
     'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -470,19 +471,19 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[missing-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'id': 'foobar_0',
     'name': 'Foobar',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -491,14 +492,14 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'test',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_edit[all_valid][response]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -509,12 +510,12 @@
     'b2c_oid': None,
     'email': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bob',
     'id': 'test',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -523,18 +524,18 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'nuvs',
       'show_ids': False,
       'show_versions': False,
       'skip_quick_analyze_dialog': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_edit[good_email][response]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -545,12 +546,12 @@
     'b2c_oid': None,
     'email': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bob',
     'id': 'test',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -559,36 +560,36 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'nuvs',
       'show_ids': False,
       'show_versions': False,
       'skip_quick_analyze_dialog': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_edit[invalid_credentials][response]
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'Invalid credentials',
-  }
----
+  })
+# ---
 # name: test_edit[invalid_email][response]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'email',
-      ],
+      ]),
       'msg': 'The format of the email is invalid',
       'type': 'value_error',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_edit[missing_all][response]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -599,12 +600,12 @@
     'b2c_oid': None,
     'email': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bob',
     'id': 'test',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -613,18 +614,18 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'nuvs',
       'show_ids': False,
       'show_versions': False,
       'skip_quick_analyze_dialog': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_edit[missing_email][response]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -635,12 +636,12 @@
     'b2c_oid': None,
     'email': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bob',
     'id': 'test',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -649,76 +650,76 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'nuvs',
       'show_ids': False,
       'show_versions': False,
       'skip_quick_analyze_dialog': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_edit[missing_old_password][response]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         '__root__',
-      ],
+      ]),
       'msg': 'The old password needs to be given in order for the password to be changed',
       'type': 'value_error',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_edit[missing_password][response]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         '__root__',
-      ],
+      ]),
       'msg': 'The new password needs to be given in order for the password to be changed',
       'type': 'value_error',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_edit[none_all][response]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'email',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'old_password',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'password',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_edit[short_password][response]
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'Password does not meet minimum length requirement (8)',
-  }
----
+  })
+# ---
 # name: test_get
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -729,12 +730,12 @@
     'b2c_oid': None,
     'email': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bob',
     'id': 'test',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -743,30 +744,30 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'nuvs',
       'show_ids': False,
       'show_versions': False,
       'skip_quick_analyze_dialog': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_get_api_keys
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'administrator': True,
       'created_at': '2015-10-06T20:00:00Z',
-      'groups': <class 'list'> [
-        <class 'dict'> {
+      'groups': list([
+        dict({
           'id': 'bf1b993c',
           'name': 'musicians',
-        },
-      ],
+        }),
+      ]),
       'id': 'abc123',
       'name': 'Foobar',
-      'permissions': <class 'dict'> {
+      'permissions': dict({
         'cancel_job': False,
         'create_ref': False,
         'create_sample': False,
@@ -775,16 +776,16 @@
         'remove_file': False,
         'remove_job': False,
         'upload_file': False,
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       'administrator': False,
       'created_at': '2015-10-06T20:00:00Z',
-      'groups': <class 'list'> [
-      ],
+      'groups': list([
+      ]),
       'id': 'xyz321',
       'name': 'Baz',
-      'permissions': <class 'dict'> {
+      'permissions': dict({
         'cancel_job': False,
         'create_ref': False,
         'create_sample': False,
@@ -793,97 +794,97 @@
         'remove_file': False,
         'remove_job': False,
         'upload_file': False,
-      },
-    },
-  ]
----
+      }),
+    }),
+  ])
+# ---
 # name: test_login[all_valid]
-  <class 'dict'> {
+  dict({
     'reset': False,
-  }
----
+  })
+# ---
 # name: test_login[missing_remember]
-  <class 'dict'> {
+  dict({
     'reset': False,
-  }
----
+  })
+# ---
 # name: test_login[remember_is_none]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'remember',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_login[wrong_handle]
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'Invalid username or password',
-  }
----
+  })
+# ---
 # name: test_login[wrong_password]
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'Invalid username or password',
-  }
----
+  })
+# ---
 # name: test_update_settings[invalid_input][response]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'show_ids',
-      ],
+      ]),
       'msg': 'value could not be parsed to a boolean',
       'type': 'type_error.bool',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_update_settings[null_values][response]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'show_ids',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'skip_quick_analyze_dialog',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'quick_analyze_workflow',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'in': 'body',
-      'loc': <class 'list'> [
+      'loc': list([
         'show_versions',
-      ],
+      ]),
       'msg': 'Value may not be null',
       'type': 'value_error',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_update_settings[valid_input][response]
-  <class 'dict'> {
+  dict({
     'quick_analyze_workflow': 'pathoscope_bowtie',
     'show_ids': False,
     'show_versions': True,
     'skip_quick_analyze_dialog': True,
-  }
----
+  })
+# ---
