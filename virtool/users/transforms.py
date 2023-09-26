@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any, TYPE_CHECKING
 
 from sqlalchemy import select
@@ -37,75 +36,48 @@ class AttachPermissionsTransform(AbstractTransform):
 
     async def prepare_one(self, document) -> list[Document]:
         """
-        prepares a list of groups associated with a user.
+        Prepares a list of groups associated with a user.
 
         :param document: the user document
         :return: a list of groups associated with the user
         """
-        return list(
-            (
-                await self.get_groups_from_ids(self.get_group_ids_from_user(document))
-            ).values()
-        )
+        if not document["groups"]:
+            return []
+
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLGroup).filter(SQLGroup.id.in_(document["groups"]))
+            )
+
+            return [group.to_dict() for group in result.scalars()]
 
     async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
         """
-        Prepares a list of groups associated with each user in a list of user documents.
+        Prepares a dictionary mapping users to a list of member groups.
 
         :param documents: a list of user documents
         :return: a dictionary of groups associated with a list of users
         """
-        group_ids = set()
+        all_group_ids = set()
         prepared = {}
 
         for user in documents:
-            user_groups = self.get_group_ids_from_user(user)
+            all_group_ids |= set(user["groups"])
+            prepared[user["id"]] = user["groups"]
 
-            prepared[user["id"]] = user_groups
-            group_ids.update(set(user_groups))
+        if all_group_ids:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLGroup).filter(SQLGroup.id.in_(all_group_ids))
+                )
 
-        all_groups = await self.get_groups_from_ids(list(group_ids))
+                all_groups_map = {
+                    group.id: group.to_dict() for group in result.scalars()
+                }
 
-        return {
-            user_id: [all_groups[group] for group in groups]
-            for user_id, groups in prepared.items()
-        }
-
-    async def get_groups_from_ids(self, group_ids: list[str]) -> dict[str, Document]:
-        """
-        Get a dictionary of groups from a list of group ids.
-
-        :param group_ids: a list of group ids
-        :return: a dictionary of groups
-        """
-        if not group_ids:
-            return {}
-
-        async with AsyncSession(self._pg) as pg_session:
-            mongo_result, pg_result = await asyncio.gather(
-                self._mongo.groups.find({"_id": {"$in": list(group_ids)}}).to_list(
-                    None
-                ),
-                pg_session.execute(
-                    select(SQLGroup).filter(SQLGroup.legacy_id.in_(list(group_ids)))
-                ),
-            )
-
-            mongo_groups = {group["_id"]: group for group in mongo_result}
-            pg_groups = {
-                group.legacy_id: group.to_dict() for group in pg_result.scalars()
+            return {
+                user_id: [all_groups_map[group_id] for group_id in group_ids]
+                for user_id, group_ids in prepared.items()
             }
-
-            return mongo_groups | pg_groups
-
-    @staticmethod
-    def get_group_ids_from_user(user: Document) -> list[str]:
-        """
-        Get a list of group ids from a user document.
-
-        :param user: the user document
-        :return: the group id
-        """
-        return [
-            group if isinstance(group, str) else group["id"] for group in user["groups"]
-        ]
+        else:
+            return {document["id"]: [] for document in documents}

@@ -155,51 +155,71 @@ async def extend_user(db, user: Dict[str, Any]) -> Dict[str, Any]:
     return extended
 
 
-async def compose_groups_update(db, groups: Optional[list]) -> dict:
+async def compose_groups_update(pg: AsyncEngine, group_ids: List[int]) -> Document:
     """
-    Compose a update dict for the updating the list of groups a user is a member of.
+    Compose an update dict for the updating the list of groups a user is a member of.
 
-    :param db: the application database client
-    :param groups: the groups to include in the user update
-
+    :param pg: the application Postgres client
+    :param group_ids: the group ids to include in update
     :return: an update
     """
-    if groups is None:
+    if group_ids is None:
         return {}
 
-    non_existent_groups = await get_non_existent_ids(db.groups, groups)
+    async with AsyncSession(pg) as session:
+        groups = (
+            await session.execute(
+                select(SQLGroup.id).filter(SQLGroup.id.in_(group_ids))
+            )
+        ).scalars()
 
-    if non_existent_groups:
-        raise DatabaseError("Non-existent groups: " + ", ".join(non_existent_groups))
+        non_existent_group_ids = {
+            str(group_id) for group_id in group_ids if group_id not in groups
+        }
 
-    update = {"groups": groups}
+    if non_existent_group_ids:
+        raise DatabaseError(f"Non-existent groups: {', '.join(non_existent_group_ids)}")
 
-    return update
+    return {"groups": group_ids}
 
 
 async def compose_primary_group_update(
-    db, user_id: Optional[str], primary_group: Optional[str]
-) -> dict:
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    extra_group_ids: List[int],
+    group_id: int | str | None,
+    user_id: str | None,
+) -> Document:
     """
     Compose an update dict for changing a user's `primary_group`.
 
-    :param db: the application database client
+    If the ``group_id`` is ``None``, no change will be made. If the ``group_id`` is
+    ``"none"``, the ``primary_group`` will be set to ``"none"``.
+
+    :param mongo: the application MongoDB client
+    :param pg: the application Postgres client
+    :param extra_group_ids: a list of group ids that the user is going to be a member of
+    :param group_id: the primary group to set for the user
     :param user_id: the id of the user being updated
-    :param primary_group: the primary group to set for the user
     :return: an update
 
     """
-    if primary_group is None:
+    if group_id is None:
         return {}
 
-    if primary_group != "none":
-        if not await id_exists(db.groups, primary_group):
-            raise DatabaseError("Non-existent group: " + primary_group)
+    if group_id != "none":
+        async with AsyncSession(pg) as session:
+            group = await session.get(SQLGroup, group_id)
 
-        if not await is_member_of_group(db, user_id, primary_group):
+            if not group:
+                raise DatabaseError(f"Non-existent group: {group_id}")
+
+        if group_id not in extra_group_ids and not await mongo.users.count_documents(
+            {"_id": user_id, "groups": group_id}, limit=1
+        ):
             raise DatabaseError("User is not member of group")
 
-    return {"primary_group": primary_group}
+    return {"primary_group": group_id}
 
 
 async def generate_handle(collection, given_name: str, family_name: str) -> str:

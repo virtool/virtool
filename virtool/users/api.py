@@ -41,10 +41,9 @@ class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
         self,
-        find: Optional[str] = Field(
-            description="Provide text to filter by partial matches to the handle field."
-        ),
-    ) -> Union[r200[User], r403]:
+        find: str
+        | None = Field(description="Filter by partial matches to user handles."),
+    ) -> r200[User] | r403:
         """
         List all users.
 
