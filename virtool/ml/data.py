@@ -12,7 +12,7 @@ from virtool.config import Config
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.file import FileDescriptor
 from virtool.data.http import HTTPClient
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.ml.models import (
     MLModel,
     MLModelMinimal,
@@ -32,7 +32,7 @@ from virtool.utils import timestamp
 logger = getLogger("ml")
 
 
-class MLData(DataLayerPiece):
+class MLData(DataLayerDomain):
     """A data layer piece for interacting with machine learning models."""
 
     def __init__(

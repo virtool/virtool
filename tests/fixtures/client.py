@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 from aiohttp import BasicAuth
+from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web import Response, RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
@@ -22,7 +23,7 @@ from virtool.api.custom_json import dump_bytes, dump_string
 from virtool.app import create_app
 from virtool.authorization.client import AuthorizationClient
 from virtool.config.cls import ServerConfig
-from virtool.flags import FlagName, FeatureFlags
+from virtool.flags import FeatureFlags, FlagName
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.utils import generate_base_permissions
@@ -89,7 +90,7 @@ def spawn_client(
     pg,
     redis,
     redis_connection_string,
-    test_motor,
+    mocker,
 ):
     """A factory for spawning test clients."""
 
@@ -133,6 +134,8 @@ def spawn_client(
         if config_overrides:
             for key, value in config_overrides.items():
                 setattr(config, key, value)
+
+        mocker.patch("virtool.startup.connect_pg", return_value=pg)
 
         app = create_app(config)
 
@@ -209,7 +212,11 @@ def spawn_client(
         if flags:
             test_client.app["flags"] = FeatureFlags(flags)
 
-        return VirtoolTestClient(test_client)
+        client = VirtoolTestClient(test_client)
+
+        assert client.app["pg"] is pg
+
+        return client
 
     return func
 
@@ -226,6 +233,7 @@ def spawn_job_client(
     openfga_store_name: str,
     openfga_host: str,
     authorization_client: AuthorizationClient,
+    mocker,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
@@ -243,6 +251,8 @@ def spawn_job_client(
             auth = BasicAuth(login=f"job-{job_id}", password=key)
         else:
             auth = None
+
+        mocker.patch("virtool.startup.connect_pg", return_value=pg)
 
         app = await virtool.jobs.main.create_app(
             ServerConfig(
@@ -274,6 +284,8 @@ def spawn_job_client(
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
         client.db = mongo
+
+        assert client.app["pg"] is pg
 
         return client
 

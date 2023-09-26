@@ -26,7 +26,7 @@ from virtool.account.oas import (
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceError, ResourceNotFoundError
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.db import validate_credentials, fetch_complete_user
@@ -46,7 +46,7 @@ PROJECTION = (
 )
 
 
-class AccountData(DataLayerPiece):
+class AccountData(DataLayerDomain):
     name = "account"
 
     def __init__(
@@ -356,7 +356,7 @@ class AccountData(DataLayerPiece):
 
         await self.data.sessions.delete(session_id)
 
-        await self.data.administrators.update(
+        await self.data.users.update(
             session.reset.user_id,
             UpdateUserRequest(force_reset=False, password=data.password),
         )

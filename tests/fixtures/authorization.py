@@ -44,15 +44,17 @@ async def authorization_client(
 
 
 @pytest.fixture
-def openfga_host(request):
-    """The host of the OpenFGA server."""
+def openfga_host(request) -> str:
+    """
+    The host for the OpenFGA testing server.
+    """
     return request.config.getoption("openfga_host")
 
 
 @pytest.fixture
 def openfga_scheme() -> OpenfgaScheme:
     """
-    The scheme used by the OpenFGA server.
+    The scheme used by the OpenFGA testing server.
     """
     return OpenfgaScheme.HTTP
 
@@ -60,6 +62,9 @@ def openfga_scheme() -> OpenfgaScheme:
 @pytest.fixture
 def openfga_store_name(worker_id: str) -> str:
     """
-    The name for the OpenFGA store.
+    The name of the OpenFGA store to use.
+
+    If test multiplexing is enabled, a different store name will be used for each
+    worker.
     """
     return f"vt-test-{worker_id}"

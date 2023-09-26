@@ -22,7 +22,6 @@ pytest_plugins = (
     "tests.fixtures.settings",
     "tests.fixtures.subtractions",
     "tests.fixtures.tasks",
-    "tests.fixtures.uploads",
 )
 
 

@@ -3,8 +3,8 @@ import os
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized
+
 from virtool.http.client import JobClient
-from virtool.jobs.utils import JobRights
 from virtool.types import RouteHandler
 from virtool.utils import hash_key
 
@@ -48,11 +48,6 @@ async def middleware(request: Request, handler: RouteHandler):
     if not job:
         raise HTTPUnauthorized(text="Invalid authorization header.")
 
-    try:
-        rights = job["rights"]
-    except KeyError:
-        rights = None
-
-    request["client"] = JobClient(job_id, JobRights(rights))
+    request["client"] = JobClient(job_id)
 
     return await handler(request)

@@ -70,7 +70,7 @@
     },
   }
 ---
-# name: TestCreate.test[force_choice].2
+# name: TestCreate.test[force_choice][mongo]
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -188,7 +188,7 @@
     },
   }
 ---
-# name: TestCreate.test[none].2
+# name: TestCreate.test[none][mongo]
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -306,7 +306,7 @@
     },
   }
 ---
-# name: TestCreate.test[users_primary_group].2
+# name: TestCreate.test[users_primary_group][mongo]
   <class 'dict'> {
     '_id': 'fb085f7f',
     'all_read': True,
@@ -349,25 +349,6 @@
       'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
-    },
-  }
----
-# name: TestCreateCache.test[key]
-  '/samples/test/caches/a1b2c3d4'
----
-# name: TestCreateCache.test[key].1
-  <class 'dict'> {
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-    ],
-    'id': 'a1b2c3d4',
-    'key': 'aodp-abcdefgh',
-    'legacy': False,
-    'missing': False,
-    'paired': False,
-    'ready': False,
-    'sample': <class 'dict'> {
-      'id': 'test',
     },
   }
 ---
@@ -2061,15 +2042,16 @@
     },
   }
 ---
-# name: TestUploadReads.test_upload_reads[True]
+# name: TestUploadReads.test[409]
   <class 'dict'> {
-    'id': 1,
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'upload': 1,
-    'uploaded_at': '2015-10-06T20:00:00Z',
+    'id': 'conflict',
+    'message': 'Reads file name is already uploaded for this sample',
+  }
+---
+# name: TestUploadReads.test_uncompressed
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'File is not compressed',
   }
 ---
 # name: test_analyze[None]
@@ -2077,7 +2059,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
     ],
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'index': <class 'dict'> {
       'id': 'test',
       'version': 4,
@@ -2085,7 +2067,7 @@
     'job': <class 'dict'> {
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
@@ -2098,21 +2080,24 @@
     },
     'ready': False,
     'reference': <class 'dict'> {
-      'id': 'foo',
-      'name': None,
+      'data_type': 'genome',
+      'id': 'test_ref',
+      'name': 'Test Reference',
     },
     'results': None,
     'sample': <class 'dict'> {
       'id': 'test',
     },
-    'space': <class 'dict'> {
-      'id': 0,
-    },
     'subtractions': <class 'list'> [
-      'bar',
+      <class 'dict'> {
+        'id': 'subtraction_1',
+        'name': 'Subtraction 1',
+      },
     ],
     'updated_at': '2015-10-06T20:00:00Z',
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
     'workflow': 'pathoscope_bowtie',
@@ -2120,6 +2105,8 @@
 ---
 # name: test_finalize[quality]
   <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
     'artifacts': <class 'list'> [
       <class 'dict'> {
         'download_url': '/samples/test/artifacts/reference.fa.gz',
@@ -2134,11 +2121,52 @@
     ],
     'caches': <class 'list'> [
     ],
+    'created_at': '1970-01-01T00:00:13Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
     'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
     'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
     ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
     'paired': False,
+    'pathoscope': True,
     'quality': <class 'dict'> {
+      'bases': <class 'list'> [
+        <class 'list'> [
+          1543,
+        ],
+      ],
+      'composition': <class 'list'> [
+        <class 'list'> [
+          6372,
+        ],
+      ],
+      'count': 7069,
+      'encoding': 'OuBQPPuwYimrxkNpPWUx',
+      'gc': 34222440,
+      'length': <class 'list'> [
+        3237,
+      ],
+      'sequences': <class 'list'> [
+        7091,
+      ],
     },
     'reads': <class 'list'> [
       <class 'dict'> {
@@ -2147,9 +2175,9 @@
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
         'sample': 'test',
-        'size': None,
+        'size': 12,
         'upload': None,
-        'uploaded_at': None,
+        'uploaded_at': '2023-09-01T01:01:00Z',
       },
     ],
     'ready': True,
@@ -2157,20 +2185,13 @@
     ],
     'user': <class 'dict'> {
       'administrator': False,
-      'handle': 'leeashley',
+      'handle': 'kellylopez',
       'id': 'bf1b993c',
     },
-  }
----
-# name: test_finalize_cache[quality]
-  <class 'dict'> {
-    'id': 'test',
-    'key': 'aodp-abcdefgh',
-    'quality': <class 'dict'> {
-    },
-    'ready': True,
-    'sample': <class 'dict'> {
-      'id': 'test',
+    'workflows': <class 'dict'> {
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     },
   }
 ---
@@ -2359,40 +2380,6 @@
     'sample': 'test',
     'size': 3130756,
     'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_upload_artifact_cache[None]
-  <class 'dict'> {
-    'id': 1,
-    'key': 'aodp-abcdefgh',
-    'name': 'small.fq',
-    'name_on_disk': 'small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_upload_reads_cache[False]
-  <class 'dict'> {
-    'id': 1,
-    'key': 'aodp-abcdefgh',
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_upload_reads_cache[True]
-  <class 'dict'> {
-    'id': 2,
-    'key': 'aodp-abcdefgh',
-    'name': 'reads_2.fq.gz',
-    'name_on_disk': 'reads_2.fq.gz',
-    'sample': 'test',
-    'size': 9081,
     'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---

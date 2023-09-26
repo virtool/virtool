@@ -90,13 +90,6 @@ def static_time(mocker, static_time_obj):
     return static_time_obj
 
 
-def get_sam_lines():
-    path = Path(__file__).parent.parent / "test_files" / "sam_50.sam"
-
-    with open(path, "r") as handle:
-        return handle.read().split("\n")[0:-1]
-
-
 @pytest.fixture
 def example_path():
     return virtool_example_path

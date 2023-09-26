@@ -19,7 +19,7 @@ from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
 )
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import PROJECTION, generate_annotations_json_file
 from virtool.hmm.tasks import HMMInstallTask
@@ -35,7 +35,7 @@ from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.db import AttachUserTransform
 
 
-class HmmsData(DataLayerPiece):
+class HmmsData(DataLayerDomain):
     name = "hmms"
 
     def __init__(self, client: ClientSession, config: Config, mongo, pg: AsyncEngine):

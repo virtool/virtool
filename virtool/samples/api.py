@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 from asyncio import to_thread
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import aiohttp.web
 import pymongo.errors
@@ -10,17 +10,13 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
-from pydantic import constr, conint, Field
+from pydantic import Field, conint, constr
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.models.job import JobMinimal
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
-import virtool.analyses.db
 import virtool.caches.db
-import virtool.mongo.utils
-import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
 from virtool.analyses.db import PROJECTION
@@ -35,15 +31,18 @@ from virtool.authorization.permissions import LegacyPermission
 from virtool.caches.models import SQLSampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.config import get_config_from_req
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceNotFoundError,
+    ResourceError,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
-from virtool.http.policy import policy, PermissionRoutePolicy
+from virtool.http.policy import PermissionRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.jobs.utils import JobRights
-from virtool.mongo.utils import get_one_field, get_new_id
+from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     RIGHTS_PROJECTION,
@@ -58,20 +57,24 @@ from virtool.samples.files import (
 )
 from virtool.samples.models import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.oas import (
-    GetSampleResponse,
+    CreateAnalysisRequest,
+    CreateAnalysisResponse,
     CreateSampleRequest,
     CreateSampleResponse,
-    UpdateSampleRequest,
-    UpdateSampleResponse,
+    GetSampleAnalysesResponse,
+    GetSampleResponse,
     UpdateRightsRequest,
     UpdateRightsResponse,
-    CreateAnalysisRequest,
-    GetSampleAnalysesResponse,
-    CreateAnalysisResponse,
+    UpdateSampleRequest,
+    UpdateSampleResponse,
 )
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import AttachSubtractionTransform
-from virtool.uploads.utils import is_gzip_compressed
+from virtool.uploads.utils import (
+    is_gzip_compressed,
+    multipart_file_chunker,
+    naive_validator,
+)
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -214,6 +217,12 @@ class SampleView(PydanticView):
         ):
             raise InsufficientRights
 
+        if (
+            await get_one_field(self.request.app["db"].samples, "ready", sample_id)
+            is False
+        ):
+            raise HTTPBadRequest(text="Only finalized samples can be deleted")
+
         try:
             await get_data_from_req(self.request).samples.delete(sample_id)
         except ResourceNotFoundError:
@@ -274,16 +283,12 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    await virtool.samples.db.finalize(
-        req.app["db"],
-        req.app["pg"],
+    sample = await get_data_from_req(req).samples.finalize(
         sample_id,
         data["quality"],
-        to_thread,
-        get_config_from_req(req).data_path,
     )
 
-    return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
+    return json_response(sample)
 
 
 @routes.view("/samples/{sample_id}/rights")
@@ -441,7 +446,6 @@ class AnalysesView(PydanticView):
             404: Not found
         """
         db = self.request.app["db"]
-        ref_id = data.ref_id
 
         try:
             if not await check_rights(db, sample_id, self.request["client"]):
@@ -452,74 +456,28 @@ class AnalysesView(PydanticView):
 
             raise
 
-        if not await db.references.count_documents({"_id": ref_id}):
-            raise HTTPBadRequest(text="Reference does not exist")
+        try:
+            await get_data_from_req(
+                self.request
+            ).samples.has_resources_for_analysis_job(data.ref_id, data.subtractions)
+        except ResourceError as err:
+            raise HTTPBadRequest(text=str(err))
 
-        if not await db.indexes.count_documents(
-            {"reference.id": ref_id, "ready": True}
-        ):
-            raise HTTPBadRequest(text="No ready index")
-
-        subtractions = data.subtractions
-
-        if subtractions is None:
-            subtractions = []
-        else:
-            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-                db.subtraction, subtractions
-            )
-
-            if non_existent_subtractions:
-                raise HTTPBadRequest(
-                    text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
-                )
-
-        job_id = await get_new_id(db.jobs)
-
-        document = await virtool.analyses.db.create(
-            self.request.app["db"],
+        analysis = await get_data_from_req(self.request).analyses.create(
             sample_id,
-            ref_id,
-            subtractions,
+            data.ref_id,
+            data.subtractions,
             self.request["client"].user_id,
             data.workflow,
-            job_id,
             0,
         )
 
-        analysis_id = document["id"]
-
-        sample = await db.samples.find_one(sample_id, ["name"])
-
-        task_args = {
-            "analysis_id": analysis_id,
-            "ref_id": ref_id,
-            "sample_id": sample_id,
-            "sample_name": sample["name"],
-            "index_id": document["index"]["id"],
-            "subtractions": subtractions,
-        }
-
-        rights = JobRights()
-
-        rights.analyses.can_read(analysis_id)
-        rights.analyses.can_modify(analysis_id)
-        rights.analyses.can_remove(analysis_id)
-        rights.samples.can_read(sample_id)
-        rights.indexes.can_read(document["index"]["id"])
-        rights.references.can_read(ref_id)
-        rights.subtractions.can_read(*subtractions)
-
-        job = await get_data_from_req(self.request).jobs.create(
-            document["workflow"], task_args, document["user"]["id"], rights, 0, job_id
-        )
-
-        document["job"] = JobMinimal(**job.dict())
+        analysis_id = analysis.id
 
         await recalculate_workflow_tags(db, sample_id)
 
         return json_response(
-            base_processor(document),
+            analysis,
             status=201,
             headers={"Location": f"/analyses/{analysis_id}"},
         )
@@ -567,9 +525,7 @@ async def upload_artifact(req):
     if not await db.samples.find_one(sample_id):
         raise NotFound()
 
-    errors = virtool.uploads.utils.naive_validator(req)
-
-    if errors:
+    if errors := naive_validator(req):
         raise InvalidQuery(errors)
 
     name = req.query.get("name")
@@ -593,7 +549,7 @@ async def upload_artifact(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), artifact_file_path
+            multipart_file_chunker(await req.multipart()), artifact_file_path
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file upload aborted for sample: %s", sample_id)
@@ -603,9 +559,11 @@ async def upload_artifact(req):
 
     artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SQLSampleArtifact)
 
-    headers = {"Location": f"/samples/{sample_id}/artifact/{name}"}
-
-    return json_response(artifact, status=201, headers=headers)
+    return json_response(
+        artifact,
+        status=201,
+        headers={"Location": f"/samples/{sample_id}/artifact/{name}"},
+    )
 
 
 @routes.jobs_api.put("/samples/{sample_id}/reads/{filename}")
@@ -639,7 +597,9 @@ async def upload_reads(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), reads_path, is_gzip_compressed
+            multipart_file_chunker(await req.multipart()),
+            reads_path,
+            is_gzip_compressed,
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -708,14 +668,14 @@ async def upload_cache_reads(req):
     cache_path = join_cache_path(get_config_from_req(req), key) / name
     await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
 
-    cache_file_path = cache_path / name
-
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise NotFound("Cache doesn't exist with given key")
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_file_path, is_gzip_compressed
+            multipart_file_chunker(await req.multipart()),
+            cache_path,
+            is_gzip_compressed,
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -780,7 +740,7 @@ async def upload_cache_artifact(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            await req.multipart(), cache_path
+            multipart_file_chunker(await req.multipart()), cache_path
         )
     except asyncio.CancelledError:
         logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)
@@ -882,7 +842,8 @@ async def download_artifact(req: aiohttp.web.Request):
     artifact = result.to_dict()
 
     file_path = (
-        get_config_from_req(req).data_path / f"samples/{sample_id}/{artifact['name_on_disk']}"
+        get_config_from_req(req).data_path
+        / f"samples/{sample_id}/{artifact['name_on_disk']}"
     )
 
     if not os.path.isfile(file_path):
@@ -968,7 +929,9 @@ async def download_cache_artifact(req):
 
     artifact = result.to_dict()
 
-    file_path = get_config_from_req(req).data_path / "caches" / key / artifact["name_on_disk"]
+    file_path = (
+        get_config_from_req(req).data_path / "caches" / key / artifact["name_on_disk"]
+    )
 
     if not file_path.exists():
         raise NotFound()

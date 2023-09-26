@@ -24,9 +24,50 @@ For current users and administrators:
 3. Virtool 5.0.0 will comprise multiple containerized services that need to run together. A deployment
 and migration guide will be provided.
 
-## Contributing
+## Tests
 
-### Commits
+In the source directory root:
+
+1. Start the required backing services in Docker.
+   ```
+   docker compose -f tests/docker-compose.yml -p virtool-test up -d
+   ```
+   
+2. Run the test suite:
+   ```
+   poetry run pytest
+   ```
+
+### Multiplexing
+
+The test suite works with `pytest-xdist`.
+
+```
+poetry run pytest -n 4
+```
+
+This will use multiple Python processes to run the tests in parallel.
+
+### Snapshots
+
+We use [Syrupy](https://github.com/tophat/syrupy) for snapshot testing.
+
+Snapshots are used for tests where we want to assert that an object (eg. database record, Pydantic object, API response)
+has an expected shape and set of values.
+
+If snapshots need to be updated:
+```
+poetry run pytest <path_to_test_file> --su
+```
+
+You can be even more specific by specifying the test class or function:
+```
+poetry run pytest <path_to_test_file>::<class_or_function>
+```
+
+**Always be specific about what snapshots you are updating**. Don't blindly update a ton of snapshot files just to make your tests pass.
+
+## Commits
 
 All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) specification.
 

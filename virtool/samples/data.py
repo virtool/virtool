@@ -1,42 +1,44 @@
+"""The sample data layer domain."""
 import asyncio
-import logging
 import math
 from asyncio import gather, to_thread
-from typing import List, Optional
+from logging import getLogger
+from typing import List, Optional, Any, Dict
 
 import virtool_core.utils
-from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
-from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.samples import SampleSearchResult, Sample
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
+from virtool.data.events import emits, Operation
 from virtool.data.transforms import apply_transforms
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
-from virtool.jobs.db import lookup_minimal_job_by_id, create_job
-from virtool.jobs.utils import JobRights
+from virtool.jobs.db import create_job, lookup_minimal_job_by_id
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
     check_labels_do_not_exist,
-    check_subtractions_do_not_exist,
     check_name_is_in_use,
+    check_subtractions_do_not_exist,
 )
 from virtool.samples.db import (
-    compose_sample_workflow_query,
     LIST_PROJECTION,
     ArtifactsAndReadsTransform,
+    NameGenerator,
+    compose_sample_workflow_query,
+    define_initial_workflows,
     recalculate_workflow_tags,
     validate_force_choice_group,
-    define_initial_workflows,
-    NameGenerator,
 )
+from virtool.samples.models import SQLSampleReads
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import lookup_nested_subtractions
@@ -44,13 +46,14 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
+from virtool.uploads.models import SQLUpload
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
-logger = logging.getLogger(__name__)
+logger = getLogger("samples")
 
 
-class SamplesData(DataLayerPiece):
+class SamplesData(DataLayerDomain):
     name = "samples"
 
     def __init__(
@@ -101,18 +104,15 @@ class SamplesData(DataLayerPiece):
             # requesting user is a member of the owner group.
             rights_filter.append({"group_read": True, "group": {"$in": client.groups}})
 
-        base_query = {"$or": rights_filter}
-
-        search_query = {"$and": [base_query, query]}
-
-        dict_projection = {item: True for item in LIST_PROJECTION}
-
-        sort = {"created_at": -1}
+        search_query = {"$and": [{"$or": rights_filter}, query]}
 
         skip_count = 0
 
         if page > 1:
             skip_count = (page - 1) * per_page
+
+        found_count = 0
+        total_count = 0
 
         async for paginate_dict in self._mongo.samples.aggregate(
             [
@@ -125,7 +125,7 @@ class SamplesData(DataLayerPiece):
                         ],
                         "data": [
                             {"$match": search_query},
-                            {"$sort": sort},
+                            {"$sort": {"created_at": -1}},
                             {"$skip": skip_count},
                             {"$limit": per_page},
                             *lookup_nested_user_by_id(local_field="user.id"),
@@ -134,7 +134,7 @@ class SamplesData(DataLayerPiece):
                 },
                 {
                     "$project": {
-                        "data": dict_projection,
+                        "data": {item: True for item in LIST_PROJECTION},
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0]
                         },
@@ -164,6 +164,13 @@ class SamplesData(DataLayerPiece):
         )
 
     async def get(self, sample_id: str) -> Sample:
+        """
+        Get a sample by its id.
+
+        :param sample_id: the id of the sample
+        :return: the sample
+        :raises ResourceNotFoundError: when the sample does not exist
+        """
         documents = await self._mongo.samples.aggregate(
             [
                 {"$match": {"_id": sample_id}},
@@ -173,21 +180,19 @@ class SamplesData(DataLayerPiece):
             ]
         ).to_list(length=1)
 
-        if len(documents) == 0:
+        if not documents:
             raise ResourceNotFoundError
 
-        document = documents[0]
-
         document = await apply_transforms(
-            base_processor(document),
+            base_processor(documents[0]),
             [ArtifactsAndReadsTransform(self._pg), AttachLabelsTransform(self._pg)],
         )
 
-        document["caches"] = []
-        document["paired"] = len(document["reads"]) == 2
+        document.update({"caches": [], "paired": len(document["reads"]) == 2})
 
         return Sample(**document)
 
+    @emits(Operation.CREATE)
     async def create(
         self,
         data: CreateSampleRequest,
@@ -289,7 +294,6 @@ class SamplesData(DataLayerPiece):
                     ],
                 },
                 user_id=user_id,
-                rights=JobRights(),
                 space_id=0,
                 job_id=job_id,
                 session=session,
@@ -297,58 +301,17 @@ class SamplesData(DataLayerPiece):
 
         return await self.get(sample_id)
 
-    async def _update_with_session(
-        self,
-        session: AsyncIOMotorClientSession,
-        sample_id: str,
-        data: UpdateSampleRequest,
-    ) -> UpdateResult:
-        data = data.dict(exclude_unset=True)
-
-        aws = []
-
-        if "name" in data:
-            aws.append(
-                check_name_is_in_use(
-                    self._mongo, data["name"], sample_id=sample_id, session=session
-                )
-            )
-
-        if "labels" in data:
-            aws.append(check_labels_do_not_exist(self._pg, data["labels"]))
-
-        if "subtractions" in data:
-            aws.append(
-                check_subtractions_do_not_exist(
-                    self._mongo, data["subtractions"], session=session
-                )
-            )
-
-        await wait_for_checks(*aws)
-
-        return await self._mongo.samples.update_one(
-            {"_id": sample_id}, {"$set": data}, session=session
-        )
-
-    async def update(self, sample_id: str, data: UpdateSampleRequest) -> Sample:
-        async with self._mongo.with_session() as session:
-            await session.with_transaction(
-                lambda s: self._update_with_session(s, sample_id, data)
-            )
-
-        return await self.get(sample_id)
-
-    async def delete(self, sample_id: str):
+    @emits(Operation.DELETE)
+    async def delete(self, sample_id: str) -> Sample:
         """
-        Complete deletes the sample identified by the document ids in ``id_list``.
-
-        Removes all analyses and samples in MongoDB, as well as all files from the data
-        directory.
+        Deletes the sample identified by ``sample_id`` and all its analyses.
 
         :param sample_id: the id of the sample to delete
         :return: the mongodb deletion result
 
         """
+        sample = await self.get(sample_id)
+
         async with self._mongo.create_session() as session:
             result, _ = await asyncio.gather(
                 self._mongo.samples.delete_many({"_id": sample_id}, session=session),
@@ -364,15 +327,101 @@ class SamplesData(DataLayerPiece):
                 recursive=True,
             )
 
-            return result
+            return sample
 
         raise ResourceNotFoundError
+
+    @emits(Operation.UPDATE, name="finalize")
+    async def finalize(
+        self,
+        sample_id: str,
+        quality: Dict[str, Any],
+    ) -> Sample:
+        """
+        Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
+
+        :param sample_id: the id of the sample
+        :param quality: a dict containing quality data
+        :return: the sample after finalizing
+
+        """
+        result: UpdateResult = await self._mongo.samples.update_one(
+            {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
+        )
+
+        if not result.modified_count:
+            raise ResourceNotFoundError
+
+        async with AsyncSession(self._pg) as session:
+            rows = (
+                (
+                    await session.execute(
+                        select(SQLUpload)
+                        .filter(SQLSampleReads.sample == sample_id)
+                        .join_from(SQLSampleReads, SQLUpload)
+                    )
+                )
+                .unique()
+                .scalars()
+            )
+
+            for row in rows:
+                row.reads.clear()
+                row.removed = True
+                row.removed_at = virtool.utils.timestamp()
+
+                try:
+                    await to_thread(
+                        virtool_core.utils.rm,
+                        self._config.data_path / "files" / row.name_on_disk,
+                    )
+                except FileNotFoundError:
+                    pass
+
+                session.add(row)
+
+            await session.commit()
+
+        return await self.get(sample_id)
+
+    @emits(Operation.UPDATE)
+    async def update(self, sample_id: str, data: UpdateSampleRequest) -> Sample:
+        """
+        Update the sample identified by ``sample_id``.
+
+        :param sample_id: the id of the sample to update
+        :param data: the update data
+        :return: the updated sample
+
+        """
+        data = data.dict(exclude_unset=True)
+
+        aws = []
+
+        if "name" in data:
+            aws.append(
+                check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id)
+            )
+
+        if "labels" in data:
+            aws.append(check_labels_do_not_exist(self._pg, data["labels"]))
+
+        if "subtractions" in data:
+            aws.append(
+                check_subtractions_do_not_exist(self._mongo, data["subtractions"])
+            )
+
+        await wait_for_checks(*aws)
+
+        await self._mongo.samples.update_one({"_id": sample_id}, {"$set": data})
+
+        return await self.get(sample_id)
 
     async def has_right(
         self, sample_id: str, client: UserClient, right: SampleRight
     ) -> bool:
         document = await self._mongo.samples.find_one(
-            {"_id": sample_id}, ["all_read", "group", "group_read", "user"]
+            {"_id": sample_id}, ["all_read", "all_write", "group", "group_read", "user"]
         )
 
         if document is None:
@@ -393,7 +442,37 @@ class SamplesData(DataLayerPiece):
 
         raise ValueError(f"Invalid sample right: {right}")
 
+    async def has_resources_for_analysis_job(self, ref_id, subtractions):
+        """
+        Checks that resources for analysis job exist.
+        :param ref_id: the reference id
+        :param subtractions: list of subtractions
+        """
+
+        if not await self._mongo.references.count_documents({"_id": ref_id}):
+            raise ResourceConflictError("Reference does not exist")
+
+        if not await self._mongo.indexes.count_documents(
+            {"reference.id": ref_id, "ready": True}
+        ):
+            raise ResourceConflictError("No ready index")
+
+        if subtractions is not None:
+            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
+                self._mongo.subtraction, subtractions
+            )
+
+            if non_existent_subtractions:
+                raise ResourceConflictError(
+                    f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+                )
+
     async def compress_samples(self, progress_handler: AbstractProgressHandler):
+        """
+        Compress all uncompressed legacy samples.
+
+        :param progress_handler: a progress handler object
+        """
         query = {"is_legacy": True, "is_compressed": {"$exists": False}}
 
         count = await self._mongo.samples.count_documents(query)
@@ -409,6 +488,7 @@ class SamplesData(DataLayerPiece):
             await virtool.samples.db.compress_sample_reads(
                 self._mongo, self._config, sample
             )
+
             await tracker.add(1)
 
     async def move_sample_files(self, progress_handler: AbstractProgressHandler):
