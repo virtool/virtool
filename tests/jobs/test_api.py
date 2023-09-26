@@ -1,5 +1,4 @@
 import datetime
-from pprint import pprint
 
 import arrow
 import pytest
@@ -36,10 +35,6 @@ class TestFind:
             await fake2.jobs.create(user=user_2)
 
         resp = await client.get("/jobs?per_page=5")
-
-        result = await data_layer.jobs.find(None, 1, 15, [], [])
-
-        pprint([(d.id, d.created_at) for d in result.documents])
 
         assert resp.status == 200
         assert await resp.json() == snapshot(matcher=_job_response_matcher)
