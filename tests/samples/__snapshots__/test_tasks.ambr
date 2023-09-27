@@ -1,178 +1,179 @@
+# serializer version: 1
 # name: test_deduplicate_sample_names[False]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'test_id',
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'name': 'test_name',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'test_id_2',
       'created_at': datetime.datetime(2015, 10, 9, 20, 0),
       'name': 'test_name (2)',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'test_id_3',
       'created_at': datetime.datetime(2015, 10, 8, 20, 0),
       'name': 'test_name (4)',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'test_id_4',
       'created_at': datetime.datetime(2015, 10, 7, 20, 0),
       'name': 'test_name (3)',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_deduplicate_sample_names[True]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'test_id',
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'name': 'test_name',
       'space_id': '0',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'test_id_2',
       'created_at': datetime.datetime(2015, 10, 9, 20, 0),
       'name': 'test_name (2)',
       'space_id': '0',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'test_id_3',
       'created_at': datetime.datetime(2015, 10, 8, 20, 0),
       'name': 'test_name (3)',
       'space_id': '0',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'test_id_4',
       'created_at': datetime.datetime(2015, 10, 7, 20, 0),
       'name': 'test_name',
       'space_id': '1',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_move_sample_files_task[False-False-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'is_compressed': False,
     'is_legacy': False,
-  }
----
+  })
+# ---
 # name: test_move_sample_files_task[False-False-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'download_url': '/download/samples/oictwh/reads_1.fq.gz',
-        'from': <class 'dict'> {
+        'from': dict({
           'id': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
           'name': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
           'size': 239801249712,
           'uploaded_at': None,
-        },
+        }),
         'name': 'reads_1.fq.gz',
         'raw': True,
         'size': 213889231,
-      },
-    ],
+      }),
+    ]),
     'is_compressed': False,
     'is_legacy': True,
-  }
----
+  })
+# ---
 # name: test_move_sample_files_task[False-True-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': False,
-  }
----
+  })
+# ---
 # name: test_move_sample_files_task[False-True-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': True,
-  }
----
+  })
+# ---
 # name: test_move_sample_files_task[True-False-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'is_compressed': False,
     'is_legacy': False,
-  }
----
+  })
+# ---
 # name: test_move_sample_files_task[True-False-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'download_url': '/download/samples/oictwh/reads_1.fq.gz',
-        'from': <class 'dict'> {
+        'from': dict({
           'id': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
           'name': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
           'size': 239801249712,
           'uploaded_at': None,
-        },
+        }),
         'name': 'reads_1.fq.gz',
         'raw': True,
         'size': 213889231,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/download/samples/oictwh/reads_2.fq.gz',
-        'from': <class 'dict'> {
+        'from': dict({
           'id': 'vorbsrmz-17TFP120_S21_R1_002.fastq.gz',
           'name': 'vorbsrmz-17TFP120_S21_R1_002.fastq.gz',
           'size': 239801249712,
           'uploaded_at': None,
-        },
+        }),
         'name': 'reads_2.fq.gz',
         'raw': True,
         'size': 213889231,
-      },
-    ],
+      }),
+    ]),
     'is_compressed': False,
     'is_legacy': True,
-  }
----
+  })
+# ---
 # name: test_move_sample_files_task[True-True-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': False,
-  }
----
+  })
+# ---
 # name: test_move_sample_files_task[True-True-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'is_compressed': True,
     'is_legacy': True,
-  }
----
+  })
+# ---
 # name: test_update_workflows_fields[False]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'test_id',
       'library_type': 'normal',
       'nuvs': 'ip',
       'pathoscope': 'ip',
-      'workflows': <class 'dict'> {
+      'workflows': dict({
         'aodp': 'incompatible',
         'nuvs': 'pending',
         'pathoscope': 'pending',
-      },
-    },
-  ]
----
+      }),
+    }),
+  ])
+# ---
 # name: test_update_workflows_fields[True]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'test_id',
       'library_type': 'normal',
       'nuvs': 'ip',
       'pathoscope': True,
-      'workflows': <class 'dict'> {
+      'workflows': dict({
         'aodp': 'incompatible',
         'nuvs': 'pending',
         'pathoscope': 'complete',
-      },
-    },
-  ]
----
+      }),
+    }),
+  ])
+# ---

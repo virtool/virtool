@@ -1,18 +1,19 @@
+# serializer version: 1
 # name: test_upgrade
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'foo',
       'key': 'a97439e170adc4365c5b92bd2c148ed57d75e566',
-      'sample': <class 'dict'> {
+      'sample': dict({
         'id': 'abc',
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       '_id': 'bar',
       'key': 'd7fh3ee170adc4365c5b92bd2c1f3fd5745te566',
-      'sample': <class 'dict'> {
+      'sample': dict({
         'id': 'dfg',
-      },
-    },
-  ]
----
+      }),
+    }),
+  ])
+# ---

@@ -1,7 +1,8 @@
+# serializer version: 1
 # name: TestEdit.test_control[-False]
-  <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+  dict({
+    'contributors': list([
+    ]),
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'id': 'foo',
@@ -10,86 +11,86 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'internal_control': '',
     'name': 'Tester',
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[-True]
-  <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+  dict({
+    'contributors': list([
+    ]),
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'id': 'foo',
-    'internal_control': <class 'dict'> {
+    'internal_control': dict({
       'id': 'baz',
-    },
+    }),
     'latest_build': None,
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'internal_control': '',
     'name': 'Tester',
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[None-False]
-  <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+  dict({
+    'contributors': list([
+    ]),
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'id': 'foo',
@@ -98,90 +99,90 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[None-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
-    'internal_control': <class 'dict'> {
+    'internal_control': dict({
       'id': 'bar',
-    },
+    }),
     'name': 'Tester',
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[None-True]
-  <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+  dict({
+    'contributors': list([
+    ]),
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'id': 'foo',
-    'internal_control': <class 'dict'> {
+    'internal_control': dict({
       'id': 'baz',
-    },
+    }),
     'latest_build': None,
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[None-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
-    'internal_control': <class 'dict'> {
+    'internal_control': dict({
       'id': 'bar',
-    },
+    }),
     'name': 'Tester',
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[baz-False]
-  <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+  dict({
+    'contributors': list([
+    ]),
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'id': 'foo',
@@ -190,86 +191,86 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[baz-False].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'internal_control': 'baz',
     'name': 'Tester',
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[baz-True]
-  <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+  dict({
+    'contributors': list([
+    ]),
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'id': 'foo',
-    'internal_control': <class 'dict'> {
+    'internal_control': dict({
       'id': 'baz',
-    },
+    }),
     'latest_build': None,
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_control[baz-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'internal_control': 'baz',
     'name': 'Tester',
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_reference_name
-  <class 'dict'> {
-    'contributors': <class 'list'> [
-    ],
+  dict({
+    'contributors': list([
+    ]),
     'data_type': 'genome',
     'id': 'foo',
     'internal_control': None,
@@ -277,53 +278,53 @@
     'name': 'Bar',
     'otu_count': 0,
     'unbuilt_change_count': 0,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_reference_name.1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'data_type': 'genome',
-    'internal_control': <class 'dict'> {
+    'internal_control': dict({
       'id': 'bar',
-    },
+    }),
     'name': 'Bar',
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'id': 'fb085f7f',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestEdit.test_reference_name.2
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'baz',
-      'reference': <class 'dict'> {
+      'reference': dict({
         'id': 'foo',
         'name': 'Bar',
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       '_id': 'boo',
-      'reference': <class 'dict'> {
+      'reference': dict({
         'id': 'foo',
         'name': 'Bar',
-      },
-    },
-  ]
----
+      }),
+    }),
+  ])
+# ---

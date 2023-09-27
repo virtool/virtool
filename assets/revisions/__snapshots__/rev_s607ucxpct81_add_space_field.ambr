@@ -1,114 +1,115 @@
+# serializer version: 1
 # name: test_upgrade
-  <class 'list'> [
-    <class 'list'> [
-      <class 'dict'> {
+  list([
+    list([
+      dict({
         '_id': 'foo',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 2,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'bar',
         'space': 0,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         '_id': 'baz',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 15,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'noo',
         'space': 0,
-      },
-    ],
-    <class 'list'> [
-      <class 'dict'> {
+      }),
+    ]),
+    list([
+      dict({
         '_id': 'foo',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 2,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'bar',
         'space': 0,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         '_id': 'baz',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 15,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'noo',
         'space': 0,
-      },
-    ],
-    <class 'list'> [
-      <class 'dict'> {
+      }),
+    ]),
+    list([
+      dict({
         '_id': 'foo',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 2,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'bar',
         'space': 0,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         '_id': 'baz',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 15,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'noo',
         'space': 0,
-      },
-    ],
-    <class 'list'> [
-      <class 'dict'> {
+      }),
+    ]),
+    list([
+      dict({
         '_id': 'foo',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 2,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'bar',
         'space': 0,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         '_id': 'baz',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 15,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'noo',
         'space': 0,
-      },
-    ],
-    <class 'list'> [
-      <class 'dict'> {
+      }),
+    ]),
+    list([
+      dict({
         '_id': 'foo',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 2,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'bar',
         'space': 0,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         '_id': 'baz',
-        'space': <class 'dict'> {
+        'space': dict({
           'id': 15,
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         '_id': 'noo',
         'space': 0,
-      },
-    ],
-  ]
----
+      }),
+    ]),
+  ])
+# ---

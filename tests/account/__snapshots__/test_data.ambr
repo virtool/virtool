@@ -32,10 +32,10 @@
     '_id': 'baz',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'fb085f7f',
       'bf1b993c',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
     'permissions': dict({
@@ -86,10 +86,10 @@
     '_id': 'baz',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'fb085f7f',
       'bf1b993c',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
     'permissions': dict({
@@ -140,10 +140,10 @@
     '_id': 'baz',
     'administrator': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'fb085f7f',
       'bf1b993c',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
     'permissions': dict({
@@ -194,10 +194,10 @@
     '_id': 'baz',
     'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
+    'groups': list([
       'fb085f7f',
       'bf1b993c',
-    ],
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
     'permissions': dict({

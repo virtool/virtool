@@ -1,10 +1,11 @@
+# serializer version: 1
 # name: test_ensure
-  <class 'dict'> {
+  dict({
     '_id': 'settings',
-    'default_source_types': <class 'list'> [
+    'default_source_types': list([
       'isolate',
       'strain',
-    ],
+    ]),
     'enable_api': True,
     'enable_sentry': True,
     'hmm_slug': 'virtool/virtool-hmm',
@@ -15,5 +16,5 @@
     'sample_group_read': True,
     'sample_group_write': False,
     'sample_unique_names': True,
-  }
----
+  })
+# ---

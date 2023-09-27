@@ -17,9 +17,9 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[False-True]
   dict({
     'administrator': False,
@@ -42,9 +42,9 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[True-False]
   dict({
     'administrator': False,
@@ -63,9 +63,9 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test[True-True]
   dict({
     'administrator': False,
@@ -88,9 +88,9 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestCreateAPIKey.test_naming
   dict({
     'administrator': False,
@@ -130,12 +130,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-False]
   dict({
     'administrator': True,
@@ -174,12 +174,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-True]
   dict({
     'administrator': True,
@@ -218,12 +218,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[True-False]
   dict({
     'administrator': True,
@@ -262,12 +262,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[True-True]
   dict({
     'administrator': True,
@@ -306,12 +306,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[missing-False]
   dict({
     'administrator': True,
@@ -350,12 +350,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[missing-True]
   dict({
     'administrator': True,
@@ -394,18 +394,18 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test_not_found
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_edit[all_valid][response]
   dict({
     'active': True,
@@ -667,8 +667,8 @@
     dict({
       'administrator': True,
       'created_at': '2015-10-06T20:00:00Z',
-      'groups': <class 'list'> [
-        <class 'dict'> {
+      'groups': list([
+        dict({
           'id': 'fb085f7f',
           'name': 'musicians',
         }),
@@ -738,14 +738,14 @@
   dict({
     'id': 'bad_request',
     'message': 'Invalid username or password',
-  }
----
+  })
+# ---
 # name: test_remove_api_key[404]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_update_settings[invalid_input][response]
   list([
     dict({

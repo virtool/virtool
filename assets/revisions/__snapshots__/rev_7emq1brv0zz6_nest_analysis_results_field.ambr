@@ -1,111 +1,112 @@
+# serializer version: 1
 # name: test_upgrade
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'foo',
-      'results': <class 'dict'> {
-        'hits': <class 'list'> [
+      'results': dict({
+        'hits': list([
           1,
           2,
           3,
           4,
           5,
-        ],
+        ]),
         'read_count': 1209,
         'subtracted_count': 231,
-      },
+      }),
       'workflow': 'pathoscope_bowtie',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'fine',
-      'results': <class 'dict'> {
-        'hits': <class 'list'> [
+      'results': dict({
+        'hits': list([
           1,
           2,
           3,
           4,
           5,
-        ],
+        ]),
         'read_count': 1209,
         'subtracted_count': 231,
-      },
+      }),
       'workflow': 'pathoscope_bowtie',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'bar',
-      'results': <class 'dict'> {
-        'hits': <class 'list'> [
+      'results': dict({
+        'hits': list([
           9,
           8,
           7,
           6,
           5,
-        ],
+        ]),
         'read_count': 7982,
         'subtracted_count': 112,
-      },
+      }),
       'workflow': 'pathoscope_bowtie',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'baz',
-      'results': <class 'dict'> {
-        'hits': <class 'list'> [
+      'results': dict({
+        'hits': list([
           9,
           8,
           7,
           6,
           5,
-        ],
-      },
+        ]),
+      }),
       'workflow': 'nuvs',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'bad',
-      'results': <class 'dict'> {
-        'hits': <class 'list'> [
+      'results': dict({
+        'hits': list([
           9,
           8,
           7,
           6,
           5,
-        ],
-        'join_histogram': <class 'list'> [
+        ]),
+        'join_histogram': list([
           1,
           2,
           3,
           4,
           5,
-        ],
+        ]),
         'joined_pair_count': 12345,
         'remainder_pair_count': 54321,
-      },
+      }),
       'workflow': 'aodp',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'missing',
-      'join_histogram': <class 'list'> [
+      'join_histogram': list([
         1,
         2,
         3,
         4,
         5,
-      ],
+      ]),
       'joined_pair_count': 12345,
       'remainder_pair_count': 54321,
       'workflow': 'aodp',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'none',
-      'join_histogram': <class 'list'> [
+      'join_histogram': list([
         1,
         2,
         3,
         4,
         5,
-      ],
+      ]),
       'joined_pair_count': 12345,
       'remainder_pair_count': 54321,
       'results': None,
       'workflow': 'aodp',
-    },
-  ]
----
+    }),
+  ])
+# ---

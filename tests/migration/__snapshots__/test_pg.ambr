@@ -1,18 +1,19 @@
+# serializer version: 1
 # name: test_list_applied_revisions
-  <class 'list'> [
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+  list([
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 1,
       'name': 'Test 1',
       'revision': 'test_1',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 2,
       'name': 'Test 2',
       'revision': 'test_2',
-    },
-  ]
----
+    }),
+  ])
+# ---

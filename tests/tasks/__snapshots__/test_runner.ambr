@@ -1,8 +1,9 @@
+# serializer version: 1
 # name: test_graceful_shutdown[0][take timeout 0s]
-  <class 'dict'> {
+  dict({
     'complete': False,
-    'context': <class 'dict'> {
-    },
+    'context': dict({
+    }),
     'count': 0,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -11,13 +12,13 @@
     'progress': 0,
     'step': 'wait',
     'type': 'dummy_trigger_task',
-  }
----
+  })
+# ---
 # name: test_graceful_shutdown[1][take timeout 1s]
-  <class 'dict'> {
+  dict({
     'complete': True,
-    'context': <class 'dict'> {
-    },
+    'context': dict({
+    }),
     'count': 0,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -26,13 +27,13 @@
     'progress': 100,
     'step': 'wait',
     'type': 'dummy_trigger_task',
-  }
----
+  })
+# ---
 # name: test_run_task[complete_task]
-  <class 'dict'> {
+  dict({
     'complete': False,
-    'context': <class 'dict'> {
-    },
+    'context': dict({
+    }),
     'count': 0,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -41,5 +42,5 @@
     'progress': 0,
     'step': 'wait',
     'type': 'dummy_trigger_task',
-  }
----
+  })
+# ---

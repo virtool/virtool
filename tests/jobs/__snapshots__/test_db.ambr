@@ -1,30 +1,31 @@
+# serializer version: 1
 # name: test_fetch_complete_job
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'analysis_id': 'e410429b',
       'index_id': '465428b0',
       'name': None,
       'sample_id': '1e01a382',
       'username': 'igboyes',
       'workflow': 'nuvs',
-    },
+    }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': '4c530449',
     'ping': None,
     'progress': 1,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': 'import_results',
     'state': <JobState.COMPLETE: 'complete'>,
-    'status': <class 'list'> [
+    'status': list([
       JobStatus(error=None, progress=0, stage=None, state=<JobState.WAITING: 'waiting'>, step_description=None, step_name=None, timestamp=datetime.datetime(2015, 10, 6, 20, 0)),
       JobStatus(error=None, progress=0, stage=None, state=<JobState.RUNNING: 'running'>, step_description=None, step_name=None, timestamp=datetime.datetime(2015, 10, 6, 20, 0)),
       JobStatus(error=None, progress=0, stage='mk_analysis_dir', state=<JobState.RUNNING: 'running'>, step_description=None, step_name=None, timestamp=datetime.datetime(2015, 10, 6, 20, 0)),
       JobStatus(error=None, progress=1, stage='import_results', state=<JobState.COMPLETE: 'complete'>, step_description=None, step_name=None, timestamp=datetime.datetime(2015, 10, 6, 20, 0)),
-    ],
+    ]),
     'user': UserNested(id='bf1b993c', administrator=False, handle='leeashley'),
     'workflow': 'build_index',
-  }
----
+  })
+# ---

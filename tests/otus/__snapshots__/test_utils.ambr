@@ -1,23 +1,24 @@
+# serializer version: 1
 # name: TestVerify.test_empty_sequence
-  <class 'dict'> {
+  dict({
     'empty_isolate': False,
     'empty_otu': False,
-    'empty_sequence': <class 'list'> [
-      <class 'dict'> {
+    'empty_sequence': list([
+      dict({
         '_id': 'abcd1234',
         'accession': 'KX269872',
         'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
         'host': 'sweet cherry',
         'isolate_id': 'cab8b360',
         'otu_id': '6116cba1',
-        'reference': <class 'dict'> {
+        'reference': dict({
           'id': 'ref',
-        },
+        }),
         'remote': None,
         'segment': None,
         'sequence': '',
-      },
-    ],
+      }),
+    ]),
     'isolate_inconsistency': False,
-  }
----
+  })
+# ---
