@@ -63,9 +63,9 @@ async def test_label_attacher(documents, snapshot, pg: AsyncEngine):
     ],
 )
 async def test_sample_count_attacher(labels, snapshot, spawn_client):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
-    await client.db.samples.insert_many(
+    await client.mongo.samples.insert_many(
         [
             {"_id": "foo", "name": "Foo", "labels": [1, 2, 4]},
             {"_id": "bar", "name": "Bar", "labels": []},
@@ -74,4 +74,6 @@ async def test_sample_count_attacher(labels, snapshot, spawn_client):
         session=None,
     )
 
-    assert await apply_transforms(labels, [SampleCountTransform(client.db)]) == snapshot
+    assert (
+        await apply_transforms(labels, [SampleCountTransform(client.mongo)]) == snapshot
+    )

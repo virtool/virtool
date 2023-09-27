@@ -3,100 +3,143 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.task import Task
-from virtool.config import get_config_from_app
 
 import virtool.utils
-from virtool.data.utils import get_data_from_app
+from tests.fixtures.client import ClientSpawner
+from virtool.config import get_config_from_app
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import SQLTask
+from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.mark.apitest
-async def test_find(spawn_client, pg, snapshot, fake2, static_time):
-    client = await spawn_client(authorize=True, administrator=True)
+async def test_find(
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    pg: AsyncEngine,
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
+):
+    client = await spawn_client(authenticated=True)
 
-    user_1 = await fake2.users.create()
+    group = await fake2.groups.create()
+    user = await fake2.users.create()
+    await data_layer.users.update(client.user.id, UpdateUserRequest(groups=[group.id]))
 
-    await client.db.references.insert_many(
+    await client.mongo.references.insert_many(
         [
             {
                 "_id": "foo",
                 "created_at": static_time.datetime,
                 "data_type": "genome",
+                "groups": [],
+                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
-                "internal_control": None,
                 "restrict_source_types": False,
                 "task": {"id": 1},
-                "user": {"id": user_1.id},
-                "groups": [],
+                "user": {"id": client.user.id},
             },
             {
                 "_id": "baz",
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
+                "groups": [],
+                "internal_control": None,
                 "name": "Baz",
                 "organism": "virus",
-                "internal_control": None,
                 "restrict_source_types": True,
                 "task": {"id": 2},
-                "user": {"id": user_1.id},
+                "user": {"id": user.id},
+            },
+            {
+                "_id": "bar",
+                "created_at": static_time.datetime,
+                "data_type": "barcode",
                 "groups": [],
+                "internal_control": None,
+                "name": "Baz",
+                "organism": "virus",
+                "restrict_source_types": True,
+                "task": {"id": 2},
+                "user": {"id": user.id},
+                "users": [{"id": client.user.id}],
+            },
+            {
+                "_id": "goo",
+                "created_at": static_time.datetime,
+                "data_type": "barcode",
+                "groups": [{"id": group.id}],
+                "internal_control": None,
+                "name": "Baz",
+                "organism": "virus",
+                "restrict_source_types": True,
+                "task": {"id": 2},
+                "user": {"id": user.id},
+                "users": [],
             },
         ],
         session=None,
     )
 
-    task_1 = SQLTask(
-        id=1,
-        complete=True,
-        context={"user_id": "test_1"},
-        count=40,
-        created_at=static_time.datetime,
-        file_size=1024,
-        progress=100,
-        step="download",
-        type="clone_reference",
-    )
-
-    task_2 = SQLTask(
-        id=2,
-        complete=False,
-        context={"user_id": "test_2"},
-        count=30,
-        created_at=static_time.datetime,
-        file_size=14754,
-        progress=80,
-        step="download",
-        type="import_reference",
-    )
-
     async with AsyncSession(pg) as session:
-        session.add_all([task_1, task_2])
+        session.add_all(
+            [
+                SQLTask(
+                    id=1,
+                    complete=True,
+                    context={"user_id": "test_1"},
+                    count=40,
+                    created_at=static_time.datetime,
+                    file_size=1024,
+                    progress=100,
+                    step="download",
+                    type="clone_reference",
+                ),
+                SQLTask(
+                    id=2,
+                    complete=False,
+                    context={"user_id": "test_2"},
+                    count=30,
+                    created_at=static_time.datetime,
+                    file_size=14754,
+                    progress=80,
+                    step="download",
+                    type="import_reference",
+                ),
+            ]
+        )
         await session.commit()
 
     resp = await client.get("/refs")
+    body = await resp.json()
 
     assert resp.status == 200
-    assert await resp.json() == snapshot
+    assert body == snapshot
+
+    # Make sure the user does not have access to the reference "baz" where they are not
+    # the owner, in ``users`` or a member of a group in ``groups``.
+    assert {d["id"] for d in body["documents"]} == {"foo", "bar", "goo"}
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [404, None])
 async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
-    client = await spawn_client(authorize=True, administrator=True)
+    client = await spawn_client(authenticated=True, administrator=True)
 
     user_1 = await fake2.users.create()
-
     user_2 = await fake2.users.create()
 
     if error is None:
-        await client.db.references.insert_one(
+        await client.mongo.references.insert_one(
             {
                 "_id": "bar",
                 "created_at": virtool.utils.timestamp(),
@@ -123,71 +166,82 @@ async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
             }
         )
 
-    task_1 = SQLTask(
-        id=1,
-        complete=True,
-        context={"user_id": "test_1"},
-        count=40,
-        created_at=static_time.datetime,
-        file_size=1024,
-        progress=100,
-        step="download",
-        type="clone_reference",
-    )
-
     async with AsyncSession(pg) as session:
-        session.add_all([task_1])
+        session.add(
+            SQLTask(
+                id=1,
+                complete=True,
+                context={"user_id": "test_1"},
+                count=40,
+                created_at=static_time.datetime,
+                file_size=1024,
+                progress=100,
+                step="download",
+                type="clone_reference",
+            )
+        )
+
         await session.commit()
 
     resp = await client.get("/refs/bar")
 
-    if error:
+    if error is None:
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+    else:
         assert resp.status == 404
-        return
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
 class TestCreate:
     @pytest.mark.parametrize("data_type", ["genome", "barcode"])
-    async def test_create(self, data_type, snapshot, spawn_client, static_time):
+    async def test_ok(
+        self,
+        data_type,
+        data_layer: DataLayer,
+        snapshot,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
         client = await spawn_client(
-            authorize=True,
+            authenticated=True,
             base_url="https://virtool.example.com",
             permissions=[Permission.create_ref],
         )
 
         default_source_type = ["strain", "isolate"]
 
-        await get_data_from_app(client.app).settings.update(
+        await data_layer.settings.update(
             UpdateSettingsRequest(default_source_types=default_source_type)
         )
 
-        data = {
-            "name": "Test Viruses",
-            "description": "A bunch of viruses used for testing",
-            "data_type": data_type,
-            "organism": "virus",
-        }
-
-        resp = await client.post("/refs", data)
-
-        assert resp.status == 201
-        assert resp.headers["Location"] == snapshot
-        assert await resp.json() == snapshot
-
-    @pytest.mark.flaky(reruns=2)
-    async def test_import_reference(
-        self, snapshot, spawn_client, test_files_path, tmpdir
-    ):
-        client = await spawn_client(
-            authorize=True,
-            permissions=[Permission.create_ref, Permission.upload_file],
+        resp = await client.post(
+            "/refs",
+            {
+                "name": "Test Viruses",
+                "description": "A bunch of viruses used for testing",
+                "data_type": data_type,
+                "organism": "virus",
+            },
         )
 
-        tmpdir.mkdir("files")
+        assert resp.status == 201
+        assert resp.headers["Location"] == snapshot(name="location")
+        assert await resp.json() == snapshot(name="resp")
+
+    @pytest.mark.flaky(reruns=2)
+    async def test_import(
+        self,
+        snapshot,
+        spawn_client: ClientSpawner,
+        static_time,
+        test_files_path,
+        tmpdir,
+    ):
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref, Permission.upload_file],
+        )
 
         get_config_from_app(client.app).data_path = Path(tmpdir)
 
@@ -203,21 +257,29 @@ class TestCreate:
             {"name": "Test Viruses", "import_from": str(upload["name_on_disk"])},
         )
 
-        reference = await resp.json()
+        body = await resp.json()
 
-        assert reference == snapshot(
+        assert resp.status == 201
+        assert body == snapshot(
             matcher=path_type({"id": (str,)}),
         )
 
-    async def test_clone_reference(
-        self, snapshot, spawn_client, tmpdir, fake2, static_time
+    async def test_clone(
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
+        static_time,
+        tmpdir,
     ):
-        client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
+        client = await spawn_client(
+            authenticated=True, permissions=[Permission.create_ref]
+        )
 
         user_1 = await fake2.users.create()
         user_2 = await fake2.users.create()
 
-        await client.db.references.insert_one(
+        await client.mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": virtool.utils.timestamp(),
@@ -253,25 +315,30 @@ class TestCreate:
         )
 
         assert resp.status == 201
-        assert resp.headers["Location"] == snapshot
-        assert await resp.json() == snapshot
+        assert resp.headers["Location"] == snapshot(name="location")
+        assert await resp.json() == snapshot(name="resp")
 
-    async def test_remote_reference(self, snapshot, spawn_client, tmpdir, static_time):
-        client = await spawn_client(authorize=True, permissions=[Permission.create_ref])
+    async def test_remote(
+        self, snapshot, spawn_client: ClientSpawner, static_time, tmpdir
+    ):
+        client = await spawn_client(
+            authenticated=True, permissions=[Permission.create_ref]
+        )
 
-        data = {
-            "name": "Test Remote",
-            "organism": "viruses",
-            "data_type": "genome",
-            "remote_from": "virtool/ref-plant-viruses",
-        }
-
-        resp = await client.post("/refs", data)
+        resp = await client.post(
+            "/refs",
+            {
+                "name": "Test Remote",
+                "organism": "viruses",
+                "data_type": "genome",
+                "remote_from": "virtool/ref-plant-viruses",
+            },
+        )
 
         assert resp.status == 201
-        assert resp.headers["Location"] == snapshot
+        assert resp.headers["Location"] == snapshot(name="location")
         assert await resp.json() == snapshot(
-            matcher=path_type({".*etag": (str,)}, regex=True)
+            matcher=path_type({".*etag": (str,)}, regex=True), name="resp"
         )
 
 
@@ -281,16 +348,23 @@ class TestCreate:
     "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
 )
 async def test_edit(
-    data_type, error, mocker, snapshot, fake2, spawn_client, resp_is, static_time
+    data_type: str,
+    error: str | None,
+    fake2: DataFaker,
+    mocker,
+    resp_is,
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
     user_3 = await fake2.users.create()
 
     if error != "404":
-        await client.db.references.insert_one(
+        await client.mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": virtool.utils.timestamp(),
@@ -349,42 +423,40 @@ async def test_edit(
 
     resp = await client.patch("/refs/foo", data)
 
-    if error == "400_duplicates":
-        assert await resp.json() == snapshot
-        return
+    match error:
+        case None:
+            assert await resp.json() == snapshot(name="resp")
+            assert await client.mongo.references.find_one() == snapshot(name="db")
 
-    if error == "400_invalid_input":
-        assert resp.status == 400
-        assert await resp.json() == [
-            {
-                "loc": ["targets", 0, "name"],
-                "msg": "field required",
-                "type": "value_error.missing",
-                "in": "body",
-            }
-        ]
-        return
+        case "400_invalid_input":
+            assert resp.status == 400
+            assert await resp.json() == [
+                {
+                    "loc": ["targets", 0, "name"],
+                    "msg": "field required",
+                    "type": "value_error.missing",
+                    "in": "body",
+                }
+            ]
 
-    if error == "404":
-        await resp_is.not_found(resp)
-        return
+        case "400_duplicates":
+            assert await resp.json() == snapshot
 
-    if error == "403":
-        await resp_is.insufficient_rights(resp)
-        return
+        case "403":
+            await resp_is.insufficient_rights(resp)
 
-    assert await resp.json() == snapshot(name="resp")
-    assert await client.db.references.find_one() == snapshot(name="db")
+        case "404":
+            await resp_is.not_found(resp)
 
 
 @pytest.mark.apitest
 async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static_time):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
-    await client.db.references.insert_one(
+    await client.mongo.references.insert_one(
         {
             "_id": "foo",
             "created_at": virtool.utils.timestamp(),
@@ -416,7 +488,7 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
 
     resp = await client.delete("/refs/foo")
 
-    assert await client.db.references.count_documents({}) == 0
+    assert await client.mongo.references.count_documents({}) == 0
     assert await resp.text() == ""
     assert resp.status == 204
 
@@ -424,7 +496,7 @@ async def test_delete_ref(mocker, snapshot, fake2, spawn_client, resp_is, static
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     if error != "404":
         document = {
@@ -449,7 +521,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
         if error == "400":
             del document["remotes_from"]
 
-        await client.db.references.insert_one(document)
+        await client.mongo.references.insert_one(document)
 
     m_fetch_and_update_release = mocker.patch(
         "virtool.references.db.fetch_and_update_release",
@@ -495,7 +567,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
 @pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
 async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, snapshot):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     m_get_one_field = mocker.patch(
         "virtool.mongo.utils.get_one_field",
@@ -526,7 +598,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, sna
 
     resp = await client.get("/refs/foo/updates")
 
-    id_exists.assert_called_with(client.db.references, "foo")
+    id_exists.assert_called_with(client.mongo.references, "foo")
 
     if not id_exists:
         await resp_is.not_found(resp)
@@ -535,7 +607,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, sna
     assert resp.status == 200
     assert await resp.json() == snapshot
 
-    m_get_one_field.assert_called_with(client.db.references, "updates", "foo")
+    m_get_one_field.assert_called_with(client.mongo.references, "updates", "foo")
 
 
 @pytest.mark.apitest
@@ -550,10 +622,12 @@ async def test_update(
     static_time,
     snapshot,
 ):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     if error != "400":
-        await client.db.references.insert_one({"_id": "foo", "release": {"id": "bar"}})
+        await client.mongo.references.insert_one(
+            {"_id": "foo", "release": {"id": "bar"}}
+        )
 
     mocker.patch("virtool.references.tasks.UpdateRemoteReferenceTask")
 
@@ -600,9 +674,9 @@ async def test_update(
         ),
     )
 
-    resp = await client.post("/refs/foo/updates")
+    resp = await client.post("/refs/foo/updates", {})
 
-    id_exists.assert_called_with(client.db.references, "foo")
+    id_exists.assert_called_with(client.mongo.references, "foo")
 
     if not id_exists:
         await resp_is.not_found(resp)
@@ -622,7 +696,7 @@ async def test_update(
             "created_at": static_time.datetime,
             "ref_id": "foo",
             "release": {"id": "bar"},
-            "user_id": "test",
+            "user_id": "bf1b993c",
         },
     )
 
@@ -650,15 +724,15 @@ class TestCreateOTU:
         test_random_alphanumeric,
     ):
         """
-        Test that a valid request results in the creation of a otu document and a ``201`` response.
-
+        Test that a valid request results in the creation of a otu document and a
+        ``201`` response.
         """
         client = await spawn_client(
-            authorize=True, base_url="https://virtool.example.com"
+            authenticated=True, base_url="https://virtool.example.com"
         )
 
         if exists:
-            await client.db.references.insert_one(
+            await client.mongo.references.insert_one(
                 {"_id": "foo", "name": "Foo", "data_type": "genome"}
             )
 
@@ -685,7 +759,7 @@ class TestCreateOTU:
         assert await resp.json() == snapshot(name="json")
 
         assert await asyncio.gather(
-            client.db.otus.find_one(), client.db.history.find_one()
+            client.mongo.otus.find_one(), client.mongo.history.find_one()
         ) == snapshot(name="db")
 
     @pytest.mark.parametrize(
@@ -702,8 +776,8 @@ class TestCreateOTU:
         self, error, message, mocker, spawn_client, check_ref_right, resp_is
     ):
         """
-        Test that the request fails with ``409 Conflict`` if the requested otu name already exists.
-
+        Test that the request fails with ``409 Conflict`` if the requested otu name
+        already exists.
         """
         # Pass ref exists check.
         mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(True))
@@ -713,10 +787,10 @@ class TestCreateOTU:
             "virtool.otus.db.check_name_and_abbreviation", make_mocked_coro(message)
         )
 
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         if error != "404":
-            await client.db.references.insert_one(
+            await client.mongo.references.insert_one(
                 {"_id": "foo", "name": "Foo", "data_type": "genome"}
             )
 
@@ -734,7 +808,7 @@ class TestCreateOTU:
 
         # Abbreviation defaults to empty string for OTU creation.
         m_check_name_and_abbreviation.assert_called_with(
-            client.db, "foo", "Tobacco mosaic virus", "TMV"
+            client.mongo, "foo", "Tobacco mosaic virus", "TMV"
         )
 
         if error:
@@ -746,22 +820,30 @@ class TestCreateOTU:
 
 @pytest.mark.apitest
 async def test_create_index(
-    fake2, mocker, snapshot, spawn_client, check_ref_right, resp_is
+    check_ref_right,
+    fake2: DataFaker,
+    mocker,
+    resp_is,
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     """
     Test that a valid request results in the creation of a otu document and a ``201`` response.
 
     """
-    client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
+    client = await spawn_client(
+        authenticated=True, base_url="https://virtool.example.com"
+    )
 
     user = await fake2.users.create()
 
     await asyncio.gather(
-        client.db.references.insert_one(
+        client.mongo.references.insert_one(
             {"_id": "foo", "name": "Foo", "data_type": "genome"}
         ),
         # Insert unbuilt changes to prevent initial check failure.
-        client.db.history.insert_one(
+        client.mongo.history.insert_one(
             {
                 "_id": "history_1",
                 "index": {"id": "unbuilt", "version": "unbuilt"},
@@ -778,7 +860,7 @@ async def test_create_index(
     # Pass ref exists check.
     mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(False))
 
-    resp = await client.post("/refs/foo/indexes")
+    resp = await client.post("/refs/foo/indexes", {})
 
     if not check_ref_right:
         await resp_is.insufficient_rights(resp)
@@ -786,27 +868,35 @@ async def test_create_index(
 
     assert resp.status == 201
     assert await resp.json() == snapshot
-    assert await client.db.indexes.find_one() == snapshot
+    assert await client.mongo.indexes.find_one() == snapshot
 
-    m_create_manifest.assert_called_with(client.db, "foo")
+    m_create_manifest.assert_called_with(client.mongo, "foo")
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_add_group_or_user(
-    error, field, snapshot, spawn_client, check_ref_right, resp_is, static_time, fake2
+    error: str | None,
+    field: str,
+    check_ref_right,
+    fake2: DataFaker,
+    resp_is,
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     """
-    Test that the group or user is added to the reference when no error condition exists.
+    Test that the group or user is added to the reference when no error condition
+    exists.
 
     Test for the following error conditions:
-    - 404: ref does not exist
-    - 400_exists: group or user already exists in ref
-    - 400_dne: group or user does not exist
+    * 404: ref does not exist
+    * 400_exists: group or user already exists in ref
+    * 400_dne: group or user does not exist
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
@@ -825,20 +915,20 @@ async def test_add_group_or_user(
         "users": [],
     }
 
-    # Add group and user subdocuments to make sure a 400 is returned complaining about the user or group already
-    # existing in the ref.
+    # Add group and user subdocuments to make sure a 400 is returned complaining about
+    # the user or group already existing in the ref.
     if error == "400_exists":
         document["groups"].append({"id": "tech"})
         document["users"].append({"id": user_1.id})
 
-    # Add group and user document to their collections unless we want to trigger a 400 complaining about the user or
-    # group already not existing.
+    # Add group and user document to their collections unless we want to trigger a 400
+    # complaining about the user or group already not existing.
     if error != "400_dne":
-        await client.db.groups.insert_one({"_id": "tech"})
+        await client.mongo.groups.insert_one({"_id": "tech"})
 
     # Don't insert the ref document if we want to trigger a 404.
     if error != "404":
-        await client.db.references.insert_one(document)
+        await client.mongo.references.insert_one(document)
 
     url = f"/refs/foo/{field}s"
 
@@ -868,16 +958,23 @@ async def test_add_group_or_user(
 
     assert resp.status == 201
     assert await resp.json() == snapshot
-    assert await client.db.references.find_one() == snapshot
+    assert await client.mongo.references.find_one() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_edit_group_or_user(
-    error, field, snapshot, spawn_client, check_ref_right, resp_is, fake2, static_time
+    error: str | None,
+    field: str,
+    check_ref_right,
+    resp_is,
+    fake2: DataFaker,
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
@@ -920,18 +1017,16 @@ async def test_edit_group_or_user(
         )
 
     if error != "404_ref":
-        await client.db.references.insert_one(document)
+        await client.mongo.references.insert_one(document)
 
     if field == "group":
         subdocument_id = "tech"
     else:
         subdocument_id = "fred" if error == "404_field" else user_1.id
 
-    url = f"/refs/foo/{field}s/{subdocument_id}"
+    resp = await client.patch(f"/refs/foo/{field}s/{subdocument_id}", {"remove": True})
 
-    resp = await client.patch(url, {"remove": True})
-
-    if error:
+    if error in ["404_field", "404_ref"]:
         await resp_is.not_found(resp)
         return
 
@@ -941,17 +1036,23 @@ async def test_edit_group_or_user(
 
     assert resp.status == 200
     assert await resp.json() == snapshot
-
-    assert await client.db.references.find_one() == snapshot
+    assert await client.mongo.references.find_one() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
 async def test_delete_group_or_user(
-    error, field, check_ref_right, fake2, resp_is, spawn_client, snapshot, static_time
+    error: str | None,
+    field: str,
+    check_ref_right,
+    fake2: DataFaker,
+    resp_is,
+    spawn_client: ClientSpawner,
+    snapshot,
+    static_time,
 ):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
@@ -994,7 +1095,7 @@ async def test_delete_group_or_user(
         )
 
     if error != "404_ref":
-        await client.db.references.insert_one(document)
+        await client.mongo.references.insert_one(document)
 
     subdocument_id = "tech" if field == "group" else user_2.id
 
@@ -1011,50 +1112,55 @@ async def test_delete_group_or_user(
         return
 
     await resp_is.no_content(resp)
-
-    assert await client.db.references.find_one() == snapshot
+    assert await client.mongo.references.find_one() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "Prunus", "virus", "PVF", "VF"])
 @pytest.mark.parametrize("verified", [None, True, False])
-async def test_find_otus(find, verified, spawn_client, snapshot):
-    """Test to check that the api returns the correct OTUs based on how the results are filtered"""
+async def test_find_otus(
+    find: str | None, verified: bool | None, snapshot, spawn_client: ClientSpawner
+):
+    """
+    Test to check that the api returns the correct OTUs based on how the results are
+    filtered.
+    """
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
-    await client.db.references.insert_one(
-        {"_id": "foo", "name": "Foo", "data_type": "genome"}
-    )
-
-    await client.db.otus.insert_many(
-        [
-            {
-                "_id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "last_indexed_version": None,
-                "verified": True,
-                "lower_name": "prunus virus f",
-                "isolates": [],
-                "version": 0,
-                "reference": {"id": "foo"},
-                "schema": [],
-            },
-            {
-                "_id": "5316cbz2",
-                "name": "Papaya virus q",
-                "abbreviation": "P",
-                "last_indexed_version": None,
-                "verified": False,
-                "lower_name": "papaya virus q",
-                "isolates": [],
-                "version": 0,
-                "reference": {"id": "foo"},
-                "schema": [],
-            },
-        ],
-        session=None,
+    await asyncio.gather(
+        client.mongo.references.insert_one(
+            {"_id": "foo", "name": "Foo", "data_type": "genome"}
+        ),
+        client.mongo.otus.insert_many(
+            [
+                {
+                    "_id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "abbreviation": "PVF",
+                    "last_indexed_version": None,
+                    "verified": True,
+                    "lower_name": "prunus virus f",
+                    "isolates": [],
+                    "version": 0,
+                    "reference": {"id": "foo"},
+                    "schema": [],
+                },
+                {
+                    "_id": "5316cbz2",
+                    "name": "Papaya virus q",
+                    "abbreviation": "P",
+                    "last_indexed_version": None,
+                    "verified": False,
+                    "lower_name": "papaya virus q",
+                    "isolates": [],
+                    "version": 0,
+                    "reference": {"id": "foo"},
+                    "schema": [],
+                },
+            ],
+            session=None,
+        ),
     )
 
     path = "/refs/foo/otus"
@@ -1067,8 +1173,9 @@ async def test_find_otus(find, verified, spawn_client, snapshot):
         query.append(f"verified={verified}")
 
     if query:
-        path += f"?{'&'.join(query)}"
+        path = f"{path}?{'&'.join(query)}"
 
     resp = await client.get(path)
+
     assert resp.status == 200
     assert await resp.json() == snapshot

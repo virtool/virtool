@@ -93,11 +93,11 @@
     'created_at': <class 'datetime'>,
     'id': '3cbb22cc',
     'ping': None,
-    'progress': 0,
+    'progress': 10,
     'rights': <class 'dict'> {
     },
-    'stage': None,
-    'state': <JobState.WAITING: 'waiting'>,
+    'stage': 'gukcXlhktChZZhvJTzVq',
+    'state': <JobState.PREPARING: 'preparing'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
@@ -106,6 +106,15 @@
         'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
+        'timestamp': <class 'datetime'>,
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 10,
+        'stage': 'gukcXlhktChZZhvJTzVq',
+        'state': <JobState.PREPARING: 'preparing'>,
+        'step_description': 'zzIkFlrYUQbhnORELPde',
+        'step_name': 'gukcXlhktChZZhvJTzVq',
         'timestamp': <class 'datetime'>,
       },
     ],
@@ -132,11 +141,11 @@
     'created_at': <class 'datetime'>,
     'id': 'fb085f7f',
     'ping': None,
-    'progress': 0,
+    'progress': 10,
     'rights': <class 'dict'> {
     },
-    'stage': None,
-    'state': <JobState.WAITING: 'waiting'>,
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': <JobState.PREPARING: 'preparing'>,
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
@@ -145,6 +154,15 @@
         'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
+        'timestamp': <class 'datetime'>,
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': <JobState.PREPARING: 'preparing'>,
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
         'timestamp': <class 'datetime'>,
       },
     ],

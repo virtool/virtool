@@ -4,6 +4,9 @@ from asyncio import gather
 import pytest
 
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
 
 
@@ -15,15 +18,15 @@ from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTUR
     ],
 )
 async def test_create(
-    data,
-    mongo,
-    fake2,
+    data: CreateOTURequest,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
     snapshot,
     static_time,
     test_random_alphanumeric,
     test_ref,
     tmp_path,
-    data_layer,
 ):
     user = await fake2.users.create()
 
@@ -70,16 +73,16 @@ async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
     "data", [UpdateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus")]
 )
 async def test_update(
-    data,
-    mongo,
-    fake2,
+    data: UpdateOTURequest,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
     snapshot,
     static_time,
     test_otu,
     test_random_alphanumeric,
     test_ref,
     tmp_path,
-    data_layer,
 ):
     await mongo.references.insert_one(test_ref)
 

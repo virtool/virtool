@@ -6,8 +6,8 @@
       'force_reset': False,
       'groups': <class 'list'> [
         <class 'dict'> {
-          'id': 'bf1b993c',
-          'name': 'musicians',
+          'id': '7cf872dc',
+          'name': 'architects',
           'permissions': <class 'dict'> {
             'cancel_job': False,
             'create_ref': False,
@@ -34,8 +34,8 @@
           },
         },
         <class 'dict'> {
-          'id': '7cf872dc',
-          'name': 'architects',
+          'id': 'bf1b993c',
+          'name': 'musicians',
           'permissions': <class 'dict'> {
             'cancel_job': False,
             'create_ref': False,
@@ -67,6 +67,20 @@
       'force_reset': False,
       'groups': <class 'list'> [
         <class 'dict'> {
+          'id': 'f60bae36',
+          'name': 'haematologists',
+          'permissions': <class 'dict'> {
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          },
+        },
+        <class 'dict'> {
           'id': 'da42dca3',
           'name': 'neurosurgeons',
           'permissions': <class 'dict'> {
@@ -83,20 +97,6 @@
         <class 'dict'> {
           'id': '09d01419',
           'name': 'optometrists',
-          'permissions': <class 'dict'> {
-            'cancel_job': False,
-            'create_ref': False,
-            'create_sample': False,
-            'modify_hmm': False,
-            'modify_subtraction': False,
-            'remove_file': False,
-            'remove_job': False,
-            'upload_file': False,
-          },
-        },
-        <class 'dict'> {
-          'id': 'f60bae36',
-          'name': 'haematologists',
           'permissions': <class 'dict'> {
             'cancel_job': False,
             'create_ref': False,
@@ -166,8 +166,8 @@
         },
       },
       <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
+        'id': 'fb085f7f',
+        'name': 'hydrogeologists',
         'permissions': <class 'dict'> {
           'cancel_job': False,
           'create_ref': False,
@@ -180,8 +180,8 @@
         },
       },
       <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
+        'id': 'bf1b993c',
+        'name': 'musicians',
         'permissions': <class 'dict'> {
           'cancel_job': False,
           'create_ref': False,
@@ -235,20 +235,7 @@
       'invalidate_sessions': False,
       'last_password_change': <class 'datetime'>,
       'password': <class 'bytes'>,
-      'primary_group': <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-      },
+      'primary_group': None,
       'settings': <class 'dict'> {
         'quick_analyze_workflow': 'pathoscope_bowtie',
         'show_ids': True,
@@ -281,20 +268,7 @@
       'invalidate_sessions': False,
       'last_password_change': <class 'datetime'>,
       'password': <class 'bytes'>,
-      'primary_group': <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-      },
+      'primary_group': None,
       'settings': <class 'dict'> {
         'quick_analyze_workflow': 'pathoscope_bowtie',
         'show_ids': True,
@@ -351,20 +325,7 @@
     'invalidate_sessions': False,
     'last_password_change': <class 'datetime'>,
     'password': <class 'bytes'>,
-    'primary_group': <class 'dict'> {
-      'id': 'bf1b993c',
-      'name': 'musicians',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
+    'primary_group': None,
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,

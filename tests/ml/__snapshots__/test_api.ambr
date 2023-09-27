@@ -9,6 +9,16 @@
     'releases': <class 'list'> [
       <class 'dict'> {
         'created_at': <class 'str'>,
+        'download_url': 'http://www.morales.biz/',
+        'github_url': 'http://wiggins.com/',
+        'id': 3,
+        'name': 'cknqtDSSXFzHxwTjtpho',
+        'published_at': '2023-09-26T04:33:42Z',
+        'ready': False,
+        'size': 6016,
+      },
+      <class 'dict'> {
+        'created_at': <class 'str'>,
         'download_url': 'https://www.snyder.com/',
         'github_url': 'https://carlson.com/',
         'id': 1,
@@ -26,16 +36,6 @@
         'published_at': '1996-05-28T05:17:47Z',
         'ready': False,
         'size': 6789,
-      },
-      <class 'dict'> {
-        'created_at': <class 'str'>,
-        'download_url': 'http://www.morales.biz/',
-        'github_url': 'http://wiggins.com/',
-        'id': 3,
-        'name': 'cknqtDSSXFzHxwTjtpho',
-        'published_at': '1994-12-27T20:12:38Z',
-        'ready': False,
-        'size': 1535,
       },
     ],
   }

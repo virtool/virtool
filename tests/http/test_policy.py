@@ -15,6 +15,7 @@ from aiohttp_pydantic import PydanticView
 from virtool_core.models.enums import Permission
 from virtool_core.models.roles import AdministratorRole
 
+from tests.fixtures.client import ClientSpawner
 from virtool.authorization.permissions import LegacyPermission
 from virtool.errors import PolicyError
 from virtool.http.policy import (
@@ -143,15 +144,20 @@ def privilege_routes():
 
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("authenticated", [True, False])
-async def test_public(administrator, authenticated, privilege_routes, spawn_client):
+async def test_public(
+    administrator: bool,
+    authenticated: bool,
+    privilege_routes,
+    spawn_client: ClientSpawner,
+):
     """
     Test that all clients can access public endpoints.
 
     """
     client = await spawn_client(
-        authorize=authenticated,
-        administrator=administrator,
         addon_route_table=privilege_routes(PublicRoutePolicy),
+        administrator=administrator,
+        authenticated=authenticated,
     )
 
     for url in ("/view", "/func"):
@@ -166,15 +172,20 @@ async def test_public(administrator, authenticated, privilege_routes, spawn_clie
 
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("authenticated", [True, False])
-async def test_default(administrator, authenticated, privilege_routes, spawn_client):
+async def test_default(
+    administrator: bool,
+    authenticated: bool,
+    privilege_routes,
+    spawn_client: ClientSpawner,
+):
     """
     Test that a request to a non-public endpoint fails with a 401 status code.
 
     """
     client = await spawn_client(
-        administrator=administrator,
-        authorize=authenticated,
         addon_route_table=privilege_routes(DefaultRoutePolicy),
+        administrator=administrator,
+        authenticated=authenticated,
     )
 
     for url in ["/view", "/func"]:
@@ -198,15 +209,20 @@ async def test_default(administrator, authenticated, privilege_routes, spawn_cli
 
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("authenticated", [True, False])
-async def test_no_policy(administrator, authenticated, privilege_routes, spawn_client):
+async def test_no_policy(
+    administrator: bool,
+    authenticated: bool,
+    privilege_routes,
+    spawn_client: ClientSpawner,
+):
     """
     Test that routes fallback on the default if they have no policy explicitly defined.
 
     """
     client = await spawn_client(
-        authorize=authenticated,
-        administrator=administrator,
         addon_route_table=privilege_routes(PublicRoutePolicy),
+        administrator=administrator,
+        authenticated=authenticated,
     )
 
     for url in ("/no_policy_view", "/no_policy_func"):
@@ -231,18 +247,21 @@ async def test_no_policy(administrator, authenticated, privilege_routes, spawn_c
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("authenticated", [True, False])
 async def test_administrator(
-    administrator, authenticated, spawn_client, privilege_routes
+    administrator: bool,
+    authenticated: bool,
+    spawn_client: ClientSpawner,
+    privilege_routes,
 ):
     """
     Test that only authenticated, administrator clients can access admin endpoints.
 
     """
     client = await spawn_client(
-        authorize=authenticated,
-        administrator=administrator,
         addon_route_table=privilege_routes(
             AdministratorRoutePolicy(AdministratorRole.BASE)
         ),
+        administrator=administrator,
+        authenticated=authenticated,
     )
 
     for url in ["/view", "/func"]:
@@ -277,22 +296,22 @@ async def test_administrator(
 @pytest.mark.parametrize("authenticated", [True, False])
 @pytest.mark.parametrize("has_permission", [True, False])
 async def test_permissions(
-    administrator,
-    authenticated,
-    has_permission,
-    spawn_client,
+    administrator: bool,
+    authenticated: bool,
+    has_permission: bool,
+    spawn_client: ClientSpawner,
     privilege_routes,
 ):
     client = await spawn_client(
-        authorize=authenticated,
+        addon_route_table=privilege_routes(
+            PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE)
+        ),
         administrator=administrator,
+        authenticated=authenticated,
         permissions=(
             [LegacyPermission.CREATE_SAMPLE, LegacyPermission.MODIFY_SUBTRACTION]
             if has_permission
             else [Permission.modify_subtraction]
-        ),
-        addon_route_table=privilege_routes(
-            PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE)
         ),
     )
 

@@ -263,7 +263,7 @@ async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client)
     Test that a sample can be properly created.
 
     """
-    client = await spawn_client(authorize=True, administrator=True)
+    client = await spawn_client(administrator=True)
 
     mocker.patch("virtool.mongo.utils.get_new_id", return_value="a2oj3gfd")
 

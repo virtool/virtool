@@ -197,7 +197,7 @@ async def compose_primary_group_update(
             raise DatabaseError("Non-existent group: " + primary_group)
 
         if not await is_member_of_group(db, user_id, primary_group):
-            raise DatabaseError("User is not member of group")
+            raise DatabaseError("User is not member of primary group")
 
     return {"primary_group": primary_group}
 

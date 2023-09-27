@@ -159,7 +159,7 @@ class KeysView(PydanticView):
 
     async def post(
         self, data: CreateKeysRequest
-    ) -> Union[r201[CreateAPIKeyResponse], r400, r401]:
+    ) -> r201[CreateAPIKeyResponse] | r400 | r401:
         """
         Create an API key.
 
@@ -177,17 +177,13 @@ class KeysView(PydanticView):
             data, self.request["client"].user_id
         )
 
-        headers = {"Location": f"/account/keys/{key.id}"}
-
-        key_dict = key.dict()
-
-        key_dict["key"] = raw
-
         return json_response(
-            CreateAPIKeyResponse.parse_obj(key_dict), headers=headers, status=201
+            CreateAPIKeyResponse(**{**key.dict(), "key": raw}),
+            headers={"Location": f"/account/keys/{key.id}"},
+            status=201,
         )
 
-    async def delete(self) -> Union[r204, r401]:
+    async def delete(self) -> r204 | r401:
         """
         Purge API keys.
 
@@ -252,7 +248,7 @@ class KeyView(PydanticView):
 
         return json_response(APIKeyResponse.parse_obj(key))
 
-    async def delete(self, key_id: str, /) -> Union[r204, r401, r404]:
+    async def delete(self, key_id: str, /) -> r204 | r401 | r404:
         """
         Delete an API key.
 
@@ -268,7 +264,7 @@ class KeyView(PydanticView):
                 self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         raise HTTPNoContent
 
