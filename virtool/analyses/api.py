@@ -294,12 +294,13 @@ class DocumentDownloadView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        headers = {
-            "Content-Disposition": f"attachment; filename={analysis_id}.{extension}",
-            "Content-Type": content_type,
-        }
-
-        return Response(body=formatted, headers=headers)
+        return Response(
+            body=formatted,
+            headers={
+                "Content-Disposition": f"attachment; filename={analysis_id}.{extension}",
+                "Content-Type": content_type,
+            },
+        )
 
 
 @routes.view("/analyses/{analysis_id}/{sequence_index}/blast")

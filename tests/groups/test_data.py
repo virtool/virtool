@@ -1,27 +1,24 @@
+import asyncio
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.groups.data import GroupsData
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 
 
-@pytest.fixture
-def groups_data(authorization_client, mongo, pg):
-    return GroupsData(authorization_client, mongo, pg)
-
-
 async def test_create(
-    groups_data: GroupsData,
+    data_layer: DataLayer,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot,
 ):
-    group = await groups_data.create("test")
+    group = await data_layer.groups.create("test")
     row = await get_row_by_id(pg, SQLGroup, 1)
     doc = await mongo.groups.find_one()
 
@@ -34,89 +31,87 @@ async def test_create(
 
 
 class TestGet:
-    async def test_get(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_get(self, data_layer: DataLayer, fake2: DataFaker, snapshot):
         """
-        Ensure the correct group is returned when passed an postgres integer ID
+        Ensure the correct group is returned when passed a postgres integer ID
         """
-        await fake2.groups.create()
+        group = await fake2.groups.create()
+        assert await data_layer.groups.get(group.id) == snapshot
 
-        assert await groups_data.get(1) == snapshot
-
-    async def test_legacy_id(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_legacy_id(self, data_layer: DataLayer, fake2: DataFaker, snapshot):
         """
         Ensure the correct group is returned when passed a legacy mongo id
         """
         group = await fake2.groups.create()
+        assert await data_layer.groups.get(group.id) == snapshot
 
-        assert await groups_data.get(group.id) == snapshot
-
-    async def test_user(self, groups_data: GroupsData, fake2, snapshot):
+    async def test_user(self, data_layer: DataLayer, fake2: DataFaker, snapshot):
         """
         Ensure that users are correctly attached to the returned groups
         """
         group = await fake2.groups.create()
-
         await fake2.users.create(groups=[group])
 
-        assert await groups_data.get(1) == snapshot
+        assert await data_layer.groups.get(group.id) == snapshot
 
     @pytest.mark.parametrize("group_id", ["group_dne", 0xBEEF])
-    async def test_group_dne(self, groups_data: GroupsData, group_id: str | int):
+    async def test_group_dne(self, data_layer: DataLayer, group_id: str | int):
         """
         Ensure the correct exception is raised when the group does not exist
         using either a postgres or mongo id
         """
         with pytest.raises(ResourceNotFoundError):
-            await groups_data.get(group_id)
+            await data_layer.groups.get(group_id)
 
 
-async def test_create_duplicate(groups_data: GroupsData):
-    group = await groups_data.create("test")
+async def test_create_duplicate(data_layer: DataLayer):
+    """Test that a group cannot be created with a name that already exists."""
+    group = await data_layer.groups.create("test")
 
     with pytest.raises(ResourceConflictError):
-        await groups_data.create(group.name)
+        await data_layer.groups.create(group.name)
 
 
 async def test_update_name(
-    authorization_client: AuthorizationClient,
-    groups_data: GroupsData,
+    data_layer: DataLayer,
     mongo: Mongo,
     pg: AsyncEngine,
-    snapshot,
 ):
-    group = await groups_data.create("Test")
+    group = await data_layer.groups.create("Test")
 
-    document = await mongo.groups.find_one()
-    row = await get_row_by_id(pg, SQLGroup, 1)
+    document, row = await asyncio.gather(
+        mongo.groups.find_one(), get_row_by_id(pg, SQLGroup, 1)
+    )
 
     assert document["name"] == row.name == "Test" == group.name
 
-    group = await groups_data.update(group.id, UpdateGroupRequest(name="Renamed"))
+    group = await data_layer.groups.update(group.id, UpdateGroupRequest(name="Renamed"))
 
-    document = await mongo.groups.find_one()
-    row = await get_row_by_id(pg, SQLGroup, 1)
+    document, row = await asyncio.gather(
+        mongo.groups.find_one(), get_row_by_id(pg, SQLGroup, 1)
+    )
 
     assert document["name"] == row.name == "Renamed" == group.name
 
 
 async def test_update_permissions(
-    authorization_client: AuthorizationClient,
-    groups_data: GroupsData,
+    data_layer: DataLayer,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot,
 ):
-    group = await groups_data.create("Test")
+    group = await data_layer.groups.create("Test")
 
-    group = await groups_data.update(
+    group = await data_layer.groups.update(
         group.id,
         UpdateGroupRequest(
             **{"permissions": {"create_sample": True, "modify_subtraction": True}}
         ),
     )
 
-    doc = await mongo.groups.find_one()
-    row = await get_row_by_id(pg, SQLGroup, 1)
+    doc, row = await asyncio.gather(
+        mongo.groups.find_one(), get_row_by_id(pg, SQLGroup, 1)
+    )
 
     assert (
         group.permissions
@@ -125,12 +120,13 @@ async def test_update_permissions(
         == snapshot(name="mongo_added")
     )
 
-    group = await groups_data.update(
+    group = await data_layer.groups.update(
         group.id, UpdateGroupRequest(**{"permissions": {"create_sample": False}})
     )
 
-    doc = await mongo.groups.find_one()
-    row = await get_row_by_id(pg, SQLGroup, 1)
+    doc, row = await asyncio.gather(
+        mongo.groups.find_one(), get_row_by_id(pg, SQLGroup, 1)
+    )
 
     assert (
         group.permissions
@@ -140,18 +136,29 @@ async def test_update_permissions(
     )
 
 
-async def test_delete(authorization_client, groups_data, mongo, pg, snapshot):
-    group = await groups_data.create("Test")
+class TestDelete:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Test that deletion of a group removes it from both databases."""
+        group = await data_layer.groups.create("Test")
 
-    await groups_data.delete(group.id)
+        await data_layer.groups.delete(group.id)
 
-    with pytest.raises(ResourceNotFoundError):
-        await groups_data.get(group.id)
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.groups.get(group.id)
 
-    assert await mongo.groups.count_documents({}) == 0
-    assert await get_row_by_id(pg, SQLGroup, 1) is None
+        document_count, row = await asyncio.gather(
+            mongo.groups.count_documents({}), get_row_by_id(pg, SQLGroup, 1)
+        )
 
+        assert document_count == 0
+        assert row is None
 
-async def test_delete_dne(groups_data: GroupsData, snapshot):
-    with pytest.raises(ResourceNotFoundError):
-        await groups_data.delete("foobar")
+    async def test_not_found(self, data_layer: DataLayer):
+        """Test that a ResourceNotFoundError is raised when the group does not exist."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.groups.delete("foobar")

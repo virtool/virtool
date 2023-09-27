@@ -1,5 +1,6 @@
 import datetime
 import shutil
+from pprint import pprint
 from unittest.mock import call
 
 import pytest
@@ -118,12 +119,14 @@ async def test_load(
         matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
 
+    pprint(spy.call_args_list)
+
     spy.assert_has_calls(
         [
             call("https://www.snyder.com/", config.data_path / "ml/1/model.tar.gz"),
             call("http://walker.com/", config.data_path / "ml/2/model.tar.gz"),
             call("http://www.morales.biz/", config.data_path / "ml/3/model.tar.gz"),
-            call("http://www.smith.com/", config.data_path / "ml/9/model.tar.gz"),
+            call("http://johnson.com/", config.data_path / "ml/9/model.tar.gz"),
         ],
         any_order=True,
     )

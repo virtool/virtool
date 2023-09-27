@@ -11,9 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import LibraryType, Permission
 from virtool_core.models.samples import WorkflowState
 
+from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.config.cls import ServerConfig
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.jobs.client import DummyJobsClient
@@ -23,6 +25,7 @@ from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.uploads.models import SQLUpload
+from virtool.users.oas import UpdateUserRequest
 
 
 class MockJobInterface:
@@ -124,9 +127,9 @@ async def setup_find_samples_client(fake2, spawn_client, static_time):
         label_2 = await fake2.labels.create()
         label_3 = await fake2.labels.create()
 
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
-        await client.db.samples.insert_many(
+        await client.mongo.samples.insert_many(
             [
                 {
                     "user": {"id": user_1.id},
@@ -260,64 +263,110 @@ class TestFindSamples:
 
 @pytest.mark.apitest
 class TestGet:
-    @pytest.mark.parametrize(
-        "administrator,owner,all_read,group_read,group,status",
-        [
-            # User is administrator.
-            (True, False, False, False, "none", 200),
-            # User is owner.
-            (False, True, False, False, "none", 200),
-            # Anyone can read because of all_read.
-            (False, False, True, False, "none", 200),
-            # User is part of group with read right.
-            (False, False, False, True, "technicians", 200),
-            # User is not part of a group with read right.
-            (False, False, False, True, "managers", 403),
-        ],
-        ids=[
-            "administrator",
-            "owner",
-            "all_read",
-            "group_read",
-            "not_in_group",
-        ],
-    )
-    async def test_get(
-        self,
-        administrator,
-        owner,
-        all_read,
-        group_read,
-        group,
-        status,
-        get_sample_data,
-        snapshot,
-        spawn_client,
-        static_time,
+    async def test_administrator(
+        self, get_sample_data, snapshot, spawn_client: ClientSpawner
     ):
-        client = await spawn_client(
-            authorize=True, administrator=administrator, groups=["technicians"]
-        )
+        """Test that a sample can be retrieved by an administrator."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
-        update = {"all_read": all_read, "group_read": group_read, "group": group}
+        resp = await client.get("/samples/test")
 
-        if owner:
-            update["user"] = {"id": "test"}
+        assert resp.status == 200
+        assert await resp.json() == snapshot(name="resp")
 
-        await client.db.samples.update_one(
+    async def test_owner(self, get_sample_data, snapshot, spawn_client: ClientSpawner):
+        """Test that a sample can be retrieved by its owner."""
+        client = await spawn_client(authenticated=True)
+
+        await client.mongo.samples.update_one(
             {"_id": "test"},
-            {"$set": update},
+            {
+                "$set": {
+                    "all_read": False,
+                    "group_read": False,
+                    "group": "none",
+                    "user": {"id": client.user.id},
+                }
+            },
         )
 
         resp = await client.get("/samples/test")
 
-        assert resp.status == status
-        assert await resp.json() == snapshot(name="json")
+        assert resp.status == 200
+        assert await resp.json() == snapshot(name="resp")
 
-    async def test_not_found(self, spawn_client):
-        client = await spawn_client(authorize=True)
-        resp = await client.get("/samples/dne")
-        assert resp.status == 404
+    async def test_all_read(
+        self,
+        fake2: DataFaker,
+        get_sample_data,
+        snapshot,
+        spawn_client: ClientSpawner,
+    ):
+        """
+        Test that a sample can be retrieved any user when ``all_read`` is ``True`` on
+        the sample.
+        """
+        client = await spawn_client(authenticated=True)
+
+        user = await fake2.users.create()
+
+        await client.mongo.samples.update_one(
+            {"_id": "test"},
+            {
+                "$set": {
+                    "all_read": True,
+                    "group_read": False,
+                    "group": "none",
+                    "user": {"id": user.id},
+                }
+            },
+        )
+
+        resp = await client.get("/samples/test")
+
+        assert resp.status == 200
+        assert await resp.json() == snapshot(name="resp")
+
+    @pytest.mark.parametrize("is_member", [True, False])
+    async def test_group_read(
+        self,
+        is_member: bool,
+        fake2: DataFaker,
+        get_sample_data,
+        snapshot,
+        spawn_client: ClientSpawner,
+    ):
+        """
+        Test that a sample can be retrieved by the client user when they are a member
+        the sample's ``group`` and ``group_read`` is ``True``.
+        """
+        client = await spawn_client(authenticated=True)
+
+        group = await fake2.groups.create()
+        user = await fake2.users.create()
+
+        if is_member:
+            await get_data_from_app(client.app).users.update(
+                client.user.id, UpdateUserRequest(groups=[group.id])
+            )
+
+        await client.mongo.samples.update_one(
+            {"_id": "test"},
+            {
+                "$set": {
+                    "all_read": False,
+                    "all_write": False,
+                    "group_read": True,
+                    "group": group.id,
+                    "user": {"id": user.id},
+                }
+            },
+        )
+
+        resp = await client.get("/samples/test")
+
+        assert resp.status == (200 if is_member else 403)
+        assert await resp.json() == snapshot(name="resp")
 
 
 @pytest.mark.apitest
@@ -325,20 +374,33 @@ class TestCreate:
     @pytest.mark.parametrize(
         "group_setting", ["none", "users_primary_group", "force_choice"]
     )
-    async def test(
+    async def test_ok(
         self,
+        group_setting: str,
+        data_layer: DataLayer,
         fake2: DataFaker,
-        group_setting,
         pg: AsyncEngine,
         snapshot,
-        spawn_client,
+        spawn_client: ClientSpawner,
         static_time,
     ):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample]
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
-        await get_data_from_app(client.app).settings.update(
+        group = await fake2.groups.create()
+
+        await data_layer.users.update(
+            client.user.id,
+            UpdateUserRequest(groups=[*[g.id for g in client.user.groups], group.id]),
+        )
+
+        await data_layer.users.update(
+            client.user.id,
+            UpdateUserRequest(primary_group=group.id),
+        )
+
+        await data_layer.settings.update(
             UpdateSettingsRequest(
                 sample_group=group_setting,
                 sample_all_write=True,
@@ -346,22 +408,18 @@ class TestCreate:
             )
         )
 
-        data = get_data_from_app(client.app)
         dummy_jobs_client = DummyJobsClient()
-        data.jobs._client = dummy_jobs_client
-        data.samples.jobs_client = dummy_jobs_client
+        get_data_from_app(client.app).jobs._client = dummy_jobs_client
+        get_data_from_app(client.app).samples.jobs_client = dummy_jobs_client
 
         label = await fake2.labels.create()
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
         await asyncio.gather(
-            client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
-            client.db.groups.insert_many(
-                [{"_id": "diagnostics"}, {"_id": "technician"}], session=None
-            ),
+            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
-        request_data = {
+        data = {
             "files": [upload.id],
             "labels": [label.id],
             "name": "Foobar",
@@ -369,40 +427,41 @@ class TestCreate:
         }
 
         if group_setting == "force_choice":
-            request_data["group"] = "diagnostics"
+            data["group"] = group.id
 
-        resp = await client.post("/samples", request_data)
+        resp = await client.post("/samples", data)
 
         assert resp.status == 201
-        assert resp.headers["Location"] == snapshot
-        assert await resp.json() == snapshot
+        assert resp.headers["Location"] == snapshot(name="location")
+        assert await resp.json() == snapshot(name="resp")
 
         sample, upload = await asyncio.gather(
-            client.db.samples.find_one(), get_row_by_id(pg, SQLUpload, 1)
+            client.mongo.samples.find_one(), get_row_by_id(pg, SQLUpload, 1)
         )
 
         assert sample == snapshot(name="mongo")
-        assert data.jobs._client.enqueued == [("create_sample", "bf1b993c")]
+        assert get_data_from_app(client.app).jobs._client.enqueued == [
+            ("create_sample", "bf1b993c")
+        ]
         assert upload.reserved is True
 
     @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     async def test_name_exists(
         self,
-        path,
+        path: str,
         fake2: DataFaker,
-        pg,
-        spawn_client,
+        snapshot,
+        spawn_client: ClientSpawner,
         static_time,
-        resp_is,
     ):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample]
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
         await asyncio.gather(
-            client.db.samples.insert_one(
+            client.mongo.samples.insert_one(
                 {
                     "_id": "foobar",
                     "name": "Foobar",
@@ -413,63 +472,66 @@ class TestCreate:
                     "ready": True,
                 }
             ),
-            client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
         resp = await client.post(
-            path, {"name": "Foobar", "files": [upload.id], "subtractions": ["apple"]}
+            path,
+            {"name": "Foobar", "files": [upload.id], "subtractions": ["apple"]},
         )
 
-        await resp_is.bad_request(resp, "Sample name is already in use")
+        assert resp.status == 400
+        assert await resp.json() == snapshot(name="json")
 
     @pytest.mark.parametrize("group", ["", "diagnostics", None])
     async def test_force_choice(
         self,
+        group: str | None,
         fake2: DataFaker,
-        group,
         resp_is,
-        spawn_client,
+        spawn_client: ClientSpawner,
     ):
         """
-        Test that when ``force_choice`` is enabled, a request with no group field passed results in
-        an error response, that "" is accepted as a valid user group and that valid user groups are accepted as expected
+        Test that when ``force_choice`` is enabled, a request with no group field passed
+        results in an error response, that "" is accepted as a valid user group and
+        that valid user groups are accepted as expected
 
         """
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample]
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
         await asyncio.gather(
-            client.db.groups.insert_one(
+            client.mongo.groups.insert_one(
                 {"_id": "diagnostics", "name": "Diagnostics"},
             ),
             get_data_from_app(client.app).settings.update(
                 UpdateSettingsRequest(sample_group="force_choice")
             ),
-            client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
-        request_data = {
+        data = {
             "name": "Foobar",
             "files": [upload.id],
             "subtractions": ["apple"],
         }
 
         if group is None:
-            resp = await client.post("/samples", request_data)
+            resp = await client.post("/samples", data)
             await resp_is.bad_request(resp, "Group value required for sample creation")
         else:
-            request_data["group"] = group
-            resp = await client.post("/samples", request_data)
+            data["group"] = group
+            resp = await client.post("/samples", data)
             assert resp.status == 201
 
     async def test_group_dne(
-        self, fake2: DataFaker, spawn_client, pg: AsyncEngine, resp_is
+        self, fake2: DataFaker, resp_is, spawn_client: ClientSpawner
     ):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample]
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
         await get_data_from_app(client.app).settings.update(
@@ -484,7 +546,7 @@ class TestCreate:
                     sample_group="force_choice",
                 )
             ),
-            client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
         resp = await client.post(
@@ -498,9 +560,11 @@ class TestCreate:
         )
         await resp_is.bad_request(resp, "Group does not exist")
 
-    async def test_subtraction_dne(self, fake2: DataFaker, spawn_client, resp_is):
+    async def test_subtraction_dne(
+        self, fake2: DataFaker, resp_is, spawn_client: ClientSpawner
+    ):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample]
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
         upload = await fake2.uploads.create(user=await fake2.users.create())
@@ -515,10 +579,10 @@ class TestCreate:
     @pytest.mark.parametrize("one_exists", [True, False])
     async def test_file_dne(
         self,
-        one_exists,
+        one_exists: bool,
         fake2: DataFaker,
+        spawn_client: ClientSpawner,
         resp_is,
-        spawn_client,
     ):
         """
         Test that a ``404`` is returned if one or more of the file ids passed in
@@ -526,10 +590,10 @@ class TestCreate:
 
         """
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample]
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
-        await client.db.subtraction.insert_one(
+        await client.mongo.subtraction.insert_one(
             {
                 "_id": "apple",
             }
@@ -547,9 +611,11 @@ class TestCreate:
 
         await resp_is.bad_request(resp, "File does not exist")
 
-    async def test_label_dne(self, fake2: DataFaker, spawn_client, resp_is):
+    async def test_label_dne(
+        self, fake2: DataFaker, resp_is, spawn_client: ClientSpawner
+    ):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample]
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
         upload = await fake2.uploads.create(user=await fake2.users.create())
@@ -563,12 +629,9 @@ class TestCreate:
 
 @pytest.mark.apitest
 class TestEdit:
-    async def test(self, get_sample_data, spawn_client, snapshot):
-        """
-        Test that an existing sample can be edited correctly.
-
-        """
-        client = await spawn_client(authorize=True, administrator=True)
+    async def test_ok(self, get_sample_data, snapshot, spawn_client: ClientSpawner):
+        """Test that an existing sample can be edited correctly."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
         resp = await client.patch(
             "/samples/test",
@@ -583,15 +646,14 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_name_exists(self, spawn_client, resp_is):
+    async def test_name_exists(self, resp_is, spawn_client: ClientSpawner):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name``
         already exists.
-
         """
-        client = await spawn_client(authorize=True, administrator=True)
+        client = await spawn_client(administrator=True, authenticated=True)
 
-        await client.db.samples.insert_many(
+        await client.mongo.samples.insert_many(
             [
                 {
                     "_id": "foo",
@@ -625,16 +687,16 @@ class TestEdit:
     async def test_label_exists(
         self,
         snapshot,
-        spawn_client,
+        spawn_client: ClientSpawner,
     ):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does
         not exist.
 
         """
-        client = await spawn_client(authorize=True, administrator=True)
+        client = await spawn_client(administrator=True, authenticated=True)
 
-        await client.db.samples.insert_one(
+        await client.mongo.samples.insert_one(
             {
                 "_id": "foo",
                 "name": "Foo",
@@ -646,23 +708,26 @@ class TestEdit:
                 "ready": True,
             }
         )
+
         resp = await client.patch("/samples/foo", {"labels": [1]})
 
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")
 
-    async def test_subtraction_exists(self, fake2, snapshot, spawn_client):
+    async def test_subtraction_exists(
+        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+    ):
         """
         Test that a ``bad_request`` is returned if the subtraction passed in
         ``subtractions`` does not exist.
 
         """
-        client = await spawn_client(authorize=True, administrator=True)
+        client = await spawn_client(administrator=True, authenticated=True)
 
         user = await fake2.users.create()
 
         await asyncio.gather(
-            client.db.samples.insert_one(
+            client.mongo.samples.insert_one(
                 {
                     "_id": "test",
                     "name": "Test",
@@ -673,7 +738,7 @@ class TestEdit:
                     "user": {"id": user.id},
                 }
             ),
-            client.db.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
+            client.mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
         )
 
         resp = await client.patch("/samples/test", {"subtractions": ["foo", "bar"]})
@@ -685,7 +750,13 @@ class TestEdit:
 @pytest.mark.apitest
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
 async def test_finalize(
-    field, snapshot, fake2, spawn_job_client, resp_is, pg, tmp_path
+    field: str,
+    snapshot,
+    fake2: DataFaker,
+    pg: AsyncEngine,
+    resp_is,
+    spawn_job_client,
+    tmp_path,
 ):
     """
     Test that sample can be finalized using the Jobs API.
@@ -699,17 +770,6 @@ async def test_finalize(
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
-    data = {
-        field: {
-            "bases": [[1543]],
-            "composition": [[6372]],
-            "count": 7069,
-            "encoding": "OuBQPPuwYimrxkNpPWUx",
-            "gc": 34222440,
-            "length": [3237],
-            "sequences": [7091],
-        }
-    }
 
     await client.db.samples.insert_one(
         {
@@ -775,7 +835,20 @@ async def test_finalize(
 
         await session.commit()
 
-    resp = await client.patch("/samples/test", json=data)
+    resp = await client.patch(
+        "/samples/test",
+        json={
+            field: {
+                "bases": [[1543]],
+                "composition": [[6372]],
+                "count": 7069,
+                "encoding": "OuBQPPuwYimrxkNpPWUx",
+                "gc": 34222440,
+                "length": [3237],
+                "sequences": [7091],
+            }
+        },
+    )
 
     if field == "quality":
         assert resp.status == 200
@@ -791,35 +864,17 @@ async def test_finalize(
 
 
 @pytest.mark.apitest
-async def test_delete(fake2, spawn_client, tmpdir):
-    """Test the ability to delete a sample."""
-    client = await spawn_client(authorize=True)
-
-    user = await fake2.users.create()
-
-    await create_fake_sample(client.app, "test", user.id, finalized=True)
-
-    resp = await client.get("/samples/test")
-    assert resp.status == 200
-
-    resp = await client.delete("/samples/test")
-    assert resp.status == 204
-
-    resp = await client.get("/samples/test")
-    assert resp.status == 404
-
-
 class TestDelete:
     @pytest.mark.parametrize("finalized", [True, False])
-    async def test(
+    async def test_ok(
         self,
         config: ServerConfig,
         finalized: bool,
         fake2: DataFaker,
-        spawn_client,
-        tmp_path,
+        spawn_client: ClientSpawner,
+        tmp_path: Path,
     ):
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         (config.data_path / "samples/test").mkdir(parents=True)
 
@@ -855,8 +910,8 @@ class TestDelete:
         else:
             assert resp.status == 204
 
-    async def test_not_found(self, spawn_client):
-        client = await spawn_client(authorize=True)
+    async def test_not_found(self, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
         resp = await client.delete("/samples/test")
         assert resp.status == 404
 
@@ -870,14 +925,21 @@ class TestDelete:
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("term", [None, "Baz"])
 async def test_find_analyses(
-    error, term, snapshot, mocker, fake2, spawn_client, resp_is, static_time
+    error: str | None,
+    term: str | None,
+    fake2: DataFaker,
+    mocker,
+    resp_is,
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     if not error:
-        await client.db.samples.insert_one(
+        await client.mongo.samples.insert_one(
             {
                 "_id": "test",
                 "created_at": static_time.datetime,
@@ -893,17 +955,17 @@ async def test_find_analyses(
     job = await fake2.jobs.create(user=user_1)
 
     await asyncio.gather(
-        client.db.subtraction.insert_one(
+        client.mongo.subtraction.insert_one(
             {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
         ),
-        client.db.references.insert_many(
+        client.mongo.references.insert_many(
             [
                 {"_id": "foo", "data_type": "genome", "name": "Foo"},
                 {"_id": "baz", "data_type": "genome", "name": "Baz"},
             ],
             session=None,
         ),
-        client.db.analyses.insert_many(
+        client.mongo.analyses.insert_many(
             [
                 {
                     "_id": "test_1",
@@ -956,12 +1018,11 @@ async def test_find_analyses(
 
     resp = await client.get(url)
 
-    if error:
-        await resp_is.not_found(resp)
-
-    else:
+    if error is None:
         assert resp.status == 200
         assert await resp.json() == snapshot
+    else:
+        await resp_is.not_found(resp)
 
 
 @pytest.mark.apitest
@@ -970,20 +1031,20 @@ async def test_find_analyses(
     [None, "400_reference", "400_index", "400_ready_index", "400_subtraction", "404"],
 )
 async def test_analyze(
-    error,
+    error: str | None,
     mocker,
-    snapshot,
-    spawn_client,
-    static_time,
     resp_is,
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
     client.app["jobs"] = MockJobInterface()
 
     if error != "400_reference":
-        await client.db.references.insert_one(
+        await client.mongo.references.insert_one(
             {
                 "_id": "test_ref",
                 "name": "Test Reference",
@@ -992,7 +1053,7 @@ async def test_analyze(
         )
 
     if error != "400_index":
-        await client.db.indexes.insert_one(
+        await client.mongo.indexes.insert_one(
             {
                 "_id": "test",
                 "reference": {"id": "test_ref"},
@@ -1002,12 +1063,12 @@ async def test_analyze(
         )
 
     if error != "400_subtraction":
-        await client.db.subtraction.insert_one(
+        await client.mongo.subtraction.insert_one(
             {"_id": "subtraction_1", "name": "Subtraction 1"}
         )
 
     if error != "404":
-        await client.db.samples.insert_one(
+        await client.mongo.samples.insert_one(
             {
                 "_id": "test",
                 "name": "Test",
@@ -1029,31 +1090,27 @@ async def test_analyze(
         },
     )
 
-    if error == "400_reference":
-        await resp_is.bad_request(resp, "Reference does not exist")
-        return
-
-    if error in ["400_index", "400_ready_index"]:
-        await resp_is.bad_request(resp, "No ready index")
-        return
-
-    if error == "400_subtraction":
-        await resp_is.bad_request(resp, "Subtractions do not exist: subtraction_1")
-        return
-
-    if error == "404":
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 201
-    assert resp.headers["Location"] == "/analyses/bf1b993c"
-    assert await resp.json() == snapshot
+    match error:
+        case None:
+            assert resp.status == 201
+            assert resp.headers["Location"] == "/analyses/bf1b993c"
+            assert await resp.json() == snapshot
+        case "400_reference":
+            await resp_is.bad_request(resp, "Reference does not exist")
+        case ("400_index", "400_ready_index"):
+            await resp_is.bad_request(resp, "No ready index")
+        case "400_subtraction":
+            await resp_is.bad_request(resp, "Subtractions do not exist: subtraction_1")
+        case "404":
+            await resp_is.not_found(resp)
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, resp_is):
+async def test_cache_job_remove(
+    exists: bool, ready: bool, resp_is, spawn_job_client, tmp_path: Path
+):
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
@@ -1063,7 +1120,7 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, resp_
     path.joinpath("reads_1.fq.gz").write_text("Cache file")
 
     if exists:
-        await client.db.caches.insert_one(
+        await client.mongo.caches.insert_one(
             {"_id": "foo", "key": "abc123", "sample": {"id": "bar"}, "ready": ready}
         )
 
@@ -1071,15 +1128,12 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, resp_
 
     if not exists:
         assert resp.status == 404
-        return
-
-    if ready:
+    elif ready:
         await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
-        return
-
-    await resp_is.no_content(resp)
-    assert await client.db.caches.find_one("foo") is None
-    assert not (tmp_path / "caches" / "foo").is_dir()
+    else:
+        await resp_is.no_content(resp)
+        assert await client.mongo.caches.find_one("foo") is None
+        assert not (tmp_path / "caches" / "foo").is_dir()
 
 
 @pytest.mark.apitest
@@ -1104,7 +1158,7 @@ async def test_upload_artifact(
     get_config_from_app(client.app).data_path = tmp_path
     sample_file_path = tmp_path / "samples" / "test"
 
-    await client.db.samples.insert_one(
+    await client.mongo.samples.insert_one(
         {
             "_id": "test",
             "ready": True,
@@ -1233,7 +1287,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
         "sample": {"id": "foo"},
     }
 
-    await client.db.caches.insert_one(cache)
+    await client.mongo.caches.insert_one(cache)
 
     resp = await client.get("/samples/foo/caches/abc123")
 
@@ -1251,7 +1305,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
 async def test_download_reads(
     suffix, error, tmp_path, spawn_client, spawn_job_client, pg
 ):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
     job_client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
@@ -1265,7 +1319,7 @@ async def test_download_reads(
         path.joinpath(file_name).write_text("test")
 
     if error != "404_sample":
-        await client.db.samples.insert_one(
+        await client.mongo.samples.insert_one(
             {
                 "_id": "foo",
                 "ready": True,
@@ -1284,20 +1338,20 @@ async def test_download_reads(
     resp = await client.get(f"/samples/foo/reads/{file_name}")
     job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
 
-    expected_path = (
-        get_config_from_app(client.app).data_path / "samples" / "foo" / file_name
-    )
-
     if error:
         assert resp.status == job_resp.status == 404
-        return
-
-    assert resp.status == job_resp.status == 200
-    assert (
-        expected_path.read_bytes()
-        == await resp.content.read()
-        == await job_resp.content.read()
-    )
+    else:
+        assert resp.status == job_resp.status == 200
+        assert (
+            (
+                get_config_from_app(client.app).data_path
+                / "samples"
+                / "foo"
+                / file_name
+            ).read_bytes()
+            == await resp.content.read()
+            == await job_resp.content.read()
+        )
 
 
 @pytest.mark.apitest
@@ -1313,7 +1367,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
         path.joinpath("fastqc.txt").write_text("test")
 
     if error != "404_sample":
-        await client.db.samples.insert_one(
+        await client.mongo.samples.insert_one(
             {
                 "_id": "foo",
                 "ready": True,

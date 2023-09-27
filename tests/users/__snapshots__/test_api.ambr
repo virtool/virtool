@@ -1,4 +1,22 @@
-# name: TestUpdate.test
+# name: TestUpdate.test_non_existent_primary_group
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Non-existent group: managers',
+  }
+---
+# name: TestUpdate.test_not_a_member_of_primary_group
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'User is not member of primary group',
+  }
+---
+# name: TestUpdate.test_not_found
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'User does not exist',
+  }
+---
+# name: TestUpdate.test_ok
   <class 'dict'> {
     'active': True,
     'administrator': False,
@@ -11,12 +29,12 @@
     'force_reset': True,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
         'name': 'musicians',
       },
     ],
     'handle': 'qtaylor',
-    'id': '7cf872dc',
+    'id': '3cbb22cc',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -29,27 +47,9 @@
       'upload_file': True,
     },
     'primary_group': <class 'dict'> {
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'musicians',
     },
-  }
----
-# name: TestUpdate.test_non_existent_primary_group
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': 'Non-existent group: managers',
-  }
----
-# name: TestUpdate.test_not_a_member_of_primary_group
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': 'User is not member of group',
-  }
----
-# name: TestUpdate.test_not_found
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'User does not exist',
   }
 ---
 # name: TestUpdate.test_short_password
@@ -71,16 +71,16 @@
     'force_reset': True,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
+        'id': '7cf872dc',
+        'name': 'hydrogeologists',
       },
       <class 'dict'> {
         'id': 'fb085f7f',
-        'name': 'hydrogeologists',
+        'name': 'musicians',
       },
     ],
     'handle': 'qtaylor',
-    'id': '7cf872dc',
+    'id': '3cbb22cc',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -220,7 +220,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'fred',
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -249,7 +249,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'fred',
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -266,7 +266,7 @@
 ---
 # name: test_create[None][db]
   <class 'dict'> {
-    '_id': 'fb085f7f',
+    '_id': '7cf872dc',
     'active': True,
     'administrator': False,
     'force_reset': False,
@@ -285,7 +285,42 @@
   }
 ---
 # name: test_create[None][location]
-  '/users/fb085f7f'
+  '/users/7cf872dc'
+---
+# name: test_create_first_user[False-201]
+  <class 'dict'> {
+    'active': True,
+    'administrator': True,
+    'administrator_role': 'full',
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'fred',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+  }
+---
+# name: test_create_first_user[True-409]
+  <class 'dict'> {
+    'id': 'conflict',
+    'message': 'Virtool already has at least one user',
+  }
 ---
 # name: test_find[None]
   <class 'dict'> {
@@ -294,10 +329,10 @@
         'administrator': True,
         'force_reset': False,
         'groups': <class 'list'> [
-          'perms_group',
+          'bf1b993c',
         ],
         'handle': 'bob',
-        'id': 'test',
+        'id': 'fb085f7f',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': <class 'dict'> {
           'cancel_job': False,
@@ -309,15 +344,15 @@
           'remove_job': False,
           'upload_file': False,
         },
-        'primary_group': 'technician',
+        'primary_group': None,
       },
       <class 'dict'> {
         'administrator': False,
         'force_reset': False,
         'groups': <class 'list'> [
         ],
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'handle': 'laura56',
+        'id': '7cf872dc',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': <class 'dict'> {
           'cancel_job': False,
@@ -336,8 +371,8 @@
         'force_reset': False,
         'groups': <class 'list'> [
         ],
-        'handle': 'zclark',
-        'id': 'fb085f7f',
+        'handle': 'sjohnson',
+        'id': '3cbb22cc',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': <class 'dict'> {
           'cancel_job': False,
@@ -368,7 +403,7 @@
         'groups': <class 'list'> [
         ],
         'handle': 'fred',
-        'id': 'bf1b993c',
+        'id': '7cf872dc',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': <class 'dict'> {
           'cancel_job': False,
@@ -390,41 +425,6 @@
     'total_count': 3,
   }
 ---
-# name: test_first_user_view[False-201]
-  <class 'dict'> {
-    'active': True,
-    'administrator': True,
-    'administrator_role': 'full',
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
-    'force_reset': False,
-    'groups': <class 'list'> [
-    ],
-    'handle': 'fred',
-    'id': 'bf1b993c',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'primary_group': None,
-  }
----
-# name: test_first_user_view[True-409]
-  <class 'dict'> {
-    'id': 'conflict',
-    'message': 'Virtool already has at least one user',
-  }
----
 # name: test_get[200]
   <class 'dict'> {
     'active': True,
@@ -438,16 +438,16 @@
     'force_reset': False,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
+        'id': '7cf872dc',
+        'name': 'hydrogeologists',
       },
       <class 'dict'> {
         'id': 'fb085f7f',
-        'name': 'hydrogeologists',
+        'name': 'musicians',
       },
     ],
     'handle': 'qtaylor',
-    'id': '7cf872dc',
+    'id': '3cbb22cc',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -459,10 +459,7 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': <class 'dict'> {
-      'id': 'bf1b993c',
-      'name': 'musicians',
-    },
+    'primary_group': None,
   }
 ---
 # name: test_get[404]

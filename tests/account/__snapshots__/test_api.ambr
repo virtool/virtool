@@ -19,30 +19,6 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test[False-False].1
-  <class 'dict'> {
-    '_id': 'hashed_key',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
----
 # name: TestCreateAPIKey.test[False-True]
   <class 'dict'> {
     'administrator': False,
@@ -68,31 +44,6 @@
     },
   }
 ---
-# name: TestCreateAPIKey.test[False-True].1
-  <class 'dict'> {
-    '_id': 'hashed_key',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      'bf1b993c',
-    ],
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
----
 # name: TestCreateAPIKey.test[True-False]
   <class 'dict'> {
     'administrator': False,
@@ -111,30 +62,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
-# name: TestCreateAPIKey.test[True-False].1
-  <class 'dict'> {
-    '_id': 'hashed_key',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-    ],
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
     },
   }
 ---
@@ -160,31 +87,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
-# name: TestCreateAPIKey.test[True-True].1
-  <class 'dict'> {
-    '_id': 'hashed_key',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      'bf1b993c',
-    ],
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
     },
   }
 ---
@@ -229,7 +131,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -273,7 +175,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -317,7 +219,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -361,7 +263,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -405,7 +307,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -449,7 +351,7 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -493,8 +395,14 @@
       'upload_file': False,
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': 'bf1b993c',
     },
+  }
+---
+# name: TestUpdateAPIKey.test_not_found
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
   }
 ---
 # name: test_edit[all_valid][response]
@@ -512,7 +420,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -548,7 +456,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -602,7 +510,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -638,7 +546,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -732,7 +640,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
-    'id': 'test',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -760,7 +668,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'groups': <class 'list'> [
         <class 'dict'> {
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
           'name': 'musicians',
         },
       ],
@@ -829,6 +737,12 @@
   <class 'dict'> {
     'id': 'bad_request',
     'message': 'Invalid username or password',
+  }
+---
+# name: test_remove_api_key[404]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
   }
 ---
 # name: test_update_settings[invalid_input][response]

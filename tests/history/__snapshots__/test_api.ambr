@@ -23,7 +23,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
-          'id': 'test',
+          'id': 'bf1b993c',
         },
       },
       <class 'dict'> {
@@ -48,7 +48,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
-          'id': 'test',
+          'id': 'bf1b993c',
         },
       },
       <class 'dict'> {
@@ -73,7 +73,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
-          'id': 'test',
+          'id': 'bf1b993c',
         },
       },
     ],
@@ -133,7 +133,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
+      'id': 'bf1b993c',
     },
   }
 ---

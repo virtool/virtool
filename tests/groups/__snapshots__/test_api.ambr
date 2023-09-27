@@ -1,6 +1,6 @@
 # name: TestUpdate.test
   <class 'dict'> {
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'name': 'Technicians',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -16,29 +16,20 @@
       <class 'dict'> {
         'administrator': False,
         'handle': 'fcarpenter',
-        'id': '3cbb22cc',
-      },
-      <class 'dict'> {
-        'administrator': False,
-        'handle': 'chelsea34',
         'id': 'da42dca3',
       },
       <class 'dict'> {
         'administrator': False,
-        'handle': 'michelle34',
+        'handle': 'chelsea34',
         'id': '09d01419',
+      },
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'michelle34',
+        'id': 'f60bae36',
       },
     ],
   }
----
-# name: TestUpdate.test[users]
-  <class 'list'> [
-    User(id='test', administrator=True, handle='bob', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=False, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False), primary_group=None, administrator_role=<AdministratorRole.FULL: 'full'>),
-    User(id='7cf872dc', administrator=False, handle='qtaylor', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=False, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False), primary_group=None, administrator_role=None),
-    User(id='3cbb22cc', administrator=False, handle='fcarpenter', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
-    User(id='da42dca3', administrator=False, handle='chelsea34', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
-    User(id='09d01419', administrator=False, handle='michelle34', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
-  ]
 ---
 # name: TestUpdate.test_not_found[json]
   <class 'dict'> {
@@ -48,7 +39,7 @@
 ---
 # name: test_create[201][json]
   <class 'dict'> {
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'name': 'Test',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -65,7 +56,7 @@
   }
 ---
 # name: test_create[201][location]
-  'https://virtool.example.com/groups/fb085f7f'
+  'https://virtool.example.com/groups/bf1b993c'
 ---
 # name: test_create[400][json]
   <class 'dict'> {
@@ -79,18 +70,18 @@
 # name: test_find
   <class 'list'> [
     <class 'dict'> {
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'musicians',
     },
     <class 'dict'> {
-      'id': 'fb085f7f',
+      'id': '7cf872dc',
       'name': 'hydrogeologists',
     },
   ]
 ---
 # name: test_get[200]
   <class 'dict'> {
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'name': 'musicians',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -106,7 +97,7 @@
       <class 'dict'> {
         'administrator': False,
         'handle': 'qtaylor',
-        'id': '7cf872dc',
+        'id': '3cbb22cc',
       },
     ],
   }
@@ -120,63 +111,9 @@
 # name: test_remove[204][json]
   None
 ---
-# name: test_remove[204][users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '7cf872dc',
-      'groups': <class 'list'> [
-        'fb085f7f',
-      ],
-    },
-    <class 'dict'> {
-      '_id': '3cbb22cc',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'da42dca3',
-      'groups': <class 'list'> [
-        'fb085f7f',
-      ],
-    },
-  ]
----
 # name: test_remove[404][json]
   <class 'dict'> {
     'id': 'not_found',
     'message': 'Not found',
   }
----
-# name: test_remove[404][users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '7cf872dc',
-      'groups': <class 'list'> [
-        'bf1b993c',
-        'fb085f7f',
-      ],
-    },
-    <class 'dict'> {
-      '_id': '3cbb22cc',
-      'groups': <class 'list'> [
-        'bf1b993c',
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'da42dca3',
-      'groups': <class 'list'> [
-        'fb085f7f',
-      ],
-    },
-  ]
 ---

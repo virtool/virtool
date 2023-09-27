@@ -1,4 +1,4 @@
-# name: test_finalize[db]
+# name: test_finalize[mongo]
   <class 'dict'> {
     '_id': 'apple',
     'count': 100,
@@ -49,9 +49,9 @@
       'archived': False,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': <JobState.WAITING: 'waiting'>,
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': <JobState.PREPARING: 'preparing'>,
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',

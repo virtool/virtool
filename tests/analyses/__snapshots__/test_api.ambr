@@ -14,24 +14,6 @@
     'updated_at': '2015-10-06T20:00:00Z',
   }
 ---
-# name: test_download_analysis_result[False-False]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_download_analysis_result[False-True]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_download_analysis_result[True-False]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
 # name: test_finalize[None]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
@@ -46,9 +28,9 @@
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'progress': 50,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
+      'state': 'timeout',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'zclark',
@@ -161,14 +143,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'zclark',
-            'id': 'fb085f7f',
+            'id': '7cf872dc',
           },
           'workflow': 'jobs_aodp',
         },
@@ -187,7 +169,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -201,14 +183,14 @@
         'job': <class 'dict'> {
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
           'user': <class 'dict'> {
             'administrator': False,
             'handle': 'zclark',
-            'id': 'fb085f7f',
+            'id': '7cf872dc',
           },
           'workflow': 'jobs_aodp',
         },
@@ -231,7 +213,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -258,7 +240,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -318,7 +300,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'workflow': 'pathoscope_bowtie',
   }
@@ -412,14 +394,14 @@
     'job': <class 'dict'> {
       'archived': False,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'id': '7cf872dc',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'id': '3cbb22cc',
+      'progress': 50,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
+      'state': 'timeout',
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
       },
       'workflow': 'jobs_aodp',
     },
@@ -449,8 +431,20 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     },
     'workflow': 'pathoscope_bowtie',
+  }
+---
+# name: test_upload_file[None]
+  <class 'dict'> {
+    'analysis': 'foobar',
+    'description': None,
+    'format': 'fasta',
+    'id': 1,
+    'name': 'reference.fa',
+    'name_on_disk': '1-reference.fa',
+    'size': 20466,
+    'uploaded_at': '2015-10-06T20:00:00Z',
   }
 ---

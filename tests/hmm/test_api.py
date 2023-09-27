@@ -57,11 +57,11 @@ async def test_find(fake_hmm_status, snapshot, spawn_client, hmm_document):
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     hmm_document["hidden"] = False
 
-    await client.db.hmm.insert_one(hmm_document)
+    await client.mongo.hmm.insert_one(hmm_document)
 
     resp = await client.get("/hmms")
 
@@ -71,7 +71,7 @@ async def test_find(fake_hmm_status, snapshot, spawn_client, hmm_document):
 
 @pytest.mark.apitest
 async def test_get_status(fake_hmm_status, snapshot, spawn_client, static_time):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
     resp = await client.get("/hmms/status")
 
     assert resp.status == 200
@@ -85,7 +85,7 @@ async def test_get_release(fake_hmm_status, spawn_client, snapshot):
     situations.
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     resp = await client.get("/hmms/status/release")
 
@@ -103,10 +103,10 @@ async def test_get(error, snapshot, spawn_client, hmm_document, resp_is):
     Check that a `404` is returned if the HMM does not exist.
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     if not error:
-        await client.db.hmm.insert_one(hmm_document)
+        await client.mongo.hmm.insert_one(hmm_document)
 
     resp = await client.get("/hmms/f8666902")
 
@@ -150,9 +150,7 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
 async def test_get_hmm_profiles(
     data_exists,
     file_exists,
-    snapshot,
     example_path,
-    spawn_client,
     spawn_job_client,
     tmp_path,
 ):
