@@ -235,6 +235,9 @@ class SamplesData(DataLayerDomain):
         elif settings.sample_group == "users_primary_group":
             group = await get_one_field(self._mongo.users, "primary_group", user_id)
 
+            if not group:
+                group = "none"
+
         async with self._mongo.create_session() as session:
             job_id = await get_new_id(self._mongo.jobs, session=session)
 

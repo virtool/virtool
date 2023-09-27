@@ -2,10 +2,10 @@ from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 from aiohttp.web_routedef import RouteTableDef
 
-test_routes = RouteTableDef()
+_routes = RouteTableDef()
 
 
-@test_routes.get("/foo")
+@_routes.get("/foo")
 def public_test_route(req: Request):
     headers = {"Location": "/foo", "Content-Location": "/bar"}
     return Response(status=200, headers=headers)
@@ -13,7 +13,9 @@ def public_test_route(req: Request):
 
 async def test_on_prepare_location_location(spawn_client):
     client = await spawn_client(
-        base_url="foobar", authorize=True, addon_route_table=test_routes
+        addon_route_table=_routes,
+        authenticated=True,
+        base_url="foobar",
     )
 
     resp = await client.get("/foo")

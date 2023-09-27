@@ -252,23 +252,23 @@ class AccountData(DataLayerDomain):
         if not await self._mongo.keys.count_documents({"id": key_id}):
             raise ResourceNotFoundError()
 
-        user = await self._mongo.users.find_one(
-            user_id, ["administrator", "permissions"]
-        )
+        user = await self.get(user_id)
 
         # The permissions currently assigned to the API key.
-        permissions = await get_one_field(
+        key_permissions = await get_one_field(
             self._mongo.keys, "permissions", {"id": key_id, "user.id": user_id}
         )
 
-        permissions.update(permissions_update)
+        key_permissions.update(permissions_update)
 
-        if not user["administrator"]:
-            permissions = limit_permissions(permissions, user["permissions"])
+        if not user.administrator:
+            key_permissions = limit_permissions(
+                key_permissions, user.permissions.dict()
+            )
 
         document = await self._mongo.keys.find_one_and_update(
             {"id": key_id},
-            {"$set": {"permissions": permissions}},
+            {"$set": {"permissions": key_permissions}},
             projection=API_KEY_PROJECTION,
         )
 

@@ -75,7 +75,7 @@ async def test_compose_primary_group_update(primary_group, mongo, bob, kings, pe
             return
 
         if primary_group == "kings":
-            assert "User is not member of group" in str(excinfo.value)
+            assert "User is not member of primary group" in str(excinfo.value)
             return
 
         raise excinfo
@@ -157,7 +157,6 @@ async def test_update_keys(
     )
 
     target_permissions = all_permissions if elevate else no_permissions
-
 
     await update_keys(
         mongo, "bob", administrator, ["peasants", "kings"], target_permissions

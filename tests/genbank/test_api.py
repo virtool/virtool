@@ -6,7 +6,7 @@ from aiohttp.test_utils import make_mocked_coro
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, mocker, resp_is, spawn_client):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     expected = {"accession": "baz"}
 
