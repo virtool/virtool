@@ -1,12 +1,13 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.transforms import AbstractTransform
-from virtool.groups.pg import SQLGroup
-from virtool.groups.utils import merge_group_permissions
+from virtool.groups.pg import SQLGroup, merge_group_permissions
 from virtool.types import Document
+from virtool.users.db import ATTACH_PROJECTION
+from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -81,3 +82,85 @@ class AttachPermissionsTransform(AbstractTransform):
             }
         else:
             return {document["id"]: [] for document in documents}
+
+
+class AttachUserTransform(AbstractTransform):
+    """
+    Attaches more complete user data to a document with a `user.id` field.
+    """
+
+    def __init__(self, db, ignore_errors: bool = False):
+        self._db = db
+        self._ignore_errors = ignore_errors
+
+    def _extract_user_id(self, document: Document) -> Optional[str]:
+        try:
+            user = document["user"]
+
+            try:
+                return user["id"]
+            except TypeError:
+                if isinstance(user, str):
+                    return user
+
+                raise
+        except KeyError:
+            if not self._ignore_errors:
+                raise KeyError("Document needs a value at user or user.id")
+
+        return None
+
+    async def attach_one(self, document: Document, prepared: Document) -> Document:
+        try:
+            user_data = document["user"]
+        except KeyError:
+            if self._ignore_errors:
+                return document
+
+            raise
+
+        if isinstance(user_data, str):
+            return {
+                **document,
+                "user": {
+                    "id": user_data,
+                    **prepared,
+                },
+            }
+
+        return {
+            **document,
+            "user": {
+                **document["user"],
+                **prepared,
+            },
+        }
+
+    async def attach_many(
+        self, documents: list[Document], prepared: dict[int, Any]
+    ) -> list[Document]:
+        return [
+            (await self.attach_one(document, prepared[self._extract_user_id(document)]))
+            for document in documents
+        ]
+
+    async def prepare_one(self, document: Document):
+        user_id = self._extract_user_id(document)
+        user_data = base_processor(
+            await self._db.users.find_one(user_id, ATTACH_PROJECTION)
+        )
+
+        if not user_data:
+            raise KeyError(f"Document contains non-existent user: {user_id}.")
+
+        return user_data
+
+    async def prepare_many(self, documents: list[Document]) -> dict[str | str, Any]:
+        user_ids = list({self._extract_user_id(document) for document in documents})
+
+        return {
+            document["_id"]: base_processor(document)
+            async for document in self._db.users.find(
+                {"_id": {"$in": user_ids}}, ATTACH_PROJECTION
+            )
+        }

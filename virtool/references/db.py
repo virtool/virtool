@@ -49,7 +49,8 @@ from virtool.releases import (
 )
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import AttachUserTransform, extend_user
+from virtool.users.db import extend_user
+from virtool.users.transforms import AttachUserTransform
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

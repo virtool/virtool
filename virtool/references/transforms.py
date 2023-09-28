@@ -10,7 +10,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import get_safely, base_processor
 
 if TYPE_CHECKING:

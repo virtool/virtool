@@ -18,7 +18,7 @@ from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import Document
 from virtool.uploads.db import AttachUploadTransform
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 PROJECTION = [

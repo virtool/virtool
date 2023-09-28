@@ -1,3 +1,4 @@
+import asyncio
 import random
 
 from pymongo.errors import DuplicateKeyError
@@ -16,18 +17,16 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import emits, Operation
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
+from virtool.groups.pg import merge_group_permissions
 from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
-from virtool.groups.utils import merge_group_permissions
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import id_exists
 from virtool.users.db import (
     B2CUserAttributes,
-    update_keys,
     compose_groups_update,
     compose_primary_group_update,
-    fetch_complete_user,
 )
-from virtool.users.mongo import create_user
+from virtool.users.mongo import create_user, update_keys
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
@@ -125,14 +124,29 @@ class UsersData(DataLayerDomain):
         :param user_id: the user's ID
         :return: the user
         """
-        user = await fetch_complete_user(
-            self._authorization_client, self._mongo, self._pg, user_id
+        user, (user_id, role) = await asyncio.gather(
+            self._mongo.users.find_one(
+                {"_id": user_id},
+            ),
+            self._authorization_client.get_administrator(user_id),
         )
 
         if not user:
             raise ResourceNotFoundError("User does not exist")
 
-        return user
+        return User(
+            **(
+                await apply_transforms(
+                    base_processor(user),
+                    [
+                        AttachPermissionsTransform(self._pg),
+                        AttachPrimaryGroupTransform(self._pg),
+                        AttachGroupsTransform(self._pg),
+                    ],
+                )
+            ),
+            administrator_role=role,
+        )
 
     @emits(Operation.CREATE)
     async def create(
@@ -150,9 +164,7 @@ class UsersData(DataLayerDomain):
         """
         document = await create_user(self._mongo, handle, password, force_reset)
 
-        return await fetch_complete_user(
-            self._authorization_client, self._mongo, self._pg, document["_id"]
-        )
+        return await self.get(document["_id"])
 
     async def create_first(self, handle: str, password: str) -> User:
         """
@@ -183,9 +195,7 @@ class UsersData(DataLayerDomain):
             AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL)
         )
 
-        return await fetch_complete_user(
-            self._authorization_client, self._mongo, self._pg, document["_id"]
-        )
+        return await self.get(document["_id"])
 
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes
@@ -200,11 +210,9 @@ class UsersData(DataLayerDomain):
         :return: the found or created user
         """
         if document := await self._mongo.users.find_one(
-            {"b2c_oid": b2c_user_attributes.oid}
+            {"b2c_oid": b2c_user_attributes.oid}, ["_id"]
         ):
-            return await fetch_complete_user(
-                self._authorization_client, self._mongo, self._pg, document["_id"]
-            )
+            return await self.get(document["_id"])
 
         handle = "-".join(
             [
@@ -225,11 +233,7 @@ class UsersData(DataLayerDomain):
         except DuplicateKeyError:
             return await self.find_or_create_b2c_user(b2c_user_attributes)
 
-        user = await fetch_complete_user(
-            self._authorization_client, self._mongo, self._pg, document["_id"]
-        )
-
-        return user
+        return await self.get(document["_id"])
 
     async def set_administrator_role(
         self, user_id: str, role: AdministratorRole
@@ -325,7 +329,7 @@ class UsersData(DataLayerDomain):
 
         if "groups" in data:
             try:
-                update.update(await compose_groups_update(self._mongo, data["groups"]))
+                update.update(await compose_groups_update(self._pg, data["groups"]))
             except DatabaseError as err:
                 raise ResourceConflictError(str(err))
 
@@ -361,14 +365,7 @@ class UsersData(DataLayerDomain):
                 permissions,
             )
 
-        user = await fetch_complete_user(
-            self._authorization_client, self._mongo, self._pg, user_id
-        )
-
-        if user is None:
-            raise ResourceNotFoundError
-
-        return user
+        return await self.get(user_id)
 
     async def check_users_exist(self) -> bool:
         """

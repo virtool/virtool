@@ -13,7 +13,8 @@ from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.jobs.client import AbstractJobsClient
 from virtool.jobs.utils import compose_status
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform, lookup_nested_user_by_id
+from virtool.users.db import lookup_nested_user_by_id
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, get_safely
 
 OR_COMPLETE = [{"status.state": "complete"}]

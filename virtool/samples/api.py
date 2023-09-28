@@ -75,7 +75,7 @@ from virtool.uploads.utils import (
     multipart_file_chunker,
     naive_validator,
 )
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = logging.getLogger("samples")

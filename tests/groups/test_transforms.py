@@ -1,21 +1,27 @@
 from datetime import datetime
 
+from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
 
 from virtool.data.transforms import apply_transforms
+from virtool.fake.next import DataFaker
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
+from virtool.mongo.core import Mongo
 from virtool.utils import base_processor
 
 
 class TestAttachPrimaryGroup:
-    async def test_no_primary_group(self, fake2, mongo, pg, snapshot):
-        user = await fake2.users.create()
-
-        document = await mongo.users.find_one({"_id": user.id})
+    async def test_no_primary_group(self, mongo: Mongo, pg: AsyncEngine, snapshot):
+        await mongo.users.insert_one(
+            {
+                "_id": "bob",
+                "primary_group": "none",
+            }
+        )
 
         assert await apply_transforms(
-            base_processor(document),
-            [AttachPrimaryGroupTransform(mongo, pg)],
+            base_processor(await mongo.users.find_one({"_id": "bob"})),
+            [AttachPrimaryGroupTransform(pg)],
         ) == snapshot(
             matcher=path_type(
                 {"last_password_change": (datetime,), "password": (bytes,)}

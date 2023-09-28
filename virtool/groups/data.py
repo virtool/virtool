@@ -1,5 +1,4 @@
 from logging import getLogger
-from typing import List, TYPE_CHECKING
 
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
@@ -11,16 +10,14 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.events import emits, Operation, emit
 from virtool.data.topg import both_transactions
-from virtool.groups.db import (
-    update_member_users,
+from virtool.groups.mongo import (
+    update_member_users_and_api_keys,
 )
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
+from virtool.mongo.core import Mongo
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 logger = getLogger("groups")
 
@@ -29,13 +26,13 @@ class GroupsData:
     name = "groups"
 
     def __init__(
-        self, authorization_client: AuthorizationClient, mongo: "Mongo", pg: AsyncEngine
+        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
 
-    async def find(self) -> List[GroupMinimal]:
+    async def find(self) -> list[GroupMinimal]:
         """
         List all user groups.
 
@@ -134,7 +131,9 @@ class GroupsData:
 
             if db_update:
                 group.update(db_update)
-                await update_member_users(self._mongo, group.id, session=mongo_session)
+                await update_member_users_and_api_keys(
+                    self._mongo, mongo_session, pg_session, group.id
+                )
 
         return await self.get(group_id)
 
@@ -162,8 +161,8 @@ class GroupsData:
             if not result.rowcount:
                 raise ResourceNotFoundError
 
-            await update_member_users(
-                self._mongo, group_id, remove=True, session=mongo_session
+            await update_member_users_and_api_keys(
+                self._mongo, mongo_session, pg_session, group_id
             )
 
         emit(group, "groups", "delete", Operation.DELETE)

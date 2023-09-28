@@ -32,7 +32,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.tasks.transforms import AttachTaskTransform
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 
 class HmmsData(DataLayerDomain):

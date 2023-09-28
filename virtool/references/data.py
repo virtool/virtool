@@ -74,7 +74,8 @@ from virtool.tasks.progress import (
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import AttachUserTransform, extend_user
+from virtool.users.db import extend_user
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import chunk_list, get_http_session_from_app
 
 

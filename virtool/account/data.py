@@ -5,11 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
-from virtool.data.transforms import apply_transforms
-from virtool.groups.transforms import AttachGroupsTransform
 
 import virtool.utils
-from virtool.utils import base_processor
 from virtool.account.db import (
     compose_password_update,
     API_KEY_PROJECTION,
@@ -25,12 +22,15 @@ from virtool.account.oas import (
 )
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
-from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.domain import DataLayerDomain
+from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.transforms import apply_transforms
+from virtool.groups.transforms import AttachGroupsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.users.db import validate_credentials, fetch_complete_user
+from virtool.users.mongo import validate_credentials
 from virtool.users.utils import limit_permissions
+from virtool.utils import base_processor
 
 PROJECTION = (
     "_id",
@@ -68,13 +68,11 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         :return: the user account
         """
+        user = await self.data.users.get(user_id)
+
         return Account(
             **{
-                **(
-                    await fetch_complete_user(
-                        self._authorization_client, self._mongo, self._pg, user_id
-                    )
-                ).dict(),
+                **user.dict(),
                 "settings": {
                     "quick_analyze_workflow": "nuvs",
                     "show_ids": False,

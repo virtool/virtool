@@ -21,7 +21,7 @@ from virtool.jobs.db import AttachJobsTransform
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 INDEXES_PROJECTION = [
     "_id",

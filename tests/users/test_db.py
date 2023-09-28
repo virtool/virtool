@@ -5,12 +5,11 @@ import pytest
 import virtool.errors
 from virtool.data.transforms import apply_transforms
 from virtool.users.db import (
-    AttachUserTransform,
     compose_groups_update,
     compose_primary_group_update,
-    update_keys,
-    validate_credentials,
 )
+from virtool.users.mongo import validate_credentials, update_keys
+from virtool.users.transforms import AttachUserTransform
 from virtool.users.utils import Permission
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric

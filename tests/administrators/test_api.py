@@ -13,7 +13,7 @@ from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.users.db import validate_credentials
+from virtool.users.mongo import validate_credentials
 
 _last_password_change_matcher = path_type({"last_password_change": (str,)})
 """

@@ -23,7 +23,7 @@ from virtool.otus.oas import (
     UpdateSequenceRequest,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 routes = Routes()

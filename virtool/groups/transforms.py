@@ -1,30 +1,21 @@
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import Any
 
-import pymongo
-from virtool_core.models.group import GroupMinimal
-
-from typing import Any, Dict, List, TYPE_CHECKING
-
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from virtool_core.models.group import GroupMinimal
 
+from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.groups.pg import SQLGroup
 from virtool.types import Document
-from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 class AttachPrimaryGroupTransform(AbstractTransform):
     """
-    Attach primary groups to document(s) with a `primary_group` field
+    Attach a minimal primary group to document(s) with a ``primary_group`` field.
     """
 
-    def __init__(self, mongo: "Mongo", pg: AsyncEngine):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any):
@@ -49,8 +40,8 @@ class AttachPrimaryGroupTransform(AbstractTransform):
 
         return None
 
-    async def prepare_many(self, documents: List[Document]) -> Dict[str, Any]:
-        group_ids: List[int] = list(
+    async def prepare_many(self, documents: list[Document]) -> dict[str, Any]:
+        group_ids: list[int | str] = list(
             {
                 document.get("primary_group")
                 for document in documents
@@ -58,22 +49,30 @@ class AttachPrimaryGroupTransform(AbstractTransform):
             }
         )
 
+        if not group_ids:
+            return {document["id"]: None for document in documents}
+
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLGroup).filter(SQLGroup.id.in_(group_ids))
+            expr = compose_legacy_id_expression(SQLGroup, group_ids)
+
+            groups = (
+                (await session.execute(select(SQLGroup).filter(expr))).scalars().all()
             )
 
-            groups = {group.id: group.to_dict() for group in result.scalars()}
+            group_id_map = {
+                **{group.id: group.to_dict() for group in groups},
+                **{group.legacy_id: group.to_dict() for group in groups},
+            }
 
         return {
-            document["id"]: groups.get(document.get("primary_group"))
+            document["id"]: group_id_map.get(document.get("primary_group"))
             for document in documents
         }
 
 
 class AttachGroupsTransform(AbstractTransform):
     """
-    Attach Groups to document(s) containing a `groups` field
+    Attach minimal groups to document(s) containing a ``groups`` field
     """
 
     def __init__(self, pg: AsyncEngine):
@@ -89,7 +88,7 @@ class AttachGroupsTransform(AbstractTransform):
         """
         return {**document, "groups": sorted(prepared, key=lambda d: d["name"])}
 
-    async def prepare_one(self, document: Document) -> List[Dict]:
+    async def prepare_one(self, document: Document) -> list[Document]:
         """
         Prepare a list of groups to be attached to a document
 
@@ -99,31 +98,17 @@ class AttachGroupsTransform(AbstractTransform):
         if not document["groups"]:
             return []
 
-        legacy_group_ids = []
-        modern_group_ids = []
-
         async with AsyncSession(self._pg) as session:
-            if modern_group_ids and legacy_group_ids:
-                query = select(SQLGroup).filter(
-                    or_(
-                        SQLGroup.id.in_(modern_group_ids),
-                        SQLGroup.legacy_id.in_(legacy_group_ids),
-                    )
-                )
-            elif modern_group_ids:
-                query = select(SQLGroup).filter(
-                    SQLGroup.id.in_(modern_group_ids),
-                )
-            else:
-                query = select(SQLGroup).filter(
-                    SQLGroup.legacy_id.in_(legacy_group_ids),
-                )
+            query = select(SQLGroup).filter(
+                compose_legacy_id_expression(SQLGroup, document["groups"])
+            )
 
-            result = await session.execute(query)
+            return [
+                group.to_dict()
+                for group in (await session.execute(query)).scalars().all()
+            ]
 
-            return [group.to_dict() for group in result.scalars()]
-
-    async def prepare_many(self, documents: List[Document]) -> Dict[int | str, Any]:
+    async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
         """
         Bulk prepare groups for attachment to passed documents
 
@@ -136,35 +121,15 @@ class AttachGroupsTransform(AbstractTransform):
         if not group_ids:
             return {document["id"]: [] for document in documents}
 
-        legacy_group_ids = []
-        modern_group_ids = []
-
-        for group_id in group_ids:
-            if isinstance(group_id, int):
-                modern_group_ids.append(group_id)
-            else:
-                legacy_group_ids.append(group_id)
-
         async with AsyncSession(self._pg) as session:
-            if modern_group_ids and legacy_group_ids:
-                query = select(SQLGroup).filter(
-                    or_(
-                        SQLGroup.id.in_(group_ids),
-                        SQLGroup.legacy_id.in_(group_ids),
-                    )
-                )
-            elif modern_group_ids:
-                query = select(SQLGroup).filter(
-                    SQLGroup.id.in_(modern_group_ids),
-                )
-            elif legacy_group_ids:
-                query = select(SQLGroup).filter(
-                    SQLGroup.legacy_id.in_(legacy_group_ids),
-                )
+            query = select(SQLGroup).filter(
+                compose_legacy_id_expression(SQLGroup, group_ids)
+            )
 
-            result = await session.execute(query)
-
-            groups = {group.id: group.to_dict() for group in result.scalars()}
+            groups = {
+                group.id: group.to_dict()
+                for group in (await session.execute(query)).scalars()
+            }
 
         return {
             document["id"]: [groups[group_id] for group_id in document["groups"]]

@@ -27,7 +27,8 @@ from virtool.history.utils import (
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
+from virtool.users.db import ATTACH_PROJECTION
+from virtool.users.transforms import AttachUserTransform
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

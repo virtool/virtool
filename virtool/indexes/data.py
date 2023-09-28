@@ -42,7 +42,7 @@ from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer, multipart_file_chunker
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
