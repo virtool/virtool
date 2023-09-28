@@ -1,20 +1,21 @@
+# serializer version: 1
 # name: test_upgrade
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'bob',
       'active': False,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'dave',
       'active': True,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'fran',
       'active': True,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'mary',
       'active': True,
-    },
-  ]
----
+    }),
+  ])
+# ---

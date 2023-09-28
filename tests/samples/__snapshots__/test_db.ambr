@@ -1,113 +1,114 @@
+# serializer version: 1
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[amplicon]
-  <class 'dict'> {
+  dict({
     'aodp': 'none',
     'nuvs': 'incompatible',
     'pathoscope': 'incompatible',
-  }
----
+  })
+# ---
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[normal]
-  <class 'dict'> {
+  dict({
     'aodp': 'incompatible',
     'nuvs': 'none',
     'pathoscope': 'none',
-  }
----
+  })
+# ---
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[other]
-  <class 'dict'> {
+  dict({
     'aodp': 'incompatible',
     'nuvs': 'none',
     'pathoscope': 'none',
-  }
----
+  })
+# ---
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[srna]
-  <class 'dict'> {
+  dict({
     'aodp': 'incompatible',
     'nuvs': 'none',
     'pathoscope': 'none',
-  }
----
+  })
+# ---
 # name: test_attach_labels
-  <class 'dict'> {
+  dict({
     'id': 'foo',
-    'labels': <class 'list'> [
-      <class 'dict'> {
+    'labels': list([
+      dict({
         'color': '#629f70',
         'description': 'American whole magazine truth stop whose.',
         'id': 1,
         'name': 'Three',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'color': '#955887',
         'description': 'Measure example sense peace economy.',
         'id': 2,
         'name': 'Help',
-      },
-    ],
+      }),
+    ]),
     'name': 'Foo',
-  }
----
+  })
+# ---
 # name: test_compress_sample_reads[False]
-  <class 'set'> {
+  set({
     'reads_1.fq.gz',
-  }
----
+  })
+# ---
 # name: test_compress_sample_reads[False].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'download_url': '/download/samples/foo/reads_1.fq.gz',
-        'from': <class 'dict'> {
+        'from': dict({
           'id': 'M_S11_R1_001.fastq',
           'name': 'M_S11_R1_001.fastq',
           'size': 3750821789,
-        },
+        }),
         'name': 'reads_1.fq.gz',
         'raw': False,
         'size': 6586501,
-      },
-    ],
+      }),
+    ]),
     'paired': False,
-  }
----
+  })
+# ---
 # name: test_compress_sample_reads[True]
-  <class 'set'> {
+  set({
     'reads_1.fq.gz',
     'reads_2.fq.gz',
-  }
----
+  })
+# ---
 # name: test_compress_sample_reads[True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'download_url': '/download/samples/foo/reads_1.fq.gz',
-        'from': <class 'dict'> {
+        'from': dict({
           'id': 'M_S11_R1_001.fastq',
           'name': 'M_S11_R1_001.fastq',
           'size': 3750821789,
-        },
+        }),
         'name': 'reads_1.fq.gz',
         'raw': False,
         'size': 6586501,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/download/samples/foo/reads_2.fq.gz',
-        'from': <class 'dict'> {
+        'from': dict({
           'id': 'M_S11_R1_001.fastq',
           'name': 'M_S11_R1_001.fastq',
           'size': 3750821789,
-        },
+        }),
         'name': 'reads_2.fq.gz',
         'raw': False,
         'size': 6586501,
-      },
-    ],
+      }),
+    ]),
     'paired': True,
-  }
----
+  })
+# ---
 # name: test_create_sample
-  <class 'dict'> {
+  dict({
     'all_read': True,
     'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -120,8 +121,8 @@
     'id': 'a2oj3gfd',
     'is_legacy': False,
     'isolate': '',
-    'labels': <class 'list'> [
-    ],
+    'labels': list([
+    ]),
     'library_type': '',
     'locale': '',
     'name': 'foo',
@@ -131,20 +132,20 @@
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
+    'subtractions': list([
+    ]),
+    'user': dict({
       'id': 'bob',
-    },
-    'workflows': <class 'dict'> {
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create_sample.1
-  <class 'dict'> {
+  dict({
     '_id': 'a2oj3gfd',
     'all_read': True,
     'all_write': False,
@@ -157,8 +158,8 @@
     'host': '',
     'is_legacy': False,
     'isolate': '',
-    'labels': <class 'list'> [
-    ],
+    'labels': list([
+    ]),
     'library_type': '',
     'locale': '',
     'name': 'foo',
@@ -168,48 +169,48 @@
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
+    'subtractions': list([
+    ]),
+    'user': dict({
       'id': 'bob',
-    },
-    'workflows': <class 'dict'> {
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_is_compressed
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'foo',
-      'files': <class 'list'> [
-        <class 'dict'> {
+      'files': list([
+        dict({
           'name': 'reads_1.fq.gz',
-        },
-        <class 'dict'> {
+        }),
+        dict({
           'name': 'reads_2.fq.gz',
-        },
-      ],
+        }),
+      ]),
       'is_compressed': True,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'baz',
-      'files': <class 'list'> [
-        <class 'dict'> {
+      'files': list([
+        dict({
           'name': 'reads_1.fastq',
-        },
-      ],
-    },
-    <class 'dict'> {
+        }),
+      ]),
+    }),
+    dict({
       '_id': 'bar',
-      'files': <class 'list'> [
-        <class 'dict'> {
+      'files': list([
+        dict({
           'name': 'reads_1.fq.gz',
-        },
-      ],
+        }),
+      ]),
       'is_compressed': True,
-    },
-  ]
----
+    }),
+  ])
+# ---

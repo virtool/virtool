@@ -1,28 +1,29 @@
+# serializer version: 1
 # name: test_hmm_install_task
-  <class 'list'> [
+  list([
     <SQLTask(id=1, complete=True, context={}, count=0, created_at=2015-10-06 20:00:00, error=None, file_size=None, progress=100, step=install, type=install_hmms)>,
-  ]
----
+  ])
+# ---
 # name: test_hmm_install_task.1
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'bf1b993c',
       'cluster': 2,
-      'entries': <class 'list'> [
-        <class 'dict'> {
+      'entries': list([
+        dict({
           'accession': 'NP_040324.1',
           'gi': 9626083,
           'name': 'AL1 protein',
           'organism': 'Pepper huasteco yellow vein virus',
-        },
-      ],
-      'families': <class 'dict'> {
+        }),
+      ]),
+      'families': dict({
         'Geminiviridae': 235,
         'None': 2,
-      },
+      }),
       'hidden': False,
       'length': 356,
       'total_entropy': 185.12,
-    },
-  ]
----
+    }),
+  ])
+# ---

@@ -1,28 +1,29 @@
+# serializer version: 1
 # name: test_find
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  dict({
+    'documents': list([
+      dict({
         'cluster': 3463,
         'count': 4,
-        'families': <class 'dict'> {
+        'families': dict({
           'Baculoviridae': 3,
-        },
+        }),
         'id': 'f8666902',
-        'names': <class 'list'> [
+        'names': list([
           'ORF-63',
           'ORF67',
           'hypothetical protein',
-        ],
-      },
-    ],
+        ]),
+      }),
+    ]),
     'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'status': <class 'dict'> {
-      'errors': <class 'list'> [
-      ],
-      'installed': <class 'dict'> {
+    'status': dict({
+      'errors': list([
+      ]),
+      'installed': dict({
         'body': "- remove some annotations that didn't have corresponding profiles",
         'created_at': '2015-10-06T20:00:00Z',
         'filename': 'vthmm.tar.gz',
@@ -33,13 +34,13 @@
         'published_at': '2017-11-10T19:12:43Z',
         'ready': True,
         'size': 85904451,
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-      },
-      'release': <class 'dict'> {
+        }),
+      }),
+      'release': dict({
         'body': "- remove some annotations that didn't have corresponding profiles",
         'content_type': 'application/gzip',
         'download_url': 'https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz',
@@ -52,62 +53,62 @@
         'published_at': '2015-10-06T20:00:00Z',
         'retrieved_at': '2015-10-06T20:00:00Z',
         'size': 85904451,
-      },
+      }),
       'task': None,
       'updating': False,
-    },
+    }),
     'total_count': 1,
-  }
----
+  })
+# ---
 # name: test_get[None][json]
-  <class 'dict'> {
+  dict({
     'cluster': 3463,
     'count': 4,
-    'entries': <class 'list'> [
-      <class 'dict'> {
+    'entries': list([
+      dict({
         'accession': 'YP_007250520.1',
         'gi': '438000415',
         'name': 'hypothetical protein',
         'organism': 'Thysanoplusia orichalcea nucleopolyhedrovirus',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'accession': 'YP_758364.1',
         'gi': '114679914',
         'name': 'ORF67',
         'organism': 'Leucania separata nucleopolyhedrovirus',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'accession': 'YP_002268099.1',
         'gi': '209170953',
         'name': 'agip69',
         'organism': 'Agrotis ipsilon multiple nucleopolyhedrovirus',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'accession': 'YP_529733.1',
         'gi': '90592780',
         'name': 'ORF-63',
         'organism': 'Agrotis segetum nucleopolyhedrovirus',
-      },
-    ],
-    'families': <class 'dict'> {
+      }),
+    ]),
+    'families': dict({
       'Baculoviridae': 3,
-    },
-    'genera': <class 'dict'> {
+    }),
+    'genera': dict({
       'Alphabaculovirus': 3,
-    },
+    }),
     'id': 'f8666902',
     'length': 199,
     'mean_entropy': 0.51,
-    'names': <class 'list'> [
+    'names': list([
       'ORF-63',
       'ORF67',
       'hypothetical protein',
-    ],
+    ]),
     'total_entropy': 101.49,
-  }
----
+  })
+# ---
 # name: test_get_release[json]
-  <class 'dict'> {
+  dict({
     'body': "- remove some annotations that didn't have corresponding profiles",
     'content_type': 'application/gzip',
     'download_url': 'https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz',
@@ -120,13 +121,13 @@
     'published_at': '2015-10-06T20:00:00Z',
     'retrieved_at': '2015-10-06T20:00:00Z',
     'size': 85904451,
-  }
----
+  })
+# ---
 # name: test_get_status[json]
-  <class 'dict'> {
-    'errors': <class 'list'> [
-    ],
-    'installed': <class 'dict'> {
+  dict({
+    'errors': list([
+    ]),
+    'installed': dict({
       'body': "- remove some annotations that didn't have corresponding profiles",
       'created_at': '2015-10-06T20:00:00Z',
       'filename': 'vthmm.tar.gz',
@@ -137,13 +138,13 @@
       'published_at': '2017-11-10T19:12:43Z',
       'ready': True,
       'size': 85904451,
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
-    },
-    'release': <class 'dict'> {
+      }),
+    }),
+    'release': dict({
       'body': "- remove some annotations that didn't have corresponding profiles",
       'content_type': 'application/gzip',
       'download_url': 'https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz',
@@ -156,8 +157,8 @@
       'published_at': '2015-10-06T20:00:00Z',
       'retrieved_at': '2015-10-06T20:00:00Z',
       'size': 85904451,
-    },
+    }),
     'task': None,
     'updating': False,
-  }
----
+  })
+# ---

@@ -1,8 +1,9 @@
+# serializer version: 1
 # name: TestUpdate.test
-  <class 'dict'> {
+  dict({
     'id': 'fb085f7f',
     'name': 'Technicians',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -11,37 +12,37 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': True,
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'fcarpenter',
         'id': 'da42dca3',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'administrator': False,
         'handle': 'chelsea34',
         'id': '09d01419',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'administrator': False,
         'handle': 'michelle34',
         'id': 'f60bae36',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: TestUpdate.test_not_found[json]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_create[201][json]
-  <class 'dict'> {
+  dict({
     'id': 'bf1b993c',
     'name': 'Test',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -50,40 +51,40 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'users': <class 'list'> [
-    ],
-  }
----
+    }),
+    'users': list([
+    ]),
+  })
+# ---
 # name: test_create[201][location]
   'https://virtool.example.com/groups/bf1b993c'
----
+# ---
 # name: test_create[400][json]
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'Group already exists',
-  }
----
+  })
+# ---
 # name: test_create[400][location]
   None
----
+# ---
 # name: test_find
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'id': 'fb085f7f',
       'name': 'musicians',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'id': '7cf872dc',
       'name': 'hydrogeologists',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_get[200]
-  <class 'dict'> {
+  dict({
     'id': 'fb085f7f',
     'name': 'musicians',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -92,28 +93,28 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'users': list([
+      dict({
         'administrator': False,
         'handle': 'qtaylor',
         'id': '3cbb22cc',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: test_get[404]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_remove[204][json]
   None
----
+# ---
 # name: test_remove[404][json]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---

@@ -1,19 +1,20 @@
+# serializer version: 1
 # name: test_upgrade[ad_user]
-  <class 'dict'> {
+  dict({
     '_id': 'abc123',
     'b2c_family_name': 'bar',
     'b2c_given_name': 'foo',
-  }
----
+  })
+# ---
 # name: test_upgrade[existing_user]
-  <class 'dict'> {
+  dict({
     '_id': 'abc123',
     'handle': 'abc123',
-  }
----
+  })
+# ---
 # name: test_upgrade[user_with_handle]
-  <class 'dict'> {
+  dict({
     '_id': 'abc123',
     'handle': 'bar',
-  }
----
+  })
+# ---

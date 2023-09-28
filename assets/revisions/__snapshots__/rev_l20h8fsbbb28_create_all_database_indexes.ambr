@@ -1,325 +1,326 @@
+# serializer version: 1
 # name: test_upgrade
-  <class 'list'> [
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+  list([
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'created_at_-1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'created_at_-1': dict({
+        'key': list([
+          tuple(
             'created_at',
             -1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'sample.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'sample.id_1': dict({
+        'key': list([
+          tuple(
             'sample.id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'name_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'name_1': dict({
+        'key': list([
+          tuple(
             'name',
             1,
           ),
-        ],
+        ]),
         'sparse': True,
         'unique': True,
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'created_at_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'created_at_1': dict({
+        'key': list([
+          tuple(
             'created_at',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'index.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'index.id_1': dict({
+        'key': list([
+          tuple(
             'index.id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'otu.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'otu.id_1': dict({
+        'key': list([
+          tuple(
             'otu.id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'otu.name_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'otu.name_1': dict({
+        'key': list([
+          tuple(
             'otu.name',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'otu.version_-1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'otu.version_-1': dict({
+        'key': list([
+          tuple(
             'otu.version',
             -1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'version_1_reference.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'version_1_reference.id_1': dict({
+        'key': list([
+          tuple(
             'version',
             1,
           ),
-          <class 'tuple'> (
+          tuple(
             'reference.id',
             1,
           ),
-        ],
+        ]),
         'unique': True,
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'id_1': dict({
+        'key': list([
+          tuple(
             'id',
             1,
           ),
-        ],
+        ]),
         'unique': True,
         'v': 2,
-      },
-      'user.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'user.id_1': dict({
+        'key': list([
+          tuple(
             'user.id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      '_id_1_isolate.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      '_id_1_isolate.id_1': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-          <class 'tuple'> (
+          tuple(
             'isolate.id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'abbreviation_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'abbreviation_1': dict({
+        'key': list([
+          tuple(
             'abbreviation',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'name_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'name_1': dict({
+        'key': list([
+          tuple(
             'name',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'nickname_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'nickname_1': dict({
+        'key': list([
+          tuple(
             'nickname',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'reference.id_1_remote.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'reference.id_1_remote.id_1': dict({
+        'key': list([
+          tuple(
             'reference.id',
             1,
           ),
-          <class 'tuple'> (
+          tuple(
             'remote.id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'created_at_-1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'created_at_-1': dict({
+        'key': list([
+          tuple(
             'created_at',
             -1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'name_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'name_1': dict({
+        'key': list([
+          tuple(
             'name',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'otu_id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'otu_id_1': dict({
+        'key': list([
+          tuple(
             'otu_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'reference.id_1_remote.id_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'reference.id_1_remote.id_1': dict({
+        'key': list([
+          tuple(
             'reference.id',
             1,
           ),
-          <class 'tuple'> (
+          tuple(
             'remote.id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-    },
-    <class 'dict'> {
-      '_id_': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+    }),
+    dict({
+      '_id_': dict({
+        'key': list([
+          tuple(
             '_id',
             1,
           ),
-        ],
+        ]),
         'v': 2,
-      },
-      'b2c_oid_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'b2c_oid_1': dict({
+        'key': list([
+          tuple(
             'b2c_oid',
             1,
           ),
-        ],
+        ]),
         'sparse': True,
         'unique': True,
         'v': 2,
-      },
-      'handle_1': <class 'dict'> {
-        'key': <class 'list'> [
-          <class 'tuple'> (
+      }),
+      'handle_1': dict({
+        'key': list([
+          tuple(
             'handle',
             1,
           ),
-        ],
+        ]),
         'sparse': True,
         'unique': True,
         'v': 2,
-      },
-    },
-  ]
----
+      }),
+    }),
+  ])
+# ---

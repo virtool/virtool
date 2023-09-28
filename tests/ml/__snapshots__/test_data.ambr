@@ -1,14 +1,15 @@
+# serializer version: 1
 # name: test_get
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'description': '',
     'id': 1,
     'latest_release': None,
     'name': 'ml-plant-viruses',
     'release_count': 3,
-    'releases': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+    'releases': list([
+      dict({
+        'created_at': datetime,
         'download_url': 'http://www.morales.biz/',
         'github_url': 'http://wiggins.com/',
         'id': 3,
@@ -16,9 +17,9 @@
         'published_at': datetime.datetime(2023, 9, 26, 4, 33, 42),
         'ready': False,
         'size': 6016,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'download_url': 'https://www.snyder.com/',
         'github_url': 'https://carlson.com/',
         'id': 1,
@@ -26,9 +27,9 @@
         'published_at': datetime.datetime(2009, 6, 13, 9, 32, 41),
         'ready': False,
         'size': 4509,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'download_url': 'http://walker.com/',
         'github_url': 'https://www.ruiz.org/',
         'id': 2,
@@ -36,82 +37,82 @@
         'published_at': datetime.datetime(1996, 5, 28, 5, 17, 47),
         'ready': False,
         'size': 6789,
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: test_list[False]
-  <class 'dict'> {
-    'items': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+  dict({
+    'items': list([
+      dict({
+        'created_at': datetime,
         'description': '',
         'id': 2,
         'latest_release': None,
         'name': 'ml-insect-viruses',
         'release_count': 3,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'description': '',
         'id': 1,
         'latest_release': None,
         'name': 'ml-plant-viruses',
         'release_count': 3,
-      },
-    ],
+      }),
+    ]),
     'last_synced_at': None,
-  }
----
+  })
+# ---
 # name: test_list[True]
-  <class 'dict'> {
-    'items': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+  dict({
+    'items': list([
+      dict({
+        'created_at': datetime,
         'description': '',
         'id': 2,
         'latest_release': None,
         'name': 'ml-insect-viruses',
         'release_count': 3,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'description': '',
         'id': 1,
         'latest_release': None,
         'name': 'ml-plant-viruses',
         'release_count': 3,
-      },
-    ],
+      }),
+    ]),
     'last_synced_at': datetime.datetime(2015, 10, 6, 20, 0),
-  }
----
+  })
+# ---
 # name: test_load[first]
-  <class 'dict'> {
-    'items': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+  dict({
+    'items': list([
+      dict({
+        'created_at': datetime,
         'description': '',
         'id': 1,
         'latest_release': None,
         'name': 'ml-plant-viruses',
         'release_count': 3,
-      },
-    ],
+      }),
+    ]),
     'last_synced_at': None,
-  }
----
+  })
+# ---
 # name: test_load[ml-insect-viruses]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'description': '',
     'id': 2,
     'latest_release': None,
     'name': 'ml-insect-viruses',
     'release_count': 1,
-    'releases': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+    'releases': list([
+      dict({
+        'created_at': datetime,
         'download_url': 'http://johnson.com/',
         'github_url': 'https://giles-rubio.com/',
         'id': 9,
@@ -119,21 +120,21 @@
         'published_at': datetime.datetime(2010, 3, 23, 6, 52, 47),
         'ready': False,
         'size': 6917,
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: test_load[ml-plant-viruses]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'description': '',
     'id': 1,
     'latest_release': None,
     'name': 'ml-plant-viruses',
     'release_count': 5,
-    'releases': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+    'releases': list([
+      dict({
+        'created_at': datetime,
         'download_url': 'http://www.morales.biz/',
         'github_url': 'http://wiggins.com/',
         'id': 3,
@@ -141,9 +142,9 @@
         'published_at': datetime.datetime(2023, 9, 26, 4, 33, 42),
         'ready': False,
         'size': 6016,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'download_url': 'https://www.snyder.com/',
         'github_url': 'https://carlson.com/',
         'id': 1,
@@ -151,9 +152,9 @@
         'published_at': datetime.datetime(2009, 6, 13, 9, 32, 41),
         'ready': False,
         'size': 4509,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'download_url': 'http://walker.com/',
         'github_url': 'https://www.ruiz.org/',
         'id': 2,
@@ -161,9 +162,9 @@
         'published_at': datetime.datetime(1996, 5, 28, 5, 17, 47),
         'ready': False,
         'size': 6789,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'download_url': 'https://www.sandoval.com/',
         'github_url': 'http://johnson-owens.info/',
         'id': 8,
@@ -171,9 +172,9 @@
         'published_at': datetime.datetime(1996, 5, 18, 23, 39, 40),
         'ready': False,
         'size': 4813,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'download_url': 'https://www.miller-robinson.com/',
         'github_url': 'http://elliott.biz/',
         'id': 7,
@@ -181,30 +182,30 @@
         'published_at': datetime.datetime(1974, 7, 8, 8, 45, 50),
         'ready': False,
         'size': 1386,
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: test_load[second]
-  <class 'dict'> {
-    'items': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+  dict({
+    'items': list([
+      dict({
+        'created_at': datetime,
         'description': '',
         'id': 2,
         'latest_release': None,
         'name': 'ml-insect-viruses',
         'release_count': 1,
-      },
-      <class 'dict'> {
-        'created_at': <class 'datetime'>,
+      }),
+      dict({
+        'created_at': datetime,
         'description': '',
         'id': 1,
         'latest_release': None,
         'name': 'ml-plant-viruses',
         'release_count': 5,
-      },
-    ],
+      }),
+    ]),
     'last_synced_at': None,
-  }
----
+  })
+# ---

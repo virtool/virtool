@@ -1,8 +1,9 @@
+# serializer version: 1
 # name: test_promote_administrators
-  <class 'dict'> {
+  dict({
     'found_count': 2,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': None,
@@ -12,12 +13,12 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
+        'groups': list([
+        ]),
         'handle': 'leeashley',
         'id': 'bf1b993c',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -26,10 +27,10 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'active': True,
         'administrator': True,
         'administrator_role': <AdministratorRole.FULL: 'full'>,
@@ -39,12 +40,12 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
+        'groups': list([
+        ]),
         'handle': 'zclark',
         'id': 'fb085f7f',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -53,13 +54,13 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 2,
-  }
----
+  })
+# ---
