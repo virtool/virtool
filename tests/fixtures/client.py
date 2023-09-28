@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Protocol, List
 
 import pytest
-from aiohttp import BasicAuth
+from aiohttp import BasicAuth, ClientResponse
 from aiohttp.web import Response, RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
@@ -26,7 +26,7 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.flags import FeatureFlags, FlagName
-from virtool.groups.oas import UpdatePermissionsRequest
+from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.users.oas import UpdateUserRequest
@@ -115,10 +115,10 @@ class VirtoolTestClient:
         url: str,
         headers: Dict[str, str] | None = None,
         params: Dict[str, Any] | None = None,
-    ) -> Response:
+    ) -> ClientResponse:
         return await self._test_client.get(url, headers=headers, params=params)
 
-    async def post(self, url: str, data: Dict | None) -> Response:
+    async def post(self, url: str, data: Dict | None) -> ClientResponse:
         payload = None
 
         if data:
@@ -126,16 +126,16 @@ class VirtoolTestClient:
 
         return await self._test_client.post(url, data=payload)
 
-    async def post_form(self, url: str, data) -> Response:
+    async def post_form(self, url: str, data) -> ClientResponse:
         return await self._test_client.post(url, data=data)
 
-    async def patch(self, url: str, data) -> Response:
+    async def patch(self, url: str, data) -> ClientResponse:
         return await self._test_client.patch(url, data=json.dumps(data))
 
-    async def put(self, url: str, data) -> Response:
+    async def put(self, url: str, data) -> ClientResponse:
         return await self._test_client.put(url, data=json.dumps(data))
 
-    async def delete(self, url: str) -> Response:
+    async def delete(self, url: str) -> ClientResponse:
         return await self._test_client.delete(url)
 
 
@@ -355,7 +355,7 @@ def spawn_client(
         if permissions:
             groups = [
                 await fake2.groups.create(
-                    permissions=UpdatePermissionsRequest(
+                    permissions=PermissionsUpdate(
                         **{
                             permission: True
                             for permission in permissions

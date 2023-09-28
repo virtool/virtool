@@ -1,4 +1,3 @@
-from logging import getLogger
 from typing import Union, Optional
 
 import aiohttp.web
@@ -26,8 +25,6 @@ from virtool.subtractions.oas import (
     SubtractionResponse,
     FinalizeSubtractionRequest,
 )
-
-logger = getLogger("subtractions")
 
 routes = Routes()
 

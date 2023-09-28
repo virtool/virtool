@@ -1,5 +1,6 @@
+# serializer version: 1
 # name: TestCheckNuvsBlast.test_bad_zip_file
-  <class 'dict'> {
+  dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': 'Unable to interpret NCBI result',
     'id': 4,
@@ -9,36 +10,36 @@
     'rid': None,
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-  }
----
+  })
+# ---
 # name: TestCheckNuvsBlast.test_result
-  <class 'dict'> {
+  dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
     'id': 4,
     'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
     'ready': True,
-    'result': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
+    'result': dict({
+      'hits': list([
+      ]),
       'masking': None,
-      'params': <class 'list'> [
-      ],
+      'params': list([
+      ]),
       'program': 'blast',
       'stat': 'stat',
-      'target': <class 'dict'> {
+      'target': dict({
         'name': 'foo',
         'sequence': 'ATAGAQGAGATAGAG',
-      },
+      }),
       'version': '1.2.3',
-    },
+    }),
     'rid': 'RID_12345',
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-  }
----
+  })
+# ---
 # name: TestCheckNuvsBlast.test_running[after]
-  <class 'dict'> {
+  dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
     'id': 4,
@@ -48,10 +49,10 @@
     'rid': 'RID_12345',
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-  }
----
+  })
+# ---
 # name: TestCheckNuvsBlast.test_running[before]
-  <class 'dict'> {
+  dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
     'id': 4,
@@ -61,14 +62,14 @@
     'rid': 'RID_12345',
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-  }
----
+  })
+# ---
 # name: test_create_nuvs_blast
   <SQLNuVsBlast(id=1, analysis_id=analysis, sequence_index=21, created_at=2015-10-06 20:00:00, updated_at=2015-10-06 20:00:00, last_checked_at=2015-10-06 20:00:00, error=None, interval=3, rid=None, ready=False, result=None, task_id=1)>
----
+# ---
 # name: test_list_by_analysis
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 2,
       'interval': 3,
@@ -77,8 +78,8 @@
       'result': None,
       'rid': None,
       'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 3,
       'interval': 3,
@@ -87,6 +88,6 @@
       'result': None,
       'rid': None,
       'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-    },
-  ]
----
+    }),
+  ])
+# ---

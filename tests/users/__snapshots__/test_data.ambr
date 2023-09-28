@@ -1,5 +1,6 @@
+# serializer version: 1
 # name: TestCreate.test_force_reset[False]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -9,11 +10,11 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bill',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -22,12 +23,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestCreate.test_force_reset[True]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -37,11 +38,11 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': True,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bill',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -50,12 +51,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestCreate.test_no_force_reset
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -65,11 +66,11 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bill',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -78,32 +79,32 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestUpdate.test_administrator[False][mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'bf1b993c',
     'active': True,
     'administrator': True,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'invalidate_sessions': False,
-    'last_password_change': <class 'datetime'>,
+    'last_password_change': datetime,
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_administrator[False][obj]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': True,
     'administrator_role': <AdministratorRole.FULL: 'full'>,
@@ -113,12 +114,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 'bf1b993c',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -127,32 +128,32 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestUpdate.test_administrator[True][mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'bf1b993c',
     'active': True,
     'administrator': False,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'invalidate_sessions': False,
-    'last_password_change': <class 'datetime'>,
+    'last_password_change': datetime,
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_administrator[True][obj]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -162,12 +163,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 'bf1b993c',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -176,33 +177,33 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestUpdate.test_password[db]
-  <class 'dict'> {
+  dict({
     '_id': 'abc123',
     'active': True,
     'administrator': False,
     'force_reset': False,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
-    ],
+    ]),
     'handle': 'bob',
     'invalidate_sessions': True,
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'primary_group': '',
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_password[obj]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -212,12 +213,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'bob',
     'id': 'abc123',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -226,95 +227,95 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestUpdate.test_set_groups[mongo_1]
-  <class 'dict'> {
-    '_id': '7cf872dc',
+  dict({
+    '_id': 'bf1b993c',
     'active': True,
     'administrator': False,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'qtaylor',
     'invalidate_sessions': False,
-    'last_password_change': <class 'datetime'>,
+    'last_password_change': datetime,
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_set_groups[mongo_2]
-  <class 'dict'> {
-    '_id': '7cf872dc',
+  dict({
+    '_id': 'bf1b993c',
     'active': True,
     'administrator': False,
     'force_reset': False,
-    'groups': <class 'list'> [
-      'fb085f7f',
-    ],
+    'groups': list([
+      2,
+    ]),
     'handle': 'qtaylor',
     'invalidate_sessions': False,
-    'last_password_change': <class 'datetime'>,
+    'last_password_change': datetime,
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_set_groups[mongo_3]
-  <class 'dict'> {
-    '_id': '7cf872dc',
+  dict({
+    '_id': 'bf1b993c',
     'active': True,
     'administrator': False,
     'force_reset': False,
-    'groups': <class 'list'> [
-      'fb085f7f',
-      'bf1b993c',
-    ],
+    'groups': list([
+      2,
+      1,
+    ]),
     'handle': 'qtaylor',
     'invalidate_sessions': False,
-    'last_password_change': <class 'datetime'>,
+    'last_password_change': datetime,
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_set_groups[mongo_4]
-  <class 'dict'> {
-    '_id': '7cf872dc',
+  dict({
+    '_id': 'bf1b993c',
     'active': True,
     'administrator': False,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'qtaylor',
     'invalidate_sessions': False,
-    'last_password_change': <class 'datetime'>,
+    'last_password_change': datetime,
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_set_groups[obj_1]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -324,12 +325,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'qtaylor',
-    'id': '7cf872dc',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'id': 'bf1b993c',
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -338,12 +339,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestUpdate.test_set_groups[obj_2]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -353,16 +354,17 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'fb085f7f',
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
         'name': 'hydrogeologists',
-      },
-    ],
+      }),
+    ]),
     'handle': 'qtaylor',
-    'id': '7cf872dc',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'id': 'bf1b993c',
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -371,12 +373,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestUpdate.test_set_groups[obj_3]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -386,20 +388,22 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'fb085f7f',
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
         'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
-        'id': 'bf1b993c',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
-      },
-    ],
+      }),
+    ]),
     'handle': 'qtaylor',
-    'id': '7cf872dc',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'id': 'bf1b993c',
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -408,12 +412,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: TestUpdate.test_set_groups[obj_4]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -423,12 +427,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'qtaylor',
-    'id': '7cf872dc',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'id': 'bf1b993c',
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -437,12 +441,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_find_or_create_b2c_user[False]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -452,12 +456,12 @@
     'b2c_given_name': 'Fred',
     'b2c_oid': 'abc123',
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
-    'handle': <class 'str'>,
+    'groups': list([
+    ]),
+    'handle': str,
     'id': 'fb085f7f',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -466,12 +470,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_find_or_create_b2c_user[True]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -481,12 +485,12 @@
     'b2c_given_name': 'Bilbo',
     'b2c_oid': 'abc123',
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
-    'handle': <class 'str'>,
+    'groups': list([
+    ]),
+    'handle': str,
     'id': 'bf1b993c',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -495,15 +499,15 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_find_users[False-None]
-  <class 'dict'> {
+  dict({
     'found_count': 1,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': None,
@@ -513,12 +517,12 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
+        'groups': list([
+        ]),
         'handle': 'diamond21',
-        'id': 'da42dca3',
+        'id': '7cf872dc',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -527,43 +531,43 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[False-missing-handle]
-  <class 'dict'> {
+  dict({
     'found_count': 0,
-    'items': <class 'list'> [
-    ],
+    'items': list([
+    ]),
     'page': 1,
     'page_count': 0,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[False-test_user]
-  <class 'dict'> {
+  dict({
     'found_count': 0,
-    'items': <class 'list'> [
-    ],
+    'items': list([
+    ]),
     'page': 1,
     'page_count': 0,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[None-None]
-  <class 'dict'> {
+  dict({
     'found_count': 3,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': None,
@@ -573,12 +577,12 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
+        'groups': list([
+        ]),
         'handle': 'diamond21',
-        'id': 'da42dca3',
+        'id': '7cf872dc',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -587,10 +591,10 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': <AdministratorRole.FULL: 'full'>,
@@ -600,12 +604,12 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
+        'groups': list([
+        ]),
         'handle': 'juliewilliams',
-        'id': '3cbb22cc',
+        'id': 'fb085f7f',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -614,10 +618,10 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
@@ -627,20 +631,22 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-          <class 'dict'> {
-            'id': 'fb085f7f',
+        'groups': list([
+          dict({
+            'id': 2,
+            'legacy_id': None,
             'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
-            'id': 'bf1b993c',
+          }),
+          dict({
+            'id': 1,
+            'legacy_id': None,
             'name': 'musicians',
-          },
-        ],
+          }),
+        ]),
         'handle': 'test_user',
-        'id': '7cf872dc',
+        'id': 'bf1b993c',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -649,32 +655,32 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[None-missing-handle]
-  <class 'dict'> {
+  dict({
     'found_count': 0,
-    'items': <class 'list'> [
-    ],
+    'items': list([
+    ]),
     'page': 1,
     'page_count': 0,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[None-test_user]
-  <class 'dict'> {
+  dict({
     'found_count': 1,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
@@ -684,20 +690,22 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-          <class 'dict'> {
-            'id': 'fb085f7f',
+        'groups': list([
+          dict({
+            'id': 2,
+            'legacy_id': None,
             'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
-            'id': 'bf1b993c',
+          }),
+          dict({
+            'id': 1,
+            'legacy_id': None,
             'name': 'musicians',
-          },
-        ],
+          }),
+        ]),
         'handle': 'test_user',
-        'id': '7cf872dc',
+        'id': 'bf1b993c',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -706,21 +714,21 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[True-None]
-  <class 'dict'> {
+  dict({
     'found_count': 2,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': <AdministratorRole.FULL: 'full'>,
@@ -730,12 +738,12 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
+        'groups': list([
+        ]),
         'handle': 'juliewilliams',
-        'id': '3cbb22cc',
+        'id': 'fb085f7f',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -744,10 +752,10 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
@@ -757,20 +765,22 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-          <class 'dict'> {
-            'id': 'fb085f7f',
+        'groups': list([
+          dict({
+            'id': 2,
+            'legacy_id': None,
             'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
-            'id': 'bf1b993c',
+          }),
+          dict({
+            'id': 1,
+            'legacy_id': None,
             'name': 'musicians',
-          },
-        ],
+          }),
+        ]),
         'handle': 'test_user',
-        'id': '7cf872dc',
+        'id': 'bf1b993c',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -779,32 +789,32 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[True-missing-handle]
-  <class 'dict'> {
+  dict({
     'found_count': 0,
-    'items': <class 'list'> [
-    ],
+    'items': list([
+    ]),
     'page': 1,
     'page_count': 0,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find_users[True-test_user]
-  <class 'dict'> {
+  dict({
     'found_count': 1,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'active': True,
         'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
@@ -814,20 +824,22 @@
         'b2c_given_name': None,
         'b2c_oid': None,
         'force_reset': False,
-        'groups': <class 'list'> [
-          <class 'dict'> {
-            'id': 'fb085f7f',
+        'groups': list([
+          dict({
+            'id': 2,
+            'legacy_id': None,
             'name': 'hydrogeologists',
-          },
-          <class 'dict'> {
-            'id': 'bf1b993c',
+          }),
+          dict({
+            'id': 1,
+            'legacy_id': None,
             'name': 'musicians',
-          },
-        ],
+          }),
+        ]),
         'handle': 'test_user',
-        'id': '7cf872dc',
+        'id': 'bf1b993c',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -836,18 +848,18 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_set_administrator_role[None][obj]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': None,
@@ -857,12 +869,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 'bf1b993c',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -871,12 +883,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_set_administrator_role[base][obj]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': False,
     'administrator_role': <AdministratorRole.BASE: 'base'>,
@@ -886,12 +898,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 'bf1b993c',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -900,12 +912,12 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_set_administrator_role[full][obj]
-  <class 'dict'> {
+  dict({
     'active': True,
     'administrator': True,
     'administrator_role': <AdministratorRole.FULL: 'full'>,
@@ -915,12 +927,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 'bf1b993c',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -929,7 +941,7 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---

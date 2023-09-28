@@ -1,18 +1,22 @@
 import asyncio
-import logging
 import os
 from asyncio import to_thread
-from typing import List, Optional, Union
 
-import aiohttp.web
-import pymongo.errors
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
-from aiohttp.web_fileresponse import FileResponse
+from aiohttp.web import (
+    Request,
+    FileResponse,
+    Response,
+    HTTPBadRequest,
+    HTTPConflict,
+    HTTPNoContent,
+)
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import Field, conint, constr
+from pymongo.errors import DuplicateKeyError
 from sqlalchemy import exc, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from structlog import get_logger
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
@@ -39,9 +43,11 @@ from virtool.data.errors import (
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
+from virtool.groups.pg import SQLGroup
 from virtool.http.policy import PermissionRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
@@ -78,7 +84,7 @@ from virtool.uploads.utils import (
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
-logger = logging.getLogger("samples")
+logger = get_logger("samples")
 
 routes = Routes()
 
@@ -89,11 +95,11 @@ class SamplesView(PydanticView):
     async def get(
         self,
         find: constr(strip_whitespace=True) = "",
-        label: List[int] = Field(default_factory=lambda: []),
+        label: list[int] = Field(default_factory=lambda: []),
         page: conint(gt=0) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        workflows: List[str] = Field(default_factory=lambda: []),
-    ) -> Union[r200[SampleSearchResult], r400]:
+        workflows: list[str] = Field(default_factory=lambda: []),
+    ) -> r200[SampleSearchResult] | r400:
         """
         Find samples.
 
@@ -112,7 +118,7 @@ class SamplesView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE))
     async def post(
         self, data: CreateSampleRequest
-    ) -> Union[r201[CreateSampleResponse], r400, r403]:
+    ) -> r201[CreateSampleResponse] | r400 | r403:
         """
         Create a sample.
 
@@ -145,9 +151,7 @@ class SamplesView(PydanticView):
 @routes.view("/spaces/{space_id}/samples/{sample_id}")
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
-    async def get(
-        self, sample_id: str, /
-    ) -> Union[r200[GetSampleResponse], r403, r404]:
+    async def get(self, sample_id: str, /) -> r200[GetSampleResponse] | r403 | r404:
         """
         Get a sample.
 
@@ -172,7 +176,7 @@ class SampleView(PydanticView):
 
     async def patch(
         self, sample_id: str, /, data: UpdateSampleRequest
-    ) -> Union[r200[UpdateSampleResponse], r400, r403, r404]:
+    ) -> r200[UpdateSampleResponse] | r400 | r403 | r404:
         """
         Update a sample.
 
@@ -201,7 +205,7 @@ class SampleView(PydanticView):
 
         return json_response(sample)
 
-    async def delete(self, sample_id: str, /) -> Union[r204, r403, r404]:
+    async def delete(self, sample_id: str, /) -> r204 | r403 | r404:
         """
         Delete a sample.
 
@@ -295,7 +299,7 @@ async def finalize(req):
 class RightsView(PydanticView):
     async def patch(
         self, sample_id: str, /, data: UpdateRightsRequest
-    ) -> Union[r200[UpdateRightsResponse], r400, r403, r404]:
+    ) -> r200[UpdateRightsResponse] | r400 | r403 | r404:
         """
         Update rights settings.
 
@@ -308,7 +312,9 @@ class RightsView(PydanticView):
             403: Must be administrator or sample owner
             404: Not found
         """
-        db = self.request.app["db"]
+        db: Mongo = self.request.app["db"]
+        pg: AsyncEngine = self.request.app["pg"]
+
         data = data.dict(exclude_unset=True)
 
         if not await db.samples.count_documents({"_id": sample_id}):
@@ -325,11 +331,18 @@ class RightsView(PydanticView):
 
         group = data["group"]
 
-        if group is not None:
-            existing_group_ids = await db.groups.distinct("_id") + ["none"]
+        if group is not None and group != "none":
+            async with AsyncSession(pg) as session:
+                result = await session.execute(
+                    select(SQLGroup.id).where(
+                        (SQLGroup.id == group)
+                        if isinstance(group, int)
+                        else (SQLGroup.legacy_id == group)
+                    )
+                )
 
-            if group not in existing_group_ids:
-                raise HTTPBadRequest(text="Group does not exist")
+                if not result.scalars().one_or_none():
+                    raise HTTPBadRequest(text="Group does not exist")
 
         # Update the sample document with the new rights.
         document = await db.samples.find_one_and_update(
@@ -378,10 +391,11 @@ class AnalysesView(PydanticView):
         self,
         sample_id: str,
         /,
-        term: Optional[str] = Field(
+        term: str
+        | None = Field(
             description="Provide text to filter by partial matches to the reference name or user id in the sample."
         ),
-    ) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
+    ) -> r200[list[GetSampleAnalysesResponse]] | r403 | r404:
         """
         Get analyses.
 
@@ -431,7 +445,7 @@ class AnalysesView(PydanticView):
 
     async def post(
         self, sample_id: str, /, data: CreateAnalysisRequest
-    ) -> Union[r201[CreateAnalysisResponse], r400, r403, r404]:
+    ) -> r201[CreateAnalysisResponse] | r400 | r403 | r404:
         """
         Start analysis job.
 
@@ -484,7 +498,7 @@ class AnalysesView(PydanticView):
 
 
 @routes.jobs_api.delete("/samples/{sample_id}/caches/{cache_key}")
-async def cache_job_remove(req: aiohttp.web.Request):
+async def cache_job_remove(req: Request):
     """
     Remove cache document.
 
@@ -545,19 +559,24 @@ async def upload_artifact(req):
             text="Artifact file has already been uploaded for this sample"
         )
 
-    upload_id = artifact["id"]
+    artifact_id = artifact["id"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(
             multipart_file_chunker(await req.multipart()), artifact_file_path
         )
     except asyncio.CancelledError:
-        logger.debug("Artifact file upload aborted for sample: %s", sample_id)
-        await delete_row(pg, upload_id, SQLSampleArtifact)
+        logger.info(
+            "Sample artifact file upload aborted", id=artifact_id, sample_id=sample_id
+        )
+        await delete_row(pg, artifact_id, SQLSampleArtifact)
         await to_thread(os.remove, artifact_file_path)
-        return aiohttp.web.Response(status=499)
 
-    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SQLSampleArtifact)
+        return Response(status=499)
+
+    artifact = await virtool.uploads.db.finalize(
+        pg, size, artifact_id, SQLSampleArtifact
+    )
 
     return json_response(
         artifact,
@@ -604,8 +623,8 @@ async def upload_reads(req):
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
     except asyncio.CancelledError:
-        logger.debug("Reads file upload aborted for %s", sample_id)
-        return aiohttp.web.Response(status=499)
+        logger.info("Sample reads upload aborted", sample_id=sample_id)
+        return Response(status=499)
     try:
         reads = await create_reads_file(
             pg, size, name, name, sample_id, upload_id=upload
@@ -639,7 +658,7 @@ async def create_cache(req):
 
     try:
         document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
-    except pymongo.errors.DuplicateKeyError:
+    except DuplicateKeyError:
         raise HTTPConflict(text=f"Cache with key {key} already exists for this sample")
 
     headers = {"Location": f"/samples/{sample_id}/caches/{document['id']}"}
@@ -682,8 +701,8 @@ async def upload_cache_reads(req):
     except exc.IntegrityError:
         raise HTTPConflict(text="File name is already uploaded for this cache")
     except asyncio.CancelledError:
-        logger.debug("Reads cache file upload aborted for %s", key)
-        return aiohttp.web.Response(status=499)
+        logger.info("Sample reads cache upload aborted", key=key, sample_id=sample_id)
+        return Response(status=499)
 
     reads = await create_reads_file(
         pg, size, name, name, sample_id, key=key, cache=True
@@ -736,25 +755,33 @@ async def upload_cache_artifact(req):
             text="Artifact file has already been uploaded for this sample cache"
         )
 
-    upload_id = artifact["id"]
+    artifact_id = artifact["id"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(
             multipart_file_chunker(await req.multipart()), cache_path
         )
     except asyncio.CancelledError:
-        logger.debug("Artifact file cache upload aborted for sample: %s", sample_id)
-        await delete_row(pg, upload_id, SQLSampleArtifact)
-        await to_thread(os.remove, cache_path)
-        return aiohttp.web.Response(status=499)
+        logger.info(
+            "Sample artifact file cache upload aborted",
+            id=artifact_id,
+            sample_id=sample_id,
+        )
+        await asyncio.gather(
+            delete_row(pg, artifact_id, SQLSampleArtifact),
+            to_thread(os.remove, cache_path),
+        )
+        return Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(
-        pg, size, upload_id, SQLSampleArtifactCache
+        pg, size, artifact_id, SQLSampleArtifactCache
     )
 
-    headers = {"Location": f"/samples/{sample_id}/caches/{key}/artifacts/{name}"}
-
-    return json_response(artifact, status=201, headers=headers)
+    return json_response(
+        artifact,
+        status=201,
+        headers={"Location": f"/samples/{sample_id}/caches/{key}/artifacts/{name}"},
+    )
 
 
 @routes.jobs_api.patch("/samples/{sample_id}/caches/{key}")
@@ -778,7 +805,7 @@ async def finalize_cache(req):
 
 @routes.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 @routes.jobs_api.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
-async def download_reads(req: aiohttp.web.Request):
+async def download_reads(req: Request):
     """
     Download reads.
 
@@ -813,7 +840,7 @@ async def download_reads(req: aiohttp.web.Request):
 
 
 @routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
-async def download_artifact(req: aiohttp.web.Request):
+async def download_artifact(req: Request):
     """
     Download artifact.
 

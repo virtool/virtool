@@ -2,15 +2,10 @@
 Work with the current user account and its API keys.
 
 """
-from typing import Any, Dict, Optional
-
-from virtool_core.models.account import APIKey
-from virtool.data.transforms import apply_transforms
-from virtool.groups.transforms import AttachGroupsTransform
+from typing import Any, Dict
 
 import virtool.users.utils
 import virtool.utils
-from virtool.utils import base_processor
 
 ACCOUNT_PROJECTION = (
     "_id",
@@ -66,37 +61,3 @@ async def get_alternate_id(db, name: str) -> str:
             return candidate
 
         suffix += 1
-
-
-async def fetch_complete_api_key(mongo, key_id: str) -> Optional[APIKey]:
-    """
-    Fetch an API key that contains complete group data.
-
-    :param mongo: the application database object
-    :param key_id: the API key id
-    """
-
-    key = await mongo.keys.find_one({"id": key_id})
-
-    if not key:
-        return None
-
-    key = await apply_transforms(
-        base_processor(key),
-        [
-            AttachGroupsTransform(mongo),
-        ],
-    )
-
-    return APIKey(**{**key, "groups": sorted(key["groups"], key=lambda g: g["name"])})
-
-
-API_KEY_PROJECTION = {
-    "_id": False,
-    "user": False,
-}
-"""
-A MongoDB projection to use when returning API key documents to clients.
-
-The key should never be sent to client after its creation.
-"""

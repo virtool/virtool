@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from typing import Dict, TYPE_CHECKING
 
 import aiofiles
+from structlog import get_logger
 from virtool_core.utils import decompress_tgz
 
 if TYPE_CHECKING:
@@ -14,7 +15,7 @@ from virtool.http.utils import download_file
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
 
-logger = logging.getLogger(__name__)
+logger = get_logger("hmms")
 
 
 class HMMInstallTask(BaseTask):
@@ -68,8 +69,10 @@ class HMMInstallTask(BaseTask):
                 self.temp_path / "hmm.tar.gz",
                 tracker.add,
             )
-        except Exception as err:
-            logger.warning("Request for HMM release encountered exception: %s", err)
+        except Exception:
+            logger.exception(
+                "Exception during request for HMM release",
+            )
             await self._set_error("Could not download HMM data.")
 
     async def decompress(self):

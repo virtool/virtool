@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from sqlalchemy import Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import mapped_column, Mapped
@@ -18,7 +16,7 @@ class SQLGroup(Base):
     permissions: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
 
 
-def merge_group_permissions(groups: list[SQLGroup]) -> dict[str, bool]:
+def merge_group_permissions(groups: list[dict]) -> dict[str, bool]:
     """
     Return a :class:`dict` of permissions that will be inherited by a user belonging to
     all the passed ``groups``.
@@ -33,9 +31,9 @@ def merge_group_permissions(groups: list[SQLGroup]) -> dict[str, bool]:
     for p in Permission:
         for group in groups:
             try:
-                if group.permissions[p.value]:
-                    permission_dict[p.value] = True
+                if group["permissions"][p]:
+                    permission_dict[p] = True
             except KeyError:
-                permission_dict[p.value] = False
+                permission_dict[p] = False
 
     return permission_dict

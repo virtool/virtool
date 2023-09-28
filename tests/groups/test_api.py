@@ -1,8 +1,10 @@
+from pprint import pprint
+
 import pytest
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
-from virtool.groups.oas import UpdatePermissionsRequest
+from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 
 
@@ -24,7 +26,7 @@ async def setup_update_group(spawn_client: ClientSpawner, fake2: DataFaker):
     return client, group
 
 
-async def test_find(fake2: DataFaker, spawn_client: ClientSpawner, snapshot):
+async def test_find(fake2: DataFaker, snapshot, spawn_client: ClientSpawner):
     """
     Test that a ``GET /groups`` return a complete list of groups.
 
@@ -43,34 +45,36 @@ async def test_find(fake2: DataFaker, spawn_client: ClientSpawner, snapshot):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
-@pytest.mark.parametrize("status", [201, 400])
-async def test_create(
-    status: int,
-    fake2: DataFaker,
-    mongo: Mongo,
-    snapshot,
-    spawn_client: ClientSpawner,
-):
-    """
-    Test that a group can be added to the database at ``POST /groups/:group_id``.
+class TestCreate:
+    async def test_ok(self, snapshot, spawn_client: ClientSpawner):
+        """Test that the request succeeds."""
+        client = await spawn_client(
+            administrator=True,
+            authenticated=True,
+            base_url="https://virtool.example.com",
+        )
 
-    """
-    await mongo.groups.create_index("name", unique=True, sparse=True)
+        resp = await client.post("/groups", data={"name": "Test"})
 
-    client = await spawn_client(
-        administrator=True, authenticated=True, base_url="https://virtool.example.com"
-    )
+        assert resp.status == 201
+        assert resp.headers.get("Location") == f"https://virtool.example.com/groups/1"
+        assert await resp.json() == snapshot(name="json")
 
-    group = await fake2.groups.create()
+    async def test_duplicate(
+        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+    ):
+        """Test that an error is returned when an existing group name is used."""
+        client = await spawn_client(
+            administrator=True,
+            authenticated=True,
+        )
 
-    resp = await client.post(
-        "/groups", data={"group_id": group.name if status == 400 else "Test"}
-    )
+        group = await fake2.groups.create()
 
-    assert resp.status == status
-    assert resp.headers.get("Location") == snapshot(name="location")
-    assert await resp.json() == snapshot(name="json")
+        resp = await client.post("/groups", data={"name": group.name})
+
+        assert resp.status == 400
+        assert await resp.json() == snapshot(name="json")
 
 
 @pytest.mark.apitest
@@ -81,10 +85,7 @@ async def test_get(
     snapshot,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test that a ``GET /groups/:group_id`` return the correct group.
-
-    """
+    """Test that a ``GET /groups/:group_id`` return the correct group."""
     client = await spawn_client(
         administrator=True,
         authenticated=True,
@@ -95,7 +96,7 @@ async def test_get(
 
     await fake2.users.create(groups=[group])
 
-    resp = await client.get(f"/groups/{group.id if status == 200 else 'foo'}")
+    resp = await client.get(f"/groups/{group.id if status == 200 else 5}")
 
     assert resp.status == status
     assert await resp.json() == snapshot
@@ -123,7 +124,7 @@ class TestUpdate:
             authenticated=True,
         )
 
-        resp = await client.patch("/groups/ghosts", data={"name": "Real boys"})
+        resp = await client.patch("/groups/5", data={"name": "Real boys"})
 
         assert resp.status == 404
         assert await resp.json() == snapshot(name="json")
@@ -131,7 +132,7 @@ class TestUpdate:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
-async def test_remove(
+async def test_delete(
     status: int, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
 ):
     """
@@ -141,12 +142,19 @@ async def test_remove(
     client = await spawn_client(administrator=True, authenticated=True)
 
     group = await fake2.groups.create(
-        permissions=UpdatePermissionsRequest(create_sample=True, remove_file=True)
+        permissions=PermissionsUpdate(create_sample=True, remove_file=True)
     )
 
     await fake2.users.create(groups=[group])
 
-    resp = await client.delete(f"/groups/{'ghosts' if status == 404 else group.id}")
+    resp = await client.delete(f"/groups/{5 if status == 404 else group.id}")
 
     assert resp.status == status
-    assert await resp.json() == snapshot(name="json")
+    assert await resp.json() == (
+        None
+        if status == 204
+        else {
+            "id": "not_found",
+            "message": "Not found",
+        }
+    )

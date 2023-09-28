@@ -65,7 +65,7 @@ class UsersView(PydanticView):
         )
 
         data["documents"] = await apply_transforms(
-            data["documents"], [AttachPermissionsTransform(mongo, pg)]
+            data["documents"], [AttachPermissionsTransform(pg)]
         )
 
         return json_response(data)

@@ -1,11 +1,26 @@
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-
-from virtool.fake.next import DataFaker
 from virtool.groups.pg import merge_group_permissions
+from virtool.users.utils import generate_base_permissions
 
 
-async def test_merge_group_permissions(fake2: DataFaker, pg: AsyncEngine):
-    group_1 = await fake2.groups.create()
-    group_2 = await fake2.groups.create()
-
-    merge_group_permissions(groups=[])
+async def test_merge_group_permissions():
+    """Test that permissions from multiple group-like dictionaries can be merged."""
+    assert merge_group_permissions(
+        [
+            {"permissions": permissions}
+            for permissions in [
+                generate_base_permissions(),
+                {**generate_base_permissions(), "modify_subtraction": True},
+                {
+                    **generate_base_permissions(),
+                    "create_sample": True,
+                    "modify_subtraction": True,
+                },
+                generate_base_permissions(),
+                {**generate_base_permissions(), "upload_sample": True},
+            ]
+        ]
+    ) == {
+        **generate_base_permissions(),
+        "create_sample": True,
+        "modify_subtraction": True,
+    }

@@ -1,5 +1,3 @@
-from logging import getLogger
-
 from aiohttp.web_exceptions import HTTPNoContent
 
 from virtool.data.utils import get_data_from_req
@@ -10,8 +8,6 @@ from virtool.subtractions.fake import (
     create_fake_finalized_subtraction,
 )
 from virtool.utils import random_alphanumeric
-
-logger = getLogger(__name__)
 
 routes = Routes()
 
@@ -26,8 +22,6 @@ async def dev(req):
         await req.app["db"].users.delete_many({})
         await req.app["db"].sessions.delete_many({})
         await req.app["db"].keys.delete_many({})
-
-        logger.debug("Cleared users")
 
     if command == "create_subtraction":
         upload_id, upload_name = await create_fake_fasta_upload(

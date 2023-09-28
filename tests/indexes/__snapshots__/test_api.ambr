@@ -1,59 +1,60 @@
+# serializer version: 1
 # name: TestCreate.test[True][enqueued]
-  <class 'list'> [
-    <class 'tuple'> (
+  list([
+    tuple(
       'build_index',
       'bf1b993c',
     ),
-  ]
----
+  ])
+# ---
 # name: TestCreate.test[True][index]
-  <class 'dict'> {
+  dict({
     '_id': 'fb085f7f',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
-    'job': <class 'dict'> {
+    'job': dict({
       'id': 'bf1b993c',
-    },
-    'manifest': <class 'dict'> {
+    }),
+    'manifest': dict({
       'bar': 2,
       'foo': 1,
-    },
+    }),
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'id': 'foo',
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'version': 0,
-  }
----
+  })
+# ---
 # name: TestCreate.test[True][job]
-  <class 'dict'> {
+  dict({
     '_id': 'bf1b993c',
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'index_id': 'fb085f7f',
       'index_version': 0,
-      'manifest': <class 'dict'> {
+      'manifest': dict({
         'bar': 2,
         'foo': 1,
-      },
+      }),
       'ref_id': 'foo',
       'user_id': 'bf1b993c',
-    },
+    }),
     'key': None,
     'ping': None,
-    'rights': <class 'dict'> {
-    },
-    'space': <class 'dict'> {
+    'rights': dict({
+    }),
+    'space': dict({
       'id': 0,
-    },
+    }),
     'state': 'waiting',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -61,139 +62,139 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: TestCreate.test[True][json]
-  <class 'dict'> {
+  dict({
     'change_count': 1,
-    'contributors': <class 'list'> [
-      <class 'dict'> {
+    'contributors': list([
+      dict({
         'administrator': False,
         'count': 1,
         'handle': 'leeashley',
         'id': 'fb085f7f',
-      },
-    ],
+      }),
+    ]),
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-    ],
+    'files': list([
+    ]),
     'has_files': True,
     'id': 'fb085f7f',
-    'job': <class 'dict'> {
+    'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'build_index',
-    },
-    'manifest': <class 'dict'> {
+    }),
+    'manifest': dict({
       'bar': 2,
       'foo': 1,
-    },
+    }),
     'modified_otu_count': 0,
-    'otus': <class 'list'> [
-    ],
+    'otus': list([
+    ]),
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': 'genome',
       'id': 'foo',
       'name': 'Foo',
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
-    },
+    }),
     'version': 0,
-  }
----
+  })
+# ---
 # name: TestCreate.test[True][location]
   'https://virtool.example.com/indexes/fb085f7f'
----
+# ---
 # name: TestFind.test
-  <class 'dict'> {
+  dict({
     'change_count': 12,
-    'documents': <class 'list'> [
-      <class 'dict'> {
+    'documents': list([
+      dict({
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
         'id': 'bar',
-        'job': <class 'dict'> {
+        'job': dict({
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 10,
           'stage': 'NzFJEUSgqMReEKilxKJT',
           'state': 'preparing',
-          'user': <class 'dict'> {
+          'user': dict({
             'administrator': False,
             'handle': 'leeashley',
             'id': 'fb085f7f',
-          },
+          }),
           'workflow': 'build_index',
-        },
+        }),
         'modified_otu_count': 3,
         'ready': False,
-        'reference': <class 'dict'> {
+        'reference': dict({
           'data_type': 'genome',
           'id': 'bar',
           'name': 'Bar',
-        },
-        'user': <class 'dict'> {
+        }),
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'version': 1,
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
         'id': 'foo',
-        'job': <class 'dict'> {
+        'job': dict({
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
           'progress': 40,
           'stage': 'FmSbUMpDrznQOttiWmLr',
           'state': 'cancelled',
-          'user': <class 'dict'> {
+          'user': dict({
             'administrator': False,
             'handle': 'leeashley',
             'id': 'fb085f7f',
-          },
+          }),
           'workflow': 'build_index',
-        },
+        }),
         'modified_otu_count': 2,
         'ready': False,
-        'reference': <class 'dict'> {
+        'reference': dict({
           'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
-        },
-        'user': <class 'dict'> {
+        }),
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'version': 0,
-      },
-    ],
+      }),
+    ]),
     'found_count': 2,
     'modified_otu_count': 3,
     'page': 1,
@@ -201,427 +202,427 @@
     'per_page': 25,
     'total_count': 2,
     'total_otu_count': 123,
-  }
----
+  })
+# ---
 # name: TestFind.test_ready
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
       'has_files': True,
       'id': 'daz',
-      'job': <class 'dict'> {
+      'job': dict({
         'archived': False,
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
         'progress': 10,
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'workflow': 'jobs_pathoscope_bowtie',
-      },
+      }),
       'modified_otu_count': 0,
       'ready': True,
-      'reference': <class 'dict'> {
+      'reference': dict({
         'data_type': 'genome',
         'id': 'foo',
         'name': 'Foo',
-      },
-      'user': <class 'dict'> {
+      }),
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
-      },
+      }),
       'version': 0,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
       'has_files': True,
       'id': 'bot',
-      'job': <class 'dict'> {
+      'job': dict({
         'archived': False,
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
         'progress': 10,
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'workflow': 'jobs_pathoscope_bowtie',
-      },
+      }),
       'modified_otu_count': 0,
       'ready': True,
-      'reference': <class 'dict'> {
+      'reference': dict({
         'data_type': 'genome',
         'id': 'bar',
         'name': 'Bar',
-      },
-      'user': <class 'dict'> {
+      }),
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
-      },
+      }),
       'version': 1,
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_finalize[404_reference]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_finalize[409_fasta]
-  <class 'dict'> {
+  dict({
     'id': 'conflict',
     'message': 'A FASTA file must be uploaded in order to finalize index',
-  }
----
+  })
+# ---
 # name: test_finalize[409_genome]
-  <class 'dict'> {
+  dict({
     'id': 'conflict',
     'message': 'Reference requires that all Bowtie2 index files have been uploaded. Missing files: reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2',
-  }
----
+  })
+# ---
 # name: test_finalize[None]
-  <class 'dict'> {
+  dict({
     'change_count': 0,
-    'contributors': <class 'list'> [
-    ],
+    'contributors': list([
+    ]),
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'download_url': '/indexes/test_index/files/reference.fa.gz',
         'id': 1,
         'index': 'test_index',
         'name': 'reference.fa.gz',
         'size': 9000,
         'type': 'fasta',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/indexes/test_index/files/reference.json.gz',
         'id': 2,
         'index': 'test_index',
         'name': 'reference.json.gz',
         'size': 9000,
         'type': 'json',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/indexes/test_index/files/reference.1.bt2',
         'id': 3,
         'index': 'test_index',
         'name': 'reference.1.bt2',
         'size': 9000,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/indexes/test_index/files/reference.2.bt2',
         'id': 4,
         'index': 'test_index',
         'name': 'reference.2.bt2',
         'size': 9000,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/indexes/test_index/files/reference.3.bt2',
         'id': 5,
         'index': 'test_index',
         'name': 'reference.3.bt2',
         'size': 9000,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/indexes/test_index/files/reference.4.bt2',
         'id': 6,
         'index': 'test_index',
         'name': 'reference.4.bt2',
         'size': 9000,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/indexes/test_index/files/reference.rev.1.bt2',
         'id': 7,
         'index': 'test_index',
         'name': 'reference.rev.1.bt2',
         'size': 9000,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': '/indexes/test_index/files/reference.rev.2.bt2',
         'id': 8,
         'index': 'test_index',
         'name': 'reference.rev.2.bt2',
         'size': 9000,
         'type': 'bowtie2',
-      },
-    ],
+      }),
+    ]),
     'has_files': True,
     'id': 'test_index',
-    'job': <class 'dict'> {
+    'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
       'progress': 10,
       'stage': 'NzFJEUSgqMReEKilxKJT',
       'state': 'preparing',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'build_index',
-    },
-    'manifest': <class 'dict'> {
+    }),
+    'manifest': dict({
       'foo': 4,
-    },
+    }),
     'modified_otu_count': 0,
-    'otus': <class 'list'> [
-    ],
+    'otus': list([
+    ]),
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': 'genome',
       'id': 'hxn167',
       'name': 'Test A',
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'version': 2,
-  }
----
+  })
+# ---
 # name: test_finalize[None].1
-  <class 'dict'> {
+  dict({
     '_id': '6116cba1',
     'abbreviation': 'PVF',
-    'isolates': <class 'list'> [
-      <class 'dict'> {
+    'isolates': list([
+      dict({
         'default': True,
         'id': 'cab8b360',
         'source_name': '8816-v2',
         'source_type': 'isolate',
-      },
-    ],
+      }),
+    ]),
     'last_indexed_version': 1,
     'lower_name': 'prunus virus f',
     'name': 'Prunus virus F',
-    'reference': <class 'dict'> {
+    'reference': dict({
       'id': 'hxn167',
-    },
+    }),
     'remote_id': None,
-    'schema': <class 'list'> [
-    ],
+    'schema': list([
+    ]),
     'verified': False,
     'version': 1,
-  }
----
+  })
+# ---
 # name: test_find_history[None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'description': 'Edited sequence wrta20tr in Islolate chilli-CR',
         'id': 'kjs8sa99.3',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foobar',
           'version': 0,
-        },
+        }),
         'method_name': 'edit_sequence',
-        'otu': <class 'dict'> {
+        'otu': dict({
           'id': 'kjs8sa99',
           'name': 'Foo',
           'version': 3,
-        },
-        'reference': <class 'dict'> {
+        }),
+        'reference': dict({
           'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
-        },
-        'user': <class 'dict'> {
+        }),
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.2',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foobar',
           'version': 0,
-        },
+        }),
         'method_name': 'add_isolate',
-        'otu': <class 'dict'> {
+        'otu': dict({
           'id': 'zxbbvngc',
           'name': 'Test',
           'version': 2,
-        },
-        'reference': <class 'dict'> {
+        }),
+        'reference': dict({
           'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
-        },
-        'user': <class 'dict'> {
+        }),
+        'user': dict({
           'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.1',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foobar',
           'version': 0,
-        },
+        }),
         'method_name': 'add_isolate',
-        'otu': <class 'dict'> {
+        'otu': dict({
           'id': 'zxbbvngc',
           'name': 'Test',
           'version': 1,
-        },
-        'reference': <class 'dict'> {
+        }),
+        'reference': dict({
           'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
-        },
-        'user': <class 'dict'> {
+        }),
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.0',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foobar',
           'version': 0,
-        },
+        }),
         'method_name': 'add_isolate',
-        'otu': <class 'dict'> {
+        'otu': dict({
           'id': 'zxbbvngc',
           'name': 'Test',
           'version': 0,
-        },
-        'reference': <class 'dict'> {
+        }),
+        'reference': dict({
           'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
-        },
-        'user': <class 'dict'> {
+        }),
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 4,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 4,
-  }
----
+  })
+# ---
 # name: test_get[None]
-  <class 'dict'> {
+  dict({
     'change_count': 2,
-    'contributors': <class 'list'> [
-      <class 'dict'> {
+    'contributors': list([
+      dict({
         'administrator': True,
         'count': 1,
         'handle': 'fred',
         'id': 'fred',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'administrator': True,
         'count': 3,
         'handle': 'ian',
         'id': 'igboyes',
-      },
-    ],
+      }),
+    ]),
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-    ],
+    'files': list([
+    ]),
     'has_files': True,
     'id': 'foobar',
-    'job': <class 'dict'> {
+    'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
       'progress': 10,
       'stage': 'NzFJEUSgqMReEKilxKJT',
       'state': 'preparing',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
-      },
+      }),
       'workflow': 'build_index',
-    },
-    'manifest': <class 'dict'> {
+    }),
+    'manifest': dict({
       'foo': 2,
-    },
+    }),
     'modified_otu_count': 2,
-    'otus': <class 'list'> [
-      <class 'dict'> {
+    'otus': list([
+      dict({
         'change_count': 1,
         'id': 'kjs8sa99',
         'name': 'Foo',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'change_count': 3,
         'id': 'zxbbvngc',
         'name': 'Test',
-      },
-    ],
+      }),
+    ]),
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': 'genome',
       'id': 'bar',
       'name': 'Bar',
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
-    },
+    }),
     'version': 0,
-  }
----
+  })
+# ---
 # name: test_upload[None]
-  <class 'dict'> {
+  dict({
     'download_url': '/indexes/foo/files/reference.1.bt2',
     'id': 1,
     'index': 'foo',
     'name': 'reference.1.bt2',
     'size': 7205747,
     'type': 'bowtie2',
-  }
----
+  })
+# ---
 # name: test_upload[None].1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
-    'reference': <class 'dict'> {
+    'reference': dict({
       'id': 'bar',
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_upload[None].2
   <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=7205747)>
----
+# ---

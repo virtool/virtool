@@ -1,42 +1,43 @@
+# serializer version: 1
 # name: test_upgrade[analyses]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'foo',
-      'subtractions': <class 'list'> [
+      'subtractions': list([
         'prunus',
-      ],
-    },
-    <class 'dict'> {
+      ]),
+    }),
+    dict({
       '_id': 'bar',
-      'subtractions': <class 'list'> [
+      'subtractions': list([
         'malus',
-      ],
-    },
-    <class 'dict'> {
+      ]),
+    }),
+    dict({
       '_id': 'baz',
-      'subtractions': <class 'list'> [
-      ],
-    },
-  ]
----
+      'subtractions': list([
+      ]),
+    }),
+  ])
+# ---
 # name: test_upgrade[samples]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'foo',
-      'subtractions': <class 'list'> [
+      'subtractions': list([
         'prunus',
-      ],
-    },
-    <class 'dict'> {
+      ]),
+    }),
+    dict({
       '_id': 'bar',
-      'subtractions': <class 'list'> [
+      'subtractions': list([
         'malus',
-      ],
-    },
-    <class 'dict'> {
+      ]),
+    }),
+    dict({
       '_id': 'baz',
-      'subtractions': <class 'list'> [
-      ],
-    },
-  ]
----
+      'subtractions': list([
+      ]),
+    }),
+  ])
+# ---

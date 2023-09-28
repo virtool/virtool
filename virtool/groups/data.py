@@ -1,5 +1,3 @@
-from logging import getLogger
-
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -18,8 +16,6 @@ from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
-
-logger = getLogger("groups")
 
 
 class GroupsData:
@@ -155,7 +151,7 @@ class GroupsData:
             pg_session,
         ):
             result = await pg_session.execute(
-                delete(SQLGroup).where(SQLGroup.legacy_id == group_id)
+                delete(SQLGroup).where(SQLGroup.id == group_id)
             )
 
             if not result.rowcount:

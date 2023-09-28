@@ -1,22 +1,23 @@
+# serializer version: 1
 # name: test_upgrade
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'a',
       'ping': None,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'b',
       'ping': None,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'c',
-      'ping': <class 'dict'> {
-        'pinged_at': <class 'datetime'>,
-      },
-    },
-    <class 'dict'> {
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+    }),
+    dict({
       '_id': 'd',
       'ping': None,
-    },
-  ]
----
+    }),
+  ])
+# ---

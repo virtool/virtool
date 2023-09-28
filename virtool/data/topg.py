@@ -3,13 +3,12 @@ Helpers for migrating MongoDB resources to PostgreSQL.
 
 """
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, List, Sequence, Type
+from typing import TYPE_CHECKING
 
 from sqlalchemy import or_, ColumnExpressionArgument
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.groups.pg import SQLGroup
-from virtool.pg.base import Base, HasLegacyAndModernIDs
+from virtool.pg.base import HasLegacyAndModernIDs
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

@@ -45,7 +45,7 @@ def generate_base_permissions() -> dict[str, bool]:
     return {p.value: False for p in Permission}
 
 
-def hash_password(password: str) -> str:
+def hash_password(password: str) -> bytes:
     """
     Salt and hash a unicode password. Uses bcrypt.
 

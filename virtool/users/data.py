@@ -2,7 +2,8 @@ import asyncio
 import random
 
 from pymongo.errors import DuplicateKeyError
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User, UserSearchResult
 
@@ -15,18 +16,18 @@ from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import emits, Operation
+from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
-from virtool.groups.pg import merge_group_permissions
+from virtool.groups.pg import merge_group_permissions, SQLGroup
 from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import id_exists
 from virtool.users.db import (
     B2CUserAttributes,
     compose_groups_update,
-    compose_primary_group_update,
 )
-from virtool.users.mongo import create_user, update_keys
+from virtool.users.mongo import create_user, update_keys, compose_primary_group_update
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
@@ -104,9 +105,9 @@ class UsersData(DataLayerDomain):
         result["items"] = await apply_transforms(
             [base_processor(item) for item in result["items"]],
             [
-                AttachPermissionsTransform(self._mongo, self._pg),
-                AttachPrimaryGroupTransform(self._mongo),
-                AttachGroupsTransform(self._mongo),
+                AttachPermissionsTransform(self._pg),
+                AttachPrimaryGroupTransform(self._pg),
+                AttachGroupsTransform(self._pg),
             ],
         )
 
@@ -292,7 +293,9 @@ class UsersData(DataLayerDomain):
         :param data: the update data object
         :return: the updated user
         """
-        document = await self._mongo.users.find_one({"_id": user_id})
+        document = await self._mongo.users.find_one(
+            {"_id": user_id}, ["administrator", "groups"]
+        )
 
         if document is None:
             raise ResourceNotFoundError("User does not exist")
@@ -337,7 +340,11 @@ class UsersData(DataLayerDomain):
             try:
                 update.update(
                     await compose_primary_group_update(
-                        self._mongo, user_id, data["primary_group"]
+                        self._mongo,
+                        self._pg,
+                        data.get("groups", []),
+                        data["primary_group"],
+                        user_id,
                     )
                 )
             except DatabaseError as err:
@@ -351,18 +358,24 @@ class UsersData(DataLayerDomain):
                 {"_id": user_id}, {"$set": update}
             )
 
-            permissions = merge_group_permissions(
-                await self._mongo.groups.find(
-                    {"_id": {"$in": [document["groups"]]}}
-                ).to_list(None)
-            )
+            if document["groups"]:
+                async with AsyncSession(self._pg) as session:
+                    result = await session.execute(
+                        select(SQLGroup).where(
+                            compose_legacy_id_expression(SQLGroup, document["groups"])
+                        )
+                    )
+
+                    groups = [group.to_dict() for group in result.scalars().all()]
+            else:
+                groups = []
 
             await update_keys(
                 self._mongo,
                 user_id,
                 document["administrator"],
                 document["groups"],
-                permissions,
+                merge_group_permissions(groups),
             )
 
         return await self.get(user_id)

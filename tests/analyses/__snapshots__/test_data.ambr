@@ -1,171 +1,172 @@
+# serializer version: 1
 # name: test_create[mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'test_analysis',
-    'files': <class 'list'> [
-    ],
-    'index': <class 'dict'> {
+    'files': list([
+    ]),
+    'index': dict({
       'id': 'test_index',
       'version': 11,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'id': 'fb085f7f',
-    },
+    }),
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'id': 'test_ref',
-    },
+    }),
     'results': None,
-    'sample': <class 'dict'> {
+    'sample': dict({
       'id': 'test_sample',
-    },
-    'space': <class 'dict'> {
+    }),
+    'space': dict({
       'id': 0,
-    },
-    'subtractions': <class 'list'> [
+    }),
+    'subtractions': list([
       'subtraction_1',
       'subtraction_2',
-    ],
-    'user': <class 'dict'> {
+    ]),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'nuvs',
-  }
----
+  })
+# ---
 # name: test_create[obj]
-  <class 'dict'> {
-    'files': <class 'list'> [
-    ],
+  dict({
+    'files': list([
+    ]),
     'id': 'test_analysis',
-    'index': <class 'dict'> {
+    'index': dict({
       'id': 'test_index',
       'version': 11,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'archived': False,
       'id': 'fb085f7f',
       'progress': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'nuvs',
-    },
+    }),
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
       'id': 'test_ref',
       'name': 'Test Reference',
-    },
+    }),
     'results': None,
-    'sample': <class 'dict'> {
+    'sample': dict({
       'id': 'test_sample',
-    },
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'subtractions': list([
+      dict({
         'id': 'subtraction_1',
         'name': 'Subtraction 1',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'subtraction_2',
         'name': 'Subtraction 2',
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'nuvs',
-  }
----
+  })
+# ---
 # name: test_create_analysis_id[mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'fb085f7f',
-    'files': <class 'list'> [
-    ],
-    'index': <class 'dict'> {
+    'files': list([
+    ]),
+    'index': dict({
       'id': 'test_index',
       'version': 11,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'id': '7cf872dc',
-    },
+    }),
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'id': 'test_ref',
-    },
+    }),
     'results': None,
-    'sample': <class 'dict'> {
+    'sample': dict({
       'id': 'test_sample',
-    },
-    'space': <class 'dict'> {
+    }),
+    'space': dict({
       'id': 0,
-    },
-    'subtractions': <class 'list'> [
+    }),
+    'subtractions': list([
       'subtraction_1',
       'subtraction_2',
-    ],
-    'user': <class 'dict'> {
+    ]),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'nuvs',
-  }
----
+  })
+# ---
 # name: test_create_analysis_id[obj]
-  <class 'dict'> {
-    'files': <class 'list'> [
-    ],
+  dict({
+    'files': list([
+    ]),
     'id': 'fb085f7f',
-    'index': <class 'dict'> {
+    'index': dict({
       'id': 'test_index',
       'version': 11,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'archived': False,
       'id': '7cf872dc',
       'progress': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'nuvs',
-    },
+    }),
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
       'id': 'test_ref',
       'name': 'Test Reference',
-    },
+    }),
     'results': None,
-    'sample': <class 'dict'> {
+    'sample': dict({
       'id': 'test_sample',
-    },
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'subtractions': list([
+      dict({
         'id': 'subtraction_1',
         'name': 'Subtraction 1',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'subtraction_2',
         'name': 'Subtraction 2',
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'nuvs',
-  }
----
+  })
+# ---
 # name: test_upload_file
-  <class 'dict'> {
+  dict({
     'analysis': 'foobar',
     'description': None,
     'format': 'fasta',
@@ -173,5 +174,5 @@
     'name': 'reference.fa',
     'name_on_disk': '1-reference.fa',
     'size': 20466,
-  }
----
+  })
+# ---

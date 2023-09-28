@@ -1,32 +1,33 @@
+# serializer version: 1
 # name: test_task[blast]
-  <class 'dict'> {
+  dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
     'id': 1,
     'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
     'ready': True,
-    'result': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
+    'result': dict({
+      'hits': list([
+      ]),
       'masking': None,
       'params': 'test_params',
       'program': 'test',
       'stat': 'test_stat',
       'target': 'ATAGAGAACTGTACTAGCTGATCGATCTGACGTAGCAC',
       'version': '1',
-    },
+    }),
     'rid': 'SYZDXEWK014',
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-  }
----
+  })
+# ---
 # name: test_task[task]
-  <class 'dict'> {
+  dict({
     'complete': True,
-    'context': <class 'dict'> {
+    'context': dict({
       'analysis_id': 'analysis',
       'sequence_index': 5,
-    },
+    }),
     'count': 0,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -35,5 +36,5 @@
     'progress': 100,
     'step': 'request',
     'type': 'blast',
-  }
----
+  })
+# ---

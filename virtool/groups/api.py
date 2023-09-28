@@ -1,5 +1,3 @@
-from typing import List
-
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
@@ -23,7 +21,7 @@ routes = Routes()
 
 @routes.view("/groups")
 class GroupsView(PydanticView):
-    async def get(self) -> r200[List[GetGroupResponse]]:
+    async def get(self) -> r200[list[GetGroupResponse]]:
         """
         List groups.
 

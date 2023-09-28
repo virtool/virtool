@@ -4,29 +4,29 @@ Work with HMM data in the database.
 """
 import asyncio
 import json
-import logging
 from pathlib import Path
-from typing import List, Dict, Any, Set
 
 import aiofiles
 import aiohttp.client_exceptions
 from aiohttp import ClientSession
+from structlog import get_logger
 
 import virtool.analyses.utils
 import virtool.errors
 import virtool.utils
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
+from virtool.types import Document
 from virtool.utils import base_processor
 
-logger = logging.getLogger(__name__)
+logger = get_logger("hmms")
 
 HMM_REFRESH_INTERVAL = 600
 
 PROJECTION = ["_id", "cluster", "names", "count", "families"]
 
 
-async def get_referenced_hmm_ids(mongo, data_path: Path) -> List[str]:
+async def get_referenced_hmm_ids(mongo, data_path: Path) -> list[str]:
     """
     List the IDs of HMM documents that are used in analyses.
 
@@ -43,7 +43,7 @@ async def get_referenced_hmm_ids(mongo, data_path: Path) -> List[str]:
     return sorted(list(in_db | in_files))
 
 
-async def get_hmms_referenced_in_files(mongo, data_path: Path) -> Set[str]:
+async def get_hmms_referenced_in_files(mongo, data_path: Path) -> set[str]:
     """
     Parse all NuVs JSON results files and return a set of found HMM profile ids. Used for removing unreferenced HMMs
     when purging the collection.
@@ -78,15 +78,15 @@ async def get_hmms_referenced_in_files(mongo, data_path: Path) -> Set[str]:
     return hmm_ids
 
 
-async def get_hmms_referenced_in_db(db) -> set:
+async def get_hmms_referenced_in_db(mongo) -> set:
     """
     Returns a set of all HMM ids referenced in NuVs analysis documents
 
-    :param db: the application database object
+    :param mongo: the application database object
     :return: set of all HMM ids referenced in analysis documents
 
     """
-    cursor = db.analyses.aggregate(
+    cursor = mongo.analyses.aggregate(
         [
             {"$match": {"workflow": "nuvs"}},
             {"$project": {"results.orfs.hits.hit": True}},
@@ -105,7 +105,7 @@ async def fetch_and_update_release(
     mongo,
     slug: str,
     ignore_errors: bool = False,
-) -> Dict[str, Any]:
+) -> Document:
     """
     Return the HMM install status document or create one if none exists.
 
@@ -148,7 +148,7 @@ async def fetch_and_update_release(
             upsert=True,
         )
 
-        logger.debug("Fetched and updated HMM release")
+        logger.info("Fetched and updated HMM release")
 
         return release
 

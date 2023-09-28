@@ -1,330 +1,331 @@
+# serializer version: 1
 # name: TestAcquire.test_ok
-  <class 'dict'> {
+  dict({
     'acquired': True,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
       'network': 'fhKcDVBJbHFDutYbbXjg',
       'season': 6981,
       'task': 'RrnFxjyvDAqsRnDaMrco',
       'third': 'SUEXExIZVPeFzGRmMglP',
-    },
-    'created_at': <class 'str'>,
+    }),
+    'created_at': str,
     'id': 'fb085f7f',
-    'key': <class 'str'>,
+    'key': str,
     'ping': None,
     'progress': 3,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': None,
     'state': 'preparing',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': <class 'str'>,
-      },
-      <class 'dict'> {
+        'timestamp': str,
+      }),
+      dict({
         'error': None,
         'progress': 3,
         'stage': None,
         'state': 'preparing',
         'step_description': None,
         'step_name': None,
-        'timestamp': <class 'str'>,
-      },
-    ],
-    'user': <class 'dict'> {
+        'timestamp': str,
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'jobs_pathoscope_bowtie',
-  }
----
+  })
+# ---
 # name: TestArchive.test_ok
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': True,
-    'args': <class 'dict'> {
+    'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
       'network': 'fhKcDVBJbHFDutYbbXjg',
       'season': 6981,
       'task': 'RrnFxjyvDAqsRnDaMrco',
       'third': 'SUEXExIZVPeFzGRmMglP',
-    },
-    'created_at': <class 'str'>,
+    }),
+    'created_at': str,
     'id': '7cf872dc',
     'ping': None,
     'progress': 10,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': 'NzFJEUSgqMReEKilxKJT',
     'state': 'preparing',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': <class 'str'>,
-      },
-      <class 'dict'> {
+        'timestamp': str,
+      }),
+      dict({
         'error': None,
         'progress': 10,
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
         'step_description': 'bTDOKidKxUVFacqRcQYv',
         'step_name': 'NzFJEUSgqMReEKilxKJT',
-        'timestamp': <class 'str'>,
-      },
-    ],
-    'user': <class 'dict'> {
+        'timestamp': str,
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
-    },
+    }),
     'workflow': 'jobs_pathoscope_bowtie',
-  }
----
+  })
+# ---
 # name: TestFind.test_archived[False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'preparing': <class 'dict'> {
+  dict({
+    'counts': dict({
+      'preparing': dict({
         'jobs_pathoscope_bowtie': 1,
-      },
-      'waiting': <class 'dict'> {
+      }),
+      'waiting': dict({
         'jobs_build_index': 1,
         'jobs_pathoscope_bowtie': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
+      }),
+    }),
+    'documents': list([
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': 'f60bae36',
         'progress': 0,
         'stage': None,
         'state': 'waiting',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'workflow': 'jobs_pathoscope_bowtie',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': 'da42dca3',
         'progress': 0,
         'stage': None,
         'state': 'waiting',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'workflow': 'jobs_build_index',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '7cf872dc',
         'progress': 10,
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'workflow': 'jobs_pathoscope_bowtie',
-      },
-    ],
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 5,
-  }
----
+  })
+# ---
 # name: TestFind.test_archived[True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'preparing': <class 'dict'> {
+  dict({
+    'counts': dict({
+      'preparing': dict({
         'jobs_pathoscope_bowtie': 1,
-      },
-      'waiting': <class 'dict'> {
+      }),
+      'waiting': dict({
         'jobs_build_index': 1,
         'jobs_pathoscope_bowtie': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
+      }),
+    }),
+    'documents': list([
+      dict({
         'archived': True,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '09d01419',
         'progress': 100,
         'stage': 'GapNGCiKyJNmNoZgTcnB',
         'state': 'complete',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'workflow': 'jobs_build_index',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'archived': True,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '3cbb22cc',
         'progress': 30,
         'stage': 'NkznHZPGfxsRfFzDHwBJ',
         'state': 'error',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        },
+        }),
         'workflow': 'jobs_nuvs',
-      },
-    ],
+      }),
+    ]),
     'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 5,
-  }
----
+  })
+# ---
 # name: TestFind.test_basic
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
+  dict({
+    'counts': dict({
+      'cancelled': dict({
         'jobs_create_sample': 1,
-      },
-      'complete': <class 'dict'> {
+      }),
+      'complete': dict({
         'jobs_create_sample': 1,
-      },
-      'error': <class 'dict'> {
+      }),
+      'error': dict({
         'jobs_aodp': 1,
         'jobs_create_sample': 1,
         'jobs_pathoscope_bowtie': 1,
-      },
-      'terminated': <class 'dict'> {
+      }),
+      'terminated': dict({
         'jobs_build_index': 1,
         'jobs_nuvs': 2,
-      },
-      'timeout': <class 'dict'> {
+      }),
+      'timeout': dict({
         'jobs_aodp': 1,
-      },
-      'waiting': <class 'dict'> {
+      }),
+      'waiting': dict({
         'jobs_aodp': 1,
         'jobs_nuvs': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
+      }),
+    }),
+    'documents': list([
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '9c61c0ca',
         'progress': 30,
         'stage': 'CvVtXeeYGAaIAXQZUmce',
         'state': 'terminated',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
-        },
+        }),
         'workflow': 'jobs_build_index',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '7cce8f87',
         'progress': 50,
         'stage': 'nOHABdcaOhguYUqQeuEZ',
         'state': 'error',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
-        },
+        }),
         'workflow': 'jobs_pathoscope_bowtie',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '83e4c4f6',
         'progress': 60,
         'stage': 'iLUYCkyqgDOaIrTOqeaP',
         'state': 'error',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
-        },
+        }),
         'workflow': 'jobs_aodp',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '606cd773',
         'progress': 100,
         'stage': 'DTrfalRqlzXAreDlttNm',
         'state': 'complete',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
-        },
+        }),
         'workflow': 'jobs_create_sample',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'archived': False,
-        'created_at': <class 'str'>,
+        'created_at': str,
         'id': '031ff6cb',
         'progress': 60,
         'stage': 'GNkXjEpGpwJnLsgFiwud',
         'state': 'cancelled',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
-        },
+        }),
         'workflow': 'jobs_create_sample',
-      },
-    ],
+      }),
+    ]),
     'found_count': 11,
     'page': 1,
     'page_count': 3,
     'per_page': 5,
     'total_count': 11,
-  }
----
+  })
+# ---
 # name: TestFind.test_state_invalid
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'query string',
-      'loc': <class 'list'> [
+      'loc': list([
         'state',
         0,
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'cancelled', 'complete', 'error', 'preparing', 'running', 'timeout', 'terminated', 'waiting'",
       'type': 'type_error.enum',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: TestPushStatus.test[None]
-  <class 'dict'> {
+  dict({
     'error': None,
     'progress': 23,
     'stage': 'build',
@@ -332,604 +333,604 @@
     'step_description': None,
     'step_name': None,
     'timestamp': '2015-10-06T20:00:00Z',
-  }
----
+  })
+# ---
 # name: TestPushStatus.test_bad_state
-  <class 'dict'> {
-    'errors': <class 'dict'> {
-      'state': <class 'list'> [
+  dict({
+    'errors': dict({
+      'state': list([
         'unallowed value bad',
-      ],
-    },
+      ]),
+    }),
     'id': 'invalid_input',
     'message': 'Invalid input',
-  }
----
+  })
+# ---
 # name: TestPushStatus.test_error[invalid-invalid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'type': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-invalid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'type': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-invalid-valid]
-  <class 'tuple'> (
+  tuple(
     201,
-    <class 'dict'> {
-      'error': <class 'dict'> {
-        'details': <class 'list'> [
+    dict({
+      'error': dict({
+        'details': list([
           'Valid',
-        ],
-        'traceback': <class 'list'> [
+        ]),
+        'traceback': list([
           'Valid',
-        ],
+        ]),
         'type': 'KeyError',
-      },
+      }),
       'progress': 14,
       'stage': 'fastqc',
       'state': 'error',
       'step_description': None,
       'step_name': None,
       'timestamp': '2015-10-06T20:00:00Z',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-missing-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-missing-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-missing-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-valid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-valid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-valid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-invalid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-invalid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-invalid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-missing-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-missing-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-missing-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-valid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-valid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-valid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-invalid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-invalid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-invalid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-missing-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-missing-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-missing-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-valid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-valid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-valid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_missing_error
-  <class 'tuple'> (
+  tuple(
     400,
-    <class 'dict'> {
+    dict({
       'id': 'bad_request',
       'message': 'Missing error information',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_name_and_description
-  <class 'dict'> {
+  dict({
     'error': None,
     'progress': 14,
     'stage': 'fastqc',
@@ -937,104 +938,104 @@
     'step_description': 'Run FastQC on the raw data',
     'step_name': 'FastQC',
     'timestamp': '2015-10-06T20:00:00Z',
-  }
----
+  })
+# ---
 # name: test_bulk_archive[None]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'archived': True,
       'created_at': '2019-03-07T23:20:30Z',
       'id': '7467tozj',
       'progress': 95,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'build_index',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2017-09-21T03:00:07Z',
       'id': '8cy4mjvp',
       'progress': 97,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'build_index',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2024-08-23T20:27:15Z',
       'id': '8vvqvnuk',
       'progress': 90,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'nuvs',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2021-08-30T04:32:27Z',
       'id': 'awvuon9b',
       'progress': 66,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'pathoscope',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2023-02-28T08:11:58Z',
       'id': 'sk1wj693',
       'progress': 82,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'create_sample',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_cancel[None]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'analysis_id': 'e410429b',
       'index_id': '465428b0',
       'name': None,
       'sample_id': '1e01a382',
       'username': 'igboyes',
       'workflow': 'nuvs',
-    },
+    }),
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
     'ping': None,
     'progress': 0,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': 'mk_analysis_dir',
     'state': 'running',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -1042,8 +1043,8 @@
         'step_description': None,
         'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -1051,8 +1052,8 @@
         'step_description': None,
         'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'error': None,
         'progress': 0,
         'stage': 'mk_analysis_dir',
@@ -1060,61 +1061,61 @@
         'step_description': None,
         'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'laura56',
-      'id': '7cf872dc',
-    },
+      'id': 'fb085f7f',
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_get[None]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
       'network': 'fhKcDVBJbHFDutYbbXjg',
       'season': 6981,
       'task': 'RrnFxjyvDAqsRnDaMrco',
       'third': 'SUEXExIZVPeFzGRmMglP',
-    },
-    'created_at': <class 'str'>,
+    }),
+    'created_at': str,
     'id': '7cf872dc',
     'ping': None,
     'progress': 10,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': 'NzFJEUSgqMReEKilxKJT',
     'state': 'preparing',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': <class 'str'>,
-      },
-      <class 'dict'> {
+        'timestamp': str,
+      }),
+      dict({
         'error': None,
         'progress': 10,
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
         'step_description': 'bTDOKidKxUVFacqRcQYv',
         'step_name': 'NzFJEUSgqMReEKilxKJT',
-        'timestamp': <class 'str'>,
-      },
-    ],
-    'user': <class 'dict'> {
+        'timestamp': str,
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
-    },
+    }),
     'workflow': 'jobs_pathoscope_bowtie',
-  }
----
+  })
+# ---

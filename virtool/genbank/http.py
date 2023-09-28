@@ -3,14 +3,12 @@ HTTP utilities for collecting data from GenBank on the API server.
 
 """
 import io
-import logging
-from typing import Optional, Union
 
-import aiohttp
 import Bio.SeqIO
+import aiohttp
+from structlog import get_logger
 
-
-logger = logging.getLogger(__name__)
+logger = get_logger("genbank")
 
 EMAIL = "dev@virtool.ca"
 TOOL = "virtool"
@@ -18,9 +16,7 @@ TOOL = "virtool"
 FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 
-async def fetch(
-    session: aiohttp.ClientSession, accession: Union[int, str]
-) -> Optional[dict]:
+async def fetch(session: aiohttp.ClientSession, accession: int | str) -> dict | None:
     """
     Fetch the Genbank record for the passed `accession`. Returns `None` if the Genbank record can not be found.
 
@@ -43,7 +39,7 @@ async def fetch(
 
         if resp.status != 200:
             if "Failed to retrieve sequence" not in body:
-                logger.warning("Unexpected Genbank error: %s", body)
+                logger.warning("Unexpected Genbank error", body=body)
 
             return None
 

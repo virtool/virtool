@@ -1,16 +1,16 @@
 from asyncio import to_thread
-from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
 import aiofiles
 from aiohttp import MultipartReader
 from cerberus import Validator
+from structlog import get_logger
 
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceNotFoundError
 
-logger = getLogger("uploads")
+logger = get_logger("uploads")
 
 CHUNK_SIZE = 1024 * 1000 * 50
 
@@ -74,7 +74,9 @@ async def naive_writer(
     async with aiofiles.open(path, "wb") as f:
         async for chunk in chunker:
             if type(chunk) is str:
-                logger.info("Got string chunk: %s", chunk)
+                logger.warning(
+                    "Got string chunk while writing file", path=path, chunk=chunk
+                )
                 break
 
             if size == 0 and on_first_chunk:
@@ -83,6 +85,8 @@ async def naive_writer(
             await f.write(chunk)
 
             size += len(chunk)
+
+    logger.info("Wrote file", path=path, size=size)
 
     return size
 

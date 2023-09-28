@@ -9,8 +9,6 @@ from virtool_core.models.session import Session
 import virtool.utils
 from virtool.account.db import (
     compose_password_update,
-    API_KEY_PROJECTION,
-    fetch_complete_api_key,
 )
 from virtool.account.oas import (
     UpdateSettingsRequest,
@@ -34,9 +32,9 @@ from virtool.utils import base_processor
 
 PROJECTION = (
     "_id",
-    "handle",
     "administrator",
     "email",
+    "handle",
     "groups",
     "last_password_change",
     "permissions",
@@ -158,11 +156,48 @@ class AccountData(DataLayerDomain):
                 async for key in self._mongo.keys.find({"user.id": user_id})
             ],
             [
-                AttachGroupsTransform(self._mongo),
+                AttachGroupsTransform(self._pg),
             ],
         )
 
         return [APIKey(**key) for key in keys]
+
+    async def get_key(self, user_id: str, key_id: str) -> APIKey:
+        """
+        Get the complete representation of the API key identified by the `key_id`.
+
+        The internal key ID and secret key value itself are not returned in the
+        response.
+
+        :param user_id: the user ID
+        :param key_id: the ID of the API key to get
+        :return: the API key
+        """
+
+        document = await self._mongo.keys.find_one(
+            {"id": key_id, "user.id": user_id},
+            {
+                "_id": False,
+                "user": False,
+            },
+        )
+
+        if not document:
+            raise ResourceNotFoundError
+
+        document = await apply_transforms(
+            base_processor(document),
+            [
+                AttachGroupsTransform(self._pg),
+            ],
+        )
+
+        return APIKey(
+            **{
+                **document,
+                "groups": sorted(document["groups"], key=lambda g: g["name"]),
+            }
+        )
 
     async def create_key(
         self, data: CreateKeysRequest, user_id: str
@@ -172,7 +207,6 @@ class AccountData(DataLayerDomain):
 
         :param data: the fields to create a new API key
         :param user_id: the user ID
-        :param permissions: the permissions of the requesting user
         :return: the API key
         """
         permissions_dict = data.permissions.dict(exclude_unset=True)
@@ -191,20 +225,22 @@ class AccountData(DataLayerDomain):
 
         raw, hashed = virtool.utils.generate_key()
 
-        document = {
-            "_id": hashed,
-            "id": await virtool.account.db.get_alternate_id(self._mongo, data.name),
-            "administrator": user.administrator,
-            "name": data.name,
-            "groups": [group.id for group in user.groups],
-            "permissions": key_permissions,
-            "created_at": virtool.utils.timestamp(),
-            "user": {"id": user_id},
-        }
+        id_ = await virtool.account.db.get_alternate_id(self._mongo, data.name)
 
-        await self._mongo.keys.insert_one(document)
+        await self._mongo.keys.insert_one(
+            {
+                "_id": hashed,
+                "id": id_,
+                "administrator": user.administrator,
+                "name": data.name,
+                "groups": [group.id for group in user.groups],
+                "permissions": key_permissions,
+                "created_at": virtool.utils.timestamp(),
+                "user": {"id": user_id},
+            }
+        )
 
-        return raw, await fetch_complete_api_key(self._mongo, document["id"])
+        return raw, await self.get_key(user_id, id_)
 
     async def delete_keys(self, user_id: str):
         """
@@ -213,23 +249,6 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         """
         await self._mongo.keys.delete_many({"user.id": user_id})
-
-    async def get_key(self, user_id: str, key_id: str) -> APIKey:
-        """
-        Get the complete representation of the API key identified by the `key_id`.
-
-        :param user_id: the user ID
-        :param key_id: the ID of the API key to get
-        :return: the API key
-        """
-        document = await self._mongo.keys.find_one(
-            {"id": key_id, "user.id": user_id}, API_KEY_PROJECTION
-        )
-
-        if document is None:
-            raise ResourceNotFoundError()
-
-        return APIKey(**document)
 
     async def update_key(
         self, user_id: str, key_id: str, data: UpdateKeyRequest
@@ -264,13 +283,12 @@ class AccountData(DataLayerDomain):
                 key_permissions, user.permissions.dict()
             )
 
-        document = await self._mongo.keys.find_one_and_update(
+        await self._mongo.keys.update_one(
             {"id": key_id},
             {"$set": {"permissions": key_permissions}},
-            projection=API_KEY_PROJECTION,
         )
 
-        return APIKey(**document)
+        return await self.get_key(user_id, key_id)
 
     async def delete_key(self, user_id: str, key_id: str):
         """
@@ -310,7 +328,7 @@ class AccountData(DataLayerDomain):
 
     async def get_reset_session(
         self, ip: str, user_id: str, session_id: str, remember: bool
-    ) -> [Session, str]:
+    ) -> tuple[Session, str]:
         """
         Check if user password should be reset and return a reset code if it
         should be.

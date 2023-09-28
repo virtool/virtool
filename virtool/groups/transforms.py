@@ -1,8 +1,12 @@
+"""
+Transforms for attaching groups to resources.
+
+TODO: Drop legacy group id support when we fully migrate to integer ids.
+"""
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-from virtool_core.models.group import GroupMinimal
 
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import AbstractTransform
@@ -12,7 +16,8 @@ from virtool.types import Document
 
 class AttachPrimaryGroupTransform(AbstractTransform):
     """
-    Attach a minimal primary group to document(s) with a ``primary_group`` field.
+    Attach a minimal primary group to one or more documents with a ``primary_group``
+    field.
     """
 
     def __init__(self, pg: AsyncEngine):
@@ -21,7 +26,7 @@ class AttachPrimaryGroupTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any):
         return {**document, "primary_group": prepared}
 
-    async def prepare_one(self, document: Document) -> GroupMinimal | None:
+    async def prepare_one(self, document: Document) -> Document | None:
         group_id = document.get("primary_group")
 
         if group_id is None:
@@ -40,7 +45,7 @@ class AttachPrimaryGroupTransform(AbstractTransform):
 
         return None
 
-    async def prepare_many(self, documents: list[Document]) -> dict[str, Any]:
+    async def prepare_many(self, documents: list[Document]) -> Document:
         group_ids: list[int | str] = list(
             {
                 document.get("primary_group")
@@ -71,30 +76,15 @@ class AttachPrimaryGroupTransform(AbstractTransform):
 
 
 class AttachGroupsTransform(AbstractTransform):
-    """
-    Attach minimal groups to document(s) containing a ``groups`` field
-    """
+    """Attach minimal groups to one or more documents containing a ``groups`` field"""
 
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any):
-        """
-        Attach groups to the document
-
-        :param document: the input document associated with the passed groups
-        :param prepared: the list of groups to be attached
-        :return: the input document with an attached list of groups
-        """
         return {**document, "groups": sorted(prepared, key=lambda d: d["name"])}
 
     async def prepare_one(self, document: Document) -> list[Document]:
-        """
-        Prepare a list of groups to be attached to a document
-
-        :param document: an input document with a `groups` field
-        :return: a list of groups
-        """
         if not document["groups"]:
             return []
 
@@ -109,13 +99,6 @@ class AttachGroupsTransform(AbstractTransform):
             ]
 
     async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
-        """
-        Bulk prepare groups for attachment to passed documents
-
-        :param documents: A list of input documents with `groups` fields
-        :return: a dictionary of `document["id"]:list[group]` pairs based on each
-        document's `groups` field
-        """
         group_ids = {group for document in documents for group in document["groups"]}
 
         if not group_ids:
@@ -126,12 +109,16 @@ class AttachGroupsTransform(AbstractTransform):
                 compose_legacy_id_expression(SQLGroup, group_ids)
             )
 
-            groups = {
-                group.id: group.to_dict()
-                for group in (await session.execute(query)).scalars()
+            groups = [
+                g.to_dict() for g in (await session.execute(query)).scalars().all()
+            ]
+
+            groups_map = {
+                **{group["id"]: group for group in groups},
+                **{group["legacy_id"]: group for group in groups},
             }
 
         return {
-            document["id"]: [groups[group_id] for group_id in document["groups"]]
+            document["id"]: [groups_map[group_id] for group_id in document["groups"]]
             for document in documents
         }

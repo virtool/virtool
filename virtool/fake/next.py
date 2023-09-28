@@ -5,8 +5,7 @@ Easily create fake data.
 import asyncio
 import gzip
 from pathlib import Path
-from typing import Dict, Type, AsyncGenerator
-from typing import List
+from typing import Type, AsyncGenerator
 
 import aiofiles
 from faker import Faker
@@ -22,7 +21,7 @@ from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
-from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
+from virtool.groups.oas import UpdateGroupRequest, PermissionsUpdate
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.models import MLModel
@@ -221,7 +220,7 @@ class JobsFakerPiece(DataFakerPiece):
 class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
-    async def create(self, permissions: UpdatePermissionsRequest | None = None):
+    async def create(self, permissions: PermissionsUpdate | None = None):
         name = "contains spaces"
 
         while " " in name:
@@ -332,7 +331,7 @@ class TasksFakerPiece(DataFakerPiece):
             {},
         )
 
-    async def create_with_class(self, cls: Type[BaseTask], context: Dict):
+    async def create_with_class(self, cls: Type[BaseTask], context: dict):
         return await self.layer.tasks.create(cls, context)
 
 
@@ -367,7 +366,7 @@ class UsersFakerPiece(DataFakerPiece):
     async def create(
         self,
         handle: str | None = None,
-        groups: List[Group] | None = None,
+        groups: list[Group] | None = None,
         password: str | None = None,
         primary_group: Group | None = None,
         administrator_role: AdministratorRole | None = None,

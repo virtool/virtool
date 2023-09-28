@@ -1,99 +1,92 @@
-from typing import Any, TYPE_CHECKING, Optional
+"""
+Transforms for attaching user data to documents or additional data to user documents.
+
+TODO: Drop legacy group id support when we fully migrate to integer ids.
+"""
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.groups.pg import SQLGroup, merge_group_permissions
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION
+from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 class AttachPermissionsTransform(AbstractTransform):
-    """
-    Attaches permissions to a user document.
-    """
+    """Attaches permissions to a user document based on the groups they belong to."""
 
-    def __init__(self, mongo: "Mongo", pg: AsyncEngine):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
-    async def attach_one(self, document, prepared) -> Document:
-        """
-        Attach permissions to a user document.
-
-        :param document: the user document
-        :param prepared: list of groups associated with the user
-        :return: the user document with permissions attached
-        """
+    async def attach_one(
+        self, document: Document, prepared: dict[str, bool]
+    ) -> Document:
         return {
             **document,
-            "permissions": merge_group_permissions(prepared),
+            "permissions": prepared,
         }
 
-    async def prepare_one(self, document) -> list[Document]:
-        """
-        Prepares a list of groups associated with a user.
-
-        :param document: the user document
-        :return: a list of groups associated with the user
-        """
+    async def prepare_one(self, document: Document) -> dict[str, bool]:
         if not document["groups"]:
-            return []
+            return generate_base_permissions()
 
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLGroup).filter(SQLGroup.id.in_(document["groups"]))
+                select(SQLGroup).filter(
+                    compose_legacy_id_expression(SQLGroup, document["groups"])
+                )
             )
 
-            return [group.to_dict() for group in result.scalars()]
+            return merge_group_permissions(
+                [group.to_dict() for group in result.scalars().all()]
+            )
 
     async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
-        """
-        Prepares a dictionary mapping users to a list of member groups.
-
-        :param documents: a list of user documents
-        :return: a dictionary of groups associated with a list of users
-        """
-        all_group_ids = set()
-        prepared = {}
-
-        for user in documents:
-            all_group_ids |= set(user["groups"])
-            prepared[user["id"]] = user["groups"]
+        all_group_ids: set[int | str] = {
+            group_id for document in documents for group_id in document["groups"]
+        }
 
         if all_group_ids:
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
-                    select(SQLGroup).filter(SQLGroup.id.in_(all_group_ids))
+                    select(SQLGroup).filter(
+                        compose_legacy_id_expression(SQLGroup, all_group_ids)
+                    )
                 )
 
+                groups = [group.to_dict() for group in result.scalars().all()]
+
                 all_groups_map = {
-                    group.id: group.to_dict() for group in result.scalars()
+                    **{group["id"]: group for group in groups},
+                    **{group["legacy_id"]: group for group in groups},
                 }
 
             return {
-                user_id: [all_groups_map[group_id] for group_id in group_ids]
-                for user_id, group_ids in prepared.items()
+                document["id"]: merge_group_permissions(
+                    [all_groups_map[group_id] for group_id in document["groups"]]
+                )
+                for document in documents
             }
-        else:
-            return {document["id"]: [] for document in documents}
+
+        return {document["id"]: generate_base_permissions() for document in documents}
 
 
 class AttachUserTransform(AbstractTransform):
     """
     Attaches more complete user data to a document with a `user.id` field.
+
     """
 
-    def __init__(self, db, ignore_errors: bool = False):
-        self._db = db
+    def __init__(self, mongo, ignore_errors: bool = False):
+        self._db = mongo
         self._ignore_errors = ignore_errors
 
-    def _extract_user_id(self, document: Document) -> Optional[str]:
+    def _extract_user_id(self, document: Document) -> str | None:
         try:
             user = document["user"]
 
@@ -144,16 +137,15 @@ class AttachUserTransform(AbstractTransform):
             for document in documents
         ]
 
-    async def prepare_one(self, document: Document):
+    async def prepare_one(self, document: Document) -> Document:
         user_id = self._extract_user_id(document)
-        user_data = base_processor(
+
+        if user_data := base_processor(
             await self._db.users.find_one(user_id, ATTACH_PROJECTION)
-        )
+        ):
+            return user_data
 
-        if not user_data:
-            raise KeyError(f"Document contains non-existent user: {user_id}.")
-
-        return user_data
+        raise KeyError(f"Document contains non-existent user: {user_id}.")
 
     async def prepare_many(self, documents: list[Document]) -> dict[str | str, Any]:
         user_ids = list({self._extract_user_id(document) for document in documents})

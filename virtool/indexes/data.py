@@ -1,13 +1,13 @@
 import asyncio
 from asyncio import to_thread
-from logging import getLogger
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool_core.models.reference import ReferenceNested
@@ -42,11 +42,11 @@ from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer, multipart_file_chunker
+from virtool.users.mongo import lookup_nested_user_by_id
 from virtool.users.transforms import AttachUserTransform
-from virtool.users.db import lookup_nested_user_by_id
 from virtool.utils import compress_json_with_gzip, wait_for_checks
 
-logger = getLogger("indexes")
+logger = get_logger("indexes")
 
 
 class IndexData:
@@ -320,7 +320,9 @@ class IndexData:
                     index_path, index["reference"]["id"], index["manifest"]
                 )
             except IndexError:
-                logger.exception("Could not create JSON file for index id=%s", index_id)
+                logger.exception(
+                    "Could not create JSON file for index", index_id=index_id
+                )
                 continue
 
             async with AsyncSession(self._pg) as session:

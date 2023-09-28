@@ -1,8 +1,8 @@
-from logging import getLogger
 from typing import NamedTuple
 
 import arrow
 from alembic.util import load_python_file
+from structlog import get_logger
 
 from virtool.migration.cls import GenericRevision, RevisionSource
 from virtool.migration.utils import (
@@ -12,7 +12,9 @@ from virtool.migration.utils import (
     get_revision_name,
 )
 
-logger = getLogger("migration")
+
+
+logger = get_logger("migration")
 
 
 class DowngradeSpecifier(NamedTuple):
@@ -185,15 +187,13 @@ def show_revisions():
 
     all_revisions = load_all_revisions()
 
-    logger.info("Found %s revisions", len(all_revisions))
+    logger.info("Found revisions", count=len(all_revisions))
 
     for revision in all_revisions:
         logger.info(
-            "Found revision id='%s' date='%s' source='%s' name='%s'"
-            % (
-                revision.id,
-                arrow.get(revision.created_at).format("YYYY-MM-DD HH:mm:ss"),
-                revision.source.value,
-                revision.name,
-            )
+            "Found revision",
+            id=revision.id,
+            name=revision.name,
+            date=arrow.get(revision.created_at).format("YYYY-MM-DD HH:mm:ss"),
+            source=revision.source.value,
         )
