@@ -14,8 +14,7 @@ def validate_time(timestamp: datetime.datetime | Any):
 
     if datetime.datetime.utcnow() - timestamp < datetime.timedelta(seconds=30):
         return "approximately_now"
-    else:
-        return "not_approximately_now"
+    return "not_approximately_now"
 
 
 @pytest.fixture
