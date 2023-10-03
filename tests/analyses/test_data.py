@@ -20,7 +20,7 @@ async def test_create(
     data_layer: DataLayer,
     fake2: DataFaker,
     mongo: Mongo,
-    snapshot_custom,
+    snapshot,
 ):
     """
     Tests that an analysis is created with the expected fields.
@@ -69,10 +69,10 @@ async def test_create(
         analysis_id="test_analysis",
     )
 
-    assert analysis == snapshot_custom(name="obj")
+    assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
-    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot_custom(
-        name="mongo"
+    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
+        name="mongo", exclude=props("created_at", "updated_at")
     )
 
 

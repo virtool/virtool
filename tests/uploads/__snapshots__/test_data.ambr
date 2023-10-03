@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: test_create[obj]
   dict({
-    'created_at': 'approximately_now',
+    'created_at': datetime,
     'id': 1,
     'name': 'sample_1.fq.gz',
     'name_on_disk': '1-sample_1.fq.gz',
@@ -11,7 +11,7 @@
     'reserved': False,
     'size': 16700094,
     'type': 'reads',
-    'uploaded_at': 'approximately_now',
+    'uploaded_at': datetime,
     'user': dict({
       'administrator': False,
       'handle': 'leeashley',
@@ -21,7 +21,7 @@
 # ---
 # name: test_create[sql]
   dict({
-    'created_at': 'approximately_now',
+    'created_at': datetime,
     'id': 1,
     'name': 'sample_1.fq.gz',
     'name_on_disk': '1-sample_1.fq.gz',
@@ -31,7 +31,7 @@
     'reserved': False,
     'size': 16700094,
     'type': 'reads',
-    'uploaded_at': 'approximately_now',
+    'uploaded_at': datetime,
     'user': 'bf1b993c',
   })
 # ---
