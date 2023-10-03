@@ -19,7 +19,7 @@ def validate_time(timestamp: datetime.datetime | Any):
 
 
 @pytest.fixture
-def snapshot(snapshot):
+def snapshot_recent(snapshot):
     return snapshot.with_defaults(
         matcher=path_type(
             mapping={
