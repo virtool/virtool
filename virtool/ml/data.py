@@ -67,7 +67,18 @@ class MLData(DataLayerDomain):
                     id=one.id,
                     created_at=one.created_at,
                     description=one.description,
-                    latest_release=None,
+                    latest_release=MLModelRelease(
+                        id=one.releases[0].id,
+                        created_at=one.releases[0].created_at,
+                        download_url=one.releases[0].download_url,
+                        github_url=one.releases[0].github_url,
+                        name=one.releases[0].name,
+                        published_at=one.releases[0].published_at,
+                        ready=one.releases[0].ready,
+                        size=one.releases[0].size,
+                    )
+                    if one.releases
+                    else None,
                     name=one.name,
                     release_count=len(one.releases),
                 )
@@ -114,26 +125,27 @@ class MLData(DataLayerDomain):
             if model is None:
                 raise ValueError(f"ML model with ID {model_id} not found")
 
+            releases = [
+                MLModelRelease(
+                    id=r.id,
+                    created_at=r.created_at,
+                    download_url=r.download_url,
+                    github_url=r.github_url,
+                    name=r.name,
+                    published_at=r.published_at,
+                    ready=r.ready,
+                    size=r.size,
+                )
+                for r in model.releases
+            ]
             return MLModel(
                 id=model.id,
                 created_at=model.created_at,
                 description=model.description,
-                latest_release=None,
+                latest_release=releases[0] if releases else None,
                 name=model.name,
                 release_count=len(model.releases),
-                releases=[
-                    MLModelRelease(
-                        id=r.id,
-                        created_at=r.created_at,
-                        download_url=r.download_url,
-                        github_url=r.github_url,
-                        name=r.name,
-                        published_at=r.published_at,
-                        ready=r.ready,
-                        size=r.size,
-                    )
-                    for r in model.releases
-                ],
+                releases=releases,
             )
 
     async def download_release(self, release_id: int) -> FileDescriptor:
