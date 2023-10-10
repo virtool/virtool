@@ -302,7 +302,7 @@ class TestPing:
         assert resp.status == 404
         assert await resp.json() == {
             "id": "not_found",
-            "message": "404: Not Found",
+            "message": "Not found",
         }
 
 
