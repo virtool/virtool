@@ -2,7 +2,7 @@
 HTTP error exceptions and middleware for reformatting and reporting
 errors to the client.
 """
-
+import logging
 from typing import Any, Callable, Dict, Optional
 
 from aiohttp import web
@@ -88,13 +88,20 @@ async def error_middleware(req: web.Request, handler: Callable):
     :param req: the incoming request
     :param handler: the next middleware to be executed
     """
+    logger = logging.getLogger()
     try:
+        logger.error("BEFORE HANDLE")
         return await handler(req)
 
     except web.HTTPException as exc:
+        logger.error("CAUGHT ERROR")
         data = {"id": "_".join(exc.reason.lower().split(" ")), "message": exc.text}
+
+        if exc.reason == "Not Found":
+            data["message"] = "Not found"
 
         if isinstance(exc, (InvalidQuery, InvalidInput)):
             data["errors"] = exc.errors
 
+        logger.error(data)
         return json_response(data, exc.status)
