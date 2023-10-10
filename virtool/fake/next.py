@@ -26,6 +26,7 @@ from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.models import MLModel
+from virtool.mongo.core import Mongo
 from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
 from virtool.releases import ReleaseManifestItem
 from virtool.subtractions.tasks import AddSubtractionFilesTask
@@ -221,7 +222,16 @@ class JobsFakerPiece(DataFakerPiece):
 class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
-    async def create(self, permissions: UpdatePermissionsRequest | None = None):
+    async def create(
+        self, permissions: UpdatePermissionsRequest | None = None
+    ) -> Group:
+        """
+        Create a new fake group.
+
+        :param permissions: the groups permissions
+
+        :return: a new fake group
+        """
         name = "contains spaces"
 
         while " " in name:
@@ -240,7 +250,14 @@ class GroupsFakerPiece(DataFakerPiece):
 class HMMFakerPiece(DataFakerPiece):
     model = HMM
 
-    async def create(self, mongo):
+    async def create(self, mongo: Mongo) -> HMM:
+        """
+        Create a new fake hmm.
+
+        :param mongo: the mongo DB connection
+
+        :return: a new fake hmm
+        """
         hmm_id = "".join(self.faker.mongo_id())
         faker = self.faker
 
@@ -272,7 +289,12 @@ class HMMFakerPiece(DataFakerPiece):
 class LabelsFakerPiece(DataFakerPiece):
     model = Label
 
-    async def create(self):
+    async def create(self) -> Label:
+        """
+        Create a new fake label.
+
+        :return: a new fake label
+        """
         return await self.layer.labels.create(
             self.faker.word().capitalize(),
             self.faker.hex_color(),
@@ -319,7 +341,12 @@ class MLFakerPiece(DataFakerPiece):
 class TasksFakerPiece(DataFakerPiece):
     model = Task
 
-    async def create(self):
+    async def create(self) -> Task:
+        """
+        Create a new fake random task.
+
+        :return: a new fake task
+        """
         return await self.layer.tasks.create(
             self.faker.random_element(
                 [
@@ -332,7 +359,15 @@ class TasksFakerPiece(DataFakerPiece):
             {},
         )
 
-    async def create_with_class(self, cls: Type[BaseTask], context: Dict):
+    async def create_with_class(self, cls: Type[BaseTask], context: Dict) -> Task:
+        """
+        Create a fake task.
+
+        :param cls: the type of task
+        :param context: the context required for the task
+
+        :return: a new fake task
+        """
         return await self.layer.tasks.create(cls, context)
 
 
@@ -346,6 +381,18 @@ class UploadsFakerPiece(DataFakerPiece):
         name: str = "test.fq.gz",
         reserved: bool = False,
     ) -> Upload:
+        """
+        Create a fake upload.
+
+        A completely valid user will be created.
+
+        :param user: the user creating the upload
+        :param upload_type: the type of upload
+        :param name: the name of the upload
+        :param reserved: the reservation status of the upload
+
+        :return: a new fake upload
+        """
         if upload_type not in UploadType.to_list():
             upload_type = "reads"
 
@@ -371,7 +418,20 @@ class UsersFakerPiece(DataFakerPiece):
         password: str | None = None,
         primary_group: Group | None = None,
         administrator_role: AdministratorRole | None = None,
-    ):
+    ) -> User:
+        """
+        Create a fake user.
+
+        A completely valid user will be created.
+
+        :param handle: the users handle
+        :param groups: the groups the user belongs to
+        :param password: the users password
+        :param primary_group: the users primary group
+        :param administrator_role: the users administrator role
+
+        :return: a new fake user
+        """
         user = await self.layer.users.create(
             handle or self.faker.profile()["username"],
             password or self.faker.password(),
