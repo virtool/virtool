@@ -2,6 +2,7 @@ import datetime
 
 import arrow
 import pytest
+from aiohttp.web_exceptions import HTTPNotFound
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
@@ -302,7 +303,7 @@ class TestPing:
         assert resp.status == 404
         assert await resp.json() == {
             "id": "not_found",
-            "message": "Not found",
+            "message": HTTPNotFound.reason,
         }
 
 
