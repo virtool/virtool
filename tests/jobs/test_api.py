@@ -294,17 +294,14 @@ class TestPing:
             seconds=1
         )
 
-    async def test_not_found(self, spawn_client: ClientSpawner):
+    async def test_not_found(self, snapshot, spawn_client: ClientSpawner):
         """Test that a 404 is returned when the job doesn't exist."""
         client = await spawn_client(authenticated=True)
 
         resp = await client.put("/jobs/foo/ping", {})
 
         assert resp.status == 404
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": HTTPNotFound.reason,
-        }
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
