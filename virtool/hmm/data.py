@@ -172,6 +172,7 @@ class HmmsData(DataLayerDomain):
             )
 
             try:
+                await to_thread(self.profiles_path.mkdir, parents=True, exist_ok=True)
                 await to_thread(
                     shutil.move, str(hmm_temp_profile_path), str(self.profiles_path)
                 )
