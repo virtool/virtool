@@ -370,7 +370,7 @@ class UpdateRightsResponse(Sample):
                 "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
-                "group": {"id": 4, "name": "Administrator"},
+                "group": 4,
                 "group_read": True,
                 "group_write": True,
                 "hold": True,
