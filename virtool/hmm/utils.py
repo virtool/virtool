@@ -1,14 +1,11 @@
-from pathlib import Path
-from typing import Optional
-
 from semver import VersionInfo
 
 import virtool.github
 
 
 def format_hmm_release(
-    updated: Optional[dict], release: dict, installed: dict
-) -> Optional[dict]:
+    updated: dict | None, release: dict, installed: dict
+) -> dict | None:
     # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
     # has not changed and `None` is returned from `get_release()`.
     if updated is None:
