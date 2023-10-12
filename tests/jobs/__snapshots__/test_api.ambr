@@ -324,6 +324,12 @@
     }),
   ])
 # ---
+# name: TestPing.test_not_found
+  dict({
+    'id': 'not_found',
+    'message': 'Not found',
+  })
+# ---
 # name: TestPushStatus.test[None]
   dict({
     'error': None,
