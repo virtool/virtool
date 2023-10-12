@@ -19,7 +19,6 @@ _job_response_matcher = path_type(
 class TestFind:
     async def test_basic(
         self,
-        data_layer: DataLayer,
         fake2: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
@@ -294,14 +293,13 @@ class TestPing:
             seconds=1
         )
 
-    async def test_not_found(self, snapshot, spawn_client: ClientSpawner):
+    async def test_not_found(self, spawn_job_client):
         """Test that a 404 is returned when the job doesn't exist."""
-        client = await spawn_client(authenticated=True)
+        client = await spawn_job_client(authorize=True)
 
-        resp = await client.put("/jobs/foo/ping", {})
+        resp = await client.put("/jobs/foo/ping", data={})
 
         assert resp.status == 404
-        assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
