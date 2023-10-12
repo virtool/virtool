@@ -27,13 +27,3 @@ def format_hmm_release(
     )
 
     return formatted
-
-
-def hmm_data_exists(file_path: Path) -> bool:
-    """
-    Checks if HMM data exists in the local data path.
-
-    :param file_path: Path to where `profiles.hmm` should be
-    :return: True if both the `hmm` directory and `profiles.hmm` exist, else False
-    """
-    return file_path.parent.is_dir() and file_path.is_file()
