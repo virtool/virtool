@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import shutil
 from pathlib import Path
-from typing import Optional, Dict
 
 import arrow
 import pytest
@@ -128,7 +127,7 @@ async def test_clean_references_task(
 @pytest.fixture
 def assert_reference_created(mongo, snapshot):
     async def func(
-        query: Optional[Dict] = None,
+        query: dict | None = None,
     ):
         references, otus, sequences, history = await asyncio.gather(
             mongo.references.find_one("foo"),

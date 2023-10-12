@@ -2,14 +2,14 @@
 Utilities for working with MongoDB.
 
 """
-from typing import Any, Dict, Optional, Sequence, Set, Union
+from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection
 
-from virtool.types import Projection
+from virtool.types import Projection, Document
 
 
-def apply_projection(document: Dict, projection: Projection):
+def apply_projection(document: Document, projection: Projection):
     """
     Apply a Mongo-style projection to a document and return it.
 
@@ -52,9 +52,9 @@ async def delete_unready(collection):
 async def check_missing_ids(
     collection: AsyncIOMotorCollection,
     id_list: list,
-    query: dict = None,
-    session: Optional[AsyncIOMotorClientSession] = None,
-) -> Set[str]:
+    query: dict | None = None,
+    session: AsyncIOMotorClientSession | None = None,
+) -> set[str]:
     """
     Check if all IDs in the ``id_list`` exist in the database.
 
@@ -69,13 +69,14 @@ async def check_missing_ids(
 
 
 async def get_new_id(
-    collection, session: Optional[AsyncIOMotorClientSession] = None
+    collection, session: AsyncIOMotorClientSession | None = None
 ) -> str:
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not
     return any id that is included in ``excluded``.
 
     :param collection: the Mongo collection to get a new _id for
+    :param session: a motor session to use
     :return: an ID unique within the collection
 
     """
@@ -90,8 +91,8 @@ async def get_new_id(
 async def get_one_field(
     collection,
     field: str,
-    query: Union[str, Dict],
-    session: Optional[AsyncIOMotorClientSession] = None,
+    query: str | dict,
+    session: AsyncIOMotorClientSession | None = None,
 ) -> Any:
     """
     Get the value for a single `field` from a single document matching the `query`.
@@ -109,7 +110,7 @@ async def get_one_field(
     return None
 
 
-async def get_non_existent_ids(collection, id_list: Sequence[str]) -> Set[str]:
+async def get_non_existent_ids(collection, id_list: list[str]) -> set[str]:
     """
     Return the IDs that are in `id_list`, but don't exist in the specified `collection`.
 
@@ -123,7 +124,7 @@ async def get_non_existent_ids(collection, id_list: Sequence[str]) -> Set[str]:
 
 
 async def id_exists(
-    collection, id_: str, session: Optional[AsyncIOMotorClientSession] = None
+    collection, id_: str, session: AsyncIOMotorClientSession | None = None
 ) -> bool:
     """
     Check if the document id exists in the collection.

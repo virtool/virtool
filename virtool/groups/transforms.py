@@ -1,58 +1,52 @@
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+"""
+Transforms for attaching groups to resources.
 
-import pymongo
-from virtool_core.models.group import GroupMinimal
+TODO: Drop legacy group id support when we fully migrate to integer ids.
+"""
+from typing import Any
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+
+from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import AbstractTransform
+from virtool.groups.pg import SQLGroup
 from virtool.types import Document
-from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 class AttachPrimaryGroupTransform(AbstractTransform):
     """
-    Attach primary groups to document(s) with a `primary_group` field
+    Attach a minimal primary group to one or more documents with a ``primary_group``
+    field.
     """
 
-    def __init__(self, mongo: "Mongo"):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
 
-    async def prepare_one(self, document: Document) -> Optional[GroupMinimal]:
-        """
-        Prepare the primary group of a document for attachment
+    async def attach_one(self, document: Document, prepared: Any):
+        return {**document, "primary_group": prepared}
 
-        :param document: an input document with a `primary_group` field
-        :return: the group associated with the document
-        """
+    async def prepare_one(self, document: Document) -> Document | None:
         group_id = document.get("primary_group")
 
-        if group_id:
-            return base_processor(await self._mongo.groups.find_one(group_id))
+        if group_id is None:
+            return None
+
+        async with AsyncSession(self._pg) as session:
+            if isinstance(group_id, int):
+                query = select(SQLGroup).filter(SQLGroup.id == group_id)
+            else:
+                query = select(SQLGroup).filter(SQLGroup.legacy_id == group_id)
+
+            group = (await session.execute(query)).scalars().one_or_none()
+
+            if group:
+                return group.to_dict()
 
         return None
 
-    async def attach_one(self, document: Document, prepared: Any):
-        """
-        Attach a group to the input document
-
-        :param document: the input document associated with the passed group
-        :param prepared: the group to be attached
-        :return: the input document with an attached primary_group
-        """
-        return {**document, "primary_group": prepared}
-
-    async def prepare_many(
-        self, documents: List[Document]
-    ) -> Dict[Union[int, str], Any]:
-        """
-        Prepare primary groups to be attached to passed documents
-
-        :param documents: input documents with a `primary_group` field
-        :return: a dictionary of groups keyed by each input document's id
-        """
-        group_ids: List[str] = list(
+    async def prepare_many(self, documents: list[Document]) -> Document:
+        group_ids: list[int | str] = list(
             {
                 document.get("primary_group")
                 for document in documents
@@ -60,70 +54,71 @@ class AttachPrimaryGroupTransform(AbstractTransform):
             }
         )
 
-        groups = {
-            group["_id"]: base_processor(group)
-            async for group in self._mongo.groups.find({"_id": {"$in": group_ids}})
-        }
+        if not group_ids:
+            return {document["id"]: None for document in documents}
+
+        async with AsyncSession(self._pg) as session:
+            expr = compose_legacy_id_expression(SQLGroup, group_ids)
+
+            groups = (
+                (await session.execute(select(SQLGroup).filter(expr))).scalars().all()
+            )
+
+            group_id_map = {
+                **{group.id: group.to_dict() for group in groups},
+                **{group.legacy_id: group.to_dict() for group in groups},
+            }
 
         return {
-            document["id"]: groups.get(document.get("primary_group"))
+            document["id"]: group_id_map.get(document.get("primary_group"))
             for document in documents
         }
 
 
 class AttachGroupsTransform(AbstractTransform):
-    """
-    Attach Groups to document(s) containing a `groups` field
-    """
+    """Attach minimal groups to one or more documents containing a ``groups`` field"""
 
-    def __init__(self, mongo: "Mongo"):
-        self._mongo = mongo
-
-    async def prepare_one(self, document: Document) -> List[Dict]:
-        """
-        Prepare a list of groups to be attached to a document
-
-        :param document: an input document with a `groups` field
-        :return: a list of groups
-        """
-        return [
-            base_processor(group_doc)
-            async for group_doc in self._mongo.groups.find(
-                {"_id": {"$in": document.get("groups", [])}},
-                sort=[("name", pymongo.ASCENDING)],
-            )
-        ]
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any):
-        """
-        Attach groups to the document
-
-        :param document: the input document associated with the passed groups
-        :param prepared: the list of groups to be attached
-        :return: the input document with an attached list of groups
-        """
         return {**document, "groups": sorted(prepared, key=lambda d: d["name"])}
 
-    async def prepare_many(
-        self, documents: List[Document]
-    ) -> Dict[Union[int, str], Any]:
-        """
-        Bulk prepare groups for attachment to passed documents
+    async def prepare_one(self, document: Document) -> list[Document]:
+        if not document["groups"]:
+            return []
 
-        :param documents: A list of input documents with `groups` fields
-        :return: a dictionary of `document["id"]:list[group]` pairs based on each
-        document's `groups` field
-        """
-        group_ids = list(
-            {group for document in documents for group in document["groups"]}
-        )
+        async with AsyncSession(self._pg) as session:
+            query = select(SQLGroup).filter(
+                compose_legacy_id_expression(SQLGroup, document["groups"])
+            )
 
-        groups = {
-            group["_id"]: base_processor(group)
-            async for group in self._mongo.groups.find({"_id": {"$in": group_ids}})
-        }
+            return [
+                group.to_dict()
+                for group in (await session.execute(query)).scalars().all()
+            ]
+
+    async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
+        group_ids = {group for document in documents for group in document["groups"]}
+
+        if not group_ids:
+            return {document["id"]: [] for document in documents}
+
+        async with AsyncSession(self._pg) as session:
+            query = select(SQLGroup).filter(
+                compose_legacy_id_expression(SQLGroup, group_ids)
+            )
+
+            groups = [
+                g.to_dict() for g in (await session.execute(query)).scalars().all()
+            ]
+
+            groups_map = {
+                **{group["id"]: group for group in groups},
+                **{group["legacy_id"]: group for group in groups},
+            }
 
         return {
-            document["id"]: [groups[group_id] for group_id in document["groups"]]
+            document["id"]: [groups_map[group_id] for group_id in document["groups"]]
             for document in documents
         }

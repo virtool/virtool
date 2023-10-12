@@ -157,16 +157,18 @@
     'force_reset': False,
     'groups': list([
       dict({
-        'id': '7cf872dc',
+        'id': 2,
+        'legacy_id': None,
         'name': 'hydrogeologists',
       }),
       dict({
-        'id': 'fb085f7f',
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
       }),
     ]),
     'handle': 'qtaylor',
-    'id': '3cbb22cc',
+    'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -194,12 +196,13 @@
     'force_reset': False,
     'groups': list([
       dict({
-        'id': '7cf872dc',
+        'id': 2,
+        'legacy_id': None,
         'name': 'hydrogeologists',
       }),
     ]),
     'handle': 'qtaylor',
-    'id': '3cbb22cc',
+    'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -228,7 +231,7 @@
     'groups': list([
     ]),
     'handle': 'qtaylor',
-    'id': '3cbb22cc',
+    'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -291,12 +294,13 @@
     'force_reset': False,
     'groups': list([
       dict({
-        'id': 'fb085f7f',
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
       }),
     ]),
     'handle': 'laura56',
-    'id': '7cf872dc',
+    'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -309,7 +313,8 @@
       'upload_file': False,
     }),
     'primary_group': dict({
-      'id': 'fb085f7f',
+      'id': 1,
+      'legacy_id': None,
       'name': 'musicians',
     }),
   })

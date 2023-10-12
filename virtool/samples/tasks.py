@@ -1,8 +1,4 @@
-import logging
-
 from virtool.tasks.task import BaseTask
-
-logger = logging.getLogger(__name__)
 
 
 class CompressSamplesTask(BaseTask):

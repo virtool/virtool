@@ -1,12 +1,12 @@
 import asyncio
-import logging
 import subprocess
 from pathlib import Path
 from typing import Optional
 
 import aiofiles
+from structlog import get_logger
 
-logger = logging.getLogger("app")
+logger = get_logger("app")
 
 
 async def determine_server_version(install_path: Optional[Path] = Path.cwd()):

@@ -1,0 +1,251 @@
+# serializer version: 1
+# name: TestAttachGroups.test_multiple_documents
+  list([
+    dict({
+      'groups': list([
+        dict({
+          'id': 1,
+          'legacy_id': 'group_1',
+          'name': 'group_1',
+          'permissions': dict({
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          }),
+        }),
+        dict({
+          'id': 2,
+          'legacy_id': 'group_2',
+          'name': 'group_2',
+          'permissions': dict({
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          }),
+        }),
+      ]),
+      'id': 'bob',
+    }),
+    dict({
+      'groups': list([
+      ]),
+      'id': 'joe',
+    }),
+    dict({
+      'groups': list([
+        dict({
+          'id': 2,
+          'legacy_id': 'group_2',
+          'name': 'group_2',
+          'permissions': dict({
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          }),
+        }),
+        dict({
+          'id': 3,
+          'legacy_id': 'group_3',
+          'name': 'group_3',
+          'permissions': dict({
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          }),
+        }),
+      ]),
+      'id': 'jim',
+    }),
+    dict({
+      'groups': list([
+        dict({
+          'id': 1,
+          'legacy_id': 'group_1',
+          'name': 'group_1',
+          'permissions': dict({
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          }),
+        }),
+        dict({
+          'id': 2,
+          'legacy_id': 'group_2',
+          'name': 'group_2',
+          'permissions': dict({
+            'cancel_job': False,
+            'create_ref': False,
+            'create_sample': False,
+            'modify_hmm': False,
+            'modify_subtraction': False,
+            'remove_file': False,
+            'remove_job': False,
+            'upload_file': False,
+          }),
+        }),
+      ]),
+      'id': 'ned',
+    }),
+  ])
+# ---
+# name: TestAttachGroups.test_single_document[False]
+  dict({
+    'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': 'group_1',
+        'name': 'group_1',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+      }),
+      dict({
+        'id': 2,
+        'legacy_id': 'group_2',
+        'name': 'group_2',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+      }),
+    ]),
+    'id': 'bob',
+  })
+# ---
+# name: TestAttachGroups.test_single_document[True]
+  dict({
+    'groups': list([
+    ]),
+    'id': 'bob',
+  })
+# ---
+# name: TestAttachPrimaryGroup.test_multiple_documents
+  list([
+    dict({
+      'id': 'bob',
+      'primary_group': dict({
+        'id': 1,
+        'legacy_id': 'group_1',
+        'name': 'group_1',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+      }),
+    }),
+    dict({
+      'id': 'joe',
+      'primary_group': dict({
+        'id': 2,
+        'legacy_id': 'group_2',
+        'name': 'group_2',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+      }),
+    }),
+    dict({
+      'id': 'jim',
+      'primary_group': dict({
+        'id': 1,
+        'legacy_id': 'group_1',
+        'name': 'group_1',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+      }),
+    }),
+  ])
+# ---
+# name: TestAttachPrimaryGroup.test_no_primary_group
+  dict({
+    'id': 'bob',
+    'primary_group': None,
+  })
+# ---
+# name: TestAttachPrimaryGroup.test_single_document[False]
+  dict({
+    'id': 'bob',
+    'primary_group': dict({
+      'id': 1,
+      'legacy_id': 'group_1',
+      'name': 'group_1',
+      'permissions': dict({
+        'modify': True,
+        'remove': True,
+      }),
+    }),
+  })
+# ---
+# name: TestAttachPrimaryGroup.test_single_document[True]
+  dict({
+    'id': 'bob',
+    'primary_group': dict({
+      'id': 1,
+      'legacy_id': 'group_1',
+      'name': 'group_1',
+      'permissions': dict({
+        'modify': True,
+        'remove': True,
+      }),
+    }),
+  })
+# ---

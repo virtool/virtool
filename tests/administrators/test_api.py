@@ -13,7 +13,7 @@ from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.users.db import validate_credentials
+from virtool.users.mongo import validate_credentials
 
 _last_password_change_matcher = path_type({"last_password_change": (str,)})
 """
@@ -111,7 +111,7 @@ async def test_update_admin_role(
 @pytest.mark.apitest
 class TestUpdateUser:
     async def test_force_reset(
-        self, fake2: DataFaker, spawn_client: ClientSpawner, snapshot
+        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
     ):
         client = await spawn_client(
             administrator=True,
@@ -128,7 +128,7 @@ class TestUpdateUser:
         assert body["force_reset"] is True
 
     async def test_groups(
-        self, fake2: DataFaker, spawn_client: ClientSpawner, snapshot
+        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
     ):
         """Test that the endpoint can handle several combos of group changes."""
         client = await spawn_client(
@@ -165,7 +165,7 @@ class TestUpdateUser:
         )
 
     async def test_password(
-        self, mongo: Mongo, fake2: DataFaker, spawn_client: ClientSpawner, snapshot
+        self, mongo: Mongo, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
     ):
         """
         Test that a password change leads to a successful credential validation with the
@@ -198,7 +198,7 @@ class TestUpdateUser:
 
     @pytest.mark.parametrize("is_member", [True, False])
     async def test_primary_group(
-        self, is_member: bool, fake2: DataFaker, spawn_client: ClientSpawner, snapshot
+        self, is_member: bool, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
     ):
         """
         Test that the primary group can be changed.
@@ -234,8 +234,8 @@ class TestAdministratorRoles:
         self,
         role: AdministratorRole,
         fake2: DataFaker,
-        spawn_client: ClientSpawner,
         snapshot,
+        spawn_client: ClientSpawner,
     ):
         """Test that an administrator can a non-administrator's role."""
         client = await spawn_client(

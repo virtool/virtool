@@ -1,17 +1,14 @@
-from logging import getLogger
 from shutil import copytree
 from typing import Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool.config import get_config_from_app
 
+from virtool.config import get_config_from_app
 from virtool.example import example_path
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
 from virtool.types import App
 from virtool.uploads.models import SQLUpload
-
-logger = getLogger(__name__)
 
 
 async def create_fake_fasta_upload(app: App, user_id: str) -> Tuple[int, str]:

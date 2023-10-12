@@ -1,5 +1,3 @@
-from typing import Union, Optional
-
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
@@ -9,13 +7,12 @@ from virtool_core.models.user import User
 
 import virtool.http.authentication
 import virtool.users.db
-from virtool.data.transforms import apply_transforms
-from virtool.users.oas import UpdateUserRequest
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.authorization.relationships import UserRoleAssignment
 from virtool.authorization.client import get_authorization_client_from_req
+from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import (
     policy,
@@ -31,6 +28,7 @@ from virtool.users.oas import (
     PermissionsResponse,
     PermissionResponse,
 )
+from virtool.users.oas import UpdateUserRequest
 from virtool.users.transforms import AttachPermissionsTransform
 
 routes = Routes()
@@ -41,10 +39,9 @@ class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
         self,
-        find: Optional[str] = Field(
-            description="Provide text to filter by partial matches to the handle field."
-        ),
-    ) -> Union[r200[User], r403]:
+        find: str
+        | None = Field(description="Filter by partial matches to user handles."),
+    ) -> r200[User] | r403:
         """
         List all users.
 
@@ -68,13 +65,13 @@ class UsersView(PydanticView):
         )
 
         data["documents"] = await apply_transforms(
-            data["documents"], [AttachPermissionsTransform(mongo, pg)]
+            data["documents"], [AttachPermissionsTransform(pg)]
         )
 
         return json_response(data)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def post(self, data: CreateUserRequest) -> Union[r201[User], r400, r403]:
+    async def post(self, data: CreateUserRequest) -> r201[User] | r400 | r403:
         """
         Create a user.
 
@@ -109,7 +106,7 @@ class UsersView(PydanticView):
 @routes.view("/users/first")
 class FirstUserView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def put(self, data: CreateFirstUserRequest) -> Union[r201[User], r400, r403]:
+    async def put(self, data: CreateFirstUserRequest) -> r201[User] | r400 | r403:
         """
         Create a first user.
 
@@ -159,7 +156,7 @@ class FirstUserView(PydanticView):
 @routes.view("/users/{user_id}")
 class UserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def get(self, user_id: str, /) -> Union[r200[User], r403, r404]:
+    async def get(self, user_id: str, /) -> r200[User] | r403 | r404:
         """
         Retrieve a user.
 
@@ -180,7 +177,7 @@ class UserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
         self, user_id: str, /, data: UpdateUserRequest
-    ) -> Union[r200[User], r400, r403, r404, r409]:
+    ) -> r200[User] | r400 | r403 | r404 | r409:
         """
         Update a user.
 

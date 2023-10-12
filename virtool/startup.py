@@ -2,12 +2,12 @@ import asyncio
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from logging import getLogger
 
 from aiohttp import ClientSession
 from aiojobs.aiohttp import get_scheduler_from_app
 from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
+from structlog import get_logger
 from virtool_core.redis import connect as connect_redis, periodically_ping_redis
 
 from virtool.authorization.client import (
@@ -35,7 +35,7 @@ from virtool.utils import get_http_session_from_app
 from virtool.version import determine_server_version, get_version_from_app
 from virtool.ws.server import WSServer
 
-logger = getLogger("startup")
+logger = get_logger("startup")
 
 
 @dataclass
@@ -240,8 +240,7 @@ async def startup_version(app: App):
     """
     version = await determine_server_version()
 
-    logger.info("Virtool %s", version)
-    logger.info("Mode: %s", app["mode"])
+    logger.info("Starting Virtool", version=version, mode=app["mode"])
 
     app["version"] = version
 
@@ -256,7 +255,5 @@ async def startup_ws(app: App):
 
     await scheduler.spawn(ws.run())
     await scheduler.spawn(ws.periodically_close_expired_websocket_connections())
-
-    logger.info("Closing expired WS connections")
 
     app["ws"] = ws

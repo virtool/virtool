@@ -93,7 +93,7 @@ class AdminUsersView(PydanticView):
 @routes.view("/admin/users/{user_id}")
 class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def get(self, user_id: str, /) -> Union[r200[UserResponse], r404]:
+    async def get(self, user_id: str, /) -> r200[UserResponse] | r404:
         """
         Get a user.
 
@@ -114,7 +114,7 @@ class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
         self, user_id: str, /, data: UpdateUserRequest
-    ) -> Union[r200[UserResponse], r404]:
+    ) -> r200[UserResponse] | r404:
         """
         Update a user.
 

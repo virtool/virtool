@@ -11,7 +11,7 @@ from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
 from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 
 class HistoryData:

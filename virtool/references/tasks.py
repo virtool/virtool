@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from asyncio import to_thread
-from logging import getLogger
 from pathlib import Path
 from typing import Dict, Optional, TYPE_CHECKING
 
@@ -19,9 +18,6 @@ from virtool.references.utils import (
 )
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
-
-logger = getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer

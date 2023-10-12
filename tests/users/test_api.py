@@ -7,7 +7,7 @@ from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
+from virtool.groups.oas import UpdateGroupRequest, PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.utils import check_password
@@ -24,13 +24,13 @@ async def setup_update_user(
 
     await data_layer.groups.update(
         group_1.id,
-        UpdateGroupRequest(permissions=UpdatePermissionsRequest(upload_file=True)),
+        UpdateGroupRequest(permissions=PermissionsUpdate(upload_file=True)),
     )
 
     await data_layer.groups.update(
         group_2.id,
         UpdateGroupRequest(
-            permissions=UpdatePermissionsRequest(create_sample=True, create_ref=True)
+            permissions=PermissionsUpdate(create_sample=True, create_ref=True)
         ),
     )
 
@@ -206,7 +206,7 @@ class TestUpdate:
         resp = await client.patch(
             f"/users/{user.id}",
             data={
-                "primary_group": "managers",
+                "primary_group": 4,
             },
         )
 
@@ -232,7 +232,7 @@ class TestUpdate:
         resp = await client.patch(
             "/users/bob",
             data={
-                "primary_group": "managers",
+                "primary_group": 1,
             },
         )
 

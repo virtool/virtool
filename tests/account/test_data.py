@@ -4,7 +4,7 @@ from virtool_core.models.enums import Permission
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.account.oas import CreateKeysRequest
-from virtool.groups.oas import UpdatePermissionsRequest
+from virtool.groups.oas import PermissionsUpdate
 
 
 @pytest.mark.parametrize(
@@ -34,7 +34,7 @@ async def test_create_api_key(
 
     group_1 = await fake2.groups.create()
     group_2 = await fake2.groups.create(
-        UpdatePermissionsRequest(
+        PermissionsUpdate(
             **{
                 Permission.create_sample: True,
                 Permission.modify_subtraction: has_permission,
@@ -49,9 +49,7 @@ async def test_create_api_key(
     _, api_key = await data_layer.account.create_key(
         CreateKeysRequest(
             name="Foo",
-            permissions=UpdatePermissionsRequest(
-                create_sample=True, modify_subtraction=True
-            ),
+            permissions=PermissionsUpdate(create_sample=True, modify_subtraction=True),
         ),
         user.id,
     )

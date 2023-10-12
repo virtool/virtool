@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -10,14 +9,35 @@ from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import get_safely, base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
-class ImportedFromTransform(AbstractTransform):
+PROJECTION = ["_id", "name", "data_type"]
+
+
+class AttachReferenceTransform(AbstractTransform):
+    def __init__(self, mongo: "Mongo"):
+        self._mongo = mongo
+
+    async def prepare_one(self, document: Document) -> Document | None:
+        reference_id = get_safely(document, "reference", "id")
+
+        if reference_id:
+            return base_processor(
+                await self._mongo.references.find_one({"_id": reference_id}, PROJECTION)
+            )
+
+        raise ValueError("Missing reference id")
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document | None:
+        return {**document, "reference": prepared}
+
+
+class AttachImportedFromTransform(AbstractTransform):
     """
     Attach the upload and upload user data to an imported reference.
 
@@ -27,7 +47,7 @@ class ImportedFromTransform(AbstractTransform):
         self._mongo = mongo
         self._pg = pg
 
-    async def prepare_one(self, document: Document) -> Optional[Document]:
+    async def prepare_one(self, document: Document) -> Document | None:
         try:
             upload_id = document["imported_from"]["id"]
         except KeyError:
@@ -38,30 +58,9 @@ class ImportedFromTransform(AbstractTransform):
         return await apply_transforms(row.to_dict(), [AttachUserTransform(self._mongo)])
 
     async def attach_one(
-        self, document: Document, prepared: Optional[Document]
+        self, document: Document, prepared: Document | None
     ) -> Document:
         if prepared is None:
             return document
 
         return {**document, "imported_from": prepared}
-
-
-PROJECTION = ["_id", "name", "data_type"]
-
-
-class AttachReferenceTransform(AbstractTransform):
-    def __init__(self, mongo: "Mongo"):
-        self._mongo = mongo
-
-    async def prepare_one(self, document: Document) -> Any:
-        reference_id = get_safely(document, "reference", "id")
-
-        if reference_id:
-            return base_processor(
-                await self._mongo.references.find_one({"_id": reference_id}, PROJECTION)
-            )
-
-        raise ValueError("Missing reference id")
-
-    async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, "reference": prepared}

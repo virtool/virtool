@@ -5,7 +5,7 @@ from virtool_core.models.account import Account, AccountSettings, check_email, A
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.validators import prevent_none
 
-from virtool.groups.oas import UpdatePermissionsRequest
+from virtool.groups.oas import PermissionsUpdate
 
 
 class UpdateAccountRequest(BaseModel):
@@ -73,7 +73,7 @@ class UpdateAccountResponse(Account):
                     "remove_job": False,
                     "upload_file": False,
                 },
-                "primary_group": "technician",
+                "primary_group": {"id": 6, "name": "Technicians"},
                 "settings": {
                     "quick_analyze_workflow": "pathoscope_bowtie",
                     "show_ids": True,
@@ -114,8 +114,8 @@ class CreateKeysRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="a non-unique name for the API key"
     )
-    permissions: Optional[UpdatePermissionsRequest] = Field(
-        default=UpdatePermissionsRequest(),
+    permissions: Optional[PermissionsUpdate] = Field(
+        default=PermissionsUpdate(),
         description="an object describing the permissions the new key will have. "
         "Any unset permissions will default to false",
     )
@@ -154,7 +154,7 @@ class CreateAPIKeyResponse(APIKey):
 
 
 class UpdateKeyRequest(BaseModel):
-    permissions: Optional[UpdatePermissionsRequest] = Field(
+    permissions: Optional[PermissionsUpdate] = Field(
         description="a permission update comprising an object keyed by permissions "
         "with boolean values"
     )
@@ -250,7 +250,10 @@ class AccountResponse(Account):
                     "remove_job": False,
                     "upload_file": False,
                 },
-                "primary_group": "technician",
+                "primary_group": {
+                    "id": 5,
+                    "name": "Technician",
+                },
                 "settings": {
                     "quick_analyze_workflow": "pathoscope_bowtie",
                     "show_ids": True,

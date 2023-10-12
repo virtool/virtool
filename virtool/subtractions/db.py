@@ -2,24 +2,25 @@
 Work with subtractions in the database.
 
 """
+from __future__ import annotations
+
 import asyncio
 import glob
-from typing import Any, Dict, List, Optional
+from typing import Any, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.subtraction import Subtraction
 
-import virtool.utils
+import virtool.subtractions.db
 from virtool.config.cls import Config
-from virtool.data.transforms import AbstractTransform, apply_transforms
-from virtool.mongo.core import Mongo
+from virtool.data.transforms import AbstractTransform
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import Document
-from virtool.uploads.db import AttachUploadTransform
-from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
 
 PROJECTION = [
     "_id",
@@ -61,8 +62,8 @@ class AttachSubtractionTransform(AbstractTransform):
 
 
 async def attach_computed(
-    mongo, pg: AsyncEngine, base_url: str, subtraction: Dict[str, Any]
-) -> Dict[str, Any]:
+    mongo, pg: AsyncEngine, base_url: str, subtraction: dict[str, Any]
+) -> dict[str, Any]:
     """
     Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
     document.
@@ -92,24 +93,7 @@ async def attach_computed(
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 
 
-async def fetch_complete_subtraction(
-    mongo, pg: AsyncEngine, base_url: str, subtraction_id: str
-) -> Optional[Subtraction]:
-    document = await mongo.subtraction.find_one({"_id": subtraction_id})
-
-    if document:
-        document = await attach_computed(mongo, pg, base_url, document)
-
-        return await apply_transforms(
-            base_processor(document),
-            [
-                AttachUserTransform(mongo, ignore_errors=True),
-                AttachUploadTransform(pg),
-            ],
-        )
-
-
-async def check_subtraction_fasta_files(mongo, config: Config) -> list:
+async def check_subtraction_fasta_files(mongo: Mongo, config: Config) -> list:
     """
     Check subtraction directories for files
 
@@ -129,30 +113,34 @@ async def check_subtraction_fasta_files(mongo, config: Config) -> list:
     return subtractions_without_fasta
 
 
-async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
+async def get_linked_samples(mongo: Mongo, subtraction_id: str) -> list[dict]:
     """
     Find all samples containing given 'subtraction_id' in 'subtractions' field.
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param subtraction_id: the ID of the subtraction
     :return: a list of dicts containing linked samples with 'id' and 'name' field.
 
     """
-    cursor = db.samples.find({"subtractions": subtraction_id}, ["_id", "name"])
-    return [virtool.utils.base_processor(d) async for d in cursor]
+    return [
+        base_processor(d)
+        async for d in mongo.samples.find(
+            {"subtractions": subtraction_id}, ["_id", "name"]
+        )
+    ]
 
 
 async def unlink_default_subtractions(
-    db, subtraction_id: str, session: AsyncIOMotorClientSession
+    mongo: Mongo, subtraction_id: str, session: AsyncIOMotorClientSession
 ):
     """
     Remove a subtraction as a default subtraction for samples.
 
-    :param db: the application mongo object
+    :param mongo: the application mongo object
     :param subtraction_id: the id of the subtraction to remove
     :param session: a motor session to use
     """
-    await db.samples.update_many(
+    await mongo.samples.update_many(
         {"subtractions": subtraction_id},
         {"$pull": {"subtractions": subtraction_id}},
         session=session,
@@ -186,8 +174,8 @@ def lookup_nested_subtractions(
 
 
 async def get_subtraction_names(
-    mongo: Mongo, subtraction_ids: List[str]
-) -> List[Dict[str, str]]:
+    mongo: Mongo, subtraction_ids: list[str]
+) -> list[dict[str, str]]:
     """
     Retrieve a list of subtraction names and ids.
 

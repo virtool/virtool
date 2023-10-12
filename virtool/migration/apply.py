@@ -1,6 +1,5 @@
 import asyncio
 import os
-from logging import getLogger
 from pathlib import Path
 
 import alembic.command
@@ -8,6 +7,7 @@ import alembic.config
 import arrow
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from structlog import get_logger
 
 from virtool.config.cls import MigrationConfig
 from virtool.migration.cls import RevisionSource, GenericRevision
@@ -19,7 +19,7 @@ from virtool.migration.pg import (
 )
 from virtool.migration.show import load_all_revisions
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 async def apply(config: MigrationConfig):
@@ -39,10 +39,10 @@ async def apply(config: MigrationConfig):
 
     for revision in all_revisions:
         logger.info(
-            "Loaded revision source='%s' id='%s' name='%s'",
-            revision.source.value,
-            revision.id,
-            revision.name,
+            "Loaded revision",
+            id=revision.id,
+            name=revision.name,
+            source=revision.source.value,
         )
 
     ctx = await create_migration_context(config)
@@ -53,9 +53,9 @@ async def apply(config: MigrationConfig):
 
     if last_applied_revision:
         logger.info(
-            "Last applied revision revision='%s' name=%s",
-            last_applied_revision.revision,
-            last_applied_revision.name,
+            "Found last applied revision",
+            revision=last_applied_revision.revision,
+            name=last_applied_revision.name,
         )
     else:
         logger.info("No revisions have been applied yet")
@@ -73,17 +73,14 @@ async def apply(config: MigrationConfig):
 
             continue
 
-        logger.info("Checking revision id='%s' name=%s", revision.id, revision.name)
+        logger.info("Checking revision", id=revision.id, name=revision.name)
 
         # This is necessary because buggy versions of the migration may have applied
         # revisions in the wrong order.
         if revision.id in applied_revision_ids:
             logger.info(
-                "Revision is already applied id='%s' name=%s",
-                revision.id,
-                revision.name,
+                "Revision is already applied", id=revision.id, name=revision.name
             )
-
             continue
 
         await apply_one_revision(ctx, revision)
@@ -104,7 +101,9 @@ async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
     :param ctx: the migration context
     :param revision: the revision to apply
     """
-    logger.info("Applying revision '%s'", revision.id)
+    log = logger.bind(id=revision.id, name=revision.name)
+
+    log.info("Applying revision")
 
     if revision.source == RevisionSource.ALEMBIC:
         await apply_alembic(revision.id)
@@ -123,7 +122,7 @@ async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
 
         await session.commit()
 
-    logger.info("Applied revision id='%s'", revision.id)
+    log.info("Applied revision")
 
 
 async def apply_alembic(revision: str):

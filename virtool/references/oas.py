@@ -318,13 +318,13 @@ class ReferenceTargetRequest(BaseModel):
 
 
 class UpdateReferenceRequest(BaseModel):
-    name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
+    name: constr(strip_whitespace=True, min_length=1) | None = Field(
         description="the virus name"
     )
-    description: Optional[constr(strip_whitespace=True)] = Field(
+    description: constr(strip_whitespace=True) | None = Field(
         description="a longer description for the reference"
     )
-    internal_control: Optional[str] = Field(
+    internal_control: str | None = Field(
         description="set the OTU identified by the passed id as the internal control for the reference"
     )
     organism: Optional[constr(strip_whitespace=True)] = Field(
@@ -373,16 +373,16 @@ class UpdateReferenceRequest(BaseModel):
 
 
 class ReferenceRightsRequest(BaseModel):
-    build: Optional[bool] = Field(
+    build: bool | None = Field(
         description="allow members to build new indexes for the reference"
     )
-    modify: Optional[bool] = Field(
+    modify: bool | None = Field(
         description="allow members to modify the reference metadata and settings"
     )
-    modify_otu: Optional[bool] = Field(
+    modify_otu: bool | None = Field(
         description="allow members to modify the reference’s member OTUs"
     )
-    remove: Optional[bool] = Field(description="allow members to remove the reference")
+    remove: bool | None = Field(description="allow members to remove the reference")
 
     class Config:
         schema_extra = {"example": {"build": True, "modify": True}}
@@ -390,11 +390,11 @@ class ReferenceRightsRequest(BaseModel):
     _prevent_none = prevent_none("*")
 
 
-class CreateReferenceGroupsSchema(ReferenceRightsRequest):
-    group_id: str = Field(description="the id of the group to add")
+class CreateReferenceGroupRequest(ReferenceRightsRequest):
+    group_id: int = Field(description="the id of the group to add")
 
     class Config:
-        schema_extra = {"example": {"group_id": "baz", "modify_otu": True}}
+        schema_extra = {"example": {"group_id": 2, "modify_otu": True}}
 
 
 class CreateReferenceGroupResponse(ReferenceGroup):
@@ -404,7 +404,7 @@ class CreateReferenceGroupResponse(ReferenceGroup):
                 {
                     "build": False,
                     "created_at": "2022-06-10T20:00:34.129000Z",
-                    "id": "baz",
+                    "id": 5,
                     "modify": False,
                     "modify_otu": True,
                     "remove": False,
@@ -420,7 +420,7 @@ class ReferenceGroupsResponse(ReferenceGroup):
                 {
                     "build": False,
                     "created_at": "2022-06-10T20:00:34.129000Z",
-                    "id": "sidney",
+                    "id": 5,
                     "modify": False,
                     "modify_otu": False,
                     "remove": False,
@@ -435,7 +435,7 @@ class ReferenceGroupResponse(ReferenceGroup):
             "example": {
                 "build": False,
                 "created_at": "2022-06-10T20:00:34.129000Z",
-                "id": "sidney",
+                "id": 4,
                 "modify": False,
                 "modify_otu": False,
                 "remove": False,
@@ -443,7 +443,7 @@ class ReferenceGroupResponse(ReferenceGroup):
         }
 
 
-class CreateReferenceUsersRequest(ReferenceRightsRequest):
+class CreateReferenceUserRequest(ReferenceRightsRequest):
     user_id: str = Field(description="the id of the user to add")
 
     class Config:

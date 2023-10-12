@@ -8,7 +8,7 @@ from virtool.messages.models import SQLInstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
 from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 
 class MessagesData:

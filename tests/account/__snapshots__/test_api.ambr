@@ -5,7 +5,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
-    'id': 'hashed_key',
+    'id': 'foobar_0',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': dict({
@@ -26,11 +26,12 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
       dict({
-        'id': 'bf1b993c',
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
       }),
     ]),
-    'id': 'hashed_key',
+    'id': 'foobar_0',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': dict({
@@ -51,7 +52,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
-    'id': 'hashed_key',
+    'id': 'foobar_0',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': dict({
@@ -72,11 +73,12 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
       dict({
-        'id': 'bf1b993c',
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
       }),
     ]),
-    'id': 'hashed_key',
+    'id': 'foobar_0',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': dict({
@@ -97,7 +99,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
-    'id': 'hashed_key',
+    'id': 'foobar_1',
     'key': 'raw_key',
     'name': 'Foobar',
     'permissions': dict({
@@ -669,7 +671,8 @@
       'created_at': '2015-10-06T20:00:00Z',
       'groups': list([
         dict({
-          'id': 'fb085f7f',
+          'id': 1,
+          'legacy_id': None,
           'name': 'musicians',
         }),
       ]),

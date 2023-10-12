@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Sequence, Union
 
 
 class AbstractClient(ABC):
@@ -29,11 +28,11 @@ class UserClient(AbstractClient):
         db,
         administrator: bool,
         force_reset: bool,
-        groups: Sequence[str],
-        permissions: Dict[str, bool],
-        user_id: Union[str, None],
+        groups: list[int | str],
+        permissions: dict[str, bool],
+        user_id: str | None,
         authenticated: bool,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
     ):
         self._db = db
         self._force_reset = force_reset

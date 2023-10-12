@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 import math
 import os
 import shutil
 from asyncio import CancelledError, to_thread
-from logging import getLogger
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from aiohttp import MultipartReader
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 from virtool_core.models.subtraction import (
     Subtraction,
     SubtractionFile,
@@ -23,10 +25,10 @@ import virtool.subtractions.files
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config import Config
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.file import FileDescriptor
-from virtool.data.domain import DataLayerDomain
 from virtool.jobs.db import lookup_minimal_job_by_id
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
@@ -47,23 +49,26 @@ from virtool.subtractions.utils import (
     join_subtraction_index_path,
     join_subtraction_path,
 )
-from virtool.uploads.utils import multipart_file_chunker
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import SQLUpload
+from virtool.uploads.utils import multipart_file_chunker
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import lookup_nested_user_by_id
+from virtool.users.mongo import lookup_nested_user_by_id
 from virtool.utils import base_processor
 
-logger = getLogger("subtractions")
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
+
+logger = get_logger("subtractions")
 
 
 class SubtractionsData(DataLayerDomain):
     name = "subtractions"
 
-    def __init__(self, base_url: str, config: Config, mongo, pg: AsyncEngine):
+    def __init__(self, base_url: str, config: Config, mongo: Mongo, pg: AsyncEngine):
         self._base_url = base_url
         self._config = config
         self._mongo = mongo
@@ -422,7 +427,11 @@ class SubtractionsData(DataLayerDomain):
         path = join_subtraction_path(self._config, subtraction_id) / filename
 
         if not await to_thread(path.is_file):
-            logger.warning("")
+            logger.warning(
+                "Expected subtraction file not found",
+                filename=filename,
+                subtraction_id=subtraction_id,
+            )
             raise ResourceNotFoundError
 
         return FileDescriptor(path=path, size=file["size"])
