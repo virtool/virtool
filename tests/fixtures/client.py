@@ -6,11 +6,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Protocol, List
+from typing import Any, Protocol
 
 import pytest
 from aiohttp import BasicAuth, ClientResponse
-from aiohttp.web import Response, RouteTableDef
+from aiohttp.web import RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
 from virtool_core.models.group import GroupMinimal
@@ -39,7 +39,7 @@ class VirtoolTestClientUser:
     def __init__(self, data_layer: DataLayer, tester_user: User):
         self._data_layer = data_layer
 
-        self.groups: List[GroupMinimal] = tester_user.groups
+        self.groups: list[GroupMinimal] = tester_user.groups
         """The groups the user belongs to."""
 
         self.id = tester_user.id
@@ -113,12 +113,12 @@ class VirtoolTestClient:
     async def get(
         self,
         url: str,
-        headers: Dict[str, str] | None = None,
-        params: Dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
     ) -> ClientResponse:
         return await self._test_client.get(url, headers=headers, params=params)
 
-    async def post(self, url: str, data: Dict | None) -> ClientResponse:
+    async def post(self, url: str, data: dict | None) -> ClientResponse:
         payload = None
 
         if data:

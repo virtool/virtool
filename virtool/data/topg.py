@@ -69,9 +69,10 @@ def compose_legacy_id_expression(
         else:
             legacy_ids.append(id_)
 
-    if modern_ids and legacy_ids:
+    if legacy_ids and modern_ids:
         return or_(model.id.in_(modern_ids), model.legacy_id.in_(legacy_ids))
-    elif modern_ids:
+
+    if modern_ids:
         return model.id.in_(modern_ids)
-    else:
-        return model.legacy_id.in_(legacy_ids)
+
+    return model.legacy_id.in_(legacy_ids)

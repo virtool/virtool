@@ -1,9 +1,6 @@
-import logging
-
 import pytest
 
 from virtool.mongo.connect import check_mongo_version
-from virtool.mongo.core import Mongo
 
 
 @pytest.mark.parametrize("version", ["3.5.9", "3.6.0", "3.6.1"])

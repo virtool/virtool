@@ -1,11 +1,8 @@
-from pprint import pprint
-
 import pytest
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
-from virtool.mongo.core import Mongo
 
 
 @pytest.fixture
@@ -57,7 +54,7 @@ class TestCreate:
         resp = await client.post("/groups", data={"name": "Test"})
 
         assert resp.status == 201
-        assert resp.headers.get("Location") == f"https://virtool.example.com/groups/1"
+        assert resp.headers.get("Location") == "https://virtool.example.com/groups/1"
         assert await resp.json() == snapshot(name="json")
 
     async def test_duplicate(

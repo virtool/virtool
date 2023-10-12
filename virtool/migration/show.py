@@ -13,7 +13,6 @@ from virtool.migration.utils import (
 )
 
 
-
 logger = get_logger("migration")
 
 

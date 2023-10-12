@@ -7,7 +7,6 @@ from syrupy.matchers import path_type
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
-from virtool.utils import base_processor
 
 
 class TestAttachPrimaryGroup:

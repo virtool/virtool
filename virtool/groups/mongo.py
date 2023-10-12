@@ -7,9 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.users.db
 import virtool.users.mongo
-import virtool.utils
 from virtool.groups.pg import SQLGroup, merge_group_permissions
 from virtool.mongo.core import Mongo
 

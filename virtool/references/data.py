@@ -1,10 +1,8 @@
 import asyncio
-import asyncio
 from datetime import datetime, timedelta
 
-import aiohttp
 import arrow
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientConnectionError, ClientConnectorError
 from multidict import MultiDictProxy
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -215,7 +213,7 @@ class ReferencesData(DataLayerDomain):
                     self._client, data.remote_from, release_id=data.release_id
                 )
 
-            except aiohttp.ClientConnectionError:
+            except ClientConnectionError:
                 raise ResourceRemoteError("Could not reach GitHub")
 
             except GitHubError as err:
@@ -296,6 +294,7 @@ class ReferencesData(DataLayerDomain):
         document.update(
             {
                 "contributors": contributors,
+                "groups": groups,
                 "internal_control": internal_control or None,
                 "latest_build": latest_build,
                 "otu_count": otu_count,
@@ -379,7 +378,7 @@ class ReferencesData(DataLayerDomain):
             release = await virtool.references.db.fetch_and_update_release(
                 app["db"], get_http_session_from_app(app), ref_id
             )
-        except aiohttp.ClientConnectorError:
+        except ClientConnectorError:
             raise ResourceRemoteError("Could not reach GitHub")
 
         if release is None:

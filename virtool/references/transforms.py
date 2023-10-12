@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
-from typing import Optional
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.data.transforms import apply_transforms
-from virtool.groups.pg import SQLGroup
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
@@ -51,7 +47,7 @@ class AttachImportedFromTransform(AbstractTransform):
         self._mongo = mongo
         self._pg = pg
 
-    async def prepare_one(self, document: Document) -> Optional[Document]:
+    async def prepare_one(self, document: Document) -> Document | None:
         try:
             upload_id = document["imported_from"]["id"]
         except KeyError:
@@ -62,7 +58,7 @@ class AttachImportedFromTransform(AbstractTransform):
         return await apply_transforms(row.to_dict(), [AttachUserTransform(self._mongo)])
 
     async def attach_one(
-        self, document: Document, prepared: Optional[Document]
+        self, document: Document, prepared: Document | None
     ) -> Document:
         if prepared is None:
             return document

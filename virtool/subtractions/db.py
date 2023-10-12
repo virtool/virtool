@@ -11,7 +11,7 @@ from typing import Any, TYPE_CHECKING
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.utils
+import virtool.subtractions.db
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.utils import get_one_field

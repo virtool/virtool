@@ -505,7 +505,7 @@ async def create_document(
     users=None,
 ):
     if ref_id and await mongo.references.count_documents({"_id": ref_id}):
-        raise virtool.errors.DatabaseError("ref_id already exists")
+        raise DatabaseError("ref_id already exists")
 
     ref_id = ref_id or await virtool.mongo.utils.get_new_id(mongo.references)
 
