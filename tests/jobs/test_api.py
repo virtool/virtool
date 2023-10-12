@@ -8,7 +8,6 @@ from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner
-from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 
 _job_response_matcher = path_type(
