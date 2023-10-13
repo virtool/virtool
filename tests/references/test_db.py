@@ -1,7 +1,15 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine
+from syrupy import SnapshotAssertion
 
+from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.references.db import get_manifest, check_right, fetch_and_update_release
+from virtool.references.db import (
+    get_manifest,
+    check_right,
+    fetch_and_update_release,
+    get_reference_groups,
+)
 from virtool.startup import startup_http_client_session
 
 
@@ -105,5 +113,42 @@ async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static
 
     assert (
         await fetch_and_update_release(mongo, fake_app["client"], "fake_ref_id", False)
+        == snapshot
+    )
+
+
+async def test_get_reference_groups(
+    fake2: DataFaker, pg: AsyncEngine, snapshot: SnapshotAssertion
+):
+    """
+    Test that reference groups are returned whether they have integer or string ids.
+    """
+    group_1 = await fake2.groups.create()
+    group_2 = await fake2.groups.create(legacy_id="group_2")
+
+    print([group_1, group_2])
+
+    assert (
+        await get_reference_groups(
+            pg,
+            {
+                "groups": [
+                    {
+                        "id": group_1.id,
+                        "build": False,
+                        "modify": False,
+                        "modify_otu": False,
+                        "remove": False,
+                    },
+                    {
+                        "id": group_2.legacy_id,
+                        "build": False,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                ]
+            },
+        )
         == snapshot
     )
