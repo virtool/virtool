@@ -32,7 +32,7 @@ class LabelsData:
         statement = select(SQLLabel).order_by(SQLLabel.name)
 
         if term:
-            statement = statement.filter(SQLLabel.name.ilike(f"%{term}%"))
+            statement = statement.where(SQLLabel.name.ilike(f"%{term}%"))
 
         labels = await get_generic(self._pg, statement)
 

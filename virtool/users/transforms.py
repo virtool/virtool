@@ -37,7 +37,7 @@ class AttachPermissionsTransform(AbstractTransform):
 
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLGroup).filter(
+                select(SQLGroup).where(
                     compose_legacy_id_expression(SQLGroup, document["groups"])
                 )
             )
@@ -54,7 +54,7 @@ class AttachPermissionsTransform(AbstractTransform):
         if all_group_ids:
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
-                    select(SQLGroup).filter(
+                    select(SQLGroup).where(
                         compose_legacy_id_expression(SQLGroup, all_group_ids)
                     )
                 )

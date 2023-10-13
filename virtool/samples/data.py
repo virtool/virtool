@@ -376,7 +376,7 @@ class SamplesData(DataLayerDomain):
                 (
                     await session.execute(
                         select(SQLUpload)
-                        .filter(SQLSampleReads.sample == sample_id)
+                        .where(SQLSampleReads.sample == sample_id)
                         .join_from(SQLSampleReads, SQLUpload)
                     )
                 )

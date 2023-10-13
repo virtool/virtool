@@ -42,7 +42,7 @@ async def test_store_nuvs_files_task(
     await task.run()
 
     async with AsyncSession(pg) as session:
-        task = await session.scalar(select(SQLTask).filter(SQLTask.id == 1))
+        task = await session.scalar(select(SQLTask).where(SQLTask.id == 1))
         assert task.error is None
 
     assert set(os.listdir(tmp_path / "analyses" / "bar")) == {
