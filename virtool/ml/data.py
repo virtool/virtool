@@ -62,7 +62,7 @@ class MLData(DataLayerDomain):
                 ),
                 session.execute(
                     select(SQLTask)
-                    .filter_by(type=SyncMLModelsTask.name)
+                    .where(SQLTask.type == SyncMLModelsTask.name)
                     .order_by(desc(SQLTask.created_at))
                 ),
             )
