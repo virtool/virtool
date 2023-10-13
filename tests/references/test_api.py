@@ -999,7 +999,6 @@ async def test_create_group(
 
     match error:
         case None:
-            print(await resp.json())
             assert resp.status == 201
             assert await resp.json() == snapshot
             assert await client.mongo.references.find_one() == snapshot
