@@ -19,3 +19,25 @@
     'size': 6449861,
   })
 # ---
+# name: test_get_reference_groups
+  list([
+    dict({
+      'build': False,
+      'id': 1,
+      'legacy_id': None,
+      'modify': False,
+      'modify_otu': False,
+      'name': 'musicians',
+      'remove': False,
+    }),
+    dict({
+      'build': False,
+      'id': 2,
+      'legacy_id': 'group_2',
+      'modify': True,
+      'modify_otu': True,
+      'name': 'hydrogeologists',
+      'remove': True,
+    }),
+  ])
+# ---
