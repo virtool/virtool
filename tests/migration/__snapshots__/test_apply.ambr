@@ -141,5 +141,12 @@
       'name': 'Add ML model release size',
       'revision': 'f8ad70032e9c',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 21,
+      'name': 'Use integer nested group ids',
+      'revision': 'okd9db53g0il',
+    }),
   ])
 # ---
