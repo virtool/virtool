@@ -1,13 +1,14 @@
 import sys
-from logging import getLogger
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
 from semver import VersionInfo
+from structlog import get_logger
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 
-logger = getLogger("mongo")
+
+logger = get_logger("mongo")
 
 
 async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDatabase:
@@ -26,7 +27,7 @@ async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDat
     try:
         await mongo_client.list_database_names()
     except (OperationFailure, ServerSelectionTimeoutError) as err:
-        logger.critical("Could not connect to MongoDB server: %s", err.details)
+        logger.critical("Could not connect to MongoDB server", err=err)
         sys.exit(1)
 
     await check_mongo_version(mongo_client)
@@ -47,13 +48,14 @@ async def check_mongo_version(mongo: AsyncIOMotorClient) -> str:
 
     if VersionInfo.parse(mongo_version) < VersionInfo.parse(MINIMUM_MONGO_VERSION):
         logger.critical(
-            "Virtool requires MongoDB %s. Found %s.",
-            MINIMUM_MONGO_VERSION,
-            mongo_version,
+            "MongoDB is too old",
+            minimum_version=MINIMUM_MONGO_VERSION,
+            version=mongo_version,
         )
+
         sys.exit(1)
 
-    logger.info("Found MongoDB %s", mongo_version)
+    logger.info("Found MongoDB", version=mongo_version)
 
     return mongo_version
 

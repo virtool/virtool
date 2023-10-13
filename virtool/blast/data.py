@@ -1,4 +1,3 @@
-from logging import getLogger
 from typing import List, TYPE_CHECKING
 from zipfile import BadZipFile
 
@@ -18,14 +17,12 @@ from virtool.blast.utils import (
     check_rid,
 )
 from virtool.blast.utils import format_blast_content, fetch_nuvs_blast_result
-from virtool.data.errors import ResourceNotFoundError
 from virtool.data.domain import DataLayerDomain
+from virtool.data.errors import ResourceNotFoundError
 from virtool.types import Document
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-logger = getLogger(__name__)
 
 
 class BLASTData(DataLayerDomain):

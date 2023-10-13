@@ -12,7 +12,8 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.users.db import validate_credentials, B2CUserAttributes
+from virtool.users.db import B2CUserAttributes
+from virtool.users.mongo import validate_credentials
 from virtool.users.oas import UpdateUserRequest
 
 _last_password_change_matcher = path_type(

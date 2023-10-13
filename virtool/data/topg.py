@@ -5,7 +5,10 @@ Helpers for migrating MongoDB resources to PostgreSQL.
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
+from sqlalchemy import or_, ColumnExpressionArgument
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+from virtool.pg.base import HasLegacyAndModernIDs
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -39,3 +42,37 @@ async def both_transactions(mongo: "Mongo", pg: AsyncEngine):
         await pg_session.flush()
 
         await pg_session.commit()
+
+
+def compose_legacy_id_expression(
+    model: HasLegacyAndModernIDs,
+    id_list: list[int | str] | set[int | str] | tuple[int | str],
+) -> ColumnExpressionArgument[bool]:
+    """
+    Compose a query that will match legacy (str) and modern (int) resource ids in
+    ``id_list``.
+
+    :param id_list: a list of legacy ids
+    :param model: the SQLAlchemy model to query
+    :return: a MongoDB query
+
+    """
+    if not id_list:
+        raise ValueError("id_list must not be empty")
+
+    modern_ids = []
+    legacy_ids = []
+
+    for id_ in set(id_list):
+        if isinstance(id_, int):
+            modern_ids.append(id_)
+        else:
+            legacy_ids.append(id_)
+
+    if legacy_ids and modern_ids:
+        return or_(model.id.in_(modern_ids), model.legacy_id.in_(legacy_ids))
+
+    if modern_ids:
+        return model.id.in_(modern_ids)
+
+    return model.legacy_id.in_(legacy_ids)

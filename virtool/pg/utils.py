@@ -1,17 +1,17 @@
 import sys
 from enum import Enum
-from logging import getLogger
 from typing import Optional, Type, Union
 
 import orjson
 from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from structlog import get_logger
 
 from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base
 
-logger = getLogger("pg")
+logger = get_logger("pg")
 
 
 class SQLEnum(Enum):
@@ -61,7 +61,7 @@ async def check_version(engine: AsyncEngine):
         info = await session.execute(text("SHOW server_version"))
 
     version = info.first()[0].split()[0]
-    logger.info("Found PostgreSQL %s", version)
+    logger.info("Found PostgreSQL", version=version)
 
 
 async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):

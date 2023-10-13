@@ -1,10 +1,11 @@
 """The base class for all Virtool tasks, and associated utilities."""
 import asyncio
 from asyncio import to_thread
-from logging import getLogger
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional, Type
+
+from structlog import get_logger
 
 from virtool.data.errors import ResourceError
 from virtool.tasks.oas import TaskUpdate
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 from virtool.utils import get_temp_dir
 
-logger = getLogger("task")
+logger = get_logger("task")
 
 
 class BaseTask:
@@ -128,12 +129,18 @@ class BaseTask:
                 ),
             )
 
-            logger.info("Starting task step '%s.%s'", self.name, func.__name__)
+            log = logger.bind(
+                id=self.task_id,
+                name=self.name,
+                step=self.step.__name__,
+            )
+
+            log.info("Starting next task step")
 
             try:
                 await func()
             except Exception as err:
-                logger.exception("Encountered error in task id=%s, ", self.task_id)
+                log.exception("Encountered error in task")
                 await self._set_error(f"{type(err)}: {str(err)}")
 
         if self.errored:

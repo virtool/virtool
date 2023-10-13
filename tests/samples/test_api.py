@@ -8,10 +8,11 @@ import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import LibraryType, Permission
 from virtool_core.models.samples import WorkflowState
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.config import get_config_from_app
 from virtool.config.cls import ServerConfig
 from virtool.data.errors import ResourceNotFoundError
@@ -91,15 +92,6 @@ async def get_sample_data(
         ),
     )
 
-    reads = SQLSampleReads(
-        name="reads_1.fq.gz",
-        name_on_disk="reads_1.fq.gz",
-        sample="test",
-        size=2903109210,
-        uploaded_at=static_time.datetime,
-        upload=None,
-    )
-
     async with AsyncSession(pg) as session:
         session.add_all(
             [
@@ -109,7 +101,14 @@ async def get_sample_data(
                     type="fasta",
                     name_on_disk="reference.fa.gz",
                 ),
-                reads,
+                SQLSampleReads(
+                    name="reads_1.fq.gz",
+                    name_on_disk="reads_1.fq.gz",
+                    sample="test",
+                    size=2903109210,
+                    uploaded_at=static_time.datetime,
+                    upload=None,
+                ),
             ]
         )
         await session.commit()
@@ -118,124 +117,124 @@ async def get_sample_data(
 
 
 @pytest.fixture
-async def setup_find_samples_client(fake2, spawn_client, static_time):
-    async def setup():
-        user_1 = await fake2.users.create()
-        user_2 = await fake2.users.create()
+async def find_samples_client(fake2, spawn_client, static_time):
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-        label_1 = await fake2.labels.create()
-        label_2 = await fake2.labels.create()
-        label_3 = await fake2.labels.create()
+    label_1 = await fake2.labels.create()
+    label_2 = await fake2.labels.create()
+    label_3 = await fake2.labels.create()
 
-        client = await spawn_client(authenticated=True)
+    client = await spawn_client(authenticated=True)
 
-        await client.mongo.samples.insert_many(
-            [
-                {
-                    "user": {"id": user_1.id},
-                    "nuvs": True,
-                    "host": "",
-                    "foobar": True,
-                    "isolate": "Thing",
-                    "created_at": arrow.get(static_time.datetime)
-                    .shift(hours=1)
-                    .datetime,
-                    "_id": "beb1eb10",
-                    "name": "16GVP042",
-                    "pathoscope": True,
-                    "library_type": "normal",
-                    "all_read": True,
-                    "ready": True,
-                    "labels": [label_1.id, label_2.id],
-                    "notes": "",
-                    "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-                },
-                {
-                    "user": {"id": user_2.id},
-                    "nuvs": False,
-                    "host": "",
-                    "foobar": True,
-                    "isolate": "Test",
-                    "library_type": "srna",
-                    "created_at": arrow.get(static_time.datetime).datetime,
-                    "_id": "72bb8b31",
-                    "name": "16GVP043",
-                    "pathoscope": False,
-                    "all_read": True,
-                    "ready": True,
-                    "labels": [label_1.id],
-                    "notes": "This is a good sample.",
-                    "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-                },
-                {
-                    "user": {"id": user_2.id},
-                    "nuvs": False,
-                    "host": "",
-                    "library_type": "amplicon",
-                    "notes": "",
-                    "foobar": True,
-                    "ready": True,
-                    "isolate": "",
-                    "created_at": arrow.get(static_time.datetime)
-                    .shift(hours=2)
-                    .datetime,
-                    "_id": "cb400e6d",
-                    "name": "16SPP044",
-                    "pathoscope": False,
-                    "all_read": True,
-                    "labels": [label_3.id],
-                    "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-                },
-            ],
-            session=None,
-        )
+    await client.mongo.samples.insert_many(
+        [
+            {
+                "user": {"id": user_1.id},
+                "nuvs": True,
+                "host": "",
+                "foobar": True,
+                "isolate": "Thing",
+                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+                "_id": "beb1eb10",
+                "name": "16GVP042",
+                "pathoscope": True,
+                "library_type": "normal",
+                "all_read": True,
+                "ready": True,
+                "labels": [label_1.id, label_2.id],
+                "notes": "",
+                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+            },
+            {
+                "user": {"id": user_2.id},
+                "nuvs": False,
+                "host": "",
+                "foobar": True,
+                "isolate": "Test",
+                "library_type": "srna",
+                "created_at": arrow.get(static_time.datetime).datetime,
+                "_id": "72bb8b31",
+                "name": "16GVP043",
+                "pathoscope": False,
+                "all_read": True,
+                "ready": True,
+                "labels": [label_1.id],
+                "notes": "This is a good sample.",
+                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+            },
+            {
+                "user": {"id": user_2.id},
+                "nuvs": False,
+                "host": "",
+                "library_type": "amplicon",
+                "notes": "",
+                "foobar": True,
+                "ready": True,
+                "isolate": "",
+                "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
+                "_id": "cb400e6d",
+                "name": "16SPP044",
+                "pathoscope": False,
+                "all_read": True,
+                "labels": [label_3.id],
+                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+            },
+        ],
+        session=None,
+    )
 
-        return client
-
-    return setup()
+    return client
 
 
 @pytest.mark.apitest
-class TestFindSamples:
+class TestFind:
     @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
-    async def test_term(self, find, path, snapshot, setup_find_samples_client):
-        client = await setup_find_samples_client
-
+    async def test_term(
+        self, find, path, snapshot, find_samples_client: VirtoolTestClient
+    ):
         if find is not None:
             path += f"?find={find}"
 
-        resp = await client.get(path)
+        resp = await find_samples_client.get(path)
         assert resp.status == 200
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
-    async def test_page_perpage(
-        self, per_page, page, fake2, spawn_client, snapshot, setup_find_samples_client
+    async def test_page_per_page(
+        self,
+        page: int | None,
+        per_page: int | None,
+        snapshot: SnapshotAssertion,
+        find_samples_client: VirtoolTestClient,
     ):
-        client = await setup_find_samples_client
-        path = "/samples"
         query = []
+
         if per_page is not None:
             query.append(f"per_page={per_page}")
+
+        path = "/samples"
+
         if page is not None:
             query.append(f"page={page}")
             path += f"?{'&'.join(query)}"
 
-        resp = await client.get(path)
+        resp = await find_samples_client.get(path)
         assert resp.status == 200
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize("labels", [None, [3], [2, 3], [0]])
-    async def test_labels(self, labels, snapshot, setup_find_samples_client):
-        client = await setup_find_samples_client
+    async def test_labels(
+        self, labels, snapshot, find_samples_client: VirtoolTestClient
+    ):
         path = "/samples"
 
         if labels is not None:
-            label_query = "&label=".join(str(label) for label in labels)
-            path += f"?label={label_query}"
+            query = "&label=".join(str(label) for label in labels)
+            path += f"?label={query}"
 
-        resp = await client.get(path)
+        resp = await find_samples_client.get(path)
         assert resp.status == 200
         assert await resp.json() == snapshot
 
@@ -248,15 +247,16 @@ class TestFindSamples:
             ["nuvs:none", "pathoscope:none", "pathoscope:ready"],
         ],
     )
-    async def test_workflows(self, workflows, snapshot, setup_find_samples_client):
-        client = await setup_find_samples_client
+    async def test_workflows(
+        self, workflows, snapshot, find_samples_client: VirtoolTestClient
+    ):
         path = "/samples"
 
         if workflows is not None:
             workflows_query = "&workflows=".join(workflow for workflow in workflows)
             path += f"?workflows={workflows_query}"
 
-        resp = await client.get(path)
+        resp = await find_samples_client.get(path)
         assert resp.status == 200
         assert await resp.json() == snapshot
 
@@ -264,7 +264,7 @@ class TestFindSamples:
 @pytest.mark.apitest
 class TestGet:
     async def test_administrator(
-        self, get_sample_data, snapshot, spawn_client: ClientSpawner
+        self, get_sample_data, snapshot: SnapshotAssertion, spawn_client: ClientSpawner
     ):
         """Test that a sample can be retrieved by an administrator."""
         client = await spawn_client(administrator=True, authenticated=True)
@@ -274,7 +274,9 @@ class TestGet:
         assert resp.status == 200
         assert await resp.json() == snapshot(name="resp")
 
-    async def test_owner(self, get_sample_data, snapshot, spawn_client: ClientSpawner):
+    async def test_owner(
+        self, get_sample_data, snapshot: SnapshotAssertion, spawn_client: ClientSpawner
+    ):
         """Test that a sample can be retrieved by its owner."""
         client = await spawn_client(authenticated=True)
 
@@ -299,7 +301,7 @@ class TestGet:
         self,
         fake2: DataFaker,
         get_sample_data,
-        snapshot,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         """
@@ -333,7 +335,7 @@ class TestGet:
         is_member: bool,
         fake2: DataFaker,
         get_sample_data,
-        snapshot,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         """
@@ -409,15 +411,14 @@ class TestCreate:
         )
 
         dummy_jobs_client = DummyJobsClient()
+
         get_data_from_app(client.app).jobs._client = dummy_jobs_client
         get_data_from_app(client.app).samples.jobs_client = dummy_jobs_client
 
         label = await fake2.labels.create()
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
-        await asyncio.gather(
-            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
-        )
+        await client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"})
 
         data = {
             "files": [upload.id],
@@ -430,10 +431,11 @@ class TestCreate:
             data["group"] = group.id
 
         resp = await client.post("/samples", data)
+        body = await resp.json()
 
         assert resp.status == 201
-        assert resp.headers["Location"] == snapshot(name="location")
-        assert await resp.json() == snapshot(name="resp")
+        assert resp.headers["Location"] == f"/samples/{body['id']}"
+        assert body == snapshot(name="resp")
 
         sample, upload = await asyncio.gather(
             client.mongo.samples.find_one(), get_row_by_id(pg, SQLUpload, 1)
@@ -483,10 +485,10 @@ class TestCreate:
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")
 
-    @pytest.mark.parametrize("group", ["", "diagnostics", None])
+    @pytest.mark.parametrize("error", [None, "400"])
     async def test_force_choice(
         self,
-        group: str | None,
+        error: str | None,
         fake2: DataFaker,
         resp_is,
         spawn_client: ClientSpawner,
@@ -501,12 +503,11 @@ class TestCreate:
             authenticated=True, permissions=[Permission.create_sample]
         )
 
+        group = await fake2.groups.create()
+
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
         await asyncio.gather(
-            client.mongo.groups.insert_one(
-                {"_id": "diagnostics", "name": "Diagnostics"},
-            ),
             get_data_from_app(client.app).settings.update(
                 UpdateSettingsRequest(sample_group="force_choice")
             ),
@@ -519,13 +520,13 @@ class TestCreate:
             "subtractions": ["apple"],
         }
 
-        if group is None:
-            resp = await client.post("/samples", data)
-            await resp_is.bad_request(resp, "Group value required for sample creation")
-        else:
-            data["group"] = group
+        if error is None:
+            data["group"] = group.id
             resp = await client.post("/samples", data)
             assert resp.status == 201
+        else:
+            resp = await client.post("/samples", data)
+            await resp_is.bad_request(resp, "Group value required for sample creation")
 
     async def test_group_dne(
         self, fake2: DataFaker, resp_is, spawn_client: ClientSpawner
@@ -555,9 +556,10 @@ class TestCreate:
                 "name": "Foobar",
                 "files": [upload.id],
                 "subtractions": ["apple"],
-                "group": "foobar",
+                "group": 5,
             },
         )
+
         await resp_is.bad_request(resp, "Group does not exist")
 
     async def test_subtraction_dne(

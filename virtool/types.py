@@ -28,6 +28,7 @@ A MongoDB document or similar dictionary.
 Keys must be strings.
 """
 
+
 Projection: TypeAlias = dict[str, bool] | Sequence[str]
 """
 A data structure that can be used to specify a MongoDB projection and is compatible with

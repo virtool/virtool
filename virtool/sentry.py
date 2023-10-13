@@ -1,15 +1,14 @@
 import logging
-from logging import getLogger
-from typing import Dict, Optional
 
 import sentry_sdk
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from structlog import get_logger
 
-logger = getLogger("sentry")
+logger = get_logger("sentry")
 
 
-def traces_sampler(sampling_context: Dict) -> float:
+def traces_sampler(sampling_context: dict) -> float:
     try:
         target_url = sampling_context["aiohttp_request"].rel_url
     except KeyError:
@@ -22,8 +21,9 @@ def traces_sampler(sampling_context: Dict) -> float:
     return 0.2
 
 
-def setup(server_version: Optional[str], dsn: str):
-    logger.info("Initializing Sentry with DSN %s...", dsn[:20])
+def setup(server_version: str | None, dsn: str):
+    logger.info("Initializing Sentry", dsn=f"{dsn[:20]}...")
+
     sentry_sdk.init(
         dsn=dsn,
         integrations=[

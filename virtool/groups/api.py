@@ -1,9 +1,6 @@
-from typing import List, Union
-
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
-
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import NotFound, json_response
@@ -24,7 +21,7 @@ routes = Routes()
 
 @routes.view("/groups")
 class GroupsView(PydanticView):
-    async def get(self) -> r200[List[GetGroupResponse]]:
+    async def get(self) -> r200[list[GetGroupResponse]]:
         """
         List groups.
 
@@ -41,9 +38,7 @@ class GroupsView(PydanticView):
         )
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
-    async def post(
-        self, data: CreateGroupRequest
-    ) -> Union[r201[CreateGroupResponse], r400]:
+    async def post(self, data: CreateGroupRequest) -> r201[CreateGroupResponse] | r400:
         """
         Create a group.
 
@@ -73,7 +68,7 @@ class GroupsView(PydanticView):
 
 @routes.view("/groups/{group_id}")
 class GroupView(PydanticView):
-    async def get(self, group_id: str, /) -> Union[r200[GroupResponse], r404]:
+    async def get(self, group_id: int, /) -> r200[GroupResponse] | r404:
         """
         Get a group.
 
@@ -93,8 +88,8 @@ class GroupView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def patch(
-        self, group_id: str, /, data: UpdateGroupRequest
-    ) -> Union[r200[GroupResponse], r404]:
+        self, group_id: int, /, data: UpdateGroupRequest
+    ) -> r200[GroupResponse] | r404:
         """
         Update a group.
 
@@ -115,7 +110,7 @@ class GroupView(PydanticView):
         return json_response(GroupResponse.parse_obj(group))
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
-    async def delete(self, group_id: str, /) -> Union[r204, r404]:
+    async def delete(self, group_id: int, /) -> r204 | r404:
         """
         Delete a group.
 

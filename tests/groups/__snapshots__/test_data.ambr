@@ -1,8 +1,9 @@
 # serializer version: 1
-# name: TestGet.test_get
+# name: TestCreate.test_ok[group]
   dict({
-    'id': 'bf1b993c',
-    'name': 'musicians',
+    'id': 1,
+    'legacy_id': None,
+    'name': 'Test',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -17,27 +18,13 @@
     ]),
   })
 # ---
-# name: TestGet.test_legacy_id
-  dict({
-    'id': 'bf1b993c',
-    'name': 'musicians',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'users': list([
-    ]),
-  })
+# name: TestCreate.test_ok[pg]
+  <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
 # ---
-# name: TestGet.test_user
+# name: TestGet.test_ok
   dict({
-    'id': 'bf1b993c',
+    'id': 1,
+    'legacy_id': None,
     'name': 'musicians',
     'permissions': dict({
       'cancel_job': False,
@@ -53,15 +40,21 @@
       dict({
         'administrator': False,
         'handle': 'laura56',
+        'id': 'bf1b993c',
+      }),
+      dict({
+        'administrator': False,
+        'handle': 'sjohnson',
         'id': 'fb085f7f',
       }),
     ]),
   })
 # ---
-# name: test_create[mongo]
+# name: test_update_name[group_after]
   dict({
-    '_id': 'bf1b993c',
-    'name': 'test',
+    'id': 1,
+    'legacy_id': None,
+    'name': 'Renamed',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -72,32 +65,98 @@
       'remove_job': False,
       'upload_file': False,
     }),
+    'users': list([
+    ]),
   })
 # ---
-# name: test_create[pg]
-  <SQLGroup(id=1, legacy_id=bf1b993c, name=test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
-# ---
-# name: test_update_permissions[mongo_added]
+# name: test_update_name[group_before]
   dict({
-    'cancel_job': False,
-    'create_ref': False,
-    'create_sample': True,
-    'modify_hmm': False,
-    'modify_subtraction': True,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
+    'id': 1,
+    'legacy_id': None,
+    'name': 'Test',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'users': list([
+    ]),
   })
 # ---
-# name: test_update_permissions[mongo_removed]
+# name: test_update_name[pg_after]
+  <SQLGroup(id=1, legacy_id=None, name=Renamed, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
+# ---
+# name: test_update_name[pg_before]
+  <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
+# ---
+# name: test_update_permissions[group_added]
   dict({
-    'cancel_job': False,
-    'create_ref': False,
-    'create_sample': False,
-    'modify_hmm': False,
-    'modify_subtraction': True,
-    'remove_file': False,
-    'remove_job': False,
-    'upload_file': False,
+    'id': 1,
+    'legacy_id': None,
+    'name': 'Test',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'users': list([
+    ]),
   })
+# ---
+# name: test_update_permissions[group_before]
+  dict({
+    'id': 1,
+    'legacy_id': None,
+    'name': 'Test',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'users': list([
+    ]),
+  })
+# ---
+# name: test_update_permissions[group_removed]
+  dict({
+    'id': 1,
+    'legacy_id': None,
+    'name': 'Test',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'users': list([
+    ]),
+  })
+# ---
+# name: test_update_permissions[pg_added]
+  <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': True, 'modify_subtraction': True})>
+# ---
+# name: test_update_permissions[pg_before]
+  <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
+# ---
+# name: test_update_permissions[pg_removed]
+  <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': True})>
 # ---

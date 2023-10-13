@@ -369,7 +369,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
   })
 # ---

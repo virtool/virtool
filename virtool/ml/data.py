@@ -1,5 +1,4 @@
 import asyncio
-from logging import getLogger
 from typing import List, Dict
 
 import arrow
@@ -7,12 +6,13 @@ from sqlalchemy import select, desc, asc
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import joinedload
+from structlog import get_logger
 
 from virtool.config import Config
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.file import FileDescriptor
 from virtool.data.http import HTTPClient
-from virtool.data.domain import DataLayerDomain
 from virtool.ml.models import (
     MLModel,
     MLModelMinimal,
@@ -29,7 +29,7 @@ from virtool.releases import (
 from virtool.tasks.models import SQLTask
 from virtool.utils import timestamp
 
-logger = getLogger("ml")
+logger = get_logger("ml")
 
 
 class MLData(DataLayerDomain):
@@ -291,4 +291,6 @@ class MLData(DataLayerDomain):
 
             return await self.load(data)
 
-        logger.warning("Could not fetch ML model releases from www.virtool.ca")
+        logger.warning(
+            "Could not fetch ML model releases", address="https://www.virtool.ca"
+        )

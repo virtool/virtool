@@ -2,7 +2,6 @@
 HTTP error exceptions and middleware for reformatting and reporting
 errors to the client.
 """
-
 from typing import Any, Callable, Dict, Optional
 
 from aiohttp import web
@@ -93,6 +92,10 @@ async def error_middleware(req: web.Request, handler: Callable):
 
     except web.HTTPException as exc:
         data = {"id": "_".join(exc.reason.lower().split(" ")), "message": exc.text}
+
+        if exc.reason == "Not Found":
+            # standardizes web API 404 error and Jobs API 404 error
+            data["message"] = "Not found"
 
         if isinstance(exc, (InvalidQuery, InvalidInput)):
             data["errors"] = exc.errors

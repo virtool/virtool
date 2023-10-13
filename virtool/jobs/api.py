@@ -1,4 +1,3 @@
-from logging import getLogger
 from typing import List
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
@@ -23,8 +22,6 @@ from virtool.jobs.oas import (
     JobResponse,
     ArchiveJobsRequest,
 )
-
-logger = getLogger("jobs")
 
 routes = Routes()
 

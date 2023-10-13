@@ -1,8 +1,6 @@
 import hashlib
-from typing import Dict
 
 import bcrypt
-
 from virtool_core.models.enums import Permission
 
 
@@ -38,7 +36,7 @@ def check_password(password: str, hashed: bytes) -> bool:
     return bcrypt.checkpw(password.encode(), hashed)
 
 
-def generate_base_permissions() -> Dict[str, bool]:
+def generate_base_permissions() -> dict[str, bool]:
     """
     Return a `dict` keyed with all Virtool permissions where all the values are `False`.
 
@@ -47,7 +45,7 @@ def generate_base_permissions() -> Dict[str, bool]:
     return {p.value: False for p in Permission}
 
 
-def hash_password(password: str) -> str:
+def hash_password(password: str) -> bytes:
     """
     Salt and hash a unicode password. Uses bcrypt.
 
@@ -58,7 +56,7 @@ def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt(12))
 
 
-def limit_permissions(permissions: dict, limit_filter: dict) -> dict:
+def limit_permissions(permissions, limit_filter: dict) -> dict:
     """
     Make sure permission values in `permissions` do not exceed those in `limit_filter`.
     Returns a filtered set of permissions.

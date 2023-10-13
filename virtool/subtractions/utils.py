@@ -1,4 +1,3 @@
-import logging
 import os
 from asyncio import to_thread
 from pathlib import Path
@@ -19,8 +18,6 @@ FILES = (
     "subtraction.rev.1.bt2",
     "subtraction.rev.2.bt2",
 )
-
-logger = logging.getLogger(__name__)
 
 
 def check_subtraction_file_type(file_name: str) -> str:

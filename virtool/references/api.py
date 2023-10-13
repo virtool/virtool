@@ -1,4 +1,8 @@
-from typing import Union, List, Optional
+"""
+Request handlers for the API endpoints that deal with references.
+
+TODO: Drop support for string group ids when we fully migrate to SQL.
+"""
 
 from aiohttp.web_exceptions import (
     HTTPBadGateway,
@@ -20,6 +24,7 @@ from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
 )
+import virtool.references.db
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PermissionRoutePolicy
 from virtool.http.routes import Routes
@@ -30,9 +35,9 @@ from virtool.references.db import check_right
 from virtool.references.oas import (
     CreateReferenceRequest,
     UpdateReferenceRequest,
-    CreateReferenceGroupsSchema,
+    CreateReferenceGroupRequest,
     ReferenceRightsRequest,
-    CreateReferenceUsersRequest,
+    CreateReferenceUserRequest,
     CreateReferenceResponse,
     FindReferencesResponse,
     ReferenceResponse,
@@ -60,7 +65,7 @@ RIGHTS_SCHEMA = {
 @routes.view("/spaces/{space_id}/refs")
 @routes.view("/refs")
 class ReferencesView(PydanticView):
-    async def get(self, find: Optional[str]) -> r200[FindReferencesResponse]:
+    async def get(self, find: str | None) -> r200[FindReferencesResponse]:
         """
         Find references.
 
@@ -82,7 +87,7 @@ class ReferencesView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.CREATE_REF))
     async def post(
         self, data: CreateReferenceRequest
-    ) -> Union[r200[CreateReferenceResponse], r400, r403, r502]:
+    ) -> r200[CreateReferenceResponse] | r400 | r403 | r502:
         """
         Create a reference.
 
@@ -124,7 +129,7 @@ class ReferencesView(PydanticView):
 @routes.view("/refs/{ref_id}")
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
-    async def get(self, ref_id: str, /) -> Union[r200[ReferenceResponse], r403, r404]:
+    async def get(self, ref_id: str, /) -> r200[ReferenceResponse] | r403 | r404:
         """
         Get a reference.
 
@@ -148,7 +153,7 @@ class ReferenceView(PydanticView):
         ref_id: str,
         /,
         data: UpdateReferenceRequest,
-    ) -> Union[r200[ReferenceResponse], r403, r404]:
+    ) -> r200[ReferenceResponse] | r403 | r404:
         """
         Update a reference.
 
@@ -160,22 +165,24 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
-
-        if not await check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights
+        try:
+            if not await check_right(self.request, ref_id, "modify"):
+                raise InsufficientRights
+        except ResourceNotFoundError:
+            raise NotFound()
 
         try:
             reference = await get_data_from_req(self.request).references.update(
                 ref_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
         return json_response(reference)
 
-    async def delete(self, ref_id: str, /) -> Union[r202, r403, r404]:
+    async def delete(self, ref_id: str, /) -> r202 | r403 | r404:
         """
         Delete a reference.
 
@@ -191,7 +198,7 @@ class ReferenceView(PydanticView):
 
         try:
             await get_data_from_req(self.request).references.remove(
-                ref_id, self.request["client"].user_id, self.request
+                ref_id, self.request
             )
         except ResourceNotFoundError:
             raise NotFound
@@ -245,13 +252,13 @@ class ReferenceUpdatesView(PydanticView):
                 ref_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
 
         return json_response(updates)
 
     async def post(
         self, ref_id: str, /
-    ) -> Union[r201[CreateReferenceUpdateResponse], r403, r404]:
+    ) -> r201[CreateReferenceUpdateResponse] | r403 | r404:
         """
         Update a reference.
 
@@ -262,18 +269,19 @@ class ReferenceUpdatesView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
+            raise InsufficientRights()
+
         try:
-            sub_document = await get_data_from_req(
-                self.request
-            ).references.create_update(
-                ref_id, self.request["client"].user_id, self.request
+            update = await get_data_from_req(self.request).references.create_update(
+                ref_id, self.request["client"].user_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
         except ResourceError as err:
             raise HTTPBadRequest(text=str(err))
 
-        return json_response(sub_document, status=201)
+        return json_response(update, status=201)
 
 
 @routes.view("/spaces/{space_id}/refs/{ref_id}/otus")
@@ -283,9 +291,9 @@ class ReferenceOTUsView(PydanticView):
         self,
         ref_id: str,
         /,
-        find: Optional[str],
-        verified: Optional[bool],
-    ) -> Union[r200[FindOTUsResponse], r404]:
+        find: str | None,
+        verified: bool | None,
+    ) -> r200[FindOTUsResponse] | r404:
         """
         Find OTUs.
 
@@ -305,15 +313,23 @@ class ReferenceOTUsView(PydanticView):
 
     async def post(
         self, ref_id: str, /, data: CreateOTURequest
-    ) -> Union[r201[OTU], r400, r403, r404]:
+    ) -> r201[OTU] | r400 | r403 | r404:
         """
         Create OTU.
 
         Creates an OTU.
         """
         try:
+            if not await virtool.references.db.check_right(
+                self.request, ref_id, "modify_otu"
+            ):
+                raise InsufficientRights()
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        try:
             otu = await get_data_from_req(self.request).references.create_otu(
-                ref_id, data, self.request, self.request["client"].user_id
+                ref_id, data, self.request["client"].user_id
             )
         except ResourceNotFoundError:
             raise NotFound
@@ -327,8 +343,8 @@ class ReferenceOTUsView(PydanticView):
 @routes.view("/refs/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
     async def get(
-        self, unbuilt: Optional[str], ref_id: str, /
-    ) -> Union[r200[ReferenceHistoryResponse], r404]:
+        self, unbuilt: str | None, ref_id: str, /
+    ) -> r200[ReferenceHistoryResponse] | r404:
         """
         List history.
 
@@ -351,7 +367,7 @@ class ReferenceHistoryView(PydanticView):
 @routes.view("/spaces/{space_id}/refs/{ref_id}/indexes")
 @routes.view("/refs/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
-    async def get(self, ref_id: str, /) -> Union[r200[ListIndexesResponse], r404]:
+    async def get(self, ref_id: str, /) -> r200[ListIndexesResponse] | r404:
         """
         List indexes.
 
@@ -372,7 +388,7 @@ class ReferenceIndexesView(PydanticView):
 
     async def post(
         self, ref_id: str, /
-    ) -> Union[r201[CreateReferenceIndexesResponse], r403, r404]:
+    ) -> r201[CreateReferenceIndexesResponse] | r403 | r404:
         """
         Create an index.
 
@@ -407,7 +423,7 @@ class ReferenceIndexesView(PydanticView):
 
 @routes.view("/refs/{ref_id}/groups")
 class ReferenceGroupsView(PydanticView):
-    async def get(self, ref_id: str, /) -> Union[r200[ReferenceGroupsResponse], r404]:
+    async def get(self, ref_id: str, /) -> r200[ReferenceGroupsResponse] | r404:
         """
         List groups.
 
@@ -427,8 +443,8 @@ class ReferenceGroupsView(PydanticView):
         return json_response(groups)
 
     async def post(
-        self, ref_id: str, /, data: CreateReferenceGroupsSchema
-    ) -> Union[r201[CreateReferenceGroupResponse], r400, r403, r404]:
+        self, ref_id: str, /, data: CreateReferenceGroupRequest
+    ) -> r201[CreateReferenceGroupResponse] | r400 | r403 | r404:
         """
         Add a group.
 
@@ -442,7 +458,8 @@ class ReferenceGroupsView(PydanticView):
         """
         try:
             group = await get_data_from_req(self.request).references.create_group(
-                ref_id, data, self.request
+                ref_id,
+                data,
             )
         except ResourceNotFoundError:
             raise NotFound
@@ -459,8 +476,8 @@ class ReferenceGroupsView(PydanticView):
 @routes.view("/refs/{ref_id}/groups/{group_id}")
 class ReferenceGroupView(PydanticView):
     async def get(
-        self, ref_id: str, group_id: str, /
-    ) -> Union[r200[ReferenceGroupResponse], r404]:
+        self, ref_id: str, group_id: int | str, /
+    ) -> r200[ReferenceGroupResponse] | r404:
         """
         Get a group.
 
@@ -482,10 +499,10 @@ class ReferenceGroupView(PydanticView):
     async def patch(
         self,
         ref_id: str,
-        group_id: str,
+        group_id: int | str,
         /,
         data: ReferenceRightsRequest,
-    ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
+    ) -> r200[ReferenceGroupResponse] | r403 | r404:
         """
         Update a group.
 
@@ -497,19 +514,29 @@ class ReferenceGroupView(PydanticView):
             404: Not found
         """
         try:
+            if not await virtool.references.db.check_right(
+                self.request, ref_id, "modify"
+            ):
+                raise InsufficientRights()
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        try:
             group = await get_data_from_req(self.request).references.update_group(
-                data, ref_id, group_id, self.request
+                ref_id,
+                group_id,
+                data,
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
 
         return json_response(group)
 
-    async def delete(self, ref_id: str, group_id: str, /) -> Union[r204, r403, r404]:
+    async def delete(self, ref_id: str, group_id: int | str, /) -> r204 | r403 | r404:
         """
-        Remove a group.
+        Delete a group.
 
-        Removes a group from the reference.
+        Deletes a group from the reference.
 
         Status Codes:
             204: No content
@@ -517,21 +544,30 @@ class ReferenceGroupView(PydanticView):
             404: Not found
         """
         try:
+            if not await virtool.references.db.check_right(
+                self.request, ref_id, "modify"
+            ):
+                raise InsufficientRights()
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        try:
             await get_data_from_req(self.request).references.delete_group(
-                ref_id, group_id, self.request
+                ref_id,
+                group_id,
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
 
-        raise HTTPNoContent
+        raise HTTPNoContent()
 
 
 @routes.view("/spaces/{space_id}/refs/{ref_id}/users")
 @routes.view("/refs/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
     async def post(
-        self, ref_id: str, /, data: CreateReferenceUsersRequest
-    ) -> Union[r201[List[ReferenceUsersResponse]], r400, r403, r404]:
+        self, ref_id: str, /, data: CreateReferenceUserRequest
+    ) -> r201[list[ReferenceUsersResponse]] | r400 | r403 | r404:
         """
         Add a user.
 
@@ -542,13 +578,23 @@ class ReferenceUsersView(PydanticView):
             400: Bad request
             403: Insufficient rights
             404: Not found
+
         """
+
+        try:
+            if not await virtool.references.db.check_right(
+                self.request, ref_id, "modify"
+            ):
+                raise InsufficientRights()
+        except ResourceNotFoundError:
+            raise NotFound()
+
         try:
             user = await get_data_from_req(self.request).references.create_user(
-                data, ref_id, self.request
+                ref_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
         except ResourceConflictError as err:
             raise HTTPBadRequest(text=str(err))
 
@@ -562,7 +608,7 @@ class ReferenceUsersView(PydanticView):
 class ReferenceUserView(PydanticView):
     async def patch(
         self, ref_id: str, user_id: str, /, data: ReferenceRightsRequest
-    ) -> Union[r200[ReferenceGroupResponse], r403, r404]:
+    ) -> r200[ReferenceGroupResponse] | r403 | r404:
         """
         Update a user.
 
@@ -574,15 +620,25 @@ class ReferenceUserView(PydanticView):
             404: Not found
         """
         try:
+            if not await virtool.references.db.check_right(
+                self.request, ref_id, "modify"
+            ):
+                raise InsufficientRights()
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        try:
             user = await get_data_from_req(self.request).references.update_user(
-                data, ref_id, user_id, self.request
+                ref_id,
+                user_id,
+                data,
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
 
         return json_response(user)
 
-    async def delete(self, ref_id: str, user_id: str, /) -> Union[r204, r403, r404]:
+    async def delete(self, ref_id: str, user_id: str, /) -> r204 | r403 | r404:
         """
         Remove a user.
 
@@ -594,10 +650,19 @@ class ReferenceUserView(PydanticView):
             404: Not found
         """
         try:
+            if not await virtool.references.db.check_right(
+                self.request, ref_id, "modify"
+            ):
+                raise InsufficientRights()
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        try:
             await get_data_from_req(self.request).references.delete_user(
-                ref_id, user_id, self.request
+                ref_id,
+                user_id,
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise NotFound()
 
         raise HTTPNoContent

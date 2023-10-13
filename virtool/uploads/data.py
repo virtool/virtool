@@ -1,7 +1,6 @@
 import asyncio
 import math
 from asyncio import to_thread
-from logging import getLogger
 from typing import List
 
 from sqlalchemy import select, update, func
@@ -10,16 +9,14 @@ from virtool_core.models.upload import Upload, UploadSearchResult, UploadMinimal
 from virtool_core.utils import rm
 
 import virtool.utils
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import emits, Operation
-from virtool.data.domain import DataLayerDomain
-from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
+from virtool.mongo.core import Mongo
 from virtool.uploads.models import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import AttachUserTransform
-
-logger = getLogger("uploads")
+from virtool.users.transforms import AttachUserTransform
 
 
 class UploadsData(DataLayerDomain):
@@ -163,8 +160,6 @@ class UploadsData(DataLayerDomain):
             upload.name_on_disk = f"{upload.id}-{upload.name}"
 
             size = await naive_writer(chunker, uploads_path / upload.name_on_disk)
-
-            logger.info("Size=%i", size)
 
             upload.size = size
             upload_dict = upload.to_dict()

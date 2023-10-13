@@ -1,6 +1,5 @@
 """Request handlers for managing and viewing analyses."""
 import asyncio
-from logging import getLogger
 
 import arrow
 from aiohttp.web import (
@@ -36,8 +35,6 @@ from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.uploads.utils import naive_validator
-
-logger = getLogger("analyses")
 
 routes = Routes()
 

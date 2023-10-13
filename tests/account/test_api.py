@@ -4,7 +4,7 @@ from tests.fixtures.client import ClientSpawner
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.groups.oas import UpdatePermissionsRequest
+from virtool.groups.oas import PermissionsUpdate
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, hash_password
@@ -186,7 +186,7 @@ class TestCreateAPIKey:
         )
 
         group = await fake2.groups.create(
-            UpdatePermissionsRequest(**{Permission.create_sample: True})
+            PermissionsUpdate(**{Permission.create_sample: True})
         )
 
         client = await spawn_client(authenticated=True)
@@ -247,7 +247,7 @@ class TestUpdateAPIKey:
         client = await spawn_client(authenticated=True)
 
         group = await fake2.groups.create(
-            permissions=UpdatePermissionsRequest(
+            permissions=PermissionsUpdate(
                 create_sample=True,
                 modify_subtraction=(has_perm if has_perm != "missing" else False),
             )
