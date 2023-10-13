@@ -517,7 +517,7 @@ class AnalysisData(DataLayerDomain):
 
         sample_id = document["sample"]["id"]
 
-        await recalculate_workflow_tags(self._db, sample_id)
+        await self.data.samples.recalculate_workflow_tags(sample_id)
 
         analysis = await self.get(analysis_id, None)
 
