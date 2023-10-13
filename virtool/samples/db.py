@@ -335,37 +335,6 @@ def get_workflow_name(workflow_name: str) -> str:
     return workflow_name
 
 
-async def recalculate_workflow_tags(
-    mongo: "Mongo", sample_id: str, session: AsyncIOMotorClientSession | None = None
-):
-    """
-    Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
-
-    :param mongo: the application database client
-    :param sample_id: the id of the sample to recalculate tags for
-    :param session: an optional MongoDB session to use
-    :return: the updated sample document
-
-    """
-    analyses, library_type = await asyncio.gather(
-        mongo.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(
-            None
-        ),
-        get_one_field(mongo.samples, "library_type", sample_id),
-    )
-
-    await mongo.samples.update_one(
-        {"_id": sample_id},
-        {
-            "$set": {
-                **virtool.samples.utils.calculate_workflow_tags(analyses),
-                **derive_workflow_state(analyses, library_type),
-            }
-        },
-        session=session,
-    )
-
-
 async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None:
     group_id: int | str | None = data.get("group")
 

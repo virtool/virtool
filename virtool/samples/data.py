@@ -5,6 +5,7 @@ from asyncio import gather, to_thread
 from typing import Any
 
 import virtool_core.utils
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -35,7 +36,7 @@ from virtool.samples.db import (
     NameGenerator,
     compose_sample_workflow_query,
     define_initial_workflows,
-    recalculate_workflow_tags,
+    derive_workflow_state,
 )
 from virtool.samples.models import SQLSampleReads
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
@@ -586,8 +587,36 @@ class SamplesData(DataLayerDomain):
 
         for chunk in chunk_list(sample_ids, 50):
             await gather(
-                *[
-                    recalculate_workflow_tags(self._mongo, sample_id)
-                    for sample_id in chunk
-                ]
+                *[self.recalculate_workflow_tags(sample_id) for sample_id in chunk]
             )
+
+    async def recalculate_workflow_tags(
+        self,
+        sample_id: str,
+        session: AsyncIOMotorClientSession | None = None,
+    ):
+        """
+        Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
+
+        :param sample_id: the id of the sample to recalculate tags for
+        :param session: an optional MongoDB session to use
+        :return: the updated sample document
+
+        """
+        analyses, library_type = await asyncio.gather(
+            self._mongo.analyses.find(
+                {"sample.id": sample_id}, ["ready", "workflow"]
+            ).to_list(None),
+            get_one_field(self._mongo.samples, "library_type", sample_id),
+        )
+
+        await self._mongo.samples.update_one(
+            {"_id": sample_id},
+            {
+                "$set": {
+                    **virtool.samples.utils.calculate_workflow_tags(analyses),
+                    **derive_workflow_state(analyses, library_type),
+                }
+            },
+            session=session,
+        )
