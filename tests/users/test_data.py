@@ -1,6 +1,8 @@
 import datetime
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from syrupy.filters import props
 from syrupy.matchers import path_type
 from virtool_core.models.roles import AdministratorRole
@@ -15,6 +17,7 @@ from virtool.mongo.utils import get_one_field
 from virtool.users.db import B2CUserAttributes
 from virtool.users.mongo import validate_credentials
 from virtool.users.oas import UpdateUserRequest
+from virtool.users.pg import SQLUser
 
 _last_password_change_matcher = path_type(
     {"last_password_change": (datetime.datetime,)}
@@ -22,20 +25,43 @@ _last_password_change_matcher = path_type(
 
 
 class TestCreate:
-    async def test_no_force_reset(self, data_layer: DataLayer, mocker, snapshot):
-        mocker.patch(
-            "virtool.users.utils.hash_password", return_value="hashed_password"
-        )
-
+    async def test_no_force_reset(
+        self,
+        data_layer: DataLayer,
+        mocker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
+    ):
         user = await data_layer.users.create(password="hello_world", handle="bill")
 
         assert user.force_reset is False
         assert user == snapshot(
+            name="obj",
             exclude=props(
                 "id",
             ),
             matcher=_last_password_change_matcher,
         )
+
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+
+            assert row.to_dict() == snapshot(
+                name="pg",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
+
+        doc = await mongo.users.find_one({"_id": user.id})
+
+        assert doc == snapshot(
+            name="mongo",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+
+        assert doc["password"] == row.password
 
     @pytest.mark.parametrize("force_reset", [True, False])
     async def test_force_reset(

@@ -29,6 +29,7 @@ from virtool.users.db import (
 )
 from virtool.users.mongo import create_user, update_keys, compose_primary_group_update
 from virtool.users.oas import UpdateUserRequest
+from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
 
@@ -163,7 +164,21 @@ class UsersData(DataLayerDomain):
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
+        now = virtool.utils.timestamp()
+
         document = await create_user(self._mongo, handle, password, force_reset)
+
+        async with AsyncSession(self._pg) as session:
+            session.add(
+                SQLUser(
+                    handle=handle,
+                    password=virtool.users.utils.hash_password(password),
+                    force_reset=force_reset,
+                    last_password_change=now,
+                )
+            )
+
+            await session.commit()
 
         return await self.get(document["_id"])
 

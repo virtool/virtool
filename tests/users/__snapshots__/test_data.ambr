@@ -55,7 +55,27 @@
     'primary_group': None,
   })
 # ---
-# name: TestCreate.test_no_force_reset
+# name: TestCreate.test_no_force_reset[mongo]
+  dict({
+    '_id': 'bf1b993c',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bill',
+    'invalidate_sessions': False,
+    'last_password_change': datetime,
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: TestCreate.test_no_force_reset[obj]
   dict({
     'active': True,
     'administrator': False,
@@ -81,6 +101,14 @@
       'upload_file': False,
     }),
     'primary_group': None,
+  })
+# ---
+# name: TestCreate.test_no_force_reset[pg]
+  dict({
+    'handle': 'bill',
+    'id': 1,
+    'last_password_change': datetime,
+    'primary_group_id': None,
   })
 # ---
 # name: TestUpdate.test_administrator[False][mongo]

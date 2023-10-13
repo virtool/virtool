@@ -110,23 +110,28 @@ async def pg(engine: AsyncEngine):
     async with AsyncSession(engine) as session:
         await session.execute(
             text(
-                """TRUNCATE TABLE analysis_files,
-                                groups,
-                                labels,
-                                sample_artifacts,
-                                subtraction_files,
-                                sample_artifacts_cache,
-                                sample_reads_cache,
-                                index_files,
-                                instance_messages,
-                                ml_models,
-                                ml_model_releases,
-                                uploads,
-                                nuvs_blast,
-                                sample_reads,
-                                spaces,
-                                revisions,
-                                tasks RESTART IDENTITY"""
+                """
+                TRUNCATE TABLE analysis_files,
+                    groups,
+                    index_files,
+                    instance_messages,
+                    labels,
+                    sample_artifacts,
+                    sample_artifacts_cache,
+                    sample_reads_cache,
+                    subtraction_files,
+                    ml_model_releases,
+                    ml_models,
+                    nuvs_blast,
+                    revisions,
+                    sample_reads,
+                    spaces,
+                    tasks,
+                    uploads,
+                    user_group_associations,
+                    users
+                RESTART IDENTITY
+                """
             )
         )
         await session.commit()
