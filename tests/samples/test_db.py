@@ -17,7 +17,6 @@ from virtool.samples.db import (
     compress_sample_reads,
     create_sample,
     get_sample_owner,
-    recalculate_workflow_tags,
     update_is_compressed,
 )
 from virtool.samples.db import define_initial_workflows, derive_workflow_state
