@@ -104,7 +104,7 @@ async def get_row(pg: AsyncEngine, model: Type[Base], match: tuple) -> Optional[
     (column, value) = match
     async with AsyncSession(pg) as session:
         return (
-            await session.execute(select(model).filter(getattr(model, column) == value))
+            await session.execute(select(model).where(getattr(model, column) == value))
         ).scalar()
 
 
@@ -127,7 +127,7 @@ async def get_rows(
     """
     async with AsyncSession(pg) as session:
         statement = (
-            select(model).filter(getattr(model, filter_).ilike(f"%{query}%"))
+            select(model).where(getattr(model, filter_).ilike(f"%{query}%"))
             if query
             else select(model)
         )

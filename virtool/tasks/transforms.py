@@ -54,7 +54,7 @@ class AttachTaskTransform(AbstractTransform):
 
         async with AsyncSession(self._pg) as session:
             results = await session.execute(
-                select(SQLTask).filter(SQLTask.id.in_(task_ids))
+                select(SQLTask).where(SQLTask.id.in_(task_ids))
             )
 
             return {task.id: task.to_dict() for task in results.scalars()}

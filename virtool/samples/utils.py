@@ -52,7 +52,7 @@ async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
     """
     async with AsyncSession(pg) as session:
         query = await session.execute(
-            select(SQLLabel.id).filter(SQLLabel.id.in_(labels))
+            select(SQLLabel.id).where(SQLLabel.id.in_(labels))
         )
         results = set(query.scalars().all())
 

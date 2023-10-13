@@ -15,7 +15,7 @@ class AttachLabelsTransform(AbstractTransform):
     async def _fetch_labels(self, label_ids: List[int]) -> List[Document]:
         async with AsyncSession(self._pg) as session:
             results = await session.execute(
-                select(SQLLabel).filter(SQLLabel.id.in_(label_ids))
+                select(SQLLabel).where(SQLLabel.id.in_(label_ids))
             )
 
         return [label.to_dict() for label in results.scalars()]

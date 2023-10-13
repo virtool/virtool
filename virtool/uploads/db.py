@@ -36,7 +36,7 @@ class AttachUploadTransform(AbstractTransform):
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 (
-                    select(SQLUpload).filter(
+                    select(SQLUpload).where(
                         SQLUpload.id.in_(
                             list({document["upload"] for document in documents})
                         )

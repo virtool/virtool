@@ -52,7 +52,7 @@ class UploadsData(DataLayerDomain):
                 filters.append(SQLUpload.type == upload_type)
 
             results = await session.execute(
-                select(SQLUpload).filter(*filters).order_by(SQLUpload.created_at.desc())
+                select(SQLUpload).where(*filters).order_by(SQLUpload.created_at.desc())
             )
 
             for result in results.unique().scalars().all():
@@ -84,13 +84,13 @@ class UploadsData(DataLayerDomain):
 
         total_query = (
             select(func.count(SQLUpload.id).label("total"))
-            .filter(*base_filters)
+            .where(*base_filters)
             .subquery()
         )
 
         found_query = (
             select(func.count(SQLUpload.id).label("found"))
-            .filter(*base_filters, *filters)
+            .where(*base_filters, *filters)
             .subquery()
         )
 
@@ -102,7 +102,7 @@ class UploadsData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             query = (
                 select(SQLUpload)
-                .filter(*base_filters, *filters)
+                .where(*base_filters, *filters)
                 .order_by(SQLUpload.created_at.desc())
                 .offset(skip)
                 .limit(per_page)
