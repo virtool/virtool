@@ -5,6 +5,7 @@ import arrow
 from aiohttp import ClientSession, ClientConnectionError, ClientConnectorError
 from multidict import MultiDictProxy
 from semver import VersionInfo
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.history import HistorySearchResult
@@ -654,7 +655,25 @@ class ReferencesData(DataLayerDomain):
                     Operation.UPDATE,
                 )
 
-                return ReferenceGroup(**group)
+                async with AsyncSession(self._pg) as session:
+                    result = await session.execute(
+                        select(SQLGroup).where(
+                            (SQLGroup.id == group_id)
+                            if isinstance(group_id, int)
+                            else (SQLGroup.legacy_id == group_id)
+                        )
+                    )
+
+                    row = result.scalar_one()
+
+                    return ReferenceGroup(
+                        **{
+                            **group,
+                            "id": row.id,
+                            "legacy_id": row.legacy_id,
+                            "name": row.name,
+                        }
+                    )
 
         raise ResourceNotFoundError()
 
