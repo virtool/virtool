@@ -20,7 +20,7 @@ PROJECTION = ["_id", "name", "data_type"]
 
 
 class AttachReferenceTransform(AbstractTransform):
-    def __init__(self, mongo: "Mongo"):
+    def __init__(self, mongo: Mongo):
         self._mongo = mongo
 
     async def prepare_one(self, document: Document) -> Document | None:

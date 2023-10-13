@@ -5,7 +5,7 @@ from pathlib import Path
 
 import arrow
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
 
@@ -271,7 +271,9 @@ def fake(mongo, pg):
 
 
 @pytest.fixture
-def fake2(data_layer: "DataLayer", example_path: Path, mocker, mongo: Mongo):
+def fake2(
+    data_layer: "DataLayer", example_path: Path, mocker, mongo: Mongo, pg: AsyncEngine
+):
     """
     Provides a :class:`DataFaker` object for generating deterministic fake data.
 
@@ -296,4 +298,4 @@ def fake2(data_layer: "DataLayer", example_path: Path, mocker, mongo: Mongo):
         ),
     )
 
-    return DataFaker(data_layer, mongo)
+    return DataFaker(data_layer, mongo, pg)
