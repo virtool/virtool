@@ -5,7 +5,7 @@ import arrow
 from aiohttp import ClientSession, ClientConnectionError, ClientConnectorError
 from multidict import MultiDictProxy
 from semver import VersionInfo
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.history import HistorySearchResult
