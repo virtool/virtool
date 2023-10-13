@@ -19,7 +19,7 @@ from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 
 class JobsData:
@@ -53,7 +53,7 @@ class JobsData:
 
     async def find(
         self,
-        archived: bool,
+        archived: bool | None,
         page: int,
         per_page: int,
         states: List[JobState],
@@ -63,8 +63,6 @@ class JobsData:
 
         if page > 1:
             skip_count = (page - 1) * per_page
-
-        sort = {"created_at": -1}
 
         match_query = {
             **({"archived": archived} if archived is not None else {}),
@@ -109,7 +107,7 @@ class JobsData:
                                 }
                             },
                             {"$match": match_state},
-                            {"$sort": sort},
+                            {"$sort": {"created_at": -1}},
                             {"$skip": skip_count},
                             {"$limit": per_page},
                         ],

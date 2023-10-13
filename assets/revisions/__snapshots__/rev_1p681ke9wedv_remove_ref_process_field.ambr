@@ -1,11 +1,12 @@
+# serializer version: 1
 # name: test_upgrade
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'foo',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       '_id': 'bar',
       'task': 'test',
-    },
-  ]
----
+    }),
+  ])
+# ---

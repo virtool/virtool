@@ -2,12 +2,12 @@ import asyncio
 import math
 import os
 from datetime import datetime
-from logging import getLogger
 from shutil import rmtree
 from typing import Tuple, Optional, List
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.utils import rm
@@ -32,12 +32,12 @@ from virtool.analyses.utils import (
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceConflictError,
 )
 from virtool.data.events import emits, Operation, emit
-from virtool.data.domain import DataLayerDomain
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.db import lookup_minimal_job_by_id
@@ -55,10 +55,10 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
 )
 from virtool.uploads.utils import multipart_file_chunker, naive_writer
-from virtool.users.db import lookup_nested_user_by_id
+from virtool.users.mongo import lookup_nested_user_by_id
 from virtool.utils import wait_for_checks, base_processor
 
-logger = getLogger("analyses")
+logger = get_logger("analyses")
 
 
 class AnalysisData(DataLayerDomain):
@@ -298,9 +298,9 @@ class AnalysisData(DataLayerDomain):
 
         if not sample:
             logger.warning(
-                "Parent sample for analysis not found analysis_id=%s sample_id=%s",
-                analysis_id,
-                sample_id,
+                "Parent sample not found for analysis",
+                analysis_id=analysis_id,
+                sample_id=sample_id,
             )
             raise ResourceNotFoundError
 
@@ -383,7 +383,7 @@ class AnalysisData(DataLayerDomain):
                 multipart_file_chunker(reader), analysis_file_path
             )
         except asyncio.CancelledError:
-            logger.debug("Analysis file upload aborted: %s", upload_id)
+            logger.info("Analysis file upload aborted", upload_id=upload_id)
             await delete_row(self._pg, upload_id, SQLAnalysisFile)
 
             return None

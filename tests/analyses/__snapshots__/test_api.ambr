@@ -1,5 +1,6 @@
+# serializer version: 1
 # name: test_blast[None]
-  <class 'dict'> {
+  dict({
     'analysis_id': 'foobar',
     'created_at': '2015-10-06T20:00:00Z',
     'error': None,
@@ -12,269 +13,251 @@
     'sequence_index': 5,
     'task_id': None,
     'updated_at': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_download_analysis_result[False-False]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_download_analysis_result[False-True]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_download_analysis_result[True-False]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_finalize[None]
-  <class 'dict'> {
+  dict({
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-    ],
+    'files': list([
+    ]),
     'id': 'analysis1',
-    'index': <class 'dict'> {
+    'index': dict({
       'id': 'foo',
       'version': 2,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
-      'user': <class 'dict'> {
+      'progress': 50,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
+      'state': 'timeout',
+      'user': dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
+      }),
       'workflow': 'jobs_aodp',
-    },
+    }),
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': 'genome',
       'id': 'baz',
       'name': 'Baz',
-    },
-    'results': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
-    },
-    'sample': <class 'dict'> {
+    }),
+    'results': dict({
+      'hits': list([
+      ]),
+    }),
+    'sample': dict({
       'id': 'sample1',
-    },
-    'subtractions': <class 'list'> [
-    ],
+    }),
+    'subtractions': list([
+    ]),
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'nuvs',
-  }
----
+  })
+# ---
 # name: test_finalize[None].1
-  <class 'dict'> {
+  dict({
     '_id': 'analysis1',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'files': <class 'list'> [
-    ],
-    'index': <class 'dict'> {
+    'files': list([
+    ]),
+    'index': dict({
       'id': 'foo',
       'version': 2,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'id': '7cf872dc',
-    },
+    }),
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'id': 'baz',
-    },
-    'results': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
+    }),
+    'results': dict({
+      'hits': list([
+      ]),
       'result': 'TEST_RESULT',
-    },
-    'sample': <class 'dict'> {
+    }),
+    'sample': dict({
       'id': 'sample1',
-    },
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
+    }),
+    'subtractions': list([
+    ]),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'nuvs',
-  }
----
+  })
+# ---
 # name: test_finalize_large
-  <class 'dict'> {
+  dict({
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-    ],
+    'files': list([
+    ]),
     'id': 'analysis1',
-    'index': <class 'dict'> {
+    'index': dict({
       'id': 'foo',
       'version': 2,
-    },
+    }),
     'job': None,
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': 'genome',
       'id': 'baz',
       'name': 'Baz',
-    },
-    'results': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
-    },
-    'sample': <class 'dict'> {
+    }),
+    'results': dict({
+      'hits': list([
+      ]),
+    }),
+    'sample': dict({
       'id': 'sample1',
-    },
-    'subtractions': <class 'list'> [
-    ],
+    }),
+    'subtractions': list([
+    ]),
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'nuvs',
-  }
----
+  })
+# ---
 # name: test_find
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 'test_1',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foo',
           'version': 2,
-        },
-        'job': <class 'dict'> {
+        }),
+        'job': dict({
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
-          'user': <class 'dict'> {
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
             'administrator': False,
             'handle': 'zclark',
-            'id': 'fb085f7f',
-          },
+            'id': '7cf872dc',
+          }),
           'workflow': 'jobs_aodp',
-        },
+        }),
         'ready': True,
-        'reference': <class 'dict'> {
+        'reference': dict({
           'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
-        },
-        'sample': <class 'dict'> {
+        }),
+        'sample': dict({
           'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-        ],
+        }),
+        'subtractions': list([
+        ]),
         'updated_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
+          'id': 'fb085f7f',
+        }),
         'workflow': 'pathoscope_bowtie',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 'test_2',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foo',
           'version': 2,
-        },
-        'job': <class 'dict'> {
+        }),
+        'job': dict({
           'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 0,
-          'stage': None,
-          'state': 'waiting',
-          'user': <class 'dict'> {
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
             'administrator': False,
             'handle': 'zclark',
-            'id': 'fb085f7f',
-          },
+            'id': '7cf872dc',
+          }),
           'workflow': 'jobs_aodp',
-        },
+        }),
         'ready': True,
-        'reference': <class 'dict'> {
+        'reference': dict({
           'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
-        },
-        'sample': <class 'dict'> {
+        }),
+        'sample': dict({
           'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-          <class 'dict'> {
+        }),
+        'subtractions': list([
+          dict({
             'id': 'foo',
             'name': 'Malus domestica',
-          },
-        ],
+          }),
+        ]),
         'updated_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
+          'id': 'fb085f7f',
+        }),
         'workflow': 'pathoscope_bowtie',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 'test_3',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foo',
           'version': 2,
-        },
+        }),
         'job': None,
         'ready': True,
-        'reference': <class 'dict'> {
+        'reference': dict({
           'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
-        },
-        'sample': <class 'dict'> {
+        }),
+        'sample': dict({
           'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-        ],
+        }),
+        'subtractions': list([
+        ]),
         'updated_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
+          'id': 'fb085f7f',
+        }),
         'workflow': 'pathoscope_bowtie',
-      },
-    ],
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_get[None-False-False]
-  <class 'dict'> {
+  dict({
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'analysis': 'foobar',
         'description': None,
         'format': 'fasta',
@@ -283,51 +266,51 @@
         'name_on_disk': '1-reference.fa',
         'size': None,
         'uploaded_at': None,
-      },
-    ],
+      }),
+    ]),
     'id': 'foobar',
-    'index': <class 'dict'> {
+    'index': dict({
       'id': 'bar',
       'version': 3,
-    },
+    }),
     'job': None,
     'ready': False,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': 'genome',
       'id': 'baz',
       'name': 'Baz',
-    },
-    'results': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
-    },
-    'sample': <class 'dict'> {
+    }),
+    'results': dict({
+      'hits': list([
+      ]),
+    }),
+    'sample': dict({
       'id': 'baz',
-    },
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'subtractions': list([
+      dict({
         'id': 'apple',
         'name': 'Apple',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'plum',
         'name': 'Plum',
-      },
-    ],
+      }),
+    ]),
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
+      'id': 'fb085f7f',
+    }),
     'workflow': 'pathoscope_bowtie',
-  }
----
+  })
+# ---
 # name: test_get[None-True-True]
-  <class 'dict'> {
+  dict({
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'analysis': 'foobar',
         'description': None,
         'format': 'fasta',
@@ -336,65 +319,65 @@
         'name_on_disk': '1-reference.fa',
         'size': None,
         'uploaded_at': None,
-      },
-    ],
+      }),
+    ]),
     'id': 'foobar',
-    'index': <class 'dict'> {
+    'index': dict({
       'id': 'bar',
       'version': 3,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
+      }),
       'workflow': 'jobs_aodp',
-    },
+    }),
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': 'genome',
       'id': 'baz',
       'name': 'Baz',
-    },
-    'results': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
-    },
-    'sample': <class 'dict'> {
+    }),
+    'results': dict({
+      'hits': list([
+      ]),
+    }),
+    'sample': dict({
       'id': 'baz',
-    },
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'subtractions': list([
+      dict({
         'id': 'apple',
         'name': 'Apple',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'plum',
         'name': 'Plum',
-      },
-    ],
+      }),
+    ]),
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'pathoscope_bowtie',
-  }
----
+  })
+# ---
 # name: test_get[None-True-True].1
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'analysis': 'foobar',
         'description': None,
         'format': 'fasta',
@@ -403,59 +386,59 @@
         'name_on_disk': '1-reference.fa',
         'size': None,
         'uploaded_at': None,
-      },
-    ],
-    'index': <class 'dict'> {
+      }),
+    ]),
+    'index': dict({
       'id': 'bar',
       'version': 3,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'archived': False,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'id': '7cf872dc',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
-      'user': <class 'dict'> {
+      'id': '3cbb22cc',
+      'progress': 50,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
+      'state': 'timeout',
+      'user': dict({
         'administrator': False,
         'handle': 'zclark',
-        'id': 'fb085f7f',
-      },
+        'id': '7cf872dc',
+      }),
       'workflow': 'jobs_aodp',
-    },
+    }),
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       '_id': 'baz',
       'data_type': 'genome',
       'name': 'Baz',
-    },
-    'results': <class 'dict'> {
-      'hits': <class 'list'> [
-      ],
-    },
-    'sample': <class 'dict'> {
+    }),
+    'results': dict({
+      'hits': list([
+      ]),
+    }),
+    'sample': dict({
       'id': 'baz',
-    },
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    }),
+    'subtractions': list([
+      dict({
         'id': 'apple',
         'name': 'Apple',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'plum',
         'name': 'Plum',
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
+      'id': 'fb085f7f',
+    }),
     'workflow': 'pathoscope_bowtie',
-  }
----
+  })
+# ---
 # name: test_upload_file[None]
-  <class 'dict'> {
+  dict({
     'analysis': 'foobar',
     'description': None,
     'format': 'fasta',
@@ -464,5 +447,5 @@
     'name_on_disk': '1-reference.fa',
     'size': 20466,
     'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
+  })
+# ---

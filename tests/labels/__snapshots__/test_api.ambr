@@ -1,66 +1,67 @@
+# serializer version: 1
 # name: TestFind.test_find
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'color': '#955887',
       'count': 2,
       'description': 'Measure example sense peace economy.',
       'id': 2,
       'name': 'Help',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'color': '#629F70',
       'count': 2,
       'description': 'American whole magazine truth stop whose.',
       'id': 1,
       'name': 'Three',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: TestFind.test_find_by_name
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'color': '#629F70',
       'count': 0,
       'description': 'American whole magazine truth stop whose.',
       'id': 1,
       'name': 'Three',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: TestFind.test_find_by_name.1
-  <class 'list'> [
-  ]
----
+  list([
+  ])
+# ---
 # name: test_edit[None]
-  <class 'dict'> {
+  dict({
     'color': '#629F70',
     'count': 2,
     'description': 'American whole magazine truth stop whose.',
     'id': 1,
     'name': 'Summer',
-  }
----
+  })
+# ---
 # name: test_get[200]
-  <class 'dict'> {
+  dict({
     'color': '#629F70',
     'count': 2,
     'description': 'American whole magazine truth stop whose.',
     'id': 1,
     'name': 'Three',
-  }
----
+  })
+# ---
 # name: test_get[404]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_remove[204]
   None
----
+# ---
 # name: test_remove[404]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---

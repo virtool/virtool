@@ -1,32 +1,33 @@
+# serializer version: 1
 # name: TestAnonymous.test_get_and_create
-  <class 'dict'> {
+  dict({
     'authentication': None,
-    'created_at': <class 'datetime'>,
-    'id': <class 'str'>,
+    'created_at': datetime,
+    'id': str,
     'ip': '1.1.1.1',
     'reset': None,
-  }
----
+  })
+# ---
 # name: TestAuthenticated.test_get_and_create[snapshot]
-  <class 'dict'> {
-    'authentication': <class 'dict'> {
+  dict({
+    'authentication': dict({
       'user_id': 'user_id',
-    },
-    'created_at': <class 'datetime'>,
-    'id': <class 'str'>,
+    }),
+    'created_at': datetime,
+    'id': str,
     'ip': '1.1.1.1',
     'reset': None,
-  }
----
+  })
+# ---
 # name: TestReset.test_create_and_get
-  <class 'dict'> {
+  dict({
     'authentication': None,
-    'created_at': <class 'datetime'>,
-    'id': <class 'str'>,
+    'created_at': datetime,
+    'id': str,
     'ip': '1.1.1.1',
-    'reset': <class 'dict'> {
+    'reset': dict({
       'remember': True,
       'user_id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---

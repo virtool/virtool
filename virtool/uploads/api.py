@@ -1,5 +1,3 @@
-from logging import getLogger
-from pprint import pprint
 from typing import List, Union, Optional
 
 from aiohttp.web_fileresponse import FileResponse
@@ -19,8 +17,6 @@ from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
 from virtool.uploads.utils import get_upload_path
 from virtool.uploads.utils import multipart_file_chunker
-
-logger = getLogger("uploads")
 
 routes = Routes()
 
@@ -110,12 +106,10 @@ class UploadView(PydanticView):
         try:
             upload = await get_data_from_req(self.request).uploads.get(upload_id)
 
-            pprint(upload)
             upload_path = await get_upload_path(
                 get_config_from_req(self.request), upload.name_on_disk
             )
-        except ResourceNotFoundError as exc:
-            pprint(exc)
+        except ResourceNotFoundError:
             raise NotFound
 
         return FileResponse(

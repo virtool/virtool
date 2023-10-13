@@ -1,20 +1,17 @@
+# serializer version: 1
 # name: test_relist_jobs[preparing-False]
-  <class 'list'> [
-  ]
----
+  list([
+  ])
+# ---
 # name: test_relist_jobs[waiting-False]
-  <class 'list'> [
-    <class 'tuple'> (
-      'jobs_pathoscope_bowtie',
-      'fb085f7f',
-    ),
-  ]
----
+  list([
+  ])
+# ---
 # name: test_relist_jobs[waiting-True]
-  <class 'list'> [
-    <class 'tuple'> (
+  list([
+    tuple(
       'jobs_pathoscope_bowtie',
       'fb085f7f',
     ),
-  ]
----
+  ])
+# ---

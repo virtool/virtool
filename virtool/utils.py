@@ -168,20 +168,12 @@ def random_alphanumeric(
 
 def timestamp() -> datetime.datetime:
     """
-    Returns a datetime object representing the current UTC time.
-
-    The last 3 digits of the microsecond frame are set to zero.
+    Returns a naive datetime object representing the current UTC time.
 
     :return: a UTC timestamp
 
     """
-    # Get tz-aware datetime object.
-    dt = arrow.utcnow().naive
-
-    # Set the last three ms digits to 0.
-    dt = dt.replace(microsecond=int(str(dt.microsecond)[0:3] + "000"))
-
-    return dt
+    return arrow.utcnow().naive
 
 
 def to_bool(obj):

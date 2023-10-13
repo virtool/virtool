@@ -1,13 +1,26 @@
-# name: test_get_space
-  <class 'dict'> {
+# serializer version: 1
+# name: test_get
+  dict({
     'created_at': '2015-10-06T20:00:00Z',
     'description': '',
     'id': 0,
-    'members': <class 'list'> [
-      <class 'dict'> {
+    'members': list([
+      dict({
+        'administrator': True,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+        'label_role': None,
+        'project_role': None,
+        'reference_role': None,
+        'role': 'owner',
+        'sample_role': 'sample_editor',
+        'subtraction_role': None,
+        'upload_role': None,
+      }),
+      dict({
         'administrator': False,
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
         'label_role': None,
         'project_role': 'project_manager',
         'reference_role': None,
@@ -15,194 +28,193 @@
         'sample_role': None,
         'subtraction_role': None,
         'upload_role': None,
-      },
-      <class 'dict'> {
-        'administrator': True,
-        'handle': 'bob',
-        'id': 'test',
-        'label_role': None,
-        'project_role': None,
-        'reference_role': None,
-        'role': 'owner',
-        'sample_role': 'sample_editor',
-        'subtraction_role': None,
-        'upload_role': None,
-      },
-    ],
+      }),
+    ]),
     'name': 'Space 0',
     'updated_at': '2015-10-06T20:00:00Z',
-  }
----
+  })
+# ---
+# name: test_list
+  list([
+    dict({
+      'description': '',
+      'id': 0,
+      'name': 'Space 0',
+    }),
+    dict({
+      'description': 'A testing space.',
+      'id': 1,
+      'name': 'Space 1',
+    }),
+  ])
+# ---
 # name: test_list_space_members
-  <class 'dict'> {
-    'available_roles': <class 'list'> [
-      <class 'dict'> {
-        'description': '
+  dict({
+    'available_roles': list([
+      dict({
+        'description': '''
           Full control over space a and all resources and members.
           - Remove or add members.
           - Cancel any job.
-        ',
+        ''',
         'id': 'owner',
         'name': 'Owner',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Access a space.',
         'id': 'member',
         'name': 'Member',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create, edit, or delete labels.',
         'id': 'label_manager',
         'name': 'Label_manager',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create, edit, or delete projects.',
         'id': 'project_manager',
         'name': 'Project_manager',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create or edit projects.',
         'id': 'project_editor',
         'name': 'Project_editor',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'View projects.',
         'id': 'project_viewer',
         'name': 'Project_viewer',
-      },
-      <class 'dict'> {
-        'description': '
+      }),
+      dict({
+        'description': '''
           Edit, build, contribute to (modify otus), or delete any reference. Modify access
           control and settings for any reference.
-        ',
+        ''',
         'id': 'reference_manager',
         'name': 'Reference_manager',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Edit, build, and contribute to any reference.',
         'id': 'reference_builder',
         'name': 'Reference_builder',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Edit or contribute to any reference.',
         'id': 'reference_editor',
         'name': 'Reference_editor',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create, edit, or delete (modify) OTUs in any reference.',
         'id': 'reference_contributor',
         'name': 'Reference_contributor',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'View any and use any reference.',
         'id': 'reference_viewer',
         'name': 'Reference_viewer',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create, edit, or delete samples.',
         'id': 'sample_manager',
         'name': 'Sample_manager',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create or edit samples.',
         'id': 'sample_editor',
         'name': 'Sample_editor',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Analyze samples.',
         'id': 'sample_analyzer',
         'name': 'Sample_analyzer',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'View samples.',
         'id': 'sample_viewer',
         'name': 'Sample_viewer',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create, edit, or delete subtractions.',
         'id': 'subtraction_manager',
         'name': 'Subtraction_manager',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Edit subtractions.',
         'id': 'subtraction_editor',
         'name': 'Subtraction_editor',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'View or use subtractions.',
         'id': 'subtraction_viewer',
         'name': 'Subtraction_viewer',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'Create, use, or delete uploads.',
         'id': 'upload_manager',
         'name': 'Upload_manager',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'description': 'View or use uploads.',
         'id': 'upload_viewer',
         'name': 'Upload_viewer',
-      },
-    ],
-    'items': <class 'list'> [
-      <class 'dict'> {
+      }),
+    ]),
+    'items': list([
+      dict({
         'administrator': False,
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'handle': 'zclark',
+        'id': '7cf872dc',
         'label_role': None,
         'project_role': None,
         'reference_role': None,
         'role': 'member',
-        'sample_role': 'sample_editor',
+        'sample_role': None,
         'subtraction_role': None,
         'upload_role': None,
-      },
-      <class 'dict'> {
+      }),
+      dict({
+        'administrator': True,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+        'label_role': None,
+        'project_role': None,
+        'reference_role': None,
+        'role': 'owner',
+        'sample_role': None,
+        'subtraction_role': None,
+        'upload_role': None,
+      }),
+      dict({
         'administrator': False,
-        'handle': 'zclark',
+        'handle': 'leeashley',
         'id': 'fb085f7f',
         'label_role': None,
         'project_role': None,
         'reference_role': None,
         'role': 'member',
-        'sample_role': None,
+        'sample_role': 'sample_editor',
         'subtraction_role': None,
         'upload_role': None,
-      },
-      <class 'dict'> {
-        'administrator': True,
-        'handle': 'bob',
-        'id': 'test',
-        'label_role': None,
-        'project_role': None,
-        'reference_role': None,
-        'role': 'owner',
-        'sample_role': None,
-        'subtraction_role': None,
-        'upload_role': None,
-      },
-    ],
-  }
----
-# name: test_list_spaces
-  <class 'list'> [
-    <class 'dict'> {
-      'description': '',
-      'id': 0,
-      'name': 'Space 0',
-    },
-    <class 'dict'> {
-      'description': 'A testing space.',
-      'id': 1,
-      'name': 'Space 1',
-    },
-  ]
----
+      }),
+    ]),
+  })
+# ---
+# name: test_update
+  dict({
+    'created_at': '2015-10-06T20:00:00Z',
+    'description': 'New description',
+    'id': 0,
+    'members': list([
+    ]),
+    'name': 'New Name',
+    'updated_at': '2015-10-06T20:00:00Z',
+  })
+# ---
 # name: test_update_member_roles
-  <class 'dict'> {
+  dict({
     'administrator': False,
     'handle': 'leeashley',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'label_role': 'label_manager',
     'project_role': 'project_editor',
     'reference_role': None,
@@ -210,16 +222,5 @@
     'sample_role': None,
     'subtraction_role': None,
     'upload_role': None,
-  }
----
-# name: test_update_space
-  <class 'dict'> {
-    'created_at': '2015-10-06T20:00:00Z',
-    'description': 'New description',
-    'id': 0,
-    'members': <class 'list'> [
-    ],
-    'name': 'New Name',
-    'updated_at': '2015-10-06T20:00:00Z',
-  }
----
+  })
+# ---

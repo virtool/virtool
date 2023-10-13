@@ -1,46 +1,47 @@
+# serializer version: 1
 # name: test_attach_subtractions[documents0]
-  <class 'dict'> {
+  dict({
     'id': 'sub_1',
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    'subtractions': list([
+      dict({
         'id': 'foo',
         'name': 'Foo',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'bar',
         'name': 'Bar',
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: test_attach_subtractions[documents1]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'id': 'sub_1',
-      'subtractions': <class 'list'> [
-        <class 'dict'> {
+      'subtractions': list([
+        dict({
           'id': 'foo',
           'name': 'Foo',
-        },
-        <class 'dict'> {
+        }),
+        dict({
           'id': 'bar',
           'name': 'Bar',
-        },
-      ],
-    },
-    <class 'dict'> {
+        }),
+      ]),
+    }),
+    dict({
       'id': 'sub_2',
-      'subtractions': <class 'list'> [
-        <class 'dict'> {
+      'subtractions': list([
+        dict({
           'id': 'foo',
           'name': 'Foo',
-        },
-      ],
-    },
-    <class 'dict'> {
+        }),
+      ]),
+    }),
+    dict({
       'id': 'sub_3',
-      'subtractions': <class 'list'> [
-      ],
-    },
-  ]
----
+      'subtractions': list([
+      ]),
+    }),
+  ])
+# ---

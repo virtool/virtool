@@ -17,7 +17,7 @@ async def test_public_routes_are_public(spawn_job_client):
     client = await spawn_job_client(authorize=False, add_route_table=test_routes)
 
     job_id = "test_job"
-    insert_result = await client.db.jobs.insert_one({"_id": job_id})
+    insert_result = await client.mongo.jobs.insert_one({"_id": job_id})
 
     assert insert_result["_id"] == job_id
 

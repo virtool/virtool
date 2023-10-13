@@ -1,5 +1,4 @@
 from asyncio import to_thread
-import logging
 from typing import Optional
 from typing import Union, List
 
@@ -25,7 +24,6 @@ from virtool.indexes.oas import (
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.references.db import check_right
 
-logger = logging.getLogger("indexes")
 routes = Routes()
 
 

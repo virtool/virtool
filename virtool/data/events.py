@@ -5,17 +5,17 @@ from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from logging import getLogger
 from typing import Awaitable, Callable, AsyncIterable
 
 from aioredis import Redis, Channel, ChannelClosedError
+from structlog import get_logger
 from virtool_core.models.basemodel import BaseModel
 from virtool_core.redis import resubscribe
 
 from virtool.api.custom_json import dump_string
 from virtool.utils import timestamp, get_model_by_name
 
-logger = getLogger("events")
+logger = get_logger("events")
 
 
 class Operation(str, Enum):
@@ -151,10 +151,10 @@ class EventPublisher:
                     data = event.data.dict()
                 except AttributeError:
                     logger.exception(
-                        "Encountered exception while publishing event: name=%s.%s operation=%s",
-                        event.domain,
-                        event.name,
-                        event.operation,
+                        "Encountered exception while publishing event",
+                        domain=event.domain,
+                        name=event.name,
+                        operation=event.operation,
                     )
                     continue
 
@@ -175,10 +175,10 @@ class EventPublisher:
                 )
 
                 logger.info(
-                    "Published event: name=%s.%s operation=%s",
-                    event.domain,
-                    event.name,
-                    event.operation,
+                    "Published event",
+                    domain=event.domain,
+                    name=event.name,
+                    operation=event.operation,
                 )
         except CancelledError:
             pass
@@ -214,7 +214,8 @@ class EventListener(AsyncIterable):
                     )
                 except asyncio.TimeoutError:
                     logger.critical(
-                        "Could not resubscribe to Redis channel %s", self._channel_name
+                        "Could not resubscribe to Redis channel",
+                        channel=self._channel_name,
                     )
                     sys.exit(1)
             except TypeError:

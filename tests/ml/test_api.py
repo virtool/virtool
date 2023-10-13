@@ -8,7 +8,7 @@ from virtool.config import get_config_from_app
 
 async def test_list(fake2, snapshot, spawn_client):
     """Test that a GET request to `/ml` returns a list of HMMs."""
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     await fake2.ml.populate()
 
@@ -22,7 +22,7 @@ async def test_list(fake2, snapshot, spawn_client):
 
 async def test_get(fake2, snapshot, spawn_client):
     """Test that a GET request to `/ml/:id` returns the details for a model."""
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     await fake2.ml.populate()
 
@@ -39,7 +39,7 @@ async def test_download_release(config, fake2, snapshot, spawn_client):
     Test that a GET request to `/ml/:id/releases/:id/model.tar.gz` returns a file
     download of the model archive for that release.
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
     get_config_from_app(client.app).data_path = config.data_path
 
     await fake2.ml.populate()

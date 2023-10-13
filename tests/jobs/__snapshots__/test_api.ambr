@@ -1,5 +1,337 @@
+# serializer version: 1
+# name: TestAcquire.test_ok
+  dict({
+    'acquired': True,
+    'archived': False,
+    'args': dict({
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    }),
+    'created_at': str,
+    'id': 'fb085f7f',
+    'key': str,
+    'ping': None,
+    'progress': 3,
+    'rights': dict({
+    }),
+    'stage': None,
+    'state': 'preparing',
+    'status': list([
+      dict({
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': str,
+      }),
+      dict({
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': str,
+      }),
+    ]),
+    'user': dict({
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+    'workflow': 'jobs_pathoscope_bowtie',
+  })
+# ---
+# name: TestArchive.test_ok
+  dict({
+    'acquired': False,
+    'archived': True,
+    'args': dict({
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    }),
+    'created_at': str,
+    'id': '7cf872dc',
+    'ping': None,
+    'progress': 10,
+    'rights': dict({
+    }),
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': 'preparing',
+    'status': list([
+      dict({
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': str,
+      }),
+      dict({
+        'error': None,
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
+        'timestamp': str,
+      }),
+    ]),
+    'user': dict({
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'fb085f7f',
+    }),
+    'workflow': 'jobs_pathoscope_bowtie',
+  })
+# ---
+# name: TestFind.test_archived[False]
+  dict({
+    'counts': dict({
+      'preparing': dict({
+        'jobs_pathoscope_bowtie': 1,
+      }),
+      'waiting': dict({
+        'jobs_build_index': 1,
+        'jobs_pathoscope_bowtie': 1,
+      }),
+    }),
+    'documents': list([
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': 'f60bae36',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'jobs_pathoscope_bowtie',
+      }),
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': 'da42dca3',
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'jobs_build_index',
+      }),
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': '7cf872dc',
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'jobs_pathoscope_bowtie',
+      }),
+    ]),
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
+# name: TestFind.test_archived[True]
+  dict({
+    'counts': dict({
+      'preparing': dict({
+        'jobs_pathoscope_bowtie': 1,
+      }),
+      'waiting': dict({
+        'jobs_build_index': 1,
+        'jobs_pathoscope_bowtie': 1,
+      }),
+    }),
+    'documents': list([
+      dict({
+        'archived': True,
+        'created_at': str,
+        'id': '09d01419',
+        'progress': 100,
+        'stage': 'GapNGCiKyJNmNoZgTcnB',
+        'state': 'complete',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'jobs_build_index',
+      }),
+      dict({
+        'archived': True,
+        'created_at': str,
+        'id': '3cbb22cc',
+        'progress': 30,
+        'stage': 'NkznHZPGfxsRfFzDHwBJ',
+        'state': 'error',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'jobs_nuvs',
+      }),
+    ]),
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
+# name: TestFind.test_basic
+  dict({
+    'counts': dict({
+      'cancelled': dict({
+        'jobs_create_sample': 1,
+      }),
+      'complete': dict({
+        'jobs_create_sample': 1,
+      }),
+      'error': dict({
+        'jobs_aodp': 1,
+        'jobs_create_sample': 1,
+        'jobs_pathoscope_bowtie': 1,
+      }),
+      'terminated': dict({
+        'jobs_build_index': 1,
+        'jobs_nuvs': 2,
+      }),
+      'timeout': dict({
+        'jobs_aodp': 1,
+      }),
+      'waiting': dict({
+        'jobs_aodp': 1,
+        'jobs_nuvs': 1,
+      }),
+    }),
+    'documents': list([
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': '9c61c0ca',
+        'progress': 30,
+        'stage': 'CvVtXeeYGAaIAXQZUmce',
+        'state': 'terminated',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'jobs_build_index',
+      }),
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': '7cce8f87',
+        'progress': 50,
+        'stage': 'nOHABdcaOhguYUqQeuEZ',
+        'state': 'error',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'jobs_pathoscope_bowtie',
+      }),
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': '83e4c4f6',
+        'progress': 60,
+        'stage': 'iLUYCkyqgDOaIrTOqeaP',
+        'state': 'error',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'jobs_aodp',
+      }),
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': '606cd773',
+        'progress': 100,
+        'stage': 'DTrfalRqlzXAreDlttNm',
+        'state': 'complete',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'jobs_create_sample',
+      }),
+      dict({
+        'archived': False,
+        'created_at': str,
+        'id': '031ff6cb',
+        'progress': 60,
+        'stage': 'GNkXjEpGpwJnLsgFiwud',
+        'state': 'cancelled',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'jobs_create_sample',
+      }),
+    ]),
+    'found_count': 11,
+    'page': 1,
+    'page_count': 3,
+    'per_page': 5,
+    'total_count': 11,
+  })
+# ---
+# name: TestFind.test_state_invalid
+  list([
+    dict({
+      'in': 'query string',
+      'loc': list([
+        'state',
+        0,
+      ]),
+      'msg': "value is not a valid enumeration member; permitted: 'cancelled', 'complete', 'error', 'preparing', 'running', 'timeout', 'terminated', 'waiting'",
+      'type': 'type_error.enum',
+    }),
+  ])
+# ---
+# name: TestPing.test_not_found
+  dict({
+    'id': 'not_found',
+    'message': 'Not found',
+  })
+# ---
 # name: TestPushStatus.test[None]
-  <class 'dict'> {
+  dict({
     'error': None,
     'progress': 23,
     'stage': 'build',
@@ -7,604 +339,604 @@
     'step_description': None,
     'step_name': None,
     'timestamp': '2015-10-06T20:00:00Z',
-  }
----
+  })
+# ---
 # name: TestPushStatus.test_bad_state
-  <class 'dict'> {
-    'errors': <class 'dict'> {
-      'state': <class 'list'> [
+  dict({
+    'errors': dict({
+      'state': list([
         'unallowed value bad',
-      ],
-    },
+      ]),
+    }),
     'id': 'invalid_input',
     'message': 'Invalid input',
-  }
----
+  })
+# ---
 # name: TestPushStatus.test_error[invalid-invalid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'type': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-invalid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'type': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-invalid-valid]
-  <class 'tuple'> (
+  tuple(
     201,
-    <class 'dict'> {
-      'error': <class 'dict'> {
-        'details': <class 'list'> [
+    dict({
+      'error': dict({
+        'details': list([
           'Valid',
-        ],
-        'traceback': <class 'list'> [
+        ]),
+        'traceback': list([
           'Valid',
-        ],
+        ]),
         'type': 'KeyError',
-      },
+      }),
       'progress': 14,
       'stage': 'fastqc',
       'state': 'error',
       'step_description': None,
       'step_name': None,
       'timestamp': '2015-10-06T20:00:00Z',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-missing-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-missing-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-missing-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-valid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-valid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[invalid-valid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'traceback': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'traceback': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-invalid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-invalid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-invalid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-missing-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-missing-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-missing-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-valid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-valid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[missing-valid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'required field',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-invalid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-invalid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-invalid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-missing-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-missing-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-missing-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-valid-invalid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'must be of string type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-valid-missing]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-            'type': <class 'list'> [
+            ]),
+            'type': list([
               'required field',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_error[valid-valid-valid]
-  <class 'tuple'> (
+  tuple(
     422,
-    <class 'dict'> {
-      'errors': <class 'dict'> {
-        'error': <class 'list'> [
-          <class 'dict'> {
-            'details': <class 'list'> [
+    dict({
+      'errors': dict({
+        'error': list([
+          dict({
+            'details': list([
               'must be of list type',
-            ],
-            'traceback': <class 'list'> [
+            ]),
+            'traceback': list([
               'must be of list type',
-            ],
-          },
-        ],
-      },
+            ]),
+          }),
+        ]),
+      }),
       'id': 'invalid_input',
       'message': 'Invalid input',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_missing_error
-  <class 'tuple'> (
+  tuple(
     400,
-    <class 'dict'> {
+    dict({
       'id': 'bad_request',
       'message': 'Missing error information',
-    },
+    }),
   )
----
+# ---
 # name: TestPushStatus.test_name_and_description
-  <class 'dict'> {
+  dict({
     'error': None,
     'progress': 14,
     'stage': 'fastqc',
@@ -612,246 +944,104 @@
     'step_description': 'Run FastQC on the raw data',
     'step_name': 'FastQC',
     'timestamp': '2015-10-06T20:00:00Z',
-  }
----
-# name: test_acquire[None]
-  <class 'dict'> {
-    'acquired': True,
-    'archived': False,
-    'args': <class 'dict'> {
-      'analysis_id': 'e410429b',
-      'index_id': '465428b0',
-      'name': None,
-      'sample_id': '1e01a382',
-      'username': 'igboyes',
-      'workflow': 'nuvs',
-    },
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': '4c530449',
-    'key': 'key',
-    'ping': None,
-    'progress': 3,
-    'rights': <class 'dict'> {
-    },
-    'stage': None,
-    'state': 'preparing',
-    'status': <class 'list'> [
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': 'mk_analysis_dir',
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 1,
-        'stage': 'import_results',
-        'state': 'complete',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 3,
-        'stage': None,
-        'state': 'preparing',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-    'workflow': 'build_index',
-  }
----
-# name: test_archive[None]
-  <class 'dict'> {
-    'acquired': False,
-    'archived': True,
-    'args': <class 'dict'> {
-      'analysis_id': 'e410429b',
-      'index_id': '465428b0',
-      'name': None,
-      'sample_id': '1e01a382',
-      'username': 'igboyes',
-      'workflow': 'nuvs',
-    },
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': '4c530449',
-    'ping': None,
-    'progress': 1,
-    'rights': <class 'dict'> {
-    },
-    'stage': 'import_results',
-    'state': 'complete',
-    'status': <class 'list'> [
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': 'mk_analysis_dir',
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 1,
-        'stage': 'import_results',
-        'state': 'complete',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-    'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_bulk_archive[None]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'archived': True,
       'created_at': '2019-03-07T23:20:30Z',
       'id': '7467tozj',
       'progress': 95,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
-      },
+        'id': 'bf1b993c',
+      }),
       'workflow': 'build_index',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2017-09-21T03:00:07Z',
       'id': '8cy4mjvp',
       'progress': 97,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
-      },
+        'id': 'bf1b993c',
+      }),
       'workflow': 'build_index',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2024-08-23T20:27:15Z',
       'id': '8vvqvnuk',
       'progress': 90,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
-      },
+        'id': 'bf1b993c',
+      }),
       'workflow': 'nuvs',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2021-08-30T04:32:27Z',
       'id': 'awvuon9b',
       'progress': 66,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
-      },
+        'id': 'bf1b993c',
+      }),
       'workflow': 'pathoscope',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'archived': True,
       'created_at': '2023-02-28T08:11:58Z',
       'id': 'sk1wj693',
       'progress': 82,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'bob',
-        'id': 'test',
-      },
+        'id': 'bf1b993c',
+      }),
       'workflow': 'create_sample',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_cancel[None]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'analysis_id': 'e410429b',
       'index_id': '465428b0',
       'name': None,
       'sample_id': '1e01a382',
       'username': 'igboyes',
       'workflow': 'nuvs',
-    },
+    }),
     'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
     'ping': None,
     'progress': 0,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': 'mk_analysis_dir',
     'state': 'running',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -859,8 +1049,8 @@
         'step_description': None,
         'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -868,8 +1058,8 @@
         'step_description': None,
         'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'error': None,
         'progress': 0,
         'stage': 'mk_analysis_dir',
@@ -877,1504 +1067,61 @@
         'step_description': None,
         'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
+      'handle': 'laura56',
+      'id': 'fb085f7f',
+    }),
     'workflow': 'build_index',
-  }
----
-# name: test_find_beta[None-None-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-08-22T18:08:27Z',
-        'id': '8vvqvnuk',
-        'progress': 90,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-05-31T18:03:22Z',
-        'id': 't894ea8p',
-        'progress': 94,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2023-02-26T20:43:23Z',
-        'id': 'sk1wj693',
-        'progress': 82,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-08-28T19:55:40Z',
-        'id': 'awvuon9b',
-        'progress': 66,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-08-20T07:38:55Z',
-        'id': '5k9d4ocj',
-        'progress': 97,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-03-06T19:40:07Z',
-        'id': '7467tozj',
-        'progress': 95,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-12-20T22:49:01Z',
-        'id': 'bhjlnu44',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-    ],
-    'found_count': 9,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[None-None-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-08-22T18:08:27Z',
-        'id': '8vvqvnuk',
-        'progress': 90,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-05-31T18:03:22Z',
-        'id': 't894ea8p',
-        'progress': 94,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2024-03-13T11:48:20Z',
-        'id': '3cvzfiqz',
-        'progress': 85,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2023-02-26T20:43:23Z',
-        'id': 'sk1wj693',
-        'progress': 82,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-08-28T19:55:40Z',
-        'id': 'awvuon9b',
-        'progress': 66,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2021-04-11T17:06:04Z',
-        'id': 'v68r5j2t',
-        'progress': 81,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-08-30T17:41:05Z',
-        'id': 'wrw4i0eh',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-08-20T07:38:55Z',
-        'id': '5k9d4ocj',
-        'progress': 97,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-04-24T16:02:53Z',
-        'id': 'w4cckpcq',
-        'progress': 51,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-03-06T19:40:07Z',
-        'id': '7467tozj',
-        'progress': 95,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-12-20T22:49:01Z',
-        'id': 'bhjlnu44',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2017-08-03T02:15:04Z',
-        'id': 'zc7h2ftd',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2016-03-23T13:37:46Z',
-        'id': '4jua0mbk',
-        'progress': 99,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-    ],
-    'found_count': 15,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[None-None-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2024-03-13T11:48:20Z',
-        'id': '3cvzfiqz',
-        'progress': 85,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2021-04-11T17:06:04Z',
-        'id': 'v68r5j2t',
-        'progress': 81,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-08-30T17:41:05Z',
-        'id': 'wrw4i0eh',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-04-24T16:02:53Z',
-        'id': 'w4cckpcq',
-        'progress': 51,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2017-08-03T02:15:04Z',
-        'id': 'zc7h2ftd',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2016-03-23T13:37:46Z',
-        'id': '4jua0mbk',
-        'progress': 99,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-    ],
-    'found_count': 6,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[None-running-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[None-running-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[None-running-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[bob-None-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[bob-None-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[bob-None-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[bob-running-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[bob-running-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[bob-running-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[users2-None-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-08-22T18:08:27Z',
-        'id': '8vvqvnuk',
-        'progress': 90,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-05-31T18:03:22Z',
-        'id': 't894ea8p',
-        'progress': 94,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2023-02-26T20:43:23Z',
-        'id': 'sk1wj693',
-        'progress': 82,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-08-28T19:55:40Z',
-        'id': 'awvuon9b',
-        'progress': 66,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-08-20T07:38:55Z',
-        'id': '5k9d4ocj',
-        'progress': 97,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-03-06T19:40:07Z',
-        'id': '7467tozj',
-        'progress': 95,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-12-20T22:49:01Z',
-        'id': 'bhjlnu44',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-    ],
-    'found_count': 9,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[users2-None-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-08-22T18:08:27Z',
-        'id': '8vvqvnuk',
-        'progress': 90,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2024-05-31T18:03:22Z',
-        'id': 't894ea8p',
-        'progress': 94,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2024-03-13T11:48:20Z',
-        'id': '3cvzfiqz',
-        'progress': 85,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2023-02-26T20:43:23Z',
-        'id': 'sk1wj693',
-        'progress': 82,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2021-08-28T19:55:40Z',
-        'id': 'awvuon9b',
-        'progress': 66,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2021-04-11T17:06:04Z',
-        'id': 'v68r5j2t',
-        'progress': 81,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-08-30T17:41:05Z',
-        'id': 'wrw4i0eh',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-08-20T07:38:55Z',
-        'id': '5k9d4ocj',
-        'progress': 97,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-04-24T16:02:53Z',
-        'id': 'w4cckpcq',
-        'progress': 51,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2019-03-06T19:40:07Z',
-        'id': '7467tozj',
-        'progress': 95,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-12-20T22:49:01Z',
-        'id': 'bhjlnu44',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2017-08-03T02:15:04Z',
-        'id': 'zc7h2ftd',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2016-03-23T13:37:46Z',
-        'id': '4jua0mbk',
-        'progress': 99,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-    ],
-    'found_count': 15,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[users2-None-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2024-03-13T11:48:20Z',
-        'id': '3cvzfiqz',
-        'progress': 85,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2021-04-11T17:06:04Z',
-        'id': 'v68r5j2t',
-        'progress': 81,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_subtraction',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-08-30T17:41:05Z',
-        'id': 'wrw4i0eh',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2019-04-24T16:02:53Z',
-        'id': 'w4cckpcq',
-        'progress': 51,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2017-08-03T02:15:04Z',
-        'id': 'zc7h2ftd',
-        'progress': 100,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': True,
-        'created_at': '2016-03-23T13:37:46Z',
-        'id': '4jua0mbk',
-        'progress': 99,
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-    ],
-    'found_count': 6,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[users2-running-False]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[users2-running-None]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2025-08-31T21:25:22Z',
-        'id': 'fczq56va',
-        'progress': 100,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'pathoscope',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'created_at': '2017-09-19T15:00:31Z',
-        'id': '8cy4mjvp',
-        'progress': 97,
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
-# name: test_find_beta[users2-running-True]
-  <class 'dict'> {
-    'counts': <class 'dict'> {
-      'cancelled': <class 'dict'> {
-        'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 2,
-      },
-      'complete': <class 'dict'> {
-        'create_sample': 2,
-        'nuvs': 1,
-      },
-      'running': <class 'dict'> {
-        'build_index': 1,
-        'pathoscope': 1,
-      },
-    },
-    'documents': <class 'list'> [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 15,
-  }
----
+  })
+# ---
 # name: test_get[None]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
-      'analysis_id': 'e410429b',
-      'index_id': '465428b0',
-      'name': None,
-      'sample_id': '1e01a382',
-      'username': 'igboyes',
-      'workflow': 'nuvs',
-    },
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': '4c530449',
+    'args': dict({
+      'fact': 'LdJCGRddpwdyFKunVyUD',
+      'nearly': 951.93581531826,
+      'network': 'fhKcDVBJbHFDutYbbXjg',
+      'season': 6981,
+      'task': 'RrnFxjyvDAqsRnDaMrco',
+      'third': 'SUEXExIZVPeFzGRmMglP',
+    }),
+    'created_at': str,
+    'id': '7cf872dc',
     'ping': None,
-    'progress': 1,
-    'rights': <class 'dict'> {
-    },
-    'stage': 'import_results',
-    'state': 'complete',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'progress': 10,
+    'rights': dict({
+    }),
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': 'preparing',
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
+        'timestamp': str,
+      }),
+      dict({
         'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 0,
-        'stage': 'mk_analysis_dir',
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-      <class 'dict'> {
-        'error': None,
-        'progress': 1,
-        'stage': 'import_results',
-        'state': 'complete',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      },
-    ],
-    'user': <class 'dict'> {
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': 'preparing',
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
+        'timestamp': str,
+      }),
+    ]),
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-    'workflow': 'build_index',
-  }
----
-# name: test_ping[None]
-  <class 'dict'> {
-    'pinged_at': '2015-10-06T20:00:00Z',
-  }
----
+      'id': 'fb085f7f',
+    }),
+    'workflow': 'jobs_pathoscope_bowtie',
+  })
+# ---

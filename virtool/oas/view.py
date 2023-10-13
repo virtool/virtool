@@ -44,6 +44,7 @@ class _OASResponseBuilder:
         return self._handle_pydantic_base_model(obj)
 
     def _handle_status_code_type(self, obj, *args):
+        print(obj)
         if is_status_code_type(typing.get_origin(obj)):
             example, new_dict = None, None
             status_code = typing.get_origin(obj).__name__[1:]

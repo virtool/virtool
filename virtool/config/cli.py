@@ -5,10 +5,10 @@ We
 """
 import asyncio
 import json
-from logging import getLogger
 
 import click
 import uvloop
+from structlog import get_logger
 from virtool_core.logging import configure_logs
 
 from virtool.app import run_api_server
@@ -40,7 +40,7 @@ from virtool.migration.show import show_revisions
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
 
-logger = getLogger("config")
+logger = get_logger("config")
 
 
 def create_default_map():

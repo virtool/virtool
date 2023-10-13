@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from asyncio import gather
-from logging import getLogger
 from typing import List
+
+from structlog import get_logger
 
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.types import Document
 
-logger = getLogger(__name__)
+logger = get_logger("jobs")
 
 JOB_REMOVED_FROM_QUEUE = 0
 JOB_CANCELLATION_DISPATCHED = 1
@@ -49,7 +50,7 @@ class JobsClient(AbstractJobsClient):
         :param job_id: the job ID
         """
         await self._redis.rpush(f"jobs_{workflow}", job_id)
-        logger.debug("Enqueued job: %s", job_id)
+        logger.debug("Enqueued job", id=job_id, workflow=workflow)
 
     async def cancel(self, job_id: str) -> int:
         """
@@ -74,15 +75,15 @@ class JobsClient(AbstractJobsClient):
         )
 
         if any(counts):
-            logger.debug("Removed job from Redis job queue: %s", job_id)
+            logger.debug("Removed job from Redis job list", id=job_id)
             return JOB_REMOVED_FROM_QUEUE
 
         await self._redis.publish("channel:cancel", job_id)
-        logger.debug("Requested job cancellation via Redis: %s", job_id)
+        logger.debug("Requested job cancellation via Redis", id=job_id)
 
         return JOB_CANCELLATION_DISPATCHED
 
-    async def list(self) -> List[str]:
+    async def list(self) -> tuple[str]:
         """
         List all job IDs in Redis.
 

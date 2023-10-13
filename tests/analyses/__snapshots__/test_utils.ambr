@@ -1,16 +1,17 @@
+# serializer version: 1
 # name: test_attach_analysis_files[False]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
-    'files': <class 'list'> [
-    ],
+    'files': list([
+    ]),
     'ready': True,
-  }
----
+  })
+# ---
 # name: test_attach_analysis_files[True]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'analysis': 'foobar',
         'description': None,
         'format': 'fasta',
@@ -19,8 +20,8 @@
         'name_on_disk': '1-reference-fa',
         'size': None,
         'uploaded_at': None,
-      },
-    ],
+      }),
+    ]),
     'ready': True,
-  }
----
+  })
+# ---

@@ -21,7 +21,11 @@ from virtool.authorization.client import (
     AuthorizationClient,
     get_authorization_client_from_req,
 )
-from virtool.data.errors import ResourceNotFoundError, ResourceError
+from virtool.data.errors import (
+    ResourceNotFoundError,
+    ResourceError,
+    ResourceConflictError,
+)
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
@@ -53,7 +57,7 @@ class RolesView(PydanticView):
 class AdminUsersView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
-        self, administrator: Optional[bool] = None, term: Optional[str] = None
+        self, administrator: bool | None = None, term: str | None = None
     ) -> r200[ListAdministratorResponse]:
         """
         Find users.
@@ -89,7 +93,7 @@ class AdminUsersView(PydanticView):
 @routes.view("/admin/users/{user_id}")
 class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def get(self, user_id: str, /) -> Union[r200[UserResponse], r404]:
+    async def get(self, user_id: str, /) -> r200[UserResponse] | r404:
         """
         Get a user.
 
@@ -110,7 +114,7 @@ class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
         self, user_id: str, /, data: UpdateUserRequest
-    ) -> Union[r200[UserResponse], r404]:
+    ) -> r200[UserResponse] | r404:
         """
         Update a user.
 
@@ -119,7 +123,7 @@ class AdminUserView(PydanticView):
             404: User not found
         """
 
-        if not await check_can_edit_user(
+        if not await check_administrator_can_update_user(
             get_authorization_client_from_req(self.request),
             self.request["client"].user_id,
             user_id,
@@ -130,36 +134,10 @@ class AdminUserView(PydanticView):
             user = await get_data_from_req(self.request).users.update(user_id, data)
         except ResourceNotFoundError:
             raise NotFound()
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
 
         return json_response(user)
-
-
-async def check_can_edit_user(
-    authorization_client: AuthorizationClient, req_user_id: str, user_id: str
-):
-    """
-    Check if an administrator user has sufficient permissions to update another user
-
-    Returns True if the user to be edited is not an administrator or if the requesting
-    user is a full administrator.
-
-    :param authorization_client: the authorization client
-    :param req_user_id: the requesting user id
-    :param user_id: the id of the user being updated
-
-    """
-    admin_tuple, req_admin_tuple = await asyncio.gather(
-        authorization_client.get_administrator(user_id),
-        authorization_client.get_administrator(req_user_id),
-    )
-
-    if admin_tuple[1] is None:
-        return True
-
-    if req_admin_tuple[1] == AdministratorRole.FULL:
-        return True
-
-    return False
 
 
 @routes.view("/admin/users/{user_id}/role")
@@ -211,3 +189,31 @@ class AdminActionsView(PydanticView):
             raise HTTPBadRequest(text="Invalid action name")
 
         return Response(status=202)
+
+
+async def check_administrator_can_update_user(
+    authorization_client: AuthorizationClient, req_user_id: str, user_id: str
+) -> bool:
+    """
+    Check if an administrator user has sufficient permissions to update another user
+
+    Returns True if the user to be edited is not an administrator or if the requesting
+    user is a full administrator.
+
+    :param authorization_client: the authorization client
+    :param req_user_id: the requesting user id
+    :param user_id: the id of the user being updated
+
+    """
+    admin_tuple, req_admin_tuple = await asyncio.gather(
+        authorization_client.get_administrator(user_id),
+        authorization_client.get_administrator(req_user_id),
+    )
+
+    if admin_tuple[1] is None:
+        return True
+
+    if req_admin_tuple[1] == AdministratorRole.FULL:
+        return True
+
+    return False

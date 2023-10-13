@@ -1,4 +1,3 @@
-from logging import getLogger
 from typing import Union, List
 
 from sqlalchemy import select
@@ -16,12 +15,7 @@ from virtool_core.models.roles import (
 from virtool_core.models.spaces import SpaceMinimal, Space, MemberSearchResult
 from virtool_core.utils import document_enum
 
-from virtool.mongo.core import Mongo
-from virtool.mongo.utils import id_exists
-from virtool.spaces.oas import (
-    UpdateSpaceRequest,
-    UpdateMemberRequest,
-)
+import virtool.utils
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import (
     SpaceMembership,
@@ -31,17 +25,18 @@ from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceConflictError,
 )
+from virtool.mongo.core import Mongo
+from virtool.mongo.utils import id_exists
 from virtool.spaces.models import SQLSpace
+from virtool.spaces.oas import (
+    UpdateSpaceRequest,
+    UpdateMemberRequest,
+)
 from virtool.spaces.utils import (
     remove_user_roles,
-    format_user,
-    format_users,
+    format_space_user,
+    format_space_users,
 )
-
-import virtool.utils
-
-logger = getLogger(__name__)
-
 
 AVAILABLE_ROLES = [
     {"id": role, "name": role.capitalize(), "description": role.__doc__}
@@ -104,7 +99,7 @@ class SpacesData:
         return Space(
             **{
                 **space.to_dict(),
-                "members": await format_users(
+                "members": await format_space_users(
                     self._authorization_client, self._db, space_id
                 ),
             }
@@ -145,7 +140,7 @@ class SpacesData:
         return Space(
             **{
                 **row,
-                "members": await format_users(
+                "members": await format_space_users(
                     self._authorization_client, self._db, space_id
                 ),
             }
@@ -168,7 +163,7 @@ class SpacesData:
 
         return MemberSearchResult(
             **{
-                "items": await format_users(
+                "items": await format_space_users(
                     self._authorization_client, self._db, space_id
                 ),
                 "available_roles": AVAILABLE_ROLES,
@@ -176,13 +171,14 @@ class SpacesData:
         )
 
     async def update_member(
-        self, space_id: int, member_id: Union[str, int], data: UpdateMemberRequest
+        self, space_id: int, member_id: int | str, data: UpdateMemberRequest
     ):
         """
         Change the roles of a member.
 
         :param space_id: the space id.
         :param member_id: the id of the user to update.
+        :param data: the updates to the member
         :return: the space
         """
 
@@ -221,7 +217,6 @@ class SpacesData:
                 )
 
         if "reference" in data:
-
             await remove_user_roles(
                 self._authorization_client, member_id, space_id, [SpaceReferenceRole]
             )
@@ -232,7 +227,6 @@ class SpacesData:
                 )
 
         if "sample" in data:
-
             await remove_user_roles(
                 self._authorization_client, member_id, space_id, [SpaceSampleRole]
             )
@@ -253,7 +247,6 @@ class SpacesData:
                 )
 
         if "upload" in data:
-
             await remove_user_roles(
                 self._authorization_client, member_id, space_id, [SpaceUploadRole]
             )
@@ -266,10 +259,10 @@ class SpacesData:
         members = await self._authorization_client.list_space_users(space_id)
 
         for member in members:
-
             if member[0] == member_id:
-
-                return format_user(await self._db.users.find_one(member_id), member[1])
+                return format_space_user(
+                    await self._db.users.find_one(member_id), member[1]
+                )
 
         raise ResourceNotFoundError
 

@@ -1,29 +1,26 @@
 import datetime
-import logging
-from typing import Optional
 
 import aiohttp
+from structlog import get_logger
 
-import virtool.errors
 import virtool.utils
+from virtool.errors import GitHubError
+from virtool.types import Document
 
-
-logger = logging.getLogger("github")
-
-BASE_URL = "https://api.github.com/repos"
-
-EXCLUDED_UPDATE_FIELDS = ("content_type", "download_url", "etag", "retrieved_at")
-
-HEADERS = {"Accept": "application/vnd.github.v3+json"}
+logger = get_logger("github")
 
 
 def create_update_subdocument(
     release: dict,
     ready: bool,
     user_id: str,
-    created_at: Optional[datetime.datetime] = None,
+    created_at: datetime.datetime | None = None,
 ) -> dict:
-    update = {k: release[k] for k in release if k not in EXCLUDED_UPDATE_FIELDS}
+    update = {
+        k: release[k]
+        for k in release
+        if k not in ("content_type", "download_url", "etag", "retrieved_at")
+    }
 
     return {
         **update,
@@ -57,9 +54,11 @@ def format_release(release: dict) -> dict:
     }
 
 
-def get_etag(release: Optional[dict]) -> Optional[str]:
+def get_etag(release: Document | None) -> str | None:
     """
-    Get the ETag from a release dict. Return `None` when the key is missing or the input is not a `dict`.
+    Get the ETag from a release dict.
+
+    Return `None` when the key is missing or the input is not a `dict`.
 
     :param release: a release
     :return: an ETag or `None`
@@ -74,13 +73,12 @@ def get_etag(release: Optional[dict]) -> Optional[str]:
 async def get_release(
     session: aiohttp.ClientSession,
     slug: str,
-    etag: Optional[str] = None,
-    release_id: Optional[str] = "latest",
-) -> Optional[dict]:
+    etag: str | None = None,
+    release_id: str | None = "latest",
+) -> dict | None:
     """
     GET data from a GitHub API url.
 
-    :param config: the application config object
     :param session: the application HTTP client session
     :param slug: the slug for the GitHub repo
     :param etag: an ETag for the resource to be used with the `If-None-Match` header
@@ -88,14 +86,14 @@ async def get_release(
 
     :return: the latest release
     """
-    url = f"{BASE_URL}/{slug}/releases/{release_id}"
+    url = f"https://api.github.com/repos/{slug}/releases/{release_id}"
 
-    headers = dict(HEADERS)
+    headers = {"Accept": "application/vnd.github.v3+json"}
 
     if etag:
         headers["If-None-Match"] = etag
 
-    logger.debug("Making GitHub request to %s", url)
+    logger.info("Making GitHub request", url=url)
 
     async with session.get(
         url,
@@ -106,12 +104,14 @@ async def get_release(
 
         if int(rate_limit) / int(rate_limit_remaining) > 2.0:
             logger.warning(
-                "Less than half of GitHub remaining (%s of %s)",
-                rate_limit_remaining,
-                rate_limit,
+                "Less than half of GitHub remaining",
+                remaining=rate_limit_remaining,
+                limit=rate_limit,
             )
 
-        logger.debug("Fetched release: %s/%s (%s)", slug, release_id, resp.status)
+        logger.debug(
+            "Fetched GitHub release", slug=slug, id=release_id, http_status=resp.status
+        )
 
         if resp.status == 200:
             data = await resp.json()
@@ -125,6 +125,9 @@ async def get_release(
             return None
 
         else:
-            warning = f"Encountered error {resp.status} {await resp.json()}"
-            logger.warning(warning)
-            raise virtool.errors.GitHubError(warning)
+            logger.warning(
+                "Encountered error during GitHub request",
+                http_status=resp.status,
+                body=await resp.json(),
+            )
+            raise GitHubError("Encountered error {resp.status} {await resp.json()}")

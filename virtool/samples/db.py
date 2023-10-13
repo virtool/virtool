@@ -3,7 +3,6 @@ Code for working with samples in the database and filesystem.
 
 """
 import asyncio
-import logging
 import os
 from asyncio import to_thread
 from collections import defaultdict
@@ -22,7 +21,8 @@ import virtool.samples.utils
 import virtool.utils
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
-from virtool.mongo.utils import id_exists, get_one_field
+from virtool.groups.pg import SQLGroup
+from virtool.mongo.utils import get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
 from virtool.types import Document
@@ -31,8 +31,6 @@ from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-logger = logging.getLogger(__name__)
 
 
 LIST_PROJECTION = [
@@ -184,25 +182,25 @@ def convert_workflow_condition(condition: str) -> Optional[dict]:
 
 
 async def create_sample(
-    db,
+    mongo,
     name: str,
     host: str,
     isolate: str,
-    group: str,
+    group: int | str,
     locale: str,
     library_type: str,
-    subtractions: List[str],
+    subtractions: list[str],
     notes: str,
-    labels: List[int],
+    labels: list[int],
     user_id: str,
     settings: Settings,
     paired: bool = False,
-    _id: Optional[str] = None,
+    _id: str | None = None,
 ) -> Document:
     """
     Create, insert, and return a new sample document.
 
-    :param db: application database client
+    :param mongo: the application mongo client
     :param name: the sample name
     :param host: user-defined host for the sample
     :param isolate: user-defined isolate for the sample
@@ -219,9 +217,9 @@ async def create_sample(
     :return: the newly inserted sample document
     """
     if _id is None:
-        _id = await virtool.mongo.utils.get_new_id(db.samples)
+        _id = await virtool.mongo.utils.get_new_id(mongo.samples)
 
-    document = await db.samples.insert_one(
+    document = await mongo.samples.insert_one(
         {
             "_id": _id,
             "name": name,
@@ -368,19 +366,26 @@ async def recalculate_workflow_tags(
     )
 
 
-async def validate_force_choice_group(
-    db, data: dict, session: Optional[AsyncIOMotorClientSession] = None
-) -> Optional[str]:
-    group = data.get("group")
+async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None:
+    group_id: int | str | None = data.get("group")
 
-    if group is None:
+    if group_id is None:
         return "Group value required for sample creation"
 
-    if group == "":
+    if group_id == "":
         return None
 
-    if not await id_exists(db.groups, group, session=session):
-        return "Group does not exist"
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLGroup).where(
+                (SQLGroup.id == group_id)
+                if isinstance(group_id, int)
+                else SQLGroup.legacy_id == group_id
+            )
+        )
+
+        if not result:
+            return "Group does not exist"
 
     return None
 

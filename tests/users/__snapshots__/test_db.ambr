@@ -1,50 +1,51 @@
+# serializer version: 1
 # name: test_attach_user_transform[False]
-  <class 'dict'> {
+  dict({
     '_id': 'bar',
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_attach_user_transform[True]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'bar',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       '_id': 'foo',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       '_id': 'baz',
-      'user': <class 'dict'> {
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
-    },
-  ]
----
+      }),
+    }),
+  ])
+# ---
 # name: test_update_keys[False-False-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': False,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -53,21 +54,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_keys[False-False-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -76,21 +77,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_keys[False-True-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': False,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -99,21 +100,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_keys[False-True-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -122,21 +123,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_keys[True-False-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': False,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -145,21 +146,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_keys[True-False-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -168,21 +169,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_keys[True-True-False]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': False,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -191,21 +192,21 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_update_keys[True-True-True]
-  <class 'dict'> {
+  dict({
     '_id': 'foobar',
     'administrator': True,
-    'groups': <class 'list'> [
+    'groups': list([
       'peasants',
       'kings',
-    ],
-    'permissions': <class 'dict'> {
+    ]),
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -214,9 +215,9 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bob',
-    },
-  }
----
+    }),
+  })
+# ---

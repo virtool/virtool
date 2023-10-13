@@ -1,12 +1,11 @@
-from logging import getLogger
-
 from aiohttp.web import Application
+from structlog import get_logger
 
 from virtool.authorization.client import get_authorization_client_from_app
 from virtool.startup import get_scheduler_from_app
 from virtool.utils import get_http_session_from_app
 
-logger = getLogger("shutdown")
+logger = get_logger("shutdown")
 
 
 async def shutdown_authorization_client(app: Application):

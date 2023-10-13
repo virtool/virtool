@@ -1,87 +1,88 @@
+# serializer version: 1
 # name: test_label_attacher[documents0]
-  <class 'dict'> {
+  dict({
     'id': 'foo',
-    'labels': <class 'list'> [
-      <class 'dict'> {
+    'labels': list([
+      dict({
         'color': '#a83432',
         'description': 'This is a bug',
         'id': 1,
         'name': 'Bug',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'color': '#03fc20',
         'description': 'This is a question',
         'id': 2,
         'name': 'Question',
-      },
-    ],
+      }),
+    ]),
     'name': 'Foo',
-  }
----
+  })
+# ---
 # name: test_label_attacher[documents1]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'id': 'foo',
-      'labels': <class 'list'> [
-        <class 'dict'> {
+      'labels': list([
+        dict({
           'color': '#03fc20',
           'description': 'This is a question',
           'id': 2,
           'name': 'Question',
-        },
-      ],
+        }),
+      ]),
       'name': 'Foo',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'id': 'bar',
-      'labels': <class 'list'> [
-        <class 'dict'> {
+      'labels': list([
+        dict({
           'color': '#a83432',
           'description': 'This is a bug',
           'id': 1,
           'name': 'Bug',
-        },
-        <class 'dict'> {
+        }),
+        dict({
           'color': '#03fc20',
           'description': 'This is a question',
           'id': 2,
           'name': 'Question',
-        },
-      ],
+        }),
+      ]),
       'name': 'Bar',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'id': 'baz',
-      'labels': <class 'list'> [
-      ],
+      'labels': list([
+      ]),
       'name': 'Baz',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_sample_count_attacher[labels0]
-  <class 'dict'> {
+  dict({
     'color': '#a83432',
     'count': 1,
     'description': 'This is a bug',
     'id': 1,
     'name': 'Bug',
-  }
----
+  })
+# ---
 # name: test_sample_count_attacher[labels1]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'color': '#03fc20',
       'count': 2,
       'description': 'This is a question',
       'id': 2,
       'name': 'Question',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'color': '#02db21',
       'count': 0,
       'description': 'This is a info',
       'id': 3,
       'name': 'Info',
-    },
-  ]
----
+    }),
+  ])
+# ---

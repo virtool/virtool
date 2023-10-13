@@ -1,73 +1,74 @@
-# name: test_finalize[db]
-  <class 'dict'> {
+# serializer version: 1
+# name: test_finalize[mongo]
+  dict({
     '_id': 'apple',
     'count': 100,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'deleted': False,
-    'file': <class 'dict'> {
+    'file': dict({
       'id': 642,
       'name': 'malus.fa.gz',
-    },
-    'gc': <class 'dict'> {
+    }),
+    'gc': dict({
       'a': 0.319,
       'c': 0.18,
       'g': 0.18,
       'n': 0.002,
       't': 0.319,
-    },
+    }),
     'has_file': True,
-    'job': <class 'dict'> {
+    'job': dict({
       'id': 'fb085f7f',
-    },
+    }),
     'name': 'Malus',
     'nickname': 'Apple',
     'ready': True,
-    'user': <class 'dict'> {
+    'user': dict({
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_finalize[obj]
-  <class 'dict'> {
+  dict({
     'count': 100,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': <class 'dict'> {
+    'file': dict({
       'id': 642,
       'name': 'malus.fa.gz',
-    },
-    'files': <class 'list'> [
-    ],
-    'gc': <class 'dict'> {
+    }),
+    'files': list([
+    ]),
+    'gc': dict({
       'a': 0.319,
       'c': 0.18,
       'g': 0.18,
       'n': 0.002,
       't': 0.319,
-    },
+    }),
     'id': 'apple',
-    'job': <class 'dict'> {
+    'job': dict({
       'archived': False,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': <JobState.WAITING: 'waiting'>,
-      'user': <class 'dict'> {
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': <JobState.PREPARING: 'preparing'>,
+      'user': dict({
         'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'jobs_pathoscope_bowtie',
-    },
-    'linked_samples': <class 'list'> [
-    ],
+    }),
+    'linked_samples': list([
+    ]),
     'name': 'Malus',
     'nickname': 'Apple',
     'ready': True,
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---

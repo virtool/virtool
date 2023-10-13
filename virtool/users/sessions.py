@@ -43,7 +43,7 @@ authenticated session, the data layer should raise a generic
 
 import secrets
 from datetime import timedelta
-from typing import Tuple
+
 from aioredis import Redis
 from virtool_core.models.session import (
     Session,
@@ -52,10 +52,10 @@ from virtool_core.models.session import (
 import virtool.utils
 from virtool.api.custom_json import dump_string
 from virtool.api.custom_json import isoformat_to_datetime, loads
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceNotFoundError,
 )
-from virtool.data.domain import DataLayerDomain
 from virtool.utils import get_safely, hash_key
 
 
@@ -92,7 +92,7 @@ class SessionData(DataLayerDomain):
         ip: str,
         user_id: str,
         remember: bool = False,
-    ) -> Tuple[Session, str]:
+    ) -> tuple[Session, str]:
         """
         Creates a new authenticated session with the given ``ip`` and ``user_id``.
 
@@ -130,7 +130,7 @@ class SessionData(DataLayerDomain):
 
     async def create_reset(
         self, ip: str, user_id: str, remember: bool
-    ) -> Tuple[Session, str]:
+    ) -> tuple[Session, str]:
         """
         Creates a new reset session.
 

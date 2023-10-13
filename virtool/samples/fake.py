@@ -111,7 +111,7 @@ async def create_fake_sample(
 
     await create_sample(
         _id=sample_id,
-        db=db,
+        mongo=db,
         name=f"Fake {sample_id.upper()}",
         host="Vine",
         isolate="Isolate A1",

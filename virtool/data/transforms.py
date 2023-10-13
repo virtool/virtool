@@ -6,15 +6,15 @@ For example, you have a ``dict`` like the following:
 
 .. code-block:: python
 
-    label = {
-        "id": 12,
-        "name": "Apples",
-        "color": "FF0000",
-        "samples": ["abc123", "def456", "ghi789"],
-        "user": {
-            "id": "bob",
-        }
-    }
+   label = {
+       "id": 12,
+       "name": "Apples",
+       "color": "FF0000",
+       "samples": ["abc123", "def456", "ghi789"],
+       "user": {
+           "id": "bob",
+       }
+   }
 
 You have more information about the user and samples in separate collections and want to
 attach it to the document before sending it to the client.
@@ -26,10 +26,10 @@ You use :func:`apply_transforms` to apply the transforms to the label dictionary
 
 .. code-block:: python
 
-    transformed = await apply_transforms(
-        label,
-        [AttachSamplesTransform(mongo), AttachUserTransform(mongo)]
-    )
+   transformed = await apply_transforms(
+       label,
+       [AttachSamplesTransform(mongo), AttachUserTransform(mongo)]
+   )
 
 It is not efficient to serially perform each transform, so :func:`apply_transforms`
 knows to prepare the data to be attached concurrently and then attach it when everything
@@ -49,6 +49,7 @@ collection once for each unique user ID.
 """
 from __future__ import annotations
 
+import asyncio
 from abc import ABC, abstractmethod
 from asyncio import gather
 from typing import Any, Dict, List, Union
@@ -102,8 +103,8 @@ class AbstractTransform(ABC):
 
 
 async def apply_transforms(
-    documents: Union[Document, List[Document]], pipeline: List[AbstractTransform]
-):
+    documents: Document | List[Document], pipeline: List[AbstractTransform]
+) -> Document | List[Document]:
     """
     Apply a list of transforms to one or more documents.
 
@@ -128,9 +129,12 @@ async def apply_transforms(
 
         return documents
 
-    for transform in pipeline:
-        documents = await transform.attach_one(
-            documents, await transform.prepare_one(documents)
-        )
+    # In this case, we are dealing with a single document.
+    prepared = await asyncio.gather(
+        *[transform.prepare_one(documents) for transform in pipeline]
+    )
+
+    for transform, prepared in zip(pipeline, prepared):
+        documents = await transform.attach_one(documents, prepared)
 
     return documents

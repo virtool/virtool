@@ -1,7 +1,8 @@
+# serializer version: 1
 # name: TestFind.test[None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 2,
         'name': 'test.fq.gz',
@@ -13,13 +14,13 @@
         'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'name': 'test.fq.gz',
@@ -31,13 +32,13 @@
         'size': 16700094,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 3,
         'name': 'test.fq.gz',
@@ -49,19 +50,19 @@
         'size': 16700094,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
-  }
----
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
+  })
+# ---
 # name: TestFind.test[reads]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'name': 'test.fq.gz',
@@ -73,19 +74,19 @@
         'size': 16700094,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
-  }
----
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
+  })
+# ---
 # name: TestFind.test[reference]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 2,
         'name': 'test.fq.gz',
@@ -97,20 +98,20 @@
         'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
-  }
----
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
+  })
+# ---
 # name: TestFind.test_pagination[1-2]
-  <class 'dict'> {
+  dict({
     'found_count': 3,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 3,
         'name': 'test.fq.gz',
@@ -122,24 +123,24 @@
         'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
     'page': 2,
     'page_count': 3,
     'per_page': 1,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: TestFind.test_pagination[1-None]
-  <class 'dict'> {
+  dict({
     'found_count': 3,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'name': 'test.fq.gz',
@@ -151,24 +152,24 @@
         'size': 16700094,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
     'page': 1,
     'page_count': 3,
     'per_page': 1,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: TestFind.test_pagination[2-None]
-  <class 'dict'> {
+  dict({
     'found_count': 3,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'name': 'test.fq.gz',
@@ -180,13 +181,13 @@
         'size': 16700094,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 3,
         'name': 'test.fq.gz',
@@ -198,24 +199,24 @@
         'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
     'page': 1,
     'page_count': 2,
     'per_page': 2,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: TestFind.test_pagination[3-1]
-  <class 'dict'> {
+  dict({
     'found_count': 3,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 4,
         'name': 'test.fq.gz',
@@ -227,13 +228,13 @@
         'size': 16700094,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'name': 'test.fq.gz',
@@ -245,13 +246,13 @@
         'size': 16700094,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 3,
         'name': 'test.fq.gz',
@@ -263,35 +264,35 @@
         'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 3,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: TestFind.test_pagination[None-2]
-  <class 'dict'> {
+  dict({
     'found_count': 3,
-    'items': <class 'list'> [
-    ],
+    'items': list([
+    ]),
     'page': 2,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: TestFind.test_pagination[None-None]
-  <class 'dict'> {
+  dict({
     'found_count': 3,
-    'items': <class 'list'> [
-      <class 'dict'> {
+    'items': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 4,
         'name': 'test.fq.gz',
@@ -303,13 +304,13 @@
         'size': 16700094,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'name': 'test.fq.gz',
@@ -321,13 +322,13 @@
         'size': 16700094,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 3,
         'name': 'test.fq.gz',
@@ -339,82 +340,22 @@
         'size': 16700094,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
+        'user': dict({
           'administrator': False,
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFind.test_uploads_order
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 1,
-        'name': 'test.fq.gz',
-        'name_on_disk': '1-Test.fq.gz',
-        'ready': True,
-        'removed': False,
-        'removed_at': None,
-        'reserved': False,
-        'size': 9081,
-        'type': 'hmm',
-        'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2014-07-27T00:00:00Z',
-        'id': 2,
-        'name': 'test.fq.gz',
-        'name_on_disk': '2-Test.fq.gz',
-        'ready': True,
-        'removed': False,
-        'removed_at': None,
-        'reserved': False,
-        'size': 9081,
-        'type': 'hmm',
-        'uploaded_at': '2014-07-27T00:00:00Z',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2013-09-15T00:00:00Z',
-        'id': 3,
-        'name': 'test.fq.gz',
-        'name_on_disk': '3-Test.fq.gz',
-        'ready': True,
-        'removed': False,
-        'removed_at': None,
-        'reserved': False,
-        'size': 9081,
-        'type': 'hmm',
-        'uploaded_at': '2013-09-15T00:00:00Z',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-      },
-    ],
-  }
----
+  })
+# ---
 # name: TestUpload.test
-  <class 'dict'> {
-    'created_at': <class 'str'>,
+  dict({
+    'created_at': str,
     'id': 1,
     'name': 'single.fq.gz',
     'name_on_disk': '1-single.fq.gz',
@@ -425,122 +366,42 @@
     'size': 16700094,
     'type': 'reads',
     'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
+    'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': 'test',
-    },
-  }
----
-# name: TestUpload.test[hmm]
-  <class 'dict'> {
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': 1,
-    'name': 'Test.fq.gz',
-    'name_on_disk': '1-Test.fq.gz',
-    'ready': True,
-    'removed': False,
-    'removed_at': None,
-    'reserved': False,
-    'size': 9081,
-    'type': 'hmm',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-  }
----
-# name: TestUpload.test[reads]
-  <class 'dict'> {
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': 1,
-    'name': 'Test.fq.gz',
-    'name_on_disk': '1-Test.fq.gz',
-    'ready': True,
-    'removed': False,
-    'removed_at': None,
-    'reserved': False,
-    'size': 9081,
-    'type': 'reads',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-  }
----
-# name: TestUpload.test[reference]
-  <class 'dict'> {
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': 1,
-    'name': 'Test.fq.gz',
-    'name_on_disk': '1-Test.fq.gz',
-    'ready': True,
-    'removed': False,
-    'removed_at': None,
-    'reserved': False,
-    'size': 9081,
-    'type': 'reference',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-  }
----
-# name: TestUpload.test[subtraction]
-  <class 'dict'> {
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': 1,
-    'name': 'Test.fq.gz',
-    'name_on_disk': '1-Test.fq.gz',
-    'ready': True,
-    'removed': False,
-    'removed_at': None,
-    'reserved': False,
-    'size': 9081,
-    'type': 'subtraction',
-    'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-  }
----
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: TestUpload.test_bad_upload_type
-  <class 'list'> [
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+  list([
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'hmm',
           'reference',
           'reads',
           'subtraction',
-        ],
-      },
+        ]),
+      }),
       'in': 'query string',
-      'loc': <class 'list'> [
+      'loc': list([
         'type',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'hmm', 'reference', 'reads', 'subtraction'",
       'type': 'type_error.enum',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: TestUpload.test_no_upload_type
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'in': 'query string',
-      'loc': <class 'list'> [
+      'loc': list([
         'type',
-      ],
+      ]),
       'msg': 'field required',
       'type': 'value_error.missing',
-    },
-  ]
----
+    }),
+  ])
+# ---

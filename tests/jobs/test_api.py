@@ -1,170 +1,318 @@
+import datetime
+
+import arrow
 import pytest
+
+from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
+from virtool_core.models.job import JobState
+
+from tests.fixtures.client import ClientSpawner
+from virtool.fake.next import DataFaker
+
+_job_response_matcher = path_type(
+    {".*created_at": (str,), ".*key": (str,), ".*timestamp": (str,)}, regex=True
+)
 
 
-@pytest.mark.apitest
-@pytest.mark.parametrize("archived", [True, False, None])
-@pytest.mark.parametrize("state", ["running", None])
-@pytest.mark.parametrize("users", [None, "bob", ["bob", "test"]])
-async def test_find_beta(users, archived, state, fake, snapshot, spawn_client):
-    client = await spawn_client(authorize=True)
+class TestFind:
+    async def test_basic(
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
 
-    for _ in range(15):
-        await fake.jobs.insert(randomize=True)
+        user_1 = await fake2.users.create()
+        user_2 = await fake2.users.create()
 
-    url = "/jobs?"
+        for _ in range(4):
+            await fake2.jobs.create(user=user_1)
 
-    if archived is not None:
-        url += f"&archived={archived}"
+        for _ in range(7):
+            await fake2.jobs.create(user=user_2)
 
-    if state is not None:
-        url += f"&state={state}"
+        resp = await client.get("/jobs?per_page=5")
 
-    if users is not None:
-        for user in users:
-            url += f"&user={user}"
+        assert resp.status == 200
+        assert await resp.json() == snapshot(matcher=_job_response_matcher)
 
-    resp = await client.get(url)
+    @pytest.mark.parametrize("archived", [True, False])
+    async def test_archived(
+        self, archived: bool, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+    ):
+        """
+        Test that jobs are filtered correctly when archived is ``true`` or ``false``.
+        """
+        client = await spawn_client(authenticated=True)
 
-    assert resp.status == 200
+        user = await fake2.users.create()
 
-    body = await resp.json()
+        await fake2.jobs.create(user=user)
+        await fake2.jobs.create(user=user, archived=True)
+        await fake2.jobs.create(user=user)
+        await fake2.jobs.create(user=user, archived=True)
+        await fake2.jobs.create(user=user)
 
-    assert body == snapshot
+        resp = await client.get(f"/jobs?archived={archived}")
+        body = await resp.json()
 
-    if archived is not None:
-        assert all(job["archived"] is archived for job in body["documents"])
+        assert resp.status == 200
+        assert body == snapshot(matcher=_job_response_matcher)
+        assert all(job["archived"] == archived for job in body["documents"])
 
-    if state is not None:
+    async def test_user(self, fake2: DataFaker, spawn_client: ClientSpawner):
+        """
+        Test that jobs are filtered correctly when user id(s) are provided.
+        """
+        client = await spawn_client(authenticated=True)
+
+        user_1 = await fake2.users.create()
+        user_2 = await fake2.users.create()
+        user_3 = await fake2.users.create()
+
+        await fake2.jobs.create(user=user_1)
+        await fake2.jobs.create(user=user_2)
+        await fake2.jobs.create(user=user_1)
+        await fake2.jobs.create(user=user_2)
+        await fake2.jobs.create(user=user_1)
+        await fake2.jobs.create(user=user_3)
+
+        resp_1 = await client.get(f"/jobs?user={user_1.id}")
+        body_1 = await resp_1.json()
+
+        assert resp_1.status == 200
+        assert all(job["user"]["id"] == user_1.id for job in body_1["documents"])
+
+        resp_2 = await client.get(f"/jobs?user={user_2.id}")
+        body_2 = await resp_2.json()
+
+        assert resp_2.status == 200
+        assert all(job["user"]["id"] == user_2.id for job in body_2["documents"])
+
+        resp_3 = await client.get(f"/jobs?user={user_1.id}&user={user_2.id}")
+        body_3 = await resp_3.json()
+
+        assert resp_3.status == 200
+        assert all(
+            job["user"]["id"] in [user_1.id, user_2.id] for job in body_3["documents"]
+        )
+
+    @pytest.mark.parametrize(
+        "state",
+        [
+            "cancelled",
+            "complete",
+            "error",
+            "preparing",
+            "running",
+            "terminated",
+            "timeout",
+            "waiting",
+        ],
+    )
+    async def test_state(
+        self, state: str, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+    ):
+        client = await spawn_client(authenticated=True)
+
+        user_1 = await fake2.users.create()
+        user_2 = await fake2.users.create()
+
+        await fake2.jobs.create(user=user_1)
+        await fake2.jobs.create(user=user_2, state=JobState.PREPARING)
+        await fake2.jobs.create(user=user_2, state=JobState.RUNNING)
+        await fake2.jobs.create(user=user_2)
+        await fake2.jobs.create(user=user_1, state=JobState.WAITING)
+        await fake2.jobs.create(user=user_1)
+        await fake2.jobs.create(user=user_2, state=JobState.ERROR)
+        await fake2.jobs.create(user=user_1, state=JobState.CANCELLED)
+        await fake2.jobs.create(user=user_1, state=JobState.COMPLETE)
+        await fake2.jobs.create(user=user_1)
+        await fake2.jobs.create(user=user_2)
+        await fake2.jobs.create(user=user_2, state=JobState.TERMINATED)
+        await fake2.jobs.create(user=user_1, state=JobState.TIMEOUT)
+        await fake2.jobs.create(user=user_1)
+
+        resp = await client.get(f"/jobs?state={state}")
+        body = await resp.json()
+
+        assert resp.status == 200
         assert all(job["state"] == state for job in body["documents"])
+
+    async def test_state_invalid(self, snapshot, spawn_client: ClientSpawner):
+        """
+        Test that a 400 error with a detailed message is returned when an invalid state
+        value is provided.
+        """
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/jobs?state=bad")
+
+        assert resp.status == 400
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
-    client = await spawn_client(authorize=True)
+async def test_get(error, fake2: DataFaker, snapshot, spawn_client):
+    client = await spawn_client(authenticated=True)
 
     user = await fake2.users.create()
 
-    test_job["user"] = {"id": user.id}
+    job_id = "foo"
 
     if error is None:
-        await client.db.jobs.insert_one(test_job)
+        job = await fake2.jobs.create(user=user)
+        job_id = job.id
 
-    resp = await client.get("/jobs/4c530449")
-
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-
+    resp = await client.get(f"/jobs/{job_id}")
     body = await resp.json()
-    assert body == snapshot
 
-    # Explicitly ensure the secret API key is not returned in the response.
-    assert "key" not in body
+    if error is None:
+        assert resp.status == 200
+        assert body == snapshot(matcher=_job_response_matcher)
 
-
-@pytest.mark.apitest
-@pytest.mark.parametrize("error", [None, 400, 404])
-async def test_acquire(
-    error, mocker, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
-):
-    mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
-
-    user = await fake2.users.create()
-
-    test_job["user"] = {"id": user.id}
-
-    client = await spawn_job_client(authorize=True)
-
-    if error == 400:
-        test_job["acquired"] = True
-
-    if error != 404:
-        await mongo.jobs.insert_one(test_job)
-
-    resp = await client.patch("/jobs/4c530449", json={"acquired": True})
-
-    if error == 400:
-        await resp_is.bad_request(resp, "Job already acquired")
-        return
-
-    if error == 404:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-
-    body = await resp.json()
-    assert body == snapshot
-
-    # Explicitly make sure the API key IS in the body.
-    assert "key" in body
+        # Explicitly ensure the secret API key is not returned in the response.
+        assert "key" not in body
+    else:
+        assert resp.status == 404
+        assert body == {
+            "id": "not_found",
+            "message": "Not found",
+        }
 
 
-@pytest.mark.apitest
-@pytest.mark.parametrize("error", [None, 400, 404])
-async def test_archive(
-    error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is
-):
-    user = await fake2.users.create()
+class TestAcquire:
+    async def test_ok(self, fake2: DataFaker, snapshot, spawn_job_client):
+        """Test that a job can be acquired."""
+        client = await spawn_job_client(authorize=True)
 
-    test_job["user"] = {"id": user.id}
+        job = await fake2.jobs.create(
+            await fake2.users.create(), state=JobState.WAITING
+        )
 
-    client = await spawn_job_client(authorize=True)
+        resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
+        body = await resp.json()
 
-    if error == 400:
-        test_job["archived"] = True
+        assert resp.status == 200
+        assert body == snapshot(matcher=_job_response_matcher)
+        assert "key" in body
 
-    if error != 404:
-        await mongo.jobs.insert_one(test_job)
+    async def test_already_acquired(self, fake2: DataFaker, spawn_job_client):
+        """Test that a 400 is returned when the job is already acquired."""
+        client = await spawn_job_client(authorize=True)
 
-    resp = await client.patch("/jobs/4c530449/archive", json={"archived": True})
+        user = await fake2.users.create()
+        job = await fake2.jobs.create(user, state=JobState.WAITING)
 
-    if error == 400:
-        await resp_is.bad_request(resp, "Job already archived")
-        return
+        resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
+        assert resp.status == 200
 
-    if error == 404:
-        await resp_is.not_found(resp)
-        return
+        resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
 
-    assert resp.status == 200
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Job already acquired",
+        }
 
-    assert await resp.json() == snapshot
+    async def test_not_found(self, spawn_job_client):
+        """Test that a 404 is returned when the job doesn't exist."""
+        client = await spawn_job_client(authorize=True)
+
+        resp = await client.patch("/jobs/foo", json={"acquired": True})
+
+        assert resp.status == 404
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found",
+        }
 
 
-@pytest.mark.apitest
-@pytest.mark.parametrize("error", [None, 404])
-async def test_ping(error, snapshot, mongo, fake2, test_job, spawn_job_client, resp_is):
-    user = await fake2.users.create()
+class TestArchive:
+    async def test_ok(self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner):
+        """Test that a job can be archived."""
+        client = await spawn_client(authenticated=True)
 
-    test_job["user"] = {"id": user.id}
+        job = await fake2.jobs.create(await fake2.users.create())
 
-    client = await spawn_job_client(authorize=True)
+        resp = await client.patch(f"/jobs/{job.id}/archive", data={"archived": True})
 
-    if error != 404:
-        await mongo.jobs.insert_one(test_job)
+        assert resp.status == 200
+        assert await resp.json() == snapshot(matcher=_job_response_matcher)
 
-    resp = await client.put("/jobs/4c530449/ping")
+    async def test_already_archived(
+        self, fake2: DataFaker, spawn_client: ClientSpawner
+    ):
+        """Test that a 400 is returned when the job is already archived."""
+        client = await spawn_client(authenticated=True)
 
-    if error == 404:
-        await resp_is.not_found(resp)
-        return
+        user = await fake2.users.create()
+        job = await fake2.jobs.create(user, archived=True)
 
-    assert resp.status == 200
+        resp = await client.patch(f"/jobs/{job.id}/archive", data={"archived": True})
 
-    assert await resp.json() == snapshot
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Job already archived",
+        }
+
+    async def test_not_found(self, spawn_client: ClientSpawner):
+        """Test that a 404 is returned when the job doesn't exist."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.patch("/jobs/foo/archive", data={"archived": True})
+
+        assert resp.status == 404
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found",
+        }
+
+
+class TestPing:
+    async def test_ok(self, fake2: DataFaker, spawn_job_client):
+        """Test that a job can be pinged."""
+        client = await spawn_job_client(authorize=True)
+
+        job = await fake2.jobs.create(
+            await fake2.users.create(), state=JobState.RUNNING
+        )
+
+        resp = await client.put(f"/jobs/{job.id}/ping")
+        body = await resp.json()
+
+        assert resp.status == 200
+
+        assert len(body) == 1
+        assert arrow.get(body["pinged_at"]) - arrow.utcnow() < datetime.timedelta(
+            seconds=1
+        )
+
+    async def test_not_found(self, spawn_job_client):
+        """Test that a 404 is returned when the job doesn't exist."""
+        client = await spawn_job_client(authorize=True)
+
+        resp = await client.put("/jobs/foo/ping", data={})
+
+        assert resp.status == 404
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize(
     "error", [None, "not_found", "invalid_archived", "none_archived"]
 )
-async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
-    client = await spawn_client(authorize=True)
+async def test_bulk_archive(
+    error,
+    fake,
+    resp_is,
+    snapshot,
+    spawn_client,
+):
+    client = await spawn_client(authenticated=True)
 
     message = ""
 
@@ -233,7 +381,7 @@ async def test_bulk_archive(error, resp_is, snapshot, spawn_client, fake, pg):
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
 async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test_job):
-    client = await spawn_client(authorize=True, permissions=[Permission.cancel_job])
+    client = await spawn_client(authenticated=True, permissions=[Permission.cancel_job])
 
     user = await fake2.users.create()
 
@@ -278,7 +426,7 @@ class TestPushStatus:
     async def test(
         self, error, fake2, snapshot, resp_is, spawn_client, static_time, test_job
     ):
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
         test_job["user"] = {"id": user.id}
@@ -288,7 +436,7 @@ class TestPushStatus:
             del test_job["status"][-1]
 
         if error != 404:
-            await client.db.jobs.insert_one(test_job)
+            await client.mongo.jobs.insert_one(test_job)
 
         body = {"state": "running", "stage": "build", "progress": 23}
 
@@ -308,13 +456,13 @@ class TestPushStatus:
     async def test_name_and_description(
         self, fake2, snapshot, spawn_client, static_time, test_job
     ):
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
-        await client.db.jobs.insert_one(test_job)
+        await client.mongo.jobs.insert_one(test_job)
 
         body = {
             "state": "running",
@@ -334,13 +482,13 @@ class TestPushStatus:
         Check that an unallowed state is rejected with 422.
 
         """
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
-        await client.db.jobs.insert_one(test_job)
+        await client.mongo.jobs.insert_one(test_job)
 
         body = {"state": "bad", "stage": "fastqc", "progress": 14}
 
@@ -373,13 +521,13 @@ class TestPushStatus:
         Ensure valid and invalid error inputs are handled correctly.
 
         """
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
-        await client.db.jobs.insert_one(test_job)
+        await client.mongo.jobs.insert_one(test_job)
 
         error = {}
 
@@ -405,10 +553,10 @@ class TestPushStatus:
         included.
 
         """
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         del test_job["status"][-1]
-        await client.db.jobs.insert_one(test_job)
+        await client.mongo.jobs.insert_one(test_job)
 
         body = {"state": "error", "stage": "fastqc", "progress": 14}
 
@@ -422,10 +570,10 @@ class TestPushStatus:
         Verify that job state cannot be updated once the latest status indicates the job is finished
         or otherwise terminated
         """
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         test_job["status"][-1]["state"] = state
-        await client.db.jobs.insert_one(test_job)
+        await client.mongo.jobs.insert_one(test_job)
 
         body = {"state": "running", "stage": "build", "progress": 23}
         resp = await client.post(f"/jobs/{test_job.id}/status", body)

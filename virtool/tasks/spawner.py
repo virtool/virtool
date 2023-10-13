@@ -2,18 +2,18 @@ import asyncio
 from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from logging import getLogger
 from typing import Type, List, Tuple
 
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from structlog import get_logger
 
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import SQLTask
 from virtool.tasks.task import BaseTask
 from virtool.utils import timestamp
 
-logger = getLogger("spawner")
+logger = get_logger("spawner")
 
 
 @dataclass
@@ -92,7 +92,7 @@ class TaskSpawnerService:
             periodic_task.interval, periodic_task.last_triggered
         ):
             task = await self._tasks_datalayer.create(periodic_task.task)
-            logger.info("Spawning task %s", periodic_task.task.name)
+            logger.info("Spawning task", name=periodic_task.task.name)
             periodic_task.last_triggered = task.created_at
 
         return periodic_task
