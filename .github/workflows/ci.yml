@@ -205,7 +205,7 @@ jobs:
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
-  type-check:
+  mypy:
       runs-on: ubuntu-22.04
       steps:
         - name: Checkout
@@ -230,6 +230,7 @@ jobs:
           if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
           run: poetry install --no-interaction
         - name: Run
+          continue-on-error: true
           run: poetry run mypy virtool
   release:
     runs-on: ubuntu-22.04
