@@ -29,7 +29,7 @@ async def upgrade(ctx: MigrationContext):
     for sample_id in await ctx.mongo.samples.distinct(
         "_id", {"workflows": {"$exists": False}}
     ):
-        await ctx.mongo.samples.recalculate_workflow_tags(ctx.mongo, sample_id)
+        await ctx.mongo.samples.recalculate_workflow_tags(sample_id)
 
     if await ctx.mongo.samples.count_documents({"workflows": {"$exists": False}}):
         raise MigrationError("Some samples still do not have a workflows field")
