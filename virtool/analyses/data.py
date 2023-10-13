@@ -45,7 +45,6 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
-from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     lookup_nested_subtractions,
@@ -343,7 +342,7 @@ class AnalysisData(DataLayerDomain):
         except FileNotFoundError:
             pass
 
-        await recalculate_workflow_tags(self._db, analysis.sample.id)
+        await self.data.samples.recalculate_workflow_tags(analysis.sample.id)
 
         sample = await self.data.samples.get(analysis.sample.id)
 

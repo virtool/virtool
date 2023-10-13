@@ -54,13 +54,13 @@ from virtool.samples.db import (
     RIGHTS_PROJECTION,
     check_rights,
     get_sample_owner,
-    recalculate_workflow_tags,
 )
 from virtool.samples.files import (
     create_artifact_file,
     create_reads_file,
     get_existing_reads,
 )
+
 from virtool.samples.models import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.oas import (
     CreateAnalysisRequest,
@@ -488,7 +488,9 @@ class AnalysesView(PydanticView):
 
         analysis_id = analysis.id
 
-        await recalculate_workflow_tags(db, sample_id)
+        await get_data_from_req(self.request).samples.recalculate_workflow_tags(
+            sample_id
+        )
 
         return json_response(
             analysis,
