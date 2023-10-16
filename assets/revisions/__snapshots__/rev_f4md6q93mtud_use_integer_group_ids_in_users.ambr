@@ -1,0 +1,48 @@
+# serializer version: 1
+# name: test_upgrade[mongo]
+  list([
+    dict({
+      '_id': 'bob',
+      'groups': list([
+        1,
+        3,
+      ]),
+      'primary_group': 1,
+    }),
+    dict({
+      '_id': 'joe',
+      'groups': list([
+      ]),
+      'primary_group': None,
+    }),
+    dict({
+      '_id': 'kim',
+      'groups': list([
+        2,
+        3,
+      ]),
+      'primary_group': 3,
+    }),
+    dict({
+      '_id': 'moe',
+      'groups': list([
+        1,
+        2,
+      ]),
+      'primary_group': None,
+    }),
+    dict({
+      '_id': 'roz',
+      'groups': list([
+        3,
+      ]),
+      'primary_group': None,
+    }),
+    dict({
+      '_id': 'tim',
+      'groups': list([
+      ]),
+      'primary_group': None,
+    }),
+  ])
+# ---

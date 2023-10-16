@@ -148,5 +148,12 @@
       'name': 'Use integer nested group ids',
       'revision': 'okd9db53g0il',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 22,
+      'name': 'Use integer group ids in users',
+      'revision': 'f4md6q93mtud',
+    }),
   ])
 # ---
