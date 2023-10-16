@@ -37,7 +37,6 @@
     'legacy_id': None,
     'modify': False,
     'modify_otu': True,
-    'name': 'gaffers',
     'remove': False,
   })
 # ---
@@ -605,7 +604,6 @@
     'legacy_id': None,
     'modify': True,
     'modify_otu': True,
-    'name': 'gaffers',
     'remove': False,
   })
 # ---

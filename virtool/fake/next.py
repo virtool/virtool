@@ -232,15 +232,13 @@ class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
     async def create(
-        self, permissions: UpdatePermissionsRequest | None = None
+        self, permissions: PermissionsUpdate | None = None, legacy_id: str | None = None
     ) -> Group:
         """
-        Create a new fake group.
-
-        :param permissions: the groups permissions
-
-        :return: a new fake group
-
+        :param permissions: Permissions for the group. If not provided, the group will
+            have no permissions.
+        :param legacy_id: An optional legacy ID for the group.
+        :return: a group
         """
         name = "contains spaces"
 
@@ -279,9 +277,8 @@ class HMMFakerPiece(DataFakerPiece):
 
         :return: a new fake hmm
         """
-        hmm_id = "".join(self.faker.mongo_id())
-        faker = self.faker
-
+        hmm_id = "".join(self._faker.mongo_id())
+        faker = self._faker
 
         document = await mongo.hmm.insert_one(
             {
@@ -310,17 +307,17 @@ class HMMFakerPiece(DataFakerPiece):
 
 class LabelsFakerPiece(DataFakerPiece):
     model = Label
-    
+
     async def create(self) -> Label:
         """
         Create a new fake label.
 
         :return: a new fake label
         """
-        return await self.layer.labels.create(
-            self.faker.word().capitalize(),
-            self.faker.hex_color(),
-            self.faker.sentence(),
+        return await self._layer.labels.create(
+            self._faker.word().capitalize(),
+            self._faker.hex_color(),
+            self._faker.sentence(),
         )
 
 
@@ -369,9 +366,8 @@ class TasksFakerPiece(DataFakerPiece):
 
         :return: a new fake task
         """
-        return await self.layer.tasks.create(
-            self.faker.random_element(
-
+        return await self._layer.tasks.create(
+            self._faker.random_element(
                 [
                     EnsureIndexFilesTask,
                     AddSubtractionFilesTask,
@@ -382,7 +378,7 @@ class TasksFakerPiece(DataFakerPiece):
             {},
         )
 
-    async def create_with_class(self, cls: Type[BaseTask], context: Dict) -> Task:
+    async def create_with_class(self, cls: Type[BaseTask], context: dict) -> Task:
         """
         Create a fake task.
 
@@ -391,8 +387,7 @@ class TasksFakerPiece(DataFakerPiece):
 
         :return: a new fake task
         """
-        return await self.layer.tasks.create(cls, context)
-
+        return await self._layer.tasks.create(cls, context)
 
 
 class UploadsFakerPiece(DataFakerPiece):
@@ -456,10 +451,9 @@ class UsersFakerPiece(DataFakerPiece):
 
         :return: a new fake user
         """
-        user = await self.layer.users.create(
-            handle or self.faker.profile()["username"],
-            password or self.faker.password(),
-
+        user = await self._layer.users.create(
+            handle or self._faker.profile()["username"],
+            password or self._faker.password(),
         )
 
         if administrator_role:
