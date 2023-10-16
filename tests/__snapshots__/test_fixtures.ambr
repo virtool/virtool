@@ -7,11 +7,6 @@
     'id': 1,
     'message': 'Administrative instance message',
     'updated_at': 'not_approximately_now_isoformat',
-    'user': dict({
-      'administrator': True,
-      'handle': 'ianboyes',
-      'id': 'ian',
-    }),
   })
 # ---
 # name: test_time_not_recent_datetime
