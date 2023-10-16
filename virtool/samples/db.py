@@ -2,7 +2,6 @@
 Code for working with samples in the database and filesystem.
 
 """
-import asyncio
 import os
 from asyncio import to_thread
 from collections import defaultdict
@@ -22,7 +21,6 @@ import virtool.utils
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.utils import get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
 from virtool.types import Document
