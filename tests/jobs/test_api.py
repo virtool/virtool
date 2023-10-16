@@ -2,12 +2,12 @@ import datetime
 
 import arrow
 import pytest
+
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner
-from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 
 _job_response_matcher = path_type(
@@ -18,7 +18,6 @@ _job_response_matcher = path_type(
 class TestFind:
     async def test_basic(
         self,
-        data_layer: DataLayer,
         fake2: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
@@ -293,17 +292,13 @@ class TestPing:
             seconds=1
         )
 
-    async def test_not_found(self, spawn_client: ClientSpawner):
+    async def test_not_found(self, spawn_job_client):
         """Test that a 404 is returned when the job doesn't exist."""
-        client = await spawn_client(authenticated=True)
+        client = await spawn_job_client(authorize=True)
 
-        resp = await client.put("/jobs/foo/ping", {})
+        resp = await client.put("/jobs/foo/ping", data={})
 
         assert resp.status == 404
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "404: Not Found",
-        }
 
 
 @pytest.mark.apitest

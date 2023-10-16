@@ -1,15 +1,13 @@
-from logging import getLogger
-
 import virtool.account.api
 import virtool.administrators.api
 import virtool.analyses.api
+import virtool.api.root
 import virtool.dev.api
 import virtool.downloads.api
 import virtool.genbank.api
 import virtool.groups.api
 import virtool.history.api
 import virtool.hmm.api
-import virtool.api.root
 import virtool.indexes.api
 import virtool.jobs.api
 import virtool.labels.api
@@ -26,8 +24,6 @@ import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
 import virtool.ws.route
-
-logger = getLogger("startup")
 
 ROUTES = (
     virtool.account.api.routes,
@@ -61,7 +57,6 @@ def setup_routes(app, dev: bool = False):
     app.router.add_get("/ws", virtool.ws.route.root)
 
     if dev:
-        logger.info("Enabling development API")
         app.router.add_routes(virtool.dev.api.routes)
 
     for routes in ROUTES:

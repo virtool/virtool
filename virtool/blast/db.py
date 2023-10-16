@@ -9,8 +9,8 @@ async def get_nuvs_blast(
 ) -> SQLNuVsBlast:
     result = await session.scalar(
         select(SQLNuVsBlast)
-        .filter(SQLNuVsBlast.analysis_id == analysis_id)
-        .filter(SQLNuVsBlast.sequence_index == sequence_index)
+        .where(SQLNuVsBlast.analysis_id == analysis_id)
+        .where(SQLNuVsBlast.sequence_index == sequence_index)
     )
 
     return result

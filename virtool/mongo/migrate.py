@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from logging import getLogger
 from typing import TYPE_CHECKING
 
 from pymongo.errors import DuplicateKeyError
+from structlog import get_logger
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
-logger = getLogger("mongo")
+logger = get_logger("mongo")
 
 
 async def migrate_status(mongo: Mongo):

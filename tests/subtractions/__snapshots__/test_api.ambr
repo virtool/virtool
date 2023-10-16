@@ -20,7 +20,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
     }),
   })
 # ---
@@ -58,7 +58,7 @@
       }),
     ]),
     'user': dict({
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
     }),
     'workflow': 'create_subtraction',
   })

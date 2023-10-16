@@ -25,7 +25,7 @@ from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTUR
 from virtool.otus.utils import find_isolate, format_isolate_name
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 

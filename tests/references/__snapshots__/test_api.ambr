@@ -45,7 +45,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'users': list([
       dict({
@@ -53,7 +53,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'fb085f7f',
+        'id': 'bf1b993c',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -87,7 +87,7 @@
       'user': dict({
         'administrator': False,
         'handle': 'bob',
-        'id': 'fb085f7f',
+        'id': 'bf1b993c',
       }),
     }),
     'installed': None,
@@ -118,7 +118,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'users': list([
       dict({
@@ -126,7 +126,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'fb085f7f',
+        'id': 'bf1b993c',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -170,7 +170,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'users': list([
       dict({
@@ -178,7 +178,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'fb085f7f',
+        'id': 'bf1b993c',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -221,7 +221,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'users': list([
       dict({
@@ -229,7 +229,7 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'fb085f7f',
+        'id': 'bf1b993c',
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -269,7 +269,7 @@
       'user': dict({
         'administrator': False,
         'handle': 'bob',
-        'id': 'fb085f7f',
+        'id': 'bf1b993c',
       }),
     }),
     'internal_control': None,
@@ -318,7 +318,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'users': list([
       dict({
@@ -326,12 +326,294 @@
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
-        'id': 'fb085f7f',
+        'id': 'bf1b993c',
         'modify': True,
         'modify_otu': True,
         'remove': True,
       }),
     ]),
+  })
+# ---
+# name: TestCreateOTU.test[None-None][db]
+  list([
+    dict({
+      '_id': 'bf1b993c',
+      'abbreviation': '',
+      'isolates': list([
+      ]),
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'schema': list([
+      ]),
+      'verified': False,
+      'version': 0,
+    }),
+    dict({
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus',
+      'diff': dict({
+        '_id': 'bf1b993c',
+        'abbreviation': '',
+        'isolates': list([
+        ]),
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': dict({
+          'id': 'foo',
+        }),
+        'schema': list([
+        ]),
+        'verified': False,
+        'version': 0,
+      }),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'user': dict({
+        'id': 'bf1b993c',
+      }),
+    }),
+  ])
+# ---
+# name: TestCreateOTU.test[None-None][json]
+  dict({
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': dict({
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-TMV][db]
+  list([
+    dict({
+      '_id': 'bf1b993c',
+      'abbreviation': 'TMV',
+      'isolates': list([
+      ]),
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'schema': list([
+      ]),
+      'verified': False,
+      'version': 0,
+    }),
+    dict({
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'diff': dict({
+        '_id': 'bf1b993c',
+        'abbreviation': 'TMV',
+        'isolates': list([
+        ]),
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': dict({
+          'id': 'foo',
+        }),
+        'schema': list([
+        ]),
+        'verified': False,
+        'version': 0,
+      }),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'user': dict({
+        'id': 'bf1b993c',
+      }),
+    }),
+  ])
+# ---
+# name: TestCreateOTU.test[None-TMV][json]
+  dict({
+    'abbreviation': 'TMV',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': dict({
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-][db]
+  list([
+    dict({
+      '_id': 'bf1b993c',
+      'abbreviation': '',
+      'isolates': list([
+      ]),
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'schema': list([
+      ]),
+      'verified': False,
+      'version': 0,
+    }),
+    dict({
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus',
+      'diff': dict({
+        '_id': 'bf1b993c',
+        'abbreviation': '',
+        'isolates': list([
+        ]),
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': dict({
+          'id': 'foo',
+        }),
+        'schema': list([
+        ]),
+        'verified': False,
+        'version': 0,
+      }),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'user': dict({
+        'id': 'bf1b993c',
+      }),
+    }),
+  ])
+# ---
+# name: TestCreateOTU.test[None-][json]
+  dict({
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': dict({
+        'administrator': False,
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 0,
   })
 # ---
 # name: TestCreateOTU.test[True--True][db]
@@ -625,17 +907,19 @@
 # name: TestCreateOTU.test[True-TMV-True][location]
   'https://virtool.example.com/otus/bf1b993c'
 # ---
-# name: test_add_group_or_user[True-group-None]
+# name: test_create_group[None]
   dict({
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'id': 'tech',
+    'id': 2,
+    'legacy_id': None,
     'modify': True,
     'modify_otu': False,
+    'name': 'hydrogeologists',
     'remove': False,
   })
 # ---
-# name: test_add_group_or_user[True-group-None].1
+# name: test_create_group[None].1
   dict({
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -643,9 +927,18 @@
     'description': 'This is a test reference.',
     'groups': list([
       dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'tech',
+        'id': 2,
+        'legacy_id': None,
         'modify': True,
         'modify_otu': False,
         'remove': False,
@@ -657,49 +950,9 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: test_add_group_or_user[True-user-None]
-  dict({
-    'administrator': False,
-    'build': False,
-    'created_at': '2015-10-06T20:00:00Z',
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
-    'modify': True,
-    'modify_otu': False,
-    'remove': False,
-  })
-# ---
-# name: test_add_group_or_user[True-user-None].1
-  dict({
-    '_id': 'foo',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': '7cf872dc',
-    }),
-    'users': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
-        'modify': True,
-        'modify_otu': False,
-        'remove': False,
-      }),
     ]),
   })
 # ---
@@ -777,7 +1030,7 @@
     'version': 0,
   })
 # ---
-# name: test_delete_group_or_user[True-group-None]
+# name: test_create_user[None][mongo]
   dict({
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -791,35 +1044,47 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'users': list([
       dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'bf1b993c',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': '7cf872dc',
-        'modify': False,
+        'id': 'fb085f7f',
+        'modify': True,
         'modify_otu': False,
         'remove': False,
       }),
     ]),
   })
 # ---
-# name: test_delete_group_or_user[True-user-None]
+# name: test_create_user[None][resp]
+  dict({
+    'administrator': False,
+    'build': False,
+    'created_at': '2015-10-06T20:00:00Z',
+    'handle': 'leeashley',
+    'id': 'fb085f7f',
+    'modify': True,
+    'modify_otu': False,
+    'remove': False,
+  })
+# ---
+# name: test_delete_group[None]
   dict({
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'groups': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'tech',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
     ]),
     'name': 'Test',
     'organism': 'virus',
@@ -827,9 +1092,45 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'bf1b993c',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
+# name: test_delete_user[None][mongo]
+  dict({
+    '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'groups': list([
+    ]),
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': list([
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'bf1b993c',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
     ]),
   })
 # ---
@@ -1064,100 +1365,6 @@
     ]),
   })
 # ---
-# name: test_edit_group_or_user[True-group-None]
-  dict({
-    'build': False,
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': 'tech',
-    'modify': False,
-    'modify_otu': False,
-    'remove': True,
-  })
-# ---
-# name: test_edit_group_or_user[True-group-None].1
-  dict({
-    '_id': 'foo',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'tech',
-        'modify': False,
-        'modify_otu': False,
-        'remove': True,
-      }),
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': '7cf872dc',
-    }),
-    'users': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-  })
-# ---
-# name: test_edit_group_or_user[True-user-None]
-  dict({
-    'administrator': False,
-    'build': False,
-    'created_at': '2015-10-06T20:00:00Z',
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
-    'modify': False,
-    'modify_otu': False,
-    'remove': True,
-  })
-# ---
-# name: test_edit_group_or_user[True-user-None].1
-  dict({
-    '_id': 'foo',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'tech',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': '7cf872dc',
-    }),
-    'users': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
-        'modify': False,
-        'modify_otu': False,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
 # name: test_find
   dict({
     'documents': list([
@@ -1189,7 +1396,7 @@
         'user': dict({
           'administrator': False,
           'handle': 'laura56',
-          'id': '7cf872dc',
+          'id': 'fb085f7f',
         }),
       }),
       dict({
@@ -1220,7 +1427,7 @@
         'user': dict({
           'administrator': False,
           'handle': 'laura56',
-          'id': '7cf872dc',
+          'id': 'fb085f7f',
         }),
       }),
       dict({
@@ -1713,6 +1920,21 @@
   list([
   ])
 # ---
+# name: test_update[True-None][json]
+  dict({
+    'body': 'Lorem ipsum',
+    'content_type': 'application/gzip',
+    'download_url': 'https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz',
+    'filename': 'reference.json.gz',
+    'html_url': 'https://api.github.com/repos/virtool/virtool-database/releases/10742520',
+    'id': 10742520,
+    'name': 'v0.3.0',
+    'newer': True,
+    'published_at': '2018-04-26T19:35:33Z',
+    'retrieved_at': '2018-04-14T19:52:17.465000Z',
+    'size': 3709091,
+  })
+# ---
 # name: test_update[True-True-None][call]
   tuple(
     <Request POST /refs/foo/updates >,
@@ -1748,5 +1970,101 @@
     'published_at': '2018-04-26T19:35:33Z',
     'retrieved_at': '2018-04-14T19:52:17.465000Z',
     'size': 3709091,
+  })
+# ---
+# name: test_update_group[None][mongo]
+  dict({
+    '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'groups': list([
+      dict({
+        'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': False,
+        'modify_otu': True,
+        'remove': False,
+      }),
+    ]),
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': list([
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'bf1b993c',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
+# name: test_update_group[None][resp]
+  dict({
+    'build': False,
+    'created_at': '2015-10-06T20:00:00Z',
+    'id': 1,
+    'legacy_id': None,
+    'modify': False,
+    'modify_otu': True,
+    'name': 'musicians',
+    'remove': False,
+  })
+# ---
+# name: test_update_user[None]
+  dict({
+    'administrator': False,
+    'build': False,
+    'created_at': '2015-10-06T20:00:00Z',
+    'handle': 'leeashley',
+    'id': 'fb085f7f',
+    'modify': True,
+    'modify_otu': True,
+    'remove': False,
+  })
+# ---
+# name: test_update_user[None].1
+  dict({
+    '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'groups': list([
+    ]),
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': list([
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'bf1b993c',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
+        'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'fb085f7f',
+        'modify': True,
+        'modify_otu': True,
+        'remove': False,
+      }),
+    ]),
   })
 # ---

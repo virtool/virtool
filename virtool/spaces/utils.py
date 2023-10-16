@@ -1,8 +1,7 @@
 import asyncio
 from enum import EnumMeta
-from logging import getLogger
-from typing import List, Union
 
+from structlog import get_logger
 from virtool_core.models.roles import (
     SpaceRole,
     SpaceLabelRole,
@@ -18,16 +17,15 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.mongo.core import Mongo
 
-logger = getLogger(__name__)
+logger = get_logger("spaces")
 
 
 async def remove_user_roles(
     authorization_client: AuthorizationClient,
-    user_id: Union[str, int],
+    user_id: str | int,
     space_id: int,
-    enums: List[EnumMeta],
+    enums: list[EnumMeta],
 ):
-
     await asyncio.gather(
         *[
             authorization_client.remove(
@@ -39,7 +37,7 @@ async def remove_user_roles(
     )
 
 
-def format_user(user: dict, role_list: List):
+def format_space_user(user: dict, role_list: list) -> SpaceMember:
     user = {
         **user,
         "label_role": None,
@@ -75,10 +73,9 @@ def format_user(user: dict, role_list: List):
     return SpaceMember(**user)
 
 
-async def format_users(
+async def format_space_users(
     authorization_client: AuthorizationClient, mongo: Mongo, space_id: int
-) -> List[SpaceMember]:
-
+) -> list[SpaceMember]:
     member_ids = await authorization_client.list_space_users(space_id)
 
     users = await mongo.users.find(
@@ -86,8 +83,15 @@ async def format_users(
     ).to_list(None)
 
     if len(users) != len(member_ids):
-        logger.warning("Missing users.")
+        mongo_member_ids = {member[0] for member in member_ids}
+        openfga_member_ids = {user["_id"] for user in users}
 
-    member_ids = {member[0]: member[1] for member in member_ids}
+        logger.warning(
+            "Mongo-OpenFGA space member mismatch",
+            mongo_extras=(mongo_member_ids - openfga_member_ids),
+            openfga_extras=(openfga_member_ids - mongo_member_ids),
+        )
 
-    return [format_user(user, member_ids[user["_id"]]) for user in users]
+    member_id_map = {member[0]: member[1] for member in member_ids}
+
+    return [format_space_user(user, member_id_map[user["_id"]]) for user in users]

@@ -1,9 +1,4 @@
-import logging
-from typing import Dict
-
 import virtool.validators
-
-logger = logging.getLogger(__name__)
 
 SCHEMA = {
     # Samples
@@ -35,7 +30,7 @@ SCHEMA = {
 }
 
 
-def get_defaults() -> Dict[str, str]:
+def get_defaults() -> dict[str, str]:
     """
     Create a dictionary with key and default values from `SCHEMA` object.
 

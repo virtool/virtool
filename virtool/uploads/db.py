@@ -1,4 +1,3 @@
-from logging import getLogger
 from typing import Dict, List, Optional, Type
 
 from sqlalchemy import select
@@ -10,8 +9,6 @@ from virtool.pg.base import Base
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-
-logger = getLogger("uploads")
 
 PROJECTION = ["_id", "name", "size", "user", "uploaded_at", "type", "ready", "reserved"]
 
@@ -39,7 +36,7 @@ class AttachUploadTransform(AbstractTransform):
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 (
-                    select(SQLUpload).filter(
+                    select(SQLUpload).where(
                         SQLUpload.id.in_(
                             list({document["upload"] for document in documents})
                         )

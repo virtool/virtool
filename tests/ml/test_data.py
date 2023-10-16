@@ -1,13 +1,14 @@
 import datetime
 import shutil
-from pprint import pprint
 from unittest.mock import call
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.tasks.models import SQLTask
 
@@ -16,9 +17,9 @@ from virtool.tasks.models import SQLTask
 async def test_list(
     has_last_checked_at: bool,
     data_layer: DataLayer,
-    fake2,
+    fake2: DataFaker,
     pg: AsyncEngine,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     """
@@ -50,9 +51,7 @@ async def test_list(
 async def test_get(
     data_layer: DataLayer,
     fake2,
-    pg: AsyncEngine,
     snapshot,
-    static_time,
 ):
     """Test that MLData.get() returns a complete representation of an ML model."""
     await fake2.ml.populate()
@@ -118,8 +117,6 @@ async def test_load(
         name="ml-insect-viruses",
         matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
-
-    pprint(spy.call_args_list)
 
     spy.assert_has_calls(
         [

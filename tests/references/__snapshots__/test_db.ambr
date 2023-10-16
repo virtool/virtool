@@ -1,230 +1,4 @@
 # serializer version: 1
-# name: test_delete_member[groups]
-  'bar'
-# ---
-# name: test_delete_member[groups].1
-  dict({
-    '_id': 'foo',
-    'groups': list([
-      dict({
-        'id': 'baz',
-      }),
-    ]),
-    'users': list([
-      dict({
-        'id': 'bar',
-      }),
-      dict({
-        'id': 'baz',
-      }),
-    ]),
-  })
-# ---
-# name: test_delete_member[users]
-  'bar'
-# ---
-# name: test_delete_member[users].1
-  dict({
-    '_id': 'foo',
-    'groups': list([
-      dict({
-        'id': 'bar',
-      }),
-      dict({
-        'id': 'baz',
-      }),
-    ]),
-    'users': list([
-      dict({
-        'id': 'baz',
-      }),
-    ]),
-  })
-# ---
-# name: test_edit_member[group-None]
-  dict({
-    'build': True,
-    'id': 'baz',
-    'modify': False,
-    'modify_otu': False,
-    'remove': True,
-  })
-# ---
-# name: test_edit_member[group-None].1
-  dict({
-    '_id': 'foo',
-    'groups': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': True,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': True,
-      }),
-    ]),
-    'users': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': False,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-  })
-# ---
-# name: test_edit_member[group-reference]
-  None
-# ---
-# name: test_edit_member[group-reference].1
-  None
-# ---
-# name: test_edit_member[group-subdocument]
-  None
-# ---
-# name: test_edit_member[group-subdocument].1
-  dict({
-    '_id': 'foo',
-    'groups': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': False,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-    'users': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': False,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-  })
-# ---
-# name: test_edit_member[user-None]
-  dict({
-    'build': True,
-    'id': 'baz',
-    'modify': False,
-    'modify_otu': False,
-    'remove': True,
-  })
-# ---
-# name: test_edit_member[user-None].1
-  dict({
-    '_id': 'foo',
-    'groups': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': False,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-    'users': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': True,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: test_edit_member[user-reference]
-  None
-# ---
-# name: test_edit_member[user-reference].1
-  None
-# ---
-# name: test_edit_member[user-subdocument]
-  None
-# ---
-# name: test_edit_member[user-subdocument].1
-  dict({
-    '_id': 'foo',
-    'groups': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': False,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-    'users': list([
-      dict({
-        'build': False,
-        'id': 'bar',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-      dict({
-        'build': False,
-        'id': 'baz',
-        'modify': False,
-        'modify_otu': False,
-        'remove': False,
-      }),
-    ]),
-  })
-# ---
 # name: test_fetch_and_update_release
   dict({
     'body': '''
@@ -244,4 +18,26 @@
     'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
     'size': 6449861,
   })
+# ---
+# name: test_get_reference_groups
+  list([
+    dict({
+      'build': False,
+      'id': 1,
+      'legacy_id': None,
+      'modify': False,
+      'modify_otu': False,
+      'name': 'musicians',
+      'remove': False,
+    }),
+    dict({
+      'build': False,
+      'id': 2,
+      'legacy_id': 'group_2',
+      'modify': True,
+      'modify_otu': True,
+      'name': 'hydrogeologists',
+      'remove': True,
+    }),
+  ])
 # ---

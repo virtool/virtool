@@ -1,5 +1,3 @@
-from typing import Optional, List
-
 from pydantic import BaseModel, constr, Field
 from virtool_core.models.validators import prevent_none
 
@@ -12,6 +10,7 @@ class CreateFirstUserRequest(BaseModel):
     handle: constr(strip_whitespace=True, min_length=1) = Field(
         description="The unique handle for the user."
     )
+
     password: constr(min_length=1) = Field(description="The password for the user.")
 
 
@@ -20,24 +19,29 @@ class CreateUserRequest(CreateFirstUserRequest):
     User fields for creating a new user.
     """
 
-    force_reset = Field(
+    force_reset: bool = Field(
         default=True, description="Forces a password reset next time the user logs in"
     )
 
 
 class UpdateUserRequest(BaseModel):
-    administrator: Optional[bool] = Field(
+    active: bool | None = Field(description="deactivate a user")
+
+    administrator: bool | None = Field(
         description="The user can perform administrative tasks and access all data"
     )
-    active: Optional[bool] = Field(description="deactivate a user")
-    force_reset: Optional[bool] = Field(
-        description="Forces a password reset next time the user logs in"
-    )
-    groups: Optional[List[str]] = Field(
+
+    groups: list[int | str] | None = Field(
         description="Sets the IDs of groups the user belongs to"
     )
-    password: Optional[str] = Field(description="the new password")
-    primary_group: Optional[str] = Field(
+
+    force_reset: bool | None = Field(
+        description="Forces a password reset next time the user logs in"
+    )
+
+    password: str | None = Field(description="the new password")
+
+    primary_group: int | None = Field(
         description="Sets the ID of the user's primary group"
     )
 

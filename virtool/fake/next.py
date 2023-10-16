@@ -5,12 +5,13 @@ Easily create fake data.
 import asyncio
 import gzip
 from pathlib import Path
-from typing import Dict, Type, AsyncGenerator
-from typing import List
+from typing import Type, AsyncGenerator
 
 import aiofiles
 from faker import Faker
 from faker.providers import BaseProvider, python, color, lorem, file
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.group import Group
 from virtool_core.models.hmm import HMM
 from virtool_core.models.job import Job, JobState
@@ -22,7 +23,8 @@ from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
-from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
+from virtool.groups.oas import UpdateGroupRequest, PermissionsUpdate
+from virtool.groups.pg import SQLGroup
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.models import MLModel
@@ -88,8 +90,10 @@ class VirtoolProvider(BaseProvider):
 
 
 class DataFaker:
-    def __init__(self, layer: DataLayer, mongo):
+    def __init__(self, layer: DataLayer, mongo: Mongo, pg: AsyncEngine):
         self.layer = layer
+        self.mongo = mongo
+        self.pg = pg
 
         self.faker = Faker()
         self.faker.seed_instance(0)
@@ -113,8 +117,11 @@ class DataFaker:
 
 class DataFakerPiece:
     def __init__(self, data_faker: DataFaker):
-        self.layer: DataLayer = data_faker.layer
-        self.faker = data_faker.faker
+        self._faker = data_faker.faker
+        self._layer: DataLayer = data_faker.layer
+        self._mongo = data_faker.mongo
+        self._pg = data_faker.pg
+
         self.history = []
 
 
@@ -151,9 +158,9 @@ class JobsFakerPiece(DataFakerPiece):
                 "Cannot create an archived job in the waiting, preparing, or running states"
             )
 
-        job = await self.layer.jobs.create(
-            workflow or self.faker.workflow(),
-            self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
+        job = await self._layer.jobs.create(
+            workflow or self._faker.workflow(),
+            self._faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
             0,
         )
@@ -161,7 +168,7 @@ class JobsFakerPiece(DataFakerPiece):
         if state:
             target_state = state
         elif archived:
-            target_state = self.faker.random_element(
+            target_state = self._faker.random_element(
                 [
                     JobState.CANCELLED,
                     JobState.COMPLETE,
@@ -171,7 +178,7 @@ class JobsFakerPiece(DataFakerPiece):
                 ]
             )
         else:
-            target_state = self.faker.random_element(
+            target_state = self._faker.random_element(
                 [
                     JobState.CANCELLED,
                     JobState.COMPLETE,
@@ -198,25 +205,27 @@ class JobsFakerPiece(DataFakerPiece):
             elif previous_status.state == JobState.PREPARING:
                 next_state = JobState.RUNNING
             else:
-                next_state = self.faker.random_element([JobState.RUNNING, target_state])
+                next_state = self._faker.random_element(
+                    [JobState.RUNNING, target_state]
+                )
 
             progress += 10
-            step_name = self.faker.pystr()
+            step_name = self._faker.pystr()
 
-            previous_status = await self.layer.jobs.push_status(
+            previous_status = await self._layer.jobs.push_status(
                 job.id,
                 state=next_state,
                 stage=step_name,
                 step_name=step_name,
-                step_description=self.faker.pystr(),
+                step_description=self._faker.pystr(),
                 error=None,
                 progress=100 if next_state == JobState.COMPLETE else progress,
             )
 
         if archived:
-            return await self.layer.jobs.archive(job.id)
+            return await self._layer.jobs.archive(job.id)
 
-        return await self.layer.jobs.get(job.id)
+        return await self._layer.jobs.get(job.id)
 
 
 class GroupsFakerPiece(DataFakerPiece):
@@ -231,16 +240,28 @@ class GroupsFakerPiece(DataFakerPiece):
         :param permissions: the groups permissions
 
         :return: a new fake group
+
         """
         name = "contains spaces"
 
         while " " in name:
-            name = self.faker.profile()["job"].lower() + "s"
+            name = self._faker.profile()["job"].lower() + "s"
 
-        group = await self.layer.groups.create(name)
+        group = await self._layer.groups.create(name)
+
+        if legacy_id:
+            async with AsyncSession(self._pg) as session:
+                await session.execute(
+                    update(SQLGroup)
+                    .where(SQLGroup.id == group.id)
+                    .values(legacy_id=legacy_id)
+                )
+                await session.commit()
+
+            group = await self._layer.groups.get(group.id)
 
         if permissions:
-            group = await self.layer.groups.update(
+            group = await self._layer.groups.update(
                 group.id, UpdateGroupRequest(permissions=permissions)
             )
 
@@ -260,6 +281,7 @@ class HMMFakerPiece(DataFakerPiece):
         """
         hmm_id = "".join(self.faker.mongo_id())
         faker = self.faker
+
 
         document = await mongo.hmm.insert_one(
             {
@@ -288,7 +310,7 @@ class HMMFakerPiece(DataFakerPiece):
 
 class LabelsFakerPiece(DataFakerPiece):
     model = Label
-
+    
     async def create(self) -> Label:
         """
         Create a new fake label.
@@ -307,7 +329,7 @@ class MLFakerPiece(DataFakerPiece):
 
     async def populate(self):
         """Populate the ML model collection with fake data."""
-        return await self.layer.ml.load(
+        return await self._layer.ml.load(
             {
                 "ml-plant-viruses": [
                     self.create_release_manifest_item() for _ in range(3)
@@ -325,16 +347,16 @@ class MLFakerPiece(DataFakerPiece):
 
         """
         return ReleaseManifestItem(
-            id=self.faker.pyint(),
-            body=self.faker.paragraph(),
-            content_type=self.faker.pystr(),
-            download_url=self.faker.url(),
-            filename=self.faker.pystr(),
-            html_url=self.faker.url(),
-            name=self.faker.pystr(),
-            prerelease=self.faker.pybool(),
-            published_at=self.faker.date_time(),
-            size=self.faker.pyint(),
+            id=self._faker.pyint(),
+            body=self._faker.paragraph(),
+            content_type=self._faker.pystr(),
+            download_url=self._faker.url(),
+            filename=self._faker.pystr(),
+            html_url=self._faker.url(),
+            name=self._faker.pystr(),
+            prerelease=self._faker.pybool(),
+            published_at=self._faker.date_time(),
+            size=self._faker.pyint(),
         )
 
 
@@ -349,6 +371,7 @@ class TasksFakerPiece(DataFakerPiece):
         """
         return await self.layer.tasks.create(
             self.faker.random_element(
+
                 [
                     EnsureIndexFilesTask,
                     AddSubtractionFilesTask,
@@ -369,6 +392,7 @@ class TasksFakerPiece(DataFakerPiece):
         :return: a new fake task
         """
         return await self.layer.tasks.create(cls, context)
+
 
 
 class UploadsFakerPiece(DataFakerPiece):
@@ -398,14 +422,14 @@ class UploadsFakerPiece(DataFakerPiece):
 
         fake_file_path = example_path / "reads/single.fq.gz"
 
-        upload = await self.layer.uploads.create(
+        upload = await self._layer.uploads.create(
             fake_file_chunker(fake_file_path), name, upload_type, user.id
         )
 
         if reserved:
-            await self.layer.uploads.reserve(upload.id)
+            await self._layer.uploads.reserve(upload.id)
 
-        return await self.layer.uploads.get(upload.id)
+        return await self._layer.uploads.get(upload.id)
 
 
 class UsersFakerPiece(DataFakerPiece):
@@ -414,7 +438,7 @@ class UsersFakerPiece(DataFakerPiece):
     async def create(
         self,
         handle: str | None = None,
-        groups: List[Group] | None = None,
+        groups: list[Group] | None = None,
         password: str | None = None,
         primary_group: Group | None = None,
         administrator_role: AdministratorRole | None = None,
@@ -435,15 +459,16 @@ class UsersFakerPiece(DataFakerPiece):
         user = await self.layer.users.create(
             handle or self.faker.profile()["username"],
             password or self.faker.password(),
+
         )
 
         if administrator_role:
-            user = await self.layer.users.set_administrator_role(
+            user = await self._layer.users.set_administrator_role(
                 user.id, administrator_role
             )
 
         if groups and primary_group:
-            return await self.layer.users.update(
+            return await self._layer.users.update(
                 user.id,
                 UpdateUserRequest(
                     groups=list({group.id for group in groups} | {primary_group.id})
@@ -451,13 +476,13 @@ class UsersFakerPiece(DataFakerPiece):
             )
 
         if groups:
-            return await self.layer.users.update(
+            return await self._layer.users.update(
                 user.id,
                 UpdateUserRequest(groups=[group.id for group in groups]),
             )
 
         if primary_group:
-            return await self.layer.users.update(
+            return await self._layer.users.update(
                 user.id,
                 UpdateUserRequest(
                     groups=[primary_group.id], primary_group=primary_group.id

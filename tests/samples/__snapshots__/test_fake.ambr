@@ -5,8 +5,6 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'caches': list([
-    ]),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
     'group': 'none',
@@ -51,8 +49,6 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'caches': list([
-    ]),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
     'group': 'none',
@@ -96,8 +92,6 @@
     'all_read': True,
     'all_write': True,
     'artifacts': list([
-    ]),
-    'caches': list([
     ]),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
@@ -261,8 +255,6 @@
     'all_read': True,
     'all_write': True,
     'artifacts': list([
-    ]),
-    'caches': list([
     ]),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',

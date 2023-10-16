@@ -19,7 +19,7 @@ from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 
 class JobsData:

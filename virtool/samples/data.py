@@ -2,8 +2,7 @@
 import asyncio
 import math
 from asyncio import gather, to_thread
-from logging import getLogger
-from typing import List, Optional, Any, Dict
+from typing import Any
 
 import virtool_core.utils
 from pymongo.results import UpdateResult
@@ -14,10 +13,12 @@ from virtool_core.models.samples import Sample, SampleSearchResult
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.domain import DataLayerDomain
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import emits, Operation
+from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
+from virtool.groups.pg import SQLGroup
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.db import create_job, lookup_minimal_job_by_id
@@ -36,7 +37,6 @@ from virtool.samples.db import (
     compose_sample_workflow_query,
     define_initial_workflows,
     recalculate_workflow_tags,
-    validate_force_choice_group,
 )
 from virtool.samples.models import SQLSampleReads
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
@@ -47,10 +47,8 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import lookup_nested_user_by_id
+from virtool.users.mongo import lookup_nested_user_by_id
 from virtool.utils import base_processor, chunk_list, wait_for_checks
-
-logger = getLogger("samples")
 
 
 class SamplesData(DataLayerDomain):
@@ -66,11 +64,11 @@ class SamplesData(DataLayerDomain):
 
     async def find(
         self,
-        labels: List[int],
+        labels: list[int],
         page: int,
         per_page: int,
         term: str,
-        workflows: List[str],
+        workflows: list[str],
         client,
     ) -> SampleSearchResult:
         """
@@ -100,9 +98,24 @@ class SamplesData(DataLayerDomain):
         ]
 
         if client.groups:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLGroup).where(
+                        compose_legacy_id_expression(SQLGroup, client.groups)
+                    )
+                )
+
+                group_ids = []
+
+                for group in result.scalars().all():
+                    group_ids.append(group.id)
+
+                    if group.legacy_id is not None:
+                        group_ids.append(group.legacy_id)
+
             # The sample rights allow owner group members to view the sample and the
             # requesting user is a member of the owner group.
-            rights_filter.append({"group_read": True, "group": {"$in": client.groups}})
+            rights_filter.append({"group_read": True, "group": {"$in": group_ids}})
 
         search_query = {"$and": [{"$or": rights_filter}, query]}
 
@@ -155,7 +168,7 @@ class SamplesData(DataLayerDomain):
         )
 
         return SampleSearchResult(
-            documents=documents,
+            **{"documents": documents},
             found_count=found_count,
             total_count=total_count,
             page=page,
@@ -166,6 +179,9 @@ class SamplesData(DataLayerDomain):
     async def get(self, sample_id: str) -> Sample:
         """
         Get a sample by its id.
+
+        TODO: Remove the ``caches`` field from document as it is deprecated.
+        TODO: Return `None` for unset group instead of `"none"`.
 
         :param sample_id: the id of the sample
         :return: the sample
@@ -190,6 +206,9 @@ class SamplesData(DataLayerDomain):
 
         document.update({"caches": [], "paired": len(document["reads"]) == 2})
 
+        if document["group"] is None:
+            document["group"] = "none"
+
         return Sample(**document)
 
     @emits(Operation.CREATE)
@@ -198,7 +217,7 @@ class SamplesData(DataLayerDomain):
         data: CreateSampleRequest,
         user_id: str,
         space_id: int,
-        _id: Optional[str] = None,
+        _id: str | None = None,
     ) -> Sample:
         """
         Create a sample.
@@ -218,15 +237,20 @@ class SamplesData(DataLayerDomain):
         except ResourceNotFoundError:
             raise ResourceConflictError("File does not exist")
 
-        group = "none"
+        group = None
 
         # Require a valid ``group`` field if the ``sample_group`` setting is
         # ``users_primary_group``.
         if settings.sample_group == "force_choice":
-            if force_choice_error_message := await validate_force_choice_group(
-                self._mongo, data.dict(exclude_unset=True)
-            ):
-                raise ResourceConflictError(force_choice_error_message)
+            if data.group is None:
+                raise ResourceConflictError("Group value required for sample creation")
+
+            async with AsyncSession(self._pg) as session:
+                if not await session.get(
+                    SQLGroup,
+                    data.group,
+                ):
+                    raise ResourceConflictError("Group does not exist")
 
             group = data.group
 
@@ -235,8 +259,16 @@ class SamplesData(DataLayerDomain):
         elif settings.sample_group == "users_primary_group":
             group = await get_one_field(self._mongo.users, "primary_group", user_id)
 
+            if isinstance(group, str):
+                async with AsyncSession(self._pg) as session:
+                    group = await session.execute(
+                        select(SQLGroup).where(SQLGroup.legacy_id == group)
+                    )
+
+                    group = group.scalar_one().id
+
             if not group:
-                group = "none"
+                group = None
 
         async with self._mongo.create_session() as session:
             job_id = await get_new_id(self._mongo.jobs, session=session)
@@ -251,9 +283,9 @@ class SamplesData(DataLayerDomain):
                         "created_at": virtool.utils.timestamp(),
                         "format": "fastq",
                         "group": group,
-                        "hold": True,
                         "group_read": settings.sample_group_read,
                         "group_write": settings.sample_group_write,
+                        "hold": True,
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
@@ -338,7 +370,7 @@ class SamplesData(DataLayerDomain):
     async def finalize(
         self,
         sample_id: str,
-        quality: Dict[str, Any],
+        quality: dict[str, Any],
     ) -> Sample:
         """
         Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
@@ -360,7 +392,7 @@ class SamplesData(DataLayerDomain):
                 (
                     await session.execute(
                         select(SQLUpload)
-                        .filter(SQLSampleReads.sample == sample_id)
+                        .where(SQLSampleReads.sample == sample_id)
                         .join_from(SQLSampleReads, SQLUpload)
                     )
                 )

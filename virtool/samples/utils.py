@@ -1,11 +1,11 @@
 from enum import Enum
 from pathlib import Path
-from typing import List
 
 from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.config.cls import Config
 from virtool.labels.models import SQLLabel
 
@@ -42,7 +42,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
     return {"pathoscope": pathoscope, "nuvs": nuvs}
 
 
-async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
+async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
     """
     Check for existence of label IDs given in sample creation request
 
@@ -52,7 +52,7 @@ async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
     """
     async with AsyncSession(pg) as session:
         query = await session.execute(
-            select(SQLLabel.id).filter(SQLLabel.id.in_(labels))
+            select(SQLLabel.id).where(SQLLabel.id.in_(labels))
         )
         results = set(query.scalars().all())
 
@@ -75,7 +75,7 @@ def get_sample_rights(sample: dict, client):
     return read, write
 
 
-def bad_labels_response(labels: List[int]) -> Response:
+def bad_labels_response(labels: list[int]) -> Response:
     """
     Creates a response that indicates that some label IDs do not exist
 

@@ -1,7 +1,8 @@
 import asyncio
-from logging import getLogger
 from tempfile import TemporaryDirectory
 from typing import Optional, Dict, TYPE_CHECKING
+
+from structlog import get_logger
 
 from virtool.tasks.task import BaseTask
 
@@ -9,7 +10,7 @@ if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
 
-logger = getLogger("blast")
+logger = get_logger("blast")
 
 
 BLAST_PARAMS = {
@@ -55,6 +56,8 @@ class BLASTTask(BaseTask):
         search exceeds 10 minutes.
         """
 
+        log = logger.bind(rid=self.rid)
+
         blast_timeout_count: int = 0
 
         while True:
@@ -74,16 +77,15 @@ class BLASTTask(BaseTask):
                     self.analysis_id, self.sequence_index
                 )
 
-                logger.info("Deleted BLAST due to timeout: %s", self.rid)
+                log.info("Deleted BLAST due to timeout")
 
                 blast_timeout_count += 1
 
                 if blast_timeout_count >= 3:
-                    logger.info("BLAST exceeded allowed attempts: %s", self.rid)
-
+                    log.info("BLAST exceeded allowed attempts")
                     break
 
-                logger.info("Restarting BLAST: %s", self.rid)
+                log.info("Restarting BLAST")
 
                 continue
 
@@ -92,7 +94,7 @@ class BLASTTask(BaseTask):
                     self.analysis_id, self.sequence_index
                 )
 
-                logger.info("Deleted BLAST due to cancellation: %s", self.rid)
+                log.info("Deleted BLAST due to cancellation")
 
                 break
 
@@ -114,22 +116,20 @@ class BLASTTask(BaseTask):
             )
 
             if blast.ready:
-                logger.info("Retrieved result for BLAST %s", blast.rid)
+                logger.info("Retrieved result for BLAST", rid=blast.rid)
                 break
 
             if blast.error:
                 logger.info(
-                    "Encountered error for BLAST %s: %s",
-                    blast.rid,
-                    blast.error,
+                    "Encountered error during BLAST", rid=blast.rid, error=blast.error
                 )
                 await self._set_error(blast.error)
                 break
 
             interval += 5
 
-            logger.debug(
-                "Checked BLAST %s. Waiting %s seconds",
-                blast.rid,
-                interval,
+            logger.info(
+                "Checked BLAST. Waiting for result...",
+                rid=blast.rid,
+                interval=interval,
             )

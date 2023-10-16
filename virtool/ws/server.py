@@ -1,15 +1,15 @@
 import asyncio
 from asyncio import CancelledError
-from logging import getLogger
 
 from aioredis import Redis
+from structlog import get_logger
 
 from virtool.data.events import EventListener, Operation
 from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSInsertMessage, WSDeleteMessage
 from virtool.ws.connection import WSConnection
 
-logger = getLogger("ws")
+logger = get_logger("ws")
 
 
 class WSServer:
@@ -38,10 +38,10 @@ class WSServer:
                     )
 
                 logger.info(
-                    "Sending WebSocket message domain=%s operation=%s id=%s",
-                    event.domain,
-                    event.operation,
-                    event.data.id,
+                    "Sending WebSocket message",
+                    domain=event.domain,
+                    operation=event.operation,
+                    id=event.data.id,
                 )
 
                 await asyncio.gather(
@@ -64,7 +64,7 @@ class WSServer:
 
         """
         self._connections.append(connection)
-        logger.info("Established Websocket connection user_id=%s", connection.user_id)
+        logger.info("Established Websocket connection", user_id=connection.user_id)
 
     def remove_connection(self, connection: WSConnection):
         """
@@ -75,7 +75,7 @@ class WSServer:
         """
         try:
             self._connections.remove(connection)
-            logger.info("Closed WebSocket connection user_id=%s", connection.user_id)
+            logger.info("Closed WebSocket connection", user_id=connection.user_id)
         except ValueError:
             pass
 
@@ -86,11 +86,14 @@ class WSServer:
         session_data = SessionData(self._redis)
 
         while True:
+            logger.info("Closing expired websocket connections")
+
             for connection in self._connections:
                 if not await session_data.check_session_is_authenticated(
                     connection.session_id
                 ):
                     await connection.close(1001)
+
             await asyncio.sleep(300)
 
     @property

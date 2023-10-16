@@ -14,25 +14,24 @@ from virtool_core.utils import compress_file_with_gzip
 import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config.cls import Config
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceConflictError,
     ResourceError,
 )
-from virtool.data.domain import DataLayerDomain
+from virtool.data.transforms import apply_transforms
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import PROJECTION, generate_annotations_json_file
-from virtool.hmm.tasks import HMMInstallTask
-from virtool.hmm.utils import hmm_data_exists
 from virtool.hmm.db import fetch_and_update_release
-from virtool.data.transforms import apply_transforms
+from virtool.hmm.tasks import HMMInstallTask
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.tasks.transforms import AttachTaskTransform
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 
 class HmmsData(DataLayerDomain):
@@ -173,6 +172,9 @@ class HmmsData(DataLayerDomain):
 
             try:
                 await to_thread(
+                    self.profiles_path.parent.mkdir, parents=True, exist_ok=True
+                )
+                await to_thread(
                     shutil.move, str(hmm_temp_profile_path), str(self.profiles_path)
                 )
             except Exception:
@@ -180,24 +182,22 @@ class HmmsData(DataLayerDomain):
                 raise
 
     async def get_profiles_path(self) -> Path:
-        file_path = self._config.data_path / "hmm" / "profiles.hmm"
+        path = self._config.data_path / "hmm" / "profiles.hmm"
 
-        if await to_thread(hmm_data_exists, file_path):
-            return file_path
+        if await to_thread(path.is_file):
+            return path
 
         raise ResourceNotFoundError("Profiles file could not be found")
 
     async def get_annotations_path(self) -> Path:
         path = self._config.data_path / "hmm" / "annotations.json.gz"
 
-        if await to_thread(path.exists):
-            return path
+        if not await to_thread(path.is_file):
+            json_path = await generate_annotations_json_file(
+                self._config.data_path, self._mongo
+            )
 
-        json_path = await generate_annotations_json_file(
-            self._config.data_path, self._mongo
-        )
-
-        await to_thread(compress_file_with_gzip, json_path, path)
+            await to_thread(compress_file_with_gzip, json_path, path)
 
         return path
 
