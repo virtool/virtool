@@ -16,6 +16,7 @@ from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import emits, Operation
+from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
 from virtool.http.client import UserClient
@@ -97,9 +98,24 @@ class SamplesData(DataLayerDomain):
         ]
 
         if client.groups:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLGroup).where(
+                        compose_legacy_id_expression(SQLGroup, client.groups)
+                    )
+                )
+
+                group_ids = []
+
+                for group in result.scalars().all():
+                    group_ids.append(group.id)
+
+                    if group.legacy_id is not None:
+                        group_ids.append(group.legacy_id)
+
             # The sample rights allow owner group members to view the sample and the
             # requesting user is a member of the owner group.
-            rights_filter.append({"group_read": True, "group": {"$in": client.groups}})
+            rights_filter.append({"group_read": True, "group": {"$in": group_ids}})
 
         search_query = {"$and": [{"$or": rights_filter}, query]}
 

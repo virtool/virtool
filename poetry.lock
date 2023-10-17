@@ -3450,13 +3450,13 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "mypy (>=0.800)", "psutil", "pyOp
 
 [[package]]
 name = "virtool-core"
-version = "7.1.3"
+version = "7.1.4"
 description = "Core utilities for Virtool."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "virtool_core-7.1.3-py3-none-any.whl", hash = "sha256:44cc048cd0730d56a462372a1e6c48dfbeeb42e8a9e6ff25466402f726c50197"},
-    {file = "virtool_core-7.1.3.tar.gz", hash = "sha256:381f7a0f3acde95721be7ce4d2ee18073604e42727ce04ce411e99fa621fc2fc"},
+    {file = "virtool_core-7.1.4-py3-none-any.whl", hash = "sha256:c64cb46b8dd6521678cc0fc6b59f1c2bbd5504b49bfa6ed5f1712ca2bad48392"},
+    {file = "virtool_core-7.1.4.tar.gz", hash = "sha256:03cd5b4b83c088a8970d164cc25971ddc90c434fa2dd29ae5c71796e1d123e40"},
 ]
 
 [package.dependencies]
@@ -3650,4 +3650,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "09f727237407741d47083639cd9622daa871fc58c9a07e44407fc2026bb0466b"
+content-hash = "78604d899dc730d190bee8c5ccdc4ff78cfb981f96d58fdf66eb7108f6e74a8a"
