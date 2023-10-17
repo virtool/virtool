@@ -20,7 +20,10 @@ class SQLUser(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    legacy_id: Mapped[str | None] = None
     active: Mapped[bool] = True
+    administrator: Mapped[bool] = False
+    force_reset: Mapped[bool]
     b2c_display_name: Mapped[str] = ""
     b2c_given_name: Mapped[str] = ""
     b2c_family_name: Mapped[str] = ""
@@ -35,3 +38,6 @@ class SQLUser(Base):
 
     primary_group_id: Mapped[int | None] = mapped_column(ForeignKey("groups.id"))
     primary_group: Mapped[SQLGroup | None] = relationship()
+
+    # TODO: setting relationship
+    # TODO: Test that groups works

@@ -171,6 +171,7 @@ class UsersData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             session.add(
                 SQLUser(
+                    legacy_id=document["_id"],
                     handle=handle,
                     password=document["password"],
                     force_reset=force_reset,
