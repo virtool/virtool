@@ -108,6 +108,7 @@
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
+    'legacy_id': 'bf1b993c',
     'primary_group_id': None,
   })
 # ---
