@@ -16,7 +16,7 @@ from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import emits, Operation
-from virtool.data.topg import compose_legacy_id_expression
+from virtool.data.topg import compose_legacy_id_expression, both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import merge_group_permissions, SQLGroup
@@ -164,12 +164,14 @@ class UsersData(DataLayerDomain):
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
-        now = virtool.utils.timestamp()
+        async with both_transactions(self._mongo, self._pg) as (mongo, pg):
+            now = virtool.utils.timestamp()
 
-        document = await create_user(self._mongo, handle, password, force_reset)
+            document = await create_user(
+                self._mongo, handle, password, force_reset, session=mongo
+            )
 
-        async with AsyncSession(self._pg) as session:
-            session.add(
+            pg.add(
                 SQLUser(
                     legacy_id=document["_id"],
                     handle=handle,
@@ -179,10 +181,9 @@ class UsersData(DataLayerDomain):
                 )
             )
 
-            await session.commit()
-
         return await self.get(document["_id"])
 
+    # TODO: Update this one to use both_transactions
     async def create_first(self, handle: str, password: str) -> User:
         """
         Create the first instance user.
@@ -214,6 +215,7 @@ class UsersData(DataLayerDomain):
 
         return await self.get(document["_id"])
 
+    # TODO: Update this one to use both_transactions
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes
     ) -> User:
@@ -252,6 +254,7 @@ class UsersData(DataLayerDomain):
 
         return await self.get(document["_id"])
 
+    # TODO: Update this one to use both_transactions
     async def set_administrator_role(
         self, user_id: str, role: AdministratorRole
     ) -> User:
@@ -298,6 +301,7 @@ class UsersData(DataLayerDomain):
 
         return user
 
+    # TODO: Update this one to use both_transactions
     @emits(Operation.UPDATE)
     async def update(self, user_id: str, data: UpdateUserRequest):
         """
