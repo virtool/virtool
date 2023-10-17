@@ -624,6 +624,7 @@
     'legacy_id': None,
     'modify': True,
     'modify_otu': False,
+    'name': 'hydrogeologists',
     'remove': False,
   })
 # ---
@@ -1687,6 +1688,7 @@
     'legacy_id': None,
     'modify': False,
     'modify_otu': True,
+    'name': 'musicians',
     'remove': False,
   })
 # ---
