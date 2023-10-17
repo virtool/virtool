@@ -34,7 +34,6 @@ class TestCreate:
         snapshot: SnapshotAssertion,
     ):
         user = await data_layer.users.create(password="hello_world", handle="bill")
-
         assert user.force_reset is False
         assert user == snapshot(
             name="obj",
@@ -54,7 +53,6 @@ class TestCreate:
             )
 
         doc = await mongo.users.find_one({"_id": user.id})
-
         assert doc == snapshot(
             name="mongo",
             exclude=props("password"),
@@ -68,7 +66,8 @@ class TestCreate:
         self, force_reset: bool, data_layer: DataLayer, mocker, snapshot
     ):
         mocker.patch(
-            "virtool.users.utils.hash_password", return_value="hashed_password"
+            "virtool.users.utils.hash_password",
+            return_value=bytes("hashed_password", "utf8"),
         )
 
         user = await data_layer.users.create(

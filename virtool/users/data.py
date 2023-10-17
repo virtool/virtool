@@ -172,7 +172,7 @@ class UsersData(DataLayerDomain):
             session.add(
                 SQLUser(
                     handle=handle,
-                    password=virtool.users.utils.hash_password(password),
+                    password=document["password"],
                     force_reset=force_reset,
                     last_password_change=now,
                 )
