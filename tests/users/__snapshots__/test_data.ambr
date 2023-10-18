@@ -1,4 +1,61 @@
 # serializer version: 1
+# name: TestCreate.test_create_first
+  dict({
+    'active': True,
+    'administrator': True,
+    'administrator_role': <AdministratorRole.FULL: 'full'>,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bill',
+    'last_password_change': datetime,
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+  })
+# ---
+# name: TestCreate.test_create_first[mongo]
+  dict({
+    '_id': 'bf1b993c',
+    'active': True,
+    'administrator': True,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bill',
+    'invalidate_sessions': False,
+    'last_password_change': datetime,
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: TestCreate.test_create_first[pg]
+  dict({
+    'handle': 'bill',
+    'id': 1,
+    'last_password_change': datetime,
+    'legacy_id': 'bf1b993c',
+    'primary_group_id': None,
+  })
+# ---
 # name: TestCreate.test_force_reset[False]
   dict({
     'active': True,
@@ -27,6 +84,35 @@
     'primary_group': None,
   })
 # ---
+# name: TestCreate.test_force_reset[False][mongo]
+  dict({
+    '_id': 'bf1b993c',
+    'active': True,
+    'administrator': False,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bill',
+    'invalidate_sessions': False,
+    'last_password_change': datetime,
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: TestCreate.test_force_reset[False][pg]
+  dict({
+    'handle': 'bill',
+    'id': 1,
+    'last_password_change': datetime,
+    'legacy_id': 'bf1b993c',
+    'primary_group_id': None,
+  })
+# ---
 # name: TestCreate.test_force_reset[True]
   dict({
     'active': True,
@@ -53,6 +139,35 @@
       'upload_file': False,
     }),
     'primary_group': None,
+  })
+# ---
+# name: TestCreate.test_force_reset[True][mongo]
+  dict({
+    '_id': 'bf1b993c',
+    'active': True,
+    'administrator': False,
+    'force_reset': True,
+    'groups': list([
+    ]),
+    'handle': 'bill',
+    'invalidate_sessions': False,
+    'last_password_change': datetime,
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: TestCreate.test_force_reset[True][pg]
+  dict({
+    'handle': 'bill',
+    'id': 1,
+    'last_password_change': datetime,
+    'legacy_id': 'bf1b993c',
+    'primary_group_id': None,
   })
 # ---
 # name: TestCreate.test_no_force_reset[mongo]

@@ -28,7 +28,6 @@ class TestCreate:
     async def test_no_force_reset(
         self,
         data_layer: DataLayer,
-        mocker,
         mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
@@ -63,13 +62,13 @@ class TestCreate:
 
     @pytest.mark.parametrize("force_reset", [True, False])
     async def test_force_reset(
-        self, force_reset: bool, data_layer: DataLayer, mocker, snapshot
+        self,
+        force_reset: bool,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
     ):
-        mocker.patch(
-            "virtool.users.utils.hash_password",
-            return_value=bytes("hashed_password", "utf8"),
-        )
-
         user = await data_layer.users.create(
             force_reset=force_reset, password="hello_world", handle="bill"
         )
@@ -81,6 +80,24 @@ class TestCreate:
             ),
             matcher=_last_password_change_matcher,
         )
+
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+
+            assert row.to_dict() == snapshot(
+                name="pg",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
+
+        doc = await mongo.users.find_one({"_id": user.id})
+        assert doc == snapshot(
+            name="mongo",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+
+        assert doc["password"] == row.password
 
     async def test_already_exists(
         self, data_layer: DataLayer, fake2: DataFaker, mongo: Mongo
@@ -95,6 +112,43 @@ class TestCreate:
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.users.create(password="hello_world", handle=user.handle)
             assert "User already exists" in str(err)
+
+    async def test_create_first(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
+    ):
+        user = await data_layer.users.create_first(
+            password="hello_world", handle="bill"
+        )
+
+        assert user == snapshot(
+            exclude=props(
+                "id",
+            ),
+            matcher=_last_password_change_matcher,
+        )
+
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+
+            assert row.to_dict() == snapshot(
+                name="pg",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
+
+        doc = await mongo.users.find_one({"_id": user.id})
+        assert doc == snapshot(
+            name="mongo",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+
+        assert doc["password"] == row.password
+        assert doc["administrator"] == row.administrator
 
 
 class TestUpdate:
