@@ -164,7 +164,6 @@ class UsersData(DataLayerDomain):
         :return: the user document
         """
         document = await create_user(self._mongo, handle, password, force_reset)
-
         return await self.get(document["_id"])
 
     async def create_first(self, handle: str, password: str) -> User:

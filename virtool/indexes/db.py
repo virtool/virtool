@@ -17,7 +17,7 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.indexes.models import SQLIndexFile
-from virtool.jobs.db import AttachJobsTransform
+from virtool.jobs.transforms import AttachJobTransform
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -194,7 +194,7 @@ async def find(mongo, req_query: Mapping, ref_id: Optional[str] = None) -> dict:
         "documents": await apply_transforms(
             data["documents"],
             [
-                AttachJobsTransform(mongo),
+                AttachJobTransform(mongo),
                 AttachReferenceTransform(mongo),
                 AttachUserTransform(mongo),
                 IndexCountsTransform(mongo),

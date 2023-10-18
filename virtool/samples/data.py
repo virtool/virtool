@@ -21,7 +21,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
 from virtool.http.client import UserClient
 from virtool.jobs.client import JobsClient
-from virtool.jobs.db import create_job, lookup_minimal_job_by_id
+from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
@@ -32,7 +32,7 @@ from virtool.samples.checks import (
 )
 from virtool.samples.db import (
     LIST_PROJECTION,
-    ArtifactsAndReadsTransform,
+    AttachArtifactsAndReadsTransform,
     NameGenerator,
     compose_sample_workflow_query,
     define_initial_workflows,
@@ -47,7 +47,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import SQLUpload
-from virtool.users.mongo import lookup_nested_user_by_id
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
 
@@ -141,7 +141,6 @@ class SamplesData(DataLayerDomain):
                             {"$sort": {"created_at": -1}},
                             {"$skip": skip_count},
                             {"$limit": per_page},
-                            *lookup_nested_user_by_id(local_field="user.id"),
                         ],
                     }
                 },
@@ -164,7 +163,7 @@ class SamplesData(DataLayerDomain):
 
         documents = await apply_transforms(
             [base_processor(document) for document in data],
-            [AttachLabelsTransform(self._pg)],
+            [AttachLabelsTransform(self._pg), AttachUserTransform(self._mongo)],
         )
 
         return SampleSearchResult(
@@ -190,26 +189,24 @@ class SamplesData(DataLayerDomain):
         documents = await self._mongo.samples.aggregate(
             [
                 {"$match": {"_id": sample_id}},
-                *lookup_nested_user_by_id(local_field="user.id"),
                 *lookup_nested_subtractions(local_field="subtractions"),
-                *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
 
         if not documents:
-            raise ResourceNotFoundError
+            raise ResourceNotFoundError()
 
         document = await apply_transforms(
             base_processor(documents[0]),
-            [ArtifactsAndReadsTransform(self._pg), AttachLabelsTransform(self._pg)],
+            [
+                AttachArtifactsAndReadsTransform(self._pg),
+                AttachJobTransform(self._mongo),
+                AttachLabelsTransform(self._pg),
+                AttachUserTransform(self._mongo),
+            ],
         )
 
-        document.update({"caches": [], "paired": len(document["reads"]) == 2})
-
-        if document["group"] is None:
-            document["group"] = "none"
-
-        return Sample(**document)
+        return Sample(**{**document, "paired": len(document["reads"]) == 2})
 
     @emits(Operation.CREATE)
     async def create(
@@ -313,11 +310,9 @@ class SamplesData(DataLayerDomain):
 
             sample_id = document["_id"]
 
-            await create_job(
-                mongo=self._mongo,
-                client=self.jobs_client,
-                workflow="create_sample",
-                job_args={
+            await self.data.jobs.create(
+                "create_sample",
+                {
                     "sample_id": sample_id,
                     "files": [
                         {
@@ -328,10 +323,8 @@ class SamplesData(DataLayerDomain):
                         for upload in uploads
                     ],
                 },
-                user_id=user_id,
-                space_id=0,
+                user_id,
                 job_id=job_id,
-                session=session,
             )
 
         return await self.get(sample_id)

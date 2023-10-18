@@ -8,7 +8,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from virtool.pg.base import Base
 from virtool.tasks.models import SQLTask
@@ -17,8 +17,8 @@ from virtool.tasks.models import SQLTask
 class SQLNuVsBlast(Base):
     __tablename__ = "nuvs_blast"
 
-    id = Column(Integer, primary_key=True)
-    analysis_id = Column(String(10), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    analysis_id: Mapped[str]
     sequence_index = Column(Integer, nullable=False)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)

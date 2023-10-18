@@ -1,6 +1,5 @@
 from asyncio import to_thread
-from typing import Optional
-from typing import Union, List
+from typing import Union
 
 from aiohttp.web import FileResponse, Request
 from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
@@ -31,11 +30,12 @@ routes = Routes()
 class IndexesView(PydanticView):
     async def get(
         self,
-        ready: Optional[bool] = Field(
+        ready: bool
+        | None = Field(
             default=False,
             description="Return only indexes that are ready for use in analysis.",
         ),
-    ) -> Union[r200[ListIndexesResponse], r200[List[ReadyIndexesResponse]]]:
+    ) -> r200[ListIndexesResponse] | r200[list[ReadyIndexesResponse]]:
         """
         Find indexes.
 

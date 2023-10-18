@@ -3,7 +3,9 @@ Transforms for attaching user data to documents or additional data to user docum
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -14,7 +16,10 @@ from virtool.groups.pg import SQLGroup, merge_group_permissions
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.utils import generate_base_permissions
-from virtool.utils import base_processor
+from virtool.utils import base_processor, get_safely
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
 
 
 class AttachPermissionsTransform(AbstractTransform):
@@ -82,43 +87,40 @@ class AttachUserTransform(AbstractTransform):
 
     """
 
-    def __init__(self, mongo, ignore_errors: bool = False):
-        self._db = mongo
+    def __init__(self, mongo: Mongo, ignore_errors: bool = False):
+        self._mongo = mongo
         self._ignore_errors = ignore_errors
 
-    def _extract_user_id(self, document: Document) -> str | None:
-        try:
-            user = document["user"]
-
-            try:
-                return user["id"]
-            except TypeError:
-                if isinstance(user, str):
-                    return user
-
-                raise
-        except KeyError:
-            if not self._ignore_errors:
-                raise KeyError("Document needs a value at user or user.id")
-
-        return None
-
-    async def attach_one(self, document: Document, prepared: Document) -> Document:
+    def preprocess(self, document: Document) -> Document:
         try:
             user_data = document["user"]
         except KeyError:
             if self._ignore_errors:
-                return document
+                return {**document, "user": None}
 
-            raise
+            raise KeyError("Document has no user field")
 
         if isinstance(user_data, str):
+            return {**document, "user": {"id": user_data}}
+
+        if isinstance(user_data, dict):
+            if "id" not in user_data:
+                raise KeyError("Document has user field, but no user.id")
+
+            return {**document, "user": user_data}
+
+        if user_data is None:
+            return {**document, "user": None}
+
+        raise TypeError("Could not handle document user field")
+
+    async def attach_one(self, document: Document, prepared: Document) -> Document:
+        user_id = get_safely(document, "user", "id")
+
+        if user_id is None:
             return {
                 **document,
-                "user": {
-                    "id": user_data,
-                    **prepared,
-                },
+                "user": None,
             }
 
         return {
@@ -129,30 +131,34 @@ class AttachUserTransform(AbstractTransform):
             },
         }
 
-    async def attach_many(
-        self, documents: list[Document], prepared: dict[int, Any]
-    ) -> list[Document]:
-        return [
-            (await self.attach_one(document, prepared[self._extract_user_id(document)]))
-            for document in documents
-        ]
-
     async def prepare_one(self, document: Document) -> Document:
-        user_id = self._extract_user_id(document)
+        if not isinstance(document, dict):
+            raise TypeError("Document must be a dictionary")
+
+        user_id = get_safely(document, "user", "id")
 
         if user_data := base_processor(
-            await self._db.users.find_one(user_id, ATTACH_PROJECTION)
+            await self._mongo.users.find_one(user_id, ATTACH_PROJECTION)
         ):
             return user_data
 
         raise KeyError(f"Document contains non-existent user: {user_id}.")
 
-    async def prepare_many(self, documents: list[Document]) -> dict[str | str, Any]:
-        user_ids = list({self._extract_user_id(document) for document in documents})
+    async def prepare_many(self, documents: list[Document]) -> dict[str, Any]:
+        user_ids = {get_safely(d, "user", "id") for d in documents}
+        user_ids.discard(None)
 
-        return {
+        user_map = {
             document["_id"]: base_processor(document)
-            async for document in self._db.users.find(
-                {"_id": {"$in": user_ids}}, ATTACH_PROJECTION
+            async for document in self._mongo.users.find(
+                {"_id": {"$in": list(user_ids)}}, ATTACH_PROJECTION
             )
         }
+
+        if len(user_map) != len(user_ids):
+            non_existent_user_ids = user_ids - set(user_map.keys())
+            raise KeyError(
+                f"Document contains non-existent user(s): {non_existent_user_ids}"
+            )
+
+        return {d["id"]: user_map.get(get_safely(d, "user", "id")) for d in documents}

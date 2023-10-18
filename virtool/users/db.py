@@ -7,7 +7,6 @@ TODO: Drop legacy group id support when we fully migrate to integer ids.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -15,12 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceConflictError
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.groups.pg import SQLGroup
-from virtool.types import Document
-from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
 
 ATTACH_PROJECTION = ["_id", "administrator", "handle"]
 
@@ -45,17 +38,6 @@ class B2CUserAttributes:
     family_name: str
     given_name: str
     oid: str
-
-
-async def extend_user(mongo: Mongo, user: Document) -> Document:
-    user_data = base_processor(
-        await mongo.users.find_one(user["id"], ATTACH_PROJECTION)
-    )
-
-    return {
-        **user,
-        **user_data,
-    }
 
 
 async def compose_groups_update(

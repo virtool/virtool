@@ -4,7 +4,6 @@ from typing import Any
 from virtool_core.models.history import HistorySearchResult, History
 
 import virtool.otus.utils
-import virtool.utils
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.errors import DatabaseError
 from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
@@ -12,6 +11,7 @@ from virtool.mongo.core import Mongo
 from virtool.data.transforms import apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.users.transforms import AttachUserTransform
+from virtool.utils import base_processor
 
 
 class HistoryData:
@@ -41,7 +41,7 @@ class HistoryData:
 
         if document:
             document = await apply_transforms(
-                virtool.utils.base_processor(document),
+                base_processor(document),
                 [
                     AttachReferenceTransform(self._mongo),
                     AttachUserTransform(self._mongo),
