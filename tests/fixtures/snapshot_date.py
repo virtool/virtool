@@ -43,11 +43,12 @@ def snapshot_recent(snapshot):
     return snapshot.with_defaults(
         matcher=path_type(
             mapping={
-                "applied_at": (datetime.datetime, str, Any),
-                "created_at": (datetime.datetime, str, Any),
-                "updated_at": (datetime.datetime, str, Any),
-                "uploaded_at": (datetime.datetime, str, Any),
+                ".*applied_at": (datetime.datetime, str, Any),
+                ".*created_at": (datetime.datetime, str, Any),
+                ".*updated_at": (datetime.datetime, str, Any),
+                ".*uploaded_at": (datetime.datetime, str, Any),
             },
+            regex=True,
             replacer=validate_time,
         )
     )
