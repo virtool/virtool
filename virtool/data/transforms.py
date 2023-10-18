@@ -69,8 +69,7 @@ class AbstractTransform(ABC):
 
     """
 
-    @staticmethod
-    def preprocess(document: Document) -> Document:
+    def preprocess(self, document: Document) -> Document:
         """
         Perform any necessary operations on documents before the transform is applied.
         """
