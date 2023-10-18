@@ -1,12 +1,14 @@
 # serializer version: 1
-# name: test_time
+# name: test_nested_timestamps
   dict({
-    'active': True,
-    'color': 'red',
-    'created_at': 'not_approximately_now_isoformat',
-    'id': 1,
-    'message': 'Administrative instance message',
-    'updated_at': 'not_approximately_now_isoformat',
+    'data': dict({
+      'active': True,
+      'color': 'red',
+      'created_at': 'not_approximately_now_isoformat',
+      'id': 1,
+      'message': 'Administrative instance message',
+      'updated_at': 'not_approximately_now_isoformat',
+    }),
   })
 # ---
 # name: test_time_not_recent_datetime
