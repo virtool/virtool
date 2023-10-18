@@ -40,7 +40,7 @@ from virtool.data.errors import (
 from virtool.data.events import emits, Operation, emit
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
-from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
@@ -55,7 +55,7 @@ from virtool.tasks.progress import (
     AbstractProgressHandler,
 )
 from virtool.uploads.utils import multipart_file_chunker, naive_writer
-from virtool.users.mongo import lookup_nested_user_by_id
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks, base_processor
 
 logger = get_logger("analyses")
@@ -65,8 +65,8 @@ class AnalysisData(DataLayerDomain):
     name = "analyses"
 
     def __init__(self, db: Mongo, config, pg: AsyncEngine):
-        self._db = db
         self._config = config
+        self._mongo = db
         self._pg = pg
 
     async def find(self, page: int, per_page: int, client) -> AnalysisSearchResult:
@@ -85,7 +85,7 @@ class AnalysisData(DataLayerDomain):
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        async for paginate_dict in self._db.analyses.aggregate(
+        async for paginate_dict in self._mongo.analyses.aggregate(
             [
                 {
                     "$facet": {
@@ -95,10 +95,8 @@ class AnalysisData(DataLayerDomain):
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
-                            *lookup_minimal_job_by_id(),
                             *lookup_nested_subtractions(),
                             *lookup_nested_reference_by_id(),
-                            *lookup_nested_user_by_id(),
                         ],
                     }
                 },
@@ -128,13 +126,13 @@ class AnalysisData(DataLayerDomain):
             ]
         ):
             data = paginate_dict["data"]
-            found_count = paginate_dict.get("found_count", 0)
-            total_count = paginate_dict.get("total_count", 0)
+            found_count: int = paginate_dict.get("found_count", 0)
+            total_count: int = paginate_dict.get("total_count", 0)
 
         per_document_can_read = await asyncio.gather(
             *[
                 virtool.samples.db.check_rights(
-                    self._db, document["sample"]["id"], client, write=False
+                    self._mongo, document["sample"]["id"], client, write=False
                 )
                 for document in data
             ]
@@ -146,8 +144,15 @@ class AnalysisData(DataLayerDomain):
             if can_write
         ]
 
+        documents = await apply_transforms(
+            [base_processor(d) for d in documents],
+            [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+        )
+
         return AnalysisSearchResult(
-            documents=documents,
+            **{
+                "documents": documents,
+            },
             found_count=found_count,
             total_count=total_count,
             page=page,
@@ -156,7 +161,7 @@ class AnalysisData(DataLayerDomain):
         )
 
     async def get(
-        self, analysis_id: str, if_modified_since: Optional[datetime]
+        self, analysis_id: str, if_modified_since: datetime | None
     ) -> Analysis:
         """
         Get a single analysis by its ID.
@@ -165,13 +170,11 @@ class AnalysisData(DataLayerDomain):
         :param if_modified_since: the date the document should have been last modified
         :return: the analysis
         """
-        result = await self._db.analyses.aggregate(
+        result = await self._mongo.analyses.aggregate(
             [
                 {"$match": {"_id": analysis_id}},
-                *lookup_minimal_job_by_id(),
                 *lookup_nested_subtractions(),
                 *lookup_nested_reference_by_id(),
-                *lookup_nested_user_by_id(),
             ]
         ).to_list(length=1)
 
@@ -186,13 +189,18 @@ class AnalysisData(DataLayerDomain):
 
         if analysis["ready"]:
             analysis = await virtool.analyses.format.format_analysis(
-                self._config, self._db, analysis
+                self._config, self._mongo, analysis
             )
 
-        analysis = base_processor(analysis)
+        transforms = [
+            AttachJobTransform(self._mongo),
+            AttachUserTransform(self._mongo),
+        ]
 
         if analysis["workflow"] == "nuvs":
-            analysis = await apply_transforms(analysis, [AttachNuVsBLAST(self._pg)])
+            transforms.append(AttachNuVsBLAST(self._pg))
+
+        analysis = await apply_transforms(base_processor(analysis), transforms)
 
         return Analysis(
             **{**analysis, "job": analysis["job"] if analysis["job"] else None}
@@ -225,14 +233,14 @@ class AnalysisData(DataLayerDomain):
         :return: the analysis
 
         """
-        index_id, index_version = await get_current_id_and_version(self._db, ref_id)
+        index_id, index_version = await get_current_id_and_version(self._mongo, ref_id)
 
         created_at = virtool.utils.timestamp()
 
-        sample = await self._db.samples.find_one(sample_id, ["name"])
+        sample = await self._mongo.samples.find_one(sample_id, ["name"])
 
         if analysis_id is None:
-            analysis_id = await get_new_id(self._db.analyses)
+            analysis_id = await get_new_id(self._mongo.analyses)
 
         task_args = {
             "analysis_id": analysis_id,
@@ -243,10 +251,10 @@ class AnalysisData(DataLayerDomain):
             "subtractions": subtractions,
         }
 
-        async with self._db.create_session() as session:
-            job_id = await get_new_id(self._db.jobs, session=session)
+        async with self._mongo.create_session() as session:
+            job_id = await get_new_id(self._mongo.jobs, session=session)
 
-            await self._db.analyses.insert_one(
+            await self._mongo.analyses.insert_one(
                 {
                     "_id": analysis_id,
                     "created_at": created_at,
@@ -284,14 +292,14 @@ class AnalysisData(DataLayerDomain):
         :param right: the right to check for
         :return: boolean value
         """
-        sample = await get_one_field(self._db.analyses, "sample", analysis_id)
+        sample = await get_one_field(self._mongo.analyses, "sample", analysis_id)
 
         if sample is None:
             raise ResourceNotFoundError
 
         sample_id = sample["id"]
 
-        sample = await self._db.samples.find_one(
+        sample = await self._mongo.samples.find_one(
             {"_id": sample_id},
             ["user", "group", "all_read", "group_read", "group_write", "all_write"],
         )
@@ -328,7 +336,7 @@ class AnalysisData(DataLayerDomain):
             # Only the jobs API is allowed to delete incomplete analyses.
             raise ResourceConflictError
 
-        await self._db.analyses.delete_one({"_id": analysis.id})
+        await self._mongo.analyses.delete_one({"_id": analysis.id})
 
         path = (
             self._config.data_path
@@ -343,7 +351,7 @@ class AnalysisData(DataLayerDomain):
         except FileNotFoundError:
             pass
 
-        await recalculate_workflow_tags(self._db, analysis.sample.id)
+        await recalculate_workflow_tags(self._mongo, analysis.sample.id)
 
         sample = await self.data.samples.get(analysis.sample.id)
 
@@ -363,7 +371,7 @@ class AnalysisData(DataLayerDomain):
         :return: the new analysis file
         """
 
-        document = await self._db.analyses.find_one(analysis_id)
+        document = await self._mongo.analyses.find_one(analysis_id)
 
         if document is None:
             raise ResourceNotFoundError
@@ -417,7 +425,7 @@ class AnalysisData(DataLayerDomain):
         :param extension: the file extension
         :return: formatted file and file content type
         """
-        document = await self._db.analyses.find_one(analysis_id)
+        document = await self._mongo.analyses.find_one(analysis_id)
 
         if not document:
             raise ResourceNotFoundError()
@@ -425,14 +433,14 @@ class AnalysisData(DataLayerDomain):
         if extension == "xlsx":
             return (
                 await virtool.analyses.format.format_analysis_to_excel(
-                    self._config, self._db, document
+                    self._config, self._mongo, document
                 ),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
         return (
             await virtool.analyses.format.format_analysis_to_csv(
-                self._config, self._db, document
+                self._config, self._mongo, document
             ),
             "text/csv",
         )
@@ -445,7 +453,7 @@ class AnalysisData(DataLayerDomain):
         :param sequence_index: the sequence index
         :return: the nuvs sequence
         """
-        document = await self._db.analyses.find_one(
+        document = await self._mongo.analyses.find_one(
             {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
         )
 
@@ -465,7 +473,7 @@ class AnalysisData(DataLayerDomain):
             )
             await session.commit()
 
-            await self._db.analyses.update_one(
+            await self._mongo.analyses.update_one(
                 {"_id": analysis_id},
                 {"$set": {"updated_at": virtool.utils.timestamp()}},
             )
@@ -504,7 +512,7 @@ class AnalysisData(DataLayerDomain):
         :return: the analysis
         """
 
-        document = await self._db.analyses.find_one({"_id": analysis_id}, ["ready"])
+        document = await self._mongo.analyses.find_one({"_id": analysis_id}, ["ready"])
 
         if not document:
             raise ResourceNotFoundError
@@ -512,13 +520,13 @@ class AnalysisData(DataLayerDomain):
         if "ready" in document and document["ready"]:
             raise ResourceConflictError
 
-        document = await self._db.analyses.find_one_and_update(
+        document = await self._mongo.analyses.find_one_and_update(
             {"_id": analysis_id}, {"$set": {"results": results, "ready": True}}
         )
 
         sample_id = document["sample"]["id"]
 
-        await recalculate_workflow_tags(self._db, sample_id)
+        await recalculate_workflow_tags(self._mongo, sample_id)
 
         analysis = await self.get(analysis_id, None)
 
@@ -536,11 +544,11 @@ class AnalysisData(DataLayerDomain):
     async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
         """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
 
-        count = await self._db.analyses.count_documents({"workflow": "nuvs"})
+        count = await self._mongo.analyses.count_documents({"workflow": "nuvs"})
 
         tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
 
-        async for analysis in self._db.analyses.find({"workflow": "nuvs"}):
+        async for analysis in self._mongo.analyses.find({"workflow": "nuvs"}):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
 

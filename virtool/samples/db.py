@@ -85,7 +85,7 @@ UNCHANGABLE_WORKFLOW_STATES = [
 ]
 
 
-class ArtifactsAndReadsTransform(AbstractTransform):
+class AttachArtifactsAndReadsTransform(AbstractTransform):
     def __init__(self, pg):
         self._pg = pg
 

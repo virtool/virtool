@@ -164,6 +164,7 @@ class UsersData(DataLayerDomain):
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
+
         async with both_transactions(self._mongo, self._pg) as (mongo, pg):
             now = virtool.utils.timestamp()
 
@@ -180,7 +181,7 @@ class UsersData(DataLayerDomain):
                     last_password_change=now,
                 )
             )
-
+        document = await create_user(self._mongo, handle, password, force_reset)
         return await self.get(document["_id"])
 
     # TODO: ADD TESTS FOR THIS FUNCTION

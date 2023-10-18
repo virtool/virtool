@@ -1,12 +1,16 @@
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from syrupy import SnapshotAssertion
 
 from virtool.data.transforms import apply_transforms
+from virtool.fake.next import DataFaker
 from virtool.groups.pg import SQLGroup
-from virtool.users.transforms import AttachPermissionsTransform
+from virtool.mongo.core import Mongo
+from virtool.users.transforms import AttachPermissionsTransform, AttachUserTransform
 
 
 async def test_permission_transform(
-    pg: AsyncEngine, no_permissions: dict[str, bool], snapshot
+    no_permissions: dict[str, bool], pg: AsyncEngine, snapshot: SnapshotAssertion
 ):
     """
     Test that the transform works with legacy and SQL ids, as well as a single document
@@ -67,3 +71,22 @@ async def test_permission_transform(
         ],
         [AttachPermissionsTransform(pg)],
     ) == snapshot(name="multi")
+
+
+@pytest.mark.parametrize("multiple", [True, False])
+async def test_attach_user_transform(
+    multiple: bool, fake2: DataFaker, mongo: Mongo, snapshot: SnapshotAssertion
+):
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+
+    documents = {"id": "bar", "user": {"id": user_1.id}}
+
+    if multiple:
+        documents = [
+            documents,
+            {"id": "foo", "user": {"id": user_2.id}},
+            {"id": "baz", "user": {"id": user_1.id}},
+        ]
+
+    assert await apply_transforms(documents, [AttachUserTransform(mongo)]) == snapshot

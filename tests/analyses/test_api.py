@@ -8,6 +8,8 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
 from sqlalchemy.ext.asyncio import AsyncEngine
+from syrupy import SnapshotAssertion
+from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner
 from virtool.analyses.files import create_analysis_file
@@ -113,7 +115,7 @@ async def test_find(snapshot, mocker, fake2, spawn_client, static_time):
 
 
 @pytest.mark.apitest
-@pytest.mark.parametrize("ready, job_exists", [(True, True), (False, False)])
+@pytest.mark.parametrize("ready, exists", [(True, True), (False, False)])
 @pytest.mark.parametrize(
     "error",
     [
@@ -124,37 +126,23 @@ async def test_find(snapshot, mocker, fake2, spawn_client, static_time):
     ],
 )
 async def test_get(
-    ready,
-    job_exists,
-    fake2,
-    error,
+    ready: bool,
+    exists: bool,
+    fake2: DataFaker,
+    error: str | None,
     mocker,
-    snapshot,
-    spawn_client,
-    static_time,
+    pg: AsyncEngine,
     resp_is,
-    pg,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
-    job = await fake2.jobs.create(user=user_2)
-
-    document = {
-        "_id": "foobar",
-        "created_at": static_time.datetime,
-        "ready": ready,
-        "job": {"id": job.id if job_exists else "test"},
-        "index": {"version": 3, "id": "bar"},
-        "workflow": "pathoscope_bowtie",
-        "results": {"hits": []},
-        "sample": {"id": "baz"},
-        "reference": {"id": "baz"},
-        "subtractions": ["plum", "apple"],
-        "user": {"id": user_1.id},
-    }
+    job = await fake2.jobs.create(user=user_2, state=JobState.COMPLETE)
 
     await asyncio.gather(
         client.mongo.subtraction.insert_many(
@@ -182,7 +170,22 @@ async def test_get(
         )
 
     if error != "404_analysis":
-        await client.mongo.analyses.insert_one(document)
+        await client.mongo.analyses.insert_one(
+            {
+                "_id": "foobar",
+                "created_at": static_time.datetime,
+                "ready": ready,
+                "job": {"id": job.id if exists else "test"},
+                "index": {"version": 3, "id": "bar"},
+                "workflow": "pathoscope_bowtie",
+                "results": {"hits": []},
+                "sample": {"id": "baz"},
+                "reference": {"id": "baz"},
+                "subtractions": ["plum", "apple"],
+                "user": {"id": user_1.id},
+            }
+        )
+
         await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
@@ -191,35 +194,6 @@ async def test_get(
             {
                 "_id": "foobar",
                 "created_at": static_time.datetime,
-                "ready": True,
-                "job": {
-                    "archived": False,
-                    "created_at": static_time.datetime,
-                    "id": "7cf872dc",
-                    "progress": 0,
-                    "stage": None,
-                    "state": "waiting",
-                    "user": {
-                        "administrator": False,
-                        "handle": "zclark",
-                        "id": "fb085f7f",
-                    },
-                    "workflow": "jobs_aodp",
-                },
-                "index": {"version": 3, "id": "bar"},
-                "workflow": "pathoscope_bowtie",
-                "results": {"hits": []},
-                "sample": {"id": "baz"},
-                "reference": {"_id": "baz", "data_type": "genome", "name": "Baz"},
-                "subtractions": [
-                    {"_id": "apple", "name": "Apple"},
-                    {"_id": "plum", "name": "Plum"},
-                ],
-                "user": {
-                    "_id": "bf1b993c",
-                    "handle": "leeashley",
-                    "administrator": False,
-                },
                 "files": [
                     {
                         "id": 1,
@@ -232,6 +206,20 @@ async def test_get(
                         "uploaded_at": None,
                     }
                 ],
+                "index": {"version": 3, "id": "bar"},
+                "job": {
+                    "id": job.id,
+                },
+                "ready": True,
+                "reference": {"_id": "baz", "data_type": "genome", "name": "Baz"},
+                "results": {"hits": []},
+                "sample": {"id": "baz"},
+                "subtractions": [
+                    {"_id": "apple", "name": "Apple"},
+                    {"_id": "plum", "name": "Plum"},
+                ],
+                "user": {"id": user_1.id},
+                "workflow": "pathoscope_bowtie",
             }
         ),
     )
