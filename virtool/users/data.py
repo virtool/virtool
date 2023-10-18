@@ -183,7 +183,7 @@ class UsersData(DataLayerDomain):
 
         return await self.get(document["_id"])
 
-    # TODO: Update this one to use both_transactions
+    # TODO: ADD TESTS FOR THIS FUNCTION
     async def create_first(self, handle: str, password: str) -> User:
         """
         Create the first instance user.
@@ -198,20 +198,28 @@ class UsersData(DataLayerDomain):
         if handle == "virtool":
             raise ResourceConflictError("Reserved user name: virtool")
 
-        async with self._mongo.create_session() as session:
-            document = await create_user(
-                self._mongo, handle, password, False, session=session
-            )
+        async with both_transactions(self._mongo, self._pg) as (mongo, pg):
+            now = virtool.utils.timestamp()
 
+            document = await create_user(
+                self._mongo, handle, password, False, session=mongo
+            )
             await self._mongo.users.update_one(
                 {"_id": document["_id"]},
                 {"$set": {"administrator": True}},
-                session=session,
+                session=mongo,
             )
+            user = SQLUser(
+                legacy_id=document["_id"],
+                handle=handle,
+                password=document["password"],
+                force_reset=False,
+                last_password_change=now,
+            )
+            pg.add(user)
+            user.administrator = True
 
-        await self._authorization_client.add(
-            AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL)
-        )
+        await self.set_administrator_role(document["_id"], AdministratorRole.FULL)
 
         return await self.get(document["_id"])
 
