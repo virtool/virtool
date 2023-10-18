@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.labels.models import SQLLabel
 from virtool.data.transforms import AbstractTransform
+from virtool.mongo.core import Mongo
 from virtool.types import Document
 
 
@@ -53,11 +54,11 @@ class SampleCountTransform(AbstractTransform):
 
     """
 
-    def __init__(self, db):
-        self._db = db
+    def __init__(self, mongo: Mongo):
+        self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: int) -> Document:
         return {**document, "count": prepared}
 
     async def prepare_one(self, document) -> Awaitable[Any]:
-        return await self._db.samples.count_documents({"labels": document["id"]})
+        return await self._mongo.samples.count_documents({"labels": document["id"]})

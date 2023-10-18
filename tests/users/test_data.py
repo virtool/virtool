@@ -22,11 +22,12 @@ _last_password_change_matcher = path_type(
 
 
 class TestCreate:
-    async def test_no_force_reset(self, data_layer: DataLayer, mocker, snapshot):
-        mocker.patch(
-            "virtool.users.utils.hash_password", return_value="hashed_password"
-        )
-
+    async def test_no_force_reset(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
         user = await data_layer.users.create(password="hello_world", handle="bill")
 
         assert user.force_reset is False
@@ -34,6 +35,11 @@ class TestCreate:
             exclude=props(
                 "id",
             ),
+            matcher=_last_password_change_matcher,
+        )
+        assert await mongo.users.find_one({"_id": user.id}) == snapshot(
+            name="mongo",
+            exclude=props("password"),
             matcher=_last_password_change_matcher,
         )
 

@@ -11,9 +11,43 @@ from virtool.pg.utils import get_row_by_id
 
 import pytest
 
-from syrupy import snapshot
+from syrupy import snapshot, SnapshotAssertion
 from syrupy.filters import props
 from tests.analyses.test_api import files
+
+
+async def test_find(data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion):
+    await asyncio.gather(
+        mongo.samples.insert_one({"_id": "test_sample", "name": "Test Sample"}),
+        mongo.indexes.insert_one(
+            {
+                "_id": "test_index",
+                "version": 11,
+                "ready": True,
+                "reference": {"id": "test_ref"},
+            }
+        ),
+        mongo.references.insert_one(
+            {
+                "_id": "test_ref",
+                "name": "Test Reference",
+                "data_type": "genome",
+            }
+        ),
+        mongo.subtraction.insert_many(
+            [
+                {
+                    "_id": "subtraction_1",
+                    "name": "Subtraction 1",
+                },
+                {
+                    "_id": "subtraction_2",
+                    "name": "Subtraction 2",
+                },
+            ],
+            session=None,
+        ),
+    )
 
 
 async def test_create(

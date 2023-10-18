@@ -52,7 +52,7 @@ from __future__ import annotations
 import asyncio
 from abc import ABC, abstractmethod
 from asyncio import gather
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from virtool.types import Document
 
@@ -69,6 +69,13 @@ class AbstractTransform(ABC):
 
     """
 
+    @staticmethod
+    def preprocess(document: Document) -> Document:
+        """
+        Perform any necessary operations on documents before the transform is applied.
+        """
+        return document
+
     @abstractmethod
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         """
@@ -83,8 +90,8 @@ class AbstractTransform(ABC):
         ...
 
     async def attach_many(
-        self, documents: List[Document], prepared: Document
-    ) -> List[Document]:
+        self, documents: list[Document], prepared: Document
+    ) -> list[Document]:
         return [
             await self.attach_one(document, prepared[document["id"]])
             for document in documents
@@ -94,17 +101,15 @@ class AbstractTransform(ABC):
     async def prepare_one(self, document: Document) -> Any:
         ...
 
-    async def prepare_many(
-        self, documents: List[Document]
-    ) -> Dict[Union[int, str], Any]:
+    async def prepare_many(self, documents: list[Document]) -> Any:
         return {
             document["id"]: await self.prepare_one(document) for document in documents
         }
 
 
 async def apply_transforms(
-    documents: Document | List[Document], pipeline: List[AbstractTransform]
-) -> Document | List[Document]:
+    documents: Document | list[Document], pipeline: list[AbstractTransform]
+) -> Document | list[Document]:
     """
     Apply a list of transforms to one or more documents.
 
@@ -119,22 +124,33 @@ async def apply_transforms(
     :param pipeline: a list of transforms to apply
     :return: one transformed document or a list of transformed documents
     """
+
     if isinstance(documents, list):
         all_prepared = await gather(
-            *[transform.prepare_many(documents) for transform in pipeline]
+            *[
+                transform.prepare_many([transform.preprocess(d) for d in documents])
+                for transform in pipeline
+            ]
         )
 
-        for transform, prepared in zip(pipeline, all_prepared):
-            documents = await transform.attach_many(documents, prepared)
+        for prepared, transform in zip(all_prepared, pipeline):
+            documents = await transform.attach_many(
+                [transform.preprocess(d) for d in documents], prepared
+            )
 
         return documents
 
+    document = documents
+
     # In this case, we are dealing with a single document.
     prepared = await asyncio.gather(
-        *[transform.prepare_one(documents) for transform in pipeline]
+        *[
+            transform.prepare_one(transform.preprocess(document))
+            for transform in pipeline
+        ]
     )
 
-    for transform, prepared in zip(pipeline, prepared):
-        documents = await transform.attach_one(documents, prepared)
+    for p, transform in zip(prepared, pipeline):
+        document = await transform.attach_one(transform.preprocess(document), p)
 
-    return documents
+    return document

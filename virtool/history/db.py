@@ -5,30 +5,31 @@ Work with OTU history in the database.
 import asyncio
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import Any, List, Optional, Union, TYPE_CHECKING
 
 import bson
 import dictdiffer
 import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.enums import HistoryMethod
-from virtool.config import get_config_from_app
 
 import virtool.history.utils
 import virtool.otus.db
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.config import get_config_from_app
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
     write_diff_file,
     compose_history_description,
 )
-from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.transforms import AttachUserTransform
+from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -74,17 +75,17 @@ class DiffTransform(AbstractTransform):
         return document["diff"]
 
 
-async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
+async def processor(mongo, document: Document) -> Document:
     """
     Process a history document before it is returned to the client.
 
-    :param db: the application object
+    :param mongo: the application object
     :param document: the document to process
     :return: the processed document
     """
     return await apply_transforms(
-        virtool.utils.base_processor(document),
-        [AttachUserTransform(db, ignore_errors=True)],
+        base_processor(document),
+        [AttachUserTransform(mongo, ignore_errors=True)],
     )
 
 
@@ -240,8 +241,11 @@ async def get(app, change_id: str) -> Optional[Document]:
 
     if document:
         return await apply_transforms(
-            virtool.utils.base_processor(document),
-            [AttachUserTransform(db), DiffTransform(get_config_from_app(app).data_path)],
+            base_processor(document),
+            [
+                AttachUserTransform(db),
+                DiffTransform(get_config_from_app(app).data_path),
+            ],
         )
 
     return None

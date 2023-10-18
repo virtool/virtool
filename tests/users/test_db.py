@@ -4,7 +4,6 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError
-from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.users.db import (
@@ -15,7 +14,6 @@ from virtool.users.mongo import (
     update_keys,
     compose_primary_group_update,
 )
-from virtool.users.transforms import AttachUserTransform
 from virtool.users.utils import Permission
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric
@@ -42,23 +40,6 @@ async def _group_one_and_two(no_permissions: [str, bool], pg: AsyncEngine):
         )
 
         await session.commit()
-
-
-@pytest.mark.parametrize("multiple", [True, False])
-async def test_attach_user_transform(multiple, snapshot, mongo, fake2):
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
-
-    documents = {"_id": "bar", "user": {"id": user_1.id}}
-
-    if multiple:
-        documents = [
-            documents,
-            {"_id": "foo", "user": {"id": user_2.id}},
-            {"_id": "baz", "user": {"id": user_1.id}},
-        ]
-
-    assert await apply_transforms(documents, [AttachUserTransform(mongo)]) == snapshot
 
 
 class TestComposeGroupsUpdate:
