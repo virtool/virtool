@@ -2,6 +2,7 @@ import hashlib
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 
 from virtool.data.errors import ResourceConflictError
 from virtool.groups.pg import SQLGroup
@@ -20,7 +21,7 @@ from virtool.utils import random_alphanumeric
 
 
 @pytest.fixture
-async def _group_one_and_two(no_permissions: [str, bool], pg: AsyncEngine):
+async def _group_one_and_two(no_permissions: dict[str, bool], pg: AsyncEngine):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
@@ -43,7 +44,7 @@ async def _group_one_and_two(no_permissions: [str, bool], pg: AsyncEngine):
 
 
 class TestComposeGroupsUpdate:
-    async def test_ok(self, no_permissions, pg: AsyncEngine):
+    async def test_ok(self, no_permissions: dict[str, bool], pg: AsyncEngine):
         async with AsyncSession(pg) as session:
             session.add_all(
                 [
@@ -186,19 +187,18 @@ async def test_update_keys(
     administrator: bool,
     elevate: bool,
     missing: bool,
-    all_permissions,
+    all_permissions: dict[str, bool],
     mongo: Mongo,
-    no_permissions,
-    snapshot,
+    no_permissions: dict[str, bool],
+    snapshot: SnapshotAssertion,
 ):
     """
     Test that permissions assigned to keys and sessions are updated correctly.
 
-    Keys should only lose permissions that are disabled on the account. They should not received new permissions as part
-    of a user update.
+    Keys should only lose permissions that are disabled on the account. They should not
+    receive new permissions as part of a user update.
 
     Sessions should be changed to match the user account permissions.
-
     """
     permissions = dict(no_permissions if elevate else all_permissions)
 
