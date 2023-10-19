@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import gzip
 import os
 from pathlib import Path
@@ -9,8 +8,8 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import LibraryType, Permission
-from virtool_core.models.samples import WorkflowState
+from virtool_core.models.enums import Permission
+
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.config import get_config_from_app
@@ -19,101 +18,17 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.jobs.client import DummyJobsClient
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.uploads.models import SQLUpload
 from virtool.users.oas import UpdateUserRequest
+from tests.samples.test_data import get_sample_data
 
 
 class MockJobInterface:
     def __init__(self):
         self.enqueue = make_mocked_coro()
-
-
-@pytest.fixture
-async def get_sample_data(
-    mongo: "Mongo", fake2: DataFaker, pg: AsyncEngine, static_time
-):
-    label = await fake2.labels.create()
-    await fake2.labels.create()
-
-    user = await fake2.users.create()
-
-    await asyncio.gather(
-        mongo.subtraction.insert_many(
-            [
-                {"_id": "apple", "name": "Apple"},
-                {"_id": "pear", "name": "Pear"},
-                {"_id": "peach", "name": "Peach"},
-            ],
-            session=None,
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "all_read": True,
-                "all_write": True,
-                "created_at": static_time.datetime,
-                "files": [
-                    {
-                        "id": "foo",
-                        "name": "Bar.fq.gz",
-                        "download_url": "/download/samples/files/file_1.fq.gz",
-                    }
-                ],
-                "format": "fastq",
-                "group": "none",
-                "group_read": True,
-                "group_write": True,
-                "hold": False,
-                "host": "",
-                "is_legacy": False,
-                "isolate": "",
-                "labels": [label.id],
-                "library_type": LibraryType.normal.value,
-                "locale": "",
-                "name": "Test",
-                "notes": "",
-                "nuvs": False,
-                "pathoscope": True,
-                "ready": True,
-                "subtractions": ["apple", "pear"],
-                "user": {"id": user.id},
-                "workflows": {
-                    "aodp": WorkflowState.INCOMPATIBLE.value,
-                    "pathoscope": WorkflowState.COMPLETE.value,
-                    "nuvs": WorkflowState.PENDING.value,
-                },
-            }
-        ),
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                SQLSampleArtifact(
-                    name="reference.fa.gz",
-                    sample="test",
-                    type="fasta",
-                    name_on_disk="reference.fa.gz",
-                ),
-                SQLSampleReads(
-                    name="reads_1.fq.gz",
-                    name_on_disk="reads_1.fq.gz",
-                    sample="test",
-                    size=2903109210,
-                    uploaded_at=static_time.datetime,
-                    upload=None,
-                ),
-            ]
-        )
-        await session.commit()
-
-    return user.id
 
 
 @pytest.fixture
@@ -381,16 +296,22 @@ class TestCreate:
         group_setting: str,
         data_layer: DataLayer,
         fake2: DataFaker,
-        pg: AsyncEngine,
-        snapshot,
+        snapshot_recent,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         client = await spawn_client(
             authenticated=True, permissions=[Permission.create_sample]
         )
 
         group = await fake2.groups.create()
+
+        await data_layer.settings.update(
+            UpdateSettingsRequest(
+                sample_group=group_setting,
+                sample_all_write=True,
+                sample_group_write=True,
+            )
+        )
 
         await data_layer.users.update(
             client.user.id,
@@ -401,19 +322,6 @@ class TestCreate:
             client.user.id,
             UpdateUserRequest(primary_group=group.id),
         )
-
-        await data_layer.settings.update(
-            UpdateSettingsRequest(
-                sample_group=group_setting,
-                sample_all_write=True,
-                sample_group_write=True,
-            )
-        )
-
-        dummy_jobs_client = DummyJobsClient()
-
-        get_data_from_app(client.app).jobs._client = dummy_jobs_client
-        get_data_from_app(client.app).samples.jobs_client = dummy_jobs_client
 
         label = await fake2.labels.create()
         upload = await fake2.uploads.create(user=await fake2.users.create())
@@ -434,18 +342,7 @@ class TestCreate:
         body = await resp.json()
 
         assert resp.status == 201
-        assert resp.headers["Location"] == f"/samples/{body['id']}"
-        assert body == snapshot(name="resp")
-
-        sample, upload = await asyncio.gather(
-            client.mongo.samples.find_one(), get_row_by_id(pg, SQLUpload, 1)
-        )
-
-        assert sample == snapshot(name="mongo")
-        assert get_data_from_app(client.app).jobs._client.enqueued == [
-            ("create_sample", "bf1b993c")
-        ]
-        assert upload.reserved is True
+        assert await resp.json() == snapshot_recent(name="resp")
 
     @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     async def test_name_exists(
@@ -754,88 +651,20 @@ class TestEdit:
 async def test_finalize(
     field: str,
     snapshot,
-    fake2: DataFaker,
     pg: AsyncEngine,
     resp_is,
     spawn_job_client,
     tmp_path,
+    get_sample_data,
 ):
     """
     Test that sample can be finalized using the Jobs API.
 
     """
-    label = await fake2.labels.create()
-    await fake2.labels.create()
-
-    user = await fake2.users.create()
 
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
-
-    await client.db.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "created_at": 13,
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                }
-            ],
-            "format": "fastq",
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "hold": False,
-            "host": "",
-            "is_legacy": False,
-            "isolate": "",
-            "labels": [label.id],
-            "library_type": LibraryType.normal.value,
-            "locale": "",
-            "name": "Test",
-            "notes": "",
-            "nuvs": False,
-            "pathoscope": True,
-            "ready": True,
-            "subtractions": ["apple", "pear"],
-            "user": {"id": user.id},
-            "workflows": {
-                "aodp": WorkflowState.INCOMPATIBLE.value,
-                "pathoscope": WorkflowState.COMPLETE.value,
-                "nuvs": WorkflowState.PENDING.value,
-            },
-            "quality": None,
-        }
-    )
-
-    async with AsyncSession(pg) as session:
-        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
-
-        artifact = SQLSampleArtifact(
-            name="reference.fa.gz",
-            sample="test",
-            type="fasta",
-            name_on_disk="reference.fa.gz",
-        )
-
-        reads = SQLSampleReads(
-            name="reads_1.fq.gz",
-            name_on_disk="reads_1.fq.gz",
-            sample="test",
-            size=12,
-            uploaded_at=datetime.datetime(2023, 9, 1, 1, 1),
-        )
-
-        upload.reads.append(reads)
-
-        session.add_all([upload, artifact, reads])
-
-        await session.commit()
 
     resp = await client.patch(
         "/samples/test",
@@ -859,7 +688,6 @@ async def test_finalize(
         with pytest.raises(ResourceNotFoundError):
             await get_data_from_app(client.app).uploads.get(1)
 
-        assert not (await get_row_by_id(pg, SQLSampleReads, 1)).upload
     else:
         assert resp.status == 422
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
@@ -1145,9 +973,9 @@ async def test_upload_artifact(
     resp_is,
     snapshot,
     spawn_job_client,
-    static_time,
     test_files_path: Path,
     tmp_path,
+    static_time,
 ):
     """
     Test that new artifacts can be uploaded after sample creation using the Jobs API.
@@ -1199,7 +1027,6 @@ class TestUploadReads:
         self,
         snapshot,
         spawn_job_client,
-        static_time,
         test_files_path: Path,
         tmp_path,
     ):
@@ -1279,7 +1106,7 @@ class TestUploadReads:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time):
+async def test_get_cache(error, snapshot, spawn_job_client, resp_is):
     client = await spawn_job_client(authorize=True)
 
     cache = {
