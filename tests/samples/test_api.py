@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import gzip
 import os
 from pathlib import Path
@@ -9,8 +8,8 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import LibraryType, Permission
-from virtool_core.models.samples import WorkflowState
+from virtool_core.models.enums import Permission
+
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.config import get_config_from_app
@@ -672,7 +671,6 @@ class TestEdit:
 async def test_finalize(
     field: str,
     snapshot,
-    fake2: DataFaker,
     pg: AsyncEngine,
     resp_is,
     spawn_job_client,
@@ -996,9 +994,9 @@ async def test_upload_artifact(
     resp_is,
     snapshot,
     spawn_job_client,
-    static_time,
     test_files_path: Path,
     tmp_path,
+    static_time,
 ):
     """
     Test that new artifacts can be uploaded after sample creation using the Jobs API.
@@ -1050,7 +1048,6 @@ class TestUploadReads:
         self,
         snapshot,
         spawn_job_client,
-        static_time,
         test_files_path: Path,
         tmp_path,
     ):
@@ -1130,7 +1127,7 @@ class TestUploadReads:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time):
+async def test_get_cache(error, snapshot, spawn_job_client, resp_is):
     client = await spawn_job_client(authorize=True)
 
     cache = {
