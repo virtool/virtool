@@ -66,7 +66,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': 'approximately_now_isoformat',
+    'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': 2,
     'group_read': True,
@@ -78,7 +78,7 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': 'approximately_now_isoformat',
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
@@ -182,7 +182,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': 'approximately_now_isoformat',
+    'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': None,
     'group_read': True,
@@ -194,7 +194,7 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': 'approximately_now_isoformat',
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
@@ -298,7 +298,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': 'approximately_now_isoformat',
+    'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': 2,
     'group_read': True,
@@ -310,7 +310,7 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': 'approximately_now_isoformat',
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
@@ -3623,7 +3623,7 @@
         'uploaded_at': None,
       }),
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': '1970-01-01T00:00:13Z',
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
@@ -3677,21 +3677,13 @@
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
         'sample': 'test',
-        'size': 2903109210,
+        'size': 12,
         'upload': None,
-        'uploaded_at': '2015-10-06T20:00:00Z',
+        'uploaded_at': '2023-09-01T01:01:00Z',
       }),
     ]),
     'ready': True,
     'subtractions': list([
-      dict({
-        'id': 'apple',
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 'pear',
-        'name': 'Pear',
-      }),
     ]),
     'user': dict({
       'administrator': False,
