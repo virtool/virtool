@@ -310,6 +310,14 @@ class TestCreate:
 
         group = await fake2.groups.create()
 
+        await data_layer.settings.update(
+            UpdateSettingsRequest(
+                sample_group=group_setting,
+                sample_all_write=True,
+                sample_group_write=True,
+            )
+        )
+
         await data_layer.users.update(
             client.user.id,
             UpdateUserRequest(groups=[*[g.id for g in client.user.groups], group.id]),
@@ -318,14 +326,6 @@ class TestCreate:
         await data_layer.users.update(
             client.user.id,
             UpdateUserRequest(primary_group=group.id),
-        )
-
-        await data_layer.settings.update(
-            UpdateSettingsRequest(
-                sample_group=group_setting,
-                sample_all_write=True,
-                sample_group_write=True,
-            )
         )
 
         dummy_jobs_client = DummyJobsClient()
@@ -677,83 +677,16 @@ async def test_finalize(
     resp_is,
     spawn_job_client,
     tmp_path,
+    get_sample_data,
 ):
     """
     Test that sample can be finalized using the Jobs API.
 
     """
-    label = await fake2.labels.create()
-    await fake2.labels.create()
-
-    user = await fake2.users.create()
 
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
-
-    await client.db.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "created_at": 13,
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                }
-            ],
-            "format": "fastq",
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "hold": False,
-            "host": "",
-            "is_legacy": False,
-            "isolate": "",
-            "labels": [label.id],
-            "library_type": LibraryType.normal.value,
-            "locale": "",
-            "name": "Test",
-            "notes": "",
-            "nuvs": False,
-            "pathoscope": True,
-            "ready": True,
-            "subtractions": ["apple", "pear"],
-            "user": {"id": user.id},
-            "workflows": {
-                "aodp": WorkflowState.INCOMPATIBLE.value,
-                "pathoscope": WorkflowState.COMPLETE.value,
-                "nuvs": WorkflowState.PENDING.value,
-            },
-            "quality": None,
-        }
-    )
-
-    async with AsyncSession(pg) as session:
-        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
-
-        artifact = SQLSampleArtifact(
-            name="reference.fa.gz",
-            sample="test",
-            type="fasta",
-            name_on_disk="reference.fa.gz",
-        )
-
-        reads = SQLSampleReads(
-            name="reads_1.fq.gz",
-            name_on_disk="reads_1.fq.gz",
-            sample="test",
-            size=12,
-            uploaded_at=datetime.datetime(2023, 9, 1, 1, 1),
-        )
-
-        upload.reads.append(reads)
-
-        session.add_all([upload, artifact, reads])
-
-        await session.commit()
 
     resp = await client.patch(
         "/samples/test",

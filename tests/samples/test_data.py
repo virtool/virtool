@@ -63,6 +63,7 @@ async def get_sample_data(
                     "pathoscope": WorkflowState.COMPLETE.value,
                     "nuvs": WorkflowState.PENDING.value,
                 },
+                "quality": None,
             }
         ),
     )
