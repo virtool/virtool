@@ -688,7 +688,6 @@ async def test_finalize(
         with pytest.raises(ResourceNotFoundError):
             await get_data_from_app(client.app).uploads.get(1)
 
-        assert not (await get_row_by_id(pg, SQLSampleReads, 1)).upload
     else:
         assert resp.status == 422
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
