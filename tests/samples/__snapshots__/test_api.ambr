@@ -66,7 +66,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
     'group': 2,
     'group_read': True,
@@ -78,7 +78,7 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
@@ -182,7 +182,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
     'group': None,
     'group_read': True,
@@ -194,7 +194,7 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
@@ -298,7 +298,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
     'group': 2,
     'group_read': True,
@@ -310,7 +310,7 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
