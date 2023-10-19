@@ -20,100 +20,18 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.jobs.client import DummyJobsClient
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.uploads.models import SQLUpload
 from virtool.users.oas import UpdateUserRequest
+from tests.samples.test_data import get_sample_data
 
 
 class MockJobInterface:
     def __init__(self):
         self.enqueue = make_mocked_coro()
-
-
-@pytest.fixture
-async def get_sample_data(
-    mongo: "Mongo", fake2: DataFaker, pg: AsyncEngine, static_time
-):
-    label = await fake2.labels.create()
-    await fake2.labels.create()
-
-    user = await fake2.users.create()
-
-    await asyncio.gather(
-        mongo.subtraction.insert_many(
-            [
-                {"_id": "apple", "name": "Apple"},
-                {"_id": "pear", "name": "Pear"},
-                {"_id": "peach", "name": "Peach"},
-            ],
-            session=None,
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "all_read": True,
-                "all_write": True,
-                "created_at": static_time.datetime,
-                "files": [
-                    {
-                        "id": "foo",
-                        "name": "Bar.fq.gz",
-                        "download_url": "/download/samples/files/file_1.fq.gz",
-                    }
-                ],
-                "format": "fastq",
-                "group": "none",
-                "group_read": True,
-                "group_write": True,
-                "hold": False,
-                "host": "",
-                "is_legacy": False,
-                "isolate": "",
-                "labels": [label.id],
-                "library_type": LibraryType.normal.value,
-                "locale": "",
-                "name": "Test",
-                "notes": "",
-                "nuvs": False,
-                "pathoscope": True,
-                "ready": True,
-                "subtractions": ["apple", "pear"],
-                "user": {"id": user.id},
-                "workflows": {
-                    "aodp": WorkflowState.INCOMPATIBLE.value,
-                    "pathoscope": WorkflowState.COMPLETE.value,
-                    "nuvs": WorkflowState.PENDING.value,
-                },
-            }
-        ),
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                SQLSampleArtifact(
-                    name="reference.fa.gz",
-                    sample="test",
-                    type="fasta",
-                    name_on_disk="reference.fa.gz",
-                ),
-                SQLSampleReads(
-                    name="reads_1.fq.gz",
-                    name_on_disk="reads_1.fq.gz",
-                    sample="test",
-                    size=2903109210,
-                    uploaded_at=static_time.datetime,
-                    upload=None,
-                ),
-            ]
-        )
-        await session.commit()
-
-    return user.id
 
 
 @pytest.fixture
