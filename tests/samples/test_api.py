@@ -18,12 +18,10 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.jobs.client import DummyJobsClient
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.uploads.models import SQLUpload
 from virtool.users.oas import UpdateUserRequest
 from tests.samples.test_data import get_sample_data
 
@@ -298,10 +296,8 @@ class TestCreate:
         group_setting: str,
         data_layer: DataLayer,
         fake2: DataFaker,
-        pg: AsyncEngine,
-        snapshot,
+        snapshot_recent,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         client = await spawn_client(
             authenticated=True, permissions=[Permission.create_sample]
@@ -327,11 +323,6 @@ class TestCreate:
             UpdateUserRequest(primary_group=group.id),
         )
 
-        dummy_jobs_client = DummyJobsClient()
-
-        get_data_from_app(client.app).jobs._client = dummy_jobs_client
-        get_data_from_app(client.app).samples.jobs_client = dummy_jobs_client
-
         label = await fake2.labels.create()
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
@@ -351,18 +342,7 @@ class TestCreate:
         body = await resp.json()
 
         assert resp.status == 201
-        assert resp.headers["Location"] == f"/samples/{body['id']}"
-        assert body == snapshot(name="resp")
-
-        sample, upload = await asyncio.gather(
-            client.mongo.samples.find_one(), get_row_by_id(pg, SQLUpload, 1)
-        )
-
-        assert sample == snapshot(name="mongo")
-        assert get_data_from_app(client.app).jobs._client.enqueued == [
-            ("create_sample", "bf1b993c")
-        ]
-        assert upload.reserved is True
+        assert await resp.json() == snapshot_recent(name="resp")
 
     @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     async def test_name_exists(

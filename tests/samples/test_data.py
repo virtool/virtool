@@ -1,12 +1,21 @@
 import asyncio
 
 import pytest
+from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import LibraryType
+from virtool_core.models.enums import LibraryType, Permission
 from virtool_core.models.samples import WorkflowState
 
+from tests.fixtures.client import ClientSpawner
+from virtool.settings.oas import UpdateSettingsRequest
+from virtool.users.oas import UpdateUserRequest
+from virtool.data.layer import DataLayer
+from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.jobs.client import JobsClient
+from virtool.pg.utils import get_row_by_id
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
+from virtool.uploads.models import SQLUpload
 
 
 @pytest.fixture
@@ -90,3 +99,74 @@ async def get_sample_data(
         await session.commit()
 
     return user.id
+
+
+@pytest.mark.apitest
+class TestCreate:
+    @pytest.mark.parametrize(
+        "group_setting", ["none", "users_primary_group", "force_choice"]
+    )
+    async def test_ok(
+        self,
+        group_setting: str,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        fake2: DataFaker,
+        snapshot_recent,
+        spawn_client: ClientSpawner,
+        redis: Redis,
+    ):
+        client = await spawn_client(
+            authenticated=True, permissions=[Permission.create_sample]
+        )
+
+        group = await fake2.groups.create()
+
+        await data_layer.settings.update(
+            UpdateSettingsRequest(
+                sample_group=group_setting,
+                sample_all_write=True,
+                sample_group_write=True,
+            )
+        )
+        await data_layer.users.update(
+            client.user.id,
+            UpdateUserRequest(groups=[*[g.id for g in client.user.groups], group.id]),
+        )
+
+        await data_layer.users.update(
+            client.user.id,
+            UpdateUserRequest(primary_group=group.id),
+        )
+
+        jobs_client = JobsClient(redis)
+        get_data_from_app(client.app).jobs._client = jobs_client
+        get_data_from_app(client.app).samples.jobs_client = jobs_client
+
+        label = await fake2.labels.create()
+        upload = await fake2.uploads.create(user=await fake2.users.create())
+
+        await asyncio.gather(
+            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+        )
+
+        data = {
+            "files": [upload.id],
+            "labels": [label.id],
+            "name": "Foobar",
+            "subtractions": ["apple"],
+        }
+
+        if group_setting == "force_choice":
+            data["group"] = group.id
+
+        await client.post("/samples", data)
+
+        sample, upload = await asyncio.gather(
+            client.mongo.samples.find_one(),
+            get_row_by_id(pg, SQLUpload, 1),
+        )
+
+        assert sample == snapshot_recent(name="mongo")
+        assert await redis.lrange("jobs_create_sample", 0, -1) == [b"bf1b993c"]
+        assert upload.reserved is True
