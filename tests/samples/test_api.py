@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
-
+from tests.samples.test_data import get_sample_data
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.config import get_config_from_app
 from virtool.config.cls import ServerConfig
@@ -18,12 +18,10 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.pg.utils import get_row_by_id
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
-from tests.samples.test_data import get_sample_data
 
 
 class MockJobInterface:
@@ -339,7 +337,7 @@ class TestCreate:
             data["group"] = group.id
 
         resp = await client.post("/samples", data)
-        body = await resp.json()
+        await resp.json()
 
         assert resp.status == 201
         assert await resp.json() == snapshot_recent(name="resp")
