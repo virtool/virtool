@@ -126,8 +126,6 @@ async def test_get_reference_groups(
     group_1 = await fake2.groups.create()
     group_2 = await fake2.groups.create(legacy_id="group_2")
 
-    print([group_1, group_2])
-
     assert (
         await get_reference_groups(
             pg,

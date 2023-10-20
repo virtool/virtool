@@ -3,6 +3,7 @@ import datetime
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
+from syrupy import SnapshotAssertion
 from syrupy.filters import props
 from syrupy.matchers import path_type
 from virtool_core.models.roles import AdministratorRole
@@ -160,7 +161,7 @@ class TestUpdate:
         data_layer: DataLayer,
         fake2: DataFaker,
         mongo: Mongo,
-        snapshot,
+        snapshot: SnapshotAssertion,
     ):
         """
         Test that setting a user to administrator and vice versa sets the legacy
@@ -215,7 +216,11 @@ class TestUpdate:
         assert await get_one_field(mongo.users, "force_reset", user.id) is False
 
     async def test_set_groups(
-        self, data_layer: DataLayer, fake2: DataFaker, mongo: Mongo, snapshot
+        self,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
     ):
         """
         Test that setting ``groups`` works as expected.
@@ -274,7 +279,9 @@ class TestUpdate:
         )
         assert document["groups"] == []
 
-    async def test_password(self, bob, data_layer: DataLayer, mongo: Mongo, snapshot):
+    async def test_password(
+        self, bob, data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion
+    ):
         """
         Test editing an existing user.
 
@@ -307,7 +314,7 @@ async def test_find_or_create_b2c_user(
     data_layer: DataLayer,
     fake2: DataFaker,
     mongo: Mongo,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     fake_user = await fake2.users.create()
@@ -365,7 +372,7 @@ async def test_set_administrator_role(
     data_layer: DataLayer,
     fake2: DataFaker,
     mongo: Mongo,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     """
@@ -395,7 +402,7 @@ async def test_find_users(
     authorization_client: AuthorizationClient,
     data_layer: DataLayer,
     fake2: DataFaker,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     group_1 = await fake2.groups.create()

@@ -29,7 +29,8 @@ from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.file import FileDescriptor
-from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.data.transforms import apply_transforms
+from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
@@ -56,7 +57,7 @@ from virtool.tasks.progress import (
 from virtool.uploads.models import SQLUpload
 from virtool.uploads.utils import multipart_file_chunker
 from virtool.uploads.utils import naive_writer
-from virtool.users.mongo import lookup_nested_user_by_id
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
@@ -113,8 +114,6 @@ class SubtractionsData(DataLayerDomain):
                             {"$sort": {"name": 1}},
                             {"$skip": per_page * (page - 1)},
                             {"$limit": per_page},
-                            *lookup_nested_user_by_id(local_field="user.id"),
-                            *lookup_minimal_job_by_id(local_field="job.id"),
                             {
                                 "$project": {
                                     "id": "$_id",
@@ -164,6 +163,11 @@ class SubtractionsData(DataLayerDomain):
             raise ResourceNotFoundError
 
         data = data[0]
+
+        data["documents"] = await apply_transforms(
+            [base_processor(d) for d in data["documents"]],
+            [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+        )
 
         return SubtractionSearchResult(
             **data,
@@ -231,7 +235,8 @@ class SubtractionsData(DataLayerDomain):
         return subtraction
 
     async def get(self, subtraction_id: str) -> Subtraction:
-        document = await self._mongo.subtraction.aggregate(
+        """Get a subtraction by its id."""
+        result = await self._mongo.subtraction.aggregate(
             [
                 {"$match": {"_id": subtraction_id}},
                 {
@@ -240,26 +245,30 @@ class SubtractionsData(DataLayerDomain):
                         "count": True,
                         "created_at": True,
                         "file": True,
+                        "gc": True,
                         "ready": True,
                         "job": True,
                         "name": True,
                         "nickname": True,
                         "user": True,
                         "subtraction_id": True,
-                        "gc": True,
                     }
                 },
-                *lookup_nested_user_by_id(local_field="user.id"),
-                *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
 
-        if len(document) != 0:
+        if result:
             document = await attach_computed(
-                self._mongo, self._pg, self._base_url, document[0]
+                self._mongo, self._pg, self._base_url, result[0]
             )
 
-            document = base_processor(document)
+            document = await apply_transforms(
+                base_processor(document),
+                [
+                    AttachUserTransform(self._mongo, ignore_errors=True),
+                    AttachJobTransform(self._mongo),
+                ],
+            )
 
             return Subtraction(**document)
 

@@ -54,17 +54,10 @@ class MLData(DataLayerDomain):
 
         """
         async with AsyncSession(self._pg) as session:
-            model_result, task_result = await asyncio.gather(
-                session.execute(
-                    select(SQLMLModel)
-                    .order_by(asc(SQLMLModel.name))
-                    .options(joinedload(SQLMLModel.releases))
-                ),
-                session.execute(
-                    select(SQLTask)
-                    .where(SQLTask.type == SyncMLModelsTask.name)
-                    .order_by(desc(SQLTask.created_at))
-                ),
+            model_result = await session.execute(
+                select(SQLMLModel)
+                .order_by(asc(SQLMLModel.name))
+                .options(joinedload(SQLMLModel.releases))
             )
 
             items = [
@@ -80,6 +73,12 @@ class MLData(DataLayerDomain):
                 )
                 for model in model_result.scalars().unique()
             ]
+
+            task_result = await session.execute(
+                select(SQLTask)
+                .where(SQLTask.type == SyncMLModelsTask.name)
+                .order_by(desc(SQLTask.created_at))
+            )
 
             task = task_result.scalars().first()
 

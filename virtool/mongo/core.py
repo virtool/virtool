@@ -15,7 +15,6 @@ import virtool.caches.db
 import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
-import virtool.jobs.db
 import virtool.mongo.utils
 import virtool.otus.db
 import virtool.references.db
@@ -199,7 +198,15 @@ class Mongo:
         )
 
         self.jobs = self.bind_collection(
-            "jobs", projection=virtool.jobs.db.LIST_PROJECTION
+            "jobs",
+            projection=(
+                "_id",
+                "archived",
+                "workflow",
+                "status",
+                "rights",
+                "user",
+            ),
         )
 
         self.keys = self.bind_collection("keys")

@@ -1,4 +1,5 @@
 import pytest
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 from virtool_core.models.roles import SpaceSampleRole, SpaceReferenceRole
 
@@ -42,7 +43,7 @@ async def setup_update_user(
 async def test_find(
     find: str | None,
     fake2: DataFaker,
-    snapshot,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -68,7 +69,11 @@ async def test_find(
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
-    status: int, fake2: DataFaker, snapshot, spawn_client: ClientSpawner, static_time
+    status: int,
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(administrator=True, authenticated=True)
@@ -95,7 +100,7 @@ async def test_create(
     fake2: DataFaker,
     mongo: Mongo,
     resp_is,
-    snapshot,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -157,7 +162,9 @@ async def test_create(
 
 @pytest.mark.apitest
 class TestUpdate:
-    async def test_ok(self, setup_update_user, snapshot, static_time):
+    async def test_ok(
+        self, setup_update_user, snapshot: SnapshotAssertion, static_time
+    ):
         client, group_1, _, user = setup_update_user
 
         resp = await client.patch(
@@ -172,7 +179,9 @@ class TestUpdate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_with_groups(self, setup_update_user, snapshot, static_time):
+    async def test_with_groups(
+        self, setup_update_user, snapshot: SnapshotAssertion, static_time
+    ):
         client, group_1, group_2, user = setup_update_user
 
         resp = await client.patch(
@@ -187,7 +196,7 @@ class TestUpdate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_short_password(self, setup_update_user, snapshot):
+    async def test_short_password(self, setup_update_user, snapshot: SnapshotAssertion):
         client, _, _, user = setup_update_user
 
         resp = await client.patch(
@@ -200,7 +209,9 @@ class TestUpdate:
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-    async def test_non_existent_primary_group(self, setup_update_user, snapshot):
+    async def test_non_existent_primary_group(
+        self, setup_update_user, snapshot: SnapshotAssertion
+    ):
         client, _, _, user = setup_update_user
 
         resp = await client.patch(
@@ -213,7 +224,9 @@ class TestUpdate:
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-    async def test_not_a_member_of_primary_group(self, setup_update_user, snapshot):
+    async def test_not_a_member_of_primary_group(
+        self, setup_update_user, snapshot: SnapshotAssertion
+    ):
         client, _, group_2, user = setup_update_user
 
         resp = await client.patch(
@@ -226,7 +239,7 @@ class TestUpdate:
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-    async def test_not_found(self, setup_update_user, snapshot):
+    async def test_not_found(self, setup_update_user, snapshot: SnapshotAssertion):
         client, _, _, _ = setup_update_user
 
         resp = await client.patch(
@@ -241,7 +254,7 @@ class TestUpdate:
 
 
 @pytest.mark.parametrize("user", ["test", "bob"])
-async def test_list_permissions(spawn_client, user, snapshot):
+async def test_list_permissions(spawn_client, user, snapshot: SnapshotAssertion):
     client = await spawn_client(
         authenticated=True,
         permissions=[Permission.create_sample, Permission.create_ref],
@@ -271,7 +284,10 @@ async def test_list_permissions(spawn_client, user, snapshot):
     ids=["valid_permission", "invalid_permission"],
 )
 async def test_add_permission(
-    role: SpaceSampleRole, status: int, snapshot, spawn_client: ClientSpawner
+    role: SpaceSampleRole,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
 ):
     client = await spawn_client(administrator=True, authenticated=True)
 
@@ -292,7 +308,7 @@ async def test_add_permission(
 async def test_remove_permission(
     role: SpaceSampleRole,
     status: int,
-    snapshot,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
 ):
     client = await spawn_client(administrator=True, authenticated=True)
@@ -308,7 +324,7 @@ async def test_create_first_user(
     first_user_exists: bool,
     status: int,
     mongo: Mongo,
-    snapshot,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
