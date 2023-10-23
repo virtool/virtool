@@ -49,6 +49,7 @@
 # ---
 # name: TestCreate.test_create_first[pg]
   dict({
+    'administrator': True,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
@@ -106,6 +107,7 @@
 # ---
 # name: TestCreate.test_force_reset[False][pg]
   dict({
+    'administrator': False,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
@@ -163,6 +165,7 @@
 # ---
 # name: TestCreate.test_force_reset[True][pg]
   dict({
+    'administrator': False,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
@@ -220,6 +223,7 @@
 # ---
 # name: TestCreate.test_no_force_reset[pg]
   dict({
+    'administrator': False,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
