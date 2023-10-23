@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Table, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from virtool.groups.pg import SQLGroup
@@ -22,7 +22,7 @@ class SQLUser(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     legacy_id: Mapped[str | None] = None
     active: Mapped[bool] = True
-    administrator: Mapped[bool] = False
+    administrator: Mapped[bool] = Column(Boolean, default=False)
     force_reset: Mapped[bool]
     b2c_display_name: Mapped[str] = ""
     b2c_given_name: Mapped[str] = ""
@@ -32,7 +32,7 @@ class SQLUser(Base):
     handle: Mapped[str]
     invalidate_sessions: Mapped[bool] = False
     last_password_change: Mapped[datetime]
-    password: Mapped[bytes]
+    password: Mapped[bytes] = mapped_column(nullable=True)
 
     groups: Mapped[list[SQLGroup]] = relationship(secondary=user_group_associations)
 

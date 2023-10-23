@@ -2,7 +2,7 @@ import asyncio
 import random
 
 from pymongo.errors import DuplicateKeyError
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User, UserSearchResult
@@ -27,7 +27,12 @@ from virtool.users.db import (
     B2CUserAttributes,
     compose_groups_update,
 )
-from virtool.users.mongo import create_user, update_keys, compose_primary_group_update
+from virtool.users.mongo import (
+    create_user,
+    update_keys,
+    compose_primary_group_update,
+    generate_handle,
+)
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachPermissionsTransform
@@ -152,7 +157,11 @@ class UsersData(DataLayerDomain):
 
     @emits(Operation.CREATE)
     async def create(
-        self, handle: str, password: str, force_reset: bool = False
+        self,
+        handle: str,
+        password: str | None,
+        force_reset: bool = False,
+        b2c_user_attributes: B2CUserAttributes | None = None,
     ) -> User:
         """
         Create a new user.
@@ -162,28 +171,45 @@ class UsersData(DataLayerDomain):
         :param handle: the requested handle for the user
         :param password: a password
         :param force_reset: force the user to reset password on next login
+        :param  b2c_user_attributes: Azure b2c user attributes used to describe a user
         :return: the user document
         """
         async with both_transactions(self._mongo, self._pg) as (mongo, pg):
             now = virtool.utils.timestamp()
 
             document = await create_user(
-                self._mongo, handle, password, force_reset, session=mongo
+                self._mongo,
+                handle,
+                password,
+                force_reset,
+                b2c_user_attributes=b2c_user_attributes,
+                session=mongo,
             )
 
             pg.add(
                 SQLUser(
                     legacy_id=document["_id"],
                     handle=handle,
-                    password=document["password"],
+                    password=document["password"] if password else None,
                     force_reset=force_reset,
                     last_password_change=now,
+                    b2c_display_name=b2c_user_attributes.display_name
+                    if b2c_user_attributes
+                    else "",
+                    b2c_given_name=b2c_user_attributes.given_name
+                    if b2c_user_attributes
+                    else "",
+                    b2c_family_name=b2c_user_attributes.family_name
+                    if b2c_user_attributes
+                    else "",
+                    b2c_oid=b2c_user_attributes.oid if b2c_user_attributes else "",
                 )
             )
 
         return await self.get(document["_id"])
 
-    # TODO: ADD TESTS FOR THIS FUNCTION
+    # TODO: FIX TEST
+    # TODO:  CHANGE TO USE LATER FUNCTION
     async def create_first(self, handle: str, password: str) -> User:
         """
         Create the first instance user.
@@ -217,13 +243,11 @@ class UsersData(DataLayerDomain):
                 last_password_change=now,
             )
             pg.add(user)
-            user.administrator = True
 
         await self.set_administrator_role(document["_id"], AdministratorRole.FULL)
 
         return await self.get(document["_id"])
 
-    # TODO: Update this one to use both_transactions
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes
     ) -> User:
@@ -241,28 +265,21 @@ class UsersData(DataLayerDomain):
         ):
             return await self.get(document["_id"])
 
-        handle = "-".join(
-            [
-                b2c_user_attributes.given_name,
-                b2c_user_attributes.family_name,
-                str(random.randint(1, 100)),
-            ]
+        handle = await generate_handle(
+            self._mongo.users,
+            b2c_user_attributes.given_name,
+            b2c_user_attributes.family_name,
         )
 
         try:
-            document = await create_user(
-                self._mongo,
-                handle,
-                None,
-                False,
-                b2c_user_attributes=b2c_user_attributes,
+            user = await self.create(
+                handle, None, False, b2c_user_attributes=b2c_user_attributes
             )
         except DuplicateKeyError:
             return await self.find_or_create_b2c_user(b2c_user_attributes)
 
-        return await self.get(document["_id"])
+        return user
 
-    # TODO: Update this one to use both_transactions
     async def set_administrator_role(
         self, user_id: str, role: AdministratorRole
     ) -> User:
@@ -280,32 +297,32 @@ class UsersData(DataLayerDomain):
         if not await id_exists(self._mongo.users, user_id):
             raise ResourceNotFoundError("User does not exist")
 
-        await update_legacy_administrator(self._mongo, user_id, role)
-
-        if role is None:
-            # Clear the user's administrator role.
-            admin_tuple = await self._authorization_client.get_administrator(user_id)
-
-            if admin_tuple[1] is not None:
-                await self._authorization_client.remove(
-                    AdministratorRoleAssignment(
-                        user_id, AdministratorRole(admin_tuple[1])
-                    )
-                )
-        else:
-            await self._authorization_client.add(
-                AdministratorRoleAssignment(user_id, AdministratorRole(role))
+        async with both_transactions(self._mongo, self._pg) as (mongo, pg):
+            await update_legacy_administrator(self._mongo, user_id, role)
+            await pg.execute(
+                update(SQLUser)
+                .where(SQLUser.legacy_id == user_id)
+                .values(administrator=role == AdministratorRole.FULL)
             )
 
-        user = await self.get(user_id)
+            if role is None:
+                # Clear the user's administrator role.
+                admin_tuple = await self._authorization_client.get_administrator(
+                    user_id
+                )
 
-        await update_keys(
-            self._mongo,
-            user.id,
-            user.administrator,
-            user.groups,
-            user.permissions.dict(),
-        )
+                if admin_tuple[1] is not None:
+                    await self._authorization_client.remove(
+                        AdministratorRoleAssignment(
+                            user_id, AdministratorRole(admin_tuple[1])
+                        )
+                    )
+            else:
+                await self._authorization_client.add(
+                    AdministratorRoleAssignment(user_id, AdministratorRole(role))
+                )
+
+        user = await self.get(user_id)
 
         return user
 
