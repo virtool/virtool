@@ -3,7 +3,6 @@ import datetime
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
-from syrupy import SnapshotAssertion
 from syrupy.filters import props
 from syrupy.matchers import path_type
 from virtool_core.models.roles import AdministratorRole
