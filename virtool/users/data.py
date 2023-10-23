@@ -1,5 +1,4 @@
 import asyncio
-import random
 
 from pymongo.errors import DuplicateKeyError
 from sqlalchemy import select, update
@@ -208,8 +207,6 @@ class UsersData(DataLayerDomain):
 
         return await self.get(document["_id"])
 
-    # TODO: FIX TEST
-    # TODO:  CHANGE TO USE LATER FUNCTION
     async def create_first(self, handle: str, password: str) -> User:
         """
         Create the first instance user.
@@ -298,7 +295,7 @@ class UsersData(DataLayerDomain):
             raise ResourceNotFoundError("User does not exist")
 
         async with both_transactions(self._mongo, self._pg) as (mongo, pg):
-            await update_legacy_administrator(self._mongo, user_id, role)
+            await update_legacy_administrator(self._mongo, user_id, role, mongo)
             await pg.execute(
                 update(SQLUser)
                 .where(SQLUser.legacy_id == user_id)
