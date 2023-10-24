@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, ForeignKey, Table, Boolean
+from sqlalchemy import Column, ForeignKey, Table, Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from virtool.groups.pg import SQLGroup
@@ -20,7 +20,7 @@ class SQLUser(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    legacy_id: Mapped[str | None] = None
+    legacy_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     active: Mapped[bool] = True
     administrator: Mapped[bool] = Column(Boolean, default=False)
     force_reset: Mapped[bool]
