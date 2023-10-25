@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
