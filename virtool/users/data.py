@@ -1,7 +1,7 @@
 import asyncio
 
 from pymongo.errors import DuplicateKeyError
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User, UserSearchResult
@@ -206,6 +206,16 @@ class UsersData(DataLayerDomain):
             )
 
         return await self.get(document["_id"])
+
+    async def delete(self, legacy_id: str):
+        async with both_transactions(self._mongo, self._pg) as (mongo, pg):
+            await pg.execute(delete(SQLUser).where(legacy_id=legacy_id))
+            await self._mongo.users.deleteOne(_id=legacy_id, session=mongo)
+
+    async def delete_all(self):
+        async with both_transactions(self._mongo, self._pg) as (mongo, pg):
+            await pg.execute(delete(SQLUser))
+            await self._mongo.users.delete_many({}, session=mongo)
 
     async def create_first(self, handle: str, password: str) -> User:
         """
