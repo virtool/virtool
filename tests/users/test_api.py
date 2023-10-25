@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
@@ -323,7 +325,7 @@ async def test_remove_permission(
 async def test_create_first_user(
     first_user_exists: bool,
     status: int,
-    mongo: Mongo,
+    data_layer: DataLayer,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -334,7 +336,7 @@ async def test_create_first_user(
     client = await spawn_client()
 
     if not first_user_exists:
-        await mongo.users.delete_many({})
+        await data_layer.users.delete_all()
 
     resp = await client.put(
         "/users/first", {"handle": "fred", "password": "hello_world"}
