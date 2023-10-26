@@ -50,6 +50,7 @@
 # name: TestCreate.test_create_first[pg]
   dict({
     'administrator': True,
+    'force_reset': False,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
@@ -108,6 +109,7 @@
 # name: TestCreate.test_force_reset[False][pg]
   dict({
     'administrator': False,
+    'force_reset': False,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
@@ -166,6 +168,7 @@
 # name: TestCreate.test_force_reset[True][pg]
   dict({
     'administrator': False,
+    'force_reset': True,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
@@ -224,6 +227,7 @@
 # name: TestCreate.test_no_force_reset[pg]
   dict({
     'administrator': False,
+    'force_reset': False,
     'handle': 'bill',
     'id': 1,
     'last_password_change': datetime,
@@ -280,6 +284,17 @@
     'primary_group': None,
   })
 # ---
+# name: TestUpdate.test_administrator[False][pg]
+  dict({
+    'administrator': True,
+    'force_reset': False,
+    'handle': 'leeashley',
+    'id': 1,
+    'last_password_change': datetime,
+    'legacy_id': 'bf1b993c',
+    'primary_group_id': None,
+  })
+# ---
 # name: TestUpdate.test_administrator[True][mongo]
   dict({
     '_id': 'bf1b993c',
@@ -329,19 +344,29 @@
     'primary_group': None,
   })
 # ---
+# name: TestUpdate.test_administrator[True][pg]
+  dict({
+    'administrator': False,
+    'force_reset': False,
+    'handle': 'leeashley',
+    'id': 1,
+    'last_password_change': datetime,
+    'legacy_id': 'bf1b993c',
+    'primary_group_id': None,
+  })
+# ---
 # name: TestUpdate.test_password[db]
   dict({
-    '_id': 'abc123',
+    '_id': 'bf1b993c',
     'active': True,
     'administrator': False,
     'force_reset': False,
     'groups': list([
-      'peasants',
     ]),
     'handle': 'bob',
     'invalidate_sessions': True,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'primary_group': '',
+    'last_password_change': datetime,
+    'primary_group': None,
     'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -364,8 +389,8 @@
     'groups': list([
     ]),
     'handle': 'bob',
-    'id': 'abc123',
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 'bf1b993c',
+    'last_password_change': datetime,
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -378,6 +403,43 @@
     }),
     'primary_group': None,
   })
+# ---
+# name: TestUpdate.test_password[pg]
+  dict({
+    'administrator': False,
+    'force_reset': False,
+    'handle': 'bob',
+    'id': 1,
+    'last_password_change': datetime,
+    'legacy_id': 'bf1b993c',
+    'primary_group_id': None,
+  })
+# ---
+# name: TestUpdate.test_set_groups[groups]
+  list([
+    {'user_id': 1, 'group_id': 2},
+    {'user_id': 1, 'group_id': 2},
+    {'user_id': 1, 'group_id': 1},
+  ])
+# ---
+# name: TestUpdate.test_set_groups[groups_1]
+  list([
+    {'user_id': 1, 'group_id': 2},
+  ])
+# ---
+# name: TestUpdate.test_set_groups[groups_2]
+  list([
+    {'user_id': 1, 'group_id': 2},
+    {'user_id': 1, 'group_id': 2},
+    {'user_id': 1, 'group_id': 1},
+  ])
+# ---
+# name: TestUpdate.test_set_groups[groups_3]
+  list([
+    {'user_id': 1, 'group_id': 2},
+    {'user_id': 1, 'group_id': 2},
+    {'user_id': 1, 'group_id': 1},
+  ])
 # ---
 # name: TestUpdate.test_set_groups[mongo_1]
   dict({
