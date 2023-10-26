@@ -1,5 +1,6 @@
 import datetime
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
@@ -16,7 +17,7 @@ from virtool.mongo.utils import get_one_field
 from virtool.users.db import B2CUserAttributes
 from virtool.users.mongo import validate_credentials
 from virtool.users.oas import UpdateUserRequest
-from virtool.users.pg import SQLUser
+from virtool.users.pg import SQLUser, user_group_associations
 
 _last_password_change_matcher = path_type(
     {"last_password_change": (datetime.datetime,)}
@@ -160,6 +161,7 @@ class TestUpdate:
         data_layer: DataLayer,
         fake2: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
     ):
         """
@@ -180,6 +182,14 @@ class TestUpdate:
             exclude=props("password"),
             matcher=_last_password_change_matcher,
         )
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+
+            assert row.to_dict() == snapshot(
+                name="pg",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
 
         assert (
             await authorization_client.list_administrators() == []
@@ -188,37 +198,41 @@ class TestUpdate:
         )
 
     async def test_force_reset(
-        self,
-        data_layer: DataLayer,
-        fake2: DataFaker,
-        mongo: Mongo,
+        self, data_layer: DataLayer, fake2: DataFaker, mongo: Mongo, pg: AsyncEngine
     ):
         """
         Test that setting and unsetting ``force_reset`` works as expected.
         """
         user = await fake2.users.create()
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+            assert await get_one_field(mongo.users, "force_reset", user.id) is False
 
-        assert await get_one_field(mongo.users, "force_reset", user.id) is False
-
-        user = await data_layer.users.update(
-            user.id, UpdateUserRequest(force_reset=True)
-        )
-
-        assert user.force_reset is True
-        assert await get_one_field(mongo.users, "force_reset", user.id) is True
-
-        user = await data_layer.users.update(
-            user.id, UpdateUserRequest(force_reset=False)
-        )
-
-        assert user.force_reset is False
-        assert await get_one_field(mongo.users, "force_reset", user.id) is False
+            assert row.force_reset is False
+            assert user.force_reset is False
+            user = await data_layer.users.update(
+                user.id, UpdateUserRequest(force_reset=True)
+            )
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+            assert user.force_reset is True
+            assert row.force_reset is True
+            assert await get_one_field(mongo.users, "force_reset", user.id) is True
+            user = await data_layer.users.update(
+                user.id, UpdateUserRequest(force_reset=False)
+            )
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+            assert user.force_reset is False
+            assert row.force_reset is False
+            assert await get_one_field(mongo.users, "force_reset", user.id) is False
 
     async def test_set_groups(
         self,
         data_layer: DataLayer,
         fake2: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
     ):
         """
@@ -236,6 +250,13 @@ class TestUpdate:
             exclude=props("password"),
             matcher=_last_password_change_matcher,
         )
+        async with (AsyncSession(pg) as session):
+            groups = await session.execute(
+                select(user_group_associations)
+                .join(SQLUser)
+                .where(user_group_associations.c.user_id == SQLUser.id)
+            )
+        assert groups.mappings().all() == []
         assert user.groups == []
 
         user = await data_layer.users.update(
@@ -243,6 +264,13 @@ class TestUpdate:
         )
         document = await mongo.users.find_one({"_id": user.id})
 
+        async with (AsyncSession(pg) as session):
+            groups = await session.execute(
+                select(user_group_associations)
+                .join(SQLUser)
+                .where(user_group_associations.c.user_id == SQLUser.id)
+            )
+        assert groups.mappings().all() == snapshot(name="groups_1")
         assert user == snapshot(name="obj_2", matcher=_last_password_change_matcher)
         assert document == snapshot(
             name="mongo_2",
@@ -256,6 +284,13 @@ class TestUpdate:
         )
         document = await mongo.users.find_one({"_id": user.id})
 
+        async with (AsyncSession(pg) as session):
+            groups = await session.execute(
+                select(user_group_associations)
+                .join(SQLUser)
+                .where(user_group_associations.c.user_id == SQLUser.id)
+            )
+        assert groups.mappings().all() == snapshot(name="groups_2")
         assert user == snapshot(name="obj_3", matcher=_last_password_change_matcher)
         assert document == snapshot(
             name="mongo_3",
@@ -269,7 +304,13 @@ class TestUpdate:
 
         user = await data_layer.users.update(user.id, UpdateUserRequest(groups=[]))
         document = await mongo.users.find_one({"_id": user.id})
-
+        async with (AsyncSession(pg) as session):
+            groups = await session.execute(
+                select(user_group_associations)
+                .join(SQLUser)
+                .where(user_group_associations.c.user_id == SQLUser.id)
+            )
+        assert groups.mappings().all() == snapshot(name="groups_3")
         assert user == snapshot(name="obj_4", matcher=_last_password_change_matcher)
         assert document == snapshot(
             name="mongo_4",
@@ -279,24 +320,37 @@ class TestUpdate:
         assert document["groups"] == []
 
     async def test_password(
-        self, bob, data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
     ):
         """
         Test editing an existing user.
 
         """
-        await mongo.users.insert_one(bob)
+        user = await data_layer.users.create("bob", "password")
 
         assert await data_layer.users.update(
-            bob["_id"], UpdateUserRequest(password="hello_world")
-        ) == snapshot(name="obj")
+            user.id, UpdateUserRequest(password="hello_world")
+        ) == snapshot(name="obj", matcher=_last_password_change_matcher)
 
         assert await mongo.users.find_one() == snapshot(
-            name="db", exclude=props("password")
+            name="db", exclude=props("password"), matcher=_last_password_change_matcher
         )
 
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+
+            assert row.to_dict() == snapshot(
+                name="pg",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
+
         # Ensure the newly set password validates.
-        assert await validate_credentials(mongo, bob["_id"], "hello_world")
+        assert await validate_credentials(mongo, user.id, "hello_world")
 
     async def test_not_found(self, data_layer: DataLayer):
         with pytest.raises(ResourceNotFoundError) as err:
