@@ -421,11 +421,14 @@ class UsersData(DataLayerDomain):
                         data["primary_group"],
                         user_id,
                     )
-
+                    await pg.execute(
+                        insert(user_group_associations).values(
+                            user_id=user.id, group_id=data["primary_group"]
+                        )
+                    )
                 except DatabaseError as err:
                     raise ResourceConflictError(str(err))
                 updates.update(primary_group)
-                user.primary_group = primary_group.values()
 
             if "active" in data:
                 updates.update({"active": data["active"], "invalidate_sessions": True})

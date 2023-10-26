@@ -1,6 +1,6 @@
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
+from virtool.users.pg import user_group_associations
 from virtool.fake.next import DataFaker
 from virtool.groups.mongo import update_member_users_and_api_keys
 from virtool.groups.pg import SQLGroup
@@ -17,6 +17,11 @@ async def test_update_member_users_and_api_keys(
     user = await fake2.users.create(groups=[group_1, group_2])
 
     async with AsyncSession(pg) as session:
+        await session.execute(
+            delete(user_group_associations).where(
+                user_group_associations.c.group_id == group_2.id
+            )
+        )
         await session.execute(delete(SQLGroup).where(SQLGroup.id == group_2.id))
         await session.commit()
 

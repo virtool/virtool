@@ -216,7 +216,7 @@ class TestUpdateUser:
         resp = await client.patch(
             f"/admin/users/{user.id}", {"primary_group": group.id}
         )
-
+        print(resp.status)
         assert resp.status == 200 if is_member else 400
         assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
