@@ -171,26 +171,22 @@ class TestCreate:
 
         assert sample == snapshot_recent(name="mongo")
         assert await redis.lrange("jobs_create_sample", 0, -1) == [b"bf1b993c"]
-        assert upload.reserved is True
 
 
 @pytest.mark.datatest
 async def test_finalize(
     data_layer: DataLayer,
-    spawn_job_client,
+    snapshot,
     tmp_path,
     get_sample_data,
 ):
     """
-    Test that sample can be finalized using the Jobs API.
+    Test that sample can be finalized
     """
-    client = await spawn_job_client(authorize=True)
-    get_config_from_app(client.app).data_path = tmp_path
-
-    await client.patch(
-        "/samples/test",
-        json={
-            "quality": {
+    assert (
+        await data_layer.samples.finalize(
+            "test",
+            {
                 "bases": [[1543]],
                 "composition": [[6372]],
                 "count": 7069,
@@ -198,11 +194,8 @@ async def test_finalize(
                 "gc": 34222440,
                 "length": [3237],
                 "sequences": [7091],
-            }
-        },
-    )
-
-    with pytest.raises(ResourceNotFoundError):
-        await get_data_from_app(client.app).uploads.get(1)
-
-    assert not (await get_row_by_id(data_layer.samples._pg, SQLSampleReads, 1)).upload
+            },
+        )
+    ).dict() == snapshot()
+    sample = await data_layer.samples.get("test")
+    assert sample.ready == True

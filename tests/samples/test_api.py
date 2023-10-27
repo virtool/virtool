@@ -337,7 +337,6 @@ class TestCreate:
             data["group"] = group.id
 
         resp = await client.post("/samples", data)
-        await resp.json()
 
         assert resp.status == 201
         assert await resp.json() == snapshot_recent(name="resp")
@@ -649,7 +648,6 @@ class TestEdit:
 async def test_finalize(
     field: str,
     snapshot,
-    pg: AsyncEngine,
     resp_is,
     spawn_job_client,
     tmp_path,
