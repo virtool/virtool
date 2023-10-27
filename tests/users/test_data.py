@@ -25,6 +25,96 @@ _last_password_change_matcher = path_type(
 
 
 # TODO: ADD TEST FOR DELETE METHODS
+class TestDelete:
+    async def test_delete(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        user = await data_layer.users.create(password="hello_world", handle="bill")
+
+        async with (AsyncSession(pg) as session):
+            row = await session.get(SQLUser, 1)
+
+            assert row.to_dict() == snapshot(
+                name="pg",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
+
+        doc = await mongo.users.find_one({"_id": user.id})
+
+        assert doc == snapshot(
+            name="mongo",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+
+        await data_layer.users.delete(user.id)
+        row = await session.get(SQLUser, 1)
+        doc = await mongo.users.find_one({"_id": user.id})
+        assert row == doc
+        assert row == None
+
+    async def test_delete_all(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        # Create multiple users
+        user1 = await data_layer.users.create(password="hello_world", handle="bill")
+        user2 = await data_layer.users.create(password="hello_world", handle="john")
+
+        async with (AsyncSession(pg) as session):
+            row1 = await session.get(SQLUser, 1)
+            row2 = await session.get(SQLUser, 2)
+
+            assert row1.to_dict() == snapshot(
+                name="pg_1",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
+            assert row2.to_dict() == snapshot(
+                name="pg_2",
+                exclude=props("password"),
+                matcher=_last_password_change_matcher,
+            )
+
+        doc1 = await mongo.users.find_one({"_id": user1.id})
+        doc2 = await mongo.users.find_one({"_id": user2.id})
+
+        assert doc1 == snapshot(
+            name="mongo_1",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+        assert doc2 == snapshot(
+            name="mongo_2",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
+
+        # Delete all users
+        await data_layer.users.delete_all()
+
+        # Verify that all users have been deleted
+        row1 = await session.get(SQLUser, 1)
+        row2 = await session.get(SQLUser, 2)
+
+        assert row1 is None
+        assert row2 is None
+
+        doc1 = await mongo.users.find_one({"_id": user1.id})
+        doc2 = await mongo.users.find_one({"_id": user2.id})
+
+        assert doc1 is None
+        assert doc2 is None
+
+
 class TestCreate:
     async def test_no_force_reset(
         self,
