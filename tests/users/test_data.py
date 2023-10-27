@@ -24,7 +24,6 @@ _last_password_change_matcher = path_type(
 )
 
 
-# TODO: ADD TEST FOR DELETE METHODS
 class TestDelete:
     async def test_delete(
         self,
