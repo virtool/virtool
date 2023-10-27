@@ -208,11 +208,21 @@ class UsersData(DataLayerDomain):
         return await self.get(document["_id"])
 
     async def delete(self, legacy_id: str):
+        """
+        Delete the user with the matching legacy_id.
+
+         :param legacy_id: legacy id of the user to delete
+         :return:
+        """
         async with both_transactions(self._mongo, self._pg) as (mongo, pg):
-            await pg.execute(delete(SQLUser).where(legacy_id=legacy_id))
-            await self._mongo.users.deleteOne(_id=legacy_id, session=mongo)
+            await pg.execute(delete(SQLUser).where(SQLUser.legacy_id == legacy_id))
+            await self._mongo.users.delete_one({"_id": legacy_id})
 
     async def delete_all(self):
+        """
+        Delete all users.
+         :return:
+        """
         async with both_transactions(self._mongo, self._pg) as (mongo, pg):
             await pg.execute(delete(SQLUser))
             await self._mongo.users.delete_many({}, session=mongo)
@@ -223,7 +233,7 @@ class UsersData(DataLayerDomain):
 
         :param handle: the user handle
         :param password: the password
-        :return:
+        :return: the user created
         """
         if await self.check_users_exist():
             raise ResourceConflictError("Virtool already has at least one user")
