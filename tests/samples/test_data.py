@@ -7,8 +7,6 @@ from virtool_core.models.enums import LibraryType, Permission
 from virtool_core.models.samples import WorkflowState
 
 from tests.fixtures.client import ClientSpawner
-from virtool.config import get_config_from_app
-from virtool.data.errors import ResourceNotFoundError
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
 from virtool.data.layer import DataLayer
@@ -198,4 +196,4 @@ async def test_finalize(
         )
     ).dict() == snapshot()
     sample = await data_layer.samples.get("test")
-    assert sample.ready == True
+    assert sample.ready is True
