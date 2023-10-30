@@ -216,7 +216,7 @@ class UsersData(DataLayerDomain):
         """
         async with both_transactions(self._mongo, self._pg) as (mongo, pg):
             await pg.execute(delete(SQLUser).where(SQLUser.legacy_id == legacy_id))
-            await self._mongo.users.delete_one({"_id": legacy_id})
+            await self._mongo.users.delete_one({"_id": legacy_id}, session=mongo)
 
     async def delete_all(self):
         """

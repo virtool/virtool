@@ -55,7 +55,7 @@ class TestDelete:
         row = await session.get(SQLUser, 1)
         doc = await mongo.users.find_one({"_id": user.id})
         assert row == doc
-        assert row == None
+        assert row is None
 
     async def test_delete_all(
         self,
