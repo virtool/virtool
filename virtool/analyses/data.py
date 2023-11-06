@@ -69,13 +69,16 @@ class AnalysisData(DataLayerDomain):
         self._mongo = db
         self._pg = pg
 
-    async def find(self, page: int, per_page: int, client) -> AnalysisSearchResult:
+    async def find(
+            self, page: int, per_page: int, client, sample_id: str = None
+    ) -> AnalysisSearchResult:
         """
         List all analysis documents.
 
         :param page: the page number
         :param per_page: the number of documents per page
         :param client: the client object
+        :param sample_id: sample id to search by
         :return: a list of all analysis documents
         """
         sort = {"created_at": -1}
@@ -85,46 +88,45 @@ class AnalysisData(DataLayerDomain):
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        async for paginate_dict in self._mongo.analyses.aggregate(
-            [
-                {
-                    "$facet": {
-                        "total_count": [{"$count": "total_count"}],
-                        "found_count": [{"$count": "found_count"}],
-                        "data": [
-                            {"$sort": sort},
-                            {"$skip": skip_count},
-                            {"$limit": per_page},
-                            *lookup_nested_subtractions(),
-                            *lookup_nested_reference_by_id(),
-                        ],
-                    }
-                },
-                {
-                    "$project": {
-                        "data": {
-                            "_id": True,
-                            "workflow": True,
-                            "created_at": True,
-                            "index": True,
-                            "job": True,
-                            "ready": True,
-                            "reference": True,
-                            "sample": True,
-                            "subtractions": True,
-                            "updated_at": True,
-                            "user": True,
-                        },
-                        "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0]
-                        },
-                        "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0]
-                        },
-                    }
-                },
-            ]
-        ):
+        pipeline = [
+            {
+                "$facet": {
+                    "total_count": [{"$count": "total_count"}],
+                    "found_count": [{"$count": "found_count"}],
+                    "data": [
+                        {"$sort": sort},
+                        {"$skip": skip_count},
+                        {"$limit": per_page},
+                        *lookup_nested_subtractions(),
+                        *lookup_nested_reference_by_id(),
+                    ],
+                }
+            },
+            {
+                "$project": {
+                    "data": {
+                        "_id": True,
+                        "workflow": True,
+                        "created_at": True,
+                        "index": True,
+                        "job": True,
+                        "ready": True,
+                        "reference": True,
+                        "sample": True,
+                        "subtractions": True,
+                        "updated_at": True,
+                        "user": True,
+                    },
+                    "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
+                    "found_count": {"$arrayElemAt": ["$found_count.found_count", 0]},
+                }
+            },
+        ]
+
+        if sample_id is not None:
+            pipeline.insert(0, {"$match": {"sample.id": sample_id}})
+
+        async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
             data = paginate_dict["data"]
             found_count: int = paginate_dict.get("found_count", 0)
             total_count: int = paginate_dict.get("total_count", 0)
