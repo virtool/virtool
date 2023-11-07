@@ -138,7 +138,7 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
         return {"artifacts": artifacts, "reads": reads}
 
 
-async def check_rights_error_check(db, sample_id: str, client, write: bool = True):
+async def check_rights_error_check(db, sample_id: str | None, client, write: bool = True):
     try:
         if not await check_rights(db, sample_id, client, write=write):
             raise InsufficientRights()
@@ -149,7 +149,7 @@ async def check_rights_error_check(db, sample_id: str, client, write: bool = Tru
         raise
 
 
-async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
+async def check_rights(db, sample_id: str | None, client, write: bool = True) -> bool:
 
     sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
     if not sample_rights:
