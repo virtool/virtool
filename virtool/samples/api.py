@@ -406,42 +406,11 @@ class AnalysesView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-
-        try:
-            if not await check_rights(
-                db, sample_id, self.request["client"], write=False
-            ):
-                raise InsufficientRights()
-        except DatabaseError as err:
-            if "Sample does not exist" in str(err):
-                raise NotFound()
-
-            raise
-
-        db_query = {}
-
-        if term:
-            db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
-
-        data = await paginate(
-            db.analyses,
-            db_query,
-            self.request.query,
-            base_query={"sample.id": sample_id},
-            projection=PROJECTION,
-            sort=[("created_at", -1)],
+        search_result = await get_data_from_req(self.request).analyses.find(
+            1, 25, self.request["client"], sample_id
         )
 
-        return json_response(
-            {
-                **data,
-                "documents": await apply_transforms(
-                    data["documents"],
-                    [AttachSubtractionTransform(db), AttachUserTransform(db)],
-                ),
-            }
-        )
+        return json_response(search_result)
 
     async def post(
         self, sample_id: str, /, data: CreateAnalysisRequest
