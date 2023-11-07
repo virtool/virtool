@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.api.response import NotFound, InsufficientRights
+from virtool.errors import DatabaseError
 from virtool_core.models.samples import WorkflowState
 from virtool_core.models.settings import Settings
 from virtool_core.utils import compress_file, file_stats
@@ -136,9 +138,20 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
         return {"artifacts": artifacts, "reads": reads}
 
 
-async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
-    sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
+async def check_rights_error_check(db, sample_id: str, client, write: bool = True):
+    try:
+        if not await check_rights(db, sample_id, client, write=write):
+            raise InsufficientRights()
+    except DatabaseError as err:
+        if "Sample does not exist" in str(err):
+            raise NotFound()
 
+        raise
+
+
+async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
+
+    sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
     if not sample_rights:
         raise virtool.errors.DatabaseError("Sample does not exist")
 
