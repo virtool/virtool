@@ -3777,10 +3777,22 @@
           'version': 2,
         }),
         'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'jobs_aodp',
         }),
         'ready': True,
         'reference': dict({
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         }),
@@ -3789,6 +3801,7 @@
         }),
         'subtractions': list([
         ]),
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'administrator': False,
           'handle': 'leeashley',
@@ -3803,11 +3816,10 @@
           'id': 'foo',
           'version': 2,
         }),
-        'job': dict({
-          'id': 'foo',
-        }),
+        'job': None,
         'ready': True,
         'reference': dict({
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         }),
@@ -3820,6 +3832,7 @@
             'name': 'Malus domestica',
           }),
         ]),
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'administrator': False,
           'handle': 'leeashley',
@@ -3837,6 +3850,7 @@
         'job': None,
         'ready': True,
         'reference': dict({
+          'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
         }),
@@ -3849,6 +3863,7 @@
             'name': 'Malus domestica',
           }),
         ]),
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'administrator': False,
           'handle': 'zclark',
