@@ -132,11 +132,13 @@ class AnalysisData(DataLayerDomain):
             found_count: int = paginate_dict.get("found_count", 0)
             total_count: int = paginate_dict.get("total_count", 0)
 
-
         per_document_can_read = await asyncio.gather(
             *[
                 virtool.samples.db.check_rights_error_check(
-                    self._mongo, sample_id if sample_id is not None else document["sample"]["id"], client, write=False
+                    self._mongo,
+                    sample_id if sample_id is not None else document["sample"]["id"],
+                    client,
+                    write=False,
                 )
                 for document in data
             ]
