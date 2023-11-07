@@ -70,7 +70,7 @@ class AnalysisData(DataLayerDomain):
         self._pg = pg
 
     async def find(
-            self, page: int, per_page: int, client, sample_id: str = None
+        self, page: int, per_page: int, client, sample_id: str = None
     ) -> AnalysisSearchResult:
         """
         List all analysis documents.
@@ -81,6 +81,7 @@ class AnalysisData(DataLayerDomain):
         :param sample_id: sample id to search by
         :return: a list of all analysis documents
         """
+
         sort = {"created_at": -1}
 
         skip_count = 0
@@ -133,13 +134,12 @@ class AnalysisData(DataLayerDomain):
 
         per_document_can_read = await asyncio.gather(
             *[
-                virtool.samples.db.check_rights(
-                    self._mongo, document["sample"]["id"], client, write=False
+                virtool.samples.db.check_rights_error_check(
+                    self._mongo, sample_id, client, write=False
                 )
                 for document in data
             ]
         )
-
         documents = [
             document
             for document, can_write in zip(data, per_document_can_read)
@@ -147,7 +147,7 @@ class AnalysisData(DataLayerDomain):
         ]
 
         documents = await apply_transforms(
-            [base_processor(d) for d in documents],
+            [base_processor(d) for d in data],
             [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
         )
 
