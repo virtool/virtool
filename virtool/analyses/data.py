@@ -124,13 +124,11 @@ class AnalysisData(DataLayerDomain):
             },
         ]
 
-        if sample_id is not None:
-            pipeline.insert(0, {"$match": {"sample.id": sample_id}})
-
         async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
             data = paginate_dict["data"]
             found_count: int = paginate_dict.get("found_count", 0)
             total_count: int = paginate_dict.get("total_count", 0)
+
         if sample_id is not None:
             can_read = [
                 virtool.samples.db.check_rights_error_check(
@@ -144,7 +142,7 @@ class AnalysisData(DataLayerDomain):
             can_read = [
                 virtool.samples.db.check_rights_error_check(
                     self._mongo,
-                    sample_id if sample_id is not None else document["sample"]["id"],
+                    document["sample"]["id"],
                     client,
                     write=False,
                 )
@@ -158,11 +156,15 @@ class AnalysisData(DataLayerDomain):
             for document, can_write in zip(data, per_document_can_read)
             if can_write
         ]
-
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
             [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
         )
+
+        print(sample_id)
+        print(data)
+        print(per_document_can_read)
+        print(documents)
 
         return AnalysisSearchResult(
             **{
