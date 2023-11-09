@@ -150,7 +150,7 @@ class AnalysisData(DataLayerDomain):
         ]
 
         documents = await apply_transforms(
-            [base_processor(d) for d in data],
+            [base_processor(d) for d in documents],
             [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
         )
 
