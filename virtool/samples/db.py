@@ -138,19 +138,22 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
         return {"artifacts": artifacts, "reads": reads}
 
 
-async def check_rights_error_check(db, sample_id: str | None, client, write: bool = True):
+async def check_rights_error_check(
+    db, sample_id: str | None, client, write: bool = True
+) -> bool:
     try:
-        if not await check_rights(db, sample_id, client, write=write):
+        check_right = await check_rights(db, sample_id, client, write=write)
+        if not check_right:
             raise InsufficientRights()
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
             raise NotFound()
 
         raise
+    return check_right
 
 
 async def check_rights(db, sample_id: str | None, client, write: bool = True) -> bool:
-
     sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
     if not sample_rights:
         raise virtool.errors.DatabaseError("Sample does not exist")
