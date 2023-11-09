@@ -139,7 +139,7 @@ class AnalysisData(DataLayerDomain):
                 )
             ]
             found_count = sum(
-                [document["sample"]["id"] == sample_id for document in data]
+                document["sample"]["id"] == sample_id for document in data
             )
         else:
             can_read = [
