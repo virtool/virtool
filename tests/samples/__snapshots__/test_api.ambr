@@ -3740,74 +3740,12 @@
         }),
         'workflow': 'pathoscope_bowtie',
       }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_2',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': None,
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_3',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': None,
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': '7cf872dc',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
     ]),
-    'found_count': 3,
+    'found_count': 4,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find_analyses[None-None]
@@ -3853,74 +3791,12 @@
         }),
         'workflow': 'pathoscope_bowtie',
       }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_2',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': None,
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_3',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': None,
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': '7cf872dc',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
     ]),
-    'found_count': 3,
+    'found_count': 4,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_get_cache[None]
