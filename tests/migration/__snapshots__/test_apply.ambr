@@ -162,5 +162,12 @@
       'name': 'Use integer group ids in samples',
       'revision': 'qg7bo42yvavg',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 24,
+      'name': 'add users table',
+      'revision': '4104346698df',
+    }),
   ])
 # ---

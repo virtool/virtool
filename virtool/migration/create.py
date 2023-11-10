@@ -27,7 +27,7 @@ def create_revision(name: str):
     """
     revisions_path = get_revisions_path()
 
-    most_recent_revision = load_all_revisions()[0]
+    most_recent_revision = load_all_revisions()[-1]
 
     revision_id = _generate_revision_id(_get_existing_revisions(revisions_path))
 
