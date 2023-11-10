@@ -20,6 +20,7 @@ def upgrade() -> None:
     op.create_table(
         "users",
         sa.Column("id", sa.Integer(), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
         sa.Column("legacy_id", sa.String(), nullable=True, unique=True),
         sa.Column("active", sa.Boolean(), nullable=False),
         sa.Column("administrator", sa.Boolean(), nullable=False),
@@ -32,7 +33,6 @@ def upgrade() -> None:
         sa.Column("invalidate_sessions", sa.Boolean(), nullable=False),
         sa.Column("last_password_change", sa.DateTime(), nullable=False),
         sa.Column("password", sa.LargeBinary, nullable=True),
-        sa.PrimaryKeyConstraint("id"),
         sa.Column("primary_group", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(["primary_group"], ["groups.id"]),
     )
