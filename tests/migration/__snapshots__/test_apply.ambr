@@ -169,5 +169,12 @@
       'name': 'add users table',
       'revision': '4104346698df',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 25,
+      'name': 'rename users table primary_group to primary_group_id',
+      'revision': '8f3810c1c2c9',
+    }),
   ])
 # ---
