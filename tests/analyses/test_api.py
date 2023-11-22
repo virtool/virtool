@@ -27,6 +27,13 @@ def files(test_files_path, tmp_path):
     return data
 
 
+@pytest.fixture
+def more_files(test_files_path, tmp_path):
+    path = test_files_path / "aodp" / "reference.fa"
+    data = {"file": open(path, "rb")}
+    return data
+
+
 @pytest.mark.apitest
 async def test_find(snapshot, mocker, fake2, spawn_client, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
@@ -394,6 +401,7 @@ async def test_remove(
 async def test_upload_file(
     error: str | None,
     files,
+    more_files,
     mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
@@ -418,26 +426,40 @@ async def test_upload_file(
         )
 
     if error == 422:
-        resp = await client.put("/analyses/foobar/files?format=fasta", data=files)
+        resp_put = await client.put("/analyses/foobar/files?format=fasta", data=files)
+        resp = await client.post("/analyses/foobar/files?format=fasta", data=more_files)
     else:
-        resp = await client.put(
+        resp_put = await client.put(
             f"/analyses/foobar/files?name=reference.fa&format={format_}", data=files
+        )
+        resp = await client.post(
+            f"/analyses/foobar/files?name=reference.fa&format={format_}",
+            data=more_files,
         )
 
     match error:
         case None:
+            assert resp_put.status == 201
+            assert await resp_put.json() == snapshot
+
             assert resp.status == 201
             assert await resp.json() == snapshot
-            assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
+            assert os.listdir(tmp_path / "analyses") == [
+                "2-reference.fa",
+                "1-reference.fa",
+            ]
             assert await get_row_by_id(pg, SQLAnalysisFile, 1)
 
         case 400:
+            await resp_is.bad_request(resp_put, "Unsupported analysis file format")
             await resp_is.bad_request(resp, "Unsupported analysis file format")
 
         case 404:
+            assert resp_put.status == 404
             assert resp.status == 404
 
         case 422:
+            await resp_is.invalid_query(resp_put, {"name": ["required field"]})
             await resp_is.invalid_query(resp, {"name": ["required field"]})
 
 
@@ -445,6 +467,7 @@ class TestDownloadAnalysisResult:
     async def test_ok(
         self,
         files,
+        more_files,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         spawn_job_client,
