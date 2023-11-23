@@ -90,6 +90,7 @@ class AnalysisData(DataLayerDomain):
             skip_count = (page - 1) * per_page
 
         pipeline = [
+            {"$match": {"sample.id": sample_id} if sample_id is not None else {}},
             {
                 "$facet": {
                     "total_count": [{"$count": "total_count"}],
