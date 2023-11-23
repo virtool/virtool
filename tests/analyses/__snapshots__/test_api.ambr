@@ -39,6 +39,7 @@
       }),
       'workflow': 'jobs_aodp',
     }),
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -107,6 +108,7 @@
       'version': 2,
     }),
     'job': None,
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -155,6 +157,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -195,6 +198,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -226,6 +230,7 @@
           'version': 2,
         }),
         'job': None,
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -274,6 +279,7 @@
       'version': 3,
     }),
     'job': None,
+    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
@@ -340,6 +346,7 @@
       }),
       'workflow': 'jobs_aodp',
     }),
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
