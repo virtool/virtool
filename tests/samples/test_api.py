@@ -100,6 +100,7 @@ async def get_sample_data(
                     sample="test",
                     type="fasta",
                     name_on_disk="reference.fa.gz",
+                    size=34879234,
                 ),
                 SQLSampleReads(
                     name="reads_1.fq.gz",
@@ -821,6 +822,7 @@ async def test_finalize(
             sample="test",
             type="fasta",
             name_on_disk="reference.fa.gz",
+            size=34879234,
         )
 
         reads = SQLSampleReads(
