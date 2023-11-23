@@ -139,9 +139,6 @@ class AnalysisData(DataLayerDomain):
                     write=False,
                 )
             ]
-            found_count = sum(
-                document["sample"]["id"] == sample_id for document in data
-            )
         else:
             can_read = [
                 virtool.samples.db.check_rights_error_check(
