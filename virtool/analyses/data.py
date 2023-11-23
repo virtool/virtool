@@ -164,11 +164,6 @@ class AnalysisData(DataLayerDomain):
             [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
         )
 
-        print(sample_id)
-        print(data)
-        print(per_document_can_read)
-        print(documents)
-
         return AnalysisSearchResult(
             **{
                 "documents": documents,
