@@ -132,7 +132,7 @@ class AnalysisData(DataLayerDomain):
 
         if sample_id is not None:
             can_read = [
-                virtool.samples.db.check_rights_error_check(
+                virtool.samples.db.check_rights(
                     self._mongo,
                     sample_id,
                     client,
@@ -141,7 +141,7 @@ class AnalysisData(DataLayerDomain):
             ]
         else:
             can_read = [
-                virtool.samples.db.check_rights_error_check(
+                virtool.samples.db.check_rights(
                     self._mongo,
                     document["sample"]["id"],
                     client,
