@@ -119,7 +119,6 @@ class AnalysisData(DataLayerDomain):
                         "updated_at": True,
                         "user": True,
                     },
-                    "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
                     "found_count": {"$arrayElemAt": ["$found_count.found_count", 0]},
                 }
             },
@@ -128,11 +127,10 @@ class AnalysisData(DataLayerDomain):
         async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
             data = paginate_dict["data"]
             found_count: int = paginate_dict.get("found_count", 0)
-            total_count: int = paginate_dict.get("total_count", 0)
 
         if sample_id is not None:
             can_read = [
-                virtool.samples.db.check_rights(
+                virtool.samples.db.check_rights_error_check(
                     self._mongo,
                     sample_id,
                     client,
@@ -141,7 +139,7 @@ class AnalysisData(DataLayerDomain):
             ]
         else:
             can_read = [
-                virtool.samples.db.check_rights(
+                virtool.samples.db.check_rights_error_check(
                     self._mongo,
                     document["sample"]["id"],
                     client,
@@ -160,6 +158,14 @@ class AnalysisData(DataLayerDomain):
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
             [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+        )
+
+        documents, total_count = await asyncio.gather(
+            apply_transforms(
+                [base_processor(d) for d in documents],
+                [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+            ),
+            self._mongo.analyses.count_documents({}),
         )
 
         return AnalysisSearchResult(
