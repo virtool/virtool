@@ -2,6 +2,8 @@ import asyncio
 import os
 
 from virtool_core.models.enums import QuickAnalyzeWorkflow
+
+from tests.analyses.test_api import create_files
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
@@ -13,7 +15,6 @@ import pytest
 
 from syrupy import snapshot, SnapshotAssertion
 from syrupy.filters import props
-from tests.analyses.test_api import files
 
 
 async def test_find(data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion):
@@ -171,7 +172,7 @@ async def test_create_analysis_id(
 
 @pytest.mark.apitest
 async def test_upload_file(
-    files, spawn_job_client, tmp_path, data_layer: DataLayer, snapshot
+    create_files, spawn_job_client, tmp_path, data_layer: DataLayer, snapshot
 ):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
@@ -184,7 +185,8 @@ async def test_upload_file(
         {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
     )
     resp = await client.put(
-        f"/analyses/foobar/files?name=reference.fa&format={format_}", data=files
+        f"/analyses/foobar/files?name=reference.fa&format={format_}",
+        data=create_files(),
     )
     assert resp.status == 201
     assert await resp.json() == snapshot(exclude=props("uploaded_at"))

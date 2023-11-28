@@ -21,17 +21,13 @@ from virtool.pg.utils import get_row_by_id
 
 
 @pytest.fixture
-def files(test_files_path, tmp_path):
-    path = test_files_path / "aodp" / "reference.fa"
-    data = {"file": open(path, "rb")}
-    return data
+def create_files(test_files_path, tmp_path):
+    def files():
+        path = test_files_path / "aodp" / "reference.fa"
+        data = {"file": open(path, "rb")}
+        return data
 
-
-@pytest.fixture
-def more_files(test_files_path, tmp_path):
-    path = test_files_path / "aodp" / "reference.fa"
-    data = {"file": open(path, "rb")}
-    return data
+    return files
 
 
 @pytest.mark.apitest
@@ -400,8 +396,7 @@ async def test_remove(
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
     error: str | None,
-    files,
-    more_files,
+    create_files,
     mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
@@ -426,15 +421,20 @@ async def test_upload_file(
         )
 
     if error == 422:
-        resp_put = await client.put("/analyses/foobar/files?format=fasta", data=files)
-        resp = await client.post("/analyses/foobar/files?format=fasta", data=more_files)
+        resp_put = await client.put(
+            "/analyses/foobar/files?format=fasta", data=create_files()
+        )
+        resp = await client.post(
+            "/analyses/foobar/files?format=fasta", data=create_files()
+        )
     else:
         resp_put = await client.put(
-            f"/analyses/foobar/files?name=reference.fa&format={format_}", data=files
+            f"/analyses/foobar/files?name=reference.fa&format={format_}",
+            data=create_files(),
         )
         resp = await client.post(
             f"/analyses/foobar/files?name=reference.fa&format={format_}",
-            data=more_files,
+            data=create_files(),
         )
 
     match error:
@@ -466,8 +466,7 @@ async def test_upload_file(
 class TestDownloadAnalysisResult:
     async def test_ok(
         self,
-        files,
-        more_files,
+        create_files,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         spawn_job_client,
@@ -490,7 +489,7 @@ class TestDownloadAnalysisResult:
         )
 
         await job_client.put(
-            "/analyses/foobar/files?name=reference.fa&format=fasta", data=files
+            "/analyses/foobar/files?name=reference.fa&format=fasta", data=create_files()
         )
 
         resp = await client.get("/analyses/foobar/files/1")
