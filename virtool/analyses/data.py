@@ -69,15 +69,19 @@ class AnalysisData(DataLayerDomain):
         self._mongo = db
         self._pg = pg
 
-    async def find(self, page: int, per_page: int, client) -> AnalysisSearchResult:
+    async def find(
+        self, page: int, per_page: int, client, sample_id: str = None
+    ) -> AnalysisSearchResult:
         """
         List all analysis documents.
 
         :param page: the page number
         :param per_page: the number of documents per page
         :param client: the client object
+        :param sample_id: sample id to search by
         :return: a list of all analysis documents
         """
+
         sort = {"created_at": -1}
 
         skip_count = 0
@@ -85,68 +89,83 @@ class AnalysisData(DataLayerDomain):
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        async for paginate_dict in self._mongo.analyses.aggregate(
-            [
-                {
-                    "$facet": {
-                        "total_count": [{"$count": "total_count"}],
-                        "found_count": [{"$count": "found_count"}],
-                        "data": [
-                            {"$sort": sort},
-                            {"$skip": skip_count},
-                            {"$limit": per_page},
-                            *lookup_nested_subtractions(),
-                            *lookup_nested_reference_by_id(),
-                        ],
-                    }
-                },
-                {
-                    "$project": {
-                        "data": {
-                            "_id": True,
-                            "workflow": True,
-                            "created_at": True,
-                            "index": True,
-                            "job": True,
-                            "ready": True,
-                            "reference": True,
-                            "sample": True,
-                            "subtractions": True,
-                            "updated_at": True,
-                            "user": True,
-                        },
-                        "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0]
-                        },
-                        "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0]
-                        },
-                    }
-                },
-            ]
-        ):
+        pipeline = [
+            {"$match": {"sample.id": sample_id} if sample_id is not None else {}},
+            {
+                "$facet": {
+                    "total_count": [{"$count": "total_count"}],
+                    "found_count": [{"$count": "found_count"}],
+                    "data": [
+                        {"$sort": sort},
+                        {"$skip": skip_count},
+                        {"$limit": per_page},
+                        *lookup_nested_subtractions(),
+                        *lookup_nested_reference_by_id(),
+                    ],
+                }
+            },
+            {
+                "$project": {
+                    "data": {
+                        "_id": True,
+                        "workflow": True,
+                        "created_at": True,
+                        "index": True,
+                        "job": True,
+                        "ready": True,
+                        "reference": True,
+                        "sample": True,
+                        "subtractions": True,
+                        "updated_at": True,
+                        "user": True,
+                    },
+                    "found_count": {"$arrayElemAt": ["$found_count.found_count", 0]},
+                }
+            },
+        ]
+
+        async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
             data = paginate_dict["data"]
             found_count: int = paginate_dict.get("found_count", 0)
-            total_count: int = paginate_dict.get("total_count", 0)
 
-        per_document_can_read = await asyncio.gather(
-            *[
-                virtool.samples.db.check_rights(
-                    self._mongo, document["sample"]["id"], client, write=False
+        if sample_id is not None:
+            can_read = [
+                virtool.samples.db.check_rights_error_check(
+                    self._mongo,
+                    sample_id,
+                    client,
+                    write=False,
+                )
+            ]
+        else:
+            can_read = [
+                virtool.samples.db.check_rights_error_check(
+                    self._mongo,
+                    document["sample"]["id"],
+                    client,
+                    write=False,
                 )
                 for document in data
             ]
-        )
+
+        per_document_can_read = await asyncio.gather(*can_read)
 
         documents = [
             document
             for document, can_write in zip(data, per_document_can_read)
             if can_write
         ]
-
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
             [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+        )
+
+        documents, total_count = await asyncio.gather(
+            apply_transforms(
+                [base_processor(d) for d in documents],
+                [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+            ),
+            self._mongo.analyses.count_documents({}),
         )
 
         return AnalysisSearchResult(
