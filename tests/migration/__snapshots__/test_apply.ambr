@@ -176,5 +176,12 @@
       'name': 'rename users table primary_group to primary_group_id',
       'revision': '8f3810c1c2c9',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 26,
+      'name': 'promote mongo administrators in openFGA',
+      'revision': 'xtbq4bjlpocu',
+    }),
   ])
 # ---
