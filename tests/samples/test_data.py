@@ -100,19 +100,22 @@ async def test_finalize(
     """
     Test that sample can be finalized
     """
+    quality = {
+        "bases": [[1543]],
+        "composition": [[6372]],
+        "count": 7069,
+        "encoding": "OuBQPPuwYimrxkNpPWUx",
+        "gc": 34222440,
+        "length": [3237],
+        "sequences": [7091],
+    }
+
     assert (
         await data_layer.samples.finalize(
             "test",
-            {
-                "bases": [[1543]],
-                "composition": [[6372]],
-                "count": 7069,
-                "encoding": "OuBQPPuwYimrxkNpPWUx",
-                "gc": 34222440,
-                "length": [3237],
-                "sequences": [7091],
-            },
+            quality,
         )
     ).dict() == snapshot()
     sample = await data_layer.samples.get("test")
+    assert sample.quality == quality
     assert sample.ready is True
