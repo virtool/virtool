@@ -146,7 +146,7 @@
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'size': 10,
+        'size': 34879234,
       }),
     ]),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
