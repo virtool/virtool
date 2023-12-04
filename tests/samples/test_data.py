@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner
+from tests.samples.test_api import get_sample_data
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.settings.oas import UpdateSettingsRequest
@@ -17,7 +18,6 @@ from virtool.jobs.client import JobsClient
 from virtool.pg.utils import get_row_by_id
 
 from virtool.uploads.models import SQLUpload
-from tests.samples.test_api import get_sample_data
 
 
 @pytest.mark.apitest
