@@ -233,10 +233,8 @@ class GroupsFakerPiece(DataFakerPiece):
 
     async def create(
         self, permissions: PermissionsUpdate | None = None, legacy_id: str | None = None
-    ):
+    ) -> Group:
         """
-        Create a fake group.
-
         :param permissions: Permissions for the group. If not provided, the group will
             have no permissions.
         :param legacy_id: An optional legacy ID for the group.
@@ -271,7 +269,14 @@ class GroupsFakerPiece(DataFakerPiece):
 class HMMFakerPiece(DataFakerPiece):
     model = HMM
 
-    async def create(self, mongo):
+    async def create(self, mongo: Mongo) -> HMM:
+        """
+        Create a new fake hmm.
+
+        :param mongo: the mongo DB connection
+
+        :return: a new fake hmm
+        """
         hmm_id = "".join(self._faker.mongo_id())
         faker = self._faker
 
@@ -303,7 +308,12 @@ class HMMFakerPiece(DataFakerPiece):
 class LabelsFakerPiece(DataFakerPiece):
     model = Label
 
-    async def create(self):
+    async def create(self) -> Label:
+        """
+        Create a new fake label.
+
+        :return: a new fake label
+        """
         return await self._layer.labels.create(
             self._faker.word().capitalize(),
             self._faker.hex_color(),
@@ -350,7 +360,12 @@ class MLFakerPiece(DataFakerPiece):
 class TasksFakerPiece(DataFakerPiece):
     model = Task
 
-    async def create(self):
+    async def create(self) -> Task:
+        """
+        Create a new fake random task.
+
+        :return: a new fake task
+        """
         return await self._layer.tasks.create(
             self._faker.random_element(
                 [
@@ -363,7 +378,15 @@ class TasksFakerPiece(DataFakerPiece):
             {},
         )
 
-    async def create_with_class(self, cls: Type[BaseTask], context: dict):
+    async def create_with_class(self, cls: Type[BaseTask], context: dict) -> Task:
+        """
+        Create a fake task.
+
+        :param cls: the type of task
+        :param context: the context required for the task
+
+        :return: a new fake task
+        """
         return await self._layer.tasks.create(cls, context)
 
 
@@ -377,6 +400,18 @@ class UploadsFakerPiece(DataFakerPiece):
         name: str = "test.fq.gz",
         reserved: bool = False,
     ) -> Upload:
+        """
+        Create a fake upload.
+
+        A completely valid user will be created.
+
+        :param user: the user creating the upload
+        :param upload_type: the type of upload
+        :param name: the name of the upload
+        :param reserved: the reservation status of the upload
+
+        :return: a new fake upload
+        """
         if upload_type not in UploadType.to_list():
             upload_type = "reads"
 
@@ -402,7 +437,20 @@ class UsersFakerPiece(DataFakerPiece):
         password: str | None = None,
         primary_group: Group | None = None,
         administrator_role: AdministratorRole | None = None,
-    ):
+    ) -> User:
+        """
+        Create a fake user.
+
+        A completely valid user will be created.
+
+        :param handle: the users handle
+        :param groups: the groups the user belongs to
+        :param password: the users password
+        :param primary_group: the users primary group
+        :param administrator_role: the users administrator role
+
+        :return: a new fake user
+        """
         user = await self._layer.users.create(
             handle or self._faker.profile()["username"],
             password or self._faker.password(),

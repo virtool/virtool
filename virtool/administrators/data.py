@@ -46,13 +46,3 @@ class AdministratorsData(DataLayerDomain):
         :return: the result of the action
         """
         return await get_action_from_name(name).run(self.data)
-
-    async def promote_administrators(self):
-        """
-        Promote all users with the legacy administrator flag to administrators.
-        """
-
-        for user_id in await self._mongo.users.distinct("_id", {"administrator": True}):
-            await self._authorization_client.add(
-                AdministratorRoleAssignment(user_id, AdministratorRole.FULL)
-            )

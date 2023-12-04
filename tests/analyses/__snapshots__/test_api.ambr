@@ -39,6 +39,7 @@
       }),
       'workflow': 'jobs_aodp',
     }),
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -107,6 +108,7 @@
       'version': 2,
     }),
     'job': None,
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -155,6 +157,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -195,6 +198,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -226,6 +230,7 @@
           'version': 2,
         }),
         'job': None,
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -274,6 +279,7 @@
       'version': 3,
     }),
     'job': None,
+    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
@@ -340,6 +346,7 @@
       }),
       'workflow': 'jobs_aodp',
     }),
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -432,6 +439,18 @@
     'id': 1,
     'name': 'reference.fa',
     'name_on_disk': '1-reference.fa',
+    'size': 20466,
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  })
+# ---
+# name: test_upload_file[None].1
+  dict({
+    'analysis': 'foobar',
+    'description': None,
+    'format': 'fasta',
+    'id': 2,
+    'name': 'reference.fa',
+    'name_on_disk': '2-reference.fa',
     'size': 20466,
     'uploaded_at': '2015-10-06T20:00:00Z',
   })

@@ -23,14 +23,12 @@ from virtool_core.utils import file_stats
 import virtool.caches.db
 import virtool.uploads.db
 import virtool.uploads.utils
-from virtool.analyses.db import PROJECTION
 from virtool.api.response import (
     InsufficientRights,
     InvalidQuery,
     NotFound,
     json_response,
 )
-from virtool.api.utils import compose_regex_query, paginate
 from virtool.authorization.permissions import LegacyPermission
 from virtool.caches.models import SQLSampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -40,7 +38,6 @@ from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceError,
 )
-from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
@@ -75,13 +72,12 @@ from virtool.samples.oas import (
     UpdateSampleResponse,
 )
 from virtool.samples.utils import SampleRight, join_sample_path
-from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import (
     is_gzip_compressed,
     multipart_file_chunker,
     naive_validator,
 )
-from virtool.users.transforms import AttachUserTransform
+
 from virtool.utils import base_processor
 
 logger = get_logger("samples")
@@ -391,10 +387,6 @@ class AnalysesView(PydanticView):
         self,
         sample_id: str,
         /,
-        term: str
-        | None = Field(
-            description="Provide text to filter by partial matches to the reference name or user id in the sample."
-        ),
     ) -> r200[list[GetSampleAnalysesResponse]] | r403 | r404:
         """
         Get analyses.
@@ -406,42 +398,11 @@ class AnalysesView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-
-        try:
-            if not await check_rights(
-                db, sample_id, self.request["client"], write=False
-            ):
-                raise InsufficientRights()
-        except DatabaseError as err:
-            if "Sample does not exist" in str(err):
-                raise NotFound()
-
-            raise
-
-        db_query = {}
-
-        if term:
-            db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
-
-        data = await paginate(
-            db.analyses,
-            db_query,
-            self.request.query,
-            base_query={"sample.id": sample_id},
-            projection=PROJECTION,
-            sort=[("created_at", -1)],
+        search_result = await get_data_from_req(self.request).analyses.find(
+            1, 25, self.request["client"], sample_id
         )
 
-        return json_response(
-            {
-                **data,
-                "documents": await apply_transforms(
-                    data["documents"],
-                    [AttachSubtractionTransform(db), AttachUserTransform(db)],
-                ),
-            }
-        )
+        return json_response(search_result)
 
     async def post(
         self, sample_id: str, /, data: CreateAnalysisRequest
