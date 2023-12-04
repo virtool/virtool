@@ -1,0 +1,37 @@
+# serializer version: 1
+# name: test_upgrade[mongo]
+  list([
+    dict({
+      '_id': 'full_admin_1',
+      'administrator': True,
+    }),
+    dict({
+      '_id': 'full_admin_2',
+      'administrator': True,
+    }),
+    dict({
+      '_id': 'spaces_admin_1',
+      'administrator': False,
+    }),
+    dict({
+      '_id': 'user_2',
+      'administrator': False,
+    }),
+  ])
+# ---
+# name: test_upgrade[openfga]
+  list([
+    tuple(
+      'full_admin_1',
+      'full',
+    ),
+    tuple(
+      'full_admin_2',
+      'full',
+    ),
+    tuple(
+      'spaces_admin_1',
+      'spaces',
+    ),
+  ])
+# ---

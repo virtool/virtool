@@ -30,6 +30,89 @@ class MockJobInterface:
 
 
 @pytest.fixture
+async def get_sample_data(
+    mongo: "Mongo", fake2: DataFaker, pg: AsyncEngine, static_time
+):
+    label = await fake2.labels.create()
+    await fake2.labels.create()
+
+    user = await fake2.users.create()
+
+    await asyncio.gather(
+        mongo.subtraction.insert_many(
+            [
+                {"_id": "apple", "name": "Apple"},
+                {"_id": "pear", "name": "Pear"},
+                {"_id": "peach", "name": "Peach"},
+            ],
+            session=None,
+        ),
+        mongo.samples.insert_one(
+            {
+                "_id": "test",
+                "all_read": True,
+                "all_write": True,
+                "created_at": static_time.datetime,
+                "files": [
+                    {
+                        "id": "foo",
+                        "name": "Bar.fq.gz",
+                        "download_url": "/download/samples/files/file_1.fq.gz",
+                    }
+                ],
+                "format": "fastq",
+                "group": "none",
+                "group_read": True,
+                "group_write": True,
+                "hold": False,
+                "host": "",
+                "is_legacy": False,
+                "isolate": "",
+                "labels": [label.id],
+                "library_type": LibraryType.normal.value,
+                "locale": "",
+                "name": "Test",
+                "notes": "",
+                "nuvs": False,
+                "pathoscope": True,
+                "ready": True,
+                "subtractions": ["apple", "pear"],
+                "user": {"id": user.id},
+                "workflows": {
+                    "aodp": WorkflowState.INCOMPATIBLE.value,
+                    "pathoscope": WorkflowState.COMPLETE.value,
+                    "nuvs": WorkflowState.PENDING.value,
+                },
+            }
+        ),
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                SQLSampleArtifact(
+                    name="reference.fa.gz",
+                    sample="test",
+                    type="fasta",
+                    name_on_disk="reference.fa.gz",
+                    size=34879234,
+                ),
+                SQLSampleReads(
+                    name="reads_1.fq.gz",
+                    name_on_disk="reads_1.fq.gz",
+                    sample="test",
+                    size=2903109210,
+                    uploaded_at=static_time.datetime,
+                    upload=None,
+                ),
+            ]
+        )
+        await session.commit()
+
+    return user.id
+
+
+@pytest.fixture
 async def find_samples_client(fake2, spawn_client, static_time):
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
@@ -662,6 +745,71 @@ async def test_finalize(
 
     get_config_from_app(client.app).data_path = tmp_path
 
+    await client.db.samples.insert_one(
+        {
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "created_at": 13,
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz",
+                }
+            ],
+            "format": "fastq",
+            "group": "none",
+            "group_read": True,
+            "group_write": True,
+            "hold": False,
+            "host": "",
+            "is_legacy": False,
+            "isolate": "",
+            "labels": [label.id],
+            "library_type": LibraryType.normal.value,
+            "locale": "",
+            "name": "Test",
+            "notes": "",
+            "nuvs": False,
+            "pathoscope": True,
+            "ready": True,
+            "subtractions": ["apple", "pear"],
+            "user": {"id": user.id},
+            "workflows": {
+                "aodp": WorkflowState.INCOMPATIBLE.value,
+                "pathoscope": WorkflowState.COMPLETE.value,
+                "nuvs": WorkflowState.PENDING.value,
+            },
+            "quality": None,
+        }
+    )
+
+    async with AsyncSession(pg) as session:
+        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
+
+        artifact = SQLSampleArtifact(
+            name="reference.fa.gz",
+            sample="test",
+            type="fasta",
+            name_on_disk="reference.fa.gz",
+            size=34879234,
+        )
+
+        reads = SQLSampleReads(
+            name="reads_1.fq.gz",
+            name_on_disk="reads_1.fq.gz",
+            sample="test",
+            size=12,
+            uploaded_at=datetime.datetime(2023, 9, 1, 1, 1),
+        )
+
+        upload.reads.append(reads)
+
+        session.add_all([upload, artifact, reads])
+
+        await session.commit()
+
     resp = await client.patch(
         "/samples/test",
         json={
@@ -828,6 +976,19 @@ async def test_find_analyses(
                     "index": {"version": 2, "id": "foo"},
                     "reference": {"id": "foo", "name": "Foo"},
                     "sample": {"id": "test"},
+                    "subtractions": ["foo"],
+                    "user": {"id": user_2.id},
+                    "foobar": False,
+                },
+                {
+                    "_id": "test_4",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": None,
+                    "index": {"version": 2, "id": "foo"},
+                    "reference": {"id": "foo", "name": "Foo"},
+                    "sample": {"id": "test-not-found"},
                     "subtractions": ["foo"],
                     "user": {"id": user_2.id},
                     "foobar": False,

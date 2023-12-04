@@ -1,3 +1,5 @@
+from syrupy import SnapshotAssertion
+
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
@@ -5,7 +7,11 @@ from virtool.subtractions.oas import FinalizeSubtractionRequest
 
 
 async def test_finalize(
-    data_layer: DataLayer, fake2: DataFaker, mongo: Mongo, snapshot, static_time
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
+    static_time,
 ):
     user = await fake2.users.create()
     job = await fake2.jobs.create(user)
