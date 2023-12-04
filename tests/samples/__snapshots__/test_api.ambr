@@ -3582,6 +3582,7 @@
       }),
       'workflow': 'pathoscope_bowtie',
     }),
+    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
