@@ -371,7 +371,6 @@ class AnalysisData(DataLayerDomain):
 
         await self.data.samples.recalculate_workflow_tags(analysis.sample.id)
 
-
         sample = await self.data.samples.get(analysis.sample.id)
 
         emit(sample, "samples", "recalculate_workflow_tags", Operation.UPDATE)
@@ -546,7 +545,6 @@ class AnalysisData(DataLayerDomain):
         sample_id = document["sample"]["id"]
 
         await self.data.samples.recalculate_workflow_tags(sample_id)
-
 
         analysis = await self.get(analysis_id, None)
 
