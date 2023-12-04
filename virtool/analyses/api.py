@@ -200,12 +200,14 @@ async def delete_analysis(req):
 
 
 @routes.jobs_api.put("/analyses/{id}/files")
+@routes.jobs_api.post("/analyses/{id}/files")
 async def upload(req: Request) -> Response:
     """
     Upload an analysis file.
 
     Uploads a new analysis result file to the `analysis_files` SQL table and the
     `analyses` folder in the Virtool data path.
+    TODO: Remove deprecated PUT method handler.
 
     """
     analysis_id = req.match_info["id"]

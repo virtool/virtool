@@ -39,6 +39,7 @@
       }),
       'workflow': 'jobs_aodp',
     }),
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -107,6 +108,7 @@
       'version': 2,
     }),
     'job': None,
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -155,6 +157,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -195,6 +198,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -226,6 +230,7 @@
           'version': 2,
         }),
         'job': None,
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -274,6 +279,7 @@
       'version': 3,
     }),
     'job': None,
+    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
@@ -329,17 +335,18 @@
     'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': '7cf872dc',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
+      'id': '3cbb22cc',
+      'progress': 100,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
+      'state': 'complete',
       'user': dict({
         'administrator': False,
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
       }),
       'workflow': 'jobs_aodp',
     }),
+    'ml': None,
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
@@ -367,7 +374,7 @@
     'user': dict({
       'administrator': False,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     }),
     'workflow': 'pathoscope_bowtie',
   })
@@ -393,18 +400,7 @@
       'version': 3,
     }),
     'job': dict({
-      'archived': False,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': '3cbb22cc',
-      'progress': 50,
-      'stage': 'JURZHTCWaKMqqBTFitpK',
-      'state': 'timeout',
-      'user': dict({
-        'administrator': False,
-        'handle': 'zclark',
-        'id': '7cf872dc',
-      }),
-      'workflow': 'jobs_aodp',
     }),
     'ready': True,
     'reference': dict({
@@ -430,8 +426,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
-      'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
     'workflow': 'pathoscope_bowtie',
@@ -445,6 +439,18 @@
     'id': 1,
     'name': 'reference.fa',
     'name_on_disk': '1-reference.fa',
+    'size': 20466,
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  })
+# ---
+# name: test_upload_file[None].1
+  dict({
+    'analysis': 'foobar',
+    'description': None,
+    'format': 'fasta',
+    'id': 2,
+    'name': 'reference.fa',
+    'name_on_disk': '2-reference.fa',
     'size': 20466,
     'uploaded_at': '2015-10-06T20:00:00Z',
   })

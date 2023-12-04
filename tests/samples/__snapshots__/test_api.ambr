@@ -184,7 +184,7 @@
     ]),
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
-    'group': 'none',
+    'group': None,
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -374,11 +374,7 @@
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
+        'size': 34879234,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -3237,11 +3233,7 @@
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
+        'size': 34879234,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -3315,11 +3307,7 @@
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
+        'size': 34879234,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -3399,11 +3387,7 @@
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
+        'size': 34879234,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -3477,11 +3461,7 @@
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
+        'size': 34879234,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -3582,6 +3562,7 @@
       }),
       'workflow': 'pathoscope_bowtie',
     }),
+    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
@@ -3616,11 +3597,7 @@
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
+        'size': 34879234,
       }),
     ]),
     'created_at': '1970-01-01T00:00:13Z',
@@ -3708,49 +3685,31 @@
           'version': 2,
         }),
         'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
-        }),
-        'ready': True,
-        'reference': dict({
-          'id': 'baz',
-          'name': 'Baz',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-        ]),
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_2',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': dict({
-          'id': 'foo',
-        }),
-        'ready': True,
-        'reference': dict({
-          'id': 'baz',
-          'name': 'Baz',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
           }),
+          'workflow': 'jobs_aodp',
+        }),
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
         ]),
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'administrator': False,
           'handle': 'leeashley',
@@ -3759,11 +3718,11 @@
         'workflow': 'pathoscope_bowtie',
       }),
     ]),
-    'found_count': 2,
+    'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find_analyses[None-None]
@@ -3777,10 +3736,22 @@
           'version': 2,
         }),
         'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'jobs_aodp',
         }),
         'ready': True,
         'reference': dict({
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
         }),
@@ -3789,70 +3760,11 @@
         }),
         'subtractions': list([
         ]),
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_2',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': dict({
-          'id': 'foo',
-        }),
-        'ready': True,
-        'reference': dict({
-          'id': 'baz',
-          'name': 'Baz',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_3',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': None,
-        'ready': True,
-        'reference': dict({
-          'id': 'foo',
-          'name': 'Foo',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': '7cf872dc',
         }),
         'workflow': 'pathoscope_bowtie',
       }),
@@ -3861,7 +3773,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_get_cache[None]

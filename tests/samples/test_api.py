@@ -100,6 +100,7 @@ async def get_sample_data(
                     sample="test",
                     type="fasta",
                     name_on_disk="reference.fa.gz",
+                    size=34879234,
                 ),
                 SQLSampleReads(
                     name="reads_1.fq.gz",
@@ -821,6 +822,7 @@ async def test_finalize(
             sample="test",
             type="fasta",
             name_on_disk="reference.fa.gz",
+            size=34879234,
         )
 
         reads = SQLSampleReads(
@@ -1004,6 +1006,19 @@ async def test_find_analyses(
                     "index": {"version": 2, "id": "foo"},
                     "reference": {"id": "foo", "name": "Foo"},
                     "sample": {"id": "test"},
+                    "subtractions": ["foo"],
+                    "user": {"id": user_2.id},
+                    "foobar": False,
+                },
+                {
+                    "_id": "test_4",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": None,
+                    "index": {"version": 2, "id": "foo"},
+                    "reference": {"id": "foo", "name": "Foo"},
+                    "sample": {"id": "test-not-found"},
                     "subtractions": ["foo"],
                     "user": {"id": user_2.id},
                     "foobar": False,

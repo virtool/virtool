@@ -54,41 +54,37 @@ class MLData(DataLayerDomain):
 
         """
         async with AsyncSession(self._pg) as session:
-            stmt = (
+            model_result = await session.execute(
                 select(SQLMLModel)
                 .order_by(asc(SQLMLModel.name))
                 .options(joinedload(SQLMLModel.releases))
             )
 
-            result = await session.execute(stmt)
-
             items = [
                 MLModelMinimal(
-                    id=one.id,
-                    created_at=one.created_at,
-                    description=one.description,
-                    latest_release=None,
-                    name=one.name,
-                    release_count=len(one.releases),
+                    id=model.id,
+                    created_at=model.created_at,
+                    description=model.description,
+                    latest_release=MLModelRelease(**model.releases[0].to_dict())
+                    if model.releases
+                    else None,
+                    name=model.name,
+                    release_count=len(model.releases),
                 )
-                for one in result.scalars().unique()
+                for model in model_result.scalars().unique()
             ]
 
-            result = (
-                (
-                    await session.execute(
-                        select(SQLTask)
-                        .filter_by(type=SyncMLModelsTask.name)
-                        .order_by(desc(SQLTask.created_at))
-                    )
-                )
-                .scalars()
-                .first()
+            task_result = await session.execute(
+                select(SQLTask)
+                .where(SQLTask.type == SyncMLModelsTask.name)
+                .order_by(desc(SQLTask.created_at))
             )
+
+            task = task_result.scalars().first()
 
             # The last time the ML models were synced with be none if the task has never
             # been run.
-            last_synced_at = result.created_at if result else None
+            last_synced_at = task.created_at if task else None
 
             return MLModelListResult(items=items, last_synced_at=last_synced_at)
 
@@ -114,26 +110,27 @@ class MLData(DataLayerDomain):
             if model is None:
                 raise ValueError(f"ML model with ID {model_id} not found")
 
+            releases = [
+                MLModelRelease(
+                    id=r.id,
+                    created_at=r.created_at,
+                    download_url=r.download_url,
+                    github_url=r.github_url,
+                    name=r.name,
+                    published_at=r.published_at,
+                    ready=r.ready,
+                    size=r.size,
+                )
+                for r in model.releases
+            ]
             return MLModel(
                 id=model.id,
                 created_at=model.created_at,
                 description=model.description,
-                latest_release=None,
+                latest_release=releases[0] if releases else None,
                 name=model.name,
                 release_count=len(model.releases),
-                releases=[
-                    MLModelRelease(
-                        id=r.id,
-                        created_at=r.created_at,
-                        download_url=r.download_url,
-                        github_url=r.github_url,
-                        name=r.name,
-                        published_at=r.published_at,
-                        ready=r.ready,
-                        size=r.size,
-                    )
-                    for r in model.releases
-                ],
+                releases=releases,
             )
 
     async def download_release(self, release_id: int) -> FileDescriptor:

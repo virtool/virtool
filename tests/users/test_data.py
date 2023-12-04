@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from syrupy import SnapshotAssertion
 from syrupy.filters import props
 from syrupy.matchers import path_type
 from virtool_core.models.roles import AdministratorRole
@@ -22,11 +23,12 @@ _last_password_change_matcher = path_type(
 
 
 class TestCreate:
-    async def test_no_force_reset(self, data_layer: DataLayer, mocker, snapshot):
-        mocker.patch(
-            "virtool.users.utils.hash_password", return_value="hashed_password"
-        )
-
+    async def test_no_force_reset(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
         user = await data_layer.users.create(password="hello_world", handle="bill")
 
         assert user.force_reset is False
@@ -36,10 +38,19 @@ class TestCreate:
             ),
             matcher=_last_password_change_matcher,
         )
+        assert await mongo.users.find_one({"_id": user.id}) == snapshot(
+            name="mongo",
+            exclude=props("password"),
+            matcher=_last_password_change_matcher,
+        )
 
     @pytest.mark.parametrize("force_reset", [True, False])
     async def test_force_reset(
-        self, force_reset: bool, data_layer: DataLayer, mocker, snapshot
+        self,
+        force_reset: bool,
+        data_layer: DataLayer,
+        mocker,
+        snapshot: SnapshotAssertion,
     ):
         mocker.patch(
             "virtool.users.utils.hash_password", return_value="hashed_password"
@@ -81,7 +92,7 @@ class TestUpdate:
         data_layer: DataLayer,
         fake2: DataFaker,
         mongo: Mongo,
-        snapshot,
+        snapshot: SnapshotAssertion,
     ):
         """
         Test that setting a user to administrator and vice versa sets the legacy
@@ -136,7 +147,11 @@ class TestUpdate:
         assert await get_one_field(mongo.users, "force_reset", user.id) is False
 
     async def test_set_groups(
-        self, data_layer: DataLayer, fake2: DataFaker, mongo: Mongo, snapshot
+        self,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
     ):
         """
         Test that setting ``groups`` works as expected.
@@ -195,7 +210,9 @@ class TestUpdate:
         )
         assert document["groups"] == []
 
-    async def test_password(self, bob, data_layer: DataLayer, mongo: Mongo, snapshot):
+    async def test_password(
+        self, bob, data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion
+    ):
         """
         Test editing an existing user.
 
@@ -228,7 +245,7 @@ async def test_find_or_create_b2c_user(
     data_layer: DataLayer,
     fake2: DataFaker,
     mongo: Mongo,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     fake_user = await fake2.users.create()
@@ -286,7 +303,7 @@ async def test_set_administrator_role(
     data_layer: DataLayer,
     fake2: DataFaker,
     mongo: Mongo,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     """
@@ -316,7 +333,7 @@ async def test_find_users(
     authorization_client: AuthorizationClient,
     data_layer: DataLayer,
     fake2: DataFaker,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     group_1 = await fake2.groups.create()

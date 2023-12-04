@@ -5,6 +5,7 @@ import arrow
 from aiohttp import ClientSession, ClientConnectionError, ClientConnectorError
 from multidict import MultiDictProxy
 from semver import VersionInfo
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.history import HistorySearchResult
@@ -79,7 +80,7 @@ from virtool.tasks.progress import (
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import extend_user
+from virtool.users.mongo import extend_user
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import chunk_list, get_http_session_from_app, get_safely
 
@@ -654,7 +655,25 @@ class ReferencesData(DataLayerDomain):
                     Operation.UPDATE,
                 )
 
-                return ReferenceGroup(**group)
+                async with AsyncSession(self._pg) as session:
+                    result = await session.execute(
+                        select(SQLGroup).where(
+                            (SQLGroup.id == group_id)
+                            if isinstance(group_id, int)
+                            else (SQLGroup.legacy_id == group_id)
+                        )
+                    )
+
+                    row = result.scalar_one()
+
+                    return ReferenceGroup(
+                        **{
+                            **group,
+                            "id": row.id,
+                            "legacy_id": row.legacy_id,
+                            "name": row.name,
+                        }
+                    )
 
         raise ResourceNotFoundError()
 

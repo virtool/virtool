@@ -35,16 +35,15 @@ from virtool.indexes.db import (
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import export_index, get_index_file_type_from_name
 from virtool.indexes.utils import join_index_path
-from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import naive_writer, multipart_file_chunker
-from virtool.users.mongo import lookup_nested_user_by_id
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import compress_json_with_gzip, wait_for_checks
+from virtool.utils import compress_json_with_gzip, wait_for_checks, base_processor
 
 logger = get_logger("indexes")
 
@@ -71,8 +70,8 @@ class IndexData:
             data = await virtool.indexes.db.find(self._mongo, query)
             return IndexSearchResult(**data)
 
-        return [
-            IndexMinimal(**index)
+        items = [
+            base_processor(index)
             async for index in self._mongo.indexes.aggregate(
                 [
                     {
@@ -83,15 +82,19 @@ class IndexData:
                             },
                         }
                     },
-                    *lookup_minimal_job_by_id(),
                     *lookup_nested_reference_by_id(local_field="reference.id"),
-                    *lookup_nested_user_by_id(),
                     *lookup_index_otu_counts(local_field="_id"),
                     {"$sort": {"created_at": 1}},
                     {"$project": {"counts": False}},
                 ]
             )
         ]
+
+        items = await apply_transforms(
+            items, [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)]
+        )
+
+        return [IndexMinimal(**item) for item in items]
 
     async def get(self, index_id: str) -> Index:
         """
@@ -104,9 +107,7 @@ class IndexData:
         result = await self._mongo.indexes.aggregate(
             [
                 {"$match": {"_id": index_id}},
-                *lookup_minimal_job_by_id(),
                 *lookup_nested_reference_by_id(local_field="reference.id"),
-                *lookup_nested_user_by_id(),
                 *lookup_index_otu_counts(local_field="_id"),
                 {"$sort": {"created_at": 1}},
                 {"$project": {"counts": False}},
@@ -127,6 +128,14 @@ class IndexData:
 
         document = await virtool.indexes.db.attach_files(
             self._pg, self._config.base_url, document
+        )
+
+        document = await apply_transforms(
+            base_processor(document),
+            [
+                AttachJobTransform(self._mongo),
+                AttachUserTransform(self._mongo),
+            ],
         )
 
         return Index(**document)

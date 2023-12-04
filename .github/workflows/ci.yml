@@ -205,6 +205,33 @@ jobs:
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
+  mypy:
+      runs-on: ubuntu-22.04
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Setup Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: '3.10'
+        - name: Install Poetry
+          uses: snok/install-poetry@v1
+          with:
+            virtualenvs-create: true
+            virtualenvs-in-project: true
+            installer-parallel: true
+        - name: Load Cached Packages
+          id: cached-poetry-dependencies
+          uses: actions/cache@v3
+          with:
+            path: .venv
+            key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        - name: Install Packages
+          if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+          run: poetry install --no-interaction
+        - name: Run
+          continue-on-error: true
+          run: poetry run mypy virtool
   release:
     runs-on: ubuntu-22.04
     needs: [test-api, test-unit, build, oas]

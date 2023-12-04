@@ -117,6 +117,7 @@
     'name': 'Bar',
     'nickname': 'Apple',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[False-False-data1]
@@ -173,6 +174,7 @@
     'name': 'Malus domestica',
     'nickname': 'Bar Subtraction',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[False-False-data2]
@@ -229,6 +231,7 @@
     'name': 'Malus domestica',
     'nickname': '',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[False-False-data3]
@@ -285,6 +288,7 @@
     'name': 'Bar',
     'nickname': 'Bar Subtraction',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[False-True-data0]
@@ -609,6 +613,7 @@
     'name': 'Bar',
     'nickname': 'Apple',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[True-False-data1]
@@ -681,6 +686,7 @@
     'name': 'Malus domestica',
     'nickname': 'Bar Subtraction',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[True-False-data2]
@@ -753,6 +759,7 @@
     'name': 'Malus domestica',
     'nickname': '',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[True-False-data3]
@@ -825,6 +832,7 @@
     'name': 'Bar',
     'nickname': 'Bar Subtraction',
     'ready': True,
+    'user': None,
   })
 # ---
 # name: test_edit[True-True-data0]

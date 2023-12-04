@@ -141,5 +141,47 @@
       'name': 'Add ML model release size',
       'revision': 'f8ad70032e9c',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 21,
+      'name': 'Use integer nested group ids',
+      'revision': 'okd9db53g0il',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 22,
+      'name': 'Use integer group ids in users',
+      'revision': 'f4md6q93mtud',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 23,
+      'name': 'Use integer group ids in samples',
+      'revision': 'qg7bo42yvavg',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 24,
+      'name': 'add users table',
+      'revision': '4104346698df',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 25,
+      'name': 'rename users table primary_group to primary_group_id',
+      'revision': '8f3810c1c2c9',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 26,
+      'name': 'promote mongo administrators in openFGA',
+      'revision': 'xtbq4bjlpocu',
+    }),
   ])
 # ---

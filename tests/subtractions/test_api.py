@@ -3,13 +3,14 @@ import os
 from pathlib import Path
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import SQLUpload
 
@@ -141,22 +142,23 @@ async def test_get_from_job(fake, spawn_job_client, snapshot):
 @pytest.mark.parametrize("has_job", [True, False])
 async def test_edit(
     data: dict,
-    has_user: bool,
     has_job: bool,
+    has_user: bool,
     fake2: DataFaker,
-    mocker,
-    snapshot,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
-    mocker.patch(
-        "virtool.subtractions.db.get_linked_samples",
-        make_mocked_coro(
-            [{"id": "12", "name": "Sample 12"}, {"id": "22", "name": "Sample 22"}]
-        ),
-    )
-
     user = await fake2.users.create()
+
+    await mongo.samples.insert_many(
+        [
+            {"_id": "12", "name": "Sample 12", "subtractions": ["apple"]},
+            {"_id": "22", "name": "Sample 22", "subtractions": ["apple"]},
+        ],
+        session=None,
+    )
 
     document = {
         "_id": "apple",
@@ -170,6 +172,7 @@ async def test_edit(
         "name": "Malus domestica",
         "nickname": "Apple",
         "ready": True,
+        "user": None,
     }
 
     if has_user:

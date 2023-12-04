@@ -51,7 +51,7 @@ from virtool.releases import (
 )
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import extend_user
+from virtool.users.mongo import extend_user
 from virtool.users.transforms import AttachUserTransform
 
 if TYPE_CHECKING:
@@ -148,14 +148,17 @@ async def get_reference_groups(pg: AsyncEngine, document: Document) -> list[Docu
             )
         )
 
+    rows = result.scalars().all()
+
     groups_map: dict[int | str, SQLGroup] = {
-        **{row.id: row for row in result.scalars()},
-        **{row.legacy_id: row for row in result.scalars()},
+        **{row.id: row for row in rows},
+        **{row.legacy_id: row for row in rows},
     }
 
     return [
         {
             **g,
+            "id": groups_map[g["id"]].id,
             "legacy_id": groups_map[g["id"]].legacy_id,
             "name": groups_map[g["id"]].name,
         }

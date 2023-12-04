@@ -34,9 +34,9 @@ class AttachPrimaryGroupTransform(AbstractTransform):
 
         async with AsyncSession(self._pg) as session:
             if isinstance(group_id, int):
-                query = select(SQLGroup).filter(SQLGroup.id == group_id)
+                query = select(SQLGroup).where(SQLGroup.id == group_id)
             else:
-                query = select(SQLGroup).filter(SQLGroup.legacy_id == group_id)
+                query = select(SQLGroup).where(SQLGroup.legacy_id == group_id)
 
             group = (await session.execute(query)).scalars().one_or_none()
 
@@ -61,7 +61,7 @@ class AttachPrimaryGroupTransform(AbstractTransform):
             expr = compose_legacy_id_expression(SQLGroup, group_ids)
 
             groups = (
-                (await session.execute(select(SQLGroup).filter(expr))).scalars().all()
+                (await session.execute(select(SQLGroup).where(expr))).scalars().all()
             )
 
             group_id_map = {
@@ -89,7 +89,7 @@ class AttachGroupsTransform(AbstractTransform):
             return []
 
         async with AsyncSession(self._pg) as session:
-            query = select(SQLGroup).filter(
+            query = select(SQLGroup).where(
                 compose_legacy_id_expression(SQLGroup, document["groups"])
             )
 
@@ -105,7 +105,7 @@ class AttachGroupsTransform(AbstractTransform):
             return {document["id"]: [] for document in documents}
 
         async with AsyncSession(self._pg) as session:
-            query = select(SQLGroup).filter(
+            query = select(SQLGroup).where(
                 compose_legacy_id_expression(SQLGroup, group_ids)
             )
 

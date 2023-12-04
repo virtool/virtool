@@ -3,6 +3,8 @@ Utilities for working with users in the database.
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
+from __future__ import annotations
+
 import asyncio
 import random
 
@@ -15,13 +17,14 @@ from virtool.data.errors import ResourceConflictError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.types import Document
-from virtool.users.db import B2CUserAttributes
+from virtool.users.db import B2CUserAttributes, ATTACH_PROJECTION
 from virtool.users.utils import (
     hash_password,
     check_password,
     check_legacy_password,
     limit_permissions,
 )
+from virtool.utils import base_processor
 
 
 async def compose_primary_group_update(
@@ -133,39 +136,6 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
     return handle
 
 
-def lookup_nested_user_by_id(
-    local_field: str = "user.id", set_as: str = "user"
-) -> list[dict]:
-    """
-    Create a mongoDB aggregation pipeline step to look up a nested user by id.
-
-    :param local_field: user id field to look up
-    :param set_as: desired name of the returned record
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
-    """
-    return [
-        {
-            "$lookup": {
-                "from": "users",
-                "let": {"user_id": f"${local_field}"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$eq": ["$_id", "$$user_id"]}}},
-                    {
-                        "$project": {
-                            "id": "$_id",
-                            "_id": False,
-                            "handle": True,
-                            "administrator": True,
-                        }
-                    },
-                ],
-                "as": set_as,
-            }
-        },
-        {"$set": {set_as: {"$first": f"${set_as}"}}},
-    ]
-
-
 async def update_keys(
     mongo: "Mongo",
     user_id: str,
@@ -237,3 +207,14 @@ async def validate_credentials(mongo: "Mongo", user_id: str, password: str) -> b
         return True
 
     return False
+
+
+async def extend_user(mongo: Mongo, user: Document) -> Document:
+    user_data = base_processor(
+        await mongo.users.find_one(user["id"], ATTACH_PROJECTION)
+    )
+
+    return {
+        **user,
+        **user_data,
+    }

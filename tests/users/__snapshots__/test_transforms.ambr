@@ -1,4 +1,42 @@
 # serializer version: 1
+# name: test_attach_user_transform[False]
+  dict({
+    'id': 'bar',
+    'user': dict({
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_attach_user_transform[True]
+  list([
+    dict({
+      'id': 'bar',
+      'user': dict({
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+    }),
+    dict({
+      'id': 'foo',
+      'user': dict({
+        'administrator': False,
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+      }),
+    }),
+    dict({
+      'id': 'baz',
+      'user': dict({
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+    }),
+  ])
+# ---
 # name: test_permission_transform[multi]
   list([
     dict({

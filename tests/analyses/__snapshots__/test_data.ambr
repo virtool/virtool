@@ -54,6 +54,7 @@
       }),
       'workflow': 'nuvs',
     }),
+    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
@@ -137,6 +138,7 @@
       }),
       'workflow': 'nuvs',
     }),
+    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,

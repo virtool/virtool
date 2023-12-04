@@ -73,7 +73,7 @@ class SpacesData:
 
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLSpace).filter(SQLSpace.id.in_(space_ids))
+                select(SQLSpace).where(SQLSpace.id.in_(space_ids))
             )
 
             spaces = result.scalars().all()
