@@ -1,16 +1,17 @@
 import asyncio
 import gzip
 import os
+
 from pathlib import Path
 
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import Permission
+from virtool_core.models.enums import Permission, LibraryType
+from virtool_core.models.samples import WorkflowState
 
-from tests.samples.test_data import get_sample_data
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.config import get_config_from_app
 from virtool.config.cls import ServerConfig
@@ -729,12 +730,7 @@ class TestEdit:
 @pytest.mark.apitest
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
 async def test_finalize(
-    field: str,
-    snapshot,
-    resp_is,
-    spawn_job_client,
-    tmp_path,
-    get_sample_data,
+    field: str, snapshot, resp_is, spawn_job_client, tmp_path, get_sample_data
 ):
     """
     Test that sample can be finalized using the Jobs API.
@@ -742,73 +738,6 @@ async def test_finalize(
     """
 
     client = await spawn_job_client(authorize=True)
-
-    get_config_from_app(client.app).data_path = tmp_path
-
-    await client.db.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "created_at": 13,
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                }
-            ],
-            "format": "fastq",
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "hold": False,
-            "host": "",
-            "is_legacy": False,
-            "isolate": "",
-            "labels": [label.id],
-            "library_type": LibraryType.normal.value,
-            "locale": "",
-            "name": "Test",
-            "notes": "",
-            "nuvs": False,
-            "pathoscope": True,
-            "ready": True,
-            "subtractions": ["apple", "pear"],
-            "user": {"id": user.id},
-            "workflows": {
-                "aodp": WorkflowState.INCOMPATIBLE.value,
-                "pathoscope": WorkflowState.COMPLETE.value,
-                "nuvs": WorkflowState.PENDING.value,
-            },
-            "quality": None,
-        }
-    )
-
-    async with AsyncSession(pg) as session:
-        upload = SQLUpload(name="test", name_on_disk="test.fq.gz")
-
-        artifact = SQLSampleArtifact(
-            name="reference.fa.gz",
-            sample="test",
-            type="fasta",
-            name_on_disk="reference.fa.gz",
-            size=34879234,
-        )
-
-        reads = SQLSampleReads(
-            name="reads_1.fq.gz",
-            name_on_disk="reads_1.fq.gz",
-            sample="test",
-            size=12,
-            uploaded_at=datetime.datetime(2023, 9, 1, 1, 1),
-        )
-
-        upload.reads.append(reads)
-
-        session.add_all([upload, artifact, reads])
-
-        await session.commit()
 
     resp = await client.patch(
         "/samples/test",
