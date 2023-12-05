@@ -74,9 +74,7 @@ async def authenticate_with_api_key(
 
     document, user = await asyncio.gather(
         db.keys.find_one({"_id": hash_key(key)}, ["permissions", "user"]),
-        db.users.find_one(
-            {"handle": handle}, ["administrator", "groups", "permissions", "active"]
-        ),
+        db.users.find_one({"handle": handle}, ["groups", "permissions", "active"]),
     )
 
     if not document or not user or document["user"]["id"] != user["_id"]:
@@ -87,7 +85,6 @@ async def authenticate_with_api_key(
 
     req["client"] = UserClient(
         db=db,
-        administrator=user["administrator"],
         force_reset=False,
         groups=user["groups"],
         permissions=document["permissions"],
