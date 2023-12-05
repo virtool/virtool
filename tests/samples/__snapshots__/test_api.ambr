@@ -3698,6 +3698,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -3749,6 +3750,7 @@
           }),
           'workflow': 'jobs_aodp',
         }),
+        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
