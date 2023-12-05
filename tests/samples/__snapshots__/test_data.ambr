@@ -1,7 +1,12 @@
 # serializer version: 1
+# name: TestCreate.test_ok[force_choice][jobs_create_sample]
+  list([
+    b'7cf872dc',
+  ])
+# ---
 # name: TestCreate.test_ok[force_choice][mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': '3cbb22cc',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -14,7 +19,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': '7cf872dc',
     }),
     'labels': list([
       1,
@@ -45,9 +50,14 @@
     }),
   })
 # ---
+# name: TestCreate.test_ok[none][jobs_create_sample]
+  list([
+    b'7cf872dc',
+  ])
+# ---
 # name: TestCreate.test_ok[none][mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': '3cbb22cc',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -60,7 +70,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': '7cf872dc',
     }),
     'labels': list([
       1,
@@ -91,9 +101,14 @@
     }),
   })
 # ---
+# name: TestCreate.test_ok[users_primary_group][jobs_create_sample]
+  list([
+    b'7cf872dc',
+  ])
+# ---
 # name: TestCreate.test_ok[users_primary_group][mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': '3cbb22cc',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -106,7 +121,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': '7cf872dc',
     }),
     'labels': list([
       1,
