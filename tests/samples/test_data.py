@@ -11,6 +11,7 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.users.oas import UpdateUserRequest
 
 from virtool.data.utils import get_data_from_app
@@ -92,13 +93,18 @@ class TestCreate:
 @pytest.mark.datatest
 async def test_finalize(
     data_layer: DataLayer,
-    snapshot,
+    snapshot_recent,
     tmp_path,
+    spawn_client: ClientSpawner,
     get_sample_data,
 ):
     """
     Test that sample can be finalized
     """
+    client = await spawn_client(
+        authenticated=True, permissions=[Permission.create_sample]
+    )
+
     quality = {
         "bases": [[1543]],
         "composition": [[6372]],
@@ -114,7 +120,18 @@ async def test_finalize(
             "test",
             quality,
         )
-    ).dict() == snapshot()
+    ).dict() == snapshot_recent()
     sample = await data_layer.samples.get("test")
+
+    assert (
+        await client.mongo.samples.aggregate(
+            [
+                {"$match": {"_id": "test"}},
+                *lookup_nested_subtractions(local_field="subtractions"),
+            ]
+        ).to_list(length=1)
+        == snapshot_recent()
+    )
+
     assert sample.quality == quality
     assert sample.ready is True
