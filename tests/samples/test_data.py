@@ -18,7 +18,6 @@ from virtool.pg.utils import get_row_by_id
 
 from virtool.uploads.models import SQLUpload
 
-
 class TestCreate:
     @pytest.mark.parametrize(
         "group_setting", ["none", "users_primary_group", "force_choice"]
