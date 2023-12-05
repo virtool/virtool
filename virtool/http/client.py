@@ -26,7 +26,7 @@ class UserClient(AbstractClient):
     def __init__(
         self,
         db,
-        administrator: bool,
+        administrator: bool | None,
         force_reset: bool,
         groups: list[int | str],
         permissions: dict[str, bool],
