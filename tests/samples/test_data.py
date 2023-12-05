@@ -9,6 +9,7 @@ from tests.fixtures.client import ClientSpawner
 from tests.samples.test_api import get_sample_data
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
 
@@ -58,10 +59,6 @@ class TestCreate:
             UpdateUserRequest(primary_group=group.id),
         )
 
-        jobs_client = JobsClient(redis)
-        get_data_from_app(client.app).jobs._client = jobs_client
-        get_data_from_app(client.app).samples.jobs_client = jobs_client
-
         label = await fake2.labels.create()
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
@@ -79,7 +76,7 @@ class TestCreate:
         if group_setting == "force_choice":
             data["group"] = group.id
 
-        await client.post("/samples", data)
+        await data_layer.samples.create(CreateSampleRequest(**data), client.user.id, 0)
 
         sample, upload = await asyncio.gather(
             client.mongo.samples.find_one(),
@@ -87,7 +84,9 @@ class TestCreate:
         )
 
         assert sample == snapshot_recent(name="mongo")
-        assert await redis.lrange("jobs_create_sample", 0, -1) == [b"bf1b993c"]
+        assert await redis.lrange("jobs_create_sample", 0, -1) == snapshot_recent(
+            name="jobs_create_sample"
+        )
 
 
 @pytest.mark.datatest
