@@ -85,6 +85,7 @@ async def authenticate_with_api_key(
 
     req["client"] = UserClient(
         db=db,
+        administrator=None,
         force_reset=False,
         groups=user["groups"],
         permissions=document["permissions"],
