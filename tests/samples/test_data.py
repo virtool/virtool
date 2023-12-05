@@ -14,9 +14,6 @@ from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.users.oas import UpdateUserRequest
 
-from virtool.data.utils import get_data_from_app
-
-from virtool.jobs.client import JobsClient
 from virtool.pg.utils import get_row_by_id
 
 from virtool.uploads.models import SQLUpload
