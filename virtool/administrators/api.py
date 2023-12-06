@@ -4,8 +4,9 @@ from typing import Union, Optional
 from aiohttp.web_exceptions import HTTPForbidden, HTTPBadRequest
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r404, r202, r400
+from aiohttp_pydantic.oas.typing import r200, r404, r202, r400, r201, r403
 from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.user import User
 from virtool_core.utils import document_enum
 
 from virtool.administrators.oas import (
@@ -30,6 +31,8 @@ from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
 from virtool.flags import flag, FlagName
+from virtool.users.checks import check_password_length
+from virtool.users.oas import CreateUserRequest
 
 routes = Routes()
 
@@ -87,6 +90,38 @@ class AdminUsersView(PydanticView):
                 administrator,
                 term,
             )
+        )
+
+    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
+    async def post(self, data: CreateUserRequest) -> r201[User] | r400 | r403:
+        """
+        Create a user.
+
+        Creates a new user.
+
+        Status Codes:
+            201: Successful operation
+            400: User already exists
+            400: Password does not meet length requirement
+            403: Not permitted
+        """
+        if data.handle == "virtool":
+            raise HTTPBadRequest(text="Reserved user name: virtool")
+
+        if error := await check_password_length(self.request, password=data.password):
+            raise HTTPBadRequest(text=error)
+
+        try:
+            user = await get_data_from_req(self.request).users.create(
+                data.handle, data.password, data.force_reset
+            )
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
+
+        return json_response(
+            user,
+            headers={"Location": f"/admin/users/{user.id}"},
+            status=201,
         )
 
 
