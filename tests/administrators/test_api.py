@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import arrow
 import pytest
+from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 from virtool_core.models.roles import AdministratorRole
 
@@ -11,9 +12,12 @@ from virtool.authorization.client import (
 )
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.layer import DataLayer
+from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
+from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.mongo import validate_credentials
+from virtool.users.utils import check_password
 
 _last_password_change_matcher = path_type({"last_password_change": (str,)})
 """
@@ -86,6 +90,74 @@ async def test_get_user(
 
     assert resp.status == 200
     assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
+
+
+@pytest.mark.apitest
+@pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
+async def test_create(
+    error: str | None,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
+    resp_is,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
+):
+    """
+    Test that a valid request results in a user document being properly inserted.
+
+    """
+    await mongo.users.create_index("handle", unique=True, sparse=True)
+
+    client = await spawn_client(administrator=True, authenticated=True)
+
+    user = await fake2.users.create()
+
+    await get_data_from_app(client.app).settings.update(
+        UpdateSettingsRequest(minimum_password_length=8)
+    )
+
+    data = {"handle": "fred", "password": "hello_world", "force_reset": False}
+
+    if error == "400_exists":
+        data["handle"] = user.handle
+
+    if error == "400_reserved":
+        data["handle"] = "virtool"
+
+    if error == "400_password":
+        data["password"] = "foo"
+
+    resp = await client.post("/admin/users", data)
+
+    if error == "400_exists":
+        await resp_is.bad_request(resp, "User already exists")
+        return
+
+    if error == "400_password":
+        await resp_is.bad_request(
+            resp, "Password does not meet minimum length requirement (8)"
+        )
+        return
+
+    if error == "400_reserved":
+        await resp_is.bad_request(resp, "Reserved user name: virtool")
+        return
+
+    assert resp.status == 201
+
+    resp_json = await resp.json()
+
+    assert resp_json == snapshot
+    assert resp.headers["Location"] == snapshot(name="location")
+
+    document = await client.mongo.users.find_one(resp_json["id"])
+    password = document.pop("password")
+
+    assert document == snapshot(name="db")
+    assert check_password("hello_world", password)
+    assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
 @pytest.mark.apitest
