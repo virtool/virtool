@@ -90,7 +90,7 @@ class TasksData:
         return task
 
     @emits(Operation.UPDATE)
-    async def complete(self, task_id: int):
+    async def complete(self, task_id: int) -> Task:
         """
         Update a task record as completed.
 

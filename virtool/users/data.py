@@ -282,7 +282,7 @@ class UsersData(DataLayerDomain):
         return user
 
     @emits(Operation.UPDATE)
-    async def update(self, user_id: str, data: UpdateUserRequest):
+    async def update(self, user_id: str, data: UpdateUserRequest) -> User:
         """
         Update a user.
 
