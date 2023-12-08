@@ -1,0 +1,322 @@
+# serializer version: 1
+# name: TestCreate.test_ok[force_choice][jobs_create_sample]
+  list([
+    b'7cf872dc',
+  ])
+# ---
+# name: TestCreate.test_ok[force_choice][mongo]
+  dict({
+    '_id': '3cbb22cc',
+    'all_read': True,
+    'all_write': True,
+    'created_at': 'approximately_now_datetime',
+    'format': 'fastq',
+    'group': 2,
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': '7cf872dc',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'results': None,
+    'space': dict({
+      'id': 0,
+    }),
+    'subtractions': list([
+      'apple',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    }),
+  })
+# ---
+# name: TestCreate.test_ok[none][jobs_create_sample]
+  list([
+    b'7cf872dc',
+  ])
+# ---
+# name: TestCreate.test_ok[none][mongo]
+  dict({
+    '_id': '3cbb22cc',
+    'all_read': True,
+    'all_write': True,
+    'created_at': 'approximately_now_datetime',
+    'format': 'fastq',
+    'group': None,
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': '7cf872dc',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'results': None,
+    'space': dict({
+      'id': 0,
+    }),
+    'subtractions': list([
+      'apple',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    }),
+  })
+# ---
+# name: TestCreate.test_ok[users_primary_group][jobs_create_sample]
+  list([
+    b'7cf872dc',
+  ])
+# ---
+# name: TestCreate.test_ok[users_primary_group][mongo]
+  dict({
+    '_id': '3cbb22cc',
+    'all_read': True,
+    'all_write': True,
+    'created_at': 'approximately_now_datetime',
+    'format': 'fastq',
+    'group': 2,
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': '7cf872dc',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'results': None,
+    'space': dict({
+      'id': 0,
+    }),
+    'subtractions': list([
+      'apple',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    }),
+  })
+# ---
+# name: test_finalize
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': 'not_approximately_now_datetime',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': None,
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': <LibraryType.normal: 'normal'>,
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': dict({
+      'bases': list([
+        list([
+          1543,
+        ]),
+      ]),
+      'composition': list([
+        list([
+          6372,
+        ]),
+      ]),
+      'count': 7069,
+      'encoding': 'OuBQPPuwYimrxkNpPWUx',
+      'gc': 34222440,
+      'length': list([
+        3237,
+      ]),
+      'sequences': list([
+        7091,
+      ]),
+    }),
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': 'not_approximately_now_datetime',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 'pear',
+        'name': 'Pear',
+      }),
+    ]),
+    'user': dict({
+      'administrator': False,
+      'handle': 'kellylopez',
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
+      'nuvs': <WorkflowState.PENDING: 'pending'>,
+      'pathoscope': <WorkflowState.COMPLETE: 'complete'>,
+    }),
+  })
+# ---
+# name: test_finalize.1
+  list([
+    dict({
+      '_id': 'test',
+      'all_read': True,
+      'all_write': True,
+      'created_at': 'not_approximately_now_datetime',
+      'files': list([
+        dict({
+          'download_url': '/download/samples/files/file_1.fq.gz',
+          'id': 'foo',
+          'name': 'Bar.fq.gz',
+        }),
+      ]),
+      'format': 'fastq',
+      'group': 'none',
+      'group_read': True,
+      'group_write': True,
+      'hold': False,
+      'host': '',
+      'is_legacy': False,
+      'isolate': '',
+      'labels': list([
+        1,
+      ]),
+      'library_type': 'normal',
+      'locale': '',
+      'name': 'Test',
+      'notes': '',
+      'nuvs': False,
+      'pathoscope': True,
+      'quality': dict({
+        'bases': list([
+          list([
+            1543,
+          ]),
+        ]),
+        'composition': list([
+          list([
+            6372,
+          ]),
+        ]),
+        'count': 7069,
+        'encoding': 'OuBQPPuwYimrxkNpPWUx',
+        'gc': 34222440,
+        'length': list([
+          3237,
+        ]),
+        'sequences': list([
+          7091,
+        ]),
+      }),
+      'ready': True,
+      'subtractions': list([
+        dict({
+          'id': 'apple',
+          'name': 'Apple',
+        }),
+        dict({
+          'id': 'pear',
+          'name': 'Pear',
+        }),
+      ]),
+      'user': dict({
+        'id': 'bf1b993c',
+      }),
+      'workflows': dict({
+        'aodp': 'incompatible',
+        'nuvs': 'pending',
+        'pathoscope': 'complete',
+      }),
+    }),
+  ])
+# ---
