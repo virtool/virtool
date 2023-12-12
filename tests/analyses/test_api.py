@@ -444,9 +444,9 @@ async def test_upload_file(
 
             assert resp.status == 201
             assert await resp.json() == snapshot
-            assert os.listdir(tmp_path / "analyses") == [
-                "2-reference.fa",
+            assert sorted(os.listdir(tmp_path / "analyses")) == [
                 "1-reference.fa",
+                "2-reference.fa",
             ]
             assert await get_row_by_id(pg, SQLAnalysisFile, 1)
 
