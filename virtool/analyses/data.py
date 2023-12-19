@@ -136,6 +136,7 @@ class AnalysisData(DataLayerDomain):
                     client,
                     write=False,
                 )
+                for _ in data
             ]
         else:
             can_read = [
