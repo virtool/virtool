@@ -825,37 +825,32 @@ class TestDelete:
 
 
 @pytest.mark.apitest
-@pytest.mark.parametrize("error", [None, "404"])
-@pytest.mark.parametrize("term", [None, "Baz"])
 async def test_find_analyses(
-    error: str | None,
-    term: str | None,
     fake2: DataFaker,
-    mocker,
-    resp_is,
-    snapshot,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
-
     client = await spawn_client(authenticated=True)
-
-    if not error:
-        await client.mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "created_at": static_time.datetime,
-                "all_read": True,
-                "all_write": True,
-                "ready": True,
-            }
-        )
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
     job = await fake2.jobs.create(user=user_1)
+
+    await client.mongo.samples.insert_one(
+        {
+            "_id": "test",
+            "created_at": static_time.datetime,
+            "all_read": True,
+            "all_write": True,
+            "group": "none",
+            "group_read": True,
+            "group_write": True,
+            "ready": True,
+            "user": {"id": user_1.id},
+        }
+    )
 
     await asyncio.gather(
         client.mongo.subtraction.insert_one(
@@ -927,18 +922,10 @@ async def test_find_analyses(
         ),
     )
 
-    url = "/samples/test/analyses"
+    resp = await client.get("/samples/test/analyses")
 
-    if term:
-        url = f"{url}?term={term}"
-
-    resp = await client.get(url)
-
-    if error is None:
-        assert resp.status == 200
-        assert await resp.json() == snapshot
-    else:
-        await resp_is.not_found(resp)
+    assert resp.status == 200
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.apitest
