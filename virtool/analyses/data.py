@@ -21,7 +21,7 @@ from virtool.analyses.checks import (
     check_if_analysis_running,
     check_if_analysis_modified,
 )
-from virtool.analyses.db import TARGET_FILES
+from virtool.analyses.db import TARGET_FILES, filter_analyses_by_sample_rights
 from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.analyses.utils import (
@@ -45,10 +45,12 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     lookup_nested_subtractions,
+    AttachSubtractionsTransform,
 )
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -99,8 +101,6 @@ class AnalysisData(DataLayerDomain):
                         {"$sort": sort},
                         {"$skip": skip_count},
                         {"$limit": per_page},
-                        *lookup_nested_subtractions(),
-                        *lookup_nested_reference_by_id(),
                     ],
                 }
             },
@@ -124,49 +124,32 @@ class AnalysisData(DataLayerDomain):
             },
         ]
 
+        data: tuple[list[dict], int, int] | None = None
+
         async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
-            data = paginate_dict["data"]
-            found_count: int = paginate_dict.get("found_count", 0)
+            data = (
+                paginate_dict["data"],
+                paginate_dict.get("found_count", 0),
+                paginate_dict.get("total_count", 0),
+            )
 
-        if sample_id is not None:
-            can_read = [
-                virtool.samples.db.check_rights_error_check(
-                    self._mongo,
-                    sample_id,
-                    client,
-                    write=False,
-                )
-                for _ in data
-            ]
-        else:
-            can_read = [
-                virtool.samples.db.check_rights_error_check(
-                    self._mongo,
-                    document["sample"]["id"],
-                    client,
-                    write=False,
-                )
-                for document in data
-            ]
+        if data is None:
+            raise ValueError("No data returned in aggregation")
 
-        per_document_can_read = await asyncio.gather(*can_read)
+        documents, found_count, total_count = data
 
-        documents = [
-            document
-            for document, can_write in zip(data, per_document_can_read)
-            if can_write
-        ]
-        documents = await apply_transforms(
-            [base_processor(d) for d in documents],
-            [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+        documents = await filter_analyses_by_sample_rights(
+            client, self._mongo, documents
         )
 
-        documents, total_count = await asyncio.gather(
-            apply_transforms(
-                [base_processor(d) for d in documents],
-                [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
-            ),
-            self._mongo.analyses.count_documents({}),
+        documents = await apply_transforms(
+            [base_processor(d) for d in documents],
+            [
+                AttachJobTransform(self._mongo),
+                AttachReferenceTransform(self._mongo),
+                AttachSubtractionsTransform(self._mongo),
+                AttachUserTransform(self._mongo),
+            ],
         )
 
         return AnalysisSearchResult(
@@ -174,7 +157,7 @@ class AnalysisData(DataLayerDomain):
                 "documents": documents,
             },
             found_count=found_count,
-            total_count=total_count,
+            total_count=await self._mongo.analyses.count_documents({}),
             page=page,
             page_count=int(math.ceil(found_count / per_page)),
             per_page=per_page,
