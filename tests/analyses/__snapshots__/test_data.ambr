@@ -167,6 +167,186 @@
     'workflow': 'nuvs',
   })
 # ---
+# name: test_find[0]
+  dict({
+    'documents': list([
+    ]),
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 1,
+  })
+# ---
+# name: test_find[1]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': 'approximately_now_datetime',
+        'id': '3cbb22cc',
+        'index': dict({
+          'id': 'test_index',
+          'version': 11,
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_datetime',
+          'id': 'da42dca3',
+          'progress': 0,
+          'stage': None,
+          'state': <JobState.WAITING: 'waiting'>,
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'nuvs',
+        }),
+        'ml': None,
+        'ready': False,
+        'reference': dict({
+          'data_type': <ReferenceDataType.genome: 'genome'>,
+          'id': 'test_ref',
+          'name': 'Test Reference',
+        }),
+        'sample': dict({
+          'id': 'test_sample',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'subtraction_1',
+            'name': 'Subtraction 1',
+          }),
+          dict({
+            'id': 'subtraction_2',
+            'name': 'Subtraction 2',
+          }),
+        ]),
+        'updated_at': 'approximately_now_datetime',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        }),
+        'workflow': 'nuvs',
+      }),
+    ]),
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: test_find[2]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': 'approximately_now_datetime',
+        'id': '09d01419',
+        'index': dict({
+          'id': 'test_index',
+          'version': 11,
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_datetime',
+          'id': 'f60bae36',
+          'progress': 0,
+          'stage': None,
+          'state': <JobState.WAITING: 'waiting'>,
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'nuvs',
+        }),
+        'ml': None,
+        'ready': False,
+        'reference': dict({
+          'data_type': <ReferenceDataType.genome: 'genome'>,
+          'id': 'test_ref',
+          'name': 'Test Reference',
+        }),
+        'sample': dict({
+          'id': 'test_sample',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'subtraction_1',
+            'name': 'Subtraction 1',
+          }),
+          dict({
+            'id': 'subtraction_2',
+            'name': 'Subtraction 2',
+          }),
+        ]),
+        'updated_at': 'approximately_now_datetime',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        }),
+        'workflow': 'nuvs',
+      }),
+      dict({
+        'created_at': 'approximately_now_datetime',
+        'id': '3cbb22cc',
+        'index': dict({
+          'id': 'test_index',
+          'version': 11,
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_datetime',
+          'id': 'da42dca3',
+          'progress': 0,
+          'stage': None,
+          'state': <JobState.WAITING: 'waiting'>,
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'nuvs',
+        }),
+        'ml': None,
+        'ready': False,
+        'reference': dict({
+          'data_type': <ReferenceDataType.genome: 'genome'>,
+          'id': 'test_ref',
+          'name': 'Test Reference',
+        }),
+        'sample': dict({
+          'id': 'test_sample',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'subtraction_1',
+            'name': 'Subtraction 1',
+          }),
+          dict({
+            'id': 'subtraction_2',
+            'name': 'Subtraction 2',
+          }),
+        ]),
+        'updated_at': 'approximately_now_datetime',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        }),
+        'workflow': 'nuvs',
+      }),
+    ]),
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
 # name: test_upload_file
   dict({
     'analysis': 'foobar',
