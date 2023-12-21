@@ -1,0 +1,282 @@
+name: ci
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - "main"
+  push:
+    branches:
+      - "main"
+
+jobs:
+  pg-test:
+    runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:14.9
+        env:
+          POSTGRES_USER: virtool
+          POSTGRES_PASSWORD: virtool
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Start OpenFGA
+        run: |
+          bash .github/workflows/scripts/setup_postgres.sh          
+          docker run --network ${{ job.services.postgres.network }} --rm openfga/openfga:v0.2.5 migrate --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@localhost:5432/openfga?sslmode=disable'
+      - name: Do Nothing
+        run: echo "Do nothing"
+  commitlint:
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Commitlint
+        uses: wagoid/commitlint-github-action@v5
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build
+        run: docker build .
+  test-api:
+    runs-on: ubuntu-22.04
+    services:
+      redis:
+        image: redis:6.0
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: virtool
+          POSTGRES_PASSWORD: virtool
+          POSTGRES_DB: virtool
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Start OpenFGA
+        run: |
+          docker network create openfga
+          docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+          docker run --rm --network=openfga openfga/openfga:v0.2.5 migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+          docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga:v0.2.5 run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: 4.4
+          mongodb-replica-set: rs
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Install bowtie
+        run: | 
+          wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+          unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+          cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
+          ln -s /opt/bowtie2/bowtie* /usr/local/bin
+      - name: Run
+        run: >-
+          poetry -vvv run
+          pytest
+          -x
+          -m apitest
+          --db-connection-string mongodb://localhost:27017
+          --redis-connection-string redis://localhost:6379
+          --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
+          --openfga-host localhost:8080
+          --snapshot-details
+          --snapshot-warn-unused
+  test-unit:
+    runs-on: ubuntu-22.04
+    services:
+      redis:
+        image: redis:6.0
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: virtool
+          POSTGRES_PASSWORD: virtool
+          POSTGRES_DB: virtool
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Start OpenFGA
+        run: |
+          docker network create openfga
+          docker run -d --name postgres --network=openfga -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password postgres:14.5
+          docker run --rm --network=openfga openfga/openfga:v0.2.5 migrate --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable'
+          docker run -d --name openfga --network=openfga -p 8080:8080 openfga/openfga:v0.2.5 run --datastore-engine postgres --datastore-uri 'postgres://postgres:password@postgres:5432/postgres?sslmode=disable' --playground-enabled=false
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: 4.4
+          mongodb-replica-set: rs
+      - name: Install bowtie
+        run: |
+          wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+          unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+          cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
+          ln -s /opt/bowtie2/bowtie* /usr/local/bin
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Run
+        run: >-
+          poetry -vvv run
+          pytest
+          -x
+          -m "not apitest"
+          --db-connection-string mongodb://localhost:27017
+          --redis-connection-string redis://localhost:6379
+          --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
+          --openfga-host localhost:8080
+          --snapshot-details          
+          --snapshot-warn-unused
+  oas:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Setup Poetry
+        id: setup-poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Write OAS
+        run: |
+          mkdir -p virtool/spec
+          poetry run python run.py oas > virtool/spec/openapi.json
+      - name: Upload OAS
+        uses: actions/upload-artifact@v3
+        with:
+          name: openapi.json
+          path: virtool/spec/openapi.json
+  mypy:
+      runs-on: ubuntu-22.04
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Setup Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: '3.10'
+        - name: Install Poetry
+          uses: snok/install-poetry@v1
+          with:
+            virtualenvs-create: true
+            virtualenvs-in-project: true
+            installer-parallel: true
+        - name: Load Cached Packages
+          id: cached-poetry-dependencies
+          uses: actions/cache@v3
+          with:
+            path: .venv
+            key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        - name: Install Packages
+          if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+          run: poetry install --no-interaction
+        - name: Run
+          continue-on-error: true
+          run: poetry run mypy virtool
+  release:
+    runs-on: ubuntu-22.04
+    needs: [test-api, test-unit, build, oas]
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Download OAS
+        uses: actions/download-artifact@v3
+        with:
+          name: openapi.json
+          path: virtool/spec/openapi.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      - name: Install semantic-release
+        run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx semantic-release

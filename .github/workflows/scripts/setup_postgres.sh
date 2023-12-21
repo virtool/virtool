@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+psql -v ON_ERROR_STOP=1 --username "virtool" --dbname "virtool" <<-EOSQL
 	CREATE DATABASE openfga;
-	GRANT ALL PRIVILEGES ON DATABASE openfga TO "$POSTGRES_USER";
+	GRANT ALL PRIVILEGES ON DATABASE openfga TO "virtool";
 EOSQL
