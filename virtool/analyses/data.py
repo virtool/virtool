@@ -5,6 +5,7 @@ from datetime import datetime
 from shutil import rmtree
 from typing import Tuple, Optional, List
 
+import sentry_sdk
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -126,21 +127,26 @@ class AnalysisData(DataLayerDomain):
 
         data: tuple[list[dict], int, int] | None = None
 
-        async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
-            data = (
-                paginate_dict["data"],
-                paginate_dict.get("found_count", 0),
-                paginate_dict.get("total_count", 0),
-            )
+        with sentry_sdk.start_span(op="mongo", description="aggregate_find_analyses"):
+            async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
+                data = (
+                    paginate_dict["data"],
+                    paginate_dict.get("found_count", 0),
+                    paginate_dict.get("total_count", 0),
+                )
+                break
 
         if data is None:
             raise ValueError("No data returned in aggregation")
 
         documents, found_count, total_count = data
 
-        documents = await filter_analyses_by_sample_rights(
-            client, self._mongo, documents
-        )
+        with sentry_sdk.start_span(
+            op="mongo", description="filter_analyses_by_sample_rights"
+        ):
+            documents = await filter_analyses_by_sample_rights(
+                client, self._mongo, documents
+            )
 
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
