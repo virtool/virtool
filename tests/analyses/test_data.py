@@ -1,17 +1,13 @@
 import asyncio
-import os
-
-
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
 from tests.analyses.test_api import create_files
 from tests.fixtures.snapshot_date import snapshot_recent
 from virtool.data.layer import DataLayer
-from virtool.fake.next import DataFaker
+from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.http.client import UserClient
 from virtool.mongo.core import Mongo
 from virtool.analyses.models import SQLAnalysisFile
-from virtool.config import get_config_from_app
 from virtool.pg.utils import get_row_by_id
 import pytest
 
@@ -149,23 +145,34 @@ async def test_create_analysis_id(
 
 @pytest.mark.apitest
 async def test_upload_file(
-    create_files, spawn_job_client, tmp_path, data_layer: DataLayer, snapshot
+    create_files,
+    spawn_job_client,
+    tmp_path,
+    data_layer: DataLayer,
+    snapshot_recent,
+    set_up_sample,
+    example_path,
 ):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
 
     """
-    client = await spawn_job_client(authorize=True)
-    get_config_from_app(client.app).data_path = tmp_path
-    format_ = "fasta"
-    await client.db.analyses.insert_one(
-        {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
+    user_id = set_up_sample
+    analysis = await data_layer.analyses.create(
+        "test_sample",
+        "test_ref",
+        ["subtraction_1", "subtraction_2"],
+        user_id,
+        QuickAnalyzeWorkflow.nuvs,
+        0,
+        analysis_id="test_analysis",
     )
-    resp = await client.put(
-        f"/analyses/foobar/files?name=reference.fa&format={format_}",
-        data=create_files(),
+
+    chunks = fake_file_chunker(example_path / "reads/single.fq.gz")
+
+    analysis = await data_layer.analyses.upload_file(
+        chunks, "test_analysis", "fasta", "test"
     )
-    assert resp.status == 201
-    assert await resp.json() == snapshot(exclude=props("uploaded_at"))
-    assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
+
+    assert analysis == snapshot_recent()
     assert await get_row_by_id(data_layer.analyses._pg, SQLAnalysisFile, 1)
