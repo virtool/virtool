@@ -349,12 +349,13 @@
 # ---
 # name: test_upload_file
   dict({
-    'analysis': 'foobar',
+    'analysis': 'test_analysis',
     'description': None,
     'format': 'fasta',
     'id': 1,
-    'name': 'reference.fa',
-    'name_on_disk': '1-reference.fa',
-    'size': 20466,
+    'name': 'test',
+    'name_on_disk': '1-test',
+    'size': 16700094,
+    'uploaded_at': 'approximately_now_datetime',
   })
 # ---
