@@ -10,30 +10,6 @@ on:
       - "main"
 
 jobs:
-  pg-test:
-    runs-on: ubuntu-22.04
-    services:
-      postgres:
-        image: postgres:14.9
-        env:
-          POSTGRES_USER: virtool
-          POSTGRES_PASSWORD: virtool
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Start OpenFGA
-        run: |
-          bash .github/workflows/scripts/setup_postgres.sh          
-          docker run --network ${{ job.services.postgres.network }} --rm openfga/openfga:v0.2.5 migrate --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@postgres:5432/openfga?sslmode=disable'
-      - name: Do Nothing
-        run: echo "Do nothing"
   commitlint:
     runs-on: ubuntu-22.04
     if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
