@@ -34,7 +34,7 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.uploads.utils import naive_validator
+from virtool.uploads.utils import naive_validator, multipart_file_chunker
 
 routes = Routes()
 
@@ -223,9 +223,13 @@ async def upload(req: Request) -> Response:
     if analysis_format and analysis_format not in AnalysisFormat.to_list():
         raise HTTPBadRequest(text="Unsupported analysis file format")
 
+    print(req)
+    print((await req.multipart()).__dict__)
+    reader = await req.multipart()
+    multipart_file_chunker(reader)
     try:
         analysis_file = await get_data_from_req(req).analyses.upload_file(
-            await req.multipart(), analysis_id, analysis_format, name
+            multipart_file_chunker(reader), analysis_id, analysis_format, name
         )
     except ResourceNotFoundError:
         raise NotFound()
