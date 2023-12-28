@@ -7,7 +7,7 @@ from aiohttp import web
 from virtool.api.response import NotFound
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 
 routes = Routes()
 

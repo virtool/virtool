@@ -1,29 +1,26 @@
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.roles import AdministratorRole
 
 from virtool.administrators.actions import get_action_from_name
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.domain import DataLayerDomain
 from virtool.mongo.core import Mongo
 
-PROJECTION = [
+PROJECTION = (
     "_id",
-    "handle",
-    "administrator",
-    "force_reset",
-    "groups",
-    "last_password_change",
-    "permissions",
-    "primary_group",
-    "administrator_role",
     "active",
+    "administrator_role",
     "b2c",
     "b2c_display_name",
     "b2c_family_name",
     "b2c_given_name",
     "b2c_oid",
-]
+    "force_reset",
+    "groups",
+    "handle",
+    "last_password_change",
+    "permissions",
+    "primary_group",
+)
 
 
 class AdministratorsData(DataLayerDomain):

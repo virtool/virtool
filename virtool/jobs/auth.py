@@ -4,7 +4,7 @@ from aiohttp import BasicAuth, web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized
 
-from virtool.http.client import JobClient
+from virtool.api.client import JobClient
 from virtool.types import RouteHandler
 from virtool.utils import hash_key
 

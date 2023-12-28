@@ -11,8 +11,8 @@ from virtool.authorization.permissions import LegacyPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, PermissionRoutePolicy
+from virtool.api.routes import Routes
 from virtool.uploads.models import UploadType
 from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
 from virtool.uploads.utils import get_upload_path

@@ -1,26 +1,26 @@
-import asyncio
-from typing import Callable, Tuple
+from contextlib import suppress
+from typing import Callable
 
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
-from jose.exceptions import JWTError, JWTClaimsError, ExpiredSignatureError
-from virtool.config import get_config_from_req
+from jose.exceptions import ExpiredSignatureError
 
+from virtool.api.client import UserClient
+from virtool.api.policy import (
+    get_handler_policy,
+    PublicRoutePolicy,
+)
+from virtool.api.utils import set_session_id_cookie
+from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
-from virtool.http.client import UserClient
-from virtool.http.policy import (
-    get_handler_policy,
-    PublicRoutePolicy,
-)
-from virtool.http.utils import set_session_id_cookie
 from virtool.oidc.utils import validate_token
 from virtool.users.db import B2CUserAttributes
-from virtool.utils import hash_key
+from virtool.users.utils import limit_permissions
 
 
 def get_ip(req: Request) -> str:
@@ -35,7 +35,7 @@ def get_ip(req: Request) -> str:
     return req.transport.get_extra_info("peername")[0]
 
 
-def decode_authorization(authorization: str) -> Tuple[str, str]:
+def decode_authorization(authorization: str) -> tuple[str, str]:
     """
     Parse and decode an API key from an HTTP authorization header value.
 
@@ -51,48 +51,23 @@ def decode_authorization(authorization: str) -> Tuple[str, str]:
     return auth.login, auth.password
 
 
-async def authenticate_with_key(req: Request, handler: Callable) -> Response:
-    """
-    Authenticate the request with an API key or job key.
-
-    :param req: the request to authenticate
-    :param handler: the handler to call with the request if authenticated
-
-    """
-    try:
-        holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
-    except AuthError:
-        raise HTTPUnauthorized(text="Malformed Authorization header")
-
-    return await authenticate_with_api_key(req, handler, holder_id, key)
-
-
 async def authenticate_with_api_key(
     req: Request, handler: Callable, handle: str, key: str
 ) -> Response:
-    db = req.app["db"]
+    """Authenticate the request with the provided user handle and API key."""
+    user = await get_data_from_req(req).users.get_by_handle(handle)
+    key = await get_data_from_req(req).account.get_key(user.id, key)
 
-    document, user = await asyncio.gather(
-        db.keys.find_one({"_id": hash_key(key)}, ["permissions", "user"]),
-        db.users.find_one(
-            {"handle": handle}, ["administrator", "groups", "permissions", "active"]
-        ),
-    )
-
-    if not document or not user or document["user"]["id"] != user["_id"]:
+    if not user or not user.active or not key:
         raise HTTPUnauthorized(text="Invalid authorization header")
 
-    if user["active"] is False:
-        raise HTTPUnauthorized(text="User is deactivated.")
-
     req["client"] = UserClient(
-        db=db,
-        administrator=user["administrator"],
-        force_reset=False,
-        groups=user["groups"],
-        permissions=document["permissions"],
-        user_id=user["_id"],
+        administrator_role=user.administrator_role,
         authenticated=True,
+        force_reset=False,
+        groups=[group.id for group in user.groups],
+        permissions=limit_permissions(user.permissions.dict(), key.permissions.dict()),
+        user_id=user.id,
     )
 
     return await handler(req)
@@ -122,7 +97,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
 
     try:
         token_claims = await validate_token(req.app, token)
-    except (JWTClaimsError, JWTError, ExpiredSignatureError):
+    except ExpiredSignatureError:
         raise HTTPUnauthorized(text="Invalid authorization")
 
     user = await get_data_from_req(req).users.find_or_create_b2c_user(
@@ -138,13 +113,13 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
         raise HTTPUnauthorized(text="User is deactivated.")
 
     req["client"] = UserClient(
-        db=req.app["db"],
-        administrator=user.administrator,
+        administrator_role=user.administrator_role,
+        authenticated=True,
         force_reset=False,
         groups=[group.id for group in user.groups],
         permissions=user.permissions.dict(),
         user_id=user.id,
-        authenticated=True,
+        session_id=None,
     )
 
     resp = await handler(req)
@@ -153,41 +128,8 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
     return resp
 
 
-@web.middleware
-async def middleware(req, handler) -> Response:
-    """
-    Handle requests based on client type and authentication status.
-
-    :param req: the request to handle
-    :param handler: the handler to call with the request if authenticated
-    :return: the response
-    """
-    db = req.app["db"]
-
-    if isinstance(get_handler_policy(handler, req.method), PublicRoutePolicy):
-        req["client"] = UserClient(
-            db=db,
-            administrator=False,
-            force_reset=False,
-            groups=[],
-            permissions={},
-            user_id=None,
-            authenticated=False,
-        )
-
-        return await handler(req)
-
-    if req.headers.get("AUTHORIZATION"):
-        return await authenticate_with_key(req, handler)
-
-    if get_config_from_req(req).use_b2c:
-        try:
-            return await authenticate_with_b2c(req, handler)
-        except HTTPUnauthorized:
-            # Allow authentication by both session and JWT in same instance.
-            pass
-
-    # Get session information from cookies.
+async def authenticate_with_session(req: Request, handler: Callable) -> Response:
+    """Authenticate the given request with session information in the cookie."""
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
 
@@ -212,42 +154,79 @@ async def middleware(req, handler) -> Response:
     if session.authentication:
         user = await get_data_from_req(req).users.get(session.authentication.user_id)
 
-        if user.active is False:
+        if not user.active:
             raise HTTPUnauthorized(text="User is deactivated.")
 
         req["client"] = UserClient(
-            db,
-            user.administrator,
-            user.force_reset,
-            [group.id for group in user.groups],
-            user.permissions.dict(),
-            session.authentication.user_id,
+            administrator_role=user.administrator_role,
             authenticated=True,
+            force_reset=user.force_reset,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
             session_id=session_id,
         )
-
     else:
         req["client"] = UserClient(
-            db=db,
-            administrator=False,
+            administrator_role=None,
+            authenticated=False,
             force_reset=False,
             groups=[],
             permissions={},
             user_id=None,
-            authenticated=False,
+            session_id=session_id,
         )
 
     resp = await handler(req)
 
     if req.path != "/account/reset" and session.reset:
-        try:
+        with suppress(ResourceNotFoundError):
             await get_data_from_req(req).sessions.delete(session_id)
             session = await get_data_from_req(req).sessions.create_anonymous(
                 get_ip(req)
             )
-        except ResourceNotFoundError:
-            pass
 
     set_session_id_cookie(resp, session.id)
 
     return resp
+
+
+@web.middleware
+async def middleware(req, handler) -> Response:
+    """
+    Handle requests based on client type and authentication status.
+
+    :param req: the request to handle
+    :param handler: the handler to call with the request if authenticated
+    :return: the response
+    """
+    if isinstance(get_handler_policy(handler, req.method), PublicRoutePolicy):
+        req["client"] = UserClient(
+            administrator_role=None,
+            authenticated=False,
+            force_reset=False,
+            groups=[],
+            permissions={},
+            user_id=None,
+            session_id=None,
+        )
+
+        return await handler(req)
+
+    if req.headers.get("AUTHORIZATION"):
+        # Authenticate the request with an API key or job key.
+        try:
+            holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
+        except AuthError:
+            raise HTTPUnauthorized(text="Malformed Authorization header")
+
+        if holder_id.startswith("job"):
+            raise HTTPUnauthorized(text="Jobs are not supported")
+
+        return await authenticate_with_api_key(req, handler, holder_id, key)
+
+    if get_config_from_req(req).use_b2c:
+        with suppress(HTTPUnauthorized):
+            return await authenticate_with_b2c(req, handler)
+
+    return await authenticate_with_session(req, handler)

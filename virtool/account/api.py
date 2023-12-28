@@ -10,8 +10,8 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
-import virtool.http.authentication
-import virtool.http.routes
+import virtool.api.authentication
+import virtool.api.routes
 from virtool.account.oas import (
     UpdateAccountRequest,
     UpdateSettingsRequest,
@@ -31,11 +31,11 @@ from virtool.account.oas import (
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PublicRoutePolicy
-from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
+from virtool.api.policy import policy, PublicRoutePolicy
+from virtool.api.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 
-routes = virtool.http.routes.Routes()
+routes = virtool.api.routes.Routes()
 """
 A :class:`aiohttp.web.RouteTableDef` for account API routes.
 """
@@ -285,7 +285,7 @@ class LoginView(PydanticView):
         """
 
         session_id = self.request.cookies.get("session_id")
-        ip = virtool.http.authentication.get_ip(self.request)
+        ip = virtool.api.authentication.get_ip(self.request)
 
         try:
             user_id = await get_data_from_req(self.request).account.login(data)
@@ -344,7 +344,7 @@ class LogoutView(PydanticView):
         """
         session = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
-            virtool.http.authentication.get_ip(self.request),
+            virtool.api.authentication.get_ip(self.request),
         )
 
         resp = Response(status=200)
@@ -377,7 +377,7 @@ class ResetView(PydanticView):
             session, token = await get_data_from_req(self.request).account.reset(
                 self.request.cookies.get("session_id"),
                 data,
-                virtool.http.authentication.get_ip(self.request),
+                virtool.api.authentication.get_ip(self.request),
             )
         except ResourceNotFoundError:
             raise HTTPBadRequest(text="Invalid session")

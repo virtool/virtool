@@ -7,8 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.users.mongo
-from virtool.groups.pg import SQLGroup, merge_group_permissions
+from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 
 
@@ -50,7 +49,7 @@ async def update_member_users_and_api_keys(
 
     async for user in mongo.users.find(
         {"groups": {"$in": ids_to_query}},
-        ["administrator", "groups", "permissions", "primary_group"],
+        ["groups", "permissions", "primary_group"],
         session=mongo_session,
     ):
         new_group_ids = {
@@ -71,14 +70,3 @@ async def update_member_users_and_api_keys(
                 projection=["_id", "administrator", "groups"],
                 session=mongo_session,
             )
-
-        await virtool.users.mongo.update_keys(
-            mongo,
-            user["administrator"],
-            user["_id"],
-            user["groups"],
-            merge_group_permissions(
-                [group.to_dict() for group in groups if group.id in new_group_ids]
-            ),
-            session=mongo_session,
-        )

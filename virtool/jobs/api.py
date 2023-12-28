@@ -15,9 +15,9 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionRoutePolicy
-from virtool.http.routes import Routes
-from virtool.http.schema import schema
+from virtool.api.policy import policy, PermissionRoutePolicy
+from virtool.api.routes import Routes
+from virtool.api.schema import schema
 from virtool.jobs.oas import (
     JobResponse,
     ArchiveJobsRequest,

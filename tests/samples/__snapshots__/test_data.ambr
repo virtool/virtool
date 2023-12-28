@@ -235,7 +235,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     }),

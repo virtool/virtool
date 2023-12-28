@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.config.cls import Config
+from virtool.api.client import AbstractClient
 from virtool.labels.models import SQLLabel
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
@@ -59,11 +60,15 @@ async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
     return [label for label in labels if label not in results]
 
 
-def get_sample_rights(sample: dict, client):
-    if client.administrator or sample["user"]["id"] == client.user_id:
+def get_sample_rights(sample: dict, client: AbstractClient):
+    if (
+        client.administrator_role
+        or sample["user"]["id"] == client.user_id
+        or client.is_job
+    ):
         return True, True
 
-    is_group_member = sample["group"] and sample["group"] in client.groups
+    is_group_member = sample["group"] and client.is_group_member(sample["group"])
 
     read = sample["all_read"] or (is_group_member and sample["group_read"])
 

@@ -2,7 +2,6 @@
 # name: TestCreate.test_force_reset[False]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -30,7 +29,6 @@
 # name: TestCreate.test_force_reset[True]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -58,7 +56,6 @@
 # name: TestCreate.test_no_force_reset
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -87,7 +84,6 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
-    'administrator': False,
     'force_reset': False,
     'groups': list([
     ]),
@@ -135,7 +131,6 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
-    'administrator': True,
     'force_reset': False,
     'groups': list([
     ]),
@@ -154,7 +149,6 @@
 # name: TestUpdate.test_administrator[False][obj]
   dict({
     'active': True,
-    'administrator': True,
     'administrator_role': <AdministratorRole.FULL: 'full'>,
     'b2c': None,
     'b2c_display_name': None,
@@ -184,7 +178,6 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
-    'administrator': False,
     'force_reset': False,
     'groups': list([
     ]),
@@ -203,8 +196,7 @@
 # name: TestUpdate.test_administrator[True][obj]
   dict({
     'active': True,
-    'administrator': False,
-    'administrator_role': None,
+    'administrator_role': <AdministratorRole.FULL: 'full'>,
     'b2c': None,
     'b2c_display_name': None,
     'b2c_family_name': None,
@@ -283,7 +275,6 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
-    'administrator': False,
     'force_reset': False,
     'groups': list([
     ]),
@@ -303,7 +294,6 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
-    'administrator': False,
     'force_reset': False,
     'groups': list([
       2,
@@ -324,7 +314,6 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
-    'administrator': False,
     'force_reset': False,
     'groups': list([
       2,
@@ -346,7 +335,6 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
-    'administrator': False,
     'force_reset': False,
     'groups': list([
     ]),
@@ -365,7 +353,6 @@
 # name: TestUpdate.test_set_groups[obj_1]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -394,7 +381,6 @@
 # name: TestUpdate.test_set_groups[obj_2]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -428,7 +414,6 @@
 # name: TestUpdate.test_set_groups[obj_3]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -467,7 +452,6 @@
 # name: TestUpdate.test_set_groups[obj_4]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -496,7 +480,6 @@
 # name: test_find_or_create_b2c_user[False]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': 'Fred',
@@ -525,7 +508,6 @@
 # name: test_find_or_create_b2c_user[True]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': 'Bilbo',
@@ -557,7 +539,6 @@
     'items': list([
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': None,
         'b2c': None,
         'b2c_display_name': None,
@@ -617,7 +598,6 @@
     'items': list([
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': None,
         'b2c': None,
         'b2c_display_name': None,
@@ -644,7 +624,6 @@
       }),
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': <AdministratorRole.FULL: 'full'>,
         'b2c': None,
         'b2c_display_name': None,
@@ -671,7 +650,6 @@
       }),
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
         'b2c': None,
         'b2c_display_name': None,
@@ -730,7 +708,6 @@
     'items': list([
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
         'b2c': None,
         'b2c_display_name': None,
@@ -778,7 +755,6 @@
     'items': list([
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': <AdministratorRole.FULL: 'full'>,
         'b2c': None,
         'b2c_display_name': None,
@@ -805,7 +781,6 @@
       }),
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
         'b2c': None,
         'b2c_display_name': None,
@@ -864,7 +839,6 @@
     'items': list([
       dict({
         'active': True,
-        'administrator': False,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
         'b2c': None,
         'b2c_display_name': None,
@@ -909,7 +883,6 @@
 # name: test_set_administrator_role[None][obj]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -938,7 +911,6 @@
 # name: test_set_administrator_role[base][obj]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': <AdministratorRole.BASE: 'base'>,
     'b2c': None,
     'b2c_display_name': None,
@@ -967,7 +939,6 @@
 # name: test_set_administrator_role[full][obj]
   dict({
     'active': True,
-    'administrator': True,
     'administrator_role': <AdministratorRole.FULL: 'full'>,
     'b2c': None,
     'b2c_display_name': None,

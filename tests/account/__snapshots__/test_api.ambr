@@ -1,7 +1,6 @@
 # serializer version: 1
 # name: TestCreateAPIKey.test[False-False]
   dict({
-    'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -22,7 +21,6 @@
 # ---
 # name: TestCreateAPIKey.test[False-True]
   dict({
-    'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
       dict({
@@ -48,7 +46,6 @@
 # ---
 # name: TestCreateAPIKey.test[True-False]
   dict({
-    'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -69,7 +66,6 @@
 # ---
 # name: TestCreateAPIKey.test[True-True]
   dict({
-    'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
       dict({
@@ -95,7 +91,6 @@
 # ---
 # name: TestCreateAPIKey.test_naming
   dict({
-    'administrator': False,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -117,12 +112,34 @@
 # name: TestCreateAPIKey.test_naming.1
   dict({
     '_id': 'hashed_key',
-    'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
     ]),
     'id': 'foobar_1',
     'name': 'Foobar',
+    'permissions': dict({
+    }),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestUpdate.test_empty[resp]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 'bf1b993c',
+    'last_password_change': '2023-12-27T23:38:07.536000Z',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -133,14 +150,52 @@
       'remove_job': False,
       'upload_file': False,
     }),
-    'user': dict({
-      'id': 'bf1b993c',
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
+    }),
+  })
+# ---
+# name: TestUpdate.test_empty[response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 'bf1b993c',
+    'last_password_change': '2023-12-27T23:37:27.264000Z',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
     }),
   })
 # ---
 # name: TestUpdateAPIKey.test[False-False]
   dict({
-    'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -172,7 +227,7 @@
       'create_ref': False,
       'create_sample': True,
       'modify_hmm': False,
-      'modify_subtraction': False,
+      'modify_subtraction': True,
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
@@ -184,7 +239,6 @@
 # ---
 # name: TestUpdateAPIKey.test[False-True]
   dict({
-    'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -195,7 +249,7 @@
       'create_ref': False,
       'create_sample': True,
       'modify_hmm': False,
-      'modify_subtraction': True,
+      'modify_subtraction': False,
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
@@ -228,7 +282,6 @@
 # ---
 # name: TestUpdateAPIKey.test[True-False]
   dict({
-    'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -272,7 +325,6 @@
 # ---
 # name: TestUpdateAPIKey.test[True-True]
   dict({
-    'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -316,7 +368,6 @@
 # ---
 # name: TestUpdateAPIKey.test[missing-False]
   dict({
-    'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -360,7 +411,6 @@
 # ---
 # name: TestUpdateAPIKey.test[missing-True]
   dict({
-    'administrator': True,
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
     ]),
@@ -411,7 +461,6 @@
 # name: test_edit[all_valid][response]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -447,7 +496,6 @@
 # name: test_edit[good_email][response]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -501,7 +549,6 @@
 # name: test_edit[missing_all][response]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -537,7 +584,6 @@
 # name: test_edit[missing_email][response]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -631,7 +677,6 @@
 # name: test_get
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -667,7 +712,6 @@
 # name: test_get_api_keys
   list([
     dict({
-      'administrator': True,
       'created_at': '2015-10-06T20:00:00Z',
       'groups': list([
         dict({
@@ -690,7 +734,6 @@
       }),
     }),
     dict({
-      'administrator': False,
       'created_at': '2015-10-06T20:00:00Z',
       'groups': list([
       ]),
@@ -747,6 +790,222 @@
   dict({
     'id': 'not_found',
     'message': 'Not found',
+  })
+# ---
+# name: test_update[all_valid][response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
+    }),
+  })
+# ---
+# name: test_update[good_email][response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
+    }),
+  })
+# ---
+# name: test_update[invalid_credentials][response]
+  dict({
+    'id': 'bad_request',
+    'message': 'Invalid credentials',
+  })
+# ---
+# name: test_update[invalid_email][response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'email',
+      ]),
+      'msg': 'The format of the email is invalid',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: test_update[missing_all][response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
+    }),
+  })
+# ---
+# name: test_update[missing_email][response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
+    }),
+  })
+# ---
+# name: test_update[missing_old_password][response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        '__root__',
+      ]),
+      'msg': 'The old password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: test_update[missing_password][response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        '__root__',
+      ]),
+      'msg': 'The new password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: test_update[none_all][response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'email',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'old_password',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'password',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: test_update[short_password][response]
+  dict({
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
   })
 # ---
 # name: test_update_settings[invalid_input][response]

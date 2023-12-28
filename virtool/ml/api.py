@@ -5,7 +5,7 @@ from aiohttp_pydantic.oas.typing import r200, r404
 
 from virtool.api.response import json_response
 from virtool.data.utils import get_data_from_req
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.ml.models import MLModel, MLModelListResult
 
 routes = Routes()

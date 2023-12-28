@@ -346,7 +346,6 @@ class JobsData:
                     "user": {
                         "id": user["_id"],
                         "handle": user["handle"],
-                        "administrator": user["administrator"],
                     },
                     "workflow": agg["workflow"],
                 }

@@ -84,41 +84,6 @@ class TestCreate:
 
 
 class TestUpdate:
-    @pytest.mark.parametrize("is_administrator", [True, False])
-    async def test_administrator(
-        self,
-        is_administrator: bool,
-        authorization_client: AuthorizationClient,
-        data_layer: DataLayer,
-        fake2: DataFaker,
-        mongo: Mongo,
-        snapshot: SnapshotAssertion,
-    ):
-        """
-        Test that setting a user to administrator and vice versa sets the legacy
-        ``administrator`` flag and gives them the ``AdministratorRole.FULL`` role.
-        """
-        user = await fake2.users.create(administrator_role=AdministratorRole.FULL)
-
-        assert await data_layer.users.update(
-            user.id, UpdateUserRequest(administrator=not is_administrator)
-        ) == snapshot(
-            name="obj",
-            matcher=_last_password_change_matcher,
-        )
-
-        assert await mongo.users.find_one() == snapshot(
-            name="mongo",
-            exclude=props("password"),
-            matcher=_last_password_change_matcher,
-        )
-
-        assert (
-            await authorization_client.list_administrators() == []
-            if is_administrator
-            else [(user.id, "full")]
-        )
-
     async def test_force_reset(
         self,
         data_layer: DataLayer,
@@ -283,15 +248,11 @@ async def test_find_or_create_b2c_user(
 
 class TestCheckUsersExist:
     async def test_no_users_exist(self, data_layer: DataLayer):
-        """
-        Verify that the user existence check returns False when no users exist.
-        """
+        """Verify that the user existence check returns False when no users exist."""
         assert not await data_layer.users.check_users_exist()
 
     async def test_users_exist(self, data_layer: DataLayer):
-        """
-        Verify that the user existence check returns True when users exist.
-        """
+        """Verify that the user existence check returns True when users exist."""
         await data_layer.users.create(password="hello_world", handle="bill")
         assert await data_layer.users.check_users_exist()
 
@@ -302,7 +263,6 @@ async def test_set_administrator_role(
     authorization_client: AuthorizationClient,
     data_layer: DataLayer,
     fake2: DataFaker,
-    mongo: Mongo,
     snapshot: SnapshotAssertion,
     static_time,
 ):
@@ -314,10 +274,6 @@ async def test_set_administrator_role(
 
     assert await data_layer.users.set_administrator_role(user.id, role) == snapshot(
         name="obj"
-    )
-
-    assert await get_one_field(mongo.users, "administrator", user.id) == (
-        role == AdministratorRole.FULL
     )
 
     assert await authorization_client.list_administrators() == (

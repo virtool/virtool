@@ -15,7 +15,7 @@ from virtool.authorization.permissions import (
     LegacyPermission,
 )
 from virtool.errors import PolicyError
-from virtool.http.client import AbstractClient
+from virtool.api.client import UserClient
 
 
 class DefaultRoutePolicy:
@@ -54,23 +54,18 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
     def __init__(self, role: AdministratorRole):
         self.role = role
 
-    async def check(self, req, handler, client: AbstractClient):
-        if client.administrator:
-            return
-
-        if await get_authorization_client_from_req(req).check(
+    async def check(self, req, handler, client: UserClient):
+        if not await get_authorization_client_from_req(req).check(
             client.user_id, self.role, ResourceType.APP, "virtool"
         ):
-            return
-
-        raise HTTPForbidden(text="Requires administrative privilege")
+            raise HTTPForbidden(text="Requires administrative privilege")
 
 
 class PermissionRoutePolicy(DefaultRoutePolicy):
     def __init__(self, permission: LegacyPermission):
         self.permission = permission
 
-    async def check(self, req: Request, handler: Callable, client):
+    async def check(self, req: Request, handler: Callable, client: UserClient):
         """
         Checks if the client has the required permission for the object.
 
@@ -82,10 +77,8 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
           permissions.
 
         """
-        if client.administrator or client.permissions[self.permission.value]:
-            return
-
-        raise HTTPForbidden(text="Not permitted")
+        if not (client.administrator_role or client.permissions[self.permission.value]):
+            raise HTTPForbidden(text="Not permitted")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):
@@ -101,18 +94,17 @@ class WebSocketRoutePolicy(DefaultRoutePolicy):
 
 
 def policy(route_policy: Union[DefaultRoutePolicy, Type[DefaultRoutePolicy]]):
-    """
-    Applies the provided route policy to the decorated request handler.
-
-    """
+    """Applies the provided route policy to the decorated request handler."""
 
     def decorator(func):
-        try:
-            if func.policy:
-                raise PolicyError("A policy is already defined on this route")
-        except AttributeError:
-            func.policy = route_policy
-            return func
+        existing_policy = getattr(func, "policy", None)
+
+        if existing_policy:
+            raise PolicyError("A policy is already defined on this route")
+
+        func.policy = route_policy
+
+        return func
 
     return decorator
 

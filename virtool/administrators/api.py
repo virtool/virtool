@@ -1,5 +1,5 @@
 import asyncio
-from typing import Union, Optional
+from typing import Union
 
 from aiohttp.web_exceptions import HTTPForbidden, HTTPBadRequest
 from aiohttp.web_response import Response
@@ -28,8 +28,8 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, AdministratorRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.flags import flag, FlagName
 from virtool.users.checks import check_password_length
 from virtool.users.oas import CreateUserRequest

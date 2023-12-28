@@ -1,7 +1,7 @@
 from aiohttp.web_exceptions import HTTPNoContent
 
 from virtool.data.utils import get_data_from_req
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.samples.fake import create_fake_sample
 from virtool.subtractions.fake import (
     create_fake_fasta_upload,

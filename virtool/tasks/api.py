@@ -7,7 +7,7 @@ from aiohttp_pydantic.oas.typing import r200, r400
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.tasks.oas import GetTasksResponse, TaskResponse
 
 routes = Routes()

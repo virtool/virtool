@@ -13,11 +13,9 @@ class UpdateAccountRequest(BaseModel):
     Fields for updating a user account.
     """
 
-    email: Optional[constr(strip_whitespace=True)] = Field(
-        description="an email address"
-    )
-    old_password: Optional[str] = Field(description="the old password for verification")
-    password: Optional[str] = Field(description="the new password")
+    email: constr(strip_whitespace=True) | None = Field(description="an email address")
+    old_password: str | None = Field(description="the old password for verification")
+    password: str | None = Field(description="the new password")
 
     class Config:
         schema_extra = {
@@ -58,7 +56,8 @@ class UpdateAccountResponse(Account):
     class Config:
         schema_extra = {
             "example": {
-                "administrator": False,
+                "administrator_role": None,
+                "email": "dev@virtool.ca",
                 "groups": [],
                 "handle": "bob",
                 "id": "test",
@@ -80,8 +79,6 @@ class UpdateAccountResponse(Account):
                     "show_versions": True,
                     "skip_quick_analyze_dialog": True,
                 },
-                "email": "dev@virtool.ca",
-                "administrator_role": None,
             }
         }
 
@@ -235,7 +232,7 @@ class AccountResponse(Account):
     class Config:
         schema_extra = {
             "example": {
-                "administrator": False,
+                "administrator_role": None,
                 "groups": [],
                 "handle": "bob",
                 "id": "test",
@@ -260,7 +257,6 @@ class AccountResponse(Account):
                     "show_versions": True,
                     "skip_quick_analyze_dialog": True,
                 },
-                "administrator_role": None,
             }
         }
 

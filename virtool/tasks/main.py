@@ -4,8 +4,7 @@ import aiojobs
 import aiojobs.aiohttp
 from aiohttp.web import Application
 
-import virtool.http
-import virtool.http.accept
+from virtool.api.accept import accept_middleware
 from virtool.api.response import error_middleware
 from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
 from virtool.shutdown import (
@@ -39,7 +38,7 @@ def run_task_runner(config: TaskRunnerConfig):
 
     :param config: the task runner configuration object
     """
-    app = Application(middlewares=[virtool.http.accept.middleware, error_middleware])
+    app = Application(middlewares=[accept_middleware, error_middleware])
 
     app["config"] = config
     app["mode"] = "task_runner"
@@ -80,7 +79,7 @@ def run_task_spawner(config: TaskSpawnerConfig):
 
     :param config: the task spawner configuration object
     """
-    app = Application(middlewares=[virtool.http.accept.middleware, error_middleware])
+    app = Application(middlewares=[accept_middleware, error_middleware])
 
     app["config"] = config
     app["mode"] = "task_spawner"

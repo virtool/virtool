@@ -7,7 +7,7 @@ from aiohttp.web import HTTPBadGateway, Response
 
 import virtool.genbank.http
 from virtool.api.response import NotFound, json_response
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.utils import get_http_session_from_app
 
 routes = Routes()
