@@ -1,5 +1,5 @@
-from aiohttp.web_exceptions import HTTPNoContent
 
+from virtool.api.errors import APINoContent
 from virtool.data.utils import get_data_from_req
 from virtool.api.routes import Routes
 from virtool.samples.fake import create_fake_sample
@@ -40,4 +40,4 @@ async def dev(req):
     if command == "force_delete_jobs":
         await get_data_from_req(req).jobs.force_delete()
 
-    raise HTTPNoContent
+    raise APINoContent()

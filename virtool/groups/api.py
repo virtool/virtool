@@ -1,9 +1,9 @@
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
+from virtool.api.custom_json import json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import (
@@ -57,7 +57,7 @@ class GroupsView(PydanticView):
         try:
             group = await get_data_from_req(self.request).groups.create(name)
         except ResourceConflictError:
-            raise HTTPBadRequest(text="Group already exists")
+            raise APIBadRequest("Group already exists")
 
         return json_response(
             GroupResponse.parse_obj(group),
@@ -82,7 +82,7 @@ class GroupView(PydanticView):
         try:
             group = await get_data_from_req(self.request).groups.get(group_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(GroupResponse.parse_obj(group))
 
@@ -105,7 +105,7 @@ class GroupView(PydanticView):
         try:
             group = await get_data_from_req(self.request).groups.update(group_id, data)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(GroupResponse.parse_obj(group))
 
@@ -124,6 +124,6 @@ class GroupView(PydanticView):
         try:
             await get_data_from_req(self.request).groups.delete(group_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
-        raise HTTPNoContent
+        raise APINoContent()

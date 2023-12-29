@@ -1,16 +1,14 @@
-from typing import Union
-
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.custom_json import json_response
+from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.flags import flag, FlagName
-from virtool.api.policy import policy, AdministratorRoutePolicy
-from virtool.api.routes import Routes
 from virtool.spaces.oas import (
     UpdateSpaceRequest,
     UpdateMemberRequest,
@@ -47,7 +45,7 @@ class SpacesView(PydanticView):
 @flag(FlagName.SPACES)
 @routes.view("/spaces/{space_id}")
 class SpaceView(PydanticView):
-    async def get(self, space_id: int, /) -> Union[r200[GetSpaceResponse], r404]:
+    async def get(self, space_id: int, /) -> r200[GetSpaceResponse] | r404:
         """
         Get a space.
 
@@ -61,14 +59,14 @@ class SpaceView(PydanticView):
         try:
             space = await get_data_from_req(self.request).spaces.get(space_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(space)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
     async def patch(
         self, space_id: int, /, data: UpdateSpaceRequest
-    ) -> Union[r201[UpdateSpaceResponse], r404]:
+    ) -> r201[UpdateSpaceResponse] | r404:
         """
         Update a space.
 
@@ -82,9 +80,9 @@ class SpaceView(PydanticView):
         try:
             space = await get_data_from_req(self.request).spaces.update(space_id, data)
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         except ResourceConflictError:
-            raise HTTPBadRequest(text="Space name already exists.")
+            raise APIBadRequest("Space name already exists.")
 
         return json_response(space)
 
@@ -106,7 +104,7 @@ class SpaceMembersView(PydanticView):
                 space_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(members)
 
@@ -116,8 +114,8 @@ class SpaceMembersView(PydanticView):
 class SpaceMemberView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
     async def patch(
-        self, space_id: int, member_id: Union[int, str], /, data: UpdateMemberRequest
-    ) -> Union[r200[UpdateMemberResponse], r404]:
+        self, space_id: int, member_id: int | str, /, data: UpdateMemberRequest
+    ) -> r200[UpdateMemberResponse] | r404:
         """
         Update a member.
 
@@ -132,14 +130,12 @@ class SpaceMemberView(PydanticView):
                 space_id, member_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(member)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
-    async def delete(
-        self, space_id: int, member_id: Union[int, str], /
-    ) -> Union[r204, r404]:
+    async def delete(self, space_id: int, member_id: int | str, /) -> r204 | r404:
         """
         Remove a member.
 
@@ -155,6 +151,6 @@ class SpaceMemberView(PydanticView):
                 space_id, member_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
-        raise HTTPNoContent
+        raise APINoContent()

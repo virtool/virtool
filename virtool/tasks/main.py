@@ -5,7 +5,7 @@ import aiojobs.aiohttp
 from aiohttp.web import Application
 
 from virtool.api.accept import accept_middleware
-from virtool.api.response import error_middleware
+from virtool.api.errors import error_middleware
 from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
 from virtool.shutdown import (
     shutdown_authorization_client,

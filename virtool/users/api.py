@@ -1,4 +1,3 @@
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
@@ -7,7 +6,8 @@ from virtool_core.models.user import User
 
 import virtool.api.authentication
 import virtool.users.db
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APIConflict
+from virtool.api.custom_json import json_response
 from virtool.api.utils import (
     compose_regex_query,
     paginate,
@@ -90,17 +90,17 @@ class UsersView(PydanticView):
             403: Not permitted
         """
         if data.handle == "virtool":
-            raise HTTPBadRequest(text="Reserved user name: virtool")
+            raise APIBadRequest("Reserved user name: virtool")
 
         if error := await check_password_length(self.request, password=data.password):
-            raise HTTPBadRequest(text=error)
+            raise APIBadRequest(error)
 
         try:
             user = await get_data_from_req(self.request).users.create(
                 data.handle, data.password, data.force_reset
             )
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(
             user,
@@ -129,13 +129,13 @@ class FirstUserView(PydanticView):
         """
 
         if await get_data_from_req(self.request).users.check_users_exist():
-            raise HTTPConflict(text="Virtool already has at least one user")
+            raise APIConflict("Virtool already has at least one user")
 
         if data.handle == "virtool":
-            raise HTTPBadRequest(text="Reserved user name: virtool")
+            raise APIBadRequest("Reserved user name: virtool")
 
         if error := await check_password_length(self.request, password=data.password):
-            raise HTTPBadRequest(text=error)
+            raise APIBadRequest(error)
 
         user = await get_data_from_req(self.request).users.create_first(
             data.handle, data.password
@@ -176,7 +176,7 @@ class UserView(PydanticView):
         try:
             user = await get_data_from_req(self.request).users.get(user_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(user)
 
@@ -202,14 +202,14 @@ class UserView(PydanticView):
             if error := await check_password_length(
                 self.request, password=data.password
             ):
-                raise HTTPBadRequest(text=error)
+                raise APIBadRequest(error)
 
         try:
             user = await get_data_from_req(self.request).users.update(user_id, data)
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
         except ResourceNotFoundError:
-            raise NotFound("User does not exist")
+            raise APINotFound("User does not exist")
 
         return json_response(user)
 

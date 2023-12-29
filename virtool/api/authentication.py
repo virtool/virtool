@@ -3,10 +3,10 @@ from typing import Callable
 
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
-from aiohttp.web_exceptions import HTTPUnauthorized
 from jose.exceptions import ExpiredSignatureError
 
 from virtool.api.client import UserClient
+from virtool.api.errors import APIUnauthorized
 from virtool.api.policy import (
     get_handler_policy,
     PublicRoutePolicy,
@@ -59,7 +59,9 @@ async def authenticate_with_api_key(
     key = await get_data_from_req(req).account.get_key(user.id, key)
 
     if not user or not user.active or not key:
-        raise HTTPUnauthorized(text="Invalid authorization header")
+        raise APIUnauthorized(
+            "Invalid authorization header", error_id="invalid_authorization_header"
+        )
 
     req["client"] = UserClient(
         administrator_role=user.administrator_role,
@@ -93,12 +95,14 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
     token = req.headers.get("bearer") or req.cookies.get("bearer")
 
     if token is None:
-        raise HTTPUnauthorized(text="Invalid authorization")
+        raise APIUnauthorized(
+            "No B2C token found in headers or cookies", error_id="no_b2c_token"
+        )
 
     try:
         token_claims = await validate_token(req.app, token)
     except ExpiredSignatureError:
-        raise HTTPUnauthorized(text="Invalid authorization")
+        raise APIUnauthorized()
 
     user = await get_data_from_req(req).users.find_or_create_b2c_user(
         B2CUserAttributes(
@@ -110,7 +114,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
     )
 
     if user.active is False:
-        raise HTTPUnauthorized(text="User is deactivated.")
+        raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
 
     req["client"] = UserClient(
         administrator_role=user.administrator_role,
@@ -155,7 +159,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
         user = await get_data_from_req(req).users.get(session.authentication.user_id)
 
         if not user.active:
-            raise HTTPUnauthorized(text="User is deactivated.")
+            raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
 
         req["client"] = UserClient(
             administrator_role=user.administrator_role,
@@ -192,7 +196,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
 
 
 @web.middleware
-async def middleware(req, handler) -> Response:
+async def authentication_middleware(req: Request, handler) -> Response:
     """
     Handle requests based on client type and authentication status.
 
@@ -218,15 +222,20 @@ async def middleware(req, handler) -> Response:
         try:
             holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
         except AuthError:
-            raise HTTPUnauthorized(text="Malformed Authorization header")
+            raise APIUnauthorized(
+                "Malformed Authorization header", "malformed_authorization_header"
+            )
 
         if holder_id.startswith("job"):
-            raise HTTPUnauthorized(text="Jobs are not supported")
+            raise APIUnauthorized(
+                "Jobs cannot authenticate against this service",
+                "malformed_authorization_header",
+            )
 
         return await authenticate_with_api_key(req, handler, holder_id, key)
 
     if get_config_from_req(req).use_b2c:
-        with suppress(HTTPUnauthorized):
+        with suppress(APIUnauthorized):
             return await authenticate_with_b2c(req, handler)
 
     return await authenticate_with_session(req, handler)

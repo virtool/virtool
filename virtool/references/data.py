@@ -24,7 +24,7 @@ import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
-from virtool.api.response import InsufficientRights
+from virtool.api.errors import APIInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
@@ -362,7 +362,7 @@ class ReferencesData(DataLayerDomain):
 
     async def remove(self, ref_id: str, req):
         if not await virtool.references.db.check_right(req, ref_id, "remove"):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         reference = await self.get(ref_id)
 
@@ -503,7 +503,7 @@ class ReferencesData(DataLayerDomain):
     @emits(Operation.CREATE, domain="indexes", name="create")
     async def create_index(self, ref_id: str, req, user_id: str) -> IndexMinimal:
         if not await virtool.references.db.check_right(req, ref_id, "build"):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         if await self._mongo.indexes.count_documents(
             {"reference.id": ref_id, "ready": False}, limit=1

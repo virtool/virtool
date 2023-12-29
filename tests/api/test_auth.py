@@ -1,6 +1,8 @@
 from aiohttp import BasicAuth
 
+from tests.fixtures.client import ClientSpawner
 from virtool.data.utils import get_data_from_app
+from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.utils import hash_key
 
@@ -28,7 +30,7 @@ class TestJobAuthentication:
 
         assert resp.status == 401
 
-    async def test_protected_fails(self, mongo, spawn_client):
+    async def test_protected_fails(self, mongo: Mongo, spawn_client: ClientSpawner):
         """
         Check that a request against GET /samples using job authentication fails.
 

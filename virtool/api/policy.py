@@ -3,12 +3,12 @@ from typing import Callable, Any, Type, Union
 
 from aiohttp import web
 from aiohttp.web import Request
-from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_pydantic import PydanticView
 from virtool_core.models.roles import (
     AdministratorRole,
 )
 
+from virtool.api.errors import APIUnauthorized, APIForbidden
 from virtool.authorization.client import get_authorization_client_from_req
 from virtool.authorization.permissions import (
     ResourceType,
@@ -43,7 +43,7 @@ class DefaultRoutePolicy:
 
     async def run_checks(self, req, handler, client):
         if not self.allow_unauthenticated and not client.authenticated:
-            raise HTTPUnauthorized(text="Requires authorization")
+            raise APIUnauthorized("Requires authorization")
 
         await self.check(req, handler, client)
 
@@ -58,7 +58,7 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
         if not await get_authorization_client_from_req(req).check(
             client.user_id, self.role, ResourceType.APP, "virtool"
         ):
-            raise HTTPForbidden(text="Requires administrative privilege")
+            raise APIForbidden("Requires administrative privilege")
 
 
 class PermissionRoutePolicy(DefaultRoutePolicy):
@@ -78,7 +78,7 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
 
         """
         if not (client.administrator_role or client.permissions[self.permission.value]):
-            raise HTTPForbidden(text="Not permitted")
+            raise APIForbidden("Not permitted")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):

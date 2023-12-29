@@ -6,9 +6,6 @@ from aiohttp.web import (
     Request,
     FileResponse,
     Response,
-    HTTPBadRequest,
-    HTTPConflict,
-    HTTPNoContent,
 )
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
@@ -24,12 +21,19 @@ from virtool_core.utils import file_stats
 import virtool.caches.db
 import virtool.uploads.db
 import virtool.uploads.utils
-from virtool.api.response import (
-    InsufficientRights,
-    InvalidQuery,
-    NotFound,
-    json_response,
+from virtool.api.client import UserClient
+from virtool.api.errors import (
+    APINotFound,
+    APIInsufficientRights,
+    APIBadRequest,
+    APIConflict,
+    APINoContent,
+    APIInvalidQuery,
 )
+from virtool.api.policy import PermissionRoutePolicy, policy
+from virtool.api.custom_json import json_response
+from virtool.api.routes import Routes
+from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
 from virtool.caches.models import SQLSampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -42,10 +46,6 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.api.client import UserClient
-from virtool.api.policy import PermissionRoutePolicy, policy
-from virtool.api.routes import Routes
-from virtool.api.schema import schema
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
@@ -79,7 +79,6 @@ from virtool.uploads.utils import (
     multipart_file_chunker,
     naive_validator,
 )
-
 from virtool.utils import base_processor
 
 logger = get_logger("samples")
@@ -137,7 +136,7 @@ class SamplesView(PydanticView):
                 data, self.request["client"].user_id, 0
             )
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(
             sample,
@@ -162,13 +161,13 @@ class SampleView(PydanticView):
         if not await get_data_from_req(self.request).samples.has_right(
             sample_id, self.request["client"], SampleRight.read
         ):
-            raise InsufficientRights
+            raise APIInsufficientRights()
 
         try:
             sample = await get_data_from_req(self.request).samples.get(sample_id)
 
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(sample)
 
@@ -190,16 +189,16 @@ class SampleView(PydanticView):
         if not await get_data_from_req(self.request).samples.has_right(
             sample_id, self.request["client"], SampleRight.write
         ):
-            raise InsufficientRights
+            raise APIInsufficientRights()
 
         try:
             sample = await get_data_from_req(self.request).samples.update(
                 sample_id, data
             )
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(sample)
 
@@ -217,20 +216,20 @@ class SampleView(PydanticView):
         if not await get_data_from_req(self.request).samples.has_right(
             sample_id, self.request["client"], SampleRight.write
         ):
-            raise InsufficientRights
+            raise APIInsufficientRights()
 
         if (
             await get_one_field(self.request.app["db"].samples, "ready", sample_id)
             is False
         ):
-            raise HTTPBadRequest(text="Only finalized samples can be deleted")
+            raise APIBadRequest("Only unfinalized samples can be deleted")
 
         try:
             await get_data_from_req(self.request).samples.delete(sample_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.jobs_api.get("/samples/{sample_id}")
@@ -246,7 +245,7 @@ async def get_sample(req):
     try:
         sample = await get_data_from_req(req).samples.get(sample_id)
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
     return json_response(sample)
 
@@ -267,7 +266,7 @@ async def get_cache(req):
     document = await db.caches.find_one({"key": cache_key, "sample.id": sample_id})
 
     if document is None:
-        raise NotFound()
+        raise APINotFound()
 
     return json_response(base_processor(document))
 
@@ -316,7 +315,7 @@ class RightsView(PydanticView):
         data = data.dict(exclude_unset=True)
 
         if not await mongo.samples.count_documents({"_id": sample_id}):
-            raise NotFound()
+            raise APINotFound()
 
         client: UserClient = self.request["client"]
 
@@ -324,7 +323,7 @@ class RightsView(PydanticView):
             client.administrator_role != AdministratorRole.FULL
             and client.user_id != await get_sample_owner(mongo, sample_id)
         ):
-            raise InsufficientRights("Must be administrator or sample owner")
+            raise APIInsufficientRights("Must be administrator or sample owner")
 
         group = data["group"]
 
@@ -339,7 +338,7 @@ class RightsView(PydanticView):
                 )
 
                 if not result.scalars().one_or_none():
-                    raise HTTPBadRequest(text="Group does not exist")
+                    raise APIBadRequest("Group does not exist")
 
         # Update the sample document with the new rights.
         document = await mongo.samples.find_one_and_update(
@@ -366,7 +365,7 @@ async def job_remove(req):
     sample_id = req.match_info["sample_id"]
 
     if await get_one_field(req.app["db"].samples, "ready", sample_id):
-        raise HTTPBadRequest(text="Only unfinalized samples can be deleted")
+        raise APIBadRequest("Only unfinalized samples can be deleted")
 
     reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
@@ -377,9 +376,9 @@ async def job_remove(req):
     try:
         await get_data_from_req(req).samples.delete(sample_id)
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
-    raise HTTPNoContent
+    raise APINoContent()
 
 
 @routes.view("/samples/{sample_id}/analyses")
@@ -425,10 +424,10 @@ class AnalysesView(PydanticView):
 
         try:
             if not await check_rights(db, sample_id, self.request["client"]):
-                raise InsufficientRights()
+                raise APIInsufficientRights()
         except DatabaseError as err:
             if "Sample does not exist" in str(err):
-                raise NotFound()
+                raise APINotFound()
 
             raise
 
@@ -437,7 +436,7 @@ class AnalysesView(PydanticView):
                 self.request
             ).samples.has_resources_for_analysis_job(data.ref_id, data.subtractions)
         except ResourceError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         analysis = await get_data_from_req(self.request).analyses.create(
             sample_id,
@@ -475,14 +474,14 @@ async def cache_job_remove(req: Request):
     document = await db.caches.find_one({"key": cache_key})
 
     if document is None:
-        raise NotFound()
+        raise APINotFound()
 
     if "ready" in document and document["ready"]:
-        raise HTTPConflict(text="Jobs cannot delete finalized caches")
+        raise APIConflict("Jobs cannot delete finalized caches")
 
     await virtool.caches.db.remove(req.app, document["_id"])
 
-    raise HTTPNoContent
+    raise APINoContent()
 
 
 @routes.jobs_api.post("/samples/{sample_id}/artifacts")
@@ -499,10 +498,10 @@ async def upload_artifact(req):
     artifact_type = req.query.get("type")
 
     if not await db.samples.find_one(sample_id):
-        raise NotFound()
+        raise APINotFound()
 
     if errors := naive_validator(req):
-        raise InvalidQuery(errors)
+        raise APIInvalidQuery(errors)
 
     name = req.query.get("name")
 
@@ -512,14 +511,12 @@ async def upload_artifact(req):
     artifact_file_path = sample_path / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
-        raise HTTPBadRequest(text="Unsupported sample artifact type")
+        raise APIBadRequest("Unsupported sample artifact type")
 
     try:
         artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type)
     except exc.IntegrityError:
-        raise HTTPConflict(
-            text="Artifact file has already been uploaded for this sample"
-        )
+        raise APIConflict("Artifact file has already been uploaded for this sample")
 
     artifact_id = artifact["id"]
 
@@ -566,7 +563,7 @@ async def upload_reads(req):
         upload = None
 
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
-        raise HTTPBadRequest(text="File name is not an accepted reads file")
+        raise APIBadRequest("File name is not an accepted reads file")
 
     sample_path = join_sample_path(get_config_from_req(req), sample_id)
     await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
@@ -574,7 +571,7 @@ async def upload_reads(req):
     reads_path = sample_path / name
 
     if not await db.samples.find_one(sample_id):
-        raise NotFound()
+        raise APINotFound()
 
     try:
         size = await virtool.uploads.utils.naive_writer(
@@ -583,7 +580,7 @@ async def upload_reads(req):
             is_gzip_compressed,
         )
     except OSError:
-        raise HTTPBadRequest(text="File is not compressed")
+        raise APIBadRequest("File is not compressed")
     except asyncio.CancelledError:
         logger.info("Sample reads upload aborted", sample_id=sample_id)
         return Response(status=499)
@@ -592,7 +589,7 @@ async def upload_reads(req):
             pg, size, name, name, sample_id, upload_id=upload
         )
     except exc.IntegrityError:
-        raise HTTPConflict(text="Reads file name is already uploaded for this sample")
+        raise APIConflict("Reads file name is already uploaded for this sample")
 
     headers = {"Location": f"/samples/{sample_id}/reads/{reads['name_on_disk']}"}
 
@@ -616,12 +613,12 @@ async def create_cache(req):
     sample = await db.samples.find_one({"_id": sample_id}, ["paired"])
 
     if not sample:
-        raise NotFound("Sample does not exist")
+        raise APINotFound("Sample does not exist")
 
     try:
         document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
     except DuplicateKeyError:
-        raise HTTPConflict(text=f"Cache with key {key} already exists for this sample")
+        raise APIConflict(f"Cache with key {key} already exists for this sample")
 
     headers = {"Location": f"/samples/{sample_id}/caches/{document['id']}"}
 
@@ -643,14 +640,14 @@ async def upload_cache_reads(req):
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
 
-    if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
-        raise HTTPBadRequest(text="File name is not an accepted reads file")
+    if name not in ("reads_1.fq.gz", "reads_2.fq.gz"):
+        raise APIBadRequest("File name is not an accepted reads file")
 
     cache_path = join_cache_path(get_config_from_req(req), key) / name
     await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
-        raise NotFound("Cache doesn't exist with given key")
+        raise APINotFound("Cache doesn't exist with given key")
 
     try:
         size = await virtool.uploads.utils.naive_writer(
@@ -659,9 +656,9 @@ async def upload_cache_reads(req):
             is_gzip_compressed,
         )
     except OSError:
-        raise HTTPBadRequest(text="File is not compressed")
+        raise APIBadRequest("File is not compressed")
     except exc.IntegrityError:
-        raise HTTPConflict(text="File name is already uploaded for this cache")
+        raise APIConflict("File name is already uploaded for this cache")
     except asyncio.CancelledError:
         logger.info("Sample reads cache upload aborted", key=key, sample_id=sample_id)
         return Response(status=499)
@@ -691,12 +688,12 @@ async def upload_cache_artifact(req):
     artifact_type = req.query.get("type")
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
-        raise NotFound()
+        raise APINotFound()
 
     errors = virtool.uploads.utils.naive_validator(req)
 
     if errors:
-        raise InvalidQuery(errors)
+        raise APIInvalidQuery(errors)
 
     name = req.query.get("name")
 
@@ -706,15 +703,15 @@ async def upload_cache_artifact(req):
     cache_path = join_cache_path(get_config_from_req(req), key) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
-        raise HTTPBadRequest(text="Unsupported sample artifact type")
+        raise APIBadRequest("Unsupported sample artifact type")
 
     try:
         artifact = await create_artifact_file(
             pg, name, name, sample_id, artifact_type, key=key
         )
     except exc.IntegrityError:
-        raise HTTPConflict(
-            text="Artifact file has already been uploaded for this sample cache"
+        raise APIConflict(
+            "Artifact file has already been uploaded for this sample cache"
         )
 
     artifact_id = artifact["id"]
@@ -782,17 +779,17 @@ async def download_reads(req: Request):
     file_name = f"reads_{suffix}.fq.gz"
 
     if not await db.samples.find_one(sample_id):
-        raise NotFound()
+        raise APINotFound()
 
     existing_reads = await get_existing_reads(pg, sample_id)
 
     if file_name not in existing_reads:
-        raise NotFound()
+        raise APINotFound()
 
     file_path = get_config_from_req(req).data_path / "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
-        raise NotFound()
+        raise APINotFound()
 
     stats = await to_thread(file_stats, file_path)
 
@@ -816,7 +813,7 @@ async def download_artifact(req: Request):
     filename = req.match_info["filename"]
 
     if not await db.samples.find_one(sample_id):
-        raise NotFound()
+        raise APINotFound()
 
     async with AsyncSession(pg) as session:
         result = (
@@ -826,7 +823,7 @@ async def download_artifact(req: Request):
         ).scalar()
 
     if not result:
-        raise NotFound()
+        raise APINotFound()
 
     artifact = result.to_dict()
 
@@ -836,7 +833,7 @@ async def download_artifact(req: Request):
     )
 
     if not os.path.isfile(file_path):
-        raise NotFound()
+        raise APINotFound()
 
     stats = await to_thread(file_stats, file_path)
 
@@ -865,17 +862,17 @@ async def download_cache_reads(req):
     if not await db.samples.count_documents(
         {"_id": sample_id}
     ) or not await db.caches.count_documents({"key": key}):
-        raise NotFound()
+        raise APINotFound()
 
     existing_reads = await get_existing_reads(pg, sample_id, key=key)
 
     if file_name not in existing_reads:
-        raise NotFound()
+        raise APINotFound()
 
     file_path = get_config_from_req(req).data_path / "caches" / key / file_name
 
     if not os.path.isfile(file_path):
-        raise NotFound()
+        raise APINotFound()
 
     stats = await to_thread(file_stats, file_path)
 
@@ -902,7 +899,7 @@ async def download_cache_artifact(req):
     if not await db.samples.count_documents(
         {"_id": sample_id}
     ) or not await db.caches.count_documents({"key": key}):
-        raise NotFound()
+        raise APINotFound()
 
     async with AsyncSession(pg) as session:
         result = (
@@ -914,7 +911,7 @@ async def download_cache_artifact(req):
         ).scalar()
 
     if not result:
-        raise NotFound()
+        raise APINotFound()
 
     artifact = result.to_dict()
 
@@ -923,7 +920,7 @@ async def download_cache_artifact(req):
     )
 
     if not file_path.exists():
-        raise NotFound()
+        raise APINotFound()
 
     stats = await to_thread(file_stats, file_path)
 

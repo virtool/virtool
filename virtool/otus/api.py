@@ -1,19 +1,24 @@
 from typing import List, Union
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r404, r204, r401, r403, r400
 from virtool_core.models.otu import OTU, OTUIsolate, Sequence
 
 import virtool.otus.db
 import virtool.references.db
-from virtool.api.response import InsufficientRights, NotFound, json_response
+from virtool.api.errors import (
+    APINotFound,
+    APIInsufficientRights,
+    APIBadRequest,
+    APINoContent,
+)
+from virtool.api.custom_json import json_response
+from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.history.db import LIST_PROJECTION
-from virtool.api.routes import Routes
-from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
     UpdateOTURequest,
@@ -49,7 +54,7 @@ class OTUView(PydanticView):
                     otu_id
                 )
             except ResourceNotFoundError:
-                raise NotFound
+                raise APINotFound()
 
             return web.Response(
                 text=fasta,
@@ -59,7 +64,7 @@ class OTUView(PydanticView):
         try:
             otu = await get_data_from_req(self.request).otus.get(otu_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(otu)
 
@@ -82,14 +87,14 @@ class OTUView(PydanticView):
         )
 
         if not document:
-            raise NotFound()
+            raise APINotFound()
 
         ref_id = document["reference"]["id"]
 
         if not await virtool.references.db.check_right(
             self.request, ref_id, "modify_otu"
         ):
-            raise InsufficientRights
+            raise APIInsufficientRights()
 
         name, abbreviation, otu_schema = evaluate_changes(
             data.dict(by_alias=True, exclude_unset=True), document
@@ -104,7 +109,7 @@ class OTUView(PydanticView):
         if message := await virtool.otus.db.check_name_and_abbreviation(
             db, ref_id, name, abbreviation
         ):
-            raise HTTPBadRequest(text=message)
+            raise APIBadRequest(message)
 
         otu = await get_data_from_req(self.request).otus.update(
             otu_id, data, self.request["client"].user_id
@@ -124,12 +129,12 @@ class OTUView(PydanticView):
         document = await db.otus.find_one(otu_id, ["reference"])
 
         if document is None:
-            raise NotFound()
+            raise APINotFound()
 
         if not await virtool.references.db.check_right(
             self.request, document["reference"]["id"], "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         await get_data_from_req(self.request).otus.remove(
             otu_id, self.request["client"].user_id
@@ -152,7 +157,7 @@ class IsolatesView(PydanticView):
         document = await virtool.otus.db.join_and_format(db, otu_id)
 
         if not document:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(document["isolates"])
 
@@ -170,12 +175,12 @@ class IsolatesView(PydanticView):
         reference = await get_one_field(db.otus, "reference", otu_id)
 
         if not reference:
-            raise NotFound()
+            raise APINotFound()
 
         if not await virtool.references.db.check_right(
             self.request, reference["id"], "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         source_type = data.source_type.lower()
 
@@ -183,7 +188,7 @@ class IsolatesView(PydanticView):
         if not await virtool.references.db.check_source_type(
             db, reference["id"], source_type
         ):
-            raise HTTPBadRequest(text="Source type is not allowed")
+            raise APIBadRequest("Source type is not allowed")
 
         isolate = await get_data_from_req(self.request).otus.add_isolate(
             otu_id,
@@ -224,7 +229,7 @@ class IsolateView(PydanticView):
                 ).otus.get_isolate_fasta(otu_id, isolate_id)
             except ResourceNotFoundError as err:
                 if "does not exist" in str(err):
-                    raise NotFound
+                    raise APINotFound()
 
                 raise
 
@@ -238,7 +243,7 @@ class IsolateView(PydanticView):
         )
 
         if not document:
-            raise NotFound()
+            raise APINotFound()
 
         isolate = find_isolate(document["isolates"], isolate_id)
 
@@ -268,14 +273,14 @@ class IsolateView(PydanticView):
         )
 
         if not reference:
-            raise NotFound()
+            raise APINotFound()
 
         ref_id = reference["id"]
 
         if not await virtool.references.db.check_right(
             self.request, ref_id, "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         data = data.dict(exclude_unset=True)
 
@@ -288,7 +293,7 @@ class IsolateView(PydanticView):
             if not await virtool.references.db.check_source_type(
                 db, ref_id, source_type
             ):
-                raise HTTPBadRequest(text="Source type is not allowed")
+                raise APIBadRequest("Source type is not allowed")
 
         isolate = await get_data_from_req(self.request).otus.update_isolate(
             otu_id,
@@ -314,18 +319,18 @@ class IsolateView(PydanticView):
         )
 
         if not reference:
-            raise NotFound()
+            raise APINotFound()
 
         if not await virtool.references.db.check_right(
             self.request, reference["id"], "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         await get_data_from_req(self.request).otus.remove_isolate(
             otu_id, isolate_id, self.request["client"].user_id
         )
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.view("/otus/{otu_id}/isolates/{isolate_id}/sequences")
@@ -344,7 +349,7 @@ class SequencesView(PydanticView):
         if not await db.otus.count_documents(
             {"_id": otu_id, "isolates.id": isolate_id}, limit=1
         ):
-            raise NotFound
+            raise APINotFound()
 
         projection = list(virtool.otus.db.SEQUENCE_PROJECTION)
 
@@ -376,19 +381,19 @@ class SequencesView(PydanticView):
         )
 
         if not document:
-            raise NotFound
+            raise APINotFound()
 
         ref_id = document["reference"]["id"]
 
         if not await virtool.references.db.check_right(
             self.request, ref_id, "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         if message := await virtool.otus.db.check_sequence_segment_or_target(
             db, otu_id, isolate_id, None, ref_id, data.dict()
         ):
-            raise HTTPBadRequest(text=message)
+            raise APIBadRequest(message)
 
         sequence_document = await get_data_from_req(self.request).otus.create_sequence(
             otu_id,
@@ -432,12 +437,12 @@ class SequenceView(PydanticView):
                 ).otus.get_sequence_fasta(sequence_id)
             except ResourceNotFoundError as err:
                 if "does not exist" in str(err):
-                    raise NotFound
+                    raise APINotFound()
 
                 raise
 
             if fasta is None:
-                raise NotFound
+                raise APINotFound()
 
             return web.Response(
                 text=fasta,
@@ -449,7 +454,7 @@ class SequenceView(PydanticView):
                 otu_id, isolate_id, sequence_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(sequence)
 
@@ -476,12 +481,12 @@ class SequenceView(PydanticView):
         if not document or not await db.sequences.count_documents(
             {"_id": sequence_id}, limit=1
         ):
-            raise NotFound()
+            raise APINotFound()
 
         if not await virtool.references.db.check_right(
             self.request, document["reference"]["id"], "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         if message := await virtool.otus.db.check_sequence_segment_or_target(
             db,
@@ -491,7 +496,7 @@ class SequenceView(PydanticView):
             document["reference"]["id"],
             data.dict(exclude_unset=True),
         ):
-            raise HTTPBadRequest(text=message)
+            raise APIBadRequest(message)
 
         sequence_document = await get_data_from_req(self.request).otus.update_sequence(
             otu_id, isolate_id, sequence_id, self.request["client"].user_id, data
@@ -509,25 +514,25 @@ class SequenceView(PydanticView):
         db = self.request.app["db"]
 
         if not await db.sequences.count_documents({"_id": sequence_id}, limit=1):
-            raise NotFound()
+            raise APINotFound()
 
         document = await db.otus.find_one(
             {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
         )
 
         if document is None:
-            raise NotFound()
+            raise APINotFound()
 
         if not await virtool.references.db.check_right(
             self.request, document["reference"]["id"], "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         await get_data_from_req(self.request).otus.remove_sequence(
             otu_id, isolate_id, sequence_id, self.request["client"].user_id
         )
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.get("/otus/{otu_id}/history")
@@ -542,7 +547,7 @@ async def list_history(req):
     otu_id = req.match_info["otu_id"]
 
     if not await db.otus.count_documents({"_id": otu_id}, limit=1):
-        raise NotFound()
+        raise APINotFound()
 
     documents = await db.history.find(
         {"otu.id": otu_id}, projection=LIST_PROJECTION
@@ -569,12 +574,12 @@ async def set_as_default(req):
     )
 
     if not document:
-        raise NotFound()
+        raise APINotFound()
 
     if not await virtool.references.db.check_right(
         req, document["reference"]["id"], "modify_otu"
     ):
-        raise InsufficientRights()
+        raise APIInsufficientRights()
 
     isolate = await get_data_from_req(req).otus.set_isolate_as_default(
         otu_id, isolate_id, req["client"].user_id

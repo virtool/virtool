@@ -1,13 +1,14 @@
 from typing import Union
 
-from aiohttp.web import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
+
+from virtool.api.errors import APIInsufficientRights, APINotFound, APIConflict, APINoContent
 from virtool.history.oas import ListHistoryResponse, HistoryResponse
 
 import virtool.api.routes
 import virtool.references.db
-from virtool.api.response import InsufficientRights, NotFound, json_response
+from virtool.api.custom_json import json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.mongo.utils import get_one_field
@@ -49,7 +50,7 @@ class ChangeView(PydanticView):
         try:
             document = await get_data_from_req(self.request).history.get(change_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(HistoryResponse.parse_obj(document).dict())
 
@@ -73,13 +74,13 @@ class ChangeView(PydanticView):
         if reference is not None and not await virtool.references.db.check_right(
             self.request, reference["id"], "modify_otu"
         ):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         try:
             await get_data_from_req(self.request).history.delete(change_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
         except ResourceConflictError:
-            raise HTTPConflict(text="Change is already built")
+            raise APIConflict("Change is already built")
 
-        raise HTTPNoContent
+        raise APINoContent()

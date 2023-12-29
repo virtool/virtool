@@ -2,10 +2,10 @@ from enum import Enum
 from pathlib import Path
 
 from aiohttp.web import Response
-from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.api.errors import APIBadRequest
 from virtool.config.cls import Config
 from virtool.api.client import AbstractClient
 from virtool.labels.models import SQLLabel
@@ -87,8 +87,8 @@ def bad_labels_response(labels: list[int]) -> Response:
     :param labels: A list of label IDs that do not exist
     :return: A `bad_request()` response
     """
-    raise HTTPBadRequest(
-        text=f"Labels do not exist: {', '.join(str(label) for label in labels)}"
+    raise APIBadRequest(
+        f"Labels do not exist: {', '.join(str(label) for label in labels)}"
     )
 
 
