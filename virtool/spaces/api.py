@@ -9,8 +9,8 @@ from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.flags import flag, FlagName
-from virtool.http.policy import policy, AdministratorRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.spaces.oas import (
     UpdateSpaceRequest,
     UpdateMemberRequest,

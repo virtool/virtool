@@ -3,7 +3,7 @@ import aiohttp.web
 import aiojobs.aiohttp
 from aiohttp.web import Application
 
-import virtool.http.accept
+import virtool.api.accept
 import virtool.jobs.auth
 from virtool.api.response import error_middleware
 from virtool.config.cls import ServerConfig
@@ -26,7 +26,7 @@ async def create_app(config: ServerConfig):
     app = Application(
         client_max_size=1024**2 * 50,
         middlewares=[
-            virtool.http.accept.middleware,
+            virtool.api.accept.accept_middleware,
             virtool.jobs.auth.middleware,
             error_middleware,
         ],

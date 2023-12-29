@@ -17,6 +17,7 @@ from pymongo.errors import DuplicateKeyError
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from structlog import get_logger
+from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
@@ -41,9 +42,10 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.http.policy import PermissionRoutePolicy, policy
-from virtool.http.routes import Routes
-from virtool.http.schema import schema
+from virtool.api.client import UserClient
+from virtool.api.policy import PermissionRoutePolicy, policy
+from virtool.api.routes import Routes
+from virtool.api.schema import schema
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_rows
@@ -299,7 +301,7 @@ class RightsView(PydanticView):
         """
         Update rights settings.
 
-        Updates rights settings for the specified sample document.
+        Updates the rights settings for the specified sample document.
 
         Status Codes:
             200: Successful operation
@@ -308,21 +310,20 @@ class RightsView(PydanticView):
             403: Must be administrator or sample owner
             404: Not found
         """
-        db: Mongo = self.request.app["db"]
+        mongo: Mongo = self.request.app["db"]
         pg: AsyncEngine = self.request.app["pg"]
 
         data = data.dict(exclude_unset=True)
 
-        if not await db.samples.count_documents({"_id": sample_id}):
+        if not await mongo.samples.count_documents({"_id": sample_id}):
             raise NotFound()
 
-        user_id = self.request["client"].user_id
+        client: UserClient = self.request["client"]
 
-        # Only update the document if the connected user owns the samples or is an
-        # administrator.
-        if not self.request[
-            "client"
-        ].administrator and user_id != await get_sample_owner(db, sample_id):
+        if (
+            client.administrator_role != AdministratorRole.FULL
+            and client.user_id != await get_sample_owner(mongo, sample_id)
+        ):
             raise InsufficientRights("Must be administrator or sample owner")
 
         group = data["group"]
@@ -341,7 +342,7 @@ class RightsView(PydanticView):
                     raise HTTPBadRequest(text="Group does not exist")
 
         # Update the sample document with the new rights.
-        document = await db.samples.find_one_and_update(
+        document = await mongo.samples.find_one_and_update(
             {"_id": sample_id},
             {"$set": data},
             projection=RIGHTS_PROJECTION,

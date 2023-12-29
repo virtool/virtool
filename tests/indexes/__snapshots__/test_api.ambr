@@ -75,7 +75,6 @@
     'change_count': 1,
     'contributors': list([
       dict({
-        'administrator': False,
         'count': 1,
         'handle': 'leeashley',
         'id': 'fb085f7f',
@@ -94,7 +93,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -114,7 +112,6 @@
       'name': 'Foo',
     }),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -141,7 +138,6 @@
           'stage': 'NzFJEUSgqMReEKilxKJT',
           'state': 'preparing',
           'user': dict({
-            'administrator': False,
             'handle': 'leeashley',
             'id': 'fb085f7f',
           }),
@@ -155,7 +151,6 @@
           'name': 'Bar',
         }),
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -174,7 +169,6 @@
           'stage': 'FmSbUMpDrznQOttiWmLr',
           'state': 'cancelled',
           'user': dict({
-            'administrator': False,
             'handle': 'leeashley',
             'id': 'fb085f7f',
           }),
@@ -188,7 +182,6 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -219,7 +212,6 @@
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -233,7 +225,6 @@
         'name': 'Foo',
       }),
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),
@@ -252,7 +243,6 @@
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -266,7 +256,6 @@
         'name': 'Bar',
       }),
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),
@@ -374,7 +363,6 @@
       'stage': 'NzFJEUSgqMReEKilxKJT',
       'state': 'preparing',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
@@ -393,7 +381,6 @@
       'name': 'Test A',
     }),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -448,7 +435,6 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -473,7 +459,6 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
@@ -498,7 +483,6 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -523,7 +507,6 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -541,13 +524,11 @@
     'change_count': 2,
     'contributors': list([
       dict({
-        'administrator': True,
         'count': 1,
         'handle': 'fred',
         'id': 'fred',
       }),
       dict({
-        'administrator': True,
         'count': 3,
         'handle': 'ian',
         'id': 'igboyes',
@@ -566,7 +547,6 @@
       'stage': 'NzFJEUSgqMReEKilxKJT',
       'state': 'preparing',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),
@@ -595,7 +575,6 @@
       'name': 'Bar',
     }),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),

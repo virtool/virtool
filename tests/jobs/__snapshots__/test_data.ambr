@@ -26,7 +26,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -86,7 +85,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -146,7 +144,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -204,7 +201,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': '7CtBo2yG',
     }),
@@ -271,7 +267,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': '7CtBo2yG',
     }),

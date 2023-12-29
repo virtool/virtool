@@ -5,14 +5,14 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
 from virtool.history.oas import ListHistoryResponse, HistoryResponse
 
-import virtool.http.routes
+import virtool.api.routes
 import virtool.references.db
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.mongo.utils import get_one_field
 
-routes = virtool.http.routes.Routes()
+routes = virtool.api.routes.Routes()
 
 
 @routes.view("/history")

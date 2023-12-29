@@ -13,8 +13,8 @@ from virtool.groups.oas import (
     GroupResponse,
     GetGroupResponse,
 )
-from virtool.http.policy import policy, AdministratorRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 
 routes = Routes()
 

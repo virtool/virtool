@@ -14,6 +14,7 @@ from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.otu import OTU
+from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import InsufficientRights
 from virtool.api.response import NotFound, json_response
@@ -26,8 +27,8 @@ from virtool.data.errors import (
 )
 import virtool.references.db
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, PermissionRoutePolicy
+from virtool.api.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
 from virtool.otus.oas import CreateOTURequest
 from virtool.otus.oas import FindOTUsResponse
@@ -77,7 +78,7 @@ class ReferencesView(PydanticView):
         search_result = await get_data_from_req(self.request).references.find(
             find,
             self.request["client"].user_id,
-            self.request["client"].administrator,
+            self.request["client"].administrator_role == AdministratorRole.FULL,
             self.request["client"].groups,
             self.request.query,
         )
@@ -169,7 +170,7 @@ class ReferenceView(PydanticView):
             if not await check_right(self.request, ref_id, "modify"):
                 raise InsufficientRights
         except ResourceNotFoundError:
-            raise NotFound()
+            raise NotFound
 
         try:
             reference = await get_data_from_req(self.request).references.update(

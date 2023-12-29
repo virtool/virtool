@@ -5,22 +5,26 @@ from pydantic import Field
 from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 from virtool_core.models.user import User
 
-import virtool.http.authentication
+import virtool.api.authentication
 import virtool.users.db
 from virtool.api.response import NotFound, json_response
-from virtool.api.utils import compose_regex_query, paginate
+from virtool.api.utils import (
+    compose_regex_query,
+    paginate,
+    set_session_id_cookie,
+    set_session_token_cookie,
+)
 from virtool.authorization.client import get_authorization_client_from_req
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import (
+from virtool.api.policy import (
     policy,
     AdministratorRoutePolicy,
     PublicRoutePolicy,
 )
-from virtool.http.routes import Routes
-from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
+from virtool.api.routes import Routes
 from virtool.users.checks import check_password_length
 from virtool.users.oas import (
     CreateUserRequest,
@@ -39,8 +43,9 @@ class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
         self,
-        find: str
-        | None = Field(description="Filter by partial matches to user handles."),
+        find: str | None = Field(
+            description="Filter by partial matches to user handles."
+        ),
     ) -> r200[User] | r403:
         """
         List all users.
@@ -51,6 +56,7 @@ class UsersView(PydanticView):
             200: Successful operation
             403: Not permitted
         """
+
         mongo = self.request.app["db"]
         pg = self.request.app["pg"]
 
@@ -138,7 +144,7 @@ class FirstUserView(PydanticView):
         session, token = await get_data_from_req(
             self.request
         ).sessions.create_authenticated(
-            virtool.http.authentication.get_ip(self.request), user.id
+            virtool.api.authentication.get_ip(self.request), user.id
         )
 
         response = json_response(
@@ -197,11 +203,6 @@ class UserView(PydanticView):
                 self.request, password=data.password
             ):
                 raise HTTPBadRequest(text=error)
-
-        if data.administrator is not None and user_id == self.request["client"].user_id:
-            raise HTTPBadRequest(
-                text="Users cannot modify their own administrative status"
-            )
 
         try:
             user = await get_data_from_req(self.request).users.update(user_id, data)

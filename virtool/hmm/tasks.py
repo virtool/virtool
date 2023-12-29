@@ -7,10 +7,11 @@ import aiofiles
 from structlog import get_logger
 from virtool_core.utils import decompress_tgz
 
+from virtool.data.http import download_file
+
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
-from virtool.http.utils import download_file
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
 

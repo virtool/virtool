@@ -40,6 +40,7 @@ from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import patch_to_version
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field, id_exists
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
@@ -88,7 +89,9 @@ from virtool.utils import chunk_list, get_http_session_from_app, get_safely
 class ReferencesData(DataLayerDomain):
     name = "references"
 
-    def __init__(self, mongo, pg: AsyncEngine, config: Config, client: ClientSession):
+    def __init__(
+        self, mongo: Mongo, pg: AsyncEngine, config: Config, client: ClientSession
+    ):
         self._mongo = mongo
         self._pg = pg
         self._config = config
@@ -107,16 +110,16 @@ class ReferencesData(DataLayerDomain):
 
         """
 
-        db_query = {}
+        mongo_query = {}
 
         if find:
-            db_query = compose_regex_query(find, ["name", "data_type"])
+            mongo_query = compose_regex_query(find, ["name", "data_type"])
 
         base_query = compose_base_find_query(user_id, administrator, groups)
 
         data = await paginate(
             self._mongo.references,
-            db_query,
+            mongo_query,
             query,
             sort="name",
             base_query=base_query,

@@ -15,7 +15,6 @@
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -33,7 +32,6 @@
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -51,7 +49,6 @@
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -75,7 +72,6 @@
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -99,7 +95,6 @@
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -124,7 +119,6 @@
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -153,7 +147,6 @@
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -182,7 +175,6 @@
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -200,7 +192,6 @@
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -229,7 +220,6 @@
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -247,7 +237,6 @@
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -265,7 +254,6 @@
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -305,7 +293,6 @@
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -323,7 +310,6 @@
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -341,7 +327,6 @@
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -367,7 +352,6 @@
     'type': 'reads',
     'uploaded_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),

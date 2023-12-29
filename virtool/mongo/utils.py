@@ -39,16 +39,6 @@ def apply_projection(document: Document, projection: Projection):
     return {key: document[key] for key in document if projection.get(key, False)}
 
 
-async def delete_unready(collection):
-    """
-    Delete documents in the `collection` where the `ready` field is set to `false`.
-
-    :param collection: the collection to modify
-
-    """
-    await collection.delete_many({"ready": False})
-
-
 async def check_missing_ids(
     collection: AsyncIOMotorCollection,
     id_list: list,
@@ -66,6 +56,16 @@ async def check_missing_ids(
 
     """
     return set(id_list) - set(await collection.distinct("_id", query, session=session))
+
+
+async def delete_unready(collection):
+    """
+    Delete documents in the `collection` where the `ready` field is set to `false`.
+
+    :param collection: the collection to modify
+
+    """
+    await collection.delete_many({"ready": False})
 
 
 async def get_new_id(

@@ -58,7 +58,7 @@ orjson = "^3.8.0"
 openfga-sdk = "^0.1.1"
 python-jose = "^3.3.0"
 alembic = {extras = ["tz"], version = "^1.10.3"}
-virtool-core = "^8.0.0"
+virtool-core = "^10.0.0"
 pytest = "^7.4.0"
 syrupy = "^4.5.0"
 

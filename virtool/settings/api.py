@@ -8,8 +8,8 @@ from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.response import json_response
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, AdministratorRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.settings.oas import (
     GetSettingsResponse,
     UpdateSettingsResponse,

@@ -26,8 +26,8 @@ from virtool.data.errors import (
     ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, AdministratorRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.mongo.utils import get_one_field
 
 routes = Routes()

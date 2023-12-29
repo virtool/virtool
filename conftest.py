@@ -15,7 +15,6 @@ pytest_plugins = (
     "tests.fixtures.migration",
     "tests.fixtures.otus",
     "tests.fixtures.pg",
-    "tests.fixtures.users",
     "tests.fixtures.redis",
     "tests.fixtures.references",
     "tests.fixtures.response",

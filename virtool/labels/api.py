@@ -5,7 +5,7 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
 from pydantic import Field
 
-import virtool.http.routes
+import virtool.api.routes
 from virtool.api.response import EmptyRequest, NotFound, json_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
@@ -17,7 +17,7 @@ from virtool.labels.oas import (
     LabelResponse,
 )
 
-routes = virtool.http.routes.Routes()
+routes = virtool.api.routes.Routes()
 
 
 @routes.view("/spaces/{space_id}/labels")

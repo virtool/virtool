@@ -4,7 +4,7 @@ Provides handlers for managing Websocket related requests.
 
 from aiohttp.web import Request, WebSocketResponse
 
-from virtool.http.policy import policy, WebSocketRoutePolicy
+from virtool.api.policy import policy, WebSocketRoutePolicy
 from virtool.ws.connection import WSConnection
 
 

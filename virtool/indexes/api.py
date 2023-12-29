@@ -13,7 +13,7 @@ from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.oas import (
     ListIndexesResponse,
@@ -30,8 +30,7 @@ routes = Routes()
 class IndexesView(PydanticView):
     async def get(
         self,
-        ready: bool
-        | None = Field(
+        ready: bool | None = Field(
             default=False,
             description="Return only indexes that are ready for use in analysis.",
         ),

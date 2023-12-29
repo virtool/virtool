@@ -54,7 +54,6 @@
       'stage': 'NzFJEUSgqMReEKilxKJT',
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
@@ -66,7 +65,6 @@
     'nickname': 'Apple',
     'ready': True,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),

@@ -15,9 +15,9 @@ from virtool.api.response import NotFound, json_response
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionRoutePolicy
-from virtool.http.routes import Routes
-from virtool.http.schema import schema
+from virtool.api.policy import policy, PermissionRoutePolicy
+from virtool.api.routes import Routes
+from virtool.api.schema import schema
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
     UpdateSubtractionRequest,

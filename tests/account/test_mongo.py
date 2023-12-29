@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.account.db
+from virtool.account.mongo import compose_password_update, get_alternate_id
 
 
 def test_compose_password_update(mocker, static_time):
@@ -13,7 +13,7 @@ def test_compose_password_update(mocker, static_time):
         "virtool.users.utils.hash_password", return_value="foobar"
     )
 
-    update = virtool.account.db.compose_password_update("baz")
+    update = compose_password_update("baz")
 
     assert update == {
         "force_reset": False,
@@ -39,4 +39,4 @@ async def test_get_alternate_id(existing, expected, mongo):
     for key_id in existing:
         await mongo.keys.insert_one({"id": key_id})
 
-    assert await virtool.account.db.get_alternate_id(mongo, "foo") == expected
+    assert await get_alternate_id(mongo, "foo") == expected

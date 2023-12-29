@@ -12,7 +12,7 @@ from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.db import LIST_PROJECTION
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
