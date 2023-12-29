@@ -1,10 +1,10 @@
 from typing import Union, Optional
 
-from aiohttp.web_exceptions import HTTPConflict
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404, r409
 
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIConflict
+from virtool.api.custom_json import json_response
 from virtool.data.utils import get_data_from_req
 from virtool.api.routes import Routes
 from virtool.messages.oas import (
@@ -74,8 +74,8 @@ class MessagesView(PydanticView):
                 data
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         except ResourceConflictError:
-            raise HTTPConflict(text="No active message set")
+            raise APIConflict("No active message set")
 
         return json_response(instance_message)

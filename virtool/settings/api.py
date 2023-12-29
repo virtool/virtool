@@ -6,7 +6,7 @@ from aiohttp_pydantic.oas.typing import r200, r403
 
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.response import json_response
+from virtool.api.custom_json import json_response
 from virtool.data.utils import get_data_from_req
 from virtool.api.policy import policy, AdministratorRoutePolicy
 from virtool.api.routes import Routes

@@ -4,7 +4,7 @@ Provides request handlers for file downloads.
 """
 from aiohttp import web
 
-from virtool.api.response import NotFound
+from virtool.api.errors import APINotFound
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.api.routes import Routes
@@ -28,10 +28,10 @@ async def download_isolate(req):
         )
     except ResourceNotFoundError as err:
         if "OTU does not exist" in str(err):
-            raise NotFound("OTU not found")
+            raise APINotFound("OTU not found")
 
         if "Isolate does not exist" in str(err):
-            raise NotFound("Isolate not found")
+            raise APINotFound("Isolate not found")
 
         raise
 
@@ -55,13 +55,13 @@ async def download_sequence(req):
         )
     except ResourceNotFoundError as err:
         if "Sequence does not exist" in str(err):
-            raise NotFound("Sequence not found")
+            raise APINotFound("Sequence not found")
 
         if "Isolate does not exist" in str(err):
-            raise NotFound("Isolate not found")
+            raise APINotFound("Isolate not found")
 
         if "OTU does not exist" in str(err):
-            raise NotFound("OTU not found")
+            raise APINotFound("OTU not found")
 
         raise
 

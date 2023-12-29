@@ -3,13 +3,13 @@ import aiojobs
 import aiojobs.aiohttp
 from aiohttp_pydantic import oas
 
-import virtool.api.accept
-import virtool.api.authentication
-from virtool.api.response import error_middleware
-from virtool.config.cls import Config
-from virtool.flags import FeatureFlags, feature_flag_middleware
+from virtool.api.accept import accept_middleware
+from virtool.api.authentication import authentication_middleware
+from virtool.api.errors import error_middleware
 from virtool.api.headers import headers_middleware, on_prepare_location
 from virtool.api.policy import route_policy_middleware
+from virtool.config.cls import Config
+from virtool.flags import FeatureFlags, feature_flag_middleware
 from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_authorization_client,
@@ -37,9 +37,9 @@ from virtool.startup import (
 def create_app_without_startup():
     middlewares = [
         headers_middleware,
-        virtool.api.authentication.middleware,
-        virtool.api.accept.accept_middleware,
         error_middleware,
+        authentication_middleware,
+        accept_middleware,
         route_policy_middleware,
     ]
 
@@ -58,9 +58,9 @@ def create_app(config: Config):
     """
     middlewares = [
         headers_middleware,
-        virtool.api.authentication.middleware,
-        virtool.api.accept.accept_middleware,
+        accept_middleware,
         error_middleware,
+        authentication_middleware,
         route_policy_middleware,
         feature_flag_middleware,
     ]

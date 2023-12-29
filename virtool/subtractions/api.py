@@ -1,17 +1,13 @@
 from typing import Union, Optional
 
 import aiohttp.web
-from aiohttp.web_exceptions import (
-    HTTPBadRequest,
-    HTTPConflict,
-    HTTPNoContent,
-)
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
 from virtool_core.models.subtraction import SubtractionSearchResult
 
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APIConflict, APINoContent
+from virtool.api.custom_json import json_response
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
@@ -78,9 +74,9 @@ class SubtractionsView(PydanticView):
             )
         except ResourceNotFoundError as err:
             if "Upload does not exist" in str(err):
-                raise HTTPBadRequest(text=str(err))
+                raise APIBadRequest(str(err))
 
-            raise NotFound
+            raise APINotFound()
 
         return json_response(
             subtraction,
@@ -111,7 +107,7 @@ class SubtractionView(PydanticView):
                 subtraction_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(subtraction)
 
@@ -136,7 +132,7 @@ class SubtractionView(PydanticView):
                 subtraction_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(subtraction)
 
@@ -156,9 +152,9 @@ class SubtractionView(PydanticView):
         try:
             await get_data_from_req(self.request).subtractions.delete(subtraction_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
@@ -176,12 +172,12 @@ async def upload(req):
             subtraction_id, filename, await req.multipart()
         )
     except ResourceConflictError as err:
-        raise HTTPConflict(text=str(err))
+        raise APIConflict(str(err))
     except ResourceNotFoundError as err:
         if "Unsupported subtraction file name" in str(err):
-            raise NotFound(str(err))
+            raise APINotFound(str(err))
 
-        raise NotFound
+        raise APINotFound()
 
     return json_response(
         subtraction_file,
@@ -213,9 +209,9 @@ async def finalize_subtraction(req: aiohttp.web.Request):
             req.match_info["subtraction_id"], FinalizeSubtractionRequest(**data)
         )
     except ResourceConflictError as err:
-        raise HTTPConflict(text=str(err))
+        raise APIConflict(str(err))
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
     return json_response(subtraction)
 
@@ -233,17 +229,17 @@ async def job_delete(req: aiohttp.web.Request):
     try:
         subtraction = await get_data_from_req(req).subtractions.get(subtraction_id)
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
     if subtraction.ready:
-        raise HTTPConflict(text="Only unfinalized subtractions can be deleted")
+        raise APIConflict("Only unfinalized subtractions can be deleted")
 
     try:
         await get_data_from_req(req).subtractions.delete(subtraction_id)
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
-    raise HTTPNoContent
+    raise APINoContent()
 
 
 @routes.view("/subtractions/{subtraction_id}/files/{filename}")
@@ -270,7 +266,7 @@ class SubtractionFileView(PydanticView):
                 subtraction_id, filename
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return FileResponse(
             descriptor.path,

@@ -4,7 +4,7 @@ from functools import wraps
 import aiohttp.web
 import cerberus
 
-from virtool.api.response import InvalidInput
+from virtool.api.errors import APIInvalidInput
 from virtool.types import RouteHandler
 
 
@@ -30,7 +30,7 @@ def schema(schema_dict: dict):
 
             request["data"] = validator.validated(data)
             if not request["data"]:
-                raise InvalidInput(validator.errors)
+                raise APIInvalidInput(validator.errors)
 
             return await handler(request)
 

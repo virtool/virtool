@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool.api.response import NotFound, InsufficientRights
+
+from virtool.api.errors import APINotFound
 from virtool.errors import DatabaseError
 from virtool_core.models.samples import WorkflowState
 from virtool_core.models.settings import Settings
@@ -145,7 +146,7 @@ async def check_rights_error_check(
         check_right = await check_rights(db, sample_id, client, write=write)
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
-            raise NotFound()
+            raise APINotFound()
         raise
 
     return check_right

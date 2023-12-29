@@ -6,7 +6,8 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
 from pydantic import Field, conint
 
-from virtool.api.response import json_response, NotFound
+from virtool.api.errors import APINotFound
+from virtool.api.custom_json import json_response
 from virtool.authorization.permissions import LegacyPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
@@ -110,7 +111,7 @@ class UploadView(PydanticView):
                 get_config_from_req(self.request), upload.name_on_disk
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return FileResponse(
             upload_path,
@@ -137,7 +138,7 @@ class UploadView(PydanticView):
         try:
             await get_data_from_req(self.request).uploads.delete(upload_id)
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return Response(status=204)
 
@@ -154,7 +155,7 @@ async def download(req):
     try:
         upload = await get_data_from_req(req).uploads.get(upload_id)
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
     upload_path = await get_upload_path(get_config_from_req(req), upload.name_on_disk)
 

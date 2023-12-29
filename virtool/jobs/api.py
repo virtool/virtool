@@ -1,6 +1,5 @@
 from typing import List
 
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.injectors import CONTEXT
@@ -8,7 +7,8 @@ from aiohttp_pydantic.oas.typing import r200, r400, r403, r404, r409
 from pydantic import Field, conint, ValidationError
 from virtool_core.models.job import JobMinimal, JobSearchResult, JobState
 
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APIConflict
+from virtool.api.custom_json import json_response
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceConflictError,
@@ -73,7 +73,7 @@ class JobsView(PydanticView):
         try:
             jobs = await get_data_from_req(self.request).jobs.bulk_archive(job_ids)
         except ResourceNotFoundError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(jobs)
 
@@ -113,7 +113,7 @@ class JobView(PydanticView):
         try:
             document = await get_data_from_req(self.request).jobs.get(job_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(document)
 
@@ -128,7 +128,7 @@ async def get(req):
     try:
         document = await get_data_from_req(req).jobs.get(req.match_info["job_id"])
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
 
     return json_response(document)
 
@@ -147,9 +147,9 @@ async def acquire(req):
     try:
         document = await get_data_from_req(req).jobs.acquire(req.match_info["job_id"])
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
     except ResourceConflictError:
-        raise HTTPBadRequest(text="Job already acquired")
+        raise APIBadRequest("Job already acquired")
 
     return json_response(document)
 
@@ -165,9 +165,9 @@ async def archive(req):
     try:
         document = await get_data_from_req(req).jobs.archive(req.match_info["job_id"])
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
     except ResourceConflictError:
-        raise HTTPBadRequest(text="Job already archived")
+        raise APIBadRequest("Job already archived")
 
     return json_response(document)
 
@@ -190,9 +190,9 @@ class CancelJobView(PydanticView):
         try:
             document = await get_data_from_req(self.request).jobs.cancel(job_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
         except ResourceConflictError:
-            raise HTTPConflict(text="Job cannot be cancelled in its current state")
+            raise APIConflict("Job cannot be cancelled in its current state")
 
         return json_response(document)
 
@@ -208,7 +208,7 @@ async def ping(req):
     try:
         job_ping = await get_data_from_req(req).jobs.ping(req.match_info["job_id"])
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
     return json_response(job_ping)
 
@@ -268,7 +268,7 @@ async def push_status(req):
     data = req["data"]
 
     if data["state"] == "error" and not data["error"]:
-        raise HTTPBadRequest(text="Missing error information")
+        raise APIBadRequest("Missing error information")
 
     try:
         document = await get_data_from_req(req).jobs.push_status(
@@ -281,8 +281,8 @@ async def push_status(req):
             data["progress"],
         )
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
     except ResourceConflictError:
-        raise HTTPConflict(text="Job is finished")
+        raise APIConflict("Job is finished")
 
     return json_response(document, status=201)

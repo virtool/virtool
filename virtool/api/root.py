@@ -1,4 +1,4 @@
-from virtool.api.response import json_response
+from virtool.api.custom_json import json_response
 from virtool.config import get_config_from_req
 from virtool.api.policy import policy, PublicRoutePolicy
 from virtool.api.routes import Routes

@@ -3,7 +3,7 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 
-from virtool.api.response import json_response
+from virtool.api.custom_json import json_response
 from virtool.data.utils import get_data_from_req
 from virtool.api.routes import Routes
 from virtool.ml.models import MLModel, MLModelListResult
