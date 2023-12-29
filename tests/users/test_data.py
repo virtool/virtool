@@ -176,16 +176,19 @@ class TestUpdate:
         assert document["groups"] == []
 
     async def test_password(
-        self, bob, data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion
+        self,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        static_time,
     ):
-        """
-        Test editing an existing user.
-
-        """
-        await mongo.users.insert_one(bob)
+        """Test that updating the user's password works as expected."""
+        group = await fake2.groups.create()
+        user = await fake2.users.create(groups=[group])
 
         assert await data_layer.users.update(
-            bob["_id"], UpdateUserRequest(password="hello_world")
+            user.id, UpdateUserRequest(password="hello_world")
         ) == snapshot(name="obj")
 
         assert await mongo.users.find_one() == snapshot(
@@ -193,7 +196,7 @@ class TestUpdate:
         )
 
         # Ensure the newly set password validates.
-        assert await validate_credentials(mongo, bob["_id"], "hello_world")
+        assert await validate_credentials(mongo, user.id, "hello_world")
 
     async def test_not_found(self, data_layer: DataLayer):
         with pytest.raises(ResourceNotFoundError) as err:
