@@ -5,13 +5,12 @@ These endpoints modify and return data about the user account associated with th
 session or API key making the requests.
 
 """
-from aiohttp.web import HTTPNoContent, Response
-from aiohttp.web_exceptions import HTTPBadRequest
+from aiohttp.web import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
-import virtool.http.authentication
-import virtool.http.routes
+import virtool.api.authentication
+import virtool.api.routes
 from virtool.account.oas import (
     UpdateAccountRequest,
     UpdateSettingsRequest,
@@ -28,14 +27,15 @@ from virtool.account.oas import (
     AccountResetPasswordResponse,
     ListAPIKeysResponse,
 )
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
+from virtool.api.policy import policy, PublicRoutePolicy
+from virtool.api.custom_json import json_response
+from virtool.api.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PublicRoutePolicy
-from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 
-routes = virtool.http.routes.Routes()
+routes = virtool.api.routes.Routes()
 """
 A :class:`aiohttp.web.RouteTableDef` for account API routes.
 """
@@ -85,14 +85,14 @@ class AccountView(PydanticView):
             error = await check_password_length(self.request, data.password)
 
             if error:
-                raise HTTPBadRequest(text=error)
+                raise APIBadRequest(error)
 
         try:
             account = await get_data_from_req(self.request).account.update(
                 self.request["client"].user_id, data
             )
         except ResourceError:
-            raise HTTPBadRequest(text="Invalid credentials")
+            raise APIBadRequest("Invalid credentials")
 
         return json_response(UpdateAccountResponse.parse_obj(account))
 
@@ -195,7 +195,7 @@ class KeysView(PydanticView):
             self.request["client"].user_id
         )
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.view("/account/keys/{key_id}")
@@ -216,7 +216,7 @@ class KeyView(PydanticView):
                 self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(APIKeyResponse.parse_obj(key), status=200)
 
@@ -242,7 +242,7 @@ class KeyView(PydanticView):
                 data,
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(APIKeyResponse.parse_obj(key))
 
@@ -262,9 +262,9 @@ class KeyView(PydanticView):
                 self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.view("/account/login")
@@ -285,12 +285,12 @@ class LoginView(PydanticView):
         """
 
         session_id = self.request.cookies.get("session_id")
-        ip = virtool.http.authentication.get_ip(self.request)
+        ip = virtool.api.authentication.get_ip(self.request)
 
         try:
             user_id = await get_data_from_req(self.request).account.login(data)
         except ResourceError:
-            raise HTTPBadRequest(text="Invalid username or password")
+            raise APIBadRequest("Invalid username or password")
 
         session = None
         reset_code = None
@@ -344,7 +344,7 @@ class LogoutView(PydanticView):
         """
         session = await get_data_from_req(self.request).account.logout(
             self.request.cookies.get("session_id"),
-            virtool.http.authentication.get_ip(self.request),
+            virtool.api.authentication.get_ip(self.request),
         )
 
         resp = Response(status=200)
@@ -371,16 +371,16 @@ class ResetView(PydanticView):
             400: Invalid input
         """
         if error := await check_password_length(self.request, data.password):
-            raise HTTPBadRequest(text=error)
+            raise APIBadRequest(error)
 
         try:
             session, token = await get_data_from_req(self.request).account.reset(
                 self.request.cookies.get("session_id"),
                 data,
-                virtool.http.authentication.get_ip(self.request),
+                virtool.api.authentication.get_ip(self.request),
             )
         except ResourceNotFoundError:
-            raise HTTPBadRequest(text="Invalid session")
+            raise APIBadRequest("Invalid session")
 
         try:
             self.request["client"].authorize(session, is_api=False)

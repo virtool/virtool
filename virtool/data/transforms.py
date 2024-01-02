@@ -54,6 +54,8 @@ from abc import ABC, abstractmethod
 from asyncio import gather
 from typing import Any
 
+import sentry_sdk
+
 from virtool.types import Document
 
 
@@ -123,33 +125,36 @@ async def apply_transforms(
     :param pipeline: a list of transforms to apply
     :return: one transformed document or a list of transformed documents
     """
+    with sentry_sdk.start_span(
+        op="apply_transforms",
+        description=", ".join([p.__class__.__name__ for p in pipeline]),
+    ):
+        if isinstance(documents, list):
+            all_prepared = await gather(
+                *[
+                    transform.prepare_many([transform.preprocess(d) for d in documents])
+                    for transform in pipeline
+                ]
+            )
 
-    if isinstance(documents, list):
-        all_prepared = await gather(
+            for prepared, transform in zip(all_prepared, pipeline):
+                documents = await transform.attach_many(
+                    [transform.preprocess(d) for d in documents], prepared
+                )
+
+            return documents
+
+        document = documents
+
+        # In this case, we are dealing with a single document.
+        prepared = await asyncio.gather(
             *[
-                transform.prepare_many([transform.preprocess(d) for d in documents])
+                transform.prepare_one(transform.preprocess(document))
                 for transform in pipeline
             ]
         )
 
-        for prepared, transform in zip(all_prepared, pipeline):
-            documents = await transform.attach_many(
-                [transform.preprocess(d) for d in documents], prepared
-            )
+        for p, transform in zip(prepared, pipeline):
+            document = await transform.attach_one(transform.preprocess(document), p)
 
-        return documents
-
-    document = documents
-
-    # In this case, we are dealing with a single document.
-    prepared = await asyncio.gather(
-        *[
-            transform.prepare_one(transform.preprocess(document))
-            for transform in pipeline
-        ]
-    )
-
-    for p, transform in zip(prepared, pipeline):
-        document = await transform.attach_one(transform.preprocess(document), p)
-
-    return document
+        return document

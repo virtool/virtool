@@ -41,7 +41,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -89,7 +88,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
@@ -116,7 +114,6 @@
         'stage': None,
         'state': 'waiting',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -130,7 +127,6 @@
         'stage': None,
         'state': 'waiting',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -144,7 +140,6 @@
         'stage': 'NzFJEUSgqMReEKilxKJT',
         'state': 'preparing',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -178,7 +173,6 @@
         'stage': 'GapNGCiKyJNmNoZgTcnB',
         'state': 'complete',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -192,7 +186,6 @@
         'stage': 'NkznHZPGfxsRfFzDHwBJ',
         'state': 'error',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -241,7 +234,6 @@
         'stage': 'CvVtXeeYGAaIAXQZUmce',
         'state': 'terminated',
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
@@ -255,7 +247,6 @@
         'stage': 'nOHABdcaOhguYUqQeuEZ',
         'state': 'error',
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
@@ -269,7 +260,6 @@
         'stage': 'iLUYCkyqgDOaIrTOqeaP',
         'state': 'error',
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
@@ -283,7 +273,6 @@
         'stage': 'DTrfalRqlzXAreDlttNm',
         'state': 'complete',
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
@@ -297,7 +286,6 @@
         'stage': 'GNkXjEpGpwJnLsgFiwud',
         'state': 'cancelled',
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
@@ -956,7 +944,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -970,7 +957,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -984,7 +970,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -998,7 +983,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1012,7 +996,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1070,7 +1053,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'laura56',
       'id': 'fb085f7f',
     }),
@@ -1118,7 +1100,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),

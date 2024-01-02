@@ -38,12 +38,10 @@
     }),
     'users': list([
       dict({
-        'administrator': False,
         'handle': 'laura56',
         'id': 'bf1b993c',
       }),
       dict({
-        'administrator': False,
         'handle': 'sjohnson',
         'id': 'fb085f7f',
       }),

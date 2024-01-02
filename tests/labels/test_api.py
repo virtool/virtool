@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 
 from tests.fixtures.client import ClientSpawner
@@ -198,7 +196,7 @@ async def test_edit(
 async def test_remove(
     status: int,
     fake2: DataFaker,
-    mock_samples: List[dict],
+    mock_samples: list[dict],
     snapshot,
     spawn_client: ClientSpawner,
 ):

@@ -3,7 +3,6 @@ The client class and utilities for managing authorization.
 
 """
 import asyncio
-from typing import List, Tuple
 
 from aiohttp.web_request import Request
 from openfga_sdk import (
@@ -91,7 +90,7 @@ class AuthorizationClient:
 
     async def get_administrator(
         self, user_id: str
-    ) -> Tuple[str, AdministratorRole | None]:
+    ) -> tuple[str, AdministratorRole | None]:
         response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object="app:virtool"),
@@ -105,7 +104,7 @@ class AuthorizationClient:
 
         return user_id, role
 
-    async def list_administrators(self) -> List[Tuple[str, AdministratorRole]]:
+    async def list_administrators(self) -> list[tuple[str, AdministratorRole]]:
         """
         Return a list of user ids that are administrators and their roles.
 
@@ -125,7 +124,7 @@ class AuthorizationClient:
             ]
         )
 
-    async def list_user_spaces(self, user_id: str) -> List[int]:
+    async def list_user_spaces(self, user_id: str) -> list[int]:
         """
         Return a list of ids of spaces the user is a member of.
 
@@ -154,7 +153,7 @@ class AuthorizationClient:
 
         return sorted([*test, *test2])
 
-    async def list_user_roles(self, user_id: str, space_id: int) -> List[SpaceRoleType]:
+    async def list_user_roles(self, user_id: str, space_id: int) -> list[SpaceRoleType]:
         response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(user=f"user:{user_id}", object=f"space:{space_id}")
@@ -165,7 +164,7 @@ class AuthorizationClient:
 
     async def list_reference_users(
         self, ref_id: str
-    ) -> List[Tuple[str, ReferenceRole]]:
+    ) -> list[tuple[str, ReferenceRole]]:
         """
         List users and their roles on a reference.
 
@@ -191,7 +190,7 @@ class AuthorizationClient:
 
     async def list_space_users(
         self, space_id: int
-    ) -> List[Tuple[str, List[SpaceRole]]]:
+    ) -> list[tuple[str, list[SpaceRole]]]:
         """
         List members of a space
         """

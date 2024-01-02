@@ -48,7 +48,6 @@
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
@@ -76,7 +75,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -132,7 +130,6 @@
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
@@ -160,7 +157,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),

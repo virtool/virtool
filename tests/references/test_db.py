@@ -1,7 +1,9 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
+from virtool_core.models.roles import AdministratorRole
 
+from virtool.api.client import UserClient
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
@@ -44,8 +46,10 @@ async def test_check_right(
 ):
     mock_req.app = {"db": mongo}
 
-    mock_req["client"] = mocker.Mock()
-    mock_req["client"].administrator = is_administrator
+    mock_req["client"] = mocker.Mock(spec=UserClient)
+    mock_req["client"].administrator_role = (
+        AdministratorRole.FULL if is_administrator else None
+    )
     mock_req["client"].user_id = "bar"
     mock_req["client"].groups = ["foo"]
 

@@ -4,9 +4,6 @@ import asyncio
 import arrow
 from aiohttp.web import (
     FileResponse,
-    HTTPBadRequest,
-    HTTPConflict,
-    HTTPNoContent,
     HTTPNotModified,
     Request,
     Response,
@@ -17,12 +14,14 @@ from pydantic import conint
 
 from virtool.analyses.models import AnalysisFormat
 from virtool.analyses.oas import FindAnalysesResponse, AnalysisResponse
-from virtool.api.custom_json import datetime_to_isoformat
-from virtool.api.response import (
-    InsufficientRights,
-    InvalidQuery,
-    NotFound,
-    json_response,
+from virtool.api.custom_json import datetime_to_isoformat, json_response
+from virtool.api.errors import (
+    APINotFound,
+    APIBadRequest,
+    APIInsufficientRights,
+    APIInvalidQuery,
+    APIConflict,
+    APINoContent,
 )
 from virtool.config import get_config_from_req
 from virtool.data.errors import (
@@ -87,9 +86,9 @@ class AnalysisView(PydanticView):
             if not await get_data_from_req(self.request).analyses.has_right(
                 analysis_id, self.request["client"], "read"
             ):
-                raise InsufficientRights
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         if_modified_since = self.request.headers.get("If-Modified-Since")
 
@@ -101,9 +100,9 @@ class AnalysisView(PydanticView):
                 analysis_id, if_modified_since
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         except ResourceNotModifiedError:
-            raise HTTPNotModified
+            raise HTTPNotModified()
 
         return json_response(
             analysis,
@@ -132,18 +131,18 @@ class AnalysisView(PydanticView):
                     self.request["client"],
                     right,
                 ):
-                    raise InsufficientRights()
+                    raise APIInsufficientRights()
             except ResourceNotFoundError:
-                raise NotFound()
+                raise APINotFound()
 
         try:
             await get_data_from_req(self.request).analyses.delete(analysis_id, False)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
         except ResourceConflictError:
-            raise HTTPConflict(text="Analysis is still running")
+            raise APIConflict("Analysis is still running")
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.jobs_api.get("/analyses/{analysis_id}")
@@ -165,11 +164,11 @@ async def get_for_jobs_api(req: Request) -> Response:
             if_modified_since,
         )
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
     except ResourceNotModifiedError:
         raise HTTPNotModified()
     except ResourceError:
-        raise HTTPBadRequest(text="Parent sample does not exist")
+        raise APIBadRequest("Parent sample does not exist")
 
     return json_response(
         analysis.dict(by_alias=True),
@@ -192,11 +191,11 @@ async def delete_analysis(req):
             req.match_info["analysis_id"], True
         )
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
     except ResourceConflictError:
-        raise HTTPConflict(text="Analysis is finalized")
+        raise APIConflict("Analysis is finalized")
 
-    raise HTTPNoContent
+    raise APINoContent()
 
 
 @routes.jobs_api.put("/analyses/{id}/files")
@@ -216,12 +215,12 @@ async def upload(req: Request) -> Response:
     errors = naive_validator(req)
 
     if errors:
-        raise InvalidQuery(errors)
+        raise APIInvalidQuery(errors)
 
     name = req.query.get("name")
 
     if analysis_format and analysis_format not in AnalysisFormat.to_list():
-        raise HTTPBadRequest(text="Unsupported analysis file format")
+        raise APIBadRequest("Unsupported analysis file format")
 
     print(req)
     print((await req.multipart()).__dict__)
@@ -232,7 +231,7 @@ async def upload(req: Request) -> Response:
             multipart_file_chunker(reader), analysis_id, analysis_format, name
         )
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
 
     if analysis_file is None:
         return Response(status=499)
@@ -262,12 +261,12 @@ class AnalysisFileView(PydanticView):
                 upload_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         path = get_config_from_req(self.request).data_path / "analyses" / name_on_disk
 
         if not await asyncio.to_thread(path.exists):
-            raise NotFound
+            raise APINotFound()
 
         return FileResponse(path)
 
@@ -288,14 +287,14 @@ class DocumentDownloadView(PydanticView):
         """
 
         if extension not in ["xlsx", "csv"]:
-            raise HTTPBadRequest(text=f"Invalid extension: {extension}")
+            raise APIBadRequest(f"Invalid extension: {extension}")
 
         try:
             formatted, content_type = await get_data_from_req(
                 self.request
             ).analyses.download(analysis_id, extension)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return Response(
             body=formatted,
@@ -332,18 +331,18 @@ class BlastView(PydanticView):
                 self.request["client"],
                 "write",
             ):
-                raise InsufficientRights
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         try:
             document = await get_data_from_req(self.request).analyses.blast(
                 analysis_id, sequence_index
             )
         except ResourceConflictError as err:
-            raise HTTPConflict(text=str(err))
+            raise APIConflict(str(err))
         except ResourceNotFoundError:
-            raise NotFound("Sequence not found")
+            raise APINotFound("Sequence not found")
 
         headers = {"Location": f"/analyses/{analysis_id}/{sequence_index}/blast"}
 
@@ -366,8 +365,8 @@ async def finalize(req: Request):
             analysis_id, data["results"]
         )
     except ResourceNotFoundError:
-        raise NotFound(f"There is no analysis with id {analysis_id}")
+        raise APINotFound(f"There is no analysis with id {analysis_id}")
     except ResourceConflictError:
-        raise HTTPConflict(text="There is already a result for this analysis.")
+        raise APIConflict("There is already a result for this analysis.")
 
     return json_response(document)
