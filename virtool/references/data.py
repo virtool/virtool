@@ -24,7 +24,7 @@ import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
-from virtool.api.response import InsufficientRights
+from virtool.api.errors import APIInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
@@ -40,6 +40,7 @@ from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import patch_to_version
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field, id_exists
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
@@ -88,7 +89,9 @@ from virtool.utils import chunk_list, get_http_session_from_app, get_safely
 class ReferencesData(DataLayerDomain):
     name = "references"
 
-    def __init__(self, mongo, pg: AsyncEngine, config: Config, client: ClientSession):
+    def __init__(
+        self, mongo: Mongo, pg: AsyncEngine, config: Config, client: ClientSession
+    ):
         self._mongo = mongo
         self._pg = pg
         self._config = config
@@ -107,16 +110,16 @@ class ReferencesData(DataLayerDomain):
 
         """
 
-        db_query = {}
+        mongo_query = {}
 
         if find:
-            db_query = compose_regex_query(find, ["name", "data_type"])
+            mongo_query = compose_regex_query(find, ["name", "data_type"])
 
         base_query = compose_base_find_query(user_id, administrator, groups)
 
         data = await paginate(
             self._mongo.references,
-            db_query,
+            mongo_query,
             query,
             sort="name",
             base_query=base_query,
@@ -359,7 +362,7 @@ class ReferencesData(DataLayerDomain):
 
     async def remove(self, ref_id: str, req):
         if not await virtool.references.db.check_right(req, ref_id, "remove"):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         reference = await self.get(ref_id)
 
@@ -500,7 +503,7 @@ class ReferencesData(DataLayerDomain):
     @emits(Operation.CREATE, domain="indexes", name="create")
     async def create_index(self, ref_id: str, req, user_id: str) -> IndexMinimal:
         if not await virtool.references.db.check_right(req, ref_id, "build"):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         if await self._mongo.indexes.count_documents(
             {"reference.id": ref_id, "ready": False}, limit=1

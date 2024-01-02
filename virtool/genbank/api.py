@@ -3,11 +3,12 @@ Provides request handlers for accessing GenBank through the web server.
 
 """
 from aiohttp import ClientConnectorError
-from aiohttp.web import HTTPBadGateway, Response
+from aiohttp.web import Response
 
 import virtool.genbank.http
-from virtool.api.response import NotFound, json_response
-from virtool.http.routes import Routes
+from virtool.api.errors import APINotFound, APIBadGateway
+from virtool.api.custom_json import json_response
+from virtool.api.routes import Routes
 from virtool.utils import get_http_session_from_app
 
 routes = Routes()
@@ -28,9 +29,9 @@ async def get(req) -> Response:
         )
 
         if data is None:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(data)
 
     except ClientConnectorError:
-        raise HTTPBadGateway(text="Could not reach NCBI")
+        raise APIBadGateway("Could not reach NCBI")

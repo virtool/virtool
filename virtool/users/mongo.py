@@ -5,7 +5,6 @@ TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
 from __future__ import annotations
 
-import asyncio
 import random
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -22,7 +21,6 @@ from virtool.users.utils import (
     hash_password,
     check_password,
     check_legacy_password,
-    limit_permissions,
 )
 from virtool.utils import base_processor
 
@@ -76,7 +74,6 @@ async def create_user(
 ) -> Document:
     document = {
         "active": True,
-        "administrator": False,
         "force_reset": force_reset,
         "groups": [],
         "handle": handle,
@@ -134,46 +131,6 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
         return await generate_handle(collection, given_name, family_name)
 
     return handle
-
-
-async def update_keys(
-    mongo: "Mongo",
-    user_id: str,
-    administrator: bool,
-    groups: list[int | str],
-    permissions: dict,
-    session: AsyncIOMotorClientSession | None = None,
-):
-    """
-
-    :param mongo: a database client
-    :param user_id: the id of the user to update keys and session for
-    :param administrator: the administrator flag for the user
-    :param groups: an updated list of groups
-    :param permissions: an updated set of permissions derived from the updated groups
-    :param session: an option Motor session to use
-
-    """
-    await asyncio.gather(
-        *[
-            mongo.keys.update_one(
-                {"_id": document["_id"]},
-                {
-                    "$set": {
-                        "administrator": administrator,
-                        "groups": groups,
-                        "permissions": limit_permissions(
-                            document["permissions"], permissions
-                        ),
-                    }
-                },
-                session=session,
-            )
-            async for document in mongo.keys.find(
-                {"user.id": user_id}, ["permissions"], session=session
-            )
-        ]
-    )
 
 
 async def validate_credentials(mongo: "Mongo", user_id: str, password: str) -> bool:

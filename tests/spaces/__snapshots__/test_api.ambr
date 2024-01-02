@@ -6,7 +6,6 @@
     'id': 0,
     'members': list([
       dict({
-        'administrator': True,
         'handle': 'bob',
         'id': 'bf1b993c',
         'label_role': None,
@@ -18,7 +17,6 @@
         'upload_role': None,
       }),
       dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
         'label_role': None,
@@ -161,7 +159,6 @@
     ]),
     'items': list([
       dict({
-        'administrator': False,
         'handle': 'zclark',
         'id': '7cf872dc',
         'label_role': None,
@@ -173,7 +170,6 @@
         'upload_role': None,
       }),
       dict({
-        'administrator': True,
         'handle': 'bob',
         'id': 'bf1b993c',
         'label_role': None,
@@ -185,7 +181,6 @@
         'upload_role': None,
       }),
       dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
         'label_role': None,
@@ -212,7 +207,6 @@
 # ---
 # name: test_update_member_roles
   dict({
-    'administrator': False,
     'handle': 'leeashley',
     'id': 'fb085f7f',
     'label_role': 'label_manager',

@@ -3,7 +3,7 @@ import pytest
 import virtool.subtractions.db
 from virtool.data.transforms import apply_transforms
 from virtool.subtractions.db import (
-    AttachSubtractionTransform,
+    AttachSubtractionsTransform,
     unlink_default_subtractions,
 )
 
@@ -24,7 +24,7 @@ async def test_attach_subtractions(documents, mongo, snapshot):
         [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}], session=None
     )
 
-    result = await apply_transforms(documents, [AttachSubtractionTransform(mongo)])
+    result = await apply_transforms(documents, [AttachSubtractionsTransform(mongo)])
 
     assert result == snapshot
 

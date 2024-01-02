@@ -3,7 +3,6 @@
   dict({
     'id': 'bar',
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -14,7 +13,6 @@
     dict({
       'id': 'bar',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
@@ -22,7 +20,6 @@
     dict({
       'id': 'foo',
       'user': dict({
-        'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
       }),
@@ -30,7 +27,6 @@
     dict({
       'id': 'baz',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),

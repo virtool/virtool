@@ -33,7 +33,6 @@
       'stage': 'JURZHTCWaKMqqBTFitpK',
       'state': 'timeout',
       'user': dict({
-        'administrator': False,
         'handle': 'zclark',
         'id': 'fb085f7f',
       }),
@@ -57,7 +56,6 @@
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -126,7 +124,6 @@
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -151,7 +148,6 @@
           'stage': 'JURZHTCWaKMqqBTFitpK',
           'state': 'timeout',
           'user': dict({
-            'administrator': False,
             'handle': 'zclark',
             'id': '7cf872dc',
           }),
@@ -171,7 +167,6 @@
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -192,7 +187,6 @@
           'stage': 'JURZHTCWaKMqqBTFitpK',
           'state': 'timeout',
           'user': dict({
-            'administrator': False,
             'handle': 'zclark',
             'id': '7cf872dc',
           }),
@@ -216,7 +210,6 @@
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -244,7 +237,6 @@
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
@@ -305,7 +297,6 @@
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
@@ -340,7 +331,6 @@
       'stage': 'JURZHTCWaKMqqBTFitpK',
       'state': 'complete',
       'user': dict({
-        'administrator': False,
         'handle': 'zclark',
         'id': '7cf872dc',
       }),
@@ -372,7 +362,6 @@
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),

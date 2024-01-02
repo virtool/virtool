@@ -20,7 +20,6 @@
 # name: TestUpdate.test_ok
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -64,7 +63,6 @@
 # name: TestUpdate.test_with_groups
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -214,7 +212,6 @@
 # name: test_create[None]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -243,7 +240,6 @@
 # name: test_create[None][data_layer]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -273,7 +269,6 @@
   dict({
     '_id': '7cf872dc',
     'active': True,
-    'administrator': False,
     'force_reset': False,
     'groups': list([
     ]),
@@ -295,7 +290,6 @@
 # name: test_create_first_user[False-201]
   dict({
     'active': True,
-    'administrator': True,
     'administrator_role': 'full',
     'b2c': None,
     'b2c_display_name': None,
@@ -331,7 +325,6 @@
   dict({
     'documents': list([
       dict({
-        'administrator': True,
         'force_reset': False,
         'groups': list([
           1,
@@ -352,7 +345,6 @@
         'primary_group': None,
       }),
       dict({
-        'administrator': False,
         'force_reset': False,
         'groups': list([
         ]),
@@ -372,7 +364,6 @@
         'primary_group': None,
       }),
       dict({
-        'administrator': False,
         'force_reset': False,
         'groups': list([
         ]),
@@ -403,7 +394,6 @@
   dict({
     'documents': list([
       dict({
-        'administrator': False,
         'force_reset': False,
         'groups': list([
         ]),
@@ -433,7 +423,6 @@
 # name: test_get[200]
   dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,

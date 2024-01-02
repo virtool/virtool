@@ -18,14 +18,14 @@ from virtool_core.models.roles import AdministratorRole
 from tests.fixtures.client import ClientSpawner
 from virtool.authorization.permissions import LegacyPermission
 from virtool.errors import PolicyError
-from virtool.http.policy import (
+from virtool.api.policy import (
     policy,
     PublicRoutePolicy,
     DefaultRoutePolicy,
     AdministratorRoutePolicy,
     PermissionRoutePolicy,
 )
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 
 
 @pytest.fixture

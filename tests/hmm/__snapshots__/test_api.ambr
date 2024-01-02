@@ -35,7 +35,6 @@
         'ready': True,
         'size': 85904451,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -139,7 +138,6 @@
       'ready': True,
       'size': 85904451,
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),

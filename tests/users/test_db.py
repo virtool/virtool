@@ -2,7 +2,6 @@ import hashlib
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
 
 from virtool.data.errors import ResourceConflictError
 from virtool.groups.pg import SQLGroup
@@ -12,10 +11,8 @@ from virtool.users.db import (
 )
 from virtool.users.mongo import (
     validate_credentials,
-    update_keys,
     compose_primary_group_update,
 )
-from virtool.users.utils import Permission
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric
 
@@ -178,51 +175,3 @@ async def test_validate_credentials(
     await mongo.users.insert_one(document)
 
     assert await validate_credentials(mongo, user_id, password) is result
-
-
-@pytest.mark.parametrize("administrator", [True, False])
-@pytest.mark.parametrize("elevate", [True, False])
-@pytest.mark.parametrize("missing", [True, False])
-async def test_update_keys(
-    administrator: bool,
-    elevate: bool,
-    missing: bool,
-    all_permissions: dict[str, bool],
-    mongo: Mongo,
-    no_permissions: dict[str, bool],
-    snapshot: SnapshotAssertion,
-):
-    """
-    Test that permissions assigned to keys and sessions are updated correctly.
-
-    Keys should only lose permissions that are disabled on the account. They should not
-    receive new permissions as part of a user update.
-
-    Sessions should be changed to match the user account permissions.
-    """
-    permissions = dict(no_permissions if elevate else all_permissions)
-
-    if missing and not elevate:
-        permissions.update(
-            {Permission.create_sample.value: False, Permission.upload_file.value: False}
-        )
-
-    await mongo.keys.insert_one(
-        {
-            "_id": "foobar",
-            "administrator": False,
-            "groups": ["peasants"],
-            "permissions": permissions,
-            "user": {"id": "bob"},
-        }
-    )
-
-    await update_keys(
-        mongo,
-        "bob",
-        administrator,
-        ["peasants", "kings"],
-        all_permissions if elevate else no_permissions,
-    )
-
-    assert await mongo.keys.find_one() == snapshot

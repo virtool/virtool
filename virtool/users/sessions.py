@@ -79,11 +79,14 @@ class SessionData(DataLayerDomain):
         :param ip: the ip address of the client
         :return: the session id, the session model, and the session token
         """
-        session_id = await self._create_session_id()
 
-        session = Session(created_at=virtool.utils.timestamp(), ip=ip, id=session_id)
+        session = Session(
+            created_at=virtool.utils.timestamp(),
+            ip=ip,
+            id=await self._create_session_id(),
+        )
 
-        await self.redis.set(session_id, dump_string(session), expire=600)
+        await self.redis.set(session.id, dump_string(session), expire=600)
 
         return session
 

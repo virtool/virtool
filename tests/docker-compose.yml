@@ -19,7 +19,7 @@ services:
       POSTGRES_PASSWORD: virtool
       POSTGRES_USER: virtool
       POSTGRES_DB: virtool
-    image: postgres:14.5
+    image: postgres:14.9
     ports:
       - 9002:5432
 
