@@ -31,8 +31,8 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.routes import Routes
-from virtool.http.schema import schema
+from virtool.api.routes import Routes
+from virtool.api.schema import schema
 from virtool.uploads.utils import naive_validator, multipart_file_chunker
 
 routes = Routes()
