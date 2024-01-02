@@ -222,10 +222,8 @@ async def upload(req: Request) -> Response:
     if analysis_format and analysis_format not in AnalysisFormat.to_list():
         raise APIBadRequest("Unsupported analysis file format")
 
-    print(req)
-    print((await req.multipart()).__dict__)
     reader = await req.multipart()
-    multipart_file_chunker(reader)
+
     try:
         analysis_file = await get_data_from_req(req).analyses.upload_file(
             multipart_file_chunker(reader), analysis_id, analysis_format, name

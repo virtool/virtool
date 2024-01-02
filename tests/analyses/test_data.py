@@ -158,7 +158,7 @@ async def test_upload_file(
 
     """
     user_id = set_up_sample
-    analysis = await data_layer.analyses.create(
+    await data_layer.analyses.create(
         "test_sample",
         "test_ref",
         ["subtraction_1", "subtraction_2"],

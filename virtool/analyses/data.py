@@ -57,7 +57,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
-from virtool.uploads.utils import multipart_file_chunker, naive_writer
+from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks, base_processor
 
