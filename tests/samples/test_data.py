@@ -6,7 +6,6 @@ from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner
 from tests.samples.test_api import get_sample_data
-from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
@@ -16,8 +15,6 @@ from virtool.users.oas import UpdateUserRequest
 from virtool.pg.utils import get_row_by_id
 
 from virtool.uploads.models import SQLUpload
-
-
 from virtool.data.layer import DataLayer
 
 
@@ -83,6 +80,7 @@ class TestRecalculateWorkflowTags:
                 "pathoscope": "complete",
             },
         }
+
 
 class TestCreate:
     @pytest.mark.parametrize(
