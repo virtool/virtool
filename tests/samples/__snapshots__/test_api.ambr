@@ -271,7 +271,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'kellylopez',
+      'handle': 'sallywalker',
       'id': 'bf1b993c',
     }),
     'workflows': dict({
@@ -1593,7 +1593,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'kellylopez',
+      'handle': 'sallywalker',
       'id': 'bf1b993c',
     }),
     'workflows': dict({
@@ -1666,7 +1666,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'tammybrown',
+      'handle': 'zclark',
       'id': '7cf872dc',
     }),
     'workflows': dict({
@@ -1745,7 +1745,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'qtaylor',
+      'handle': 'williamserin',
       'id': '7cf872dc',
     }),
     'workflows': dict({
@@ -1956,6 +1956,9 @@
       'pathoscope': 'complete',
     }),
   })
+# ---
+# name: test_finalize[quality].1
+  <coroutine object ClientResponse.json at 0x7f2b00205d20>
 # ---
 # name: test_find_analyses
   dict({
