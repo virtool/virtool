@@ -8,7 +8,6 @@
     'message': 'This is test message 2',
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -23,7 +22,6 @@
     'message': 'This is a test message',
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -38,7 +36,6 @@
     'message': 'Updated Message',
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),

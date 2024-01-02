@@ -9,8 +9,8 @@ from aiohttp import ClientConnectorError
 from humanfriendly.testing import TemporaryDirectory
 
 from virtool.api.custom_json import dump_string
+from virtool.data.http import download_file
 from virtool.errors import WebError
-from virtool.http.utils import download_file
 from virtool.references.utils import (
     check_import_data,
     load_reference_file,

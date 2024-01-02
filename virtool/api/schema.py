@@ -4,7 +4,7 @@ from functools import wraps
 import aiohttp.web
 import cerberus
 
-from virtool.api.response import InvalidInput
+from virtool.api.errors import APIInvalidInput
 from virtool.types import RouteHandler
 
 
@@ -15,8 +15,8 @@ def schema(schema_dict: dict):
     The validated json body will be available by `request["data"]`.
 
     :param schema_dict: The cerberus validation schema.
-    :return: A decorator which wraps a :class:`RouteHandler`, ensuring that the JSON body
-        of the request matches the cerberus schema.
+    :return: A decorator which wraps a :class:`RouteHandler`, ensuring that the JSON
+        body of the request matches the cerberus schema.
     """
     validator = cerberus.Validator(schema_dict, purge_unknown=True)
 
@@ -30,7 +30,7 @@ def schema(schema_dict: dict):
 
             request["data"] = validator.validated(data)
             if not request["data"]:
-                raise InvalidInput(validator.errors)
+                raise APIInvalidInput(validator.errors)
 
             return await handler(request)
 

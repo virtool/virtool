@@ -1,4 +1,5 @@
 import pytest
+from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from virtool.data.layer import DataLayer
@@ -55,7 +56,13 @@ async def test_get(snapshot, spawn_client, static_time):
         "none_all",
     ],
 )
-async def test_edit(body, status, snapshot, spawn_client, static_time):
+async def test_update(
+    body: dict,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
+):
     client = await spawn_client(authenticated=True)
 
     await get_data_from_app(client.app).settings.update(

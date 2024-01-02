@@ -9,6 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import UpdateResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
@@ -20,7 +21,7 @@ from virtool.data.events import emits, Operation
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
-from virtool.http.client import UserClient
+from virtool.api.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.db import AttachLabelsTransform
@@ -456,7 +457,10 @@ class SamplesData(DataLayerDomain):
         if document is None:
             return True
 
-        if client.administrator or document["user"]["id"] == client.user_id:
+        if (
+            client.administrator_role == AdministratorRole.FULL
+            or client.user_id == document["user"]["id"]
+        ):
             return True
 
         is_group_member = bool(document["group"] and document["group"] in client.groups)

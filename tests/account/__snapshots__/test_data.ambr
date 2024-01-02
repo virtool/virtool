@@ -1,175 +1,6 @@
 # serializer version: 1
-# name: test_create_api_key[has permission-full][dl]
+# name: test_create_api_key[does_not_have_permission][data]
   dict({
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      dict({
-        'id': 2,
-        'legacy_id': None,
-        'name': 'hydrogeologists',
-      }),
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'musicians',
-      }),
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-  })
-# ---
-# name: test_create_api_key[has permission-full][mongo]
-  dict({
-    '_id': 'baz',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      2,
-      1,
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_create_api_key[has permission-none][dl]
-  dict({
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      dict({
-        'id': 2,
-        'legacy_id': None,
-        'name': 'hydrogeologists',
-      }),
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'musicians',
-      }),
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-  })
-# ---
-# name: test_create_api_key[has permission-none][mongo]
-  dict({
-    '_id': 'baz',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      2,
-      1,
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_create_api_key[missing permission-full][dl]
-  dict({
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      dict({
-        'id': 2,
-        'legacy_id': None,
-        'name': 'hydrogeologists',
-      }),
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'musicians',
-      }),
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-  })
-# ---
-# name: test_create_api_key[missing permission-full][mongo]
-  dict({
-    '_id': 'baz',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      2,
-      1,
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_create_api_key[missing permission-none][dl]
-  dict({
-    'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       dict({
@@ -197,10 +28,9 @@
     }),
   })
 # ---
-# name: test_create_api_key[missing permission-none][mongo]
+# name: test_create_api_key[does_not_have_permission][mongo]
   dict({
     '_id': 'baz',
-    'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       2,
@@ -209,14 +39,56 @@
     'id': 'foo_0',
     'name': 'Foo',
     'permissions': dict({
+      'create_sample': True,
+      'modify_subtraction': True,
+    }),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_create_api_key[has_permission][data]
+  dict({
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'hydrogeologists',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
+    ]),
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
       'modify_hmm': False,
-      'modify_subtraction': False,
+      'modify_subtraction': True,
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
+    }),
+  })
+# ---
+# name: test_create_api_key[has_permission][mongo]
+  dict({
+    '_id': 'baz',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': list([
+      2,
+      1,
+    ]),
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': dict({
+      'create_sample': True,
+      'modify_subtraction': True,
     }),
     'user': dict({
       'id': 'bf1b993c',

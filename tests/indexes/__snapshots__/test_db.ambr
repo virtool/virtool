@@ -95,7 +95,6 @@
     'id': 'baz',
     'modified_otu_count': 2,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),

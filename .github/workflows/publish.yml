@@ -8,7 +8,6 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-
   hooks:
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool'

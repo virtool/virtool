@@ -1,5 +1,3 @@
-from typing import Union, Tuple, List
-
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.account import Account
@@ -7,7 +5,7 @@ from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
 
 import virtool.utils
-from virtool.account.db import (
+from virtool.account.mongo import (
     compose_password_update,
 )
 from virtool.account.oas import (
@@ -32,7 +30,6 @@ from virtool.utils import base_processor
 
 PROJECTION = (
     "_id",
-    "administrator",
     "email",
     "handle",
     "groups",
@@ -61,24 +58,27 @@ class AccountData(DataLayerDomain):
 
     async def get(self, user_id: str) -> Account:
         """
-        Find complete user document.
+        Get the account for the given ``user_id``.
 
         :param user_id: the user ID
         :return: the user account
         """
         user = await self.data.users.get(user_id)
 
-        return Account(
-            **{
-                **user.dict(),
-                "settings": {
-                    "quick_analyze_workflow": "nuvs",
-                    "show_ids": False,
-                    "show_versions": False,
-                    "skip_quick_analyze_dialog": False,
-                },
-            }
-        )
+        if user:
+            return Account(
+                **{
+                    **user.dict(),
+                    "settings": {
+                        "quick_analyze_workflow": "nuvs",
+                        "show_ids": False,
+                        "show_versions": False,
+                        "skip_quick_analyze_dialog": False,
+                    },
+                }
+            )
+
+        raise ResourceNotFoundError("User not found")
 
     async def update(self, user_id: str, data: UpdateAccountRequest) -> Account:
         """
@@ -103,7 +103,13 @@ class AccountData(DataLayerDomain):
         if "email" in data_dict:
             update["email"] = data_dict["email"]
 
-        await self._mongo.users.update_one({"_id": user_id}, {"$set": update})
+        if update:
+            result = await self._mongo.users.update_one(
+                {"_id": user_id}, {"$set": update}
+            )
+
+            if result.modified_count == 0:
+                raise ResourceNotFoundError("User not found")
 
         return await self.get(user_id)
 
@@ -142,7 +148,7 @@ class AccountData(DataLayerDomain):
 
         return AccountSettings(**settings)
 
-    async def get_keys(self, user_id: str) -> List[APIKey]:
+    async def get_keys(self, user_id: str) -> list[APIKey]:
         """
         Gets API keys associated with the authenticated user account.
 
@@ -182,6 +188,8 @@ class AccountData(DataLayerDomain):
             },
         )
 
+        user = await self.data.users.get(user_id)
+
         if not document:
             raise ResourceNotFoundError
 
@@ -192,6 +200,10 @@ class AccountData(DataLayerDomain):
             ],
         )
 
+        document["permissions"] = limit_permissions(
+            document["permissions"], user.permissions.dict()
+        )
+
         return APIKey(
             **{
                 **document,
@@ -200,8 +212,10 @@ class AccountData(DataLayerDomain):
         )
 
     async def create_key(
-        self, data: CreateKeysRequest, user_id: str
-    ) -> Tuple[str, APIKey]:
+        self,
+        data: CreateKeysRequest,
+        user_id: str,
+    ) -> tuple[str, APIKey]:
         """
         Create a new API key.
 
@@ -209,33 +223,21 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         :return: the API key
         """
-        permissions_dict = data.permissions.dict(exclude_unset=True)
 
         user = await self.data.users.get(user_id)
 
-        key_permissions = {
-            **virtool.users.utils.generate_base_permissions(),
-            **permissions_dict,
-        }
-
-        if not user.administrator:
-            key_permissions = virtool.users.utils.limit_permissions(
-                key_permissions, user.permissions.dict()
-            )
-
         raw, hashed = virtool.utils.generate_key()
 
-        id_ = await virtool.account.db.get_alternate_id(self._mongo, data.name)
+        id_ = await virtool.account.mongo.get_alternate_id(self._mongo, data.name)
 
         await self._mongo.keys.insert_one(
             {
                 "_id": hashed,
                 "id": id_,
-                "administrator": user.administrator,
-                "name": data.name,
-                "groups": [group.id for group in user.groups],
-                "permissions": key_permissions,
                 "created_at": virtool.utils.timestamp(),
+                "groups": [group.id for group in user.groups],
+                "name": data.name,
+                "permissions": data.permissions.dict(exclude_unset=True),
                 "user": {"id": user_id},
             }
         )
@@ -262,30 +264,25 @@ class AccountData(DataLayerDomain):
         :return: the API key
         """
         if data.permissions is None:
-            permissions_update = {}
+            update = {}
         else:
-            permissions_update = data.permissions.dict(exclude_unset=True)
+            update = data.permissions.dict(exclude_unset=True)
 
         if not await self._mongo.keys.count_documents({"id": key_id}):
             raise ResourceNotFoundError()
 
-        user = await self.get(user_id)
-
-        # The permissions currently assigned to the API key.
-        key_permissions = await get_one_field(
-            self._mongo.keys, "permissions", {"id": key_id, "user.id": user_id}
-        )
-
-        key_permissions.update(permissions_update)
-
-        if not user.administrator:
-            key_permissions = limit_permissions(
-                key_permissions, user.permissions.dict()
-            )
+        new_permissions = {
+            **(
+                await get_one_field(
+                    self._mongo.keys, "permissions", {"id": key_id, "user.id": user_id}
+                )
+            ),
+            **update,
+        }
 
         await self._mongo.keys.update_one(
             {"id": key_id},
-            {"$set": {"permissions": key_permissions}},
+            {"$set": {"permissions": new_permissions}},
         )
 
         return await self.get_key(user_id, key_id)
@@ -333,11 +330,10 @@ class AccountData(DataLayerDomain):
         Check if user password should be reset and return a reset code if it
         should be.
 
-        :param ip: the ip address of the requesiton client
+        :param ip: the ip address of the requesting client
         :param user_id: the login session ID
         :param session_id: the id of the session getting the reset code
-        :param remember: boolean indicating whether the sessions
-        should be remembered
+        :param remember: boolean indicating whether the sessions should be remembered
         """
 
         if await get_one_field(self._mongo.users, "force_reset", user_id):
@@ -359,7 +355,7 @@ class AccountData(DataLayerDomain):
 
     async def reset(
         self, session_id: str, data: ResetPasswordRequest, ip: str
-    ) -> Tuple[Session, str]:
+    ) -> tuple[Session, str]:
         """
         Resets the password for a session user.
 

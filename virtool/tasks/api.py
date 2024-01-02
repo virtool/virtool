@@ -4,10 +4,11 @@ from typing import List
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400
 
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound
+from virtool.api.custom_json import json_response
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.tasks.oas import GetTasksResponse, TaskResponse
 
 routes = Routes()
@@ -65,6 +66,6 @@ class TaskView(PydanticView):
         try:
             task = await get_data_from_req(self.request).tasks.get(task_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(task)

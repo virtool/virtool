@@ -1,7 +1,7 @@
-from virtool.api.response import json_response
+from virtool.api.custom_json import json_response
 from virtool.config import get_config_from_req
-from virtool.http.policy import policy, PublicRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, PublicRoutePolicy
+from virtool.api.routes import Routes
 from virtool.data.utils import get_data_from_req
 
 API_URL_ROOT = "https://www.virtool.ca/docs/api"

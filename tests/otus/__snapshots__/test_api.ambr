@@ -410,7 +410,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -531,7 +530,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -660,7 +658,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -773,7 +770,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -894,7 +890,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1023,7 +1018,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1152,7 +1146,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1265,7 +1258,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1378,7 +1370,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1491,7 +1482,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1607,7 +1597,6 @@
       'id': '6116cba1.0',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),
@@ -1657,7 +1646,6 @@
       'id': '6116cba1.0',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),
@@ -1707,7 +1695,6 @@
       'id': '6116cba1.0',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),
@@ -1757,7 +1744,6 @@
       'id': '6116cba1.0',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),
@@ -3104,7 +3090,6 @@
       'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'fb085f7f',
       }),

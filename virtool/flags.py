@@ -1,8 +1,9 @@
 from typing import List, Callable
 from enum import Enum
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPNotFound
 from aiohttp.web import Request
+
+from virtool.api.errors import APINotFound
 
 
 class FlagName(Enum):
@@ -63,6 +64,6 @@ async def feature_flag_middleware(req: Request, handler: Callable):
         feature_flag is not None
         and req.app["flags"].check_flag_enabled(feature_flag) is False
     ):
-        raise HTTPNotFound
+        raise APINotFound
 
     return await handler(req)

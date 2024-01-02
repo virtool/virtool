@@ -2,13 +2,23 @@ import asyncio
 import math
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union, Mapping, Any
+from typing import Union
+from typing import Dict, List, Optional, Tuple, Mapping, Any
 
 from aiohttp.web import Request
+from aiohttp.web_response import Response
 from multidict import MultiDictProxy
 
 from virtool.types import Projection, Document
 from virtool.utils import coerce_list, to_bool
+
+
+def set_session_id_cookie(resp: Response, session_id: str):
+    resp.set_cookie("session_id", session_id, httponly=True, max_age=2600000)
+
+
+def set_session_token_cookie(resp: Response, session_token: str):
+    resp.set_cookie("session_token", session_token, httponly=True, max_age=2600000)
 
 
 @dataclass

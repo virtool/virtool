@@ -9,9 +9,11 @@ into JSON. The pretty dumper is used for formatting JSON for viewing in the brow
 
 """
 import datetime
+from typing import Any
 
 import arrow
 import orjson
+from aiohttp.web import Response
 from pydantic import BaseModel
 
 
@@ -88,3 +90,24 @@ def dump_pretty_bytes(obj: object) -> bytes:
         | orjson.OPT_NAIVE_UTC
         | orjson.OPT_UTC_Z,
     )
+
+
+def json_response(
+    data: Any, status: int = 200, headers: dict[str, str] | None = None
+) -> Response:
+    """
+    Return a response object whose attached JSON dict will be formatted by middleware
+    depending on the request's `Accept` header.
+
+    :param data: the data to send in the response as JSON
+    :param status: the HTTP status code for the response
+    :param headers: HTTP response headers
+    :return: the response
+
+    """
+    headers = headers or {}
+
+    resp = Response(status=status, headers=headers)
+    resp["json_data"] = data
+
+    return resp

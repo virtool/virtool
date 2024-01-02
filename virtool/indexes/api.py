@@ -2,18 +2,18 @@ from asyncio import to_thread
 from typing import Union
 
 from aiohttp.web import FileResponse, Request
-from aiohttp.web_exceptions import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 from pydantic import Field
 from virtool_core.models.index import IndexSearchResult
 
-from virtool.api.response import InsufficientRights, NotFound, json_response
+from virtool.api.errors import APINotFound, APIInsufficientRights, APIConflict, APINoContent
+from virtool.api.custom_json import json_response
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
-from virtool.http.routes import Routes
+from virtool.api.routes import Routes
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.oas import (
     ListIndexesResponse,
@@ -30,8 +30,7 @@ routes = Routes()
 class IndexesView(PydanticView):
     async def get(
         self,
-        ready: bool
-        | None = Field(
+        ready: bool | None = Field(
             default=False,
             description="Return only indexes that are ready for use in analysis.",
         ),
@@ -71,7 +70,7 @@ class IndexView(PydanticView):
         try:
             index = await get_data_from_req(self.request).index.get(index_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(index)
 
@@ -89,7 +88,7 @@ async def download_otus_json(req):
             req.match_info["index_id"]
         )
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
 
     return FileResponse(
         json_path,
@@ -113,17 +112,17 @@ class IndexFileView(PydanticView):
             404: Not found
         """
         if filename not in INDEX_FILE_NAMES:
-            raise NotFound()
+            raise APINotFound()
 
         try:
             reference = await get_data_from_req(self.request).index.get_reference(
                 index_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         if not await check_right(self.request, reference.id, "read"):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         path = (
             join_index_path(
@@ -141,7 +140,7 @@ class IndexFileView(PydanticView):
                 },
             )
 
-        raise NotFound("File not found")
+        raise APINotFound("File not found")
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
@@ -156,12 +155,12 @@ async def download_index_file_for_jobs(req: Request):
     filename = req.match_info["filename"]
 
     if filename not in INDEX_FILE_NAMES:
-        raise NotFound()
+        raise APINotFound()
 
     try:
         reference = await get_data_from_req(req).index.get_reference(index_id)
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
 
     path = (
         join_index_path(get_config_from_req(req).data_path, reference.id, index_id)
@@ -171,7 +170,7 @@ async def download_index_file_for_jobs(req: Request):
     if await to_thread(path.exists):
         return FileResponse(path)
 
-    raise NotFound("File not found")
+    raise APINotFound("File not found")
 
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
@@ -185,12 +184,12 @@ async def upload(req):
     name = req.match_info["filename"]
 
     if name not in INDEX_FILE_NAMES:
-        raise NotFound("Index file not found")
+        raise APINotFound("Index file not found")
 
     try:
         reference = await get_data_from_req(req).index.get_reference(index_id)
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
     file_type = check_index_file_type(name)
 
@@ -199,7 +198,7 @@ async def upload(req):
             reference.id, index_id, file_type, name, req.multipart
         )
     except ResourceConflictError:
-        raise HTTPConflict(text="File name already exists")
+        raise APIConflict("File name already exists")
 
     return json_response(
         index_file,
@@ -221,9 +220,9 @@ async def finalize(req):
     try:
         document = await get_data_from_req(req).index.finalize(index_id)
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound
     except ResourceConflictError as err:
-        raise HTTPConflict(text=str(err))
+        raise APIConflict(str(err))
 
     return json_response(document)
 
@@ -246,7 +245,7 @@ class IndexHistoryView(PydanticView):
                 index_id, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(data)
 
@@ -263,6 +262,6 @@ async def delete_index(req: Request):
     try:
         await get_data_from_req(req).index.delete(index_id)
     except ResourceNotFoundError:
-        raise NotFound(f"There is no index with id: {index_id}.")
+        raise APINotFound(f"There is no index with id: {index_id}.")
 
-    raise HTTPNoContent
+    raise APINoContent()

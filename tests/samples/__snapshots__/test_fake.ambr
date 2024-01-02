@@ -32,7 +32,6 @@
     'subtractions': list([
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
@@ -76,7 +75,6 @@
     'subtractions': list([
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
@@ -239,7 +237,6 @@
     'subtractions': list([
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
@@ -412,7 +409,6 @@
     'subtractions': list([
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),

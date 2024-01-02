@@ -6,18 +6,14 @@ import asyncio
 from typing import Union
 
 from aiohttp.web import Response
-from aiohttp.web_exceptions import (
-    HTTPBadGateway,
-    HTTPBadRequest,
-    HTTPConflict,
-)
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadGateway, APIConflict
+from virtool.api.custom_json import json_response
 from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -26,8 +22,8 @@ from virtool.data.errors import (
     ResourceError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, AdministratorRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.mongo.utils import get_one_field
 
 routes = Routes()
@@ -101,9 +97,9 @@ class ReleaseView(PydanticView):
         try:
             status = await get_data_from_req(self.request).hmms.get_status()
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         except ResourceRemoteError as err:
-            raise HTTPBadGateway(text=str(err))
+            raise APIBadGateway(str(err))
 
         return json_response(status.release)
 
@@ -143,9 +139,9 @@ class UpdatesView(PydanticView):
                 self.request["client"].user_id
             )
         except ResourceConflictError as err:
-            raise HTTPConflict(text=str(err))
+            raise APIConflict(str(err))
         except ResourceError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadGateway(str(err))
 
         return json_response(update)
 
@@ -165,7 +161,7 @@ class HMMView(PydanticView):
         try:
             hmm = await get_data_from_req(self.request).hmms.get(hmm_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(hmm)
 
@@ -180,7 +176,7 @@ async def get(req):
     try:
         hmm = await get_data_from_req(req).hmms.get(req.match_info["hmm_id"])
     except ResourceNotFoundError:
-        raise NotFound()
+        raise APINotFound()
 
     return json_response(hmm)
 
@@ -222,7 +218,7 @@ async def get_hmm_profiles(req):
     try:
         path = await get_data_from_req(req).hmms.get_profiles_path()
     except ResourceNotFoundError:
-        raise NotFound
+        raise APINotFound()
 
     return FileResponse(
         path,

@@ -5,6 +5,7 @@ from datetime import datetime
 from shutil import rmtree
 from typing import Tuple, Optional, List
 
+import sentry_sdk
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -21,7 +22,7 @@ from virtool.analyses.checks import (
     check_if_analysis_running,
     check_if_analysis_modified,
 )
-from virtool.analyses.db import TARGET_FILES
+from virtool.analyses.db import TARGET_FILES, filter_analyses_by_sample_rights
 from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.analyses.utils import (
@@ -45,9 +46,12 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.db import lookup_nested_reference_by_id
+from virtool.references.transforms import AttachReferenceTransform
+from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     lookup_nested_subtractions,
+    AttachSubtractionsTransform,
 )
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -93,13 +97,10 @@ class AnalysisData(DataLayerDomain):
             {
                 "$facet": {
                     "total_count": [{"$count": "total_count"}],
-                    "found_count": [{"$count": "found_count"}],
                     "data": [
                         {"$sort": sort},
                         {"$skip": skip_count},
                         {"$limit": per_page},
-                        *lookup_nested_subtractions(),
-                        *lookup_nested_reference_by_id(),
                     ],
                 }
             },
@@ -118,63 +119,51 @@ class AnalysisData(DataLayerDomain):
                         "updated_at": True,
                         "user": True,
                     },
-                    "found_count": {"$arrayElemAt": ["$found_count.found_count", 0]},
+                    "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
                 }
             },
         ]
 
-        async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
-            data = paginate_dict["data"]
-            found_count: int = paginate_dict.get("found_count", 0)
+        data: tuple[list[dict], int] | None = None
 
-        if sample_id is not None:
-            can_read = [
-                virtool.samples.db.check_rights_error_check(
-                    self._mongo,
-                    sample_id,
-                    client,
-                    write=False,
+        with sentry_sdk.start_span(op="mongo", description="aggregate_find_analyses"):
+            async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
+                data = (
+                    paginate_dict["data"],
+                    paginate_dict.get("total_count", 0),
                 )
-            ]
-        else:
-            can_read = [
-                virtool.samples.db.check_rights_error_check(
-                    self._mongo,
-                    document["sample"]["id"],
-                    client,
-                    write=False,
-                )
-                for document in data
-            ]
+                break
 
-        per_document_can_read = await asyncio.gather(*can_read)
+        if data is None:
+            raise ValueError("No data returned in aggregation")
 
-        documents = [
-            document
-            for document, can_write in zip(data, per_document_can_read)
-            if can_write
-        ]
+        documents, total_count = data
+
+        with sentry_sdk.start_span(
+            op="mongo", description="filter_analyses_by_sample_rights"
+        ):
+            documents = await filter_analyses_by_sample_rights(
+                client, self._mongo, documents
+            )
+
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
-            [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
-        )
-
-        documents, total_count = await asyncio.gather(
-            apply_transforms(
-                [base_processor(d) for d in documents],
-                [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
-            ),
-            self._mongo.analyses.count_documents({}),
+            [
+                AttachJobTransform(self._mongo),
+                AttachReferenceTransform(self._mongo),
+                AttachSubtractionsTransform(self._mongo),
+                AttachUserTransform(self._mongo),
+            ],
         )
 
         return AnalysisSearchResult(
             **{
                 "documents": documents,
             },
-            found_count=found_count,
+            found_count=total_count,
             total_count=total_count,
             page=page,
-            page_count=int(math.ceil(found_count / per_page)),
+            page_count=int(math.ceil(total_count / per_page)),
             per_page=per_page,
         )
 

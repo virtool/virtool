@@ -72,7 +72,6 @@
 # ---
 # name: TestCreateUser.test_ok[obj]
   dict({
-    'administrator': False,
     'build': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'handle': 'zclark',
@@ -152,13 +151,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
@@ -226,13 +223,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
@@ -300,13 +295,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
@@ -374,13 +367,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
@@ -448,13 +439,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
@@ -522,13 +511,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
@@ -640,7 +627,6 @@
 # ---
 # name: TestUpdateUser.test_ok[obj_1]
   dict({
-    'administrator': False,
     'build': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'handle': 'zclark',
@@ -652,7 +638,6 @@
 # ---
 # name: TestUpdateUser.test_ok[obj_2]
   dict({
-    'administrator': False,
     'build': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'handle': 'zclark',

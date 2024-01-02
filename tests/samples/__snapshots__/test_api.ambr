@@ -11,62 +11,13 @@
     'message': 'Sample name is already in use',
   })
 # ---
-# name: TestCreate.test_ok[force_choice][location]
-  '/samples/fb085f7f'
-# ---
-# name: TestCreate.test_ok[force_choice][mongo]
-  dict({
-    '_id': 'fb085f7f',
-    'all_read': True,
-    'all_write': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'format': 'fastq',
-    'group': 2,
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'job': dict({
-      'id': 'bf1b993c',
-    }),
-    'labels': list([
-      1,
-    ]),
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      'apple',
-    ]),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    }),
-  })
-# ---
 # name: TestCreate.test_ok[force_choice][resp]
   dict({
     'all_read': True,
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
     'group': 2,
     'group_read': True,
@@ -78,13 +29,12 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -116,57 +66,7 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
-      'id': 'bf1b993c',
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    }),
-  })
-# ---
-# name: TestCreate.test_ok[none][location]
-  '/samples/fb085f7f'
-# ---
-# name: TestCreate.test_ok[none][mongo]
-  dict({
-    '_id': 'fb085f7f',
-    'all_read': True,
-    'all_write': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'format': 'fastq',
-    'group': None,
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'job': dict({
-      'id': 'bf1b993c',
-    }),
-    'labels': list([
-      1,
-    ]),
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      'apple',
-    ]),
-    'user': dict({
       'id': 'bf1b993c',
     }),
     'workflows': dict({
@@ -182,7 +82,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
     'group': None,
     'group_read': True,
@@ -194,13 +94,12 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -232,57 +131,7 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
-      'id': 'bf1b993c',
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    }),
-  })
-# ---
-# name: TestCreate.test_ok[users_primary_group][location]
-  '/samples/fb085f7f'
-# ---
-# name: TestCreate.test_ok[users_primary_group][mongo]
-  dict({
-    '_id': 'fb085f7f',
-    'all_read': True,
-    'all_write': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'format': 'fastq',
-    'group': 2,
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'job': dict({
-      'id': 'bf1b993c',
-    }),
-    'labels': list([
-      1,
-    ]),
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      'apple',
-    ]),
-    'user': dict({
       'id': 'bf1b993c',
     }),
     'workflows': dict({
@@ -298,7 +147,7 @@
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
     'group': 2,
     'group_read': True,
@@ -310,13 +159,12 @@
     'isolate': '',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -348,7 +196,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -424,7 +271,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     }),
@@ -465,7 +311,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -502,7 +347,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -533,7 +377,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -575,7 +418,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -617,7 +459,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -654,7 +495,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -707,7 +547,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -744,7 +583,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -786,7 +624,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -828,7 +665,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -865,7 +701,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -896,238 +731,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFind.test_page_perpage[2-1]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 2,
-    'per_page': 2,
-    'total_count': 3,
-  })
-# ---
-# name: TestFind.test_page_perpage[2-2]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 2,
-    'page_count': 2,
-    'per_page': 2,
-    'total_count': 3,
-  })
-# ---
-# name: TestFind.test_page_perpage[None-None]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1169,7 +772,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1206,7 +808,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1237,7 +838,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1279,7 +879,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1316,7 +915,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1347,7 +945,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1395,7 +992,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1426,7 +1022,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1474,7 +1069,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1505,7 +1099,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1547,7 +1140,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1589,7 +1181,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1631,7 +1222,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1668,7 +1258,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1699,7 +1288,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1747,7 +1335,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1789,7 +1376,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1826,7 +1412,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1857,7 +1442,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1899,7 +1483,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1930,1283 +1513,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_labels[None]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_labels[labels1]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_labels[labels2]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_labels[labels3]
-  dict({
-    'documents': list([
-    ]),
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_page_perpage[2-1]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 2,
-    'per_page': 2,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_page_perpage[2-2]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 2,
-    'page_count': 2,
-    'per_page': 2,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_page_perpage[None-None]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_term[None-/samples]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_term[None-/spaces/0/samples]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_term[gv-/samples]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_term[gv-/spaces/0/samples]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_term[sp-/samples]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_term[sp-/spaces/0/samples]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_workflows[None]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_workflows[workflows1]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_workflows[workflows2]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
-        'host': '',
-        'id': 'beb1eb10',
-        'isolate': 'Thing',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-          dict({
-            'color': '#8f837f',
-            'description': 'Leader bad school.',
-            'id': 2,
-            'name': 'Class',
-          }),
-        ]),
-        'library_type': 'normal',
-        'name': '16GVP042',
-        'notes': '',
-        'nuvs': True,
-        'pathoscope': True,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFindSamples.test_workflows[workflows3]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
-          'handle': 'zclark',
-          'id': 'fb085f7f',
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#ae686a',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Market',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -3287,7 +1593,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     }),
@@ -3361,7 +1666,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'tammybrown',
       'id': '7cf872dc',
     }),
@@ -3441,7 +1745,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'qtaylor',
       'id': '7cf872dc',
     }),
@@ -3515,7 +1818,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'fb085f7f',
     }),
@@ -3556,7 +1858,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -3581,7 +1882,6 @@
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -3600,7 +1900,7 @@
         'size': 34879234,
       }),
     ]),
-    'created_at': '1970-01-01T00:00:13Z',
+    'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
@@ -3654,16 +1954,23 @@
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
         'sample': 'test',
-        'size': 12,
+        'size': 2903109210,
         'upload': None,
-        'uploaded_at': '2023-09-01T01:01:00Z',
+        'uploaded_at': '2015-10-06T20:00:00Z',
       }),
     ]),
     'ready': True,
     'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 'pear',
+        'name': 'Pear',
+      }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     }),
@@ -3672,6 +1979,118 @@
       'nuvs': 'pending',
       'pathoscope': 'complete',
     }),
+  })
+# ---
+# name: test_find_analyses
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'jobs_aodp',
+        }),
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+    ]),
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
   })
 # ---
 # name: test_find_analyses[Baz-None]
@@ -3715,6 +2134,70 @@
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
         }),
         'workflow': 'pathoscope_bowtie',
       }),
@@ -3767,6 +2250,70 @@
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
         }),
         'workflow': 'pathoscope_bowtie',
       }),

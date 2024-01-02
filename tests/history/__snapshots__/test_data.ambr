@@ -20,7 +20,6 @@
       'name': 'Reference A',
     }),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -45,7 +44,6 @@
       'name': 'Reference A',
     }),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
