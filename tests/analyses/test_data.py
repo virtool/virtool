@@ -5,7 +5,7 @@ from tests.analyses.test_api import create_files
 from tests.fixtures.snapshot_date import snapshot_recent
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
-from virtool.http.client import UserClient
+from virtool.api.client import UserClient
 from virtool.mongo.core import Mongo
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.pg.utils import get_row_by_id
