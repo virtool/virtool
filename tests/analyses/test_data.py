@@ -170,9 +170,9 @@ async def test_upload_file(
 
     chunks = fake_file_chunker(example_path / "reads/single.fq.gz")
 
-    analysis = await data_layer.analyses.upload_file(
+    analysis_file = await data_layer.analyses.upload_file(
         chunks, "test_analysis", "fasta", "test"
     )
 
-    assert analysis == snapshot_recent()
+    assert analysis_file == snapshot_recent()
     assert await get_row_by_id(data_layer.analyses._pg, SQLAnalysisFile, 1)
