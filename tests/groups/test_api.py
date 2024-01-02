@@ -129,9 +129,7 @@ class TestUpdate:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
-async def test_delete(
-    status: int, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
-):
+async def test_delete(status: int, fake2: DataFaker, spawn_client: ClientSpawner):
     """
     Test that an existing document can be removed at ``DELETE /groups/:group_id``.
 

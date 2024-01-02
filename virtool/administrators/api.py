@@ -1,7 +1,7 @@
 import asyncio
-from typing import Union, Optional
+from typing import Union
 
-from aiohttp.web_exceptions import HTTPForbidden, HTTPBadRequest
+
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404, r202, r400, r201, r403
@@ -17,7 +17,8 @@ from virtool.administrators.oas import (
     UserResponse,
     RunActionRequest,
 )
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APIForbidden
+from virtool.api.custom_json import json_response
 from virtool.authorization.client import (
     AuthorizationClient,
     get_authorization_client_from_req,
@@ -28,8 +29,8 @@ from virtool.data.errors import (
     ResourceConflictError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, AdministratorRoutePolicy
-from virtool.http.routes import Routes
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.flags import flag, FlagName
 from virtool.users.checks import check_password_length
 from virtool.users.oas import CreateUserRequest
@@ -106,17 +107,17 @@ class AdminUsersView(PydanticView):
             403: Not permitted
         """
         if data.handle == "virtool":
-            raise HTTPBadRequest(text="Reserved user name: virtool")
+            raise APIBadRequest("Reserved user name: virtool")
 
         if error := await check_password_length(self.request, password=data.password):
-            raise HTTPBadRequest(text=error)
+            raise APIBadRequest(error)
 
         try:
             user = await get_data_from_req(self.request).users.create(
                 data.handle, data.password, data.force_reset
             )
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(
             user,
@@ -142,7 +143,7 @@ class AdminUserView(PydanticView):
         try:
             user = await get_data_from_req(self.request).users.get(user_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(user)
 
@@ -163,14 +164,16 @@ class AdminUserView(PydanticView):
             self.request["client"].user_id,
             user_id,
         ):
-            raise HTTPForbidden(text="Insufficient privileges")
+            raise APIForbidden(
+                "Insufficient privileges", error_id="insufficient_privileges"
+            )
 
         try:
             user = await get_data_from_req(self.request).users.update(user_id, data)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(user)
 
@@ -192,14 +195,14 @@ class AdminRoleView(PydanticView):
         """
 
         if user_id == self.request["client"].user_id:
-            raise HTTPBadRequest(text="Cannot change own role")
+            raise APIBadRequest("Cannot change own role")
 
         try:
             administrator = await get_data_from_req(
                 self.request
             ).users.set_administrator_role(user_id, data.role)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(administrator, status=200)
 
@@ -221,7 +224,7 @@ class AdminActionsView(PydanticView):
         try:
             await get_data_from_req(self.request).administrators.run_action(data.name)
         except ResourceError:
-            raise HTTPBadRequest(text="Invalid action name")
+            raise APIBadRequest("Invalid action name")
 
         return Response(status=202)
 

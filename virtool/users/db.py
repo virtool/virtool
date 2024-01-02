@@ -15,17 +15,16 @@ from virtool.data.errors import ResourceConflictError
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.groups.pg import SQLGroup
 
-ATTACH_PROJECTION = ["_id", "administrator", "handle"]
+ATTACH_PROJECTION = ("_id", "handle")
 
-PROJECTION = [
+PROJECTION = (
     "_id",
-    "handle",
-    "administrator",
     "force_reset",
+    "handle",
     "groups",
     "last_password_change",
     "primary_group",
-]
+)
 
 
 @dataclass

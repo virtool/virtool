@@ -19,6 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
+from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.settings import Settings
 
 import virtool.github
@@ -30,6 +31,7 @@ from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.api.client import UserClient
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
@@ -182,10 +184,10 @@ async def get_reference_users(mongo: "Mongo", document: Document) -> list[Docume
 
 
 async def check_right(req: Request, ref_id: str, right: str) -> bool:
-    if req["client"].administrator:
-        return True
+    client: UserClient = req["client"]
 
-    user_id = req["client"].user_id
+    if client.administrator_role == AdministratorRole.FULL:
+        return True
 
     reference = await req.app["db"].references.find_one(ref_id, ["groups", "users"])
 
@@ -196,7 +198,7 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
     users: list[dict] = reference["users"]
 
     for user in users:
-        if user["id"] == user_id:
+        if user["id"] == client.user_id:
             if user[right]:
                 return True
 

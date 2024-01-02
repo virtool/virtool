@@ -11,7 +11,6 @@ from typing import Any, TYPE_CHECKING
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.subtractions.db
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.utils import get_one_field
@@ -37,10 +36,10 @@ PROJECTION = [
 ADD_SUBTRACTION_FILES_QUERY = {"deleted": False}
 
 
-class AttachSubtractionTransform(AbstractTransform):
+class AttachSubtractionsTransform(AbstractTransform):
     """
     Attach more subtraction detail to a document with a field `subtractions` that
-    contains a list    of subtraction IDs.
+    contains a list of subtraction IDs.
     """
 
     def __init__(self, db):
@@ -59,6 +58,21 @@ class AttachSubtractionTransform(AbstractTransform):
             }
             for subtraction_id in document["subtractions"]
         ]
+
+    async def prepare_many(self, documents: list[Document]) -> dict[str, list[dict]]:
+        subtraction_ids = {s for d in documents for s in d["subtractions"]}
+
+        subtraction_lookup = {
+            d["_id"]: {"id": d["_id"], "name": d["name"]}
+            async for d in self._db.subtraction.find(
+                {"_id": {"$in": list(subtraction_ids)}}, ["_id", "name"]
+            )
+        }
+
+        return {
+            d["id"]: [subtraction_lookup[s] for s in d["subtractions"]]
+            for d in documents
+        }
 
 
 async def attach_computed(
@@ -82,7 +96,7 @@ async def attach_computed(
 
     files, linked_samples = await asyncio.gather(
         get_subtraction_files(pg, subtraction_id),
-        virtool.subtractions.db.get_linked_samples(mongo, subtraction_id),
+        get_linked_samples(mongo, subtraction_id),
     )
 
     for file in files:

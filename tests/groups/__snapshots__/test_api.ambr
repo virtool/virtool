@@ -41,17 +41,14 @@
     }),
     'users': list([
       dict({
-        'administrator': False,
         'handle': 'fcarpenter',
         'id': '7cf872dc',
       }),
       dict({
-        'administrator': False,
         'handle': 'chelsea34',
         'id': '3cbb22cc',
       }),
       dict({
-        'administrator': False,
         'handle': 'michelle34',
         'id': 'da42dca3',
       }),
@@ -95,7 +92,6 @@
     }),
     'users': list([
       dict({
-        'administrator': False,
         'handle': 'qtaylor',
         'id': 'fb085f7f',
       }),

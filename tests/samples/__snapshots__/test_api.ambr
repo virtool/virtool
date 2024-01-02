@@ -35,7 +35,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -67,7 +66,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -102,7 +100,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -134,7 +131,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -169,7 +165,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -201,7 +196,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -277,7 +271,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     }),
@@ -318,7 +311,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -355,7 +347,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -386,7 +377,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -428,7 +418,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -470,7 +459,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -507,7 +495,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -560,7 +547,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -597,7 +583,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -639,7 +624,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -681,7 +665,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -718,7 +701,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -749,7 +731,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -791,7 +772,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -828,7 +808,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -859,7 +838,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -901,7 +879,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -938,7 +915,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -969,7 +945,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1017,7 +992,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1048,7 +1022,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1096,7 +1069,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1127,7 +1099,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1169,7 +1140,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1211,7 +1181,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1253,7 +1222,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1290,7 +1258,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1321,7 +1288,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1369,7 +1335,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1411,7 +1376,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1448,7 +1412,6 @@
         'pathoscope': True,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         }),
@@ -1479,7 +1442,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1521,7 +1483,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1552,7 +1513,6 @@
         'pathoscope': False,
         'ready': True,
         'user': dict({
-          'administrator': False,
           'handle': 'zclark',
           'id': 'fb085f7f',
         }),
@@ -1633,7 +1593,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     }),
@@ -1707,7 +1666,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'tammybrown',
       'id': '7cf872dc',
     }),
@@ -1787,7 +1745,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'qtaylor',
       'id': '7cf872dc',
     }),
@@ -1861,7 +1818,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'fb085f7f',
     }),
@@ -1902,7 +1858,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1927,7 +1882,6 @@
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -2017,7 +1971,6 @@
       }),
     ]),
     'user': dict({
-      'administrator': False,
       'handle': 'kellylopez',
       'id': 'bf1b993c',
     }),
@@ -2026,6 +1979,118 @@
       'nuvs': 'pending',
       'pathoscope': 'complete',
     }),
+  })
+# ---
+# name: test_find_analyses
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'jobs_aodp',
+        }),
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+    ]),
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
   })
 # ---
 # name: test_find_analyses[Baz-None]
@@ -2069,6 +2134,70 @@
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
         }),
         'workflow': 'pathoscope_bowtie',
       }),
@@ -2121,6 +2250,70 @@
           'administrator': False,
           'handle': 'leeashley',
           'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
         }),
         'workflow': 'pathoscope_bowtie',
       }),

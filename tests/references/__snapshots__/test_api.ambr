@@ -43,13 +43,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
@@ -85,7 +83,6 @@
       'type': 'reference',
       'uploaded_at': '2015-10-06T20:00:00Z',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -116,13 +113,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
@@ -168,13 +163,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
@@ -219,13 +212,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
@@ -267,7 +258,6 @@
       'ready': False,
       'size': 3695872,
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -316,13 +306,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'bob',
@@ -410,7 +398,6 @@
       'id': 'bf1b993c.0',
       'method_name': 'create',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -504,7 +491,6 @@
       'id': 'bf1b993c.0',
       'method_name': 'create',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -598,7 +584,6 @@
       'id': 'bf1b993c.0',
       'method_name': 'create',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -961,7 +946,6 @@
     'change_count': 1,
     'contributors': list([
       dict({
-        'administrator': False,
         'count': 1,
         'handle': 'leeashley',
         'id': 'fb085f7f',
@@ -980,7 +964,6 @@
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'administrator': False,
         'handle': 'bob',
         'id': 'bf1b993c',
       }),
@@ -1000,7 +983,6 @@
       'name': 'Foo',
     }),
     'user': dict({
-      'administrator': False,
       'handle': 'bob',
       'id': 'bf1b993c',
     }),
@@ -1068,7 +1050,6 @@
 # ---
 # name: test_create_user[None][resp]
   dict({
-    'administrator': False,
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
     'handle': 'leeashley',
@@ -1240,13 +1221,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
@@ -1256,7 +1235,6 @@
         'remove': True,
       }),
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'olopez',
@@ -1337,13 +1315,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
@@ -1353,7 +1329,6 @@
         'remove': True,
       }),
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'olopez',
@@ -1394,7 +1369,6 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'administrator': False,
           'handle': 'laura56',
           'id': 'fb085f7f',
         }),
@@ -1425,7 +1399,6 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'administrator': False,
           'handle': 'laura56',
           'id': 'fb085f7f',
         }),
@@ -1456,7 +1429,6 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'administrator': False,
           'handle': 'bob',
           'id': 'bf1b993c',
         }),
@@ -1856,13 +1828,11 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
     'users': list([
       dict({
-        'administrator': False,
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
         'handle': 'zclark',
@@ -1909,7 +1879,6 @@
       'ready': True,
       'size': 3695872,
       'user': dict({
-        'administrator': True,
         'handle': 'igboyes',
         'id': 'igboyes',
       }),
@@ -2022,7 +1991,6 @@
 # ---
 # name: test_update_user[None]
   dict({
-    'administrator': False,
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
     'handle': 'leeashley',

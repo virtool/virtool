@@ -73,7 +73,6 @@
       'stage': 'NzFJEUSgqMReEKilxKJT',
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({
-        'administrator': False,
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
@@ -91,7 +90,6 @@
       'name': 'Bar',
     }),
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),

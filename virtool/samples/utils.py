@@ -2,11 +2,12 @@ from enum import Enum
 from pathlib import Path
 
 from aiohttp.web import Response
-from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.api.errors import APIBadRequest
 from virtool.config.cls import Config
+from virtool.api.client import AbstractClient
 from virtool.labels.models import SQLLabel
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
@@ -59,11 +60,15 @@ async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
     return [label for label in labels if label not in results]
 
 
-def get_sample_rights(sample: dict, client):
-    if client.administrator or sample["user"]["id"] == client.user_id:
+def get_sample_rights(sample: dict, client: AbstractClient):
+    if (
+        client.administrator_role
+        or sample["user"]["id"] == client.user_id
+        or client.is_job
+    ):
         return True, True
 
-    is_group_member = sample["group"] and sample["group"] in client.groups
+    is_group_member = sample["group"] and client.is_group_member(sample["group"])
 
     read = sample["all_read"] or (is_group_member and sample["group_read"])
 
@@ -82,8 +87,8 @@ def bad_labels_response(labels: list[int]) -> Response:
     :param labels: A list of label IDs that do not exist
     :return: A `bad_request()` response
     """
-    raise HTTPBadRequest(
-        text=f"Labels do not exist: {', '.join(str(label) for label in labels)}"
+    raise APIBadRequest(
+        f"Labels do not exist: {', '.join(str(label) for label in labels)}"
     )
 
 

@@ -4,19 +4,24 @@ Request handlers for the API endpoints that deal with references.
 TODO: Drop support for string group ids when we fully migrate to SQL.
 """
 
-from aiohttp.web_exceptions import (
-    HTTPBadGateway,
-    HTTPBadRequest,
-    HTTPConflict,
-    HTTPNoContent,
-)
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.otu import OTU
+from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.response import InsufficientRights
-from virtool.api.response import NotFound, json_response
+import virtool.references.db
+from virtool.api.errors import (
+    APINotFound,
+    APIInsufficientRights,
+    APIBadRequest,
+    APIBadGateway,
+    APIConflict,
+    APINoContent,
+)
+from virtool.api.policy import policy, PermissionRoutePolicy
+from virtool.api.custom_json import json_response
+from virtool.api.routes import Routes
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -24,10 +29,7 @@ from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
 )
-import virtool.references.db
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PermissionRoutePolicy
-from virtool.http.routes import Routes
 from virtool.indexes.oas import ListIndexesResponse
 from virtool.otus.oas import CreateOTURequest
 from virtool.otus.oas import FindOTUsResponse
@@ -77,7 +79,7 @@ class ReferencesView(PydanticView):
         search_result = await get_data_from_req(self.request).references.find(
             find,
             self.request["client"].user_id,
-            self.request["client"].administrator,
+            self.request["client"].administrator_role == AdministratorRole.FULL,
             self.request["client"].groups,
             self.request.query,
         )
@@ -104,17 +106,17 @@ class ReferencesView(PydanticView):
                 data, self.request["client"].user_id
             )
         except ResourceNotFoundError as err:
-            if "Source reference does not exist" in str(err):
-                raise HTTPBadRequest(text=str(err))
-            if "File not found" in str(err):
-                raise HTTPBadRequest(text=str(err))
+            if "Source reference does not exist" in str(err) or "File not found" in str(
+                err
+            ):
+                raise APIBadRequest(str(err))
 
             raise
         except ResourceRemoteError as err:
-            if "Could not reach GitHub" in str(err):
-                raise HTTPBadGateway(text=str(err))
-            if "Could not retrieve latest GitHub release" in str(err):
-                raise HTTPBadGateway(text=str(err))
+            if "Could not reach GitHub" in str(
+                err
+            ) or "Could not retrieve latest GitHub release" in str(err):
+                raise APIBadGateway(str(err))
 
             raise
 
@@ -144,7 +146,7 @@ class ReferenceView(PydanticView):
         try:
             reference = await get_data_from_req(self.request).references.get(ref_id)
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(reference)
 
@@ -167,18 +169,18 @@ class ReferenceView(PydanticView):
         """
         try:
             if not await check_right(self.request, ref_id, "modify"):
-                raise InsufficientRights
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound
 
         try:
             reference = await get_data_from_req(self.request).references.update(
                 ref_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(reference)
 
@@ -201,7 +203,7 @@ class ReferenceView(PydanticView):
                 ref_id, self.request
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return Response(status=204)
 
@@ -226,11 +228,11 @@ class ReferenceReleaseView(PydanticView):
                 ref_id, self.request.app
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
         except ResourceRemoteError as err:
-            raise HTTPBadGateway(text=str(err))
+            raise APIBadGateway(str(err))
 
         return json_response(release)
 
@@ -252,7 +254,7 @@ class ReferenceUpdatesView(PydanticView):
                 ref_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(updates)
 
@@ -270,16 +272,16 @@ class ReferenceUpdatesView(PydanticView):
             404: Not found
         """
         if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise InsufficientRights()
+            raise APIInsufficientRights()
 
         try:
             update = await get_data_from_req(self.request).references.create_update(
                 ref_id, self.request["client"].user_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
         except ResourceError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(update, status=201)
 
@@ -308,7 +310,7 @@ class ReferenceOTUsView(PydanticView):
                 find, verified, ref_id, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         return json_response(data)
 
     async def post(
@@ -323,18 +325,18 @@ class ReferenceOTUsView(PydanticView):
             if not await virtool.references.db.check_right(
                 self.request, ref_id, "modify_otu"
             ):
-                raise InsufficientRights()
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         try:
             otu = await get_data_from_req(self.request).references.create_otu(
                 ref_id, data, self.request["client"].user_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         except ResourceError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
@@ -359,7 +361,7 @@ class ReferenceHistoryView(PydanticView):
                 ref_id, unbuilt, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(data)
 
@@ -382,7 +384,7 @@ class ReferenceIndexesView(PydanticView):
                 ref_id, self.request.query
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound
 
         return json_response(data)
 
@@ -407,12 +409,12 @@ class ReferenceIndexesView(PydanticView):
             document = await get_data_from_req(self.request).references.create_index(
                 ref_id, self.request, self.request["client"].user_id
             )
-        except ResourceNotFoundError:
-            raise NotFound
         except ResourceConflictError as err:
-            raise HTTPConflict(text=str(err))
+            raise APIConflict(str(err))
+        except ResourceNotFoundError:
+            raise APINotFound()
         except ResourceError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(
             document,
@@ -438,7 +440,7 @@ class ReferenceGroupsView(PydanticView):
                 ref_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(groups)
 
@@ -462,9 +464,9 @@ class ReferenceGroupsView(PydanticView):
                 data,
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(
             group,
@@ -492,7 +494,7 @@ class ReferenceGroupView(PydanticView):
                 ref_id, group_id
             )
         except ResourceNotFoundError:
-            raise NotFound
+            raise APINotFound()
 
         return json_response(group)
 
@@ -517,9 +519,9 @@ class ReferenceGroupView(PydanticView):
             if not await virtool.references.db.check_right(
                 self.request, ref_id, "modify"
             ):
-                raise InsufficientRights()
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         try:
             group = await get_data_from_req(self.request).references.update_group(
@@ -528,7 +530,7 @@ class ReferenceGroupView(PydanticView):
                 data,
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(group)
 
@@ -547,9 +549,9 @@ class ReferenceGroupView(PydanticView):
             if not await virtool.references.db.check_right(
                 self.request, ref_id, "modify"
             ):
-                raise InsufficientRights()
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         try:
             await get_data_from_req(self.request).references.delete_group(
@@ -557,9 +559,9 @@ class ReferenceGroupView(PydanticView):
                 group_id,
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
-        raise HTTPNoContent()
+        raise APINoContent()
 
 
 @routes.view("/spaces/{space_id}/refs/{ref_id}/users")
@@ -585,18 +587,18 @@ class ReferenceUsersView(PydanticView):
             if not await virtool.references.db.check_right(
                 self.request, ref_id, "modify"
             ):
-                raise InsufficientRights()
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         try:
             user = await get_data_from_req(self.request).references.create_user(
                 ref_id, data
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
         except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
+            raise APIBadRequest(str(err))
 
         return json_response(
             user, status=201, headers={"Location": f"/refs/{ref_id}/users/{user.id}"}
@@ -623,9 +625,9 @@ class ReferenceUserView(PydanticView):
             if not await virtool.references.db.check_right(
                 self.request, ref_id, "modify"
             ):
-                raise InsufficientRights()
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         try:
             user = await get_data_from_req(self.request).references.update_user(
@@ -634,7 +636,7 @@ class ReferenceUserView(PydanticView):
                 data,
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(user)
 
@@ -653,9 +655,9 @@ class ReferenceUserView(PydanticView):
             if not await virtool.references.db.check_right(
                 self.request, ref_id, "modify"
             ):
-                raise InsufficientRights()
+                raise APIInsufficientRights()
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         try:
             await get_data_from_req(self.request).references.delete_user(
@@ -663,6 +665,6 @@ class ReferenceUserView(PydanticView):
                 user_id,
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
-        raise HTTPNoContent
+        raise APINoContent()

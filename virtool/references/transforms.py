@@ -20,8 +20,13 @@ PROJECTION = ["_id", "name", "data_type"]
 
 
 class AttachReferenceTransform(AbstractTransform):
+    """Attach nested references to documents with a ``reference.id`` field."""
+
     def __init__(self, mongo: Mongo):
         self._mongo = mongo
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document | None:
+        return {**document, "reference": prepared}
 
     async def prepare_one(self, document: Document) -> Document | None:
         reference_id = get_safely(document, "reference", "id")
@@ -33,15 +38,25 @@ class AttachReferenceTransform(AbstractTransform):
 
         raise ValueError("Missing reference id")
 
-    async def attach_one(self, document: Document, prepared: Any) -> Document | None:
-        return {**document, "reference": prepared}
+    async def prepare_many(
+        self, documents: list[Document]
+    ) -> dict[str, Document | None]:
+        reference_ids = {get_safely(d, "reference", "id") for d in documents}
+
+        reference_lookup = {
+            d["_id"]: d
+            async for d in self._mongo.references.find(
+                {"_id": {"$in": list(reference_ids)}}, PROJECTION
+            )
+        }
+
+        reference_lookup[None] = None
+
+        return {d["id"]: reference_lookup[d["reference"]["id"]] for d in documents}
 
 
 class AttachImportedFromTransform(AbstractTransform):
-    """
-    Attach the upload and upload user data to an imported reference.
-
-    """
+    """Attach the upload and upload user data to an imported reference."""
 
     def __init__(self, mongo: Mongo, pg: AsyncEngine):
         self._mongo = mongo

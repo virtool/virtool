@@ -3,7 +3,7 @@ from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web_ws import WebSocketResponse
 
 from virtool.api.custom_json import dump_string
-from virtool.http.client import UserClient
+from virtool.api.client import UserClient
 from virtool.users.utils import Permission
 from virtool.ws.connection import WSConnection
 

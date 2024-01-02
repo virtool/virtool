@@ -1,35 +1,33 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
-from virtool_core.models.roles import AdministratorRole
 
 from virtool.account.oas import CreateKeysRequest
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
+from virtool.mongo.core import Mongo
 
 
 @pytest.mark.parametrize(
-    "administrator_role", [AdministratorRole.FULL, None], ids=["full", "none"]
-)
-@pytest.mark.parametrize(
-    "has_permission", [True, False], ids=["has permission", "missing permission"]
+    "has_permission", [True, False], ids=["has_permission", "does_not_have_permission"]
 )
 async def test_create_api_key(
-    administrator_role,
-    has_permission,
+    has_permission: bool,
+    data_layer: DataLayer,
+    fake2: DataFaker,
     mocker,
-    mongo,
-    snapshot,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
     static_time,
-    data_layer,
-    fake2,
 ):
     """
     Test that an API key is created correctly with varying key owner administrator status and
     permissions.
 
     """
-    mocker.patch("virtool.account.db.get_alternate_id", make_mocked_coro("foo_0"))
-
+    mocker.patch("virtool.account.mongo.get_alternate_id", make_mocked_coro("foo_0"))
     mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
     group_1 = await fake2.groups.create()
@@ -42,9 +40,7 @@ async def test_create_api_key(
         )
     )
 
-    user = await fake2.users.create(
-        groups=[group_1, group_2], administrator_role=administrator_role
-    )
+    user = await fake2.users.create(groups=[group_1, group_2])
 
     _, api_key = await data_layer.account.create_key(
         CreateKeysRequest(
@@ -54,5 +50,5 @@ async def test_create_api_key(
         user.id,
     )
 
-    assert api_key == snapshot(name="dl")
+    assert api_key == snapshot(name="data")
     assert await mongo.keys.find_one() == snapshot(name="mongo")

@@ -254,7 +254,9 @@ class Mongo:
 
     @asynccontextmanager
     async def create_session(self):
-        async with await self.motor_client.client.start_session() as s, s.start_transaction():
+        async with await (
+            self.motor_client.client.start_session()
+        ) as s, s.start_transaction():
             yield s
 
     @asynccontextmanager

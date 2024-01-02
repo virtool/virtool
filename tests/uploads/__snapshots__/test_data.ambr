@@ -13,7 +13,6 @@
     'type': 'reads',
     'uploaded_at': datetime,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
@@ -49,7 +48,6 @@
     'type': 'reads',
     'uploaded_at': datetime,
     'user': dict({
-      'administrator': False,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),

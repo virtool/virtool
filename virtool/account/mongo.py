@@ -2,26 +2,26 @@
 Work with the current user account and its API keys.
 
 """
-from typing import Any, Dict
+from typing import Any
 
 import virtool.users.utils
 import virtool.utils
+from virtool.mongo.core import Mongo
 
 ACCOUNT_PROJECTION = (
     "_id",
-    "handle",
-    "administrator",
     "email",
+    "force_reset",
     "groups",
+    "handle",
     "last_password_change",
     "permissions",
     "primary_group",
     "settings",
-    "force_reset",
 )
 
 
-def compose_password_update(password: str) -> Dict[str, Any]:
+def compose_password_update(password: str) -> dict[str, Any]:
     """
     Compose an update dict for self-changing a users account password.
 
@@ -40,17 +40,17 @@ def compose_password_update(password: str) -> Dict[str, Any]:
     }
 
 
-async def get_alternate_id(db, name: str) -> str:
+async def get_alternate_id(mongo: Mongo, name: str) -> str:
     """
     Get an alternate id for an API key whose provided `name` is not unique. Appends an
     integer suffix to the end of the `name`.
 
-    :param db: the application database object
+    :param mongo: the application mongodb client
     :param name: the API key name
     :return: an alternate unique id for the key
 
     """
-    existing_alt_ids = await db.keys.distinct("id")
+    existing_alt_ids = await mongo.keys.distinct("id")
 
     suffix = 0
 

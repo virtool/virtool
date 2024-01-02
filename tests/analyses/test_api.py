@@ -31,7 +31,13 @@ def create_files(test_files_path, tmp_path):
 
 
 @pytest.mark.apitest
-async def test_find(snapshot, mocker, fake2, spawn_client, static_time):
+async def test_find(
+    mocker,
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
+):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authenticated=True)
@@ -55,6 +61,9 @@ async def test_find(snapshot, mocker, fake2, spawn_client, static_time):
                 "created_at": static_time.datetime,
                 "all_read": True,
                 "all_write": True,
+                "group": "none",
+                "group_read": False,
+                "group_write": False,
                 "user": {"id": user_1.id},
                 "labels": [],
             }
@@ -444,9 +453,9 @@ async def test_upload_file(
 
             assert resp.status == 201
             assert await resp.json() == snapshot
-            assert os.listdir(tmp_path / "analyses") == [
-                "2-reference.fa",
+            assert sorted(os.listdir(tmp_path / "analyses")) == [
                 "1-reference.fa",
+                "2-reference.fa",
             ]
             assert await get_row_by_id(pg, SQLAnalysisFile, 1)
 
