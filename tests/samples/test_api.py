@@ -736,21 +736,18 @@ async def test_finalize(
     """
 
     client = await spawn_job_client(authorize=True)
-
-    resp = await client.patch(
-        "/samples/test",
-        json={
-            field: {
-                "bases": [[1543]],
-                "composition": [[6372]],
-                "count": 7069,
-                "encoding": "OuBQPPuwYimrxkNpPWUx",
-                "gc": 34222440,
-                "length": [3237],
-                "sequences": [7091],
-            }
-        },
-    )
+    json = {
+        field: {
+            "bases": [[1543]],
+            "composition": [[6372]],
+            "count": 7069,
+            "encoding": "OuBQPPuwYimrxkNpPWUx",
+            "gc": 34222440,
+            "length": [3237],
+            "sequences": [7091],
+        }
+    }
+    resp = await client.patch("/samples/test", json=json)
 
     if field == "quality":
         assert resp.status == 200
@@ -758,6 +755,9 @@ async def test_finalize(
 
         with pytest.raises(ResourceNotFoundError):
             await get_data_from_app(client.app).uploads.get(1)
+
+        resp = await client.patch("/samples/test", json=json)
+        assert resp.status == 500
 
     else:
         assert resp.status == 422

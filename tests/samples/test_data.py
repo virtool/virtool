@@ -7,6 +7,7 @@ from virtool_core.models.enums import Permission, LibraryType
 from virtool_core.models.samples import WorkflowState
 
 from tests.fixtures.client import ClientSpawner
+from virtool.data.errors import  ResourceConflictError
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -173,6 +174,26 @@ async def test_finalize(
         ).to_list(length=1)
         == snapshot_recent()
     )
-
     assert sample.quality == quality
     assert sample.ready is True
+
+
+async def test_finalized_already(get_sample_ready_false, data_layer):
+    quality = {
+        "bases": [[1543]],
+        "composition": [[6372]],
+        "count": 7069,
+        "encoding": "OuBQPPuwYimrxkNpPWUx",
+        "gc": 34222440,
+        "length": [3237],
+        "sequences": [7091],
+    }
+
+    await data_layer.samples.finalize("test", quality)
+
+    try:
+        await data_layer.samples.finalize("test", quality)
+    except ResourceConflictError:
+        pass
+    else:
+        raise AssertionError("Expected ResourceConflictError")
