@@ -96,7 +96,7 @@ class AnalysisData(DataLayerDomain):
             {"$match": {"sample.id": sample_id} if sample_id is not None else {}},
             {
                 "$facet": {
-                    "found_count": [{"$count": "found_count"}],
+                    "total_count": [{"$count": "total_count"}],
                     "data": [
                         {"$sort": sort},
                         {"$skip": skip_count},
@@ -119,7 +119,7 @@ class AnalysisData(DataLayerDomain):
                         "updated_at": True,
                         "user": True,
                     },
-                    "found_count": {"$arrayElemAt": ["$found_count.found_count", 0]},
+                    "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
                 }
             },
         ]
@@ -130,14 +130,14 @@ class AnalysisData(DataLayerDomain):
             async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
                 data = (
                     paginate_dict["data"],
-                    paginate_dict.get("found_count", 0),
+                    paginate_dict.get("total_count", 0),
                 )
                 break
 
         if data is None:
             raise ValueError("No data returned in aggregation")
 
-        documents, found_count = data
+        documents, total_count = data
 
         with sentry_sdk.start_span(
             op="mongo", description="filter_analyses_by_sample_rights"
@@ -146,24 +146,21 @@ class AnalysisData(DataLayerDomain):
                 client, self._mongo, documents
             )
 
-        documents, total_count = await asyncio.gather(
-            apply_transforms(
-                [base_processor(d) for d in documents],
-                [
-                    AttachJobTransform(self._mongo),
-                    AttachReferenceTransform(self._mongo),
-                    AttachSubtractionsTransform(self._mongo),
-                    AttachUserTransform(self._mongo),
-                ],
-            ),
-            self._mongo.analyses.count_documents({}),
+        documents = await apply_transforms(
+            [base_processor(d) for d in documents],
+            [
+                AttachJobTransform(self._mongo),
+                AttachReferenceTransform(self._mongo),
+                AttachSubtractionsTransform(self._mongo),
+                AttachUserTransform(self._mongo),
+            ],
         )
 
         return AnalysisSearchResult(
             **{
                 "documents": documents,
             },
-            found_count=found_count,
+            found_count=total_count,
             total_count=total_count,
             page=page,
             page_count=int(math.ceil(total_count / per_page)),
