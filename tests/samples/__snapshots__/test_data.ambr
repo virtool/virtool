@@ -157,12 +157,6 @@
     'all_read': True,
     'all_write': True,
     'artifacts': list([
-      dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
-        'id': 1,
-        'name': 'reference.fa.gz',
-        'size': 34879234,
-      }),
     ]),
     'created_at': 'not_approximately_now_datetime',
     'format': 'fastq',
@@ -212,30 +206,12 @@
       ]),
     }),
     'reads': list([
-      dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
-        'id': 1,
-        'name': 'reads_1.fq.gz',
-        'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
-        'size': 2903109210,
-        'upload': None,
-        'uploaded_at': 'not_approximately_now_datetime',
-      }),
     ]),
     'ready': True,
     'subtractions': list([
-      dict({
-        'id': 'apple',
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 'pear',
-        'name': 'Pear',
-      }),
     ]),
     'user': dict({
-      'handle': 'kellylopez',
+      'handle': 'sallywalker',
       'id': 'bf1b993c',
     }),
     'workflows': dict({
@@ -299,14 +275,6 @@
       }),
       'ready': True,
       'subtractions': list([
-        dict({
-          'id': 'apple',
-          'name': 'Apple',
-        }),
-        dict({
-          'id': 'pear',
-          'name': 'Pear',
-        }),
       ]),
       'user': dict({
         'id': 'bf1b993c',
