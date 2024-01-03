@@ -183,5 +183,12 @@
       'name': 'promote mongo administrators in openFGA',
       'revision': 'xtbq4bjlpocu',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 27,
+      'name': 'repair schema',
+      'revision': '77be1d95da09',
+    }),
   ])
 # ---
