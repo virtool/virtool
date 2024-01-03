@@ -1,0 +1,13 @@
+# serializer version: 1
+# name: test_upgrade
+  list([
+    (1, 'Foo'),
+    (2, 'Bar'),
+    (3, 'Baz'),
+    (4, 'Baz (1)'),
+    (5, 'Loo'),
+    (6, 'Foo (1)'),
+    (7, 'Boo'),
+    (8, 'Foo (2)'),
+  ])
+# ---

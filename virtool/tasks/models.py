@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, BigInteger
 from sqlalchemy.dialects.postgresql import JSONB
 
 from virtool.pg.base import Base
@@ -13,7 +13,7 @@ class SQLTask(Base):
     count = Column(Integer, default=0)
     created_at = Column(DateTime, nullable=False)
     error = Column(String)
-    file_size = Column(Integer)
+    file_size = Column(BigInteger)
     progress = Column(Integer, default=0)
     step = Column(String)
     type = Column(String, nullable=False)

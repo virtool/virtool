@@ -29,6 +29,7 @@
     'removed_at': None,
     'reserved': False,
     'size': 16700094,
+    'space': None,
     'type': 'reads',
     'uploaded_at': datetime,
     'user': 'bf1b993c',
