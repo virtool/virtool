@@ -15,7 +15,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Commitlint
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build
         run: docker build .
   test-api:
@@ -49,7 +49,7 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Start OpenFGA
         run: |
           bash .github/workflows/scripts/setup_postgres.sh          
@@ -120,7 +120,7 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Start OpenFGA
         run: |
           bash .github/workflows/scripts/setup_postgres.sh          
@@ -173,7 +173,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -207,7 +207,7 @@ jobs:
       runs-on: ubuntu-22.04
       steps:
         - name: Checkout
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
         - name: Setup Python
           uses: actions/setup-python@v4
           with:
@@ -236,7 +236,7 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download OAS
         uses: actions/download-artifact@v3
         with:

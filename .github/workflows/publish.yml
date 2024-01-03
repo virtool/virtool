@@ -22,13 +22,13 @@ jobs:
     if: github.repository_owner == 'Virtool'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Write VERSION
         run: echo ${{ github.event.release.tag_name }} > VERSION
       - name: Update pyproject.toml version
         run: sed -i 's/0\.0\.0/${{ github.event.release.tag_name }}/' pyproject.toml
       - name: Login to Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.GH_USERNAME }}
@@ -39,7 +39,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/virtool/virtool
       - name: Build and Push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
