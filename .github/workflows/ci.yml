@@ -26,7 +26,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: docker build .
+        uses: docker/build-push-action@v5
+        with:
+          context: .
   test-api:
     runs-on: ubuntu-22.04
     services:
