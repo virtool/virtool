@@ -1,42 +1,4 @@
 # serializer version: 1
-# name: test_attach_user_transform[False]
-  dict({
-    '_id': 'bar',
-    'user': dict({
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_attach_user_transform[True]
-  list([
-    dict({
-      '_id': 'bar',
-      'user': dict({
-        'administrator': False,
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-    }),
-    dict({
-      '_id': 'foo',
-      'user': dict({
-        'administrator': False,
-        'handle': 'zclark',
-        'id': 'fb085f7f',
-      }),
-    }),
-    dict({
-      '_id': 'baz',
-      'user': dict({
-        'administrator': False,
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-    }),
-  ])
-# ---
 # name: test_update_keys[False-False-False]
   dict({
     '_id': 'foobar',

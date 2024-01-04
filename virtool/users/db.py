@@ -8,11 +8,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+
 from virtool.data.errors import ResourceConflictError
 from virtool.data.topg import compose_legacy_id_expression
+
 from virtool.groups.pg import SQLGroup
 
 ATTACH_PROJECTION = ("_id", "handle")
@@ -40,7 +43,7 @@ class B2CUserAttributes:
 
 
 async def compose_groups_update(
-    pg: AsyncEngine, group_ids: list[int | str]
+    pg: AsyncEngine, group_ids: list[int | str], primary_group: int | str | None
 ) -> dict[str, list[int | str]]:
     """
     Compose an update dict for updating the list of groups a user is a member of.
@@ -52,11 +55,8 @@ async def compose_groups_update(
     :param group_ids: the group ids to include in update
     :return: an update
     """
-    if group_ids is None:
-        return {}
-
     if not group_ids:
-        return {"groups": []}
+        return {"groups": [], "primary_group": None}
 
     async with AsyncSession(pg) as session:
         expr = compose_legacy_id_expression(SQLGroup, group_ids)
@@ -76,4 +76,9 @@ async def compose_groups_update(
         repr_ids = sorted([repr(id_) for id_ in non_existent_group_ids])
         raise ResourceConflictError(f"Non-existent groups: {', '.join(repr_ids)}")
 
-    return {"groups": group_ids}
+    update = {"groups": group_ids}
+
+    if primary_group not in group_ids:
+        update["primary_group"] = None
+
+    return update

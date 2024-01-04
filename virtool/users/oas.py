@@ -8,10 +8,10 @@ class CreateFirstUserRequest(BaseModel):
     """
 
     handle: constr(strip_whitespace=True, min_length=1) = Field(
-        description="The unique handle for the user."
+        description="the unique handle for the user"
     )
 
-    password: constr(min_length=1) = Field(description="The password for the user.")
+    password: constr(min_length=1) = Field(description="the password for the user")
 
 
 class CreateUserRequest(CreateFirstUserRequest):
@@ -20,28 +20,28 @@ class CreateUserRequest(CreateFirstUserRequest):
     """
 
     force_reset: bool = Field(
-        default=True, description="Forces a password reset next time the user logs in"
+        default=True, description="forces a password reset next time the user logs in"
     )
 
 
 class UpdateUserRequest(BaseModel):
     active: bool | None = Field(description="make a user active or not")
 
-    groups: list[int | str] | None = Field(
-        description="sets the IDs of groups the user belongs to"
-    )
-
     force_reset: bool | None = Field(
         description="forces a password reset next time the user logs in"
+    )
+
+    groups: list[int | str] | None = Field(
+        description="sets the IDs of groups the user belongs to"
     )
 
     password: str | None = Field(description="the new password")
 
     primary_group: int | None = Field(
-        description="Sets the ID of the user's primary group"
+        description="set the ID of the user's primary group"
     )
 
-    _prevent_none = prevent_none("force_reset", "groups", "password")
+    _prevent_none = prevent_none("active", "force_reset", "groups", "password")
 
 
 class PermissionsResponse(BaseModel):

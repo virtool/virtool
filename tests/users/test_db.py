@@ -62,15 +62,27 @@ class TestComposeGroupsUpdate:
 
             await session.commit()
 
-        assert await compose_groups_update(pg, ["group_1", 2]) == {
-            "groups": ["group_1", 2]
+        assert await compose_groups_update(pg, ["group_1", 2], None) == {
+            "groups": ["group_1", 2],
+            "primary_group": None,
         }
 
     async def test_non_existent_groups(self, _group_one_and_two, pg: AsyncEngine):
+        """Test that an exception is raised if one or more groups do not exist."""
         with pytest.raises(ResourceConflictError) as err:
-            await compose_groups_update(pg, ["group_1", 2, "group_3", 4])
+            await compose_groups_update(pg, ["group_1", 2, "group_3", 4], None)
 
         assert "Non-existent groups: 'group_3', 4" in str(err.value)
+
+    async def test_primary_group(self, _group_one_and_two, pg: AsyncEngine):
+        """
+        Test that the primary group id is set to `None` in the update if it is not
+        included in the list of groups.
+        """
+        assert await compose_groups_update(pg, [1], 2) == {
+            "groups": [1],
+            "primary_group": None,
+        }
 
 
 class TestComposePrimaryGroupUpdate:
@@ -81,24 +93,9 @@ class TestComposePrimaryGroupUpdate:
         """
         await mongo.users.insert_one({"_id": "bob", "groups": [1, "group_2"]})
 
-        assert await compose_primary_group_update(mongo, pg, [], 1, "bob") == {
-            "primary_group": 1
-        }
-
-    async def test_extra(self, _group_one_and_two, mongo: Mongo, pg: AsyncEngine):
-        """
-        Test that the ``primary_group`` is set correctly when the user is in the
-        ``extra`` group id list, but is not a member.
-        """
-        await mongo.users.insert_one({"_id": "bob", "groups": [1]})
-
         assert await compose_primary_group_update(
-            mongo,
-            pg,
-            [2],
-            2,
-            "bob",
-        ) == {"primary_group": 2}
+            mongo, pg, [1, "group_2"], 1, "bob"
+        ) == {"primary_group": 1}
 
     async def test_non_existent_group(self, mongo: Mongo, pg: AsyncEngine):
         """
@@ -131,7 +128,7 @@ class TestComposePrimaryGroupUpdate:
             await compose_primary_group_update(
                 mongo,
                 pg,
-                [],
+                [1],
                 2,
                 "bob",
             )

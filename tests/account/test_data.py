@@ -1,13 +1,19 @@
+import asyncio
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
+from syrupy.filters import props
 from virtool_core.models.enums import Permission
 
-from virtool.account.oas import CreateKeysRequest
+from virtool.account.oas import CreateKeysRequest, UpdateAccountRequest
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
+from virtool.pg.utils import get_row_by_id
+from virtool.users.pg import SQLUser
 
 
 @pytest.mark.parametrize(
@@ -52,3 +58,40 @@ async def test_create_api_key(
 
     assert api_key == snapshot(name="data")
     assert await mongo.keys.find_one() == snapshot(name="mongo")
+
+
+@pytest.mark.parametrize(
+    "update",
+    [
+        UpdateAccountRequest(old_password="hello_world_1", password="hello_world_2"),
+        UpdateAccountRequest(email="hello@world.com"),
+        UpdateAccountRequest(
+            old_password="hello_world_1",
+            password="hello_world_2",
+            email="hello@world.com",
+        ),
+    ],
+    ids=["password", "email", "password and email"],
+)
+async def test_update(
+    update: UpdateAccountRequest,
+    data_layer: DataLayer,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    fake2: DataFaker,
+    snapshot_recent: SnapshotAssertion,
+):
+    user = await fake2.users.create(password="hello_world_1")
+
+    await data_layer.account.update(
+        user.id,
+        update,
+    )
+
+    (row, document) = await asyncio.gather(
+        get_row_by_id(pg, SQLUser, 1), mongo.users.find_one({"_id": user.id})
+    )
+
+    assert row == snapshot_recent(name="pg", exclude=props("password"))
+    assert document == snapshot_recent(name="mongo", exclude=props("password"))
+    assert row.password == document["password"]

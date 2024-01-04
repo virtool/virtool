@@ -2,7 +2,9 @@ import asyncio
 import random
 
 from pymongo.errors import DuplicateKeyError
+from sqlalchemy import update, delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncEngine
+from structlog import get_logger
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User, UserSearchResult
 
@@ -18,8 +20,8 @@ from virtool.data.errors import (
     ResourceError,
 )
 from virtool.data.events import emits, Operation
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
-from virtool.errors import DatabaseError
 from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import id_exists, get_one_field
@@ -27,8 +29,13 @@ from virtool.users.db import (
     B2CUserAttributes,
     compose_groups_update,
 )
-from virtool.users.mongo import create_user, compose_primary_group_update
+from virtool.users.mongo import compose_primary_group_update
+from virtool.users.mongo import (
+    create_user,
+)
 from virtool.users.oas import UpdateUserRequest
+from virtool.users.pg import SQLUser, SQLUserGroup
+from virtool.users.settings import DEFAULT_USER_SETTINGS
 from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
 
@@ -47,6 +54,8 @@ PROJECTION = [
     "permissions",
     "primary_group",
 ]
+
+logger = get_logger("data.users")
 
 
 class UsersData(DataLayerDomain):
@@ -163,19 +172,87 @@ class UsersData(DataLayerDomain):
 
     @emits(Operation.CREATE)
     async def create(
-        self, handle: str, password: str, force_reset: bool = False
+        self,
+        handle: str,
+        password: str,
+        force_reset: bool = False,
     ) -> User:
         """
         Create a new user.
-
-        If Azure AD B2C information is given, add it to user document.
 
         :param handle: the requested handle for the user
         :param password: a password
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
-        document = await create_user(self._mongo, handle, password, force_reset)
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            document = await create_user(
+                self._mongo,
+                handle,
+                password,
+                force_reset,
+                session=mongo_session,
+            )
+
+            pg_session.add(
+                SQLUser(
+                    force_reset=force_reset,
+                    handle=handle,
+                    last_password_change=virtool.utils.timestamp(),
+                    legacy_id=document["_id"],
+                    password=document["password"],
+                    settings=DEFAULT_USER_SETTINGS,
+                )
+            )
+
+        return await self.get(document["_id"])
+
+    @emits(Operation.CREATE)
+    async def create_b2c(
+        self,
+        handle: str,
+        b2c_user_attributes: B2CUserAttributes,
+        force_reset: bool = False,
+    ) -> User:
+        """
+        Create a new user using Azure B2C information.
+
+        :param handle: the requested handle for the user
+        :param force_reset: force the user to reset password on next login
+        :param  b2c_user_attributes: Azure b2c user attributes used to describe a user
+        :return: the user document
+        """
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            document = await create_user(
+                self._mongo,
+                handle,
+                None,
+                force_reset,
+                b2c_user_attributes=b2c_user_attributes,
+                session=mongo_session,
+            )
+
+            pg_session.add(
+                SQLUser(
+                    b2c_display_name=b2c_user_attributes.display_name,
+                    b2c_given_name=b2c_user_attributes.given_name,
+                    b2c_family_name=b2c_user_attributes.family_name,
+                    b2c_oid=b2c_user_attributes.oid,
+                    force_reset=force_reset,
+                    handle=handle,
+                    last_password_change=virtool.utils.timestamp(),
+                    legacy_id=document["_id"],
+                    password=None,
+                    settings=DEFAULT_USER_SETTINGS,
+                )
+            )
+
         return await self.get(document["_id"])
 
     async def create_first(self, handle: str, password: str) -> User:
@@ -184,7 +261,7 @@ class UsersData(DataLayerDomain):
 
         :param handle: the user handle
         :param password: the password
-        :return:
+        :return: the user created
         """
         if await self.check_users_exist():
             raise ResourceConflictError("Virtool already has at least one user")
@@ -192,13 +269,11 @@ class UsersData(DataLayerDomain):
         if handle == "virtool":
             raise ResourceConflictError("Reserved user name: virtool")
 
-        document = await create_user(self._mongo, handle, password, False)
+        document = await self.create(handle, password)
 
-        await self._authorization_client.add(
-            AdministratorRoleAssignment(document["_id"], AdministratorRole.FULL)
-        )
+        await self.set_administrator_role(document.id, AdministratorRole.FULL)
 
-        return await self.get(document["_id"])
+        return await self.get(document.id)
 
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes
@@ -217,26 +292,17 @@ class UsersData(DataLayerDomain):
         ):
             return await self.get(document["_id"])
 
-        handle = "-".join(
-            [
-                b2c_user_attributes.given_name,
-                b2c_user_attributes.family_name,
-                str(random.randint(1, 100)),
-            ]
-        )
+        handle = f"{b2c_user_attributes.given_name}-{b2c_user_attributes.family_name}-{random.randint(1, 100)}"
+
+        while await self._mongo.users.count_documents({"handle": handle}):
+            handle = f"{b2c_user_attributes.given_name}-{b2c_user_attributes.family_name}-{random.randint(1, 100)}"
 
         try:
-            document = await create_user(
-                self._mongo,
-                handle,
-                None,
-                False,
-                b2c_user_attributes=b2c_user_attributes,
-            )
+            user = await self.create_b2c(handle, b2c_user_attributes)
         except DuplicateKeyError:
             return await self.find_or_create_b2c_user(b2c_user_attributes)
 
-        return await self.get(document["_id"])
+        return user
 
     async def set_administrator_role(
         self, user_id: str, role: AdministratorRole
@@ -288,47 +354,117 @@ class UsersData(DataLayerDomain):
 
         data = data.dict(exclude_unset=True)
 
-        update = {}
+        mongo_update = {}
+        pg_update = {}
 
         if "active" in data:
-            update.update({"active": data["active"], "invalidate_sessions": True})
+            for u in (mongo_update, pg_update):
+                u.update({"active": data["active"], "invalidate_sessions": True})
 
         if "force_reset" in data:
-            update.update(
-                {"force_reset": data["force_reset"], "invalidate_sessions": True}
-            )
+            for u in (mongo_update, pg_update):
+                u.update(
+                    {"force_reset": data["force_reset"], "invalidate_sessions": True}
+                )
 
         if "password" in data:
-            update.update(
-                {
-                    "password": virtool.users.utils.hash_password(data["password"]),
-                    "last_password_change": virtool.utils.timestamp(),
-                    "invalidate_sessions": True,
-                }
-            )
+            for u in (mongo_update, pg_update):
+                u.update(
+                    {
+                        "password": virtool.users.utils.hash_password(data["password"]),
+                        "last_password_change": virtool.utils.timestamp(),
+                        "invalidate_sessions": True,
+                    }
+                )
 
         if "groups" in data:
-            try:
-                update.update(await compose_groups_update(self._pg, data["groups"]))
-            except DatabaseError as err:
-                raise ResourceConflictError(str(err))
+            current_primary_group = await get_one_field(
+                self._mongo.users, "primary_group", user_id
+            )
+
+            mongo_update.update(
+                await compose_groups_update(
+                    self._pg, data["groups"], current_primary_group
+                )
+            )
 
         if "primary_group" in data:
-            try:
-                update.update(
-                    await compose_primary_group_update(
-                        self._mongo,
-                        self._pg,
-                        data.get("groups", []),
-                        data["primary_group"],
-                        user_id,
-                    )
+            mongo_update.update(
+                await compose_primary_group_update(
+                    self._mongo,
+                    self._pg,
+                    data.get("groups"),
+                    data["primary_group"],
+                    user_id,
                 )
-            except DatabaseError as err:
-                raise ResourceConflictError(str(err))
+            )
 
-        if update:
-            await self._mongo.users.update_one({"_id": user_id}, {"$set": update})
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            if mongo_update:
+                result = await self._mongo.users.update_one(
+                    {"_id": user_id}, {"$set": mongo_update}, session=mongo_session
+                )
+
+                if not result.modified_count:
+                    raise ResourceNotFoundError("User not found")
+
+            result = await pg_session.execute(
+                select(SQLUser).where(SQLUser.legacy_id == user_id)
+            )
+
+            user = result.unique().scalar_one_or_none()
+
+            if user:
+                if pg_update:
+                    result = await pg_session.execute(
+                        update(SQLUser).where(SQLUser.id == user.id).values(**pg_update)
+                    )
+
+                    if not result.rowcount:
+                        logger.info(
+                            "user not found during update",
+                            method="users.update",
+                            user_id=user_id,
+                        )
+
+                if "groups" in data:
+                    await pg_session.execute(
+                        delete(SQLUserGroup).where(SQLUserGroup.user_id == user.id)
+                    )
+
+                    if data["groups"]:
+                        # Don't do this if the new groups list is not empty.
+                        await pg_session.execute(
+                            insert(SQLUserGroup).values(
+                                [
+                                    {"user_id": user.id, "group_id": group_id}
+                                    for group_id in data["groups"]
+                                ]
+                            )
+                        )
+
+                if "primary_group" in data:
+                    await pg_session.execute(update(SQLUserGroup).values(primary=False))
+
+                    result = await pg_session.execute(
+                        update(SQLUserGroup)
+                        .where(SQLUser.id == user.id)
+                        .where(SQLUserGroup.group_id == data["primary_group"])
+                        .values(primary=True)
+                    )
+
+                    if not result.rowcount:
+                        raise ResourceConflictError("User is not a member of group")
+
+            else:
+                logger.info(
+                    "user not found in postgres",
+                    method="users.update",
+                    user_id=user_id,
+                )
 
         return await self.get(user_id)
 

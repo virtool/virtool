@@ -455,7 +455,11 @@
       'remove_job': False,
       'upload_file': False,
     }),
-    'primary_group': None,
+    'primary_group': dict({
+      'id': 1,
+      'legacy_id': None,
+      'name': 'musicians',
+    }),
   })
 # ---
 # name: test_get[404]
