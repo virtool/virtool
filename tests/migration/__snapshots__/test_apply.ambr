@@ -197,5 +197,12 @@
       'name': 'update user schema',
       'revision': '5df816cef12f',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 29,
+      'name': 'add user email',
+      'revision': '141c7ecb99b7',
+    }),
   ])
 # ---
