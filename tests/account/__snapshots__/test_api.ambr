@@ -1025,22 +1025,6 @@
     dict({
       'in': 'body',
       'loc': list([
-        'show_ids',
-      ]),
-      'msg': 'Value may not be null',
-      'type': 'value_error',
-    }),
-    dict({
-      'in': 'body',
-      'loc': list([
-        'skip_quick_analyze_dialog',
-      ]),
-      'msg': 'Value may not be null',
-      'type': 'value_error',
-    }),
-    dict({
-      'in': 'body',
-      'loc': list([
         'quick_analyze_workflow',
       ]),
       'msg': 'Value may not be null',
@@ -1049,7 +1033,23 @@
     dict({
       'in': 'body',
       'loc': list([
+        'show_ids',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
         'show_versions',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'skip_quick_analyze_dialog',
       ]),
       'msg': 'Value may not be null',
       'type': 'value_error',

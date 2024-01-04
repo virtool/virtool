@@ -1,3 +1,5 @@
+import logging.config
+
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
@@ -7,6 +9,7 @@ from virtool.api.accept import accept_middleware
 from virtool.api.authentication import authentication_middleware
 from virtool.api.errors import error_middleware
 from virtool.api.headers import headers_middleware, on_prepare_location
+from virtool.api.logging import logging_middleware
 from virtool.api.policy import route_policy_middleware
 from virtool.config.cls import Config
 from virtool.flags import FeatureFlags, feature_flag_middleware
@@ -35,7 +38,15 @@ from virtool.startup import (
 
 
 def create_app_without_startup():
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": True,
+        }
+    )
+
     middlewares = [
+        logging_middleware,
         headers_middleware,
         error_middleware,
         authentication_middleware,
@@ -57,6 +68,7 @@ def create_app(config: Config):
 
     """
     middlewares = [
+        logging_middleware,
         headers_middleware,
         accept_middleware,
         error_middleware,
@@ -109,4 +121,4 @@ def create_app(config: Config):
 
 def run_api_server(config: Config):
     app = create_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
+    aiohttp.web.run_app(app=app, host=config.host, port=config.port, access_log=None)

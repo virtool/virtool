@@ -98,7 +98,7 @@ class AccountView(PydanticView):
 
 
 @routes.view("/account/settings")
-class SettingsView(PydanticView):
+class AccountsSettingsView(PydanticView):
     async def get(self) -> r200[AccountSettingsResponse] | r401:
         """
         Get account settings.
@@ -110,7 +110,7 @@ class SettingsView(PydanticView):
             401: Requires authorization
         """
         account_settings = await get_data_from_req(self.request).account.get_settings(
-            "settings", self.request["client"].user_id
+            self.request["client"].user_id
         )
 
         return json_response(AccountSettingsResponse.parse_obj(account_settings))
@@ -129,7 +129,7 @@ class SettingsView(PydanticView):
             401: Requires Authorization
         """
         settings = await get_data_from_req(self.request).account.update_settings(
-            data, "settings", self.request["client"].user_id
+            data, self.request["client"].user_id
         )
 
         return json_response(AccountSettingsResponse.parse_obj(settings))

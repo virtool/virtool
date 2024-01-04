@@ -3,8 +3,6 @@ Utilities for working with users in the database.
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
-from __future__ import annotations
-
 import random
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -15,8 +13,10 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
+from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.users.db import B2CUserAttributes, ATTACH_PROJECTION
+from virtool.users.settings import DEFAULT_USER_SETTINGS
 from virtool.users.utils import (
     hash_password,
     check_password,
@@ -28,9 +28,9 @@ from virtool.utils import base_processor
 async def compose_primary_group_update(
     mongo: "Mongo",
     pg: AsyncEngine,
-    extra_group_ids: list[int | str],
-    group_id: int | None,
-    user_id: str | None,
+    member_group_ids: list[int | str] | None,
+    group_id: int,
+    user_id: str,
 ) -> Document:
     """
     Compose an update dict for changing a user's `primary_group`.
@@ -40,26 +40,29 @@ async def compose_primary_group_update(
 
     :param mongo: the application MongoDB client
     :param pg: the application Postgres client
-    :param extra_group_ids: a list of group ids that the user is going to be a member of
+    :param member_group_ids: a list of group ids of which the user will be a member
     :param group_id: the primary group to set for the user
     :param user_id: the id of the user being updated
     :return: an update
 
     """
-    if group_id is None:
-        return {}
 
-    if group_id != "none":
-        async with AsyncSession(pg) as session:
-            group = await session.get(SQLGroup, group_id)
+    if group_id in (None, "none"):
+        return {
+            "primary_group": None,
+        }
 
-            if not group:
-                raise ResourceConflictError(f"Non-existent group: {group_id}")
+    async with AsyncSession(pg) as session:
+        group = await session.get(SQLGroup, group_id)
 
-        if group_id not in extra_group_ids and not await mongo.users.count_documents(
-            {"_id": user_id, "groups": group_id}, limit=1
-        ):
-            raise ResourceConflictError("User is not member of primary group")
+        if not group:
+            raise ResourceConflictError(f"Non-existent group: {group_id}")
+
+    if member_group_ids is None:
+        member_group_ids = await get_one_field(mongo.users, "groups", user_id)
+
+    if group_id not in member_group_ids:
+        raise ResourceConflictError("User is not member of primary group")
 
     return {"primary_group": group_id}
 
@@ -80,12 +83,7 @@ async def create_user(
         "invalidate_sessions": False,
         "last_password_change": virtool.utils.timestamp(),
         "primary_group": None,
-        "settings": {
-            "skip_quick_analyze_dialog": True,
-            "show_ids": True,
-            "show_versions": True,
-            "quick_analyze_workflow": "pathoscope_bowtie",
-        },
+        "settings": DEFAULT_USER_SETTINGS,
     }
 
     if password is None:
