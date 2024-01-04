@@ -67,7 +67,7 @@ async def delete_openfga_tuples(
     """
     response = await api_instance.read(
         ReadRequest(
-            tuple_key=TupleKey(object=f"{object_type}:{object_id}"),
+            tuple_key=TupleKey(object=f"{object_type.value}:{object_id}"),
         )
     )
 
