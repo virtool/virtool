@@ -19,6 +19,8 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from virtool.users.pg import SQLUser, SQLUserGroup
+
 config = context.config
 
 # Interpret the config file for Python logging.
@@ -48,6 +50,8 @@ __models__ = (
     SQLSpace,
     SQLSubtractionFile,
     SQLUpload,
+    SQLUser,
+    SQLUserGroup,
 )
 
 
