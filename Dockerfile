@@ -1,4 +1,4 @@
-FROM library/python:3.10-buster as server
+FROM library/python:3.12-buster as server
 WORKDIR /build
 RUN curl -sSL https://install.python-poetry.org | python -
 COPY poetry.lock pyproject.toml ./
