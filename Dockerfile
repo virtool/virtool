@@ -15,7 +15,7 @@ ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=ghcr.io/virtool/workflow-tools:2.0.1 /usr/local/bin/bowtie* /usr/local/bin/
 COPY --from=build /app/.venv /app/.venv
-COPY alembic.ini run.py ./
+COPY alembic.ini run.py VERSION* ./
 COPY assets ./assets
 COPY virtool ./virtool
 EXPOSE 9950
