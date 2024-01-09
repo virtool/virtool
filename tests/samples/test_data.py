@@ -7,7 +7,7 @@ from virtool_core.models.enums import Permission, LibraryType
 from virtool_core.models.samples import WorkflowState
 
 from tests.fixtures.client import ClientSpawner
-from virtool.data.errors import ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -191,9 +191,5 @@ async def test_finalized_already(get_sample_ready_false, data_layer):
 
     await data_layer.samples.finalize("test", quality)
 
-    try:
+    with pytest.raises(ResourceConflictError, match=r"Sample already finalized"):
         await data_layer.samples.finalize("test", quality)
-    except ResourceConflictError:
-        pass
-    else:
-        raise AssertionError("Expected ResourceConflictError")
