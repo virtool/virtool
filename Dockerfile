@@ -18,6 +18,8 @@ COPY --from=build /app/.venv /app/.venv
 COPY alembic.ini run.py VERSION* ./
 COPY assets ./assets
 COPY virtool ./virtool
+COPY bowtie2-inspect /tmp/bowtie2-inspect
+
 EXPOSE 9950
 ENTRYPOINT ["python", "run.py"]
 CMD ["server"]
