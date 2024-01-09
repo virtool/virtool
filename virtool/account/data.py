@@ -1,5 +1,7 @@
 from aioredis import Redis
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine
+from structlog import get_logger
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
@@ -20,11 +22,13 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.mongo import validate_credentials
+from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor
 
@@ -40,21 +44,23 @@ PROJECTION = (
     "force_reset",
 )
 
+logger = get_logger(layer="data", domain="account")
+
 
 class AccountData(DataLayerDomain):
     name = "account"
 
     def __init__(
         self,
-        mongo: Mongo,
-        redis: Redis,
         authorization_client: AuthorizationClient,
+        mongo: Mongo,
         pg: AsyncEngine,
+        redis: Redis,
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
-        self._redis = redis
         self._pg = pg
+        self._redis = redis
 
     async def get(self, user_id: str) -> Account:
         """
@@ -88,7 +94,7 @@ class AccountData(DataLayerDomain):
         :param data: the update to the account
         :return: the user account
         """
-        update = {}
+        updates = {}
 
         data_dict = data.dict(exclude_unset=True)
 
@@ -98,53 +104,86 @@ class AccountData(DataLayerDomain):
             ):
                 raise ResourceError("Invalid credentials")
 
-            update = compose_password_update(data_dict["password"])
+            updates.update(compose_password_update(data_dict["password"]))
 
         if "email" in data_dict:
-            update["email"] = data_dict["email"]
+            updates["email"] = data_dict["email"]
 
-        if update:
-            result = await self._mongo.users.update_one(
-                {"_id": user_id}, {"$set": update}
-            )
+        if updates:
+            async with both_transactions(self._mongo, self._pg) as (
+                mongo_session,
+                pg_session,
+            ):
+                result = await self._mongo.users.update_one(
+                    {"_id": user_id}, {"$set": updates}, session=mongo_session
+                )
 
-            if result.modified_count == 0:
-                raise ResourceNotFoundError("User not found")
+                if result.modified_count == 0:
+                    raise ResourceNotFoundError("User not found")
+
+                result = await pg_session.execute(
+                    update(SQLUser).where(SQLUser.legacy_id == user_id).values(updates)
+                )
+
+                if result.rowcount == 0:
+                    logger.info("user not found in postgres", method="account.update")
 
         return await self.get(user_id)
 
-    async def get_settings(self, query_field: str, user_id: str) -> AccountSettings:
+    async def get_settings(self, user_id: str) -> AccountSettings:
         """
         Gets account settings.
 
-        :param query_field: the field to get
         :param user_id: the user ID
         :return: the account settings
         """
-        settings = await get_one_field(self._mongo.users, query_field, user_id)
+        settings = await get_one_field(self._mongo.users, "settings", user_id)
 
         return AccountSettings(**settings)
 
     async def update_settings(
-        self, data: UpdateSettingsRequest, query_field: str, user_id: str
+        self, data: UpdateSettingsRequest, user_id: str
     ) -> AccountSettings:
         """
         Updates account settings.
 
         :param data: the update to the account settings
-        :param query_field: the field to edit
         :param user_id: the user ID
         :return: the account settings
         """
         settings_from_mongo = await get_one_field(
-            self._mongo.users, query_field, user_id
+            self._mongo.users, "settings", user_id
         )
 
-        data_dict = data.dict(exclude_unset=True)
+        settings = {
+            **settings_from_mongo,
+            **data.dict(exclude_unset=True),
+        }
 
-        settings = {**settings_from_mongo, **data_dict}
+        if settings != settings_from_mongo:
+            async with both_transactions(self._mongo, self._pg) as (
+                mongo_session,
+                pg_session,
+            ):
+                result = await self._mongo.users.update_one(
+                    {"_id": user_id},
+                    {"$set": {"settings": settings}},
+                    session=mongo_session,
+                )
 
-        await self._mongo.users.update_one({"_id": user_id}, {"$set": settings})
+                if result.modified_count == 0:
+                    raise ResourceNotFoundError("User not found")
+
+                result = await pg_session.execute(
+                    update(SQLUser)
+                    .where(SQLUser.legacy_id == user_id)
+                    .values({"settings": settings})
+                )
+
+                if result.rowcount == 0:
+                    logger.info(
+                        "user not found in postgres", method="account.update_settings"
+                    )
 
         return AccountSettings(**settings)
 

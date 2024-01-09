@@ -17,15 +17,6 @@ class UpdateAccountRequest(BaseModel):
     old_password: str | None = Field(description="the old password for verification")
     password: str | None = Field(description="the new password")
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "email": "dev@virtool.ca",
-                "password": "foo_bar_1",
-                "old_password": "hello_world",
-            }
-        }
-
     @root_validator
     def check_password(cls, values: Union[str, constr]):
         """
@@ -47,9 +38,17 @@ class UpdateAccountRequest(BaseModel):
 
         return values
 
-    _email_validation = validator("email", allow_reuse=True)(check_email)
-
+    _email_validator = validator("email", allow_reuse=True)(check_email)
     _prevent_none = prevent_none("*")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "dev@virtool.ca",
+                "password": "foo_bar_1",
+                "old_password": "hello_world",
+            }
+        }
 
 
 class UpdateAccountResponse(Account):
@@ -88,17 +87,17 @@ class UpdateSettingsRequest(BaseModel):
     Fields for updating a user account's settings.
     """
 
-    show_ids: Optional[bool] = Field(
-        description="show document ids in client where possible"
-    )
-    skip_quick_analyze_dialog: Optional[bool] = Field(
-        description="don’t show the quick analysis dialog"
-    )
-    quick_analyze_workflow: Optional[QuickAnalyzeWorkflow] = Field(
+    quick_analyze_workflow: QuickAnalyzeWorkflow | None = Field(
         description="workflow to use for quick analysis"
     )
-    show_versions: Optional[bool] = Field(
+    show_ids: bool | None = Field(
+        description="show document ids in client where possible"
+    )
+    show_versions: bool | None = Field(
         description="show document versions in client where possible"
+    )
+    skip_quick_analyze_dialog: bool | None = Field(
+        description="don’t show the quick analysis dialog"
     )
 
     class Config:
@@ -151,7 +150,7 @@ class CreateAPIKeyResponse(APIKey):
 
 
 class UpdateKeyRequest(BaseModel):
-    permissions: Optional[PermissionsUpdate] = Field(
+    permissions: PermissionsUpdate | None = Field(
         description="a permission update comprising an object keyed by permissions "
         "with boolean values"
     )
@@ -159,7 +158,7 @@ class UpdateKeyRequest(BaseModel):
     class Config:
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
 
-    _prevent_none = prevent_none("permissions")
+    _prevent_none = prevent_none("*")
 
 
 class APIKeyResponse(APIKey):
@@ -187,7 +186,7 @@ class APIKeyResponse(APIKey):
 class CreateLoginRequest(BaseModel):
     username: constr(min_length=1) = Field(description="account username")
     password: constr(min_length=1) = Field(description="account password")
-    remember: Optional[bool] = Field(
+    remember: bool | None = Field(
         default=False,
         description="value determining whether the session will last for 1 month or "
         "1 hour",
@@ -202,7 +201,7 @@ class CreateLoginRequest(BaseModel):
             }
         }
 
-    _prevent_none = prevent_none("remember")
+    _prevent_none = prevent_none("*")
 
 
 class LoginResponse(BaseModel):
@@ -213,6 +212,8 @@ class LoginResponse(BaseModel):
 class ResetPasswordRequest(BaseModel):
     password: str
     reset_code: str
+
+    _prevent_none = prevent_none("*")
 
     class Config:
         schema_extra = {

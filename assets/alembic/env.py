@@ -1,6 +1,10 @@
 import asyncio
 import os
 
+from alembic import context
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.blast.models import SQLNuVsBlast
 from virtool.caches.models import SQLSampleReadsCache, SQLSampleArtifactCache
@@ -14,10 +18,7 @@ from virtool.samples.models import SQLSampleReads, SQLSampleArtifact
 from virtool.spaces.models import SQLSpace
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import SQLUpload
-
-from alembic import context
-from sqlalchemy import engine_from_config, pool
-from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool.users.pg import SQLUser, SQLUserGroup
 
 config = context.config
 
@@ -48,6 +49,8 @@ __models__ = (
     SQLSpace,
     SQLSubtractionFile,
     SQLUpload,
+    SQLUser,
+    SQLUserGroup,
 )
 
 

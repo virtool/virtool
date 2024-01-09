@@ -102,7 +102,7 @@ def create_data_layer(
     jobs_client = JobsClient(redis)
 
     data_layer = DataLayer(
-        AccountData(mongo, redis, authorization_client, pg),
+        AccountData(authorization_client, mongo, pg, redis),
         AdministratorsData(authorization_client, mongo, pg),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),

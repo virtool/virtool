@@ -450,6 +450,7 @@ async def test_upload_file(
 
             assert resp.status == 201
             assert await resp.json() == snapshot
+
             assert sorted(os.listdir(tmp_path / "analyses")) == [
                 "1-reference.fa",
                 "2-reference.fa",

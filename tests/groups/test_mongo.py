@@ -1,6 +1,5 @@
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
 from virtool.fake.next import DataFaker
 from virtool.groups.mongo import update_member_users_and_api_keys
 from virtool.groups.pg import SQLGroup

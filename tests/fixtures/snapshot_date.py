@@ -45,6 +45,7 @@ def snapshot_recent(snapshot):
             mapping={
                 ".*applied_at": (datetime.datetime, str, Any),
                 ".*created_at": (datetime.datetime, str, Any),
+                ".*last_password_change": (datetime.datetime, str, Any),
                 ".*updated_at": (datetime.datetime, str, Any),
                 ".*uploaded_at": (datetime.datetime, str, Any),
             },

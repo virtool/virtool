@@ -1,5 +1,6 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.group import Permissions
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -8,6 +9,8 @@ from virtool.fake.next import DataFaker
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.pg.utils import get_row_by_id
+from virtool.users.oas import UpdateUserRequest
+from virtool.users.pg import SQLUserGroup
 from virtool.users.utils import generate_base_permissions
 
 
@@ -108,17 +111,33 @@ async def test_update_permissions(
 
 
 class TestDelete:
-    async def test_ok(
-        self,
-        data_layer: DataLayer,
-        pg: AsyncEngine,
-    ):
+    async def test_ok(self, data_layer: DataLayer, pg: AsyncEngine, fake2):
         """Test that deletion of a group removes it from both databases."""
+        user = await fake2.users.create()
         group = await data_layer.groups.create("Test")
+        await data_layer.users.update(user.id, UpdateUserRequest(groups=[group.id]))
+
+        async with AsyncSession(pg) as session:
+            user_associations = (
+                await session.execute(
+                    select(SQLUserGroup).where(SQLUserGroup.group_id == group.id)
+                )
+            ).all()
+
+        assert len(user_associations) == 1
 
         await data_layer.groups.delete(group.id)
 
         assert await get_row_by_id(pg, SQLGroup, group.id) is None
+
+        async with AsyncSession(pg) as session:
+            users = (
+                await session.execute(
+                    select(SQLUserGroup).where(SQLUserGroup.group_id == group.id)
+                )
+            ).all()
+
+        assert len(users) == 0
 
     async def test_not_found(self, data_layer: DataLayer):
         """Test that a ResourceNotFoundError is raised when the group does not exist."""

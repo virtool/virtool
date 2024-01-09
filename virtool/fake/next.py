@@ -465,7 +465,8 @@ class UsersFakerPiece(DataFakerPiece):
             return await self._layer.users.update(
                 user.id,
                 UpdateUserRequest(
-                    groups=list({group.id for group in groups} | {primary_group.id})
+                    groups=list({group.id for group in groups} | {primary_group.id}),
+                    primary_group=primary_group.id,
                 ),
             )
 
