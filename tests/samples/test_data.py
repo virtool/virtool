@@ -7,7 +7,7 @@ from virtool_core.models.enums import Permission, LibraryType
 from virtool_core.models.samples import WorkflowState
 
 from tests.fixtures.client import ClientSpawner
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
