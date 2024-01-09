@@ -1,4 +1,4 @@
-FROM library/python:3.12-buster as server
+FROM library/python:3.12.1-slim as server
 RUN curl -sSL https://install.python-poetry.org | python - --version 1.7.1
 ENV PATH="/root/.local/bin:${PATH}" \
     POETRY_CACHE_DIR='/tmp/poetry_cache' \
