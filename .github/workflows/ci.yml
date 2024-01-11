@@ -139,7 +139,6 @@ jobs:
           unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
-          cp bowtie2-inspect /user/local/bin/bowtie2-inspect
       - name: Setup Python
         id: setup-python
         uses: actions/setup-python@v4
@@ -160,6 +159,7 @@ jobs:
       - name: Install Packages
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
+            cp bowtie2-inspect /user/local/bin/bowtie2-inspect
       - name: Run
         run: >-
           poetry -vvv run
