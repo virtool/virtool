@@ -159,7 +159,7 @@ jobs:
       - name: Install Packages
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
-            cp bowtie2-inspect /user/local/bin/bowtie2-inspect
+            cp bowtie2-inspect /usr/local/bin/bowtie2-inspect
       - name: Run
         run: >-
           poetry -vvv run
