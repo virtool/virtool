@@ -312,7 +312,8 @@ class LoginView(PydanticView):
             set_session_id_cookie(resp, session.id)
             return resp
 
-        await get_data_from_req(self.request).sessions.delete(session_id)
+        if session_id is not None:
+            await get_data_from_req(self.request).sessions.delete(session_id)
 
         session, token = await get_data_from_req(
             self.request
