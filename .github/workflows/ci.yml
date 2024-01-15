@@ -138,6 +138,7 @@ jobs:
           wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
           unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
+          cp bowtie2-inspect /opt/bowtie2/bowtie2-inspect
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Setup Python
         id: setup-python
@@ -159,7 +160,6 @@ jobs:
       - name: Install Packages
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
-            cp bowtie2-inspect /usr/local/bin/bowtie2-inspect
       - name: Run
         run: >-
           poetry -vvv run
