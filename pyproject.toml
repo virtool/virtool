@@ -20,7 +20,7 @@ maintainers = [
 description = "Viral infection diagnostics using next-generation sequencing"
 license = "MIT"
 classifiers = [
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
 ]
 
 [tool.isort]

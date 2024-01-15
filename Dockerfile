@@ -9,7 +9,7 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml ./
 RUN poetry install --without dev --no-root && rm -rf "$POETRY_CACHE_DIR"
 
-FROM python:3.10-slim-buster as runtime
+FROM python:3.12-rc-slim-buster as runtime
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
