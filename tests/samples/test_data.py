@@ -3,12 +3,15 @@ import asyncio
 import pytest
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.enums import Permission
+from virtool_core.models.enums import Permission, LibraryType
+from virtool_core.models.samples import WorkflowState
 
 from tests.fixtures.client import ClientSpawner
-from tests.samples.test_api import get_sample_data
+from virtool.data.errors import ResourceConflictError
+
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+
 from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.db import lookup_nested_subtractions
@@ -17,6 +20,51 @@ from virtool.users.oas import UpdateUserRequest
 from virtool.pg.utils import get_row_by_id
 
 from virtool.uploads.models import SQLUpload
+
+
+@pytest.fixture
+async def get_sample_ready_false(static_time, fake2, mongo):
+    label = await fake2.labels.create()
+    user = await fake2.users.create()
+    await mongo.samples.insert_one(
+        {
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "created_at": static_time.datetime,
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz",
+                }
+            ],
+            "format": "fastq",
+            "group": "none",
+            "group_read": True,
+            "group_write": True,
+            "hold": False,
+            "host": "",
+            "is_legacy": False,
+            "isolate": "",
+            "labels": [label.id],
+            "library_type": LibraryType.normal.value,
+            "locale": "",
+            "name": "Test",
+            "notes": "",
+            "nuvs": False,
+            "pathoscope": True,
+            "ready": False,
+            "subtractions": ["apple", "pear"],
+            "user": {"id": user.id},
+            "workflows": {
+                "aodp": WorkflowState.INCOMPATIBLE.value,
+                "pathoscope": WorkflowState.COMPLETE.value,
+                "nuvs": WorkflowState.PENDING.value,
+            },
+        }
+    ),
+
 
 class TestCreate:
     @pytest.mark.parametrize(
@@ -90,7 +138,7 @@ async def test_finalize(
     snapshot_recent,
     tmp_path,
     spawn_client: ClientSpawner,
-    get_sample_data,
+    get_sample_ready_false,
 ):
     """
     Test that sample can be finalized
@@ -126,6 +174,22 @@ async def test_finalize(
         ).to_list(length=1)
         == snapshot_recent()
     )
-
     assert sample.quality == quality
     assert sample.ready is True
+
+
+async def test_finalized_already(get_sample_ready_false, data_layer):
+    quality = {
+        "bases": [[1543]],
+        "composition": [[6372]],
+        "count": 7069,
+        "encoding": "OuBQPPuwYimrxkNpPWUx",
+        "gc": 34222440,
+        "length": [3237],
+        "sequences": [7091],
+    }
+
+    await data_layer.samples.finalize("test", quality)
+
+    with pytest.raises(ResourceConflictError, match=r"Sample already finalized"):
+        await data_layer.samples.finalize("test", quality)

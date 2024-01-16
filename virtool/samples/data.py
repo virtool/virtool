@@ -374,6 +374,10 @@ class SamplesData(DataLayerDomain):
         :return: the sample after finalizing
 
         """
+
+        if await get_one_field(self._mongo.samples, "ready", sample_id):
+            raise ResourceConflictError("Sample already finalized")
+
         result: UpdateResult = await self._mongo.samples.update_one(
             {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
         )

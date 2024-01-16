@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission, LibraryType
 from virtool_core.models.samples import WorkflowState
-
+from tests.samples.test_data import get_sample_ready_false
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.config import get_config_from_app
 from virtool.config.cls import ServerConfig
@@ -35,8 +35,6 @@ async def get_sample_data(
     mongo: "Mongo", fake2: DataFaker, pg: AsyncEngine, static_time
 ):
     label = await fake2.labels.create()
-    await fake2.labels.create()
-
     user = await fake2.users.create()
 
     await asyncio.gather(
@@ -730,7 +728,7 @@ class TestEdit:
 @pytest.mark.apitest
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
 async def test_finalize(
-    field: str, snapshot, resp_is, spawn_job_client, tmp_path, get_sample_data
+    field: str, snapshot, resp_is, spawn_job_client, tmp_path, get_sample_ready_false
 ):
     """
     Test that sample can be finalized using the Jobs API.
@@ -738,21 +736,18 @@ async def test_finalize(
     """
 
     client = await spawn_job_client(authorize=True)
-
-    resp = await client.patch(
-        "/samples/test",
-        json={
-            field: {
-                "bases": [[1543]],
-                "composition": [[6372]],
-                "count": 7069,
-                "encoding": "OuBQPPuwYimrxkNpPWUx",
-                "gc": 34222440,
-                "length": [3237],
-                "sequences": [7091],
-            }
-        },
-    )
+    json = {
+        field: {
+            "bases": [[1543]],
+            "composition": [[6372]],
+            "count": 7069,
+            "encoding": "OuBQPPuwYimrxkNpPWUx",
+            "gc": 34222440,
+            "length": [3237],
+            "sequences": [7091],
+        }
+    }
+    resp = await client.patch("/samples/test", json=json)
 
     if field == "quality":
         assert resp.status == 200
@@ -760,6 +755,9 @@ async def test_finalize(
 
         with pytest.raises(ResourceNotFoundError):
             await get_data_from_app(client.app).uploads.get(1)
+
+        resp = await client.patch("/samples/test", json=json)
+        assert resp.status == 500
 
     else:
         assert resp.status == 422
