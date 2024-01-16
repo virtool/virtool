@@ -295,7 +295,7 @@ async def test_add_permission(
 ):
     client = await spawn_client(administrator=True, authenticated=True)
     if role is None:
-        resp = await client.put(f"/users/test/permissions/invalid", {})
+        resp = await client.put("/users/test/permissions/invalid", {})
     else:
         resp = await client.put(f"/users/test/permissions/{role.value}", {})
 
@@ -320,7 +320,7 @@ async def test_remove_permission(
     client = await spawn_client(administrator=True, authenticated=True)
 
     if role is None:
-        resp = await client.put(f"/users/test/permissions/invalid", {})
+        resp = await client.put("/users/test/permissions/invalid", {})
     else:
         resp = await client.put(f"/users/test/permissions/{role.value}", {})
 

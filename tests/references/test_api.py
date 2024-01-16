@@ -12,7 +12,6 @@ import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
-from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.utils import get_one_field
 from virtool.settings.oas import UpdateSettingsRequest
