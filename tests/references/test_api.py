@@ -652,8 +652,6 @@ async def test_update(
 
         await client.mongo.references.insert_one(reference)
 
-
-
     resp = await client.post("/refs/foo/updates", {})
 
     if not check_ref_right:

@@ -20,7 +20,7 @@ from virtool.users.utils import check_password
 
 @pytest.fixture
 async def setup_update_user(
-        data_layer: DataLayer, fake2: DataFaker, spawn_client: ClientSpawner
+    data_layer: DataLayer, fake2: DataFaker, spawn_client: ClientSpawner
 ):
     client = await spawn_client(administrator=True, authenticated=True)
 
@@ -45,11 +45,11 @@ async def setup_update_user(
 @pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "fred"])
 async def test_find(
-        find: str | None,
-        fake2: DataFaker,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
-        static_time,
+    find: str | None,
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(
@@ -73,11 +73,11 @@ async def test_find(
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
-        status: int,
-        fake2: DataFaker,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
-        static_time,
+    status: int,
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(administrator=True, authenticated=True)
@@ -99,14 +99,14 @@ async def test_get(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
 async def test_create(
-        error: str | None,
-        data_layer: DataLayer,
-        fake2: DataFaker,
-        mongo: Mongo,
-        resp_is,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
-        static_time,
+    error: str | None,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
+    resp_is,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     """
     Test that a valid request results in a user document being properly inserted.
@@ -167,7 +167,7 @@ async def test_create(
 @pytest.mark.apitest
 class TestUpdate:
     async def test_ok(
-            self, setup_update_user, snapshot: SnapshotAssertion, static_time
+        self, setup_update_user, snapshot: SnapshotAssertion, static_time
     ):
         client, group_1, _, user = setup_update_user
 
@@ -184,7 +184,7 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
     async def test_with_groups(
-            self, setup_update_user, snapshot: SnapshotAssertion, static_time
+        self, setup_update_user, snapshot: SnapshotAssertion, static_time
     ):
         client, group_1, group_2, user = setup_update_user
 
@@ -214,7 +214,7 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
     async def test_non_existent_primary_group(
-            self, setup_update_user, snapshot: SnapshotAssertion
+        self, setup_update_user, snapshot: SnapshotAssertion
     ):
         client, _, _, user = setup_update_user
 
@@ -229,7 +229,7 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
     async def test_not_a_member_of_primary_group(
-            self, setup_update_user, snapshot: SnapshotAssertion
+        self, setup_update_user, snapshot: SnapshotAssertion
     ):
         client, _, group_2, user = setup_update_user
 
@@ -288,10 +288,10 @@ async def test_list_permissions(spawn_client, user, snapshot: SnapshotAssertion)
     ids=["valid_permission", "invalid_permission"],
 )
 async def test_add_permission(
-        role: SpaceSampleRole,
-        status: int,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
+    role: SpaceSampleRole,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
 ):
     client = await spawn_client(administrator=True, authenticated=True)
     if role is None:
@@ -312,10 +312,10 @@ async def test_add_permission(
     ids=["valid_permission", "invalid_permission"],
 )
 async def test_remove_permission(
-        role: SpaceSampleRole,
-        status: int,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
+    role: SpaceSampleRole,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
 ):
     client = await spawn_client(administrator=True, authenticated=True)
 
