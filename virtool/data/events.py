@@ -92,6 +92,10 @@ def emit(data: BaseModel, domain: str, name: str, operation: Operation):
 
 
     """
+
+    if data is None:
+        logger.warning("emit event with no data")
+
     _events_target.emit(
         Event(
             data=data,
@@ -202,14 +206,6 @@ class EventListener(AsyncIterable):
         while True:
             try:
                 received = await self._channel.get_json()
-
-                if received is None:
-                    logger.error(
-                        "Channel has been unsubscribed, trying to re-subscribe"
-                    )
-                    (self._channel,) = await self._redis.subscribe(self._channel_name)
-                    continue
-
                 payload = received.pop("payload")
                 cls = get_model_by_name(payload["model"])
 
