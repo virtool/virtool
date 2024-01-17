@@ -93,7 +93,7 @@ async def test_find(
 
     assert analyses_found.dict() == snapshot_recent()
     assert analysis_wrong_sample not in analyses_found
-    assert analyses_found.total_count == analyses_found.found_count + 1
+    assert analyses_found.total_count == analyses_found.found_count
 
 
 async def test_create(data_layer: DataLayer, mongo: Mongo, snapshot, set_up_sample):

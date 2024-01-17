@@ -169,9 +169,9 @@
     ]),
     'found_count': 0,
     'page': 1,
-    'page_count': 1,
+    'page_count': 0,
     'per_page': 25,
-    'total_count': 1,
+    'total_count': 0,
   })
 # ---
 # name: test_find[1]
@@ -229,7 +229,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 1,
   })
 # ---
 # name: test_find[2]
@@ -334,7 +334,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 2,
   })
 # ---
 # name: test_upload_file
