@@ -57,7 +57,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     AbstractProgressHandler,
 )
-from virtool.uploads.utils import multipart_file_chunker, naive_writer
+from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks, base_processor
 
@@ -366,7 +366,7 @@ class AnalysisData(DataLayerDomain):
         emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
-        self, reader, analysis_id: str, analysis_format: str, name: str
+        self, chunks, analysis_id: str, analysis_format: str, name: str
     ) -> Optional[AnalysisFile]:
         """
         Uploads a new analysis result file.
@@ -394,9 +394,7 @@ class AnalysisData(DataLayerDomain):
         )
 
         try:
-            size = await naive_writer(
-                multipart_file_chunker(reader), analysis_file_path
-            )
+            size = await naive_writer(chunks, analysis_file_path)
         except asyncio.CancelledError:
             logger.info("Analysis file upload aborted", upload_id=upload_id)
             await delete_row(self._pg, upload_id, SQLAnalysisFile)
