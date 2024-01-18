@@ -12,11 +12,7 @@ from virtool.api.policy import (
     get_handler_policy,
     PublicRoutePolicy,
 )
-from virtool.api.utils import set_session_id_cookie
 from virtool.config import get_config_from_req
-from virtool.data.errors import (
-    ResourceNotFoundError,
-)
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.oidc.utils import validate_token
@@ -140,63 +136,27 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
 
 async def authenticate_with_session(req: Request, handler: Callable) -> Response:
     """Authenticate the given request with session information in the cookie."""
-    session_id = req.cookies.get("session_id")
-    session_token = req.cookies.get("session_token")
+    session = req["session"]
 
-    if session_id:
-        try:
-            session = await get_data_from_req(req).sessions.get_authenticated(
-                session_id, session_token
-            )
-        except ResourceNotFoundError:
-            try:
-                session = await get_data_from_req(req).sessions.get_anonymous(
-                    session_id
-                )
-            except ResourceNotFoundError:
-                session = await get_data_from_req(req).sessions.create_anonymous(
-                    get_ip(req)
-                )
+    if not session.authentication:
+        raise APIUnauthorized("Requires authorization")
 
-    else:
-        session = await get_data_from_req(req).sessions.create_anonymous(get_ip(req))
+    user = await get_data_from_req(req).users.get(session.authentication.user_id)
 
-    if session.authentication:
-        user = await get_data_from_req(req).users.get(session.authentication.user_id)
+    if not user.active:
+        raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
 
-        if not user.active:
-            raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
-
-        req["client"] = UserClient(
-            administrator_role=user.administrator_role,
-            authenticated=True,
-            force_reset=user.force_reset,
-            groups=[group.id for group in user.groups],
-            permissions=user.permissions.dict(),
-            user_id=user.id,
-            session_id=session_id,
-        )
-    else:
-        req["client"] = UserClient(
-            administrator_role=None,
-            authenticated=False,
-            force_reset=False,
-            groups=[],
-            permissions={},
-            user_id=None,
-            session_id=session_id,
-        )
+    req["client"] = UserClient(
+        administrator_role=user.administrator_role,
+        authenticated=True,
+        force_reset=user.force_reset,
+        groups=[group.id for group in user.groups],
+        permissions=user.permissions.dict(),
+        user_id=user.id,
+        session_id=session.id,
+    )
 
     resp = await handler(req)
-
-    if req.path != "/account/reset" and session.reset:
-        with suppress(ResourceNotFoundError):
-            await get_data_from_req(req).sessions.delete(session_id)
-            session = await get_data_from_req(req).sessions.create_anonymous(
-                get_ip(req)
-            )
-
-    set_session_id_cookie(resp, session.id)
 
     return resp
 
@@ -218,7 +178,7 @@ async def authentication_middleware(req: Request, handler) -> Response:
             groups=[],
             permissions={},
             user_id=None,
-            session_id=None,
+            session_id=req["session"].id,
         )
 
         return await handler(req)
