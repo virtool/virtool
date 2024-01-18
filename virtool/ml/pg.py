@@ -40,4 +40,4 @@ class SQLMLModelRelease(Base):
     ready: Mapped[bool] = mapped_column(nullable=False)
     size: Mapped[int] = mapped_column(nullable=False)
 
-    model: Mapped["SQLMLModel"] = relationship(back_populates="releases")
+    model: Mapped["SQLMLModel"] = relationship(back_populates="releases", lazy="joined")

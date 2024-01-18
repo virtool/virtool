@@ -7,18 +7,19 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import joinedload
 from structlog import get_logger
+from virtool_core.models.ml import (
+    MLModelListResult,
+    MLModelMinimal,
+    MLModelRelease,
+    MLModel,
+    MLModelReleaseMinimal,
+)
 
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.file import FileDescriptor
 from virtool.data.http import HTTPClient
-from virtool.ml.models import (
-    MLModel,
-    MLModelMinimal,
-    MLModelRelease,
-    MLModelListResult,
-)
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.releases import (
@@ -65,7 +66,7 @@ class MLData(DataLayerDomain):
                     id=model.id,
                     created_at=model.created_at,
                     description=model.description,
-                    latest_release=MLModelRelease(**model.releases[0].to_dict())
+                    latest_release=MLModelReleaseMinimal(**model.releases[0].to_dict())
                     if model.releases
                     else None,
                     name=model.name,
@@ -97,13 +98,11 @@ class MLData(DataLayerDomain):
 
         """
         async with AsyncSession(self._pg) as session:
-            stmt = (
+            result = await session.execute(
                 select(SQLMLModel)
                 .options(joinedload(SQLMLModel.releases))
                 .filter_by(id=model_id)
             )
-
-            result = await session.execute(stmt)
 
             model = result.scalars().unique().one_or_none()
 
@@ -111,7 +110,7 @@ class MLData(DataLayerDomain):
                 raise ValueError(f"ML model with ID {model_id} not found")
 
             releases = [
-                MLModelRelease(
+                MLModelReleaseMinimal(
                     id=r.id,
                     created_at=r.created_at,
                     download_url=r.download_url,
@@ -123,6 +122,7 @@ class MLData(DataLayerDomain):
                 )
                 for r in model.releases
             ]
+
             return MLModel(
                 id=model.id,
                 created_at=model.created_at,
@@ -131,6 +131,27 @@ class MLData(DataLayerDomain):
                 name=model.name,
                 release_count=len(model.releases),
                 releases=releases,
+            )
+
+    async def get_release(self, release_id: int) -> MLModelRelease:
+        """
+        Get an ML model release by its id.
+
+        :param release_id: the ID of the release to get.
+        :return: the ML model release.
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLMLModelRelease).where(SQLMLModelRelease.id == release_id)
+            )
+
+            release = result.scalars().unique().one_or_none()
+
+            if release is None:
+                raise ResourceNotFoundError()
+
+            return MLModelRelease(
+                **{**release.to_dict(), "model": release.model.to_dict()}
             )
 
     async def download_release(self, release_id: int) -> FileDescriptor:

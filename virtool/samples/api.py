@@ -420,10 +420,10 @@ class AnalysesView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
+        mongo: "Mongo" = self.request.app["db"]
 
         try:
-            if not await check_rights(db, sample_id, self.request["client"]):
+            if not await check_rights(mongo, sample_id, self.request["client"]):
                 raise APIInsufficientRights()
         except DatabaseError as err:
             if "Sample does not exist" in str(err):
@@ -439,22 +439,18 @@ class AnalysesView(PydanticView):
             raise APIBadRequest(str(err))
 
         analysis = await get_data_from_req(self.request).analyses.create(
+            data,
             sample_id,
-            data.ref_id,
-            data.subtractions,
             self.request["client"].user_id,
-            data.workflow,
             0,
         )
 
-        analysis_id = analysis.id
-
-        await recalculate_workflow_tags(db, sample_id)
+        await recalculate_workflow_tags(mongo, sample_id)
 
         return json_response(
             analysis,
             status=201,
-            headers={"Location": f"/analyses/{analysis_id}"},
+            headers={"Location": f"/analyses/{analysis.id}"},
         )
 
 

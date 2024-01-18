@@ -48,7 +48,7 @@ class AttachLabelsTransform(AbstractTransform):
         }
 
 
-class SampleCountTransform(AbstractTransform):
+class AttachSampleCountsTransform(AbstractTransform):
     """
     Attach the number of samples associated with the given label to the passed document.
 

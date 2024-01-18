@@ -7,7 +7,7 @@ from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import emits, Operation, emit
-from virtool.labels.db import SampleCountTransform
+from virtool.labels.transforms import AttachSampleCountsTransform
 from virtool.labels.models import SQLLabel
 from virtool.labels.oas import UpdateLabelRequest
 from virtool.mongo.core import Mongo
@@ -37,7 +37,8 @@ class LabelsData:
         labels = await get_generic(self._pg, statement)
 
         documents = await apply_transforms(
-            [label.to_dict() for label in labels], [SampleCountTransform(self._db)]
+            [label.to_dict() for label in labels],
+            [AttachSampleCountsTransform(self._db)],
         )
 
         return [LabelMinimal(**label) for label in documents]
@@ -64,7 +65,7 @@ class LabelsData:
             except IntegrityError:
                 raise ResourceConflictError()
 
-        document = await apply_transforms(row, [SampleCountTransform(self._db)])
+        document = await apply_transforms(row, [AttachSampleCountsTransform(self._db)])
 
         return Label(**document)
 
@@ -84,7 +85,7 @@ class LabelsData:
             raise ResourceNotFoundError()
 
         document = await apply_transforms(
-            label.to_dict(), [SampleCountTransform(self._db)]
+            label.to_dict(), [AttachSampleCountsTransform(self._db)]
         )
 
         return Label(**document)
@@ -123,7 +124,7 @@ class LabelsData:
             except IntegrityError:
                 raise ResourceConflictError()
 
-        document = await apply_transforms(row, [SampleCountTransform(self._db)])
+        document = await apply_transforms(row, [AttachSampleCountsTransform(self._db)])
 
         return Label(**document)
 

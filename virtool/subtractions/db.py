@@ -36,6 +36,17 @@ PROJECTION = [
 ADD_SUBTRACTION_FILES_QUERY = {"deleted": False}
 
 
+def subtraction_processor(document: Document) -> Document:
+    """
+    Process a subtraction document for client-side.
+
+    :param document: the subtraction document to process
+    :return: the processed document
+
+    """
+    return {**base_processor(document), "subtractions": document["subtractions"] or []}
+
+
 class AttachSubtractionsTransform(AbstractTransform):
     """
     Attach more subtraction detail to a document with a field `subtractions` that

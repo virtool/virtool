@@ -4,8 +4,8 @@ import asyncio
 import math
 import os
 import shutil
-from asyncio import CancelledError, to_thread
-from typing import Optional, TYPE_CHECKING
+from asyncio import CancelledError
+from typing import TYPE_CHECKING
 
 from aiohttp import MultipartReader
 from multidict import MultiDictProxy
@@ -182,7 +182,7 @@ class SubtractionsData(DataLayerDomain):
         data: CreateSubtractionRequest,
         user_id: str,
         space_id: int,
-        subtraction_id: Optional[str] = None,
+        subtraction_id: str | None = None,
     ) -> Subtraction:
         """
         Create a new subtraction.
@@ -310,7 +310,7 @@ class SubtractionsData(DataLayerDomain):
 
             await asyncio.gather(
                 unlink_default_subtractions(self._mongo, subtraction_id, session),
-                to_thread(
+                asyncio.to_thread(
                     shutil.rmtree,
                     join_subtraction_path(self._config, subtraction_id),
                     True,
@@ -406,7 +406,7 @@ class SubtractionsData(DataLayerDomain):
 
                 await session.commit()
         except CancelledError:
-            await to_thread(
+            await asyncio.to_thread(
                 rm, self._config.data_path / "subtractions" / subtraction_id / filename
             )
 
@@ -437,7 +437,7 @@ class SubtractionsData(DataLayerDomain):
 
         path = join_subtraction_path(self._config, subtraction_id) / filename
 
-        if not await to_thread(path.is_file):
+        if not await asyncio.to_thread(path.is_file):
             logger.warning(
                 "Expected subtraction file not found",
                 filename=filename,
@@ -465,14 +465,16 @@ class SubtractionsData(DataLayerDomain):
             stderr=asyncio.subprocess.PIPE,
         )
 
-        await proc.communicate()
+        _, stderr = await proc.communicate()
+
+        assert proc.returncode == 0
 
         target_path = (
             join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
         )
 
-        await to_thread(compress_file, fasta_path, target_path)
-        await to_thread(rm, fasta_path)
+        await asyncio.to_thread(compress_file, fasta_path, target_path)
+        await asyncio.to_thread(rm, fasta_path)
 
     async def rename_and_track_files(self, progress_handler: AbstractProgressHandler):
         """
@@ -494,7 +496,7 @@ class SubtractionsData(DataLayerDomain):
 
             subtraction_files = []
 
-            for filename in sorted(await to_thread(os.listdir, path)):
+            for filename in sorted(await asyncio.to_thread(os.listdir, path)):
                 if filename in FILES:
                     async with AsyncSession(self._pg) as session:
                         exists = (

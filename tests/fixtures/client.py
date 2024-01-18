@@ -418,6 +418,7 @@ def spawn_client(
 @pytest.fixture
 def spawn_job_client(
     aiohttp_client,
+    config: ServerConfig,
     mongo: "Mongo",
     mongo_connection_string,
     mongo_name: str,
@@ -454,7 +455,7 @@ def spawn_job_client(
                 b2c_client_secret="",
                 b2c_tenant="",
                 b2c_user_flow="",
-                data_path=Path("data"),
+                data_path=config.data_path,
                 dev=dev,
                 flags=[],
                 host="localhost",

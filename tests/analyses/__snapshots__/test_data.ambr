@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: test_create[mongo]
   dict({
-    '_id': 'test_analysis',
+    '_id': '7cf872dc',
     'files': list([
     ]),
     'index': dict({
@@ -11,6 +11,7 @@
     'job': dict({
       'id': 'fb085f7f',
     }),
+    'ml': None,
     'ready': False,
     'reference': dict({
       'id': 'test_ref',
@@ -36,7 +37,7 @@
   dict({
     'files': list([
     ]),
-    'id': 'test_analysis',
+    'id': '7cf872dc',
     'index': dict({
       'id': 'test_index',
       'version': 11,
@@ -83,7 +84,7 @@
 # ---
 # name: test_create_analysis_id[mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': '7cf872dc',
     'files': list([
     ]),
     'index': dict({
@@ -91,8 +92,9 @@
       'version': 11,
     }),
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
     }),
+    'ml': None,
     'ready': False,
     'reference': dict({
       'id': 'test_ref',
@@ -118,14 +120,14 @@
   dict({
     'files': list([
     ]),
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'index': dict({
       'id': 'test_index',
       'version': 11,
     }),
     'job': dict({
       'archived': False,
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
       'progress': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
@@ -179,7 +181,7 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '3cbb22cc',
+        'id': 'da42dca3',
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -187,7 +189,7 @@
         'job': dict({
           'archived': False,
           'created_at': 'approximately_now_datetime',
-          'id': 'da42dca3',
+          'id': '3cbb22cc',
           'progress': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
@@ -237,7 +239,7 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '09d01419',
+        'id': 'f60bae36',
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -245,7 +247,7 @@
         'job': dict({
           'archived': False,
           'created_at': 'approximately_now_datetime',
-          'id': 'f60bae36',
+          'id': '09d01419',
           'progress': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
@@ -284,7 +286,7 @@
       }),
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '3cbb22cc',
+        'id': 'da42dca3',
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -292,7 +294,7 @@
         'job': dict({
           'archived': False,
           'created_at': 'approximately_now_datetime',
-          'id': 'da42dca3',
+          'id': '3cbb22cc',
           'progress': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
@@ -339,7 +341,7 @@
 # ---
 # name: test_upload_file
   dict({
-    'analysis': 'test_analysis',
+    'analysis': '7cf872dc',
     'description': None,
     'format': 'fasta',
     'id': 1,

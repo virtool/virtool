@@ -16,6 +16,7 @@ from virtool_core.models.group import Group
 from virtool_core.models.hmm import HMM
 from virtool_core.models.job import Job, JobState
 from virtool_core.models.label import Label
+from virtool_core.models.ml import MLModel
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.task import Task
 from virtool_core.models.upload import Upload
@@ -27,7 +28,6 @@ from virtool.groups.oas import UpdateGroupRequest, PermissionsUpdate
 from virtool.groups.pg import SQLGroup
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES
-from virtool.ml.models import MLModel
 from virtool.mongo.core import Mongo
 from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
 from virtool.releases import ReleaseManifestItem

@@ -2,9 +2,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, constr, Field, conlist
 from virtool_core.models.analysis import AnalysisMinimal
-from virtool_core.models.enums import LibraryType
+from virtool_core.models.enums import LibraryType, AnalysisWorkflow
 from virtool_core.models.samples import SampleMinimal, Sample
-from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.validators import prevent_none
 
 
@@ -475,9 +474,10 @@ class GetSampleAnalysesResponse(AnalysisMinimal):
 
 
 class CreateAnalysisRequest(BaseModel):
+    ml: int | None
     ref_id: str
-    subtractions: Optional[list]
-    workflow: QuickAnalyzeWorkflow
+    subtractions: list[str] | None
+    workflow: AnalysisWorkflow
 
     _prevent_none = prevent_none("subtractions")
 

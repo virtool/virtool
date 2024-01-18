@@ -2,6 +2,7 @@
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[amplicon]
   dict({
     'aodp': 'none',
+    'iimi': 'incompatible',
     'nuvs': 'incompatible',
     'pathoscope': 'incompatible',
   })
@@ -9,6 +10,7 @@
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[normal]
   dict({
     'aodp': 'incompatible',
+    'iimi': 'none',
     'nuvs': 'none',
     'pathoscope': 'none',
   })
@@ -16,6 +18,7 @@
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[other]
   dict({
     'aodp': 'incompatible',
+    'iimi': 'none',
     'nuvs': 'none',
     'pathoscope': 'none',
   })
@@ -23,30 +26,9 @@
 # name: TestDeriveWorkflowStates.test_define_initial_workflows[srna]
   dict({
     'aodp': 'incompatible',
+    'iimi': 'none',
     'nuvs': 'none',
     'pathoscope': 'none',
-  })
-# ---
-# name: test_attach_labels
-  dict({
-    'id': 'foo',
-    'labels': list([
-      dict({
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
-        'id': 1,
-        'name': 'Three',
-        'space': None,
-      }),
-      dict({
-        'color': '#955887',
-        'description': 'Measure example sense peace economy.',
-        'id': 2,
-        'name': 'Help',
-        'space': None,
-      }),
-    ]),
-    'name': 'Foo',
   })
 # ---
 # name: test_compress_sample_reads[False]
@@ -141,6 +123,7 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
+      'iimi': 'none',
       'nuvs': 'none',
       'pathoscope': 'none',
     }),
@@ -178,6 +161,7 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
+      'iimi': 'none',
       'nuvs': 'none',
       'pathoscope': 'none',
     }),

@@ -287,12 +287,12 @@
     }),
     'subtractions': list([
       dict({
-        'id': 'apple',
-        'name': 'Apple',
-      }),
-      dict({
         'id': 'plum',
         'name': 'Plum',
+      }),
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
       }),
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
@@ -393,9 +393,7 @@
     }),
     'ready': True,
     'reference': dict({
-      '_id': 'baz',
-      'data_type': 'genome',
-      'name': 'Baz',
+      'id': 'baz',
     }),
     'results': dict({
       'hits': list([
@@ -405,14 +403,8 @@
       'id': 'baz',
     }),
     'subtractions': list([
-      dict({
-        'id': 'apple',
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 'plum',
-        'name': 'Plum',
-      }),
+      'plum',
+      'apple',
     ]),
     'user': dict({
       'id': 'fb085f7f',

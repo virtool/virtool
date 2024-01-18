@@ -23,7 +23,7 @@ from virtool.groups.pg import SQLGroup
 from virtool.api.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.labels.db import AttachLabelsTransform
+from virtool.labels.transforms import AttachLabelsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
@@ -42,7 +42,9 @@ from virtool.samples.db import (
 from virtool.samples.models import SQLSampleReads
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
-from virtool.subtractions.db import lookup_nested_subtractions
+from virtool.subtractions.db import (
+    AttachSubtractionsTransform,
+)
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
@@ -187,22 +189,18 @@ class SamplesData(DataLayerDomain):
         :return: the sample
         :raises ResourceNotFoundError: when the sample does not exist
         """
-        documents = await self._mongo.samples.aggregate(
-            [
-                {"$match": {"_id": sample_id}},
-                *lookup_nested_subtractions(local_field="subtractions"),
-            ]
-        ).to_list(length=1)
+        document = await self._mongo.samples.find_one({"_id": sample_id})
 
-        if not documents:
+        if document is None:
             raise ResourceNotFoundError()
 
         document = await apply_transforms(
-            base_processor(documents[0]),
+            base_processor(document),
             [
                 AttachArtifactsAndReadsTransform(self._pg),
                 AttachJobTransform(self._mongo),
                 AttachLabelsTransform(self._pg),
+                AttachSubtractionsTransform(self._mongo),
                 AttachUserTransform(self._mongo),
             ],
         )
