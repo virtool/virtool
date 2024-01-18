@@ -241,7 +241,7 @@ class JobsData:
         return Job(**document)
 
     @emits(Operation.UPDATE)
-    async def acquire(self, job_id: str):
+    async def acquire(self, job_id: str) -> JobAcquired:
         """
         Set the `started` field on a job to `True` and return the complete document.
 

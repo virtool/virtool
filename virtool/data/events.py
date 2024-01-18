@@ -92,15 +92,19 @@ def emit(data: BaseModel, domain: str, name: str, operation: Operation):
 
 
     """
-    _events_target.emit(
-        Event(
-            data=data,
-            domain=domain,
-            name=name,
-            operation=operation,
-            timestamp=timestamp(),
+
+    if data is None:
+        logger.warning("emit event with no data")
+    else:
+        _events_target.emit(
+            Event(
+                data=data,
+                domain=domain,
+                name=name,
+                operation=operation,
+                timestamp=timestamp(),
+            )
         )
-    )
 
 
 def emits(operation: Operation, domain: str | None = None, name: str | None = None):
@@ -202,7 +206,6 @@ class EventListener(AsyncIterable):
         while True:
             try:
                 received = await self._channel.get_json()
-
                 payload = received.pop("payload")
                 cls = get_model_by_name(payload["model"])
 

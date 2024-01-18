@@ -320,7 +320,9 @@ class SubtractionsData(DataLayerDomain):
         return update_result.modified_count
 
     @emits(Operation.UPDATE)
-    async def finalize(self, subtraction_id: str, data: FinalizeSubtractionRequest):
+    async def finalize(
+        self, subtraction_id: str, data: FinalizeSubtractionRequest
+    ) -> Subtraction:
         """
         Finalize a subtraction.
 
@@ -329,7 +331,7 @@ class SubtractionsData(DataLayerDomain):
 
         :param subtraction_id:
         :param data:
-        :return:
+        :return: finalized subtraction
         """
         ready = await get_one_field(self._mongo.subtraction, "ready", subtraction_id)
 
