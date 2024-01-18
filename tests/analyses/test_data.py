@@ -1,8 +1,6 @@
 import asyncio
-from virtool_core.models.enums import QuickAnalyzeWorkflow
+from virtool_core.models.enums import QuickAnalyzeWorkflow, AnalysisWorkflow
 
-from tests.analyses.test_api import create_files
-from tests.fixtures.snapshot_date import snapshot_recent
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.api.client import UserClient
@@ -11,8 +9,10 @@ from virtool.analyses.models import SQLAnalysisFile
 from virtool.pg.utils import get_row_by_id
 import pytest
 
-from syrupy import snapshot, SnapshotAssertion
+from syrupy import SnapshotAssertion
 from syrupy.filters import props
+
+from virtool.samples.oas import CreateAnalysisRequest
 
 
 @pytest.fixture
@@ -100,16 +100,18 @@ async def test_create(data_layer: DataLayer, mongo: Mongo, snapshot, set_up_samp
     """
     Tests that an analysis is created given an analysis id with the expected fields.
     """
-    user_id = set_up_sample
+    user_id: str = set_up_sample
 
     analysis = await data_layer.analyses.create(
+        CreateAnalysisRequest(
+            ml=None,
+            ref_id="test_ref",
+            subtractions=["subtraction_1", "subtraction_2"],
+            workflow=AnalysisWorkflow.nuvs,
+        ),
         "test_sample",
-        "test_ref",
-        ["subtraction_1", "subtraction_2"],
         user_id,
-        QuickAnalyzeWorkflow.nuvs,
         0,
-        analysis_id="test_analysis",
     )
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))

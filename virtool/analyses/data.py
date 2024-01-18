@@ -3,14 +3,13 @@ import math
 import os
 from datetime import datetime
 from shutil import rmtree
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional
 
 import sentry_sdk
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
-from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -42,16 +41,17 @@ from virtool.data.events import emits, Operation, emit
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.transforms import AttachJobTransform
+from virtool.ml.transforms import AttachMLTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
-from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
+from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
-    lookup_nested_subtractions,
     AttachSubtractionsTransform,
+    subtraction_processor,
 )
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -59,7 +59,7 @@ from virtool.tasks.progress import (
 )
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import wait_for_checks, base_processor
+from virtool.utils import wait_for_checks
 
 logger = get_logger("analyses")
 
@@ -108,16 +108,17 @@ class AnalysisData(DataLayerDomain):
                 "$project": {
                     "data": {
                         "_id": True,
-                        "workflow": True,
                         "created_at": True,
                         "index": True,
                         "job": True,
+                        "ml": True,
                         "ready": True,
                         "reference": True,
                         "sample": True,
                         "subtractions": True,
                         "updated_at": True,
                         "user": True,
+                        "workflow": True,
                     },
                     "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
                 }
@@ -147,8 +148,9 @@ class AnalysisData(DataLayerDomain):
             )
 
         documents = await apply_transforms(
-            [base_processor(d) for d in documents],
+            [subtraction_processor(d) for d in documents],
             [
+                AttachMLTransform(self._pg),
                 AttachJobTransform(self._mongo),
                 AttachReferenceTransform(self._mongo),
                 AttachSubtractionsTransform(self._mongo),
@@ -177,22 +179,14 @@ class AnalysisData(DataLayerDomain):
         :param if_modified_since: the date the document should have been last modified
         :return: the analysis
         """
-        result = await self._mongo.analyses.aggregate(
-            [
-                {"$match": {"_id": analysis_id}},
-                *lookup_nested_subtractions(),
-                *lookup_nested_reference_by_id(),
-            ]
-        ).to_list(length=1)
+        document = await self._mongo.analyses.find_one({"_id": analysis_id})
 
-        if not result:
+        if not document:
             raise ResourceNotFoundError()
 
-        analysis = result[0]
+        await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
-        await wait_for_checks(check_if_analysis_modified(if_modified_since, analysis))
-
-        analysis = await attach_analysis_files(self._pg, analysis_id, analysis)
+        analysis = await attach_analysis_files(self._pg, analysis_id, document)
 
         if analysis["ready"]:
             analysis = await virtool.analyses.format.format_analysis(
@@ -201,27 +195,23 @@ class AnalysisData(DataLayerDomain):
 
         transforms = [
             AttachJobTransform(self._mongo),
+            AttachMLTransform(self._pg),
+            AttachReferenceTransform(self._mongo),
+            AttachSubtractionsTransform(self._mongo),
             AttachUserTransform(self._mongo),
         ]
 
         if analysis["workflow"] == "nuvs":
             transforms.append(AttachNuVsBLAST(self._pg))
 
-        analysis = await apply_transforms(base_processor(analysis), transforms)
+        analysis = await apply_transforms(subtraction_processor(analysis), transforms)
 
         return Analysis(
             **{**analysis, "job": analysis["job"] if analysis["job"] else None}
         )
 
     async def create(
-        self,
-        sample_id: str,
-        ref_id: str,
-        subtractions: List[str],
-        user_id: str,
-        workflow: QuickAnalyzeWorkflow,
-        space_id: int,
-        analysis_id: str | None = None,
+        self, data: CreateAnalysisRequest, sample_id: str, user_id: str, space_id: int
     ) -> Analysis:
         """
         Creates a new analysis.
@@ -230,36 +220,25 @@ class AnalysisData(DataLayerDomain):
         write permissions on the sample document and assigns it a creator username
         based on the requesting connection.
 
+        :param data: the analysis creation input data
         :param sample_id: the ID of the sample to create an analysis for
-        :param ref_id: the ID of the reference to analyze against
-        :param subtractions: the list of the subtraction IDs to remove from the analysis
         :param user_id: the ID of the user starting the job
-        :param workflow: the analysis workflow to run
         :param space_id: the ID of the parent space
-        :param analysis_id: the ID of the analysis
         :return: the analysis
 
         """
-        index_id, index_version = await get_current_id_and_version(self._mongo, ref_id)
+        index_id, index_version = await get_current_id_and_version(
+            self._mongo, data.ref_id
+        )
 
         created_at = virtool.utils.timestamp()
 
         sample = await self._mongo.samples.find_one(sample_id, ["name"])
 
-        if analysis_id is None:
-            analysis_id = await get_new_id(self._mongo.analyses)
-
-        task_args = {
-            "analysis_id": analysis_id,
-            "ref_id": ref_id,
-            "sample_id": sample_id,
-            "sample_name": sample["name"],
-            "index_id": index_id,
-            "subtractions": subtractions,
-        }
-
         async with self._mongo.create_session() as session:
             job_id = await get_new_id(self._mongo.jobs, session=session)
+
+            analysis_id = await get_new_id(self._mongo.analyses, session=session)
 
             await self._mongo.analyses.insert_one(
                 {
@@ -268,25 +247,37 @@ class AnalysisData(DataLayerDomain):
                     "files": [],
                     "index": {"id": index_id, "version": index_version},
                     "job": {"id": job_id},
+                    "ml": data.ml,
                     "reference": {
-                        "id": ref_id,
+                        "id": data.ref_id,
                     },
                     "ready": False,
                     "results": None,
                     "sample": {"id": sample_id},
                     "space": {"id": space_id},
-                    "subtractions": subtractions,
+                    "subtractions": data.subtractions,
                     "updated_at": created_at,
                     "user": {
                         "id": user_id,
                     },
-                    "workflow": workflow,
+                    "workflow": data.workflow.value,
                 }
             )
 
-            await self.data.jobs.create(
-                workflow.value, task_args, user_id, space_id, job_id
-            )
+        await self.data.jobs.create(
+            data.workflow.value,
+            {
+                "analysis_id": analysis_id,
+                "ref_id": data.ref_id,
+                "sample_id": sample_id,
+                "sample_name": sample["name"],
+                "index_id": index_id,
+                "subtractions": data.subtractions,
+            },
+            user_id,
+            space_id,
+            job_id,
+        )
 
         return await self.get(analysis_id, None)
 

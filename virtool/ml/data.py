@@ -97,13 +97,11 @@ class MLData(DataLayerDomain):
 
         """
         async with AsyncSession(self._pg) as session:
-            stmt = (
+            result = await session.execute(
                 select(SQLMLModel)
                 .options(joinedload(SQLMLModel.releases))
                 .filter_by(id=model_id)
             )
-
-            result = await session.execute(stmt)
 
             model = result.scalars().unique().one_or_none()
 
@@ -123,6 +121,7 @@ class MLData(DataLayerDomain):
                 )
                 for r in model.releases
             ]
+
             return MLModel(
                 id=model.id,
                 created_at=model.created_at,
@@ -131,6 +130,27 @@ class MLData(DataLayerDomain):
                 name=model.name,
                 release_count=len(model.releases),
                 releases=releases,
+            )
+
+    async def get_release(self, release_id: int) -> MLModelRelease:
+        """
+        Get an ML model release by its id.
+
+        :param release_id: the ID of the release to get.
+        :return: the ML model release.
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLMLModelRelease).where(SQLMLModelRelease.id == release_id)
+            )
+
+            release = result.scalars().unique().one_or_none()
+
+            if release is None:
+                raise ResourceNotFoundError()
+
+            return MLModelRelease(
+                **{**release.to_dict(), "model": release.model.to_dict()}
             )
 
     async def download_release(self, release_id: int) -> FileDescriptor:

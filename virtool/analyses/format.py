@@ -10,16 +10,20 @@ import json
 import statistics
 from asyncio import gather
 from collections import defaultdict
-from typing import Any, Dict, List, Tuple
+from typing import Any, TYPE_CHECKING
 
 import aiofiles
 import openpyxl.styles
 import visvalingamwyatt as vw
+from virtool_core.models.enums import AnalysisWorkflow
 
 import virtool.analyses.utils
 from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.otus.utils import format_isolate_name
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
 
 
 CSV_HEADERS = (
@@ -33,7 +37,7 @@ CSV_HEADERS = (
 )
 
 
-def calculate_median_depths(hits: List[dict]) -> Dict[str, int]:
+def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
     """
     Calculate the median depth for all hits (sequences) in a Pathoscope result document.
 
@@ -44,11 +48,11 @@ def calculate_median_depths(hits: List[dict]) -> Dict[str, int]:
     return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
 
 
-async def load_results(config: Config, document: Dict[str, Any]) -> dict:
+async def load_results(config: Config, document: dict[str, Any]) -> dict:
     """
     Load the analysis results. Hide the alternative loading from a `results.json` file.
-    These files are only generated if the analysis data would have exceeded the MongoDB size
-    limit (16mb).
+    These files are only generated if the analysis data had exceeded the MongoDB size
+    limit (16 MB.
 
     The document is returned unmodified if loading from file is not required.
 
@@ -69,19 +73,22 @@ async def load_results(config: Config, document: Dict[str, Any]) -> dict:
     return document
 
 
-async def format_aodp(config, db, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_aodp(
+    config, mongo: "Mongo", document: dict[str, Any]
+) -> dict[str, Any]:
     """
     Format an AODP analysis document by retrieving the detected OTUs and incorporating them into
     the returned document.
 
-    :param app: the application object
+    :param config: the application config object
+    :param mongo: the application Mongo object
     :param document: the document to format
     :return: the formatted document
 
     """
     hits = document["results"]["hits"]
 
-    patched_otus = await gather_patched_otus(config, db, hits)
+    patched_otus = await gather_patched_otus(config, mongo, hits)
 
     hits_by_sequence_id = defaultdict(list)
 
@@ -102,13 +109,16 @@ async def format_aodp(config, db, document: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def format_pathoscope(config, db, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_pathoscope(
+    config, mongo: "Mongo", document: dict[str, Any]
+) -> dict[str, Any]:
     """
     Format a Pathoscope analysis document by retrieving the detected OTUs and incorporating them
     into the returned document. Calculate metrics for different organizational levels: OTU,
     isolate, and sequence.
 
-    :param app: the application object
+    :param config: the application config object
+    :param mongo: the application Mongo object
     :param document: the document to format
     :return: the formatted document
 
@@ -127,7 +137,7 @@ async def format_pathoscope(config, db, document: Dict[str, Any]) -> Dict[str, A
 
     for otu_specifier, hits in hits_by_otu.items():
         otu_id, otu_version = otu_specifier
-        coros.append(format_pathoscope_hits(config, db, otu_id, otu_version, hits))
+        coros.append(format_pathoscope_hits(config, mongo, otu_id, otu_version, hits))
 
     return {
         **document,
@@ -136,10 +146,10 @@ async def format_pathoscope(config, db, document: Dict[str, Any]) -> Dict[str, A
 
 
 async def format_pathoscope_hits(
-    config, db, otu_id: str, otu_version, hits: List[Dict]
+    config, mongo: "Mongo", otu_id: str, otu_version, hits: list[dict]
 ):
     _, patched_otu, _ = await patch_to_version(
-        config.data_path, db, otu_id, otu_version
+        config.data_path, mongo, otu_id, otu_version
     )
 
     max_sequence_length = 0
@@ -149,28 +159,23 @@ async def format_pathoscope_hits(
             max_sequence_length, max(len(s["sequence"]) for s in isolate["sequences"])
         )
 
-    otu = {
-        "id": otu_id,
-        "name": patched_otu["name"],
-        "version": patched_otu["version"],
-        "abbreviation": patched_otu["abbreviation"],
-        "isolates": patched_otu["isolates"],
-        "length": max_sequence_length,
-    }
-
     hits_by_sequence_id = {hit["id"]: hit for hit in hits}
 
     return {
-        **otu,
+        "id": otu_id,
+        "abbreviation": patched_otu["abbreviation"],
+        "name": patched_otu["name"],
         "isolates": list(
             format_pathoscope_isolates(patched_otu["isolates"], hits_by_sequence_id)
         ),
+        "length": max_sequence_length,
+        "version": patched_otu["version"],
     }
 
 
 def format_pathoscope_isolates(
-    isolates: List[Dict[str, Any]], hits_by_sequence_ids: Dict[str, dict]
-) -> List[Dict[str, Any]]:
+    isolates: list[dict[str, Any]], hits_by_sequence_ids: dict[str, dict]
+) -> list[dict[str, Any]]:
     for isolate in isolates:
         sequences = list(
             format_pathoscope_sequences(isolate["sequences"], hits_by_sequence_ids)
@@ -181,7 +186,7 @@ def format_pathoscope_isolates(
 
 
 def format_pathoscope_sequences(
-    sequences: List[Dict[str, Any]], hits_by_sequence_id: Dict[str, dict]
+    sequences: list[dict[str, Any]], hits_by_sequence_id: dict[str, dict]
 ):
     for sequence in sequences:
         try:
@@ -212,12 +217,14 @@ def format_pathoscope_sequences(
         }
 
 
-async def format_nuvs(config: Config, db, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_nuvs(
+    config: Config, mongo: "Mongo", document: dict[str, Any]
+) -> dict[str, Any]:
     """
     Format a NuVs analysis document by attaching the HMM annotation data to the results.
 
     :param config: the config object
-    :param db: the database object
+    :param mongo: the database object
     :param document: the document to format
     :return: the formatted document
 
@@ -228,7 +235,7 @@ async def format_nuvs(config: Config, db, document: Dict[str, Any]) -> Dict[str,
 
     hit_ids = list({h["hit"] for s in hits for o in s["orfs"] for h in o["hits"]})
 
-    cursor = db.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
+    cursor = mongo.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
 
     hmms = {d.pop("_id"): d async for d in cursor}
 
@@ -241,20 +248,20 @@ async def format_nuvs(config: Config, db, document: Dict[str, Any]) -> Dict[str,
 
 
 async def format_analysis_to_excel(
-    config: Config, db, document: Dict[str, Any]
+    config: Config, mongo: "Mongo", document: dict[str, Any]
 ) -> bytes:
     """
     Convert a pathoscope analysis document to byte-encoded Excel format for download.
 
     :param config: the config object
-    :param db: the database object
+    :param mongo: the database object
     :param document: the document to format
     :return: the formatted Excel workbook
 
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(config, db, document)
+    formatted = await format_analysis(config, mongo, document)
 
     output = io.BytesIO()
 
@@ -299,19 +306,21 @@ async def format_analysis_to_excel(
     return output.getvalue()
 
 
-async def format_analysis_to_csv(config, db, document: Dict[str, Any]) -> str:
+async def format_analysis_to_csv(
+    config: Config, mongo: "Mongo", document: dict[str, Any]
+) -> str:
     """
     Convert a pathoscope analysis document to CSV format for download.
 
-    :param config: the config object
-    :param db: the database object
+    :param config: the app config object
+    :param mongo: the app mongo object
     :param document: the document to format
     :return: the formatted CSV data
 
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(config, db, document)
+    formatted = await format_analysis(config, mongo, document)
 
     output = io.StringIO()
 
@@ -338,39 +347,46 @@ async def format_analysis_to_csv(config, db, document: Dict[str, Any]) -> str:
 
 
 async def format_analysis(
-    config: Config, db, document: Dict[str, Any]
-) -> Dict[str, any]:
+    config: Config, mongo: "Mongo", document: dict[str, Any]
+) -> dict[str, any]:
     """
     Format an analysis document to be returned by the API.
 
     :param config: the config object
-    :param db: the database object
+    :param mongo: the database object
     :param document: the analysis document to format
     :return: a formatted document
 
     """
     workflow = document.get("workflow")
 
-    if workflow:
-        if workflow == "nuvs":
-            return await format_nuvs(config, db, document)
+    if workflow is None:
+        raise ValueError("analysis has no workflow field")
 
-        if "pathoscope" in workflow:
-            return await format_pathoscope(config, db, document)
+    if workflow == AnalysisWorkflow.nuvs.value:
+        return await format_nuvs(config, mongo, document)
 
-        if workflow == "aodp":
-            return await format_aodp(config, db, document)
+    if workflow == AnalysisWorkflow.aodp.value:
+        return await format_aodp(config, mongo, document)
 
-    raise ValueError("Could not determine analysis workflow")
+    if "pathoscope" in workflow:
+        return await format_pathoscope(config, mongo, document)
+
+    if workflow == AnalysisWorkflow.iimi.value:
+        return document
+
+    raise ValueError(f"unknown workflow: {workflow}")
 
 
-async def gather_patched_otus(config, db, results: List[dict]) -> Dict[str, dict]:
+async def gather_patched_otus(
+    config, mongo: "Mongo", results: list[dict]
+) -> dict[str, dict]:
     """
     Gather patched OTUs for each result item. Only fetch each id-version combination once. Make
     database requests concurrently to save time.
 
     :param config: the config object
-    :param db: the database object
+    :param mongo: the database object
     :param results: the results field from a pathoscope analysis document
     :return: a dict containing patched OTUs keyed by the OTU ID
 
@@ -380,7 +396,7 @@ async def gather_patched_otus(config, db, results: List[dict]) -> Dict[str, dict
 
     patched_otus = await asyncio.gather(
         *[
-            patch_to_version(config.data_path, db, otu_id, version)
+            patch_to_version(config.data_path, mongo, otu_id, version)
             for otu_id, version in otu_specifiers
         ]
     )
@@ -389,8 +405,8 @@ async def gather_patched_otus(config, db, results: List[dict]) -> Dict[str, dict
 
 
 def transform_coverage_to_coordinates(
-    coverage_list: List[int],
-) -> List[Tuple[int, int]]:
+    coverage_list: list[int],
+) -> list[tuple[int, int]]:
     """
     Takes a list of read depths where the list index is equal to the read position + 1 and returns
     a list of (x, y) coordinates.

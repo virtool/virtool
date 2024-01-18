@@ -296,12 +296,14 @@ def define_initial_workflows(library_type) -> Dict[str, str]:
     if library_type == "amplicon":
         return {
             "aodp": WorkflowState.NONE.value,
+            "iimi": WorkflowState.INCOMPATIBLE.value,
             "nuvs": WorkflowState.INCOMPATIBLE.value,
             "pathoscope": WorkflowState.INCOMPATIBLE.value,
         }
 
     return {
         "aodp": WorkflowState.INCOMPATIBLE.value,
+        "iimi": WorkflowState.INCOMPATIBLE.value,
         "nuvs": WorkflowState.NONE.value,
         "pathoscope": WorkflowState.NONE.value,
     }
