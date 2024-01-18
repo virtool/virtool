@@ -11,6 +11,7 @@ from virtool.api.errors import error_middleware
 from virtool.api.headers import headers_middleware, on_prepare_location
 from virtool.api.logging import logging_middleware
 from virtool.api.policy import route_policy_middleware
+from virtool.api.sessions import session_middleware
 from virtool.config.cls import Config
 from virtool.flags import FeatureFlags, feature_flag_middleware
 from virtool.routes import setup_routes
@@ -49,6 +50,7 @@ def create_app_without_startup():
         logging_middleware,
         headers_middleware,
         error_middleware,
+        session_middleware,
         authentication_middleware,
         accept_middleware,
         route_policy_middleware,
@@ -72,6 +74,7 @@ def create_app(config: Config):
         headers_middleware,
         accept_middleware,
         error_middleware,
+        session_middleware,
         authentication_middleware,
         route_policy_middleware,
         feature_flag_middleware,

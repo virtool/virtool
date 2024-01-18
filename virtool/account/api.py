@@ -284,7 +284,7 @@ class LoginView(PydanticView):
             400: Invalid input
         """
 
-        session_id = self.request.cookies.get("session_id")
+        session_id = self.request["client"].session_id
         ip = virtool.api.authentication.get_ip(self.request)
 
         try:
@@ -344,7 +344,7 @@ class LogoutView(PydanticView):
             204: Successful operation
         """
         session = await get_data_from_req(self.request).account.logout(
-            self.request.cookies.get("session_id"),
+            self.request["client"].session_id,
             virtool.api.authentication.get_ip(self.request),
         )
 
@@ -376,7 +376,7 @@ class ResetView(PydanticView):
 
         try:
             session, token = await get_data_from_req(self.request).account.reset(
-                self.request.cookies.get("session_id"),
+                self.request["client"].session_id,
                 data,
                 virtool.api.authentication.get_ip(self.request),
             )
