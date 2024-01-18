@@ -361,7 +361,7 @@ async def format_analysis(
     workflow = document.get("workflow")
 
     if workflow is None:
-        raise ValueError("analysis has no workflow field")
+        raise ValueError("Analysis has no workflow field")
 
     if workflow == AnalysisWorkflow.nuvs.value:
         return await format_nuvs(config, mongo, document)
@@ -375,7 +375,7 @@ async def format_analysis(
     if workflow == AnalysisWorkflow.iimi.value:
         return document
 
-    raise ValueError(f"unknown workflow: {workflow}")
+    raise ValueError(f"Unknown workflow: {workflow}")
 
 
 async def gather_patched_otus(

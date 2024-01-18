@@ -12,6 +12,7 @@ from virtool_core.models.ml import (
     MLModelMinimal,
     MLModelRelease,
     MLModel,
+    MLModelReleaseMinimal,
 )
 
 from virtool.config import Config
@@ -65,7 +66,7 @@ class MLData(DataLayerDomain):
                     id=model.id,
                     created_at=model.created_at,
                     description=model.description,
-                    latest_release=MLModelRelease(**model.releases[0].to_dict())
+                    latest_release=MLModelReleaseMinimal(**model.releases[0].to_dict())
                     if model.releases
                     else None,
                     name=model.name,
@@ -109,7 +110,7 @@ class MLData(DataLayerDomain):
                 raise ValueError(f"ML model with ID {model_id} not found")
 
             releases = [
-                MLModelRelease(
+                MLModelReleaseMinimal(
                     id=r.id,
                     created_at=r.created_at,
                     download_url=r.download_url,

@@ -3,6 +3,7 @@ import asyncio
 import pytest
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission, LibraryType
 from virtool_core.models.samples import WorkflowState
 
@@ -11,6 +12,7 @@ from virtool.data.errors import ResourceConflictError
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 
 from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
@@ -26,6 +28,16 @@ from virtool.uploads.models import SQLUpload
 async def get_sample_ready_false(static_time, fake2, mongo):
     label = await fake2.labels.create()
     user = await fake2.users.create()
+
+    await mongo.subtraction.insert_many(
+        [
+            {"_id": "apple", "name": "Apple"},
+            {"_id": "pear", "name": "Pear"},
+            {"_id": "peach", "name": "Peach"},
+        ],
+        session=None,
+    )
+
     await mongo.samples.insert_one(
         {
             "_id": "test",
@@ -63,7 +75,7 @@ async def get_sample_ready_false(static_time, fake2, mongo):
                 "nuvs": WorkflowState.PENDING.value,
             },
         }
-    ),
+    )
 
 
 class TestCreate:
@@ -135,17 +147,15 @@ class TestCreate:
 
 async def test_finalize(
     data_layer: DataLayer,
-    snapshot_recent,
-    tmp_path,
-    spawn_client: ClientSpawner,
     get_sample_ready_false,
+    mongo: Mongo,
+    snapshot_recent: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    tmp_path,
 ):
     """
     Test that sample can be finalized
     """
-    client = await spawn_client(
-        authenticated=True, permissions=[Permission.create_sample]
-    )
 
     quality = {
         "bases": [[1543]],
@@ -163,10 +173,11 @@ async def test_finalize(
             quality,
         )
     ).dict() == snapshot_recent()
+
     sample = await data_layer.samples.get("test")
 
     assert (
-        await client.mongo.samples.aggregate(
+        await mongo.samples.aggregate(
             [
                 {"$match": {"_id": "test"}},
                 *lookup_nested_subtractions(local_field="subtractions"),

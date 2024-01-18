@@ -1,11 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SQLSampleReads
 
 
-async def test_create_reads_file(snapshot, pg: AsyncEngine, static_time):
+async def test_create_reads_file(
+    pg: AsyncEngine, snapshot: SnapshotAssertion, static_time
+):
     await create_reads_file(
         pg,
         123456,

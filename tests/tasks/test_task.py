@@ -2,11 +2,11 @@ import os
 from asyncio import to_thread
 from datetime import timedelta
 from math import isclose
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Dict
 
 import arrow
 import pytest
-from humanfriendly.testing import TemporaryDirectory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 

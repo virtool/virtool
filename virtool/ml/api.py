@@ -47,16 +47,11 @@ class MLModelView(PydanticView):
 @routes.view("/ml/{model_id}/releases/{release_id}")
 @routes.jobs_api.view("/ml/{model_id}/releases/{release_id}")
 class MLModelReleaseView(PydanticView):
-    async def get(
-        self, model_id: int, release_id: int, /
-    ) -> r200[MLModelReleaseMinimal] | r404:
+    async def get(self, release_id: int, /) -> r200[MLModelReleaseMinimal] | r404:
         """
-        Get a model.
+        Get a model release.
 
-        Fetches the details of a machine learning model, including all of its releases.
-
-        The `releases` field comprises a list of all releases of the model that can be
-        downloaded.
+        Fetches the details of a machine learning model release.
         """
         try:
             release = await get_data_from_req(self.request).ml.get_release(release_id)

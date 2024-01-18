@@ -1,5 +1,7 @@
 import asyncio
-from virtool_core.models.enums import QuickAnalyzeWorkflow, AnalysisWorkflow
+from pathlib import Path
+
+from virtool_core.models.enums import AnalysisWorkflow
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
@@ -16,7 +18,7 @@ from virtool.samples.oas import CreateAnalysisRequest
 
 
 @pytest.fixture
-async def set_up_sample(mongo: "Mongo", fake2: DataFaker):
+async def setup_sample(mongo: "Mongo", fake2: DataFaker) -> str:
     user = await fake2.users.create()
 
     await asyncio.gather(
@@ -55,37 +57,44 @@ async def set_up_sample(mongo: "Mongo", fake2: DataFaker):
 
 @pytest.mark.parametrize("number_of_analyses", [0, 1, 2])
 async def test_find(
+    number_of_analyses: int,
     data_layer: DataLayer,
     snapshot_recent: SnapshotAssertion,
     mongo: Mongo,
-    set_up_sample,
+    setup_sample: str,
     mocker,
-    number_of_analyses,
 ):
     """
     Tests that all analysis are listed.
     """
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
     client = mocker.Mock(spec=UserClient)
-    user_id = set_up_sample
+    user_id = setup_sample
 
     await mongo.samples.insert_one({"_id": "test_false", "name": "Test False"})
 
     analysis_wrong_sample = await data_layer.analyses.create(
+        CreateAnalysisRequest(
+            ml=None,
+            ref_id="test_ref",
+            subtractions=["subtraction_1", "subtraction_2"],
+            workflow=AnalysisWorkflow.nuvs,
+        ),
         "test_false",
-        "test_ref",
-        ["subtraction_1", "subtraction_2"],
         user_id,
-        QuickAnalyzeWorkflow.nuvs,
         0,
     )
+
     for _ in range(number_of_analyses):
         await data_layer.analyses.create(
+            CreateAnalysisRequest(
+                ml=None,
+                ref_id="test_ref",
+                subtractions=["subtraction_1", "subtraction_2"],
+                workflow=AnalysisWorkflow.nuvs,
+            ),
             "test_sample",
-            "test_ref",
-            ["subtraction_1", "subtraction_2"],
             user_id,
-            QuickAnalyzeWorkflow.nuvs,
             0,
         )
 
@@ -96,11 +105,13 @@ async def test_find(
     assert analyses_found.total_count == analyses_found.found_count
 
 
-async def test_create(data_layer: DataLayer, mongo: Mongo, snapshot, set_up_sample):
+async def test_create(
+    data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion, setup_sample: str
+):
     """
     Tests that an analysis is created given an analysis id with the expected fields.
     """
-    user_id: str = set_up_sample
+    user_id: str = setup_sample
 
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
@@ -122,19 +133,22 @@ async def test_create(data_layer: DataLayer, mongo: Mongo, snapshot, set_up_samp
 
 
 async def test_create_analysis_id(
-    data_layer: DataLayer, mongo: Mongo, snapshot, set_up_sample
+    data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion, setup_sample: str
 ):
     """
     Tests that an analysis is created with the expected fields.
     """
-    user_id = set_up_sample
+    user_id = setup_sample
 
     analysis = await data_layer.analyses.create(
+        CreateAnalysisRequest(
+            ml=None,
+            ref_id="test_ref",
+            subtractions=["subtraction_1", "subtraction_2"],
+            workflow=AnalysisWorkflow.nuvs,
+        ),
         "test_sample",
-        "test_ref",
-        ["subtraction_1", "subtraction_2"],
         user_id,
-        QuickAnalyzeWorkflow.nuvs,
         0,
     )
 
@@ -147,33 +161,35 @@ async def test_create_analysis_id(
 
 @pytest.mark.apitest
 async def test_upload_file(
-    create_files,
+    data_layer: DataLayer,
+    example_path: Path,
+    setup_sample: str,
+    snapshot_recent: SnapshotAssertion,
     spawn_job_client,
     tmp_path,
-    data_layer: DataLayer,
-    snapshot_recent,
-    set_up_sample,
-    example_path,
 ):
     """
-    Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
-
+    Test that an analysis result file is properly uploaded and a row is inserted into
+    the `analysis_files` SQL table.
     """
-    user_id = set_up_sample
-    await data_layer.analyses.create(
+    user_id = setup_sample
+
+    analysis = await data_layer.analyses.create(
+        CreateAnalysisRequest(
+            ml=None,
+            ref_id="test_ref",
+            subtractions=["subtraction_1", "subtraction_2"],
+            workflow=AnalysisWorkflow.nuvs,
+        ),
         "test_sample",
-        "test_ref",
-        ["subtraction_1", "subtraction_2"],
         user_id,
-        QuickAnalyzeWorkflow.nuvs,
         0,
-        analysis_id="test_analysis",
     )
 
     chunks = fake_file_chunker(example_path / "reads/single.fq.gz")
 
     analysis_file = await data_layer.analyses.upload_file(
-        chunks, "test_analysis", "fasta", "test"
+        chunks, analysis.id, "fasta", "test"
     )
 
     assert analysis_file == snapshot_recent()

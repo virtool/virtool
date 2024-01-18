@@ -1,8 +1,8 @@
 import asyncio
+from tempfile import TemporaryDirectory
 from typing import Dict
 
 import pytest
-from humanfriendly.testing import TemporaryDirectory
 
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner

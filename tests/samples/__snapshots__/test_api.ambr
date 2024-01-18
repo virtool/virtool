@@ -1845,7 +1845,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'index': dict({
       'id': 'test',
       'version': 4,
@@ -1853,7 +1853,7 @@
     'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
@@ -1945,6 +1945,14 @@
     ]),
     'ready': True,
     'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 'pear',
+        'name': 'Pear',
+      }),
     ]),
     'user': dict({
       'handle': 'sallywalker',

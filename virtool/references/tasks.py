@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from asyncio import to_thread
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Dict, Optional, TYPE_CHECKING
 
 from aiohttp import ClientConnectorError
-from humanfriendly.testing import TemporaryDirectory
 
 from virtool.api.custom_json import dump_string
 from virtool.data.http import download_file

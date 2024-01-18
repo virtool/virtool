@@ -34,6 +34,7 @@ def create_files(test_files_path, tmp_path):
 async def test_find(
     mocker,
     fake2: DataFaker,
+    mongo: Mongo,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -48,14 +49,14 @@ async def test_find(
     job = await fake2.jobs.create(user=user_2)
 
     await asyncio.gather(
-        client.mongo.references.insert_many(
+        mongo.references.insert_many(
             [
                 {"_id": "foo", "data_type": "genome", "name": "Foo"},
                 {"_id": "baz", "data_type": "genome", "name": "Baz"},
             ],
             session=None,
         ),
-        client.mongo.samples.insert_one(
+        mongo.samples.insert_one(
             {
                 "_id": "test",
                 "created_at": static_time.datetime,
@@ -68,10 +69,10 @@ async def test_find(
                 "labels": [],
             }
         ),
-        client.mongo.subtraction.insert_one(
+        mongo.subtraction.insert_one(
             {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
         ),
-        client.mongo.analyses.insert_many(
+        mongo.analyses.insert_many(
             [
                 {
                     "_id": "test_1",
@@ -82,7 +83,7 @@ async def test_find(
                     "index": {"version": 2, "id": "foo"},
                     "user": {"id": user_1.id},
                     "sample": {"id": "test"},
-                    "reference": {"id": "baz", "name": "Baz"},
+                    "reference": {"id": "baz"},
                     "results": {"hits": []},
                     "subtractions": [],
                     "foobar": True,
@@ -96,7 +97,7 @@ async def test_find(
                     "index": {"version": 2, "id": "foo"},
                     "user": {"id": user_1.id},
                     "sample": {"id": "test"},
-                    "reference": {"id": "baz", "name": "Baz"},
+                    "reference": {"id": "baz"},
                     "results": {"hits": []},
                     "subtractions": ["foo"],
                     "foobar": True,
@@ -143,6 +144,7 @@ async def test_get(
     fake2: DataFaker,
     error: str | None,
     mocker,
+    mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
     snapshot: SnapshotAssertion,
@@ -157,17 +159,17 @@ async def test_get(
     job = await fake2.jobs.create(user=user_2, state=JobState.COMPLETE)
 
     await asyncio.gather(
-        client.mongo.subtraction.insert_many(
+        mongo.subtraction.insert_many(
             [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
             session=None,
         ),
-        client.mongo.references.insert_one(
+        mongo.references.insert_one(
             {"_id": "baz", "data_type": "genome", "name": "Baz"}
         ),
     )
 
     if error != "404_sample":
-        await client.mongo.samples.insert_one(
+        await mongo.samples.insert_one(
             {
                 "_id": "baz",
                 "all_read": error != "403",
@@ -182,7 +184,7 @@ async def test_get(
         )
 
     if error != "404_analysis":
-        await client.mongo.analyses.insert_one(
+        await mongo.analyses.insert_one(
             {
                 "_id": "foobar",
                 "created_at": static_time.datetime,
@@ -223,13 +225,10 @@ async def test_get(
                     "id": job.id,
                 },
                 "ready": True,
-                "reference": {"_id": "baz", "data_type": "genome", "name": "Baz"},
+                "reference": {"id": "baz", "data_type": "genome", "name": "Baz"},
                 "results": {"hits": []},
                 "sample": {"id": "baz"},
-                "subtractions": [
-                    {"_id": "apple", "name": "Apple"},
-                    {"_id": "plum", "name": "Plum"},
-                ],
+                "subtractions": ["apple", "plum"],
                 "user": {"id": user_1.id},
                 "workflow": "pathoscope_bowtie",
             }
@@ -260,9 +259,10 @@ async def test_get(
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get_304(
     ready: bool,
+    mongo: Mongo,
     fake2: DataFaker,
-    spawn_client: ClientSpawner,
     pg,
+    spawn_client: ClientSpawner,
     static_time,
 ):
     client = await spawn_client(authenticated=True)
@@ -270,14 +270,14 @@ async def test_get_304(
     user = await fake2.users.create()
 
     await asyncio.gather(
-        client.mongo.subtraction.insert_many(
+        mongo.subtraction.insert_many(
             [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
             session=None,
         ),
-        client.mongo.references.insert_one(
+        mongo.references.insert_one(
             {"_id": "baz", "data_type": "genome", "name": "Baz"}
         ),
-        client.mongo.samples.insert_one(
+        mongo.samples.insert_one(
             {
                 "_id": "baz",
                 "all_read": True,
@@ -290,7 +290,7 @@ async def test_get_304(
                 "user": {"id": user.id},
             }
         ),
-        client.mongo.analyses.insert_one(
+        mongo.analyses.insert_one(
             {
                 "_id": "foobar",
                 "created_at": static_time.datetime,
@@ -319,9 +319,9 @@ async def test_get_304(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "403", "404_analysis", "404_sample", "409"])
 async def test_remove(
-    mocker,
     error: str | None,
     fake2: DataFaker,
+    mongo: Mongo,
     resp_is,
     spawn_client: ClientSpawner,
     static_time,
@@ -334,11 +334,15 @@ async def test_remove(
     user = await fake2.users.create()
 
     await asyncio.gather(
-        client.mongo.indexes.insert_one(
+        mongo.indexes.insert_one(
             {"_id": "bar", "version": 3, "reference": {"id": "baz"}}
         ),
-        client.mongo.references.insert_one(
+        mongo.references.insert_one(
             {"_id": "baz", "data_type": "genome", "name": "Baz"}
+        ),
+        mongo.subtraction.insert_many(
+            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
+            session=None,
         ),
     )
 
@@ -362,6 +366,7 @@ async def test_remove(
                 "name": "Sample 1",
                 "notes": "",
                 "ready": True,
+                "subtractions": [],
                 "user": {"id": user.id},
             }
         )
@@ -376,6 +381,7 @@ async def test_remove(
                 "ready": error != "409",
                 "reference": {"id": "baz"},
                 "sample": {"id": "baz", "name": "Baz"},
+                "subtractions": ["plum"],
                 "user": {"id": user.id},
                 "workflow": "pathoscope_bowtie",
                 "results": {"hits": []},
@@ -666,7 +672,13 @@ async def test_blast(error, spawn_client, resp_is, snapshot, static_time):
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_finalize(error, fake2, snapshot, spawn_job_client, static_time):
+async def test_finalize(
+    error: str | None,
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_job_client,
+    static_time,
+):
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
@@ -702,6 +714,7 @@ async def test_finalize(error, fake2, snapshot, spawn_job_client, static_time):
                 "name": "Sample 1",
                 "notes": "",
                 "ready": True,
+                "subtractions": [],
                 "user": {"id": user_1.id},
             }
         ),
@@ -739,7 +752,9 @@ async def test_finalize(error, fake2, snapshot, spawn_job_client, static_time):
 
 
 @pytest.mark.apitest
-async def test_finalize_large(fake2, snapshot, spawn_job_client, static_time):
+async def test_finalize_large(
+    fake2: DataFaker, snapshot: SnapshotAssertion, spawn_job_client, static_time
+):
     user = await fake2.users.create()
 
     faker = Faker(1)
@@ -805,6 +820,7 @@ async def test_finalize_large(fake2, snapshot, spawn_job_client, static_time):
                 "name": "Sample 1",
                 "notes": "",
                 "ready": True,
+                "subtractions": [],
                 "user": {"id": user.id},
             }
         ),

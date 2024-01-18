@@ -37,7 +37,7 @@ class AttachMLTransform(AbstractTransform):
         self, documents: list[Document]
     ) -> dict[str, list[Document | None]]:
         ml_model_release_ids = {d.get("ml") for d in documents}
-        ml_model_release_ids.remove(None)
+        ml_model_release_ids.discard(None)
 
         async with AsyncSession(self._pg) as session:
             model_releases = await session.execute(select(SQLMLModelRelease))

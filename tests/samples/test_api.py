@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission, LibraryType
 from virtool_core.models.samples import WorkflowState
-from tests.samples.test_data import get_sample_ready_false
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.config import get_config_from_app
 from virtool.config.cls import ServerConfig
@@ -19,6 +18,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
@@ -28,6 +28,60 @@ from virtool.users.oas import UpdateUserRequest
 class MockJobInterface:
     def __init__(self):
         self.enqueue = make_mocked_coro()
+
+
+@pytest.fixture
+async def get_sample_ready_false(fake2: DataFaker, mongo: Mongo, static_time):
+    label = await fake2.labels.create()
+    user = await fake2.users.create()
+
+    await mongo.subtraction.insert_many(
+        [
+            {"_id": "apple", "name": "Apple"},
+            {"_id": "pear", "name": "Pear"},
+            {"_id": "peach", "name": "Peach"},
+        ],
+        session=None,
+    )
+
+    await mongo.samples.insert_one(
+        {
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "created_at": static_time.datetime,
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz",
+                }
+            ],
+            "format": "fastq",
+            "group": "none",
+            "group_read": True,
+            "group_write": True,
+            "hold": False,
+            "host": "",
+            "is_legacy": False,
+            "isolate": "",
+            "labels": [label.id],
+            "library_type": LibraryType.normal.value,
+            "locale": "",
+            "name": "Test",
+            "notes": "",
+            "nuvs": False,
+            "pathoscope": True,
+            "ready": False,
+            "subtractions": ["apple", "pear"],
+            "user": {"id": user.id},
+            "workflows": {
+                "aodp": WorkflowState.INCOMPATIBLE.value,
+                "pathoscope": WorkflowState.COMPLETE.value,
+                "nuvs": WorkflowState.PENDING.value,
+            },
+        }
+    )
 
 
 @pytest.fixture
@@ -758,7 +812,6 @@ async def test_finalize(
 
         resp = await client.patch("/samples/test", json=json)
         assert resp.status == 500
-
     else:
         assert resp.status == 422
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
@@ -934,8 +987,9 @@ async def test_find_analyses(
 async def test_analyze(
     error: str | None,
     mocker,
+    mongo: Mongo,
     resp_is,
-    snapshot,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -945,7 +999,7 @@ async def test_analyze(
     client.app["jobs"] = MockJobInterface()
 
     if error != "400_reference":
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "test_ref",
                 "name": "Test Reference",
@@ -954,7 +1008,7 @@ async def test_analyze(
         )
 
     if error != "400_index":
-        await client.mongo.indexes.insert_one(
+        await mongo.indexes.insert_one(
             {
                 "_id": "test",
                 "reference": {"id": "test_ref"},
@@ -964,7 +1018,7 @@ async def test_analyze(
         )
 
     if error != "400_subtraction":
-        await client.mongo.subtraction.insert_one(
+        await mongo.subtraction.insert_one(
             {"_id": "subtraction_1", "name": "Subtraction 1"}
         )
 
@@ -994,7 +1048,7 @@ async def test_analyze(
     match error:
         case None:
             assert resp.status == 201
-            assert resp.headers["Location"] == "/analyses/bf1b993c"
+            assert resp.headers["Location"] == "/analyses/fb085f7f"
             assert await resp.json() == snapshot
         case "400_reference":
             await resp_is.bad_request(resp, "Reference does not exist")

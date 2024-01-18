@@ -6,11 +6,9 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro, make_mocked_request
-from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_app
-from virtool.labels.db import AttachLabelsTransform
+from virtool.mongo.core import Mongo
 from virtool.samples.db import (
     check_is_legacy,
     compose_sample_workflow_query,
@@ -81,68 +79,66 @@ class TestCalculateWorkflowTags:
         assert tags == {"pathoscope": path_tag, "nuvs": nuvs_tag}
 
 
-class TestRecalculateWorkflowTags:
-    async def test(self, mocker, mongo):
-        await mongo.samples.insert_one(
-            {"_id": "test", "pathoscope": False, "nuvs": False}
-        )
+async def test_recalculate_workflow_tags(mocker, mongo: Mongo):
+    await mongo.samples.insert_one({"_id": "test", "pathoscope": False, "nuvs": False})
 
-        analysis_documents = [
+    analysis_documents = [
+        {
+            "_id": "test_1",
+            "workflow": "pathoscope_bowtie",
+            "ready": "ip",
+            "sample": {"id": "test"},
+        },
+        {
+            "_id": "test_2",
+            "workflow": "pathoscope_bowtie",
+            "ready": True,
+            "sample": {"id": "test"},
+        },
+        {
+            "_id": "test_3",
+            "workflow": "nuvs",
+            "ready": True,
+            "sample": {"id": "test"},
+        },
+    ]
+
+    await mongo.analyses.insert_many(
+        analysis_documents
+        + [
             {
-                "_id": "test_1",
-                "workflow": "pathoscope_bowtie",
-                "ready": "ip",
-                "sample": {"id": "test"},
-            },
-            {
-                "_id": "test_2",
+                "_id": "test_4",
+                "sample": {"id": "foobar"},
                 "workflow": "pathoscope_bowtie",
                 "ready": True,
-                "sample": {"id": "test"},
-            },
-            {
-                "_id": "test_3",
-                "workflow": "nuvs",
-                "ready": True,
-                "sample": {"id": "test"},
-            },
-        ]
+            }
+        ],
+        session=None,
+    )
 
-        await mongo.analyses.insert_many(
-            analysis_documents
-            + [
-                {
-                    "_id": "test_4",
-                    "sample": {"id": "foobar"},
-                    "workflow": "pathoscope_bowtie",
-                    "ready": True,
-                }
-            ],
-            session=None,
-        )
+    m = mocker.patch(
+        "virtool.samples.utils.calculate_workflow_tags",
+        return_value={"pathoscope": True, "nuvs": "ip"},
+    )
 
-        m = mocker.patch(
-            "virtool.samples.utils.calculate_workflow_tags",
-            return_value={"pathoscope": True, "nuvs": "ip"},
-        )
+    await recalculate_workflow_tags(mongo, "test")
 
-        await recalculate_workflow_tags(mongo, "test")
+    for document in analysis_documents:
+        del document["sample"]
 
-        for document in analysis_documents:
-            del document["sample"]
+    assert m.call_args[0][0] == analysis_documents
 
-        assert m.call_args[0][0] == analysis_documents
-
-        assert await mongo.samples.find_one() == {
-            "_id": "test",
-            "pathoscope": True,
-            "nuvs": "ip",
-            "workflows": {
-                "aodp": "incompatible",
-                "nuvs": "complete",
-                "pathoscope": "complete",
-            },
-        }
+    assert await mongo.samples.find_one() == {
+        "_id": "test",
+        "pathoscope": True,
+        "nuvs": "ip",
+        "workflows": {
+            "aodp": "incompatible",
+            "iimi": "none",
+            "nuvs": "complete",
+            "pathoscope": "complete",
+        },
+    }
 
 
 class TestDeriveWorkflowStates:
@@ -184,6 +180,7 @@ class TestDeriveWorkflowStates:
         expected_workflow_states = {
             "workflows": {
                 "aodp": "incompatible",
+                "iimi": "none",
                 "nuvs": "none",
                 "pathoscope": "none",
             }
@@ -212,17 +209,14 @@ class TestDeriveWorkflowStates:
             {"_id": index, "ready": ready_2, "workflow": "aodp"},
         ]
 
-        final_workflow_states = derive_workflow_state(documents, library_type)
-
-        expected_final_workflow_state = {
+        assert derive_workflow_state(documents, library_type) == {
             "workflows": {
                 "aodp": final_workflow_state,
+                "iimi": "incompatible",
                 "nuvs": "incompatible",
                 "pathoscope": "incompatible",
             }
         }
-
-        assert final_workflow_states == expected_final_workflow_state
 
 
 class TestGetSampleOwner:
@@ -247,15 +241,6 @@ class TestGetSampleOwner:
 
         """
         assert await get_sample_owner(mongo, "foobar") is None
-
-
-async def test_attach_labels(fake2, snapshot, pg: AsyncEngine):
-    label_1 = await fake2.labels.create()
-    label_2 = await fake2.labels.create()
-
-    document = {"id": "foo", "name": "Foo", "labels": [label_1.id, label_2.id]}
-
-    assert await apply_transforms(document, [AttachLabelsTransform(pg)]) == snapshot
 
 
 async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client):
