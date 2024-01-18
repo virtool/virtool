@@ -138,7 +138,7 @@ jobs:
           wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
           unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
-          cp asset/bowtie2-inspect /opt/bowtie2/bowtie2-inspect
+          cp assets/bowtie2-inspect /opt/bowtie2/bowtie2-inspect
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Setup Python
         id: setup-python
