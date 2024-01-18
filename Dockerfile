@@ -1,4 +1,4 @@
-FROM python:3.12-rc-buster as build
+FROM python:3.12-bookworm as build
 RUN curl -sSL https://install.python-poetry.org | python - --version 1.7.1
 ENV PATH="/root/.local/bin:${PATH}" \
     POETRY_CACHE_DIR='/tmp/poetry_cache' \
@@ -9,7 +9,7 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml ./
 RUN poetry install --without dev --no-root && rm -rf "$POETRY_CACHE_DIR"
 
-FROM python:3.12-rc-slim-buster as runtime
+FROM python:3.12-bookworm as runtime
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
