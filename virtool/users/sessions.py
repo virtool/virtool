@@ -176,7 +176,11 @@ class SessionData(DataLayerDomain):
 
         session = await self._get(session_id)
 
-        if not session.get("authentication") or session.get("reset"):
+        if not session.get("authentication"):
+            raise ResourceNotFoundError("Session not found")
+
+        if session.get("reset"):
+            await self.delete(session_id)
             raise ResourceNotFoundError("Session not found")
 
         if session["authentication"]["token"] != hash_key(session_token):
@@ -208,7 +212,11 @@ class SessionData(DataLayerDomain):
         """
         session = await self._get(session_id)
 
-        if session.get("authentication") or session.get("reset"):
+        if session.get("authentication"):
+            raise ResourceNotFoundError("Session not found")
+
+        if session.get("reset"):
+            await self.delete(session_id)
             raise ResourceNotFoundError("Session not found")
 
         return Session(**session)
@@ -230,12 +238,12 @@ class SessionData(DataLayerDomain):
 
         stored_reset_code: str = get_safely(session, "reset", "code")
 
-        if (
-            not reset_code
-            or session.get("authentication")
-            or stored_reset_code != reset_code
-        ):
+        if not reset_code or session.get("authentication"):
             raise ResourceNotFoundError("Session not found")
+
+        if stored_reset_code != reset_code:
+            await self.delete(session_id)
+            raise ResourceNotFoundError("Invalid reset code")
 
         if stored_reset_code != reset_code:
             raise ResourceNotFoundError("Invalid reset code")
