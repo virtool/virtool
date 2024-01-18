@@ -66,7 +66,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12'
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -138,12 +138,13 @@ jobs:
           wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
           unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
           cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
+          cp assets/bowtie2-inspect /opt/bowtie2/bowtie2-inspect
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Setup Python
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12'
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -179,7 +180,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12'
       - name: Setup Poetry
         id: setup-poetry
         uses: snok/install-poetry@v1
@@ -213,7 +214,7 @@ jobs:
         - name: Setup Python
           uses: actions/setup-python@v4
           with:
-            python-version: '3.10'
+            python-version: '3.12'
         - name: Install Poetry
           uses: snok/install-poetry@v1
           with:

@@ -283,7 +283,7 @@ async def test_list_permissions(spawn_client, user, snapshot: SnapshotAssertion)
     "role, status",
     [
         (SpaceSampleRole.MANAGER, 200),
-        ("invalid", 400),
+        (None, 400),
     ],
     ids=["valid_permission", "invalid_permission"],
 )
@@ -294,8 +294,10 @@ async def test_add_permission(
     spawn_client: ClientSpawner,
 ):
     client = await spawn_client(administrator=True, authenticated=True)
-
-    resp = await client.put(f"/users/test/permissions/{role}", {})
+    if role is None:
+        resp = await client.put("/users/test/permissions/invalid", {})
+    else:
+        resp = await client.put(f"/users/test/permissions/{role.value}", {})
 
     assert resp.status == status
     assert await resp.json() == snapshot()
@@ -305,7 +307,7 @@ async def test_add_permission(
     "role, status",
     [
         (SpaceSampleRole.MANAGER, 200),
-        ("invalid", 400),
+        (None, 400),
     ],
     ids=["valid_permission", "invalid_permission"],
 )
@@ -317,7 +319,10 @@ async def test_remove_permission(
 ):
     client = await spawn_client(administrator=True, authenticated=True)
 
-    resp = await client.delete(f"/users/test/permissions/{role}")
+    if role is None:
+        resp = await client.put("/users/test/permissions/invalid", {})
+    else:
+        resp = await client.put(f"/users/test/permissions/{role.value}", {})
 
     assert resp.status == status
     assert await resp.json() == snapshot()

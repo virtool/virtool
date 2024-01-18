@@ -105,7 +105,7 @@ class TestFind:
         url = "/uploads"
 
         if upload_type:
-            url += f"?upload_type={upload_type}"
+            url += f"?upload_type={upload_type.value}"
 
         resp = await client.get(url)
 

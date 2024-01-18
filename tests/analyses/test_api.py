@@ -382,14 +382,11 @@ async def test_remove(
             }
         )
 
-    m_remove = mocker.patch("virtool_core.utils.rm")
-
     resp = await client.delete("/analyses/foobar")
 
     match error:
         case None:
             await resp_is.no_content(resp)
-            assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
 
         case "403":
             await resp_is.insufficient_rights(resp)

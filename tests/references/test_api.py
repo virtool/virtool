@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -652,9 +653,8 @@ async def test_update(
 
         await client.mongo.references.insert_one(reference)
 
-    m_enqueue = mocker.patch.object(
-        get_data_from_app(client.app).tasks._tasks_client, "enqueue"
-    )
+        m_enqueue = mocker.patch.object(
+        get_data_from_app(client.app).tasks._tasks_client, "enqueue")
 
     resp = await client.post("/refs/foo/updates", {})
 
@@ -669,7 +669,7 @@ async def test_update(
         assert await resp.json() == snapshot(
             name="json", matcher=path_type({".*etag": (str,)}, regex=True)
         )
-        assert m_enqueue.called_with(1)
+        assert m_enqueue.call_args == call('update_remote_reference', 1)
         assert await get_one_field(client.mongo.references, "task", "foo") == {"id": 1}
 
 
