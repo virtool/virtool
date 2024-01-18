@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -12,6 +13,7 @@ import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
+from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.utils import get_one_field
 from virtool.settings.oas import UpdateSettingsRequest
@@ -651,6 +653,9 @@ async def test_update(
 
         await client.mongo.references.insert_one(reference)
 
+        m_enqueue = mocker.patch.object(
+        get_data_from_app(client.app).tasks._tasks_client, "enqueue")
+
     resp = await client.post("/refs/foo/updates", {})
 
     if not check_ref_right:
@@ -664,7 +669,7 @@ async def test_update(
         assert await resp.json() == snapshot(
             name="json", matcher=path_type({".*etag": (str,)}, regex=True)
         )
-
+        assert m_enqueue.call_args == call('update_remote_reference', 1)
         assert await get_one_field(client.mongo.references, "task", "foo") == {"id": 1}
 
 
