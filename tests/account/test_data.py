@@ -8,6 +8,7 @@ from syrupy.filters import props
 from virtool_core.models.enums import Permission
 
 from virtool.account.oas import CreateKeysRequest, UpdateAccountRequest
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
@@ -58,6 +59,78 @@ async def test_create_api_key(
 
     assert api_key == snapshot(name="data")
     assert await mongo.keys.find_one() == snapshot(name="mongo")
+
+
+class TestGetKey:
+    async def test_ok(self, data_layer: DataLayer, fake2: DataFaker):
+        """Test that a created key can later be retrieved by its id."""
+        user = await fake2.users.create()
+
+        _, api_key = await data_layer.account.create_key(
+            CreateKeysRequest(
+                name="Foo",
+                permissions=PermissionsUpdate(
+                    create_sample=True, modify_subtraction=True
+                ),
+            ),
+            user.id,
+        )
+
+        assert await data_layer.account.get_key(user.id, api_key.id) == api_key
+
+    async def test_not_found(self, data_layer: DataLayer, fake2: DataFaker):
+        """Test that ``ResourceNotFoundError`` is raised when a key id is not found."""
+        user = await fake2.users.create()
+
+        _, api_key = await data_layer.account.create_key(
+            CreateKeysRequest(
+                name="Foo",
+                permissions=PermissionsUpdate(
+                    create_sample=True, modify_subtraction=True
+                ),
+            ),
+            user.id,
+        )
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.account.get_key(user.id, "foo")
+
+
+class TestGetKeyBySecret:
+    async def test_ok(self, data_layer: DataLayer, fake2: DataFaker):
+        """Test that a created key can later be retrieved by its secret value."""
+        user = await fake2.users.create()
+
+        secret, api_key = await data_layer.account.create_key(
+            CreateKeysRequest(
+                name="Foo",
+                permissions=PermissionsUpdate(
+                    create_sample=True, modify_subtraction=True
+                ),
+            ),
+            user.id,
+        )
+
+        assert await data_layer.account.get_key_by_secret(user.id, secret) == api_key
+
+    async def test_not_found(self, data_layer: DataLayer, fake2: DataFaker):
+        """
+        Test that ``ResourceNotFoundError`` is raised when the key secret is invalid.
+        """
+        user = await fake2.users.create()
+
+        await data_layer.account.create_key(
+            CreateKeysRequest(
+                name="Foo",
+                permissions=PermissionsUpdate(
+                    create_sample=True, modify_subtraction=True
+                ),
+            ),
+            user.id,
+        )
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.account.get_key_by_secret(user.id, "foo")
 
 
 @pytest.mark.parametrize(

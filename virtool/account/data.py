@@ -30,7 +30,7 @@ from virtool.mongo.utils import get_one_field
 from virtool.users.mongo import validate_credentials
 from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
-from virtool.utils import base_processor
+from virtool.utils import base_processor, hash_key
 
 PROJECTION = (
     "_id",
@@ -198,7 +198,9 @@ class AccountData(DataLayerDomain):
         keys = await apply_transforms(
             [
                 base_processor(key)
-                async for key in self._mongo.keys.find({"user.id": user_id})
+                async for key in self._mongo.keys.find(
+                    {"user.id": user_id}, {"_id": False, "user": False}
+                )
             ],
             [
                 AttachGroupsTransform(self._pg),
@@ -250,6 +252,38 @@ class AccountData(DataLayerDomain):
             }
         )
 
+    async def get_key_by_secret(self, user_id: str, key: str) -> APIKey:
+        """
+        Get the complete representation of the API key with secret value ``key``.
+
+        The secret key is not returned in the result.
+
+        :param user_id: the user id
+        :param key: the raw API key
+        :return: the API key
+        """
+
+        document = await self._mongo.keys.find_one(
+            {"_id": hash_key(key), "user.id": user_id},
+            {
+                "_id": False,
+                "user": False,
+            },
+        )
+
+        user = await self.data.users.get(user_id)
+
+        if not document:
+            raise ResourceNotFoundError
+
+        return APIKey(
+            **{
+                **document,
+                "groups": user.groups,
+                "permissions": {**document["permissions"], **user.permissions.dict()},
+            }
+        )
+
     async def create_key(
         self,
         data: CreateKeysRequest,
@@ -280,6 +314,8 @@ class AccountData(DataLayerDomain):
                 "user": {"id": user_id},
             }
         )
+
+        logger.info("created key", raw=raw, hashed=hashed)
 
         return raw, await self.get_key(user_id, id_)
 

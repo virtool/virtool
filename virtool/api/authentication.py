@@ -4,6 +4,7 @@ from typing import Callable
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from jose.exceptions import ExpiredSignatureError
+from structlog import get_logger
 
 from virtool.api.client import UserClient
 from virtool.api.errors import APIUnauthorized
@@ -21,6 +22,8 @@ from virtool.errors import AuthError
 from virtool.oidc.utils import validate_token
 from virtool.users.db import B2CUserAttributes
 from virtool.users.utils import limit_permissions
+
+logger = get_logger("authn")
 
 
 def get_ip(req: Request) -> str:
@@ -56,7 +59,10 @@ async def authenticate_with_api_key(
 ) -> Response:
     """Authenticate the request with the provided user handle and API key."""
     user = await get_data_from_req(req).users.get_by_handle(handle)
-    key = await get_data_from_req(req).account.get_key(user.id, key)
+
+    logger.info("authenticating api key", user=user.id)
+
+    key = await get_data_from_req(req).account.get_key_by_secret(user.id, key)
 
     if not user or not user.active or not key:
         raise APIUnauthorized(
