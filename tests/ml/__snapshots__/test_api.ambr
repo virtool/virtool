@@ -6,7 +6,6 @@
     'id': 1,
     'latest_release': dict({
       'created_at': str,
-      'download_url': 'http://www.morales.biz/',
       'github_url': 'http://wiggins.com/',
       'id': 3,
       'name': 'cknqtDSSXFzHxwTjtpho',
@@ -19,7 +18,6 @@
     'releases': list([
       dict({
         'created_at': str,
-        'download_url': 'http://www.morales.biz/',
         'github_url': 'http://wiggins.com/',
         'id': 3,
         'name': 'cknqtDSSXFzHxwTjtpho',
@@ -29,7 +27,6 @@
       }),
       dict({
         'created_at': str,
-        'download_url': 'https://www.snyder.com/',
         'github_url': 'https://carlson.com/',
         'id': 1,
         'name': 'DpjjFIyeNTWRUWCuKoQS',
@@ -39,7 +36,6 @@
       }),
       dict({
         'created_at': str,
-        'download_url': 'http://walker.com/',
         'github_url': 'https://www.ruiz.org/',
         'id': 2,
         'name': 'TVHuIhJxeMChNzFJEUSg',
@@ -59,7 +55,6 @@
         'id': 2,
         'latest_release': dict({
           'created_at': str,
-          'download_url': 'http://johnson.com/',
           'github_url': 'https://giles-rubio.com/',
           'id': 6,
           'name': 'jZfEiUXPqmNpvcgbedvC',
@@ -76,7 +71,6 @@
         'id': 1,
         'latest_release': dict({
           'created_at': str,
-          'download_url': 'http://www.morales.biz/',
           'github_url': 'http://wiggins.com/',
           'id': 3,
           'name': 'cknqtDSSXFzHxwTjtpho',
