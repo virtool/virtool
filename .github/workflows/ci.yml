@@ -162,7 +162,7 @@ jobs:
           run: poetry run mypy virtool
   release:
     runs-on: ubuntu-22.04
-    needs: [test-api, test-unit, build, oas]
+    needs: [build, oas, test]
     if: github.event_name == 'push'
     steps:
       - name: Checkout
