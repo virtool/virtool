@@ -48,6 +48,7 @@ def snapshot_recent(snapshot):
                 ".*last_password_change": (datetime.datetime, str, Any),
                 ".*updated_at": (datetime.datetime, str, Any),
                 ".*uploaded_at": (datetime.datetime, str, Any),
+                ".*removed_at": (datetime.datetime, str, Any),
             },
             regex=True,
             replacer=validate_time,
