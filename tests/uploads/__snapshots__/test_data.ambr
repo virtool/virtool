@@ -37,17 +37,17 @@
 # ---
 # name: test_delete[after]
   dict({
-    'created_at': datetime,
+    'created_at': 'approximately_now_datetime',
     'id': 1,
     'name': 'test.fq.gz',
     'name_on_disk': '1-test.fq.gz',
     'ready': True,
     'removed': True,
-    'removed_at': datetime,
+    'removed_at': 'approximately_now_datetime',
     'reserved': False,
     'size': 16700094,
     'type': 'reads',
-    'uploaded_at': datetime,
+    'uploaded_at': 'approximately_now_datetime',
     'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
