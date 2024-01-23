@@ -11,7 +11,7 @@ def test_time_not_recent_iso_string(snapshot_recent):
 
 
 def test_time_recent_iso_string(snapshot_recent):
-    timestamp = datetime.datetime.utcnow().isoformat()
+    timestamp = datetime.datetime.now().isoformat()
     assert validate_time(timestamp) == snapshot_recent
 
 
@@ -23,12 +23,12 @@ def test_time_not_iso_string(snapshot_recent):
 
 
 def test_time_recent_datetime(snapshot_recent):
-    timestamp = datetime.datetime.utcnow()
+    timestamp = datetime.datetime.now()
     assert validate_time(timestamp) == snapshot_recent
 
 
 def test_time_not_recent_datetime(snapshot_recent):
-    timestamp = datetime.datetime.utcnow() - datetime.timedelta(minutes=1)
+    timestamp = datetime.datetime.now() - datetime.timedelta(minutes=1)
     assert validate_time(timestamp) == snapshot_recent
 
 
