@@ -53,7 +53,7 @@ async def test_create(
 
 
 async def test_delete(
-    config: ServerConfig, data_layer: DataLayer, fake2: DataFaker, snapshot
+    config: ServerConfig, data_layer: DataLayer, fake2: DataFaker, snapshot_recent
 ):
     before = await fake2.uploads.create(user=await fake2.users.create())
 
@@ -65,18 +65,9 @@ async def test_delete(
 
     after = await data_layer.uploads.delete(before.id)
 
-    assert after == snapshot(
+    assert after == snapshot_recent(
         name="after",
-        matcher=path_type(
-            {
-                "created_at": (datetime.datetime,),
-                "uploaded_at": (datetime.datetime,),
-                "removed_at": (datetime.datetime,),
-            }
-        ),
     )
-
-    assert isclose(after.removed_at.timestamp(), datetime.datetime.utcnow().timestamp())
 
     assert not path.is_file()
 
