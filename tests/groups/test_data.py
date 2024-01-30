@@ -14,6 +14,16 @@ from virtool.users.pg import SQLUserGroup
 from virtool.users.utils import generate_base_permissions
 
 
+class TestFind:
+    @pytest.mark.parametrize("pagination", [True, False])
+    async def test_pagination(self, data_layer,snapshot_recent, pagination,fake2):
+        await data_layer.groups.create("test 1")
+        await data_layer.groups.create("test 2")
+        user = fake2.users.create()
+        result = await data_layer.groups.find(user,1, 25, pagination)
+        assert result == snapshot_recent
+
+
 class TestGet:
     async def test_ok(self, data_layer: DataLayer, fake2: DataFaker, snapshot):
         """
