@@ -30,6 +30,103 @@
 # name: TestFind.test_pagination[True]
   dict({
     'found_count': 2,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'test 1',
+      }),
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'test 2',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[1]
+  dict({
+    'found_count': 1,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'test 1',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[2]
+  dict({
+    'found_count': 1,
+    'items': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'test 2',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[]
+  dict({
+    'found_count': 2,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'test 1',
+      }),
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'test 2',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[re]
+  dict({
+    'found_count': 0,
+    'items': list([
+    ]),
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[te]
+  dict({
+    'found_count': 2,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'test 1',
+      }),
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'test 2',
+      }),
+    ]),
     'page': 1,
     'page_count': 1,
     'per_page': 25,
