@@ -19,7 +19,7 @@ class TestFind:
     async def test_pagination(self, data_layer, snapshot_recent, pagination, fake2):
         await data_layer.groups.create("test 1")
         await data_layer.groups.create("test 2")
-        user = fake2.users.create()
+
         result = await data_layer.groups.find(1, 25, pagination)
         assert result == snapshot_recent
 
@@ -27,7 +27,7 @@ class TestFind:
     async def test_search(self, data_layer, snapshot_recent, term, fake2):
         await data_layer.groups.create("test 1")
         await data_layer.groups.create("test 2")
-        user = fake2.users.create()
+
         result = await data_layer.groups.find(1, 25,  True, term)
         assert result == snapshot_recent
 
