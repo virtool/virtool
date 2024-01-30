@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
 from virtool_core.models.roles import AdministratorRole
@@ -16,12 +18,20 @@ from virtool.groups.oas import (
 from virtool.api.policy import policy, AdministratorRoutePolicy
 from virtool.api.routes import Routes
 
+from pydantic import conint
+
 routes = Routes()
 
 
 @routes.view("/groups")
 class GroupsView(PydanticView):
-    async def get(self) -> r200[list[GetGroupResponse]]:
+    async def get(
+            self,
+            user: Optional[str] = None,
+            page: conint(ge=1) = 1,
+            per_page: conint(ge=1, le=100) = 25,
+            paginate: Optional[bool] = False,
+    ) -> r200[list[GetGroupResponse]]:
         """
         List groups.
 
@@ -30,11 +40,23 @@ class GroupsView(PydanticView):
         Status Codes:
             200: Successful operation
         """
+
+        groups = await get_data_from_req(self.request).groups.find(
+            user,
+                                                                   page, per_page, paginate
+                                                                   )
+
+        if paginate:
+            return json_response(
+                {
+                    "items": [
+                        GetGroupResponse.parse_obj(group).dict() for group in groups
+                    ]
+                }
+            )
+
         return json_response(
-            [
-                GetGroupResponse.parse_obj(group).dict()
-                for group in await get_data_from_req(self.request).groups.find()
-            ]
+            [GetGroupResponse.parse_obj(group).dict() for group in groups]
         )
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
@@ -88,7 +110,7 @@ class GroupView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def patch(
-        self, group_id: int, /, data: UpdateGroupRequest
+            self, group_id: int, /, data: UpdateGroupRequest
     ) -> r200[GroupResponse] | r404:
         """
         Update a group.
