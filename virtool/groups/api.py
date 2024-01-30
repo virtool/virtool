@@ -26,11 +26,11 @@ routes = Routes()
 @routes.view("/groups")
 class GroupsView(PydanticView):
     async def get(
-            self,
-            user: Optional[str] = None,
-            page: conint(ge=1) = 1,
-            per_page: conint(ge=1, le=100) = 25,
-            paginate: Optional[bool] = False,
+        self,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
+        paginate: Optional[bool] = False,
+        term: str | None = None,
     ) -> r200[list[GetGroupResponse]]:
         """
         List groups.
@@ -42,9 +42,8 @@ class GroupsView(PydanticView):
         """
 
         groups = await get_data_from_req(self.request).groups.find(
-            user,
-                                                                   page, per_page, paginate
-                                                                   )
+            page, per_page, paginate, term
+        )
 
         if paginate:
             return json_response(
@@ -110,7 +109,7 @@ class GroupView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def patch(
-            self, group_id: int, /, data: UpdateGroupRequest
+        self, group_id: int, /, data: UpdateGroupRequest
     ) -> r200[GroupResponse] | r404:
         """
         Update a group.

@@ -54,10 +54,10 @@ class TestGet:
 
 class TestCreate:
     async def test_ok(
-            self,
-            data_layer: DataLayer,
-            pg: AsyncEngine,
-            snapshot,
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        snapshot,
     ):
         group = await data_layer.groups.create("Test")
 
@@ -73,9 +73,9 @@ class TestCreate:
 
 
 async def test_update_name(
-        data_layer: DataLayer,
-        pg: AsyncEngine,
-        snapshot,
+    data_layer: DataLayer,
+    pg: AsyncEngine,
+    snapshot,
 ):
     group = await data_layer.groups.create("Test")
 
@@ -91,9 +91,9 @@ async def test_update_name(
 
 
 async def test_update_permissions(
-        data_layer: DataLayer,
-        pg: AsyncEngine,
-        snapshot,
+    data_layer: DataLayer,
+    pg: AsyncEngine,
+    snapshot,
 ):
     group = await data_layer.groups.create("Test")
 

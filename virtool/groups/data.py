@@ -33,7 +33,7 @@ class GroupsData:
     name = "groups"
 
     def __init__(
-            self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
@@ -51,7 +51,7 @@ class GroupsData:
             return [GroupMinimal(**group.to_dict()) for group in result.scalars()]
 
     async def find(
-            self, user, page: int, per_page: int, paginate=False, term: str | None = None
+        self, page: int, per_page: int, paginate=False, term: str | None = None
     ) -> List[GroupMinimal]:
         """
         finds all user groups matching the term
@@ -64,14 +64,16 @@ class GroupsData:
 
         return await self.list()
 
-    async def _find_beta(self, page: int, per_page: int, term: str | None = None) -> GroupSearchResult:
+    async def _find_beta(
+        self, page: int, per_page: int, term: str | None = None
+    ) -> GroupSearchResult:
 
         base_filters = []
 
         filters = []
 
         if term:
-            filters.append(SQLGroup.name.ilike(f'%{term}%'))
+            filters.append(SQLGroup.name.ilike(f"%{term}%"))
 
         total_query = (
             select(func.count(SQLGroup.id).label("total"))
@@ -188,8 +190,8 @@ class GroupsData:
         """
 
         async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
+            mongo_session,
+            pg_session,
         ):
             group = await pg_session.get(SQLGroup, group_id)
 
@@ -228,8 +230,8 @@ class GroupsData:
         group = await self.get(group_id)
 
         async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
+            mongo_session,
+            pg_session,
         ):
             result = await pg_session.execute(
                 delete(SQLGroup).where(SQLGroup.id == group_id)
