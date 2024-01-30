@@ -16,11 +16,19 @@ from virtool.users.utils import generate_base_permissions
 
 class TestFind:
     @pytest.mark.parametrize("pagination", [True, False])
-    async def test_pagination(self, data_layer,snapshot_recent, pagination,fake2):
+    async def test_pagination(self, data_layer, snapshot_recent, pagination, fake2):
         await data_layer.groups.create("test 1")
         await data_layer.groups.create("test 2")
         user = fake2.users.create()
-        result = await data_layer.groups.find(user,1, 25, pagination)
+        result = await data_layer.groups.find(user, 1, 25, pagination)
+        assert result == snapshot_recent
+
+    @pytest.mark.parametrize("term", ["", "te", "re", "1", "2"])
+    async def test_search(self, data_layer, snapshot_recent, term, fake2):
+        await data_layer.groups.create("test 1")
+        await data_layer.groups.create("test 2")
+        user = fake2.users.create()
+        result = await data_layer.groups.find(user, 1, 25, True, term)
         assert result == snapshot_recent
 
 
@@ -46,10 +54,10 @@ class TestGet:
 
 class TestCreate:
     async def test_ok(
-        self,
-        data_layer: DataLayer,
-        pg: AsyncEngine,
-        snapshot,
+            self,
+            data_layer: DataLayer,
+            pg: AsyncEngine,
+            snapshot,
     ):
         group = await data_layer.groups.create("Test")
 
@@ -65,9 +73,9 @@ class TestCreate:
 
 
 async def test_update_name(
-    data_layer: DataLayer,
-    pg: AsyncEngine,
-    snapshot,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        snapshot,
 ):
     group = await data_layer.groups.create("Test")
 
@@ -83,9 +91,9 @@ async def test_update_name(
 
 
 async def test_update_permissions(
-    data_layer: DataLayer,
-    pg: AsyncEngine,
-    snapshot,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        snapshot,
 ):
     group = await data_layer.groups.create("Test")
 
