@@ -24,6 +24,11 @@ from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
 
+# TODO DELETE CLASS ONCE MERGED INTO CORE
+class GroupSearchResult(SearchResult):
+    items: List[GroupMinimal]
+
+
 class GroupsData:
     name = "groups"
 
@@ -46,7 +51,7 @@ class GroupsData:
             return [GroupMinimal(**group.to_dict()) for group in result.scalars()]
 
     async def find(
-            self, user, page: int, per_page: int, paginate, term: str | None = None
+            self, user, page: int, per_page: int, paginate=False, term: str | None = None
     ) -> List[GroupMinimal]:
         """
         finds all user groups matching the term
@@ -55,15 +60,18 @@ class GroupsData:
 
         """
         if paginate:
-            return await self._find_beta(page, per_page)
+            return await self._find_beta(page, per_page, term)
 
         return await self.list()
 
-    async def _find_beta(self, page: int, per_page: int) -> SearchResult:
+    async def _find_beta(self, page: int, per_page: int, term: str | None = None) -> GroupSearchResult:
 
         base_filters = []
 
         filters = []
+
+        if term:
+            filters.append(SQLGroup.name.ilike(f'%{term}%'))
 
         total_query = (
             select(func.count(SQLGroup.id).label("total"))
@@ -100,10 +108,10 @@ class GroupsData:
             found_count = found_count_results.scalar()
 
             groups = [row.to_dict() for row in results.unique().scalars()]
-            print(groups)
-        groups = await apply_transforms(groups,[])
 
-        return SearchResult(
+        groups = await apply_transforms(groups, [])
+
+        return GroupSearchResult(
             items=groups,
             found_count=found_count,
             total_count=total_count,
@@ -111,6 +119,7 @@ class GroupsData:
             page_count=int(math.ceil(found_count / per_page)),
             per_page=per_page,
         )
+
     async def get(self, group_id: int) -> Group:
         """
         Get a single group by its ID.
