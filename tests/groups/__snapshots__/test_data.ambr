@@ -21,6 +21,21 @@
 # name: TestCreate.test_ok[pg]
   <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
 # ---
+# name: TestFind.test_pagination[False]
+  list([
+    GroupMinimal(id=1, legacy_id=None, name='test 1'),
+    GroupMinimal(id=2, legacy_id=None, name='test 2'),
+  ])
+# ---
+# name: TestFind.test_pagination[True]
+  dict({
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
 # name: TestGet.test_ok
   dict({
     'id': 1,
