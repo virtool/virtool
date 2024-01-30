@@ -20,7 +20,7 @@ class TestFind:
         await data_layer.groups.create("test 1")
         await data_layer.groups.create("test 2")
         user = fake2.users.create()
-        result = await data_layer.groups.find(user, 1, 25, pagination)
+        result = await data_layer.groups.find(1, 25, pagination)
         assert result == snapshot_recent
 
     @pytest.mark.parametrize("term", ["", "te", "re", "1", "2"])
@@ -28,7 +28,7 @@ class TestFind:
         await data_layer.groups.create("test 1")
         await data_layer.groups.create("test 2")
         user = fake2.users.create()
-        result = await data_layer.groups.find(user, 1, 25, True, term)
+        result = await data_layer.groups.find(1, 25,  True, term)
         assert result == snapshot_recent
 
 
