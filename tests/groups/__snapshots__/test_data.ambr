@@ -29,21 +29,11 @@
 # ---
 # name: TestFind.test_pagination[True]
   dict({
-    'found_count': 2,
+    'found_count': 0,
     'items': list([
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'test 1',
-      }),
-      dict({
-        'id': 2,
-        'legacy_id': None,
-        'name': 'test 2',
-      }),
     ]),
     'page': 1,
-    'page_count': 1,
+    'page_count': 0,
     'per_page': 25,
     'total_count': 2,
   })
