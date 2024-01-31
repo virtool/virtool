@@ -1,5 +1,6 @@
 import datetime
 
+import arrow
 import pytest
 
 from tests.fixtures.snapshot_date import validate_time
@@ -11,7 +12,7 @@ def test_time_not_recent_iso_string(snapshot_recent):
 
 
 def test_time_recent_iso_string(snapshot_recent):
-    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    timestamp = arrow.utcnow().naive.isoformat()
     assert validate_time(timestamp) == snapshot_recent
 
 
@@ -23,12 +24,12 @@ def test_time_not_iso_string(snapshot_recent):
 
 
 def test_time_recent_datetime(snapshot_recent):
-    timestamp = datetime.datetime.now(datetime.timezone.utc)
+    timestamp = arrow.utcnow().naive
     assert validate_time(timestamp) == snapshot_recent
 
 
 def test_time_not_recent_datetime(snapshot_recent):
-    timestamp = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=1)
+    timestamp = arrow.utcnow().naive - datetime.timedelta(minutes=1)
     assert validate_time(timestamp) == snapshot_recent
 
 

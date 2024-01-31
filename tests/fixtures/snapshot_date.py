@@ -21,14 +21,14 @@ def validate_time(timestamp: datetime.datetime | str | Any, _=None):
 
     """
     if isinstance(timestamp, datetime.datetime):
-        if datetime.datetime.now(datetime.timezone.utc) - timestamp < datetime.timedelta(seconds=30):
+        if arrow.utcnow().naive - timestamp < datetime.timedelta(seconds=30):
             return "approximately_now_datetime"
         return "not_approximately_now_datetime"
     if isinstance(timestamp, str):
         try:
-            timestamp_datetime = arrow.get(timestamp).datetime.replace(tzinfo=datetime.timezone.utc)
-            if datetime.datetime.now(datetime.timezone.utc) - timestamp_datetime < datetime.timedelta(
-                seconds=30
+            timestamp_datetime = arrow.get(timestamp).datetime.replace(tzinfo=None)
+            if arrow.utcnow().naive - timestamp_datetime < datetime.timedelta(
+                    seconds=30
             ):
                 return "approximately_now_isoformat"
             return "not_approximately_now_isoformat"
