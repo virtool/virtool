@@ -5,9 +5,9 @@ from typing import List
 from sqlalchemy import delete, select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.group import GroupMinimal, Group
+from virtool_core.models.group import GroupMinimal, Group, GroupSearchResult
 from virtool_core.models.user import UserNested
-from virtool_core.models.searchresult import SearchResult
+
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
@@ -22,12 +22,6 @@ from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
-
-
-# TODO DELETE CLASS ONCE MERGED INTO CORE
-class GroupSearchResult(SearchResult):
-    items: List[GroupMinimal]
-
 
 class GroupsData:
     name = "groups"
@@ -54,7 +48,7 @@ class GroupsData:
         self, page: int, per_page: int, paginate=False, term: str | None = None
     ) -> List[GroupMinimal]:
         """
-        finds all user groups matching the term
+        Finds all user groups matching the term
 
         :return: a list of all user groups
 
@@ -68,22 +62,14 @@ class GroupsData:
         self, page: int, per_page: int, term: str | None = None
     ) -> GroupSearchResult:
 
-        base_filters = []
-
-        filters = []
-
-        if term:
-            filters.append(SQLGroup.name.ilike(f"%{term}%"))
-
         total_query = (
             select(func.count(SQLGroup.id).label("total"))
-            .where(*base_filters)
             .subquery()
         )
 
         found_query = (
             select(func.count(SQLGroup.id).label("found"))
-            .where(*base_filters, *filters)
+            .where(SQLGroup.name.ilike(f"%{term}%"))
             .subquery()
         )
 
@@ -95,7 +81,6 @@ class GroupsData:
         async with AsyncSession(self._pg) as session:
             query = (
                 select(SQLGroup)
-                .where(*base_filters, *filters)
                 .offset(skip)
                 .limit(per_page)
             )
@@ -110,8 +95,6 @@ class GroupsData:
             found_count = found_count_results.scalar()
 
             groups = [row.to_dict() for row in results.unique().scalars()]
-
-        groups = await apply_transforms(groups, [])
 
         return GroupSearchResult(
             items=groups,
