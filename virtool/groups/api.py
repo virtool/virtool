@@ -46,13 +46,7 @@ class GroupsView(PydanticView):
         )
 
         if paginate:
-            return json_response(
-                {
-                    "items": [
-                        GetGroupResponse.parse_obj(group).dict() for group in groups
-                    ]
-                }
-            )
+            return json_response(groups)
 
         return json_response(
             [GetGroupResponse.parse_obj(group).dict() for group in groups]
