@@ -8,12 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.group import GroupMinimal, Group, GroupSearchResult
 from virtool_core.models.user import UserNested
 
-
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.events import emits, Operation, emit
 from virtool.data.topg import both_transactions
-from virtool.data.transforms import apply_transforms
+
 from virtool.groups.mongo import (
     update_member_users_and_api_keys,
 )
@@ -23,11 +22,12 @@ from virtool.mongo.core import Mongo
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
+
 class GroupsData:
     name = "groups"
 
     def __init__(
-        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+            self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
@@ -45,7 +45,7 @@ class GroupsData:
             return [GroupMinimal(**group.to_dict()) for group in result.scalars()]
 
     async def find(
-        self, page: int, per_page: int, paginate=False, term: str | None = None
+            self, page: int, per_page: int, paginate=False, term: str | None = None
     ) -> List[GroupMinimal]:
         """
         Finds all user groups matching the term
@@ -59,8 +59,10 @@ class GroupsData:
         return await self.list()
 
     async def _find_beta(
-        self, page: int, per_page: int, term: str | None = None
+            self, page: int, per_page: int, term: str = ""
     ) -> GroupSearchResult:
+
+        filters = [SQLGroup.name.ilike(f"%{term}%")]
 
         total_query = (
             select(func.count(SQLGroup.id).label("total"))
@@ -69,7 +71,7 @@ class GroupsData:
 
         found_query = (
             select(func.count(SQLGroup.id).label("found"))
-            .where(SQLGroup.name.ilike(f"%{term}%"))
+            .where(*filters)
             .subquery()
         )
 
@@ -81,6 +83,7 @@ class GroupsData:
         async with AsyncSession(self._pg) as session:
             query = (
                 select(SQLGroup)
+                .where(*filters)
                 .offset(skip)
                 .limit(per_page)
             )
@@ -173,8 +176,8 @@ class GroupsData:
         """
 
         async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
+                mongo_session,
+                pg_session,
         ):
             group = await pg_session.get(SQLGroup, group_id)
 
@@ -213,8 +216,8 @@ class GroupsData:
         group = await self.get(group_id)
 
         async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
+                mongo_session,
+                pg_session,
         ):
             result = await pg_session.execute(
                 delete(SQLGroup).where(SQLGroup.id == group_id)
