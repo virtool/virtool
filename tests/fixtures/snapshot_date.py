@@ -21,14 +21,14 @@ def validate_time(timestamp: datetime.datetime | str | Any, _=None):
 
     """
     if isinstance(timestamp, datetime.datetime):
-        if datetime.datetime.utcnow() - timestamp < datetime.timedelta(seconds=30):
+        if arrow.utcnow().naive - timestamp < datetime.timedelta(seconds=30):
             return "approximately_now_datetime"
         return "not_approximately_now_datetime"
     if isinstance(timestamp, str):
         try:
             timestamp_datetime = arrow.get(timestamp).datetime.replace(tzinfo=None)
-            if datetime.datetime.utcnow() - timestamp_datetime < datetime.timedelta(
-                seconds=30
+            if arrow.utcnow().naive - timestamp_datetime < datetime.timedelta(
+                    seconds=30
             ):
                 return "approximately_now_isoformat"
             return "not_approximately_now_isoformat"
@@ -48,6 +48,7 @@ def snapshot_recent(snapshot):
                 ".*last_password_change": (datetime.datetime, str, Any),
                 ".*updated_at": (datetime.datetime, str, Any),
                 ".*uploaded_at": (datetime.datetime, str, Any),
+                ".*removed_at": (datetime.datetime, str, Any),
             },
             regex=True,
             replacer=validate_time,
