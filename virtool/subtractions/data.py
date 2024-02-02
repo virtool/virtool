@@ -67,7 +67,7 @@ logger = get_logger("subtractions")
 class SubtractionsData(DataLayerDomain):
     name = "subtractions"
 
-    def __init__(self, base_url: str, config: Config, mongo: Mongo, pg: AsyncEngine):
+    def __init__(self, base_url: str, config: Config, mongo: "Mongo", pg: AsyncEngine):
         self._base_url = base_url
         self._config = config
         self._mongo = mongo
