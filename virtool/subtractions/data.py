@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 import asyncio
+import glob
 import math
 import os
 import shutil
@@ -35,7 +34,6 @@ from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
     attach_computed,
-    check_subtraction_fasta_files,
     unlink_default_subtractions,
 )
 from virtool.subtractions.models import SQLSubtractionFile
@@ -452,6 +450,8 @@ class SubtractionsData(DataLayerDomain):
         Generate a FASTA file for a subtraction that has Bowtie2 index files, but no
         FASTA file.
 
+        :param subtraction_id: the id of the subtraction
+
         """
         index_path = join_subtraction_index_path(self._config, subtraction_id)
 
@@ -523,4 +523,12 @@ class SubtractionsData(DataLayerDomain):
         If a subtraction has Bowtie2 index files but no FASTA file, generate one.
 
         """
-        return await check_subtraction_fasta_files(self._mongo, self._config)
+        subtractions_without_fasta = []
+
+        async for subtraction in self._mongo.subtraction.find({"deleted": False}):
+            path = join_subtraction_path(self._config, subtraction["_id"])
+
+            if not glob.glob(f"{path}/*.fa.gz"):
+                subtractions_without_fasta.append(subtraction["_id"])
+
+        return subtractions_without_fasta
