@@ -386,7 +386,9 @@ class AnalysesView(PydanticView):
     async def get(
         self,
         sample_id: str,
-        /,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
+            /
     ) -> r200[list[GetSampleAnalysesResponse]] | r403 | r404:
         """
         Get analyses.
@@ -399,7 +401,7 @@ class AnalysesView(PydanticView):
             404: Not found
         """
         search_result = await get_data_from_req(self.request).analyses.find(
-            1, 25, self.request["client"], sample_id
+            page, per_page, self.request["client"], sample_id
         )
 
         return json_response(search_result)
