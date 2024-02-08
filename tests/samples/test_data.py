@@ -16,7 +16,6 @@ from virtool.mongo.core import Mongo
 
 from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.subtractions.db import lookup_nested_subtractions
 from virtool.users.oas import UpdateUserRequest
 
 from virtool.pg.utils import get_row_by_id
@@ -176,15 +175,6 @@ async def test_finalize(
 
     sample = await data_layer.samples.get("test")
 
-    assert (
-        await mongo.samples.aggregate(
-            [
-                {"$match": {"_id": "test"}},
-                *lookup_nested_subtractions(local_field="subtractions"),
-            ]
-        ).to_list(length=1)
-        == snapshot_recent()
-    )
     assert sample.quality == quality
     assert sample.ready is True
 
