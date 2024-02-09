@@ -1,6 +1,5 @@
 import asyncio
 import math
-from typing import List
 
 from sqlalchemy import delete, select, func
 from sqlalchemy.exc import IntegrityError
@@ -27,13 +26,13 @@ class GroupsData:
     name = "groups"
 
     def __init__(
-            self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
 
-    async def list(self) -> List[GroupMinimal]:
+    async def list(self) -> list[GroupMinimal]:
         """
         List all user groups.
 
@@ -41,57 +40,45 @@ class GroupsData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLGroup))
+            result = await session.execute(select(SQLGroup).order_by(SQLGroup.name))
             return [GroupMinimal(**group.to_dict()) for group in result.scalars()]
 
-    async def find(
-            self, page: int, per_page: int, paginate=False, term: str | None = None
-    ) -> List[GroupMinimal]:
+    async def find(self, page: int, per_page: int, term: str = "") -> GroupSearchResult:
         """
         Finds all user groups matching the term
 
         :return: a list of all user groups
 
         """
-        if paginate:
-            return await self._find_beta(page, per_page, term)
-
-        return await self.list()
-
-    async def _find_beta(
-            self, page: int, per_page: int, term: str = ""
-    ) -> GroupSearchResult:
-
-        filters = [SQLGroup.name.ilike(f"%{term}%")]
-
-        total_query = (
-            select(func.count(SQLGroup.id).label("total"))
-            .subquery()
-        )
-
-        found_query = (
-            select(func.count(SQLGroup.id).label("found"))
-            .where(*filters)
-            .subquery()
-        )
-
-        skip = 0
+        if term:
+            filters = [SQLGroup.name.ilike(f"%{term}%")]
+        else:
+            filters = []
 
         if page > 1:
             skip = (page - 1) * per_page
+        else:
+            skip = 0
 
         async with AsyncSession(self._pg) as session:
-            query = (
-                select(SQLGroup)
-                .where(*filters)
-                .offset(skip)
-                .limit(per_page)
-            )
-
             total_count_results, found_count_results, results = await asyncio.gather(
-                session.execute(select(total_query)),
-                session.execute(select(found_query)),
-                session.execute(query),
+                session.execute(
+                    select(select(func.count(SQLGroup.id).label("total")).subquery())
+                ),
+                session.execute(
+                    select(
+                        select(func.count(SQLGroup.id).label("found"))
+                        .where(*filters)
+                        .subquery()
+                    )
+                ),
+                session.execute(
+                    select(SQLGroup)
+                    .where(*filters)
+                    .order_by(SQLGroup.name)
+                    .offset(skip)
+                    .limit(per_page)
+                ),
             )
 
             total_count = total_count_results.scalar()
@@ -176,8 +163,8 @@ class GroupsData:
         """
 
         async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
+            mongo_session,
+            pg_session,
         ):
             group = await pg_session.get(SQLGroup, group_id)
 
@@ -216,8 +203,8 @@ class GroupsData:
         group = await self.get(group_id)
 
         async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
+            mongo_session,
+            pg_session,
         ):
             result = await pg_session.execute(
                 delete(SQLGroup).where(SQLGroup.id == group_id)

@@ -1,45 +1,52 @@
 import pytest
+from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 
 
-@pytest.fixture
-async def setup_update_group(spawn_client: ClientSpawner, fake2: DataFaker):
-    client = await spawn_client(
-        administrator=True,
-        authenticated=True,
-    )
+class TestFind:
+    async def test_list(
+        self, fake2: DataFaker, snapshot: SnapshotAssertion, spawn_client: ClientSpawner
+    ):
+        """Test that a full list of groups is returned when pagination is not toggled."""
 
-    group = await fake2.groups.create()
-    await fake2.groups.create()
+        for _ in range(10):
+            await fake2.groups.create()
 
-    await fake2.users.create()
-    await fake2.users.create(groups=[group])
-    await fake2.users.create(groups=[group])
-    await fake2.users.create(groups=[group])
+        # Need a capitalized group name to make sure ordering is case-insensitive.
+        await fake2.groups.create(name="Caps")
 
-    return client, group
+        client = await spawn_client(authenticated=True)
 
+        resp = await client.get("/groups")
 
-async def test_find(fake2: DataFaker, snapshot, spawn_client: ClientSpawner):
-    """
-    Test that a ``GET /groups`` return a complete list of groups.
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
-    """
-    client = await spawn_client(
-        administrator=True,
-        authenticated=True,
-    )
+    async def test_paginate(
+        self,
+        fake2: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that the correct page of groups and the correct search metadata values
+        are returned when `page` is `1` or `2`."""
+        for _ in range(4):
+            await fake2.groups.create()
 
-    await fake2.groups.create()
-    await fake2.groups.create()
+        await fake2.groups.create(name="Caps")
 
-    resp = await client.get("/groups")
+        for _ in range(10):
+            await fake2.groups.create()
 
-    assert resp.status == 200
-    assert await resp.json() == snapshot
+        client = await spawn_client(authenticated=True)
+
+        for page in [1, 2]:
+            resp = await client.get(f"/groups?paginate=true&page={page}&per_page=10")
+            assert resp.status == 200
+            assert await resp.json() == snapshot(name=f"page_{page}")
 
 
 class TestCreate:
@@ -101,8 +108,21 @@ async def test_get(
 
 @pytest.mark.apitest
 class TestUpdate:
-    async def test(self, setup_update_group, snapshot):
-        client, group = setup_update_group
+    async def test(
+        self, fake2: DataFaker, spawn_client: ClientSpawner, snapshot: SnapshotAssertion
+    ):
+        client = await spawn_client(
+            administrator=True,
+            authenticated=True,
+        )
+
+        group = await fake2.groups.create()
+        await fake2.groups.create()
+
+        await fake2.users.create()
+        await fake2.users.create(groups=[group])
+        await fake2.users.create(groups=[group])
+        await fake2.users.create(groups=[group])
 
         resp = await client.patch(
             f"/groups/{group.id}",

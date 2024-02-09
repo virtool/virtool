@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from virtool_core.models.group import Permissions
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -14,22 +15,51 @@ from virtool.users.pg import SQLUserGroup
 from virtool.users.utils import generate_base_permissions
 
 
-class TestFind:
-    @pytest.mark.parametrize("pagination", [True, False])
-    async def test_pagination(self, data_layer, snapshot_recent, pagination, fake2):
-        await data_layer.groups.create("test 1")
-        await data_layer.groups.create("test 2")
+async def test_list(
+    data_layer: DataLayer, fake2: DataFaker, snapshot: SnapshotAssertion
+):
+    """Test that the method lists all groups in the instance."""
+    for _ in range(10):
+        await fake2.groups.create()
 
-        result = await data_layer.groups.find(1, 25, pagination)
-        assert result == snapshot_recent
+    assert await data_layer.groups.list() == snapshot
+
+
+class TestFind:
+    @pytest.mark.parametrize("page", [1, 2])
+    async def test_pages(
+        self,
+        page: int,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that the correct page of groups and the correct search metadata values
+        are returned when `page` is `1` or `2`."""
+        for _ in range(15):
+            await fake2.groups.create()
+
+        result = await data_layer.groups.find(page, 10)
+        assert result.items == snapshot_recent
+        assert result.found_count == 15
+        assert result.page == page
+        assert result.page_count == 2
+        assert result.per_page == 10
+        assert result.total_count == 15
 
     @pytest.mark.parametrize("term", ["", "te", "re", "1", "2"])
-    async def test_search(self, data_layer, snapshot_recent, term, fake2):
+    async def test_search(
+        self,
+        term: str,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that only matching groups are returned when a search term is provided."""
         await data_layer.groups.create("test 1")
         await data_layer.groups.create("test 2")
 
-        result = await data_layer.groups.find(1, 25,  True, term)
-        assert result == snapshot_recent
+        assert await data_layer.groups.find(1, 25, term) == snapshot_recent
 
 
 class TestGet:

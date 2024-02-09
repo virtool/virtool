@@ -9,7 +9,14 @@ from typing import Type, AsyncGenerator
 
 import aiofiles
 from faker import Faker
-from faker.providers import BaseProvider, python, color, lorem, file
+from faker.providers import (
+    BaseProvider,
+    python,
+    color,
+    lorem,
+    file,
+    job as job_provider,
+)
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.group import Group
@@ -102,6 +109,7 @@ class DataFaker:
         self.faker.add_provider(lorem)
         self.faker.add_provider(python)
         self.faker.add_provider(file)
+        self.faker.add_provider(job_provider)
 
         self.groups = GroupsFakerPiece(self)
         self.hmm = HMMFakerPiece(self)
@@ -232,18 +240,24 @@ class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
     async def create(
-        self, permissions: PermissionsUpdate | None = None, legacy_id: str | None = None
+        self,
+        permissions: PermissionsUpdate | None = None,
+        legacy_id: str | None = None,
+        name: str | None = None,
     ) -> Group:
         """
         :param permissions: Permissions for the group. If not provided, the group will
             have no permissions.
         :param legacy_id: An optional legacy ID for the group.
+        :param name: The name of the group. If not provided, a unique name will be
+            generated.
         :return: a group
         """
-        name = "contains spaces"
+        if name is None:
+            name = "contains spaces"
 
-        while " " in name:
-            name = self._faker.profile()["job"].lower() + "s"
+            while " " in name:
+                name = self._faker.unique.job().lower() + "s"
 
         group = await self._layer.groups.create(name)
 

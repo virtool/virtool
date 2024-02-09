@@ -36,7 +36,7 @@
       'legacy_id': 'group_2',
       'modify': True,
       'modify_otu': True,
-      'name': 'hydrogeologists',
+      'name': 'architects',
       'remove': True,
     }),
   ])

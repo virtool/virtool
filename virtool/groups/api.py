@@ -1,11 +1,13 @@
-from typing import Optional
-
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
+from pydantic import conint
+from virtool_core.models.group import GroupMinimal, GroupSearchResult
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import (
@@ -13,12 +15,7 @@ from virtool.groups.oas import (
     UpdateGroupRequest,
     CreateGroupResponse,
     GroupResponse,
-    GetGroupResponse,
 )
-from virtool.api.policy import policy, AdministratorRoutePolicy
-from virtool.api.routes import Routes
-
-from pydantic import conint
 
 routes = Routes()
 
@@ -29,9 +26,9 @@ class GroupsView(PydanticView):
         self,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        paginate: Optional[bool] = False,
+        paginate: bool = False,
         term: str | None = None,
-    ) -> r200[list[GetGroupResponse]]:
+    ) -> r200[list[GroupMinimal] | GroupSearchResult]:
         """
         List groups.
 
@@ -40,17 +37,14 @@ class GroupsView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-
-        groups = await get_data_from_req(self.request).groups.find(
-            page, per_page, paginate, term
-        )
-
         if paginate:
-            return json_response(groups)
+            result = await get_data_from_req(self.request).groups.find(
+                page, per_page, term
+            )
+        else:
+            result = await get_data_from_req(self.request).groups.list()
 
-        return json_response(
-            [GetGroupResponse.parse_obj(group).dict() for group in groups]
-        )
+        return json_response(result)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def post(self, data: CreateGroupRequest) -> r201[CreateGroupResponse] | r400:
