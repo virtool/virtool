@@ -6,7 +6,7 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'hydrogeologists',
+        'name': 'architects',
       }),
       dict({
         'id': 1,
@@ -54,7 +54,7 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'hydrogeologists',
+        'name': 'architects',
       }),
       dict({
         'id': 1,

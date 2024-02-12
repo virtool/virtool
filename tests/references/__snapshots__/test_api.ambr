@@ -900,7 +900,7 @@
     'legacy_id': None,
     'modify': True,
     'modify_otu': False,
-    'name': 'hydrogeologists',
+    'name': 'architects',
     'remove': False,
   })
 # ---
@@ -1369,7 +1369,7 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'handle': 'laura56',
+          'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
       }),
@@ -1399,7 +1399,7 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'handle': 'laura56',
+          'handle': 'leeashley',
           'id': 'fb085f7f',
         }),
       }),
@@ -1920,13 +1920,11 @@
   dict({
     'body': '''
       The release consists of a gzipped JSON file containing:
-
       - a `data_type` field with value _genome_
       - an `organism` field with value _virus_
       - the `version` name (eg. *v0.2.0*)
       - a timestamp with the key `created_at`
       - virus data compatible for import into Virtool v2.0.0+
-
       Scripts have been updated to follow upcoming convention changes in Virtool v3.0.0.
     ''',
     'content_type': 'application/gzip',

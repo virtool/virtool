@@ -483,12 +483,12 @@
       dict({
         'id': 1,
         'legacy_id': None,
-        'name': 'gaffers',
+        'name': 'haematologists',
       }),
       dict({
         'id': 3,
         'legacy_id': None,
-        'name': 'oceanographers',
+        'name': 'meteorologists',
       }),
     ]),
     'handle': 'leeashley',
@@ -521,12 +521,12 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'actors',
+        'name': 'geoscientists',
       }),
       dict({
         'id': 1,
         'legacy_id': None,
-        'name': 'gaffers',
+        'name': 'haematologists',
       }),
     ]),
     'handle': 'leeashley',
@@ -574,10 +574,10 @@
   })
 # ---
 # name: TestUpdate.test_groups[pg_1]
-  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=1, legacy_id=None, name=gaffers, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=3, legacy_id=None, name=oceanographers, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='[]')>
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=1, legacy_id=None, name=haematologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=3, legacy_id=None, name=meteorologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='[]')>
 # ---
 # name: TestUpdate.test_groups[pg_2]
-  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=2, legacy_id=None, name=actors, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=1, legacy_id=None, name=gaffers, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='[]')>
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=2, legacy_id=None, name=geoscientists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=1, legacy_id=None, name=haematologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='[]')>
 # ---
 # name: TestUpdate.test_groups[pg_3]
   dict({
@@ -610,7 +610,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'invalidate_sessions': False,
     'last_password_change': 'approximately_now_datetime',
     'primary_group': None,
@@ -634,7 +634,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'id': 'bf1b993c',
     'last_password_change': 'approximately_now_datetime',
     'permissions': dict({
@@ -660,7 +660,7 @@
     'email': '',
     'force_reset': False,
     'groups': [],
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': False,
     'last_password_change': 'approximately_now_datetime',
@@ -682,7 +682,7 @@
     'groups': list([
       1,
     ]),
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'invalidate_sessions': True,
     'last_password_change': 'approximately_now_datetime',
     'primary_group': None,
@@ -711,7 +711,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'id': 'bf1b993c',
     'last_password_change': 'approximately_now_datetime',
     'permissions': dict({
@@ -737,7 +737,7 @@
     'email': '',
     'force_reset': False,
     'groups': [<SQLGroup(id=1, legacy_id=None, name=musicians, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>],
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': True,
     'last_password_change': 'approximately_now_datetime',
@@ -759,7 +759,7 @@
     'groups': list([
       1,
     ]),
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'invalidate_sessions': False,
     'last_password_change': 'approximately_now_datetime',
     'primary_group': 1,
@@ -788,7 +788,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'id': 'bf1b993c',
     'last_password_change': 'approximately_now_datetime',
     'permissions': dict({
@@ -818,7 +818,7 @@
     'email': '',
     'force_reset': False,
     'groups': [<SQLGroup(id=1, legacy_id=None, name=musicians, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>],
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': False,
     'last_password_change': 'approximately_now_datetime',
@@ -847,7 +847,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'diamond21',
+        'handle': 'lucasmichael',
         'id': '7cf872dc',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
         'permissions': dict({
@@ -906,7 +906,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'diamond21',
+        'handle': 'lucasmichael',
         'id': '7cf872dc',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
         'permissions': dict({
@@ -936,7 +936,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'juliewilliams',
+        'handle': 'sean96',
         'id': 'fb085f7f',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
         'permissions': dict({
@@ -968,7 +968,7 @@
           dict({
             'id': 2,
             'legacy_id': None,
-            'name': 'hydrogeologists',
+            'name': 'architects',
           }),
           dict({
             'id': 1,
@@ -1030,7 +1030,7 @@
           dict({
             'id': 2,
             'legacy_id': None,
-            'name': 'hydrogeologists',
+            'name': 'architects',
           }),
           dict({
             'id': 1,
@@ -1079,7 +1079,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'juliewilliams',
+        'handle': 'sean96',
         'id': 'fb085f7f',
         'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
         'permissions': dict({
@@ -1111,7 +1111,7 @@
           dict({
             'id': 2,
             'legacy_id': None,
-            'name': 'hydrogeologists',
+            'name': 'architects',
           }),
           dict({
             'id': 1,
@@ -1173,7 +1173,7 @@
           dict({
             'id': 2,
             'legacy_id': None,
-            'name': 'hydrogeologists',
+            'name': 'architects',
           }),
           dict({
             'id': 1,

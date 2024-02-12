@@ -34,7 +34,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'qtaylor',
+    'handle': 'lindawest',
     'id': 'fb085f7f',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
@@ -74,7 +74,7 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'hydrogeologists',
+        'name': 'architects',
       }),
       dict({
         'id': 1,
@@ -82,7 +82,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'qtaylor',
+    'handle': 'lindawest',
     'id': 'fb085f7f',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
@@ -348,7 +348,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'laura56',
+        'handle': 'leeashley',
         'id': 'fb085f7f',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': dict({
@@ -367,7 +367,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'sjohnson',
+        'handle': 'zclark',
         'id': '7cf872dc',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': dict({
@@ -434,7 +434,7 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'hydrogeologists',
+        'name': 'architects',
       }),
       dict({
         'id': 1,
@@ -442,7 +442,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'qtaylor',
+    'handle': 'lindawest',
     'id': 'fb085f7f',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
