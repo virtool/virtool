@@ -62,8 +62,11 @@ class WorkerPool:
         ]
 
     async def finish(self):
+        join_task = asyncio.create_task(self.task_queue.join())
+        worker_tasks = [asyncio.create_task(worker) for worker in self.workers]
+
         await asyncio.wait(
-            [self.task_queue.join(), *self.workers], return_when=FIRST_COMPLETED
+            [join_task, *worker_tasks], return_when=FIRST_COMPLETED
         )
 
         if exceptions := self.check_exceptions():
