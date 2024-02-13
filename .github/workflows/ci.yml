@@ -84,9 +84,9 @@ jobs:
         run: poetry install --no-interaction
       - name: Install bowtie
         run: | 
-          wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
-          unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
-          cp -rv bowtie2-2.3.2-legacy /opt/bowtie2
+          wget https://github.com/BenLangmead/bowtie2/releases/download/v2.5.3/bowtie2-2.5.3-linux-x86_64.zip
+          unzip bowtie2-2.5.3-linux-x86_64.zip
+          cp -rv bowtie2-2.5.3-linux-x86_64 /opt/bowtie2
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Run
         run: >-
