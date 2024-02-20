@@ -375,6 +375,8 @@ class ResetView(PydanticView):
             raise APIBadRequest(error)
 
         try:
+            print("session id from inside reset")
+            print(self.request["client"].session_id)
             session, token = await get_data_from_req(self.request).account.reset(
                 self.request["client"].session_id,
                 data,

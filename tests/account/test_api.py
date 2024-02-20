@@ -26,12 +26,12 @@ async def test_get(snapshot, spawn_client, static_time):
     "body,status",
     [
         (
-            {
-                "email": "virtool.devs@gmail.com",
-                "password": "foo_bar_1",
-                "old_password": "bob_is_testing",
-            },
-            200,
+                {
+                    "email": "virtool.devs@gmail.com",
+                    "password": "foo_bar_1",
+                    "old_password": "bob_is_testing",
+                },
+                200,
         ),
         ({"email": "virtool.devs@gmail.com"}, 200),
         ({"email": "invalid_email@"}, 400),
@@ -57,11 +57,11 @@ async def test_get(snapshot, spawn_client, static_time):
     ],
 )
 async def test_update(
-    body: dict,
-    status: int,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
+        body: dict,
+        status: int,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -100,18 +100,18 @@ async def test_get_settings(spawn_client):
     "data,status",
     [
         (
-            {"show_ids": False},
-            200,
+                {"show_ids": False},
+                200,
         ),
         ({"foo_bar": True, "show_ids": "foo"}, 400),
         (
-            {
-                "show_ids": None,
-                "show_versions": None,
-                "skip_quick_analyze_dialog": None,
-                "quick_analyze_workflow": None,
-            },
-            400,
+                {
+                    "show_ids": None,
+                    "show_versions": None,
+                    "skip_quick_analyze_dialog": None,
+                    "quick_analyze_workflow": None,
+                },
+                400,
         ),
     ],
     ids=["valid_input", "invalid_input", "null_values"],
@@ -132,7 +132,7 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
 
 @pytest.mark.apitest
 async def test_get_api_keys(
-    fake2: DataFaker, spawn_client: ClientSpawner, snapshot, static_time
+        fake2: DataFaker, spawn_client: ClientSpawner, snapshot, static_time
 ):
     client = await spawn_client(authenticated=True)
 
@@ -174,15 +174,15 @@ class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
     async def test(
-        self,
-        has_perm,
-        req_perm,
-        data_layer: DataLayer,
-        fake2: DataFaker,
-        mocker,
-        snapshot,
-        spawn_client: ClientSpawner,
-        static_time,
+            self,
+            has_perm,
+            req_perm,
+            data_layer: DataLayer,
+            fake2: DataFaker,
+            mocker,
+            snapshot,
+            spawn_client: ClientSpawner,
+            static_time,
     ):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
@@ -242,14 +242,14 @@ class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])
     @pytest.mark.parametrize("has_perm", [True, False, "missing"])
     async def test(
-        self,
-        has_admin: bool,
-        has_perm: bool,
-        data_layer: DataLayer,
-        fake2: DataFaker,
-        snapshot,
-        spawn_client: ClientSpawner,
-        static_time,
+            self,
+            has_admin: bool,
+            has_perm: bool,
+            data_layer: DataLayer,
+            fake2: DataFaker,
+            snapshot,
+            spawn_client: ClientSpawner,
+            static_time,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -517,4 +517,35 @@ async def test_login(spawn_client, body, status, snapshot):
     resp = await client.post("/account/login", body)
 
     assert resp.status == status
+    assert await resp.json() == snapshot
+
+
+@pytest.mark.apitest
+@pytest.mark.parametrize(
+    "request_path,correct_code",
+    [
+        ("account/keys", True),
+        ("account/reset", True),
+        ("account/reset", False),
+    ],
+)
+async def test_login_reset(spawn_client, snapshot, fake2, request_path, correct_code):
+    client = await spawn_client(authenticated=True, administrator=True)
+
+    data = {"username": "foobar", "handle": "foobar", "password": "p@ssword123", "force_reset": True}
+    resp = await client.post("/users", data)
+    resp = await client.post("/account/login", data)
+    reset_json_data = await resp.json()
+
+
+    assert 'session_id=session' in resp.headers.get('Set-Cookie')
+    assert reset_json_data.get('reset_code') is not None
+    assert reset_json_data.get('reset') is True
+    print("resp from login notice the session id")
+    print(resp)
+    reset_data = {"password": "hello_world", "reset_code": reset_json_data.get('reset_code')}
+    resp = await client.post(request_path, reset_data)
+    if request_path == "account/reset" and correct_code:
+        assert False #TODO REMOVE
+
     assert await resp.json() == snapshot
