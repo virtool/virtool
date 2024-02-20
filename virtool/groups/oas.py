@@ -4,7 +4,7 @@ specification.
 """
 
 from pydantic import BaseModel, Field, constr
-from virtool_core.models.group import Group, GroupMinimal
+from virtool_core.models.group import Group
 
 
 class PermissionsUpdate(BaseModel):
@@ -53,22 +53,6 @@ class CreateGroupResponse(Group):
                 "name": "research",
                 "users": [],
             }
-        }
-
-
-class GetGroupResponse(GroupMinimal):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "id": "technicians",
-                    "name": "technicians",
-                },
-                {
-                    "id": "sidney",
-                    "name": "sidney",
-                },
-            ]
         }
 
 

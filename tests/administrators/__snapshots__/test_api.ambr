@@ -153,7 +153,7 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'hydrogeologists',
+        'name': 'architects',
       }),
       dict({
         'id': 1,
@@ -161,7 +161,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'qtaylor',
+    'handle': 'lindawest',
     'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({
@@ -191,10 +191,10 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'hydrogeologists',
+        'name': 'architects',
       }),
     ]),
-    'handle': 'qtaylor',
+    'handle': 'lindawest',
     'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({
@@ -222,7 +222,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'qtaylor',
+    'handle': 'lindawest',
     'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({
@@ -289,7 +289,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'laura56',
+    'handle': 'leeashley',
     'id': 'fb085f7f',
     'last_password_change': str,
     'permissions': dict({

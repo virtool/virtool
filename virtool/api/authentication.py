@@ -1,9 +1,9 @@
 from contextlib import suppress
 from typing import Callable
 
+import jwt
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
-from jose.exceptions import ExpiredSignatureError
 from structlog import get_logger
 
 from virtool.api.client import UserClient
@@ -103,7 +103,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
 
     try:
         token_claims = await validate_token(req.app, token)
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         raise APIUnauthorized()
 
     user = await get_data_from_req(req).users.find_or_create_b2c_user(

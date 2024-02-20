@@ -21,6 +21,114 @@
 # name: TestCreate.test_ok[pg]
   <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
 # ---
+# name: TestFind.test_pages[1]
+  list([
+    GroupMinimal(id=2, legacy_id=None, name='architects'),
+    GroupMinimal(id=7, legacy_id=None, name='chiropractors'),
+    GroupMinimal(id=12, legacy_id=None, name='curators'),
+    GroupMinimal(id=15, legacy_id=None, name='dealers'),
+    GroupMinimal(id=10, legacy_id=None, name='gaffers'),
+    GroupMinimal(id=5, legacy_id=None, name='herbalists'),
+    GroupMinimal(id=13, legacy_id=None, name='illustrators'),
+    GroupMinimal(id=4, legacy_id=None, name='immunologists'),
+    GroupMinimal(id=8, legacy_id=None, name='interpreters'),
+    GroupMinimal(id=6, legacy_id=None, name='lawyers'),
+  ])
+# ---
+# name: TestFind.test_pages[2]
+  list([
+    GroupMinimal(id=1, legacy_id=None, name='musicians'),
+    GroupMinimal(id=11, legacy_id=None, name='oceanographers'),
+    GroupMinimal(id=3, legacy_id=None, name='ophthalmologists'),
+    GroupMinimal(id=9, legacy_id=None, name='subs'),
+    GroupMinimal(id=14, legacy_id=None, name='toxicologists'),
+  ])
+# ---
+# name: TestFind.test_search[1]
+  dict({
+    'found_count': 1,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'test 1',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[2]
+  dict({
+    'found_count': 1,
+    'items': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'test 2',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[]
+  dict({
+    'found_count': 2,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'test 1',
+      }),
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'test 2',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[re]
+  dict({
+    'found_count': 0,
+    'items': list([
+    ]),
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
+# name: TestFind.test_search[te]
+  dict({
+    'found_count': 2,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'test 1',
+      }),
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'test 2',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
+  })
+# ---
 # name: TestGet.test_ok
   dict({
     'id': 1,
@@ -38,15 +146,29 @@
     }),
     'users': list([
       dict({
-        'handle': 'laura56',
+        'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
       dict({
-        'handle': 'sjohnson',
+        'handle': 'zclark',
         'id': 'fb085f7f',
       }),
     ]),
   })
+# ---
+# name: test_list
+  list([
+    GroupMinimal(id=2, legacy_id=None, name='architects'),
+    GroupMinimal(id=7, legacy_id=None, name='chiropractors'),
+    GroupMinimal(id=10, legacy_id=None, name='gaffers'),
+    GroupMinimal(id=5, legacy_id=None, name='herbalists'),
+    GroupMinimal(id=4, legacy_id=None, name='immunologists'),
+    GroupMinimal(id=8, legacy_id=None, name='interpreters'),
+    GroupMinimal(id=6, legacy_id=None, name='lawyers'),
+    GroupMinimal(id=1, legacy_id=None, name='musicians'),
+    GroupMinimal(id=3, legacy_id=None, name='ophthalmologists'),
+    GroupMinimal(id=9, legacy_id=None, name='subs'),
+  ])
 # ---
 # name: test_update_name[group_after]
   dict({

@@ -1,9 +1,13 @@
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
+from pydantic import conint
+from virtool_core.models.group import GroupMinimal, GroupSearchResult
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
+from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import (
@@ -11,17 +15,20 @@ from virtool.groups.oas import (
     UpdateGroupRequest,
     CreateGroupResponse,
     GroupResponse,
-    GetGroupResponse,
 )
-from virtool.api.policy import policy, AdministratorRoutePolicy
-from virtool.api.routes import Routes
 
 routes = Routes()
 
 
 @routes.view("/groups")
 class GroupsView(PydanticView):
-    async def get(self) -> r200[list[GetGroupResponse]]:
+    async def get(
+        self,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
+        paginate: bool = False,
+        term: str | None = None,
+    ) -> r200[list[GroupMinimal] | GroupSearchResult]:
         """
         List groups.
 
@@ -30,12 +37,14 @@ class GroupsView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        return json_response(
-            [
-                GetGroupResponse.parse_obj(group).dict()
-                for group in await get_data_from_req(self.request).groups.find()
-            ]
-        )
+        if paginate:
+            result = await get_data_from_req(self.request).groups.find(
+                page, per_page, term
+            )
+        else:
+            result = await get_data_from_req(self.request).groups.list()
+
+        return json_response(result)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def post(self, data: CreateGroupRequest) -> r201[CreateGroupResponse] | r400:
