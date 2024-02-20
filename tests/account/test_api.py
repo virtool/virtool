@@ -6,6 +6,7 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
+from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, hash_password
@@ -132,13 +133,13 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
 
 @pytest.mark.apitest
 async def test_get_api_keys(
-    fake2: DataFaker, spawn_client: ClientSpawner, snapshot, static_time
+    fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, snapshot, static_time
 ):
     client = await spawn_client(authenticated=True)
 
     group = await fake2.groups.create()
 
-    await client.mongo.keys.insert_many(
+    await mongo.keys.insert_many(
         [
             {
                 "_id": "abc123",
@@ -213,7 +214,7 @@ class TestCreateAPIKey:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-    async def test_naming(self, mocker, snapshot, spawn_client, static_time):
+    async def test_naming(self, mocker, snapshot, mongo: Mongo, spawn_client: ClientSpawner, static_time):
         """
         Test that uniqueness is ensured on the ``id`` field.
 
@@ -224,7 +225,7 @@ class TestCreateAPIKey:
 
         client = await spawn_client(authenticated=True)
 
-        await client.mongo.keys.insert_one(
+        await mongo.keys.insert_one(
             {"_id": "foobar", "id": "foobar_0", "name": "Foobar"}
         )
 
@@ -234,7 +235,7 @@ class TestCreateAPIKey:
 
         assert resp.status == 201
         assert await resp.json() == snapshot
-        assert await client.mongo.keys.find_one({"id": "foobar_1"}) == snapshot
+        assert await mongo.keys.find_one({"id": "foobar_1"}) == snapshot
 
 
 @pytest.mark.apitest
@@ -248,6 +249,7 @@ class TestUpdateAPIKey:
         data_layer: DataLayer,
         fake2: DataFaker,
         snapshot,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -265,7 +267,7 @@ class TestUpdateAPIKey:
             UpdateUserRequest(administrator=has_admin, groups=[group.id]),
         )
 
-        await client.mongo.keys.insert_one(
+        await mongo.keys.insert_one(
             {
                 "_id": "foobar",
                 "id": "foobar_0",
@@ -295,7 +297,7 @@ class TestUpdateAPIKey:
 
         assert resp.status == 200
         assert await resp.json() == snapshot
-        assert await client.mongo.keys.find_one() == snapshot
+        assert await mongo.keys.find_one() == snapshot
 
     async def test_not_found(self, snapshot, spawn_client: ClientSpawner):
         """Test that a 404 is returned when the key is not found."""
@@ -312,11 +314,11 @@ class TestUpdateAPIKey:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_remove_api_key(error, spawn_client: ClientSpawner, snapshot):
+async def test_remove_api_key(error, mongo: Mongo, spawn_client: ClientSpawner, snapshot):
     client = await spawn_client(authenticated=True)
 
     if error is None:
-        await client.mongo.keys.insert_one(
+        await mongo.keys.insert_one(
             {
                 "_id": "foobar",
                 "id": "foobar_0",
@@ -329,7 +331,7 @@ async def test_remove_api_key(error, spawn_client: ClientSpawner, snapshot):
 
     if error is None:
         assert resp.status == 204
-        assert await client.mongo.keys.count_documents({}) == 0
+        assert await mongo.keys.count_documents({}) == 0
 
     else:
         assert resp.status == 404
@@ -337,12 +339,12 @@ async def test_remove_api_key(error, spawn_client: ClientSpawner, snapshot):
 
 
 @pytest.mark.apitest
-async def test_remove_all_api_keys(fake2: DataFaker, spawn_client: ClientSpawner):
+async def test_remove_all_api_keys(fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner):
     client = await spawn_client(authenticated=True)
 
     user = await fake2.users.create()
 
-    await client.mongo.keys.insert_many(
+    await mongo.keys.insert_many(
         [
             {
                 "_id": "hello_world",
@@ -359,7 +361,7 @@ async def test_remove_all_api_keys(fake2: DataFaker, spawn_client: ClientSpawner
 
     assert resp.status == 204
 
-    assert await client.mongo.keys.find().to_list(None) == [
+    assert await mongo.keys.find().to_list(None) == [
         {"_id": "baz", "id": "baz_0", "user": {"id": user.id}}
     ]
 
@@ -503,10 +505,10 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         "remember_is_none",
     ],
 )
-async def test_login(spawn_client, body, status, snapshot):
+async def test_login(mongo: Mongo,spawn_client: ClientSpawner, body, status, snapshot):
     client = await spawn_client()
 
-    await client.mongo.users.insert_one(
+    await mongo.users.insert_one(
         {
             "user_id": "abc123",
             "handle": "foobar",

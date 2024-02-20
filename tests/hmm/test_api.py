@@ -5,7 +5,9 @@ import aiofiles
 import pytest
 from virtool_core.utils import decompress_file
 
+from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
+from virtool.mongo.core import Mongo
 
 
 @pytest.fixture
@@ -52,7 +54,7 @@ async def fake_hmm_status(mongo, fake2, static_time):
 
 
 @pytest.mark.apitest
-async def test_find(fake_hmm_status, snapshot, spawn_client, hmm_document):
+async def test_find(fake_hmm_status, snapshot,mongo:Mongo, spawn_client:ClientSpawner, hmm_document):
     """
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
@@ -61,7 +63,7 @@ async def test_find(fake_hmm_status, snapshot, spawn_client, hmm_document):
 
     hmm_document["hidden"] = False
 
-    await client.mongo.hmm.insert_one(hmm_document)
+    await mongo.hmm.insert_one(hmm_document)
 
     resp = await client.get("/hmms")
 
@@ -95,7 +97,7 @@ async def test_get_release(fake_hmm_status, spawn_client, snapshot):
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, snapshot, spawn_client, hmm_document, resp_is):
+async def test_get(error, snapshot, mongo:Mongo, spawn_client:ClientSpawner, hmm_document, resp_is):
     """
     Check that a ``GET`` request for a valid annotation document results in a response containing that complete
     document.
@@ -106,7 +108,7 @@ async def test_get(error, snapshot, spawn_client, hmm_document, resp_is):
     client = await spawn_client(authenticated=True)
 
     if not error:
-        await client.mongo.hmm.insert_one(hmm_document)
+        await mongo.hmm.insert_one(hmm_document)
 
     resp = await client.get("/hmms/f8666902")
 

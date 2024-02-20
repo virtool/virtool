@@ -34,6 +34,7 @@ async def test_find(
     per_page: int | None,
     fake2: DataFaker,
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -42,7 +43,7 @@ async def test_find(
     user = await fake2.users.create()
     job = await fake2.jobs.create(user)
 
-    await client.mongo.subtraction.insert_many(
+    await mongo.subtraction.insert_many(
         [
             {
                 "_id": f"id_{number}",
@@ -83,6 +84,7 @@ async def test_find(
 @pytest.mark.apitest
 async def test_get(
     fake2: DataFaker,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     snapshot,
     static_time,
@@ -92,7 +94,7 @@ async def test_get(
 
     client = await spawn_client(authenticated=True)
 
-    await client.mongo.subtraction.insert_one(
+    await mongo.subtraction.insert_one(
         {
             "_id": "apple",
             "count": 11,
@@ -186,19 +188,19 @@ async def test_edit(
         authenticated=True, permissions=[Permission.modify_subtraction]
     )
 
-    await client.mongo.subtraction.insert_one(document)
+    await mongo.subtraction.insert_one(document)
 
     resp = await client.patch("/subtractions/apple", data)
 
     assert resp.status == 200
     assert await resp.json() == snapshot
-    assert await client.mongo.subtraction.find_one() == snapshot
+    assert await mongo.subtraction.find_one() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("exists", [True, False])
 async def test_delete(
-    exists: bool, fake2: DataFaker, resp_is, spawn_client: ClientSpawner, tmp_path
+    exists: bool, fake2: DataFaker, resp_is, mongo: Mongo, spawn_client: ClientSpawner, tmp_path
 ):
     client = await spawn_client(
         authenticated=True, permissions=[Permission.modify_subtraction]
@@ -210,7 +212,7 @@ async def test_delete(
         user = await fake2.users.create()
         job = await fake2.jobs.create(user)
 
-        await client.mongo.subtraction.insert_one(
+        await mongo.subtraction.insert_one(
             {
                 "_id": "foo",
                 "name": "Foo",
@@ -233,6 +235,7 @@ async def test_upload(
     error: str | None,
     pg: AsyncEngine,
     resp_is,
+    mongo: Mongo,
     spawn_job_client,
     snapshot,
     tmp_path: Path,
@@ -250,7 +253,7 @@ async def test_upload(
             await session.commit()
 
     if error != "404":
-        await client.mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"})
+        await mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"})
 
     url = "/subtractions/foo/files"
 
@@ -284,6 +287,7 @@ async def test_finalize(
     error: str | None,
     fake2,
     snapshot,
+    mongo: Mongo,
     spawn_job_client,
     resp_is,
     static_time,
@@ -311,7 +315,7 @@ async def test_finalize(
         document["ready"] = True
 
     if error != "404":
-        await client.mongo.subtraction.insert_one(document)
+        await mongo.subtraction.insert_one(document)
 
     data = {}
 
@@ -327,7 +331,7 @@ async def test_finalize(
         case None:
             assert resp.status == 200
             assert await resp.json() == snapshot
-            assert await client.mongo.subtraction.find_one() == snapshot
+            assert await mongo.subtraction.find_one() == snapshot
         case "404":
             await resp_is.not_found(resp)
         case "409":
@@ -347,6 +351,7 @@ async def test_job_remove(
     fake2: DataFaker,
     resp_is,
     snapshot,
+    mongo: Mongo,
     spawn_job_client: ClientSpawner,
     static_time,
     tmp_path: Path,
@@ -360,7 +365,7 @@ async def test_job_remove(
 
     if exists:
         await asyncio.gather(
-            client.mongo.subtraction.insert_one(
+            mongo.subtraction.insert_one(
                 {
                     "_id": "foo",
                     "created_at": static_time.datetime,
@@ -376,7 +381,7 @@ async def test_job_remove(
                     "job": {"job": job.id},
                 }
             ),
-            client.mongo.samples.insert_one(
+            mongo.samples.insert_one(
                 {"_id": "test", "name": "Test", "subtractions": ["foo"]}
             ),
         )
@@ -390,8 +395,8 @@ async def test_job_remove(
         return
     else:
         await resp_is.no_content(resp)
-        assert await client.mongo.subtraction.find_one("foo") == snapshot
-        assert await client.mongo.samples.find_one("test") == snapshot
+        assert await mongo.subtraction.find_one("foo") == snapshot
+        assert await mongo.samples.find_one("test") == snapshot
 
 
 @pytest.mark.apitest
@@ -446,7 +451,7 @@ async def test_download_subtraction_files(
 
 
 @pytest.mark.apitest
-async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
+async def test_create(fake2, pg, mongo: Mongo, spawn_client, mocker, snapshot, static_time):
     user = await fake2.users.create()
 
     async with AsyncSession(pg) as session:
@@ -486,4 +491,4 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
 
     assert resp.status == 201
     assert await resp.json() == snapshot
-    assert await client.mongo.jobs.find_one() == snapshot(name="job")
+    assert await mongo.jobs.find_one() == snapshot(name="job")
