@@ -529,23 +529,25 @@ async def test_login(spawn_client, body, status, snapshot):
         ("account/reset", False),
     ],
 )
-async def test_login_reset(spawn_client, snapshot, fake2, request_path, correct_code):
-    client = await spawn_client(authenticated=True, administrator=True)
+async def test_login_reset(spawn_client, snapshot, fake2, request_path, correct_code, data_layer: DataLayer) -> None:
+    client = await spawn_client(authenticated=False)
 
-    data = {"username": "foobar", "handle": "foobar", "password": "p@ssword123", "force_reset": True}
-    resp = await client.post("/users", data)
+    data = {"username": "foobar", "handle": "foobar", "password": "hello_world", "force_reset": True}
+    user = await data_layer.users.create("foobar", "hello_world", True)
     resp = await client.post("/account/login", data)
     reset_json_data = await resp.json()
-
 
     assert 'session_id=session' in resp.headers.get('Set-Cookie')
     assert reset_json_data.get('reset_code') is not None
     assert reset_json_data.get('reset') is True
-    print("resp from login notice the session id")
-    print(resp)
-    reset_data = {"password": "hello_world", "reset_code": reset_json_data.get('reset_code')}
+
+    reset_data = {"password": "invalid", "reset_code": reset_json_data.get('reset_code') if correct_code else "wrong_code"}
+
     resp = await client.post(request_path, reset_data)
-    if request_path == "account/reset" and correct_code:
-        assert False #TODO REMOVE
+    assert await resp.json() == snapshot
+
+    reset_data["password"] = "hello_world"
+
+    resp = await client.post(request_path, reset_data)
 
     assert await resp.json() == snapshot
