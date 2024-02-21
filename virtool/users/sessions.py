@@ -244,8 +244,6 @@ class SessionData(DataLayerDomain):
 
         if stored_reset_code != reset_code:
             print("invalid code")
-            print(reset_code)
-            print(stored_reset_code)
             await self.delete(session_id)
             raise ResourceNotFoundError("Invalid reset code")
 
