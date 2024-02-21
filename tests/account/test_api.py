@@ -533,7 +533,7 @@ async def test_login_reset(spawn_client, snapshot, fake2, request_path, correct_
     client = await spawn_client(authenticated=False)
 
     data = {"username": "foobar", "handle": "foobar", "password": "hello_world", "force_reset": True}
-    user = await data_layer.users.create("foobar", "hello_world", True)
+    await data_layer.users.create("foobar", "hello_world", True)
     resp = await client.post("/account/login", data)
     reset_json_data = await resp.json()
 
