@@ -786,6 +786,42 @@
     'message': 'Invalid username or password',
   })
 # ---
+# name: test_login_reset[account/keys-True]
+  dict({
+    'id': 'unauthorized',
+    'message': 'Requires authorization',
+  })
+# ---
+# name: test_login_reset[account/keys-True].1
+  dict({
+    'id': 'unauthorized',
+    'message': 'Requires authorization',
+  })
+# ---
+# name: test_login_reset[account/reset-False]
+  dict({
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
+  })
+# ---
+# name: test_login_reset[account/reset-False].1
+  dict({
+    'id': 'bad_request',
+    'message': 'Invalid session',
+  })
+# ---
+# name: test_login_reset[account/reset-True]
+  dict({
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
+  })
+# ---
+# name: test_login_reset[account/reset-True].1
+  dict({
+    'login': False,
+    'reset': False,
+  })
+# ---
 # name: test_remove_api_key[404]
   dict({
     'id': 'not_found',
