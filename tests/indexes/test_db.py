@@ -117,7 +117,7 @@ async def test_get_patched_otus(mocker, mongo, config):
 
 
 async def test_update_last_indexed_versions(mongo, test_otu, spawn_client):
-    client = await spawn_client(authenticated=True)
+    await spawn_client(authenticated=True)
     test_otu["version"] = 1
 
     await mongo.otus.insert_one(test_otu)
