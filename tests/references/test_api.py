@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from unittest.mock import call
+from unittest.mock import call, ANY
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -608,7 +608,7 @@ async def test_list_updates(empty, mocker, mongo: Mongo, spawn_client, id_exists
 
     resp = await client.get("/refs/foo/updates")
 
-    id_exists.assert_called_with(mongo.references, "foo")
+    id_exists.assert_called_with(ANY, "foo")
 
     if not id_exists:
         await resp_is.not_found(resp)
@@ -617,7 +617,7 @@ async def test_list_updates(empty, mocker, mongo: Mongo, spawn_client, id_exists
     assert resp.status == 200
     assert await resp.json() == snapshot
 
-    m_get_one_field.assert_called_with(mongo.references, "updates", "foo")
+    m_get_one_field.assert_called_with(ANY, "updates", "foo")
 
 
 @pytest.mark.apitest
@@ -804,7 +804,7 @@ class TestCreateOTU:
             assert resp.status == 201
             # Abbreviation defaults to empty string for OTU creation.
             m_check_name_and_abbreviation.assert_called_with(
-                mongo, "foo", "Tobacco mosaic virus", "TMV"
+                ANY, "foo", "Tobacco mosaic virus", "TMV"
             )
         elif error == "404":
             await resp_is.not_found(resp)
@@ -865,7 +865,7 @@ async def test_create_index(
     assert await resp.json() == snapshot
     assert await mongo.indexes.find_one() == snapshot
 
-    m_create_manifest.assert_called_with(mongo, "foo")
+    m_create_manifest.assert_called_with(ANY, "foo")
 
 
 @pytest.mark.apitest

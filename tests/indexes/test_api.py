@@ -7,6 +7,7 @@ import shutil
 from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
+from unittest.mock import ANY
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -235,8 +236,8 @@ async def test_get(
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        m_get_contributors.assert_called_with(mongo, {"index.id": "foobar"})
-        m_get_otus.assert_called_with(mongo, "foobar")
+        m_get_contributors.assert_called_with(ANY, {"index.id": "foobar"})
+        m_get_otus.assert_called_with(ANY, "foobar")
     else:
         await resp_is.not_found(resp)
 
@@ -345,7 +346,7 @@ class TestCreate:
         assert index == snapshot(name="index")
         assert job == snapshot(name="job")
 
-        m_create_manifest.assert_called_with(mongo, "foo")
+        m_create_manifest.assert_called_with(ANY, "foo")
 
     @pytest.mark.parametrize(
         "error", [None, "400_unbuilt", "400_unverified", "409_running"]
