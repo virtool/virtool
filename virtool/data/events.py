@@ -5,6 +5,7 @@ from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from time import sleep
 from typing import Awaitable, Callable, AsyncIterable
 
 from aioredis import Redis, Channel, ChannelClosedError
@@ -51,7 +52,16 @@ class _InternalEventsTarget:
     q = asyncio.Queue(maxsize=1000)
 
     def emit(self, event: Event):
-        self.q.put_nowait(event)
+        retries = 3
+        for attempt in range(retries-1):
+            try:
+                self.q.put_nowait(event)
+                return
+            except asyncio.QueueFull:
+                sleep(5)
+                continue
+        logger.error("Event queue full after multiple retries. Dropping event.")
+
 
     async def get(self) -> Event:
         """
