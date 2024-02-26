@@ -54,7 +54,9 @@ async def fake_hmm_status(mongo, fake2, static_time):
 
 
 @pytest.mark.apitest
-async def test_find(fake_hmm_status, snapshot,mongo:Mongo, spawn_client:ClientSpawner, hmm_document):
+async def test_find(
+    fake_hmm_status, snapshot, mongo: Mongo, spawn_client: ClientSpawner, hmm_document
+):
     """
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
@@ -97,7 +99,9 @@ async def test_get_release(fake_hmm_status, spawn_client, snapshot):
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, snapshot, mongo:Mongo, spawn_client:ClientSpawner, hmm_document, resp_is):
+async def test_get(
+    error, snapshot, mongo: Mongo, spawn_client: ClientSpawner, hmm_document, resp_is
+):
     """
     Check that a ``GET`` request for a valid annotation document results in a response containing that complete
     document.

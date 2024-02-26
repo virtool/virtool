@@ -57,20 +57,26 @@ async def test_permission_transform(
 
         await session.commit()
 
-    assert await apply_transforms(
-        {"id": "bob", "groups": [1, "group_5"]},
-        [AttachPermissionsTransform(pg)],
-    ) == snapshot(name="single")
+    assert (
+        await apply_transforms(
+            {"id": "bob", "groups": [1, "group_5"]},
+            [AttachPermissionsTransform(pg)],
+        )
+        == snapshot(name="single")
+    )
 
-    assert await apply_transforms(
-        [
-            {"id": "joe", "groups": [1, "group_5"]},
-            {"id": "mae", "groups": [3, 4]},
-            {"id": "wil", "groups": []},
-            {"id": "pam", "groups": ["group_2"]},
-        ],
-        [AttachPermissionsTransform(pg)],
-    ) == snapshot(name="multi")
+    assert (
+        await apply_transforms(
+            [
+                {"id": "joe", "groups": [1, "group_5"]},
+                {"id": "mae", "groups": [3, 4]},
+                {"id": "wil", "groups": []},
+                {"id": "pam", "groups": ["group_2"]},
+            ],
+            [AttachPermissionsTransform(pg)],
+        )
+        == snapshot(name="multi")
+    )
 
 
 @pytest.mark.parametrize("multiple", [True, False])

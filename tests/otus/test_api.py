@@ -13,16 +13,16 @@ from virtool.mongo.core import Mongo
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-        error: str | None,
-        fake2: DataFaker,
-        resp_is,
-        snapshot,
-        mongo: Mongo,
-        spawn_client: ClientSpawner,
-        test_change,
-        test_otu,
-        test_ref,
-        test_sequence,
+    error: str | None,
+    fake2: DataFaker,
+    resp_is,
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    test_change,
+    test_otu,
+    test_ref,
+    test_sequence,
 ):
     """
     Test that a valid request returns a complete otu document.
@@ -57,47 +57,47 @@ class TestEdit:
         [
             # Name, ONLY.
             (
-                    {"name": "Tobacco mosaic otu"},
-                    "TMV",
-                    "Changed name to Tobacco mosaic otu",
+                {"name": "Tobacco mosaic otu"},
+                "TMV",
+                "Changed name to Tobacco mosaic otu",
             ),
             # Name and abbreviation, BOTH CHANGE.
             (
-                    {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
-                    "PVF",
-                    "Changed name to Tobacco mosaic otu and changed abbreviation to TMV",
+                {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
+                "PVF",
+                "Changed name to Tobacco mosaic otu and changed abbreviation to TMV",
             ),
             # Name and abbreviation, NO NAME CHANGE because old is same as new.
             (
-                    {"name": "Prunus virus F", "abbreviation": "TMV"},
-                    "PVF",
-                    "Changed abbreviation to TMV",
+                {"name": "Prunus virus F", "abbreviation": "TMV"},
+                "PVF",
+                "Changed abbreviation to TMV",
             ),
             # Name and abbreviation, NO ABBR CHANGE because old is same as new.
             (
-                    {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
-                    "TMV",
-                    "Changed name to Tobacco mosaic otu",
+                {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
+                "TMV",
+                "Changed name to Tobacco mosaic otu",
             ),
             # Name and abbreviation, ABBR REMOVED because old is "TMV" and new is "".
             (
-                    {"name": "Tobacco mosaic otu", "abbreviation": ""},
-                    "TMV",
-                    "Changed name to Tobacco mosaic otu and removed abbreviation TMV",
+                {"name": "Tobacco mosaic otu", "abbreviation": ""},
+                "TMV",
+                "Changed name to Tobacco mosaic otu and removed abbreviation TMV",
             ),
             # Name and abbreviation, ABBR ADDED because old is "" and new is "TMV".
             (
-                    {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
-                    "",
-                    "Changed name to Tobacco mosaic otu and added abbreviation TMV",
+                {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
+                "",
+                "Changed name to Tobacco mosaic otu and added abbreviation TMV",
             ),
             # Abbreviation, ONLY.
             ({"abbreviation": "TMV"}, "PVF", "Changed abbreviation to TMV"),
             # Abbreviation, ONLY because old name is same as new.
             (
-                    {"name": "Prunus virus F", "abbreviation": "TMV"},
-                    "PVF",
-                    "Changed abbreviation to TMV",
+                {"name": "Prunus virus F", "abbreviation": "TMV"},
+                "PVF",
+                "Changed abbreviation to TMV",
             ),
             # Abbreviation, ADDED.
             ({"abbreviation": "TMV"}, "", "Added abbreviation TMV"),
@@ -106,17 +106,17 @@ class TestEdit:
         ],
     )
     async def test(
-            self,
-            data,
-            existing_abbreviation,
-            description,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_otu,
-            test_ref,
+        self,
+        data,
+        existing_abbreviation,
+        description,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_ref,
     ):
         """
         Test that changing the name and abbreviation results:
@@ -150,21 +150,21 @@ class TestEdit:
         "data,message",
         [
             (
-                    {"name": "Tobacco mosaic virus", "abbreviation": "FBV"},
-                    "Name already exists",
+                {"name": "Tobacco mosaic virus", "abbreviation": "FBV"},
+                "Name already exists",
             ),
             (
-                    {"name": "Foobar virus", "abbreviation": "TMV"},
-                    "Abbreviation already exists",
+                {"name": "Foobar virus", "abbreviation": "TMV"},
+                "Abbreviation already exists",
             ),
             (
-                    {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
-                    "Name and abbreviation already exist",
+                {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+                "Name and abbreviation already exist",
             ),
         ],
     )
     async def test_field_exists(
-            self, data, message, mongo: Mongo, spawn_client, check_ref_right, resp_is
+        self, data, message, mongo: Mongo, spawn_client, check_ref_right, resp_is
     ):
         """
         Test that the request fails with ``409 Conflict`` if the requested name or abbreviation already exists.
@@ -211,19 +211,19 @@ class TestEdit:
         ],
     )
     async def test_no_change(
-            self,
-            change_count,
-            data,
-            fake2,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_change,
-            test_otu,
-            test_ref,
-            test_sequence,
+        self,
+        change_count,
+        data,
+        fake2,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_change,
+        test_otu,
+        test_ref,
+        test_sequence,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -262,7 +262,14 @@ class TestEdit:
     "abbreviation,exists", [("", True), ("PVF", True), ("", False)]
 )
 async def test_remove(
-        abbreviation, exists, snapshot, mongo: Mongo, spawn_client, check_ref_right, resp_is, test_otu
+    abbreviation,
+    exists,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    check_ref_right,
+    resp_is,
+    test_otu,
 ):
     """
     Test that an existing otu can be removed.
@@ -297,7 +304,9 @@ async def test_remove(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_list_isolates(error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu):
+async def test_list_isolates(
+    error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu
+):
     """
     Test the isolates are properly listed and formatted for an existing otu.
 
@@ -329,7 +338,7 @@ async def test_list_isolates(error, snapshot, mongo: Mongo, spawn_client, resp_i
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_get_isolate(
-        error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu, test_sequence
+    error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu, test_sequence
 ):
     """
     Test that an existing isolate is successfully returned.
@@ -359,16 +368,16 @@ async def test_get_isolate(
 class TestAddIsolate:
     @pytest.mark.parametrize("default", [True, False])
     async def test_default(
-            self,
-            default,
-            mocker,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_otu,
-            test_random_alphanumeric,
+        self,
+        default,
+        mocker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_random_alphanumeric,
     ):
         """
         Test that a new default isolate can be added, setting ``default`` to ``False``
@@ -402,15 +411,15 @@ class TestAddIsolate:
         assert await mongo.history.find_one() == snapshot
 
     async def test_first(
-            self,
-            mocker,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_otu,
-            test_random_alphanumeric,
+        self,
+        mocker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_random_alphanumeric,
     ):
         """
         Test that the first isolate for a otu is set as the ``default`` otu even if ``default`` is set to ``False``
@@ -445,15 +454,15 @@ class TestAddIsolate:
         assert await mongo.history.find_one() == snapshot
 
     async def test_force_case(
-            self,
-            mocker,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_otu,
-            test_random_alphanumeric,
+        self,
+        mocker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_random_alphanumeric,
     ):
         """
         Test that the ``source_type`` value is forced to lower case.
@@ -505,22 +514,22 @@ class TestUpdateIsolate:
             ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
             ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
             (
-                    {"source_type": "variant", "source_name": "A"},
-                    "Renamed Isolate b to Variant A",
+                {"source_type": "variant", "source_name": "A"},
+                "Renamed Isolate b to Variant A",
             ),
             ({"source_name": "A"}, "Renamed Isolate b to Isolate A"),
         ],
     )
     async def test(
-            self,
-            data,
-            description,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_otu,
+        self,
+        data,
+        description,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
     ):
         """
         Test that a change to the isolate name results in the correct changes, history, and response.
@@ -562,7 +571,7 @@ class TestUpdateIsolate:
         assert await mongo.history.find_one() == snapshot
 
     async def test_force_case(
-            self, snapshot, mongo: Mongo, spawn_client, check_ref_right, resp_is, test_otu
+        self, snapshot, mongo: Mongo, spawn_client, check_ref_right, resp_is, test_otu
     ):
         """
         Test that the ``source_type`` value is forced to lower case.
@@ -603,7 +612,9 @@ class TestUpdateIsolate:
         "otu_id,isolate_id",
         [("6116cba1", "test"), ("test", "cab8b360"), ("test", "test")],
     )
-    async def test_not_found(self, otu_id, isolate_id, mongo: Mongo, spawn_client, test_otu, resp_is):
+    async def test_not_found(
+        self, otu_id, isolate_id, mongo: Mongo, spawn_client, test_otu, resp_is
+    ):
         """
         Test that a request for a non-existent otu or isolate results in a ``404`` response.
 
@@ -624,15 +635,15 @@ class TestUpdateIsolate:
 @pytest.mark.apitest
 class TestSetAsDefault:
     async def test(
-            self,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_otu,
-            test_random_alphanumeric,
-            static_time,
+        self,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_random_alphanumeric,
+        static_time,
     ):
         """
         Test changing the default isolate results in the correct changes, history, and response.
@@ -666,16 +677,16 @@ class TestSetAsDefault:
         assert await mongo.history.find_one() == snapshot
 
     async def test_no_change(
-            self,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            check_ref_right,
-            resp_is,
-            test_otu,
-            static_time,
-            test_change,
-            test_random_alphanumeric,
+        self,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        static_time,
+        test_change,
+        test_random_alphanumeric,
     ):
         """
         Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
@@ -716,7 +727,9 @@ class TestSetAsDefault:
         "otu_id,isolate_id",
         [("6116cba1", "test"), ("test", "cab8b360"), ("test", "test")],
     )
-    async def test_not_found(self, otu_id, isolate_id, mongo: Mongo, spawn_client, test_otu, resp_is):
+    async def test_not_found(
+        self, otu_id, isolate_id, mongo: Mongo, spawn_client, test_otu, resp_is
+    ):
         """
         Test that ``404 Not found`` is returned if the otu or isolate does not exist
 
@@ -735,7 +748,14 @@ class TestSetAsDefault:
 @pytest.mark.apitest
 class TestRemoveIsolate:
     async def test(
-            self, snapshot, mongo: Mongo, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
+        self,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_sequence,
     ):
         """
         Test that a valid request results in a ``204`` response and the isolate and
@@ -764,7 +784,14 @@ class TestRemoveIsolate:
         assert await mongo.history.find_one() == snapshot
 
     async def test_change_default(
-            self, snapshot, mongo: Mongo, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
+        self,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_sequence,
     ):
         """
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
@@ -821,7 +848,7 @@ class TestRemoveIsolate:
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_list_sequences(
-        error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu, test_sequence
+    error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu, test_sequence
 ):
     client = await spawn_client(authenticated=True)
 
@@ -846,7 +873,14 @@ async def test_list_sequences(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
 async def test_get_sequence(
-        error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu, test_ref, test_sequence
+    error,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    resp_is,
+    test_otu,
+    test_ref,
+    test_sequence,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -879,16 +913,16 @@ async def test_get_sequence(
     [(None, "null"), (None, "test_segment"), ("404_otu", None), ("404_isolate", None)],
 )
 async def test_create_sequence(
-        error,
-        snapshot,
-        mongo: Mongo,
-        spawn_client,
-        check_ref_right,
-        resp_is,
-        test_otu,
-        test_random_alphanumeric,
-        test_ref,
-        segment,
+    error,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    check_ref_right,
+    resp_is,
+    test_otu,
+    test_random_alphanumeric,
+    test_ref,
+    segment,
 ):
     client = await spawn_client(
         authenticated=True,
@@ -940,11 +974,14 @@ async def test_create_sequence(
     assert resp.headers["Location"] == snapshot
     assert await resp.json() == snapshot
 
-    assert await asyncio.gather(
-        mongo.sequences.find_one(),
-        mongo.otus.find_one("6116cba1"),
-        mongo.history.find_one({"method_name": "create_sequence"}),
-    ) == snapshot(name="db")
+    assert (
+        await asyncio.gather(
+            mongo.sequences.find_one(),
+            mongo.otus.find_one("6116cba1"),
+            mongo.history.find_one({"method_name": "create_sequence"}),
+        )
+        == snapshot(name="db")
+    )
 
 
 @pytest.mark.apitest
@@ -959,15 +996,15 @@ async def test_create_sequence(
     ],
 )
 async def test_edit_sequence(
-        error,
-        snapshot,
-        mongo: Mongo,
-        spawn_client,
-        check_ref_right,
-        resp_is,
-        test_otu,
-        test_sequence,
-        segment,
+    error,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    check_ref_right,
+    resp_is,
+    test_otu,
+    test_sequence,
+    segment,
 ):
     client = await spawn_client(
         authenticated=True, permissions=[ReferencePermission.modify_otu]
@@ -1018,16 +1055,20 @@ async def test_edit_sequence(
 
     assert await mongo.otus.find_one("6116cba1") == snapshot
     assert await mongo.sequences.find_one("KX269872") == snapshot
-    assert (
-            await mongo.history.find_one({"method_name": "edit_sequence"})
-            == snapshot
-    )
+    assert await mongo.history.find_one({"method_name": "edit_sequence"}) == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
 async def test_remove_sequence(
-        error, snapshot, mongo: Mongo, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
+    error,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    check_ref_right,
+    resp_is,
+    test_otu,
+    test_sequence,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -1060,7 +1101,9 @@ async def test_remove_sequence(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_download_otu(error, mongo: Mongo, spawn_client, resp_is, test_sequence, test_otu):
+async def test_download_otu(
+    error, mongo: Mongo, spawn_client, resp_is, test_sequence, test_otu
+):
     client = await spawn_client(authenticated=True)
 
     if error != "404_otu":
@@ -1080,7 +1123,7 @@ async def test_download_otu(error, mongo: Mongo, spawn_client, resp_is, test_seq
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_download_isolate(
-        error, resp_is, mongo: Mongo, spawn_client, test_otu, test_isolate, test_sequence
+    error, resp_is, mongo: Mongo, spawn_client, test_otu, test_isolate, test_sequence
 ):
     client = await spawn_client(authenticated=True)
 

@@ -7,7 +7,9 @@ from virtool.mongo.core import Mongo
 
 @pytest.mark.apitest
 class TestFind:
-    async def test_find(self, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner):
+    async def test_find(
+        self, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
+    ):
         """
         Test that a ``GET /labels`` return a complete list of labels.
 
@@ -38,7 +40,7 @@ class TestFind:
         assert await resp.json() == snapshot
 
     async def test_find_by_name(
-            self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
     ):
         """
         Test that a ``GET /labels`` with a `find` query returns a particular label. Also test for partial matches.
@@ -64,7 +66,7 @@ class TestFind:
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
-        status: int, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
+    status: int, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
 ):
     """
     Test that a ``GET /labels/:label_id`` return the correct label document.
@@ -93,10 +95,10 @@ async def test_get(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
 async def test_create(
-        error: str | None,
-        fake2: DataFaker,
-        resp_is,
-        spawn_client: ClientSpawner,
+    error: str | None,
+    fake2: DataFaker,
+    resp_is,
+    spawn_client: ClientSpawner,
 ):
     """
     Test that a label can be added to the database at ``POST /labels``.
@@ -135,12 +137,12 @@ async def test_create(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(
-        error: str | None,
-        fake2: DataFaker,
-        resp_is,
-        snapshot,
-        mongo: Mongo,
-        spawn_client: ClientSpawner,
+    error: str | None,
+    fake2: DataFaker,
+    resp_is,
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
 ):
     """
     Test that a label can be updated at ``PATCH /labels/:label_id``.
@@ -196,12 +198,12 @@ async def test_edit(
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
-        status: int,
-        fake2: DataFaker,
-        mock_samples: list[dict],
-        snapshot,
-        mongo: Mongo,
-        spawn_client: ClientSpawner,
+    status: int,
+    fake2: DataFaker,
+    mock_samples: list[dict],
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
 ):
     """
     Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.

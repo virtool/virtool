@@ -456,7 +456,9 @@ async def test_edit(
 
 
 @pytest.mark.apitest
-async def test_delete(fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, static_time):
+async def test_delete(
+    fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, static_time
+):
     client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
@@ -505,7 +507,9 @@ async def test_delete(fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawne
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
-async def test_get_release(error, mocker, mongo: Mongo, spawn_client, resp_is, snapshot):
+async def test_get_release(
+    error, mocker, mongo: Mongo, spawn_client, resp_is, snapshot
+):
     client = await spawn_client(authenticated=True)
 
     if error != "404":
@@ -576,7 +580,9 @@ async def test_get_release(error, mocker, mongo: Mongo, spawn_client, resp_is, s
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
-async def test_list_updates(empty, mocker, mongo: Mongo, spawn_client, id_exists, resp_is, snapshot):
+async def test_list_updates(
+    empty, mocker, mongo: Mongo, spawn_client, id_exists, resp_is, snapshot
+):
     client = await spawn_client(authenticated=True)
 
     m_get_one_field = mocker.patch(
@@ -659,7 +665,8 @@ async def test_update(
         await mongo.references.insert_one(reference)
 
         m_enqueue = mocker.patch.object(
-        get_data_from_app(client.app).tasks._tasks_client, "enqueue")
+            get_data_from_app(client.app).tasks._tasks_client, "enqueue"
+        )
 
     resp = await client.post("/refs/foo/updates", {})
 
@@ -674,7 +681,7 @@ async def test_update(
         assert await resp.json() == snapshot(
             name="json", matcher=path_type({".*etag": (str,)}, regex=True)
         )
-        assert m_enqueue.call_args == call('update_remote_reference', 1)
+        assert m_enqueue.call_args == call("update_remote_reference", 1)
         assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
 
 

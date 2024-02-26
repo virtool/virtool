@@ -7,7 +7,9 @@ from virtool.mongo.core import Mongo
 
 
 @pytest.mark.apitest
-async def test_find(snapshot, mongo: Mongo, spawn_client: ClientSpawner, test_changes, static_time):
+async def test_find(
+    snapshot, mongo: Mongo, spawn_client: ClientSpawner, test_changes, static_time
+):
     """
     Test that a list of processed change documents are returned with a ``200`` status.
 
@@ -31,7 +33,15 @@ async def test_find(snapshot, mongo: Mongo, spawn_client: ClientSpawner, test_ch
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, snapshot, resp_is, mongo: Mongo, spawn_client: ClientSpawner, test_changes, static_time):
+async def test_get(
+    error,
+    snapshot,
+    resp_is,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    test_changes,
+    static_time,
+):
     """
     Test that a specific history change can be retrieved by its change_id.
 
@@ -63,7 +73,14 @@ async def test_get(error, snapshot, resp_is, mongo: Mongo, spawn_client: ClientS
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
 async def test_revert(
-        error, remove, snapshot, create_mock_history, mongo: Mongo, spawn_client: ClientSpawner, check_ref_right, resp_is
+    error,
+    remove,
+    snapshot,
+    create_mock_history,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    check_ref_right,
+    resp_is,
 ):
     """
     Test that a valid request results in a reversion and a ``204`` response.

@@ -214,7 +214,9 @@ class TestCreateAPIKey:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-    async def test_naming(self, mocker, snapshot, mongo: Mongo, spawn_client: ClientSpawner, static_time):
+    async def test_naming(
+        self, mocker, snapshot, mongo: Mongo, spawn_client: ClientSpawner, static_time
+    ):
         """
         Test that uniqueness is ensured on the ``id`` field.
 
@@ -314,7 +316,9 @@ class TestUpdateAPIKey:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_remove_api_key(error, mongo: Mongo, spawn_client: ClientSpawner, snapshot):
+async def test_remove_api_key(
+    error, mongo: Mongo, spawn_client: ClientSpawner, snapshot
+):
     client = await spawn_client(authenticated=True)
 
     if error is None:
@@ -339,7 +343,9 @@ async def test_remove_api_key(error, mongo: Mongo, spawn_client: ClientSpawner, 
 
 
 @pytest.mark.apitest
-async def test_remove_all_api_keys(fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner):
+async def test_remove_all_api_keys(
+    fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner
+):
     client = await spawn_client(authenticated=True)
 
     user = await fake2.users.create()
@@ -505,7 +511,7 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         "remember_is_none",
     ],
 )
-async def test_login(mongo: Mongo,spawn_client: ClientSpawner, body, status, snapshot):
+async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, snapshot):
     client = await spawn_client()
 
     await mongo.users.insert_one(

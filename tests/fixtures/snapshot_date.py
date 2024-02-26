@@ -28,7 +28,7 @@ def validate_time(timestamp: datetime.datetime | str | Any, _=None):
         try:
             timestamp_datetime = arrow.get(timestamp).datetime.replace(tzinfo=None)
             if arrow.utcnow().naive - timestamp_datetime < datetime.timedelta(
-                    seconds=30
+                seconds=30
             ):
                 return "approximately_now_isoformat"
             return "not_approximately_now_isoformat"

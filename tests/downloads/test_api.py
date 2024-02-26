@@ -7,7 +7,12 @@ from virtool.mongo.core import Mongo
 @pytest.mark.apitest
 @pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
-async def test_all(get, missing, mongo:Mongo, spawn_client:ClientSpawner,):
+async def test_all(
+    get,
+    missing,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+):
     client = await spawn_client(authenticated=True)
 
     isolates = [{"id": "baz", "source_type": "isolate", "source_name": "Baz"}]

@@ -200,7 +200,12 @@ async def test_edit(
 @pytest.mark.apitest
 @pytest.mark.parametrize("exists", [True, False])
 async def test_delete(
-    exists: bool, fake2: DataFaker, resp_is, mongo: Mongo, spawn_client: ClientSpawner, tmp_path
+    exists: bool,
+    fake2: DataFaker,
+    resp_is,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    tmp_path,
 ):
     client = await spawn_client(
         authenticated=True, permissions=[Permission.modify_subtraction]
@@ -451,7 +456,9 @@ async def test_download_subtraction_files(
 
 
 @pytest.mark.apitest
-async def test_create(fake2, pg, mongo: Mongo, spawn_client, mocker, snapshot, static_time):
+async def test_create(
+    fake2, pg, mongo: Mongo, spawn_client, mocker, snapshot, static_time
+):
     user = await fake2.users.create()
 
     async with AsyncSession(pg) as session:

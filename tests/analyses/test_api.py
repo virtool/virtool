@@ -537,7 +537,9 @@ class TestDownloadAnalysisResult:
 @pytest.mark.apitest
 @pytest.mark.parametrize("extension", ["csv", "xlsx", "bug"])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_download_analysis_document(extension, exists, mocker,mongo: Mongo, spawn_client:ClientSpawner):
+async def test_download_analysis_document(
+    extension, exists, mocker, mongo: Mongo, spawn_client: ClientSpawner
+):
     client = await spawn_client(authenticated=True)
 
     if exists:
@@ -591,7 +593,9 @@ async def test_download_analysis_document(extension, exists, mocker,mongo: Mongo
         "409_ready",
     ],
 )
-async def test_blast(error,mongo:Mongo, spawn_client: ClientSpawner, resp_is, snapshot, static_time):
+async def test_blast(
+    error, mongo: Mongo, spawn_client: ClientSpawner, resp_is, snapshot, static_time
+):
     """
     Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
     correctly.
@@ -778,7 +782,7 @@ async def test_finalize_large(
     patch_json = {"results": {"hits": [], "extra_data": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
-    assert len(json.dumps(patch_json)) > 1024**2
+    assert len(json.dumps(patch_json)) > 1024 ** 2
 
     client = await spawn_job_client(authorize=True)
 

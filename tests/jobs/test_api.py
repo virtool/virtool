@@ -18,10 +18,10 @@ _job_response_matcher = path_type(
 
 class TestFind:
     async def test_basic(
-            self,
-            fake2: DataFaker,
-            snapshot,
-            spawn_client: ClientSpawner,
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -41,7 +41,7 @@ class TestFind:
 
     @pytest.mark.parametrize("archived", [True, False])
     async def test_archived(
-            self, archived: bool, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self, archived: bool, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
     ):
         """
         Test that jobs are filtered correctly when archived is ``true`` or ``false``.
@@ -114,7 +114,7 @@ class TestFind:
         ],
     )
     async def test_state(
-            self, state: str, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self, state: str, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
     ):
         client = await spawn_client(authenticated=True)
 
@@ -245,7 +245,7 @@ class TestArchive:
         assert await resp.json() == snapshot(matcher=_job_response_matcher)
 
     async def test_already_archived(
-            self, fake2: DataFaker, spawn_client: ClientSpawner
+        self, fake2: DataFaker, spawn_client: ClientSpawner
     ):
         """Test that a 400 is returned when the job is already archived."""
         client = await spawn_client(authenticated=True)
@@ -307,11 +307,11 @@ class TestPing:
     "error", [None, "not_found", "invalid_archived", "none_archived"]
 )
 async def test_bulk_archive(
-        error,
-        fake,
-        resp_is,
-        snapshot,
-        spawn_client,
+    error,
+    fake,
+    resp_is,
+    snapshot,
+    spawn_client,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -425,7 +425,15 @@ async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test
 class TestPushStatus:
     @pytest.mark.parametrize("error", [None, 404, 409])
     async def test(
-            self, error, fake2, snapshot, resp_is, mongo: Mongo, spawn_client, static_time, test_job
+        self,
+        error,
+        fake2,
+        snapshot,
+        resp_is,
+        mongo: Mongo,
+        spawn_client,
+        static_time,
+        test_job,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -455,7 +463,7 @@ class TestPushStatus:
         assert await resp.json() == snapshot
 
     async def test_name_and_description(
-            self, fake2, snapshot, mongo: Mongo, spawn_client, static_time, test_job
+        self, fake2, snapshot, mongo: Mongo, spawn_client, static_time, test_job
     ):
         client = await spawn_client(authenticated=True)
 
@@ -478,7 +486,9 @@ class TestPushStatus:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-    async def test_bad_state(self, fake2, snapshot, mongo: Mongo, spawn_client, test_job):
+    async def test_bad_state(
+        self, fake2, snapshot, mongo: Mongo, spawn_client, test_job
+    ):
         """
         Check that an unallowed state is rejected with 422.
 
@@ -508,16 +518,16 @@ class TestPushStatus:
         "details", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"]
     )
     async def test_error(
-            self,
-            error_type,
-            traceback,
-            details,
-            fake2,
-            snapshot,
-            mongo: Mongo,
-            spawn_client,
-            static_time,
-            test_job,
+        self,
+        error_type,
+        traceback,
+        details,
+        fake2,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        static_time,
+        test_job,
     ):
         """
         Ensure valid and invalid error inputs are handled correctly.
@@ -549,7 +559,9 @@ class TestPushStatus:
 
         assert (resp.status, await resp.json()) == snapshot
 
-    async def test_missing_error(self, snapshot, mongo: Mongo, spawn_client, static_time, test_job):
+    async def test_missing_error(
+        self, snapshot, mongo: Mongo, spawn_client, static_time, test_job
+    ):
         """
         Ensure and error is returned when state is set to `error`, but no error field is
         included.
@@ -567,7 +579,9 @@ class TestPushStatus:
         assert (resp.status, await resp.json()) == snapshot
 
     @pytest.mark.parametrize("state", ["complete", "cancelled", "error", "terminated"])
-    async def test_finalized_job_error(self, state, resp_is, mongo: Mongo, spawn_client, test_job):
+    async def test_finalized_job_error(
+        self, state, resp_is, mongo: Mongo, spawn_client, test_job
+    ):
         """
         Verify that job state cannot be updated once the latest status indicates the job is finished
         or otherwise terminated

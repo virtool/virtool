@@ -8,7 +8,9 @@ from virtool.mongo.core import Mongo
 
 @pytest.mark.parametrize("dev", [True, False])
 @pytest.mark.parametrize("first_user", [True, False])
-async def test_get(dev, first_user, mongo: Mongo, spawn_client: ClientSpawner, snapshot):
+async def test_get(
+    dev, first_user, mongo: Mongo, spawn_client: ClientSpawner, snapshot
+):
     client = await spawn_client(authenticated=False)
     get_config_from_app(client.app).dev = dev
 

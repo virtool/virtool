@@ -32,13 +32,13 @@ OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 @pytest.mark.apitest
 class TestFind:
     async def test(
-            self,
-            fake2: DataFaker,
-            mocker,
-            snapshot,
-            mongo: Mongo,
-            spawn_client: ClientSpawner,
-            static_time,
+        self,
+        fake2: DataFaker,
+        mocker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -110,7 +110,12 @@ class TestFind:
         assert await resp.json() == snapshot
 
     async def test_ready(
-            self, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner, static_time
+        self,
+        fake2: DataFaker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -163,14 +168,14 @@ class TestFind:
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-        error,
-        fake2: DataFaker,
-        mocker,
-        resp_is,
-        snapshot,
-        mongo: Mongo,
-        spawn_client: ClientSpawner,
-        static_time,
+    error,
+    fake2: DataFaker,
+    mocker,
+    resp_is,
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -245,7 +250,7 @@ async def test_get(
 @pytest.mark.apitest
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_download_otus_json(
-        file_exists: bool, mocker, mongo: Mongo, spawn_job_client, tmp_path: Path
+    file_exists: bool, mocker, mongo: Mongo, spawn_job_client, tmp_path: Path
 ):
     with gzip.open(OTUS_JSON_PATH, "rt") as f:
         expected = json.load(f)
@@ -286,15 +291,15 @@ async def test_download_otus_json(
 @pytest.mark.apitest
 class TestCreate:
     async def test(
-            self,
-            check_ref_right,
-            fake2: DataFaker,
-            mocker,
-            resp_is,
-            snapshot,
-            mongo: Mongo,
-            spawn_client: ClientSpawner,
-            static_time,
+        self,
+        check_ref_right,
+        fake2: DataFaker,
+        mocker,
+        resp_is,
+        snapshot,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
     ):
         mocker.patch("virtool.utils.generate_key", return_value=("foo", "bar"))
 
@@ -351,20 +356,18 @@ class TestCreate:
     @pytest.mark.parametrize(
         "error", [None, "400_unbuilt", "400_unverified", "409_running"]
     )
-    async def test_checks(self, error, resp_is, mongo: Mongo, spawn_client: ClientSpawner, check_ref_right):
+    async def test_checks(
+        self, error, resp_is, mongo: Mongo, spawn_client: ClientSpawner, check_ref_right
+    ):
         client = await spawn_client(authenticated=True)
 
         await mongo.references.insert_one({"_id": "foo"})
 
         if error == "409_running":
-            await mongo.indexes.insert_one(
-                {"ready": False, "reference": {"id": "foo"}}
-            )
+            await mongo.indexes.insert_one({"ready": False, "reference": {"id": "foo"}})
 
         if error == "400_unverified":
-            await mongo.otus.insert_one(
-                {"verified": False, "reference": {"id": "foo"}}
-            )
+            await mongo.otus.insert_one({"verified": False, "reference": {"id": "foo"}})
 
         resp = await client.post("/refs/foo/indexes", {})
 
@@ -387,7 +390,15 @@ class TestCreate:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_find_history(error, fake2, static_time, snapshot, mongo: Mongo, spawn_client: ClientSpawner, resp_is):
+async def test_find_history(
+    error,
+    fake2,
+    static_time,
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    resp_is,
+):
     client = await spawn_client(authenticated=True)
 
     if not error:
@@ -515,15 +526,15 @@ async def test_delete_index(error, fake2, mongo: Mongo, spawn_job_client, static
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
-        error,
-        fake2,
-        pg: AsyncEngine,
-        resp_is,
-        snapshot,
-        mongo: Mongo,
-        spawn_job_client,
-        static_time,
-        tmp_path: Path,
+    error,
+    fake2,
+    pg: AsyncEngine,
+    resp_is,
+    snapshot,
+    mongo: Mongo,
+    spawn_job_client,
+    static_time,
+    tmp_path: Path,
 ):
     client = await spawn_job_client(authorize=True)
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
@@ -582,21 +593,21 @@ async def test_upload(
 
     async with AsyncSession(pg) as session:
         assert (
-                   await session.execute(select(SQLIndexFile).filter_by(id=1))
-               ).scalar() == snapshot
+            await session.execute(select(SQLIndexFile).filter_by(id=1))
+        ).scalar() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
-        error,
-        fake2: DataFaker,
-        pg: AsyncEngine,
-        snapshot,
-        mongo: Mongo,
-        spawn_job_client,
-        static_time,
-        test_otu,
+    error,
+    fake2: DataFaker,
+    pg: AsyncEngine,
+    snapshot,
+    mongo: Mongo,
+    spawn_job_client,
+    static_time,
+    test_otu,
 ):
     """
     Test that an index can be finalized using the Jobs API.

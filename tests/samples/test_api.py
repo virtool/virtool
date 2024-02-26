@@ -166,7 +166,9 @@ async def get_sample_data(
 
 
 @pytest.fixture
-async def find_samples_client(fake2,mongo: Mongo, spawn_client: ClientSpawner, static_time):
+async def find_samples_client(
+    fake2, mongo: Mongo, spawn_client: ClientSpawner, static_time
+):
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
@@ -324,7 +326,11 @@ class TestGet:
         assert await resp.json() == snapshot(name="resp")
 
     async def test_owner(
-        self, get_sample_data, snapshot: SnapshotAssertion, mongo: Mongo, spawn_client: ClientSpawner
+        self,
+        get_sample_data,
+        snapshot: SnapshotAssertion,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
     ):
         """Test that a sample can be retrieved by its owner."""
         client = await spawn_client(authenticated=True)
@@ -684,7 +690,9 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_name_exists(self, resp_is, mongo: Mongo, spawn_client: ClientSpawner):
+    async def test_name_exists(
+        self, resp_is, mongo: Mongo, spawn_client: ClientSpawner
+    ):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name``
         already exists.
