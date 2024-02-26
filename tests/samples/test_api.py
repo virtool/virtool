@@ -34,6 +34,7 @@ class MockJobInterface:
 async def get_sample_ready_false(fake2: DataFaker, mongo: Mongo, static_time):
     label = await fake2.labels.create()
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user, workflow="create_sample")
 
     await mongo.subtraction.insert_many(
         [
@@ -65,6 +66,7 @@ async def get_sample_ready_false(fake2: DataFaker, mongo: Mongo, static_time):
             "host": "",
             "is_legacy": False,
             "isolate": "",
+            "job": {"id": job.id},
             "labels": [label.id],
             "library_type": LibraryType.normal.value,
             "locale": "",
@@ -90,6 +92,7 @@ async def get_sample_data(
 ):
     label = await fake2.labels.create()
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user, workflow="create_sample")
 
     await asyncio.gather(
         mongo.subtraction.insert_many(
@@ -121,6 +124,7 @@ async def get_sample_data(
                 "host": "",
                 "is_legacy": False,
                 "isolate": "",
+                "job": {"id": job.id},
                 "labels": [label.id],
                 "library_type": LibraryType.normal.value,
                 "locale": "",
@@ -174,25 +178,28 @@ async def find_samples_client(fake2, spawn_client, static_time):
     label_2 = await fake2.labels.create()
     label_3 = await fake2.labels.create()
 
+    job = await fake2.jobs.create(user_1, workflow="create_sample")
+
     client = await spawn_client(authenticated=True)
 
     await client.mongo.samples.insert_many(
         [
             {
-                "user": {"id": user_1.id},
-                "nuvs": True,
-                "host": "",
-                "foobar": True,
-                "isolate": "Thing",
-                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
                 "_id": "beb1eb10",
-                "name": "16GVP042",
-                "pathoscope": True,
-                "library_type": "normal",
                 "all_read": True,
-                "ready": True,
+                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+                "foobar": True,
+                "host": "",
+                "isolate": "Thing",
+                "job": {"id": job.id},
                 "labels": [label_1.id, label_2.id],
+                "library_type": "normal",
+                "name": "16GVP042",
                 "notes": "",
+                "nuvs": True,
+                "pathoscope": True,
+                "ready": True,
+                "user": {"id": user_1.id},
                 "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
             },
             {
@@ -204,6 +211,7 @@ async def find_samples_client(fake2, spawn_client, static_time):
                 "library_type": "srna",
                 "created_at": arrow.get(static_time.datetime).datetime,
                 "_id": "72bb8b31",
+                "job": None,
                 "name": "16GVP043",
                 "pathoscope": False,
                 "all_read": True,
@@ -223,6 +231,7 @@ async def find_samples_client(fake2, spawn_client, static_time):
                 "isolate": "",
                 "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
                 "_id": "cb400e6d",
+                "job": None,
                 "name": "16SPP044",
                 "pathoscope": False,
                 "all_read": True,
