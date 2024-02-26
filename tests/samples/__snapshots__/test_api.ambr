@@ -234,7 +234,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -325,7 +337,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -473,7 +497,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -561,7 +597,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -679,7 +727,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -786,7 +846,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -893,7 +965,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -970,7 +1054,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1047,7 +1143,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1236,7 +1344,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1313,7 +1433,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1390,7 +1522,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1552,7 +1696,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1625,7 +1781,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1666,8 +1834,8 @@
       }),
     ]),
     'user': dict({
-      'handle': 'zclark',
-      'id': '7cf872dc',
+      'handle': 'monica23',
+      'id': '3cbb22cc',
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -1704,7 +1872,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1745,8 +1925,8 @@
       }),
     ]),
     'user': dict({
-      'handle': 'jacobsjames',
-      'id': '7cf872dc',
+      'handle': 'mathissusan',
+      'id': '3cbb22cc',
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -1777,7 +1957,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1819,7 +2011,7 @@
     ]),
     'user': dict({
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': '7cf872dc',
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -1904,7 +2096,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',

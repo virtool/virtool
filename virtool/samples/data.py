@@ -166,7 +166,11 @@ class SamplesData(DataLayerDomain):
 
         documents = await apply_transforms(
             [base_processor(document) for document in data],
-            [AttachLabelsTransform(self._pg), AttachUserTransform(self._mongo)],
+            [
+                AttachLabelsTransform(self._pg),
+                AttachUserTransform(self._mongo),
+                AttachJobTransform(self._mongo),
+            ],
         )
 
         return SampleSearchResult(
