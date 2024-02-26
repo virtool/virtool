@@ -1352,3 +1352,99 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     assert (
         get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
     ).read_bytes() == await resp.content.read()
+
+
+class TestChangeSampleRights:
+    async def test_update_group_id(
+        self,
+        fake2,
+        get_sample_data,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        group = await fake2.groups.create()
+
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch("/samples/test/rights", data={"group": group.id})
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_set_none_group_id(
+        self,
+        get_sample_data,
+        fake2,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        mongo.samples.find_one_and_update(
+            {"_id": "test"}, {"$set": {"group": "fake_group"}}
+        )
+
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights",
+            data={
+                "group": "none",
+            },
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_update_group_rights(
+        self,
+        get_sample_data,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights", data={"group_read": False, "group_write": False}
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_update_all_user_rights(
+        self,
+        get_sample_data,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights", data={"all_read": False, "all_write": False}
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_update_all_rights(
+        self,
+        get_sample_data,
+        fake2,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        group = await fake2.groups.create()
+
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights",
+            data={
+                "group": group.id,
+                "group_read": False,
+                "group_write": False,
+                "all_read": False,
+                "all_write": False,
+            },
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
