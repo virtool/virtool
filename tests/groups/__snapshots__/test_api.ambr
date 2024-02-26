@@ -197,16 +197,16 @@
     }),
     'users': list([
       dict({
+        'handle': 'garciaregina',
+        'id': 'da42dca3',
+      }),
+      dict({
         'handle': 'jacobsjames',
         'id': '7cf872dc',
       }),
       dict({
         'handle': 'modonnell',
         'id': '3cbb22cc',
-      }),
-      dict({
-        'handle': 'garciaregina',
-        'id': 'da42dca3',
       }),
     ]),
   })
