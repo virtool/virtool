@@ -52,16 +52,14 @@ class _InternalEventsTarget:
     q = asyncio.Queue(maxsize=1000)
 
     def emit(self, event: Event):
-        retries = 3
-        for attempt in range(retries-1):
+
+        for _ in range(3):
             try:
                 self.q.put_nowait(event)
                 return
             except asyncio.QueueFull:
-                sleep(5)
-                continue
+                asyncio.sleep(5)
         logger.error("Event queue full after multiple retries. Dropping event.")
-
 
     async def get(self) -> Event:
         """
