@@ -27,6 +27,7 @@ from virtool.uploads.models import SQLUpload
 async def get_sample_ready_false(static_time, fake2, mongo):
     label = await fake2.labels.create()
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user, workflow="create_sample")
 
     await mongo.subtraction.insert_many(
         [
@@ -58,6 +59,7 @@ async def get_sample_ready_false(static_time, fake2, mongo):
             "host": "",
             "is_legacy": False,
             "isolate": "",
+            "job": {"id": job.id},
             "labels": [label.id],
             "library_type": LibraryType.normal.value,
             "locale": "",
