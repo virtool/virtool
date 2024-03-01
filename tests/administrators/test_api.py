@@ -236,8 +236,11 @@ class TestUpdateUser:
             name="resp_3", matcher=_last_password_change_matcher
         )
 
+    @pytest.mark.parametrize(
+        "password", ["a_whole_new_password","fail"]
+    )
     async def test_password(
-        self, mongo: Mongo, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self, mongo: Mongo, fake2: DataFaker, snapshot, spawn_client: ClientSpawner,password
     ):
         """
         Test that a password change leads to a successful credential validation with the
@@ -251,9 +254,13 @@ class TestUpdateUser:
         user = await fake2.users.create()
 
         resp = await client.patch(
-            f"/admin/users/{user.id}", {"password": "a_whole_new_password"}
+            f"/admin/users/{user.id}", {"password": password}
         )
         body = await resp.json()
+
+        if resp.status == 400:
+            assert body == snapshot()
+            return
 
         assert resp.status == 200
         assert body == snapshot(matcher=_last_password_change_matcher)
