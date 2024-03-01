@@ -171,7 +171,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': 'not_approximately_now_datetime',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': <JobState.PREPARING: 'preparing'>,
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',

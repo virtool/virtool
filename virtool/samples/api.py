@@ -325,7 +325,7 @@ class RightsView(PydanticView):
         ):
             raise APIInsufficientRights("Must be administrator or sample owner")
 
-        group = data["group"]
+        group = data.get("group")
 
         if group is not None and group != "none":
             async with AsyncSession(pg) as session:

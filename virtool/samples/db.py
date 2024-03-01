@@ -41,6 +41,7 @@ LIST_PROJECTION = [
     "created_at",
     "host",
     "isolate",
+    "job",
     "library_type",
     "pathoscope",
     "name",
