@@ -239,11 +239,9 @@ class SessionData(DataLayerDomain):
         stored_reset_code: str = get_safely(session, "reset", "code")
 
         if not reset_code or session.get("authentication"):
-            print("session not found")
             raise ResourceNotFoundError("Session not found")
 
         if stored_reset_code != reset_code:
-            print("invalid code")
             await self.delete(session_id)
             raise ResourceNotFoundError("Invalid reset code")
 
