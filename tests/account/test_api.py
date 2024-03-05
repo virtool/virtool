@@ -27,12 +27,12 @@ async def test_get(snapshot, spawn_client, static_time):
     "body,status",
     [
         (
-                {
-                    "email": "virtool.devs@gmail.com",
-                    "password": "foo_bar_1",
-                    "old_password": "bob_is_testing",
-                },
-                200,
+            {
+                "email": "virtool.devs@gmail.com",
+                "password": "foo_bar_1",
+                "old_password": "bob_is_testing",
+            },
+            200,
         ),
         ({"email": "virtool.devs@gmail.com"}, 200),
         ({"email": "invalid_email@"}, 400),
@@ -58,11 +58,11 @@ async def test_get(snapshot, spawn_client, static_time):
     ],
 )
 async def test_update(
-        body: dict,
-        status: int,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
-        static_time,
+    body: dict,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -101,18 +101,18 @@ async def test_get_settings(spawn_client):
     "data,status",
     [
         (
-                {"show_ids": False},
-                200,
+            {"show_ids": False},
+            200,
         ),
         ({"foo_bar": True, "show_ids": "foo"}, 400),
         (
-                {
-                    "show_ids": None,
-                    "show_versions": None,
-                    "skip_quick_analyze_dialog": None,
-                    "quick_analyze_workflow": None,
-                },
-                400,
+            {
+                "show_ids": None,
+                "show_versions": None,
+                "skip_quick_analyze_dialog": None,
+                "quick_analyze_workflow": None,
+            },
+            400,
         ),
     ],
     ids=["valid_input", "invalid_input", "null_values"],
@@ -175,15 +175,15 @@ class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
     async def test(
-            self,
-            has_perm,
-            req_perm,
-            data_layer: DataLayer,
-            fake2: DataFaker,
-            mocker,
-            snapshot,
-            spawn_client: ClientSpawner,
-            static_time,
+        self,
+        has_perm,
+        req_perm,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        mocker,
+        snapshot,
+        spawn_client: ClientSpawner,
+        static_time,
     ):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
@@ -537,19 +537,31 @@ async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, sn
         ("account/reset", False),
     ],
 )
-async def test_login_reset(spawn_client, snapshot, fake2, request_path, correct_code, data_layer: DataLayer) -> None:
+async def test_login_reset(
+    spawn_client, snapshot, fake2, request_path, correct_code, data_layer: DataLayer
+) -> None:
     client = await spawn_client(authenticated=False)
 
-    data = {"username": "foobar", "handle": "foobar", "password": "hello_world", "force_reset": True}
+    data = {
+        "username": "foobar",
+        "handle": "foobar",
+        "password": "hello_world",
+        "force_reset": True,
+    }
     await data_layer.users.create("foobar", "hello_world", True)
     resp = await client.post("/account/login", data)
     reset_json_data = await resp.json()
 
-    assert 'session_id=session' in resp.headers.get('Set-Cookie')
-    assert reset_json_data.get('reset_code') is not None
-    assert reset_json_data.get('reset') is True
+    assert "session_id=session" in resp.headers.get("Set-Cookie")
+    assert reset_json_data.get("reset_code") is not None
+    assert reset_json_data.get("reset") is True
 
-    reset_data = {"password": "invalid", "reset_code": reset_json_data.get('reset_code') if correct_code else "wrong_code"}
+    reset_data = {
+        "password": "invalid",
+        "reset_code": reset_json_data.get("reset_code")
+        if correct_code
+        else "wrong_code",
+    }
 
     resp = await client.post(request_path, reset_data)
     assert await resp.json() == snapshot
