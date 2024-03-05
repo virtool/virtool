@@ -9,7 +9,8 @@ from syrupy.matchers import path_type
 from virtool.migration.pg import (
     check_revision_applied,
     fetch_last_applied_revision,
-    list_applied_revisions, SQLRevision,
+    list_applied_revisions,
+    SQLRevision,
 )
 
 
@@ -59,7 +60,13 @@ async def test_list_applied_revisions(applied_revisions, pg: AsyncEngine, snapsh
     revisions = await list_applied_revisions(pg)
 
     assert [asdict(revision) for revision in revisions] == snapshot(
-        matcher=path_type({".*applied_at": (datetime.datetime,), ".*created_at": (datetime.datetime,)}, regex=True)
+        matcher=path_type(
+            {
+                ".*applied_at": (datetime.datetime,),
+                ".*created_at": (datetime.datetime,),
+            },
+            regex=True,
+        )
     )
 
 

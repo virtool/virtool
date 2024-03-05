@@ -109,7 +109,7 @@ class GroupsData:
             if group:
                 users = [
                     UserNested(**base_processor(user))
-                    async for user in self._mongo.users.find({"groups": group_id})
+                    async for user in self._mongo.users.find({"groups": group_id}).sort("handle", 1)
                 ]
 
                 return Group(

@@ -27,6 +27,7 @@ from virtool.uploads.models import SQLUpload
 async def get_sample_ready_false(static_time, fake2, mongo):
     label = await fake2.labels.create()
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user, workflow="create_sample")
 
     await mongo.subtraction.insert_many(
         [
@@ -58,6 +59,7 @@ async def get_sample_ready_false(static_time, fake2, mongo):
             "host": "",
             "is_legacy": False,
             "isolate": "",
+            "job": {"id": job.id},
             "labels": [label.id],
             "library_type": LibraryType.normal.value,
             "locale": "",
@@ -88,6 +90,7 @@ class TestCreate:
         pg: AsyncEngine,
         fake2: DataFaker,
         snapshot_recent,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
         redis: Redis,
     ):
@@ -118,7 +121,7 @@ class TestCreate:
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
         await asyncio.gather(
-            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
         data = {
@@ -134,7 +137,7 @@ class TestCreate:
         await data_layer.samples.create(CreateSampleRequest(**data), client.user.id, 0)
 
         sample, upload = await asyncio.gather(
-            client.mongo.samples.find_one(),
+            mongo.samples.find_one(),
             get_row_by_id(pg, SQLUpload, 1),
         )
 

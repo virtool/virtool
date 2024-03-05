@@ -168,6 +168,10 @@ class AdminUserView(PydanticView):
                 "Insufficient privileges", error_id="insufficient_privileges"
             )
 
+        if data.password is not None:
+            if error := await check_password_length(self.request, password=data.password):
+                raise APIBadRequest(error)
+
         try:
             user = await get_data_from_req(self.request).users.update(user_id, data)
         except ResourceNotFoundError:

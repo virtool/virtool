@@ -266,6 +266,40 @@
     'primary_group': None,
   })
 # ---
+# name: TestUpdateUser.test_password[a_whole_new_password]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'leeashley',
+    'id': 'fb085f7f',
+    'last_password_change': str,
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+  })
+# ---
+# name: TestUpdateUser.test_password[fail]
+  dict({
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
+  })
+# ---
 # name: TestUpdateUser.test_primary_group[False]
   dict({
     'id': 'bad_request',

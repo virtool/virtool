@@ -156,7 +156,7 @@ async def test_create(
     assert resp_json == snapshot
     assert resp.headers["Location"] == snapshot(name="location")
 
-    document = await client.mongo.users.find_one(resp_json["id"])
+    document = await mongo.users.find_one(resp_json["id"])
     password = document.pop("password")
 
     assert document == snapshot(name="db")

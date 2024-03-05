@@ -1,4 +1,304 @@
 # serializer version: 1
+# name: TestChangeSampleRights.test_set_none_group_id[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_set_none_group_id[resp]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_rights[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': False,
+    'all_write': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
+    'format': 'fastq',
+    'group': 1,
+    'group_read': False,
+    'group_write': False,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_rights[resp]
+  dict({
+    'all_read': False,
+    'all_write': False,
+    'group': 1,
+    'group_read': False,
+    'group_write': False,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_user_rights[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': False,
+    'all_write': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_user_rights[resp]
+  dict({
+    'all_read': False,
+    'all_write': False,
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_id[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
+    'format': 'fastq',
+    'group': 1,
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_id[resp]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'group': 1,
+    'group_read': True,
+    'group_write': True,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_rights[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': False,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_rights[resp]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'group': 'none',
+    'group_read': False,
+    'group_write': False,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: TestCreate.test_name_exists[/samples][json]
   dict({
     'id': 'bad_request',
@@ -234,7 +534,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -325,7 +637,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -473,7 +797,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -561,7 +897,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -679,7 +1027,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -786,7 +1146,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -893,7 +1265,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -970,7 +1354,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1047,7 +1443,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1236,7 +1644,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1313,7 +1733,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1390,7 +1822,19 @@
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#ae686a',
@@ -1552,7 +1996,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1625,7 +2081,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1666,8 +2134,8 @@
       }),
     ]),
     'user': dict({
-      'handle': 'zclark',
-      'id': '7cf872dc',
+      'handle': 'monica23',
+      'id': '3cbb22cc',
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -1704,7 +2172,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1745,8 +2225,8 @@
       }),
     ]),
     'user': dict({
-      'handle': 'jacobsjames',
-      'id': '7cf872dc',
+      'handle': 'mathissusan',
+      'id': '3cbb22cc',
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -1777,7 +2257,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',
@@ -1819,7 +2311,7 @@
     ]),
     'user': dict({
       'handle': 'bob',
-      'id': 'fb085f7f',
+      'id': '7cf872dc',
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -1904,7 +2396,19 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
     'labels': list([
       dict({
         'color': '#629f70',

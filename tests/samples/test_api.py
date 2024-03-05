@@ -34,6 +34,7 @@ class MockJobInterface:
 async def get_sample_ready_false(fake2: DataFaker, mongo: Mongo, static_time):
     label = await fake2.labels.create()
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user, workflow="create_sample")
 
     await mongo.subtraction.insert_many(
         [
@@ -65,6 +66,7 @@ async def get_sample_ready_false(fake2: DataFaker, mongo: Mongo, static_time):
             "host": "",
             "is_legacy": False,
             "isolate": "",
+            "job": {"id": job.id},
             "labels": [label.id],
             "library_type": LibraryType.normal.value,
             "locale": "",
@@ -90,6 +92,7 @@ async def get_sample_data(
 ):
     label = await fake2.labels.create()
     user = await fake2.users.create()
+    job = await fake2.jobs.create(user, workflow="create_sample")
 
     await asyncio.gather(
         mongo.subtraction.insert_many(
@@ -121,6 +124,7 @@ async def get_sample_data(
                 "host": "",
                 "is_legacy": False,
                 "isolate": "",
+                "job": {"id": job.id},
                 "labels": [label.id],
                 "library_type": LibraryType.normal.value,
                 "locale": "",
@@ -166,7 +170,9 @@ async def get_sample_data(
 
 
 @pytest.fixture
-async def find_samples_client(fake2, spawn_client, static_time):
+async def find_samples_client(
+    fake2, mongo: Mongo, spawn_client: ClientSpawner, static_time
+):
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
@@ -174,25 +180,28 @@ async def find_samples_client(fake2, spawn_client, static_time):
     label_2 = await fake2.labels.create()
     label_3 = await fake2.labels.create()
 
+    job = await fake2.jobs.create(user_1, workflow="create_sample")
+
     client = await spawn_client(authenticated=True)
 
-    await client.mongo.samples.insert_many(
+    await mongo.samples.insert_many(
         [
             {
-                "user": {"id": user_1.id},
-                "nuvs": True,
-                "host": "",
-                "foobar": True,
-                "isolate": "Thing",
-                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
                 "_id": "beb1eb10",
-                "name": "16GVP042",
-                "pathoscope": True,
-                "library_type": "normal",
                 "all_read": True,
-                "ready": True,
+                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+                "foobar": True,
+                "host": "",
+                "isolate": "Thing",
+                "job": {"id": job.id},
                 "labels": [label_1.id, label_2.id],
+                "library_type": "normal",
+                "name": "16GVP042",
                 "notes": "",
+                "nuvs": True,
+                "pathoscope": True,
+                "ready": True,
+                "user": {"id": user_1.id},
                 "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
             },
             {
@@ -204,6 +213,7 @@ async def find_samples_client(fake2, spawn_client, static_time):
                 "library_type": "srna",
                 "created_at": arrow.get(static_time.datetime).datetime,
                 "_id": "72bb8b31",
+                "job": None,
                 "name": "16GVP043",
                 "pathoscope": False,
                 "all_read": True,
@@ -223,6 +233,7 @@ async def find_samples_client(fake2, spawn_client, static_time):
                 "isolate": "",
                 "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
                 "_id": "cb400e6d",
+                "job": None,
                 "name": "16SPP044",
                 "pathoscope": False,
                 "all_read": True,
@@ -324,12 +335,16 @@ class TestGet:
         assert await resp.json() == snapshot(name="resp")
 
     async def test_owner(
-        self, get_sample_data, snapshot: SnapshotAssertion, spawn_client: ClientSpawner
+        self,
+        get_sample_data,
+        snapshot: SnapshotAssertion,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
     ):
         """Test that a sample can be retrieved by its owner."""
         client = await spawn_client(authenticated=True)
 
-        await client.mongo.samples.update_one(
+        await mongo.samples.update_one(
             {"_id": "test"},
             {
                 "$set": {
@@ -351,6 +366,7 @@ class TestGet:
         fake2: DataFaker,
         get_sample_data,
         snapshot: SnapshotAssertion,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
     ):
         """
@@ -361,7 +377,7 @@ class TestGet:
 
         user = await fake2.users.create()
 
-        await client.mongo.samples.update_one(
+        await mongo.samples.update_one(
             {"_id": "test"},
             {
                 "$set": {
@@ -384,6 +400,7 @@ class TestGet:
         is_member: bool,
         fake2: DataFaker,
         get_sample_data,
+        mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -401,7 +418,7 @@ class TestGet:
                 client.user.id, UpdateUserRequest(groups=[group.id])
             )
 
-        await client.mongo.samples.update_one(
+        await mongo.samples.update_one(
             {"_id": "test"},
             {
                 "$set": {
@@ -431,6 +448,7 @@ class TestCreate:
         data_layer: DataLayer,
         fake2: DataFaker,
         snapshot_recent,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(
@@ -460,7 +478,7 @@ class TestCreate:
         label = await fake2.labels.create()
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
-        await client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"})
+        await mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"})
 
         data = {
             "files": [upload.id],
@@ -483,6 +501,7 @@ class TestCreate:
         path: str,
         fake2: DataFaker,
         snapshot,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -493,7 +512,7 @@ class TestCreate:
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
         await asyncio.gather(
-            client.mongo.samples.insert_one(
+            mongo.samples.insert_one(
                 {
                     "_id": "foobar",
                     "name": "Foobar",
@@ -504,7 +523,7 @@ class TestCreate:
                     "ready": True,
                 }
             ),
-            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
         resp = await client.post(
@@ -521,6 +540,7 @@ class TestCreate:
         error: str | None,
         fake2: DataFaker,
         resp_is,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
     ):
         """
@@ -541,7 +561,7 @@ class TestCreate:
             get_data_from_app(client.app).settings.update(
                 UpdateSettingsRequest(sample_group="force_choice")
             ),
-            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
         data = {
@@ -559,7 +579,7 @@ class TestCreate:
             await resp_is.bad_request(resp, "Group value required for sample creation")
 
     async def test_group_dne(
-        self, fake2: DataFaker, resp_is, spawn_client: ClientSpawner
+        self, fake2: DataFaker, resp_is, mongo: Mongo, spawn_client: ClientSpawner
     ):
         client = await spawn_client(
             authenticated=True, permissions=[Permission.create_sample]
@@ -577,7 +597,7 @@ class TestCreate:
                     sample_group="force_choice",
                 )
             ),
-            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
         resp = await client.post(
@@ -613,6 +633,7 @@ class TestCreate:
         self,
         one_exists: bool,
         fake2: DataFaker,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
         resp_is,
     ):
@@ -625,7 +646,7 @@ class TestCreate:
             authenticated=True, permissions=[Permission.create_sample]
         )
 
-        await client.mongo.subtraction.insert_one(
+        await mongo.subtraction.insert_one(
             {
                 "_id": "apple",
             }
@@ -678,14 +699,16 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_name_exists(self, resp_is, spawn_client: ClientSpawner):
+    async def test_name_exists(
+        self, resp_is, mongo: Mongo, spawn_client: ClientSpawner
+    ):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name``
         already exists.
         """
         client = await spawn_client(administrator=True, authenticated=True)
 
-        await client.mongo.samples.insert_many(
+        await mongo.samples.insert_many(
             [
                 {
                     "_id": "foo",
@@ -719,6 +742,7 @@ class TestEdit:
     async def test_label_exists(
         self,
         snapshot,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
     ):
         """
@@ -728,7 +752,7 @@ class TestEdit:
         """
         client = await spawn_client(administrator=True, authenticated=True)
 
-        await client.mongo.samples.insert_one(
+        await mongo.samples.insert_one(
             {
                 "_id": "foo",
                 "name": "Foo",
@@ -747,7 +771,7 @@ class TestEdit:
         assert await resp.json() == snapshot(name="json")
 
     async def test_subtraction_exists(
-        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
     ):
         """
         Test that a ``bad_request`` is returned if the subtraction passed in
@@ -759,7 +783,7 @@ class TestEdit:
         user = await fake2.users.create()
 
         await asyncio.gather(
-            client.mongo.samples.insert_one(
+            mongo.samples.insert_one(
                 {
                     "_id": "test",
                     "name": "Test",
@@ -770,7 +794,7 @@ class TestEdit:
                     "user": {"id": user.id},
                 }
             ),
-            client.mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
+            mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
         )
 
         resp = await client.patch("/samples/test", {"subtractions": ["foo", "bar"]})
@@ -879,6 +903,7 @@ class TestDelete:
 async def test_find_analyses(
     fake2: DataFaker,
     snapshot: SnapshotAssertion,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -889,7 +914,7 @@ async def test_find_analyses(
 
     job = await fake2.jobs.create(user=user_1)
 
-    await client.mongo.samples.insert_one(
+    await mongo.samples.insert_one(
         {
             "_id": "test",
             "created_at": static_time.datetime,
@@ -904,17 +929,17 @@ async def test_find_analyses(
     )
 
     await asyncio.gather(
-        client.mongo.subtraction.insert_one(
+        mongo.subtraction.insert_one(
             {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
         ),
-        client.mongo.references.insert_many(
+        mongo.references.insert_many(
             [
                 {"_id": "foo", "data_type": "genome", "name": "Foo"},
                 {"_id": "baz", "data_type": "genome", "name": "Baz"},
             ],
             session=None,
         ),
-        client.mongo.analyses.insert_many(
+        mongo.analyses.insert_many(
             [
                 {
                     "_id": "test_1",
@@ -1023,7 +1048,7 @@ async def test_analyze(
         )
 
     if error != "404":
-        await client.mongo.samples.insert_one(
+        await mongo.samples.insert_one(
             {
                 "_id": "test",
                 "name": "Test",
@@ -1064,7 +1089,7 @@ async def test_analyze(
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_cache_job_remove(
-    exists: bool, ready: bool, resp_is, spawn_job_client, tmp_path: Path
+    exists: bool, ready: bool, resp_is, mongo: Mongo, spawn_job_client, tmp_path: Path
 ):
     client = await spawn_job_client(authorize=True)
 
@@ -1075,7 +1100,7 @@ async def test_cache_job_remove(
     path.joinpath("reads_1.fq.gz").write_text("Cache file")
 
     if exists:
-        await client.mongo.caches.insert_one(
+        await mongo.caches.insert_one(
             {"_id": "foo", "key": "abc123", "sample": {"id": "bar"}, "ready": ready}
         )
 
@@ -1087,7 +1112,7 @@ async def test_cache_job_remove(
         await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
     else:
         await resp_is.no_content(resp)
-        assert await client.mongo.caches.find_one("foo") is None
+        assert await mongo.caches.find_one("foo") is None
         assert not (tmp_path / "caches" / "foo").is_dir()
 
 
@@ -1097,6 +1122,7 @@ async def test_upload_artifact(
     error: int | None,
     resp_is,
     snapshot,
+    mongo: Mongo,
     spawn_job_client,
     test_files_path: Path,
     tmp_path,
@@ -1113,7 +1139,7 @@ async def test_upload_artifact(
     get_config_from_app(client.app).data_path = tmp_path
     sample_file_path = tmp_path / "samples" / "test"
 
-    await client.mongo.samples.insert_one(
+    await mongo.samples.insert_one(
         {
             "_id": "test",
             "ready": True,
@@ -1231,7 +1257,7 @@ class TestUploadReads:
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get_cache(error, snapshot, spawn_job_client, resp_is):
+async def test_get_cache(error, snapshot, mongo: Mongo, spawn_job_client, resp_is):
     client = await spawn_job_client(authorize=True)
 
     cache = {
@@ -1241,7 +1267,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is):
         "sample": {"id": "foo"},
     }
 
-    await client.mongo.caches.insert_one(cache)
+    await mongo.caches.insert_one(cache)
 
     resp = await client.get("/samples/foo/caches/abc123")
 
@@ -1257,7 +1283,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is):
 @pytest.mark.parametrize("suffix", ["1", "2"])
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
 async def test_download_reads(
-    suffix, error, tmp_path, spawn_client, spawn_job_client, pg
+    suffix, error, tmp_path, mongo: Mongo, spawn_client, spawn_job_client, pg
 ):
     client = await spawn_client(authenticated=True)
     job_client = await spawn_job_client(authorize=True)
@@ -1273,7 +1299,7 @@ async def test_download_reads(
         path.joinpath(file_name).write_text("test")
 
     if error != "404_sample":
-        await client.mongo.samples.insert_one(
+        await mongo.samples.insert_one(
             {
                 "_id": "foo",
                 "ready": True,
@@ -1310,7 +1336,7 @@ async def test_download_reads(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
-async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
+async def test_download_artifact(error, tmp_path, mongo: Mongo, spawn_job_client, pg):
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
@@ -1321,7 +1347,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
         path.joinpath("fastqc.txt").write_text("test")
 
     if error != "404_sample":
-        await client.mongo.samples.insert_one(
+        await mongo.samples.insert_one(
             {
                 "_id": "foo",
                 "ready": True,
@@ -1352,3 +1378,99 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     assert (
         get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
     ).read_bytes() == await resp.content.read()
+
+
+class TestChangeSampleRights:
+    async def test_update_group_id(
+        self,
+        fake2,
+        get_sample_data,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        group = await fake2.groups.create()
+
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch("/samples/test/rights", data={"group": group.id})
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_set_none_group_id(
+        self,
+        get_sample_data,
+        fake2,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        mongo.samples.find_one_and_update(
+            {"_id": "test"}, {"$set": {"group": "fake_group"}}
+        )
+
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights",
+            data={
+                "group": "none",
+            },
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_update_group_rights(
+        self,
+        get_sample_data,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights", data={"group_read": False, "group_write": False}
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_update_all_user_rights(
+        self,
+        get_sample_data,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights", data={"all_read": False, "all_write": False}
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
+
+    async def test_update_all_rights(
+        self,
+        get_sample_data,
+        fake2,
+        mongo,
+        snapshot,
+        spawn_client,
+    ):
+        group = await fake2.groups.create()
+
+        client = await spawn_client(administrator=True, authenticated=True)
+        resp = await client.patch(
+            "/samples/test/rights",
+            data={
+                "group": group.id,
+                "group_read": False,
+                "group_write": False,
+                "all_read": False,
+                "all_write": False,
+            },
+        )
+
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.samples.find_one("test") == snapshot(name="mongo")

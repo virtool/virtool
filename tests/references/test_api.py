@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from unittest.mock import call
+from unittest.mock import call, ANY
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -15,6 +15,7 @@ from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import SQLTask
@@ -27,6 +28,7 @@ async def test_find(
     fake2: DataFaker,
     pg: AsyncEngine,
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -36,7 +38,7 @@ async def test_find(
     user = await fake2.users.create()
     await data_layer.users.update(client.user.id, UpdateUserRequest(groups=[group.id]))
 
-    await client.mongo.references.insert_many(
+    await mongo.references.insert_many(
         [
             {
                 "_id": "foo",
@@ -134,14 +136,14 @@ async def test_find(
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [404, None])
-async def test_get(error, spawn_client, pg, snapshot, fake2, static_time):
+async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authenticated=True, administrator=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
     if error is None:
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "bar",
                 "created_at": virtool.utils.timestamp(),
@@ -270,6 +272,7 @@ class TestCreate:
         self,
         fake2: DataFaker,
         snapshot,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
         tmpdir,
@@ -281,7 +284,7 @@ class TestCreate:
         user_1 = await fake2.users.create()
         user_2 = await fake2.users.create()
 
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": virtool.utils.timestamp(),
@@ -356,6 +359,7 @@ async def test_edit(
     mocker,
     resp_is,
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -366,7 +370,7 @@ async def test_edit(
     user_3 = await fake2.users.create()
 
     if error != "404":
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": virtool.utils.timestamp(),
@@ -428,7 +432,7 @@ async def test_edit(
     match error:
         case None:
             assert await resp.json() == snapshot(name="resp")
-            assert await client.mongo.references.find_one() == snapshot(name="db")
+            assert await mongo.references.find_one() == snapshot(name="db")
 
         case "400_invalid_input":
             assert resp.status == 400
@@ -452,13 +456,15 @@ async def test_edit(
 
 
 @pytest.mark.apitest
-async def test_delete(fake2: DataFaker, spawn_client: ClientSpawner, static_time):
+async def test_delete(
+    fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, static_time
+):
     client = await spawn_client(authenticated=True)
 
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
-    await client.mongo.references.insert_one(
+    await mongo.references.insert_one(
         {
             "_id": "foo",
             "created_at": virtool.utils.timestamp(),
@@ -494,14 +500,16 @@ async def test_delete(fake2: DataFaker, spawn_client: ClientSpawner, static_time
 
     resp = await client.delete("/refs/foo")
 
-    assert await client.mongo.references.count_documents({}) == 0
+    assert await mongo.references.count_documents({}) == 0
     assert await resp.text() == ""
     assert resp.status == 204
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
-async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
+async def test_get_release(
+    error, mocker, mongo: Mongo, spawn_client, resp_is, snapshot
+):
     client = await spawn_client(authenticated=True)
 
     if error != "404":
@@ -527,7 +535,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
         if error == "400":
             del document["remotes_from"]
 
-        await client.mongo.references.insert_one(document)
+        await mongo.references.insert_one(document)
 
     m_fetch_and_update_release = mocker.patch(
         "virtool.references.db.fetch_and_update_release",
@@ -572,7 +580,9 @@ async def test_get_release(error, mocker, spawn_client, resp_is, snapshot):
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
-async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, snapshot):
+async def test_list_updates(
+    empty, mocker, mongo: Mongo, spawn_client, id_exists, resp_is, snapshot
+):
     client = await spawn_client(authenticated=True)
 
     m_get_one_field = mocker.patch(
@@ -604,7 +614,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, sna
 
     resp = await client.get("/refs/foo/updates")
 
-    id_exists.assert_called_with(client.mongo.references, "foo")
+    id_exists.assert_called_with(ANY, "foo")
 
     if not id_exists:
         await resp_is.not_found(resp)
@@ -613,7 +623,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is, sna
     assert resp.status == 200
     assert await resp.json() == snapshot
 
-    m_get_one_field.assert_called_with(client.mongo.references, "updates", "foo")
+    m_get_one_field.assert_called_with(ANY, "updates", "foo")
 
 
 @pytest.mark.apitest
@@ -624,6 +634,7 @@ async def test_update(
     mocker,
     resp_is,
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -651,10 +662,11 @@ async def test_update(
                 "retrieved_at": "2018-04-14T19:52:17.465000Z",
             }
 
-        await client.mongo.references.insert_one(reference)
+        await mongo.references.insert_one(reference)
 
         m_enqueue = mocker.patch.object(
-        get_data_from_app(client.app).tasks._tasks_client, "enqueue")
+            get_data_from_app(client.app).tasks._tasks_client, "enqueue"
+        )
 
     resp = await client.post("/refs/foo/updates", {})
 
@@ -669,8 +681,8 @@ async def test_update(
         assert await resp.json() == snapshot(
             name="json", matcher=path_type({".*etag": (str,)}, regex=True)
         )
-        assert m_enqueue.call_args == call('update_remote_reference', 1)
-        assert await get_one_field(client.mongo.references, "task", "foo") == {"id": 1}
+        assert m_enqueue.call_args == call("update_remote_reference", 1)
+        assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
 
 
 @pytest.mark.apitest
@@ -683,6 +695,7 @@ class TestCreateOTU:
         error: str | None,
         resp_is,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         static_time,
     ):
@@ -695,7 +708,7 @@ class TestCreateOTU:
         )
 
         if error != "404":
-            await client.mongo.references.insert_one(
+            await mongo.references.insert_one(
                 {
                     "_id": "foo",
                     "name": "Foo",
@@ -731,7 +744,7 @@ class TestCreateOTU:
                 )
                 assert await resp.json() == snapshot(name="json")
                 assert await asyncio.gather(
-                    client.mongo.otus.find_one(), client.mongo.history.find_one()
+                    mongo.otus.find_one(), mongo.history.find_one()
                 ) == snapshot(name="db")
             case "403":
                 await resp_is.insufficient_rights(resp)
@@ -754,6 +767,7 @@ class TestCreateOTU:
         message: str | None,
         mocker,
         resp_is,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -770,7 +784,7 @@ class TestCreateOTU:
         client = await spawn_client(authenticated=True)
 
         if error != "404":
-            await client.mongo.references.insert_one(
+            await mongo.references.insert_one(
                 {
                     "_id": "foo",
                     "name": "Foo",
@@ -797,7 +811,7 @@ class TestCreateOTU:
             assert resp.status == 201
             # Abbreviation defaults to empty string for OTU creation.
             m_check_name_and_abbreviation.assert_called_with(
-                client.mongo, "foo", "Tobacco mosaic virus", "TMV"
+                ANY, "foo", "Tobacco mosaic virus", "TMV"
             )
         elif error == "404":
             await resp_is.not_found(resp)
@@ -811,6 +825,7 @@ async def test_create_index(
     fake2: DataFaker,
     mocker,
     resp_is,
+    mongo: Mongo,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -826,11 +841,11 @@ async def test_create_index(
     user = await fake2.users.create()
 
     await asyncio.gather(
-        client.mongo.references.insert_one(
+        mongo.references.insert_one(
             {"_id": "foo", "name": "Foo", "data_type": "genome"}
         ),
         # Insert unbuilt changes to prevent initial check failure.
-        client.mongo.history.insert_one(
+        mongo.history.insert_one(
             {
                 "_id": "history_1",
                 "index": {"id": "unbuilt", "version": "unbuilt"},
@@ -855,9 +870,9 @@ async def test_create_index(
 
     assert resp.status == 201
     assert await resp.json() == snapshot
-    assert await client.mongo.indexes.find_one() == snapshot
+    assert await mongo.indexes.find_one() == snapshot
 
-    m_create_manifest.assert_called_with(client.mongo, "foo")
+    m_create_manifest.assert_called_with(ANY, "foo")
 
 
 @pytest.mark.apitest
@@ -867,6 +882,7 @@ async def test_create_user(
     fake2: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -923,7 +939,7 @@ async def test_create_user(
 
     # Don't insert the ref document if we want to trigger a 404.
     if error != "404":
-        await client.mongo.references.insert_one(document)
+        await mongo.references.insert_one(document)
 
     resp = await client.post(
         "/refs/foo/users",
@@ -934,7 +950,7 @@ async def test_create_user(
         case None:
             assert resp.status == 201
             assert await resp.json() == snapshot(name="resp")
-            assert await client.mongo.references.find_one() == snapshot(name="mongo")
+            assert await mongo.references.find_one() == snapshot(name="mongo")
         case "404":
             await resp_is.not_found(resp)
         case "400_dne":
@@ -950,6 +966,7 @@ async def test_create_group(
     fake2: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -967,7 +984,7 @@ async def test_create_group(
     group_2 = await fake2.groups.create()
 
     if error != "404":
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": static_time.datetime,
@@ -1001,7 +1018,7 @@ async def test_create_group(
         case None:
             assert resp.status == 201
             assert await resp.json() == snapshot
-            assert await client.mongo.references.find_one() == snapshot
+            assert await mongo.references.find_one() == snapshot
         case "404":
             await resp_is.not_found(resp)
         case "400_dne":
@@ -1016,6 +1033,7 @@ async def test_update_user(
     fake2: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1024,7 +1042,7 @@ async def test_update_user(
     user = await fake2.users.create()
 
     if error != "404_ref":
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": static_time.datetime,
@@ -1066,7 +1084,7 @@ async def test_update_user(
         case None:
             assert resp.status == 200
             assert await resp.json() == snapshot
-            assert await client.mongo.references.find_one() == snapshot
+            assert await mongo.references.find_one() == snapshot
         case ("404_field", "404_ref"):
             await resp_is.not_found(resp)
 
@@ -1081,6 +1099,7 @@ async def test_update_group(
     fake2: DataFaker,
     resp_is,
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1089,7 +1108,7 @@ async def test_update_group(
     group = await fake2.groups.create()
 
     if error != "404_ref":
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": static_time.datetime,
@@ -1132,7 +1151,7 @@ async def test_update_group(
         case None:
             assert resp.status == 200
             assert await resp.json() == snapshot(name="resp")
-            assert await client.mongo.references.find_one() == snapshot(name="mongo")
+            assert await mongo.references.find_one() == snapshot(name="mongo")
         case ("404_group", "404_ref"):
             await resp_is.not_found(resp)
 
@@ -1147,6 +1166,7 @@ async def test_delete_user(
     fake2: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1155,7 +1175,7 @@ async def test_delete_user(
     user = await fake2.users.create()
 
     if error != "404_ref":
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": static_time.datetime,
@@ -1196,7 +1216,7 @@ async def test_delete_user(
         await resp_is.not_found(resp)
     else:
         assert resp.status == 204
-        assert await client.mongo.references.find_one() == snapshot(name="mongo")
+        assert await mongo.references.find_one() == snapshot(name="mongo")
 
 
 @pytest.mark.apitest
@@ -1206,6 +1226,7 @@ async def test_delete_group(
     fake2: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1214,7 +1235,7 @@ async def test_delete_group(
     group = await fake2.groups.create()
 
     if error != "404_ref":
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "created_at": static_time.datetime,
@@ -1256,7 +1277,7 @@ async def test_delete_group(
         await resp_is.not_found(resp)
     else:
         assert resp.status == 204
-        assert await client.mongo.references.find_one() == snapshot
+        assert await mongo.references.find_one() == snapshot
 
 
 @pytest.mark.apitest
@@ -1266,6 +1287,7 @@ async def test_find_otus(
     find: str | None,
     verified: bool | None,
     snapshot: SnapshotAssertion,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
     """
@@ -1276,10 +1298,10 @@ async def test_find_otus(
     client = await spawn_client(authenticated=True)
 
     await asyncio.gather(
-        client.mongo.references.insert_one(
+        mongo.references.insert_one(
             {"_id": "foo", "name": "Foo", "data_type": "genome"}
         ),
-        client.mongo.otus.insert_many(
+        mongo.otus.insert_many(
             [
                 {
                     "_id": "6116cba1",

@@ -2,11 +2,14 @@ import pytest
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 
 
 @pytest.mark.apitest
 class TestFind:
-    async def test_find(self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner):
+    async def test_find(
+        self, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
+    ):
         """
         Test that a ``GET /labels`` return a complete list of labels.
 
@@ -16,7 +19,7 @@ class TestFind:
         label_1 = await fake2.labels.create()
         label_2 = await fake2.labels.create()
 
-        await client.mongo.samples.insert_many(
+        await mongo.samples.insert_many(
             [
                 {
                     "_id": "foo",
@@ -63,7 +66,7 @@ class TestFind:
 @pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
-    status: int, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+    status: int, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
 ):
     """
     Test that a ``GET /labels/:label_id`` return the correct label document.
@@ -74,7 +77,7 @@ async def test_get(
     label_1 = await fake2.labels.create()
     label_2 = await fake2.labels.create()
 
-    await client.mongo.samples.insert_many(
+    await mongo.samples.insert_many(
         [
             {"_id": "foo", "name": "Foo", "labels": [label_1.id]},
             {"_id": "bar", "name": "Bar", "labels": [label_2.id]},
@@ -138,6 +141,7 @@ async def test_edit(
     fake2: DataFaker,
     resp_is,
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
     """
@@ -149,7 +153,7 @@ async def test_edit(
     label_1 = await fake2.labels.create()
     label_2 = await fake2.labels.create()
 
-    await client.mongo.samples.insert_many(
+    await mongo.samples.insert_many(
         [
             {"_id": "foo", "name": "Foo", "labels": [label_1.id]},
             {"_id": "bar", "name": "Bar", "labels": [label_2.id]},
@@ -198,6 +202,7 @@ async def test_remove(
     fake2: DataFaker,
     mock_samples: list[dict],
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
     """
@@ -212,7 +217,7 @@ async def test_remove(
     label_2 = await fake2.labels.create()
     label_3 = await fake2.labels.create()
 
-    await client.mongo.subtraction.insert_many(
+    await mongo.subtraction.insert_many(
         [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}], session=None
     )
 
@@ -220,7 +225,7 @@ async def test_remove(
     mock_samples[1].update({"labels": [label_2.id, label_3.id]})
     mock_samples[2].update({"labels": [label_1.id]})
 
-    await client.mongo.samples.insert_many(mock_samples, session=None)
+    await mongo.samples.insert_many(mock_samples, session=None)
 
     resp = await client.delete(f"/labels/{22 if status == 404 else label_1.id}")
 
@@ -228,7 +233,7 @@ async def test_remove(
     assert await resp.json() == snapshot
 
     if status == 204:
-        label_ids_in_samples = await client.mongo.samples.distinct("labels")
+        label_ids_in_samples = await mongo.samples.distinct("labels")
 
         assert label_1.id not in label_ids_in_samples
         assert label_2.id in label_ids_in_samples

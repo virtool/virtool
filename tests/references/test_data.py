@@ -108,10 +108,15 @@ class TestCreateUser:
             }
         )
 
-        assert await data_layer.references.create_user(
-            "foo",
-            CreateReferenceUserRequest(build=True, modify_otu=True, user_id=user_2.id),
-        ) == snapshot(name="obj")
+        assert (
+            await data_layer.references.create_user(
+                "foo",
+                CreateReferenceUserRequest(
+                    build=True, modify_otu=True, user_id=user_2.id
+                ),
+            )
+            == snapshot(name="obj")
+        )
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
     async def test_duplicate(
@@ -235,22 +240,28 @@ class TestUpdateUser:
             }
         )
 
-        assert await data_layer.references.update_user(
-            "foo",
-            user_2.id,
-            ReferenceRightsRequest(
-                modify_otu=False,
-            ),
-        ) == snapshot(name="obj_1")
+        assert (
+            await data_layer.references.update_user(
+                "foo",
+                user_2.id,
+                ReferenceRightsRequest(
+                    modify_otu=False,
+                ),
+            )
+            == snapshot(name="obj_1")
+        )
 
-        assert await data_layer.references.update_user(
-            "foo",
-            user_2.id,
-            ReferenceRightsRequest(
-                modify=True,
-                modify_otu=True,
-            ),
-        ) == snapshot(name="obj_2")
+        assert (
+            await data_layer.references.update_user(
+                "foo",
+                user_2.id,
+                ReferenceRightsRequest(
+                    modify=True,
+                    modify_otu=True,
+                ),
+            )
+            == snapshot(name="obj_2")
+        )
 
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
@@ -417,10 +428,15 @@ class TestCreateGroup:
             }
         )
 
-        assert await data_layer.references.create_group(
-            "foo",
-            CreateReferenceGroupRequest(build=True, modify_otu=True, group_id=group.id),
-        ) == snapshot(name="obj")
+        assert (
+            await data_layer.references.create_group(
+                "foo",
+                CreateReferenceGroupRequest(
+                    build=True, modify_otu=True, group_id=group.id
+                ),
+            )
+            == snapshot(name="obj")
+        )
 
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
@@ -533,11 +549,14 @@ class TestUpdateGroup:
             }
         )
 
-        assert await data_layer.references.update_group(
-            "foo",
-            group.id,
-            ReferenceRightsRequest(build=False, modify=True),
-        ) == snapshot(name="obj")
+        assert (
+            await data_layer.references.update_group(
+                "foo",
+                group.id,
+                ReferenceRightsRequest(build=False, modify=True),
+            )
+            == snapshot(name="obj")
+        )
 
         assert await mongo.references.find_one() == snapshot(name="mongo")
 

@@ -9,6 +9,7 @@ from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 
 _job_response_matcher = path_type(
     {".*created_at": (str,), ".*key": (str,), ".*timestamp": (str,)}, regex=True
@@ -424,7 +425,15 @@ async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test
 class TestPushStatus:
     @pytest.mark.parametrize("error", [None, 404, 409])
     async def test(
-        self, error, fake2, snapshot, resp_is, spawn_client, static_time, test_job
+        self,
+        error,
+        fake2,
+        snapshot,
+        resp_is,
+        mongo: Mongo,
+        spawn_client,
+        static_time,
+        test_job,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -436,7 +445,7 @@ class TestPushStatus:
             del test_job["status"][-1]
 
         if error != 404:
-            await client.mongo.jobs.insert_one(test_job)
+            await mongo.jobs.insert_one(test_job)
 
         body = {"state": "running", "stage": "build", "progress": 23}
 
@@ -454,7 +463,7 @@ class TestPushStatus:
         assert await resp.json() == snapshot
 
     async def test_name_and_description(
-        self, fake2, snapshot, spawn_client, static_time, test_job
+        self, fake2, snapshot, mongo: Mongo, spawn_client, static_time, test_job
     ):
         client = await spawn_client(authenticated=True)
 
@@ -462,7 +471,7 @@ class TestPushStatus:
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
-        await client.mongo.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
         body = {
             "state": "running",
@@ -477,7 +486,9 @@ class TestPushStatus:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-    async def test_bad_state(self, fake2, snapshot, spawn_client, test_job):
+    async def test_bad_state(
+        self, fake2, snapshot, mongo: Mongo, spawn_client, test_job
+    ):
         """
         Check that an unallowed state is rejected with 422.
 
@@ -488,7 +499,7 @@ class TestPushStatus:
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
-        await client.mongo.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
         body = {"state": "bad", "stage": "fastqc", "progress": 14}
 
@@ -513,6 +524,7 @@ class TestPushStatus:
         details,
         fake2,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         static_time,
         test_job,
@@ -527,7 +539,7 @@ class TestPushStatus:
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
-        await client.mongo.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
         error = {}
 
@@ -547,7 +559,9 @@ class TestPushStatus:
 
         assert (resp.status, await resp.json()) == snapshot
 
-    async def test_missing_error(self, snapshot, spawn_client, static_time, test_job):
+    async def test_missing_error(
+        self, snapshot, mongo: Mongo, spawn_client, static_time, test_job
+    ):
         """
         Ensure and error is returned when state is set to `error`, but no error field is
         included.
@@ -556,7 +570,7 @@ class TestPushStatus:
         client = await spawn_client(authenticated=True)
 
         del test_job["status"][-1]
-        await client.mongo.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
         body = {"state": "error", "stage": "fastqc", "progress": 14}
 
@@ -565,7 +579,9 @@ class TestPushStatus:
         assert (resp.status, await resp.json()) == snapshot
 
     @pytest.mark.parametrize("state", ["complete", "cancelled", "error", "terminated"])
-    async def test_finalized_job_error(self, state, resp_is, spawn_client, test_job):
+    async def test_finalized_job_error(
+        self, state, resp_is, mongo: Mongo, spawn_client, test_job
+    ):
         """
         Verify that job state cannot be updated once the latest status indicates the job is finished
         or otherwise terminated
@@ -573,7 +589,7 @@ class TestPushStatus:
         client = await spawn_client(authenticated=True)
 
         test_job["status"][-1]["state"] = state
-        await client.mongo.jobs.insert_one(test_job)
+        await mongo.jobs.insert_one(test_job)
 
         body = {"state": "running", "stage": "build", "progress": 23}
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
