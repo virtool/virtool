@@ -477,7 +477,6 @@ def spawn_job_client(
             app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
-        client.mongo = mongo
         client.db = mongo
 
         assert client.app["pg"] is pg

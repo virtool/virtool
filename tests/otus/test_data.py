@@ -272,17 +272,20 @@ async def test_create_sequence(
         }
     )
 
-    assert await data_layer.otus.create_sequence(
-        "bar",
-        "baz",
-        "abc123",
-        "A made up sequence",
-        "ATGCGTGTACTG AGAGTAT\nATTTATACCACAC",
-        "bob",
-        host=host,
-        segment=segment,
-        sequence_id=sequence_id,
-    ) == snapshot(name="return")
+    assert (
+        await data_layer.otus.create_sequence(
+            "bar",
+            "baz",
+            "abc123",
+            "A made up sequence",
+            "ATGCGTGTACTG AGAGTAT\nATTTATACCACAC",
+            "bob",
+            host=host,
+            segment=segment,
+            sequence_id=sequence_id,
+        )
+        == snapshot(name="return")
+    )
 
     assert await mongo.otus.find_one() == snapshot(name="otu")
     assert await mongo.sequences.find_one() == snapshot(name="sequence")

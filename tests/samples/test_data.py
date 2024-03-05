@@ -90,6 +90,7 @@ class TestCreate:
         pg: AsyncEngine,
         fake2: DataFaker,
         snapshot_recent,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
         redis: Redis,
     ):
@@ -120,7 +121,7 @@ class TestCreate:
         upload = await fake2.uploads.create(user=await fake2.users.create())
 
         await asyncio.gather(
-            client.mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
 
         data = {
@@ -136,7 +137,7 @@ class TestCreate:
         await data_layer.samples.create(CreateSampleRequest(**data), client.user.id, 0)
 
         sample, upload = await asyncio.gather(
-            client.mongo.samples.find_one(),
+            mongo.samples.find_one(),
             get_row_by_id(pg, SQLUpload, 1),
         )
 

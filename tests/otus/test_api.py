@@ -7,6 +7,7 @@ from virtool_core.models.enums import ReferencePermission
 import virtool.otus.db
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 
 
 @pytest.mark.apitest
@@ -16,6 +17,7 @@ async def test_get(
     fake2: DataFaker,
     resp_is,
     snapshot,
+    mongo: Mongo,
     spawn_client: ClientSpawner,
     test_change,
     test_otu,
@@ -32,10 +34,10 @@ async def test_get(
 
     if not error:
         await asyncio.gather(
-            client.mongo.otus.insert_one({**test_otu, "user": {"id": user.id}}),
-            client.mongo.history.insert_one({**test_change, "user": {"id": user.id}}),
-            client.mongo.sequences.insert_one(test_sequence),
-            client.mongo.references.insert_one(test_ref),
+            mongo.otus.insert_one({**test_otu, "user": {"id": user.id}}),
+            mongo.history.insert_one({**test_change, "user": {"id": user.id}}),
+            mongo.sequences.insert_one(test_sequence),
+            mongo.references.insert_one(test_ref),
         )
 
     resp = await client.get("/otus/6116cba1")
@@ -109,6 +111,7 @@ class TestEdit:
         existing_abbreviation,
         description,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -127,8 +130,8 @@ class TestEdit:
         test_otu["abbreviation"] = existing_abbreviation
 
         await asyncio.gather(
-            client.mongo.otus.insert_one(test_otu),
-            client.mongo.references.insert_one(test_ref),
+            mongo.otus.insert_one(test_otu),
+            mongo.references.insert_one(test_ref),
         )
 
         resp = await client.patch("/otus/6116cba1", data)
@@ -140,8 +143,8 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        assert await client.mongo.otus.find_one() == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.find_one() == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     @pytest.mark.parametrize(
         "data,message",
@@ -161,7 +164,7 @@ class TestEdit:
         ],
     )
     async def test_field_exists(
-        self, data, message, spawn_client, check_ref_right, resp_is
+        self, data, message, mongo: Mongo, spawn_client, check_ref_right, resp_is
     ):
         """
         Test that the request fails with ``409 Conflict`` if the requested name or abbreviation already exists.
@@ -169,7 +172,7 @@ class TestEdit:
         """
         client = await spawn_client(authenticated=True)
 
-        await client.mongo.otus.insert_many(
+        await mongo.otus.insert_many(
             [
                 {
                     "_id": "test",
@@ -213,6 +216,7 @@ class TestEdit:
         data,
         fake2,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -227,10 +231,10 @@ class TestEdit:
         test_change.update({"user": {"id": user.id}, "_id": "6116cba1.0"})
 
         await asyncio.gather(
-            client.mongo.otus.insert_one(test_otu),
-            client.mongo.references.insert_one(test_ref),
-            client.mongo.sequences.insert_one(test_sequence),
-            client.mongo.history.insert_one(test_change),
+            mongo.otus.insert_one(test_otu),
+            mongo.references.insert_one(test_ref),
+            mongo.sequences.insert_one(test_sequence),
+            mongo.history.insert_one(test_change),
         )
 
         resp = await client.patch(f"/otus/{test_otu['_id']}", data)
@@ -240,7 +244,7 @@ class TestEdit:
             return
 
         assert resp.status == 200
-        assert await client.mongo.history.count_documents({}) == 1 + change_count
+        assert await mongo.history.count_documents({}) == 1 + change_count
         assert await resp.json() == snapshot(name="json")
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -258,7 +262,14 @@ class TestEdit:
     "abbreviation,exists", [("", True), ("PVF", True), ("", False)]
 )
 async def test_remove(
-    abbreviation, exists, snapshot, spawn_client, check_ref_right, resp_is, test_otu
+    abbreviation,
+    exists,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    check_ref_right,
+    resp_is,
+    test_otu,
 ):
     """
     Test that an existing otu can be removed.
@@ -271,9 +282,9 @@ async def test_remove(
     test_otu["abbreviation"] = abbreviation
 
     if exists:
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
-    old = await client.mongo.otus.find_one("6116cba1")
+    old = await mongo.otus.find_one("6116cba1")
 
     resp = await client.delete("/otus/6116cba1")
 
@@ -287,13 +298,15 @@ async def test_remove(
         return
 
     await resp_is.no_content(resp)
-    assert await client.mongo.otus.count_documents({"_id": "6116cba1"}) == 0
-    assert await client.mongo.history.find_one() == snapshot
+    assert await mongo.otus.count_documents({"_id": "6116cba1"}) == 0
+    assert await mongo.history.find_one() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_list_isolates(error, snapshot, spawn_client, resp_is, test_otu):
+async def test_list_isolates(
+    error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu
+):
     """
     Test the isolates are properly listed and formatted for an existing otu.
 
@@ -310,7 +323,7 @@ async def test_list_isolates(error, snapshot, spawn_client, resp_is, test_otu):
             }
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
     resp = await client.get("/otus/6116cba1/isolates")
 
@@ -325,7 +338,7 @@ async def test_list_isolates(error, snapshot, spawn_client, resp_is, test_otu):
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_get_isolate(
-    error, snapshot, spawn_client, resp_is, test_otu, test_sequence
+    error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu, test_sequence
 ):
     """
     Test that an existing isolate is successfully returned.
@@ -337,9 +350,9 @@ async def test_get_isolate(
         test_otu["isolates"] = []
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
-    await client.mongo.sequences.insert_one(test_sequence)
+    await mongo.sequences.insert_one(test_sequence)
 
     resp = await client.get("/otus/6116cba1/isolates/cab8b360")
 
@@ -359,6 +372,7 @@ class TestAddIsolate:
         default,
         mocker,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -376,7 +390,7 @@ class TestAddIsolate:
             permissions=[ReferencePermission.modify_otu],
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
         mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
 
@@ -393,13 +407,14 @@ class TestAddIsolate:
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
-        assert await client.mongo.otus.find_one("6116cba1") == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.find_one("6116cba1") == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     async def test_first(
         self,
         mocker,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -419,7 +434,7 @@ class TestAddIsolate:
 
         test_otu["isolates"] = []
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
         data = {"source_name": "b", "source_type": "isolate", "default": False}
 
@@ -435,13 +450,14 @@ class TestAddIsolate:
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
-        assert await client.mongo.otus.find_one("6116cba1") == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.find_one("6116cba1") == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     async def test_force_case(
         self,
         mocker,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -458,7 +474,7 @@ class TestAddIsolate:
             permissions=[ReferencePermission.modify_otu],
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
         mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
 
@@ -475,8 +491,8 @@ class TestAddIsolate:
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
-        assert await client.mongo.otus.find_one("6116cba1") == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.find_one("6116cba1") == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(
@@ -509,6 +525,7 @@ class TestUpdateIsolate:
         data,
         description,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -531,9 +548,9 @@ class TestUpdateIsolate:
             }
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
-        await client.mongo.references.insert_one(
+        await mongo.references.insert_one(
             {
                 "_id": "hxn167",
                 "restrict_source_types": False,
@@ -550,11 +567,11 @@ class TestUpdateIsolate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        assert await client.mongo.otus.find_one("6116cba1") == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.find_one("6116cba1") == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     async def test_force_case(
-        self, snapshot, spawn_client, check_ref_right, resp_is, test_otu
+        self, snapshot, mongo: Mongo, spawn_client, check_ref_right, resp_is, test_otu
     ):
         """
         Test that the ``source_type`` value is forced to lower case.
@@ -565,8 +582,8 @@ class TestUpdateIsolate:
         )
 
         await asyncio.gather(
-            client.mongo.otus.insert_one(test_otu),
-            client.mongo.references.insert_one(
+            mongo.otus.insert_one(test_otu),
+            mongo.references.insert_one(
                 {
                     "_id": "hxn167",
                     "restrict_source_types": False,
@@ -588,14 +605,16 @@ class TestUpdateIsolate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        assert await client.mongo.otus.find_one("6116cba1") == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.find_one("6116cba1") == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     @pytest.mark.parametrize(
         "otu_id,isolate_id",
         [("6116cba1", "test"), ("test", "cab8b360"), ("test", "test")],
     )
-    async def test_not_found(self, otu_id, isolate_id, spawn_client, test_otu, resp_is):
+    async def test_not_found(
+        self, otu_id, isolate_id, mongo: Mongo, spawn_client, test_otu, resp_is
+    ):
         """
         Test that a request for a non-existent otu or isolate results in a ``404`` response.
 
@@ -604,7 +623,7 @@ class TestUpdateIsolate:
             authenticated=True, permissions=[ReferencePermission.modify_otu]
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
         data = {"source_type": "variant", "source_name": "A"}
 
@@ -618,6 +637,7 @@ class TestSetAsDefault:
     async def test(
         self,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -642,7 +662,7 @@ class TestSetAsDefault:
             }
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
         resp = await client.put("/otus/6116cba1/isolates/test/default", {})
 
@@ -653,12 +673,13 @@ class TestSetAsDefault:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        assert await virtool.otus.db.join(client.mongo, "6116cba1") == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await virtool.otus.db.join(mongo, "6116cba1") == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     async def test_no_change(
         self,
         snapshot,
+        mongo: Mongo,
         spawn_client,
         check_ref_right,
         resp_is,
@@ -686,8 +707,8 @@ class TestSetAsDefault:
         )
 
         await asyncio.gather(
-            client.mongo.otus.insert_one(test_otu),
-            client.mongo.history.insert_one(test_change),
+            mongo.otus.insert_one(test_otu),
+            mongo.history.insert_one(test_change),
         )
 
         resp = await client.put("/otus/6116cba1/isolates/cab8b360/default", {})
@@ -699,14 +720,16 @@ class TestSetAsDefault:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        assert await virtool.otus.db.join(client.mongo, "6116cba1") == snapshot
-        assert await client.mongo.history.count_documents({}) == 1
+        assert await virtool.otus.db.join(mongo, "6116cba1") == snapshot
+        assert await mongo.history.count_documents({}) == 1
 
     @pytest.mark.parametrize(
         "otu_id,isolate_id",
         [("6116cba1", "test"), ("test", "cab8b360"), ("test", "test")],
     )
-    async def test_not_found(self, otu_id, isolate_id, spawn_client, test_otu, resp_is):
+    async def test_not_found(
+        self, otu_id, isolate_id, mongo: Mongo, spawn_client, test_otu, resp_is
+    ):
         """
         Test that ``404 Not found`` is returned if the otu or isolate does not exist
 
@@ -715,7 +738,7 @@ class TestSetAsDefault:
             authenticated=True, permissions=[ReferencePermission.modify_otu]
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
         resp = await client.put(f"/otus/{otu_id}/isolates/{isolate_id}/default", {})
 
@@ -725,7 +748,14 @@ class TestSetAsDefault:
 @pytest.mark.apitest
 class TestRemoveIsolate:
     async def test(
-        self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
+        self,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_sequence,
     ):
         """
         Test that a valid request results in a ``204`` response and the isolate and
@@ -736,10 +766,10 @@ class TestRemoveIsolate:
             authenticated=True, permissions=[ReferencePermission.modify_otu]
         )
 
-        await client.mongo.otus.insert_one(test_otu)
-        await client.mongo.sequences.insert_one(test_sequence)
+        await mongo.otus.insert_one(test_otu)
+        await mongo.sequences.insert_one(test_sequence)
 
-        assert await client.mongo.otus.count_documents({"isolates.id": "cab8b360"}) == 1
+        assert await mongo.otus.count_documents({"isolates.id": "cab8b360"}) == 1
 
         resp = await client.delete("/otus/6116cba1/isolates/cab8b360")
 
@@ -749,12 +779,19 @@ class TestRemoveIsolate:
 
         await resp_is.no_content(resp)
 
-        assert await client.mongo.otus.count_documents({"isolates.id": "cab8b360"}) == 0
-        assert await client.mongo.sequences.count_documents({}) == 0
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.count_documents({"isolates.id": "cab8b360"}) == 0
+        assert await mongo.sequences.count_documents({}) == 0
+        assert await mongo.history.find_one() == snapshot
 
     async def test_change_default(
-        self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
+        self,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        check_ref_right,
+        resp_is,
+        test_otu,
+        test_sequence,
     ):
         """
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
@@ -773,8 +810,8 @@ class TestRemoveIsolate:
             }
         )
 
-        await client.mongo.otus.insert_one(test_otu)
-        await client.mongo.sequences.insert_one(test_sequence)
+        await mongo.otus.insert_one(test_otu)
+        await mongo.sequences.insert_one(test_sequence)
 
         resp = await client.delete("/otus/6116cba1/isolates/cab8b360")
 
@@ -783,16 +820,16 @@ class TestRemoveIsolate:
             return
 
         await resp_is.no_content(resp)
-        assert await client.mongo.otus.count_documents({"isolates.id": "cab8b360"}) == 0
-        assert not await client.mongo.sequences.count_documents({})
+        assert await mongo.otus.count_documents({"isolates.id": "cab8b360"}) == 0
+        assert not await mongo.sequences.count_documents({})
 
-        assert await client.mongo.otus.find_one({"isolates.id": "bcb9b352"}) == snapshot
-        assert await client.mongo.history.find_one() == snapshot
+        assert await mongo.otus.find_one({"isolates.id": "bcb9b352"}) == snapshot
+        assert await mongo.history.find_one() == snapshot
 
     @pytest.mark.parametrize(
         "url", ["/otus/foobar/isolates/cab8b360", "/otus/test/isolates/foobar"]
     )
-    async def test_not_found(self, url, spawn_client, test_otu, resp_is):
+    async def test_not_found(self, url, mongo: Mongo, spawn_client, test_otu, resp_is):
         """
         Test that removal fails with ``404`` if the otu does not exist.
 
@@ -801,7 +838,7 @@ class TestRemoveIsolate:
             authenticated=True, permissions=[ReferencePermission.modify_otu]
         )
 
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
         resp = await client.delete(url)
 
@@ -811,7 +848,7 @@ class TestRemoveIsolate:
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_list_sequences(
-    error, snapshot, spawn_client, resp_is, test_otu, test_sequence
+    error, snapshot, mongo: Mongo, spawn_client, resp_is, test_otu, test_sequence
 ):
     client = await spawn_client(authenticated=True)
 
@@ -819,9 +856,9 @@ async def test_list_sequences(
         test_otu["isolates"] = []
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
-    await client.mongo.sequences.insert_one(test_sequence)
+    await mongo.sequences.insert_one(test_sequence)
 
     resp = await client.get("/otus/6116cba1/isolates/cab8b360/sequences")
 
@@ -836,20 +873,27 @@ async def test_list_sequences(
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
 async def test_get_sequence(
-    error, snapshot, spawn_client, resp_is, test_otu, test_ref, test_sequence
+    error,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    resp_is,
+    test_otu,
+    test_ref,
+    test_sequence,
 ):
     client = await spawn_client(authenticated=True)
 
-    await client.mongo.references.insert_one({**test_ref, "_id": "ref"})
+    await mongo.references.insert_one({**test_ref, "_id": "ref"})
 
     if error == "404_isolate":
         test_otu["isolates"] = []
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
     if error != "404_sequence":
-        await client.mongo.sequences.insert_one(test_sequence)
+        await mongo.sequences.insert_one(test_sequence)
 
     resp = await client.get(
         f"/otus/6116cba1/isolates/cab8b360/sequences/{test_sequence['_id']}"
@@ -871,6 +915,7 @@ async def test_get_sequence(
 async def test_create_sequence(
     error,
     snapshot,
+    mongo: Mongo,
     spawn_client,
     check_ref_right,
     resp_is,
@@ -889,9 +934,9 @@ async def test_create_sequence(
         test_otu["isolates"] = []
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
-    await client.mongo.references.insert_one(test_ref)
+    await mongo.references.insert_one(test_ref)
 
     data = {
         "accession": "foobar",
@@ -929,11 +974,14 @@ async def test_create_sequence(
     assert resp.headers["Location"] == snapshot
     assert await resp.json() == snapshot
 
-    assert await asyncio.gather(
-        client.mongo.sequences.find_one(),
-        client.mongo.otus.find_one("6116cba1"),
-        client.mongo.history.find_one({"method_name": "create_sequence"}),
-    ) == snapshot(name="db")
+    assert (
+        await asyncio.gather(
+            mongo.sequences.find_one(),
+            mongo.otus.find_one("6116cba1"),
+            mongo.history.find_one({"method_name": "create_sequence"}),
+        )
+        == snapshot(name="db")
+    )
 
 
 @pytest.mark.apitest
@@ -950,6 +998,7 @@ async def test_create_sequence(
 async def test_edit_sequence(
     error,
     snapshot,
+    mongo: Mongo,
     spawn_client,
     check_ref_right,
     resp_is,
@@ -965,12 +1014,12 @@ async def test_edit_sequence(
         test_otu["isolates"] = []
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
     if error != "404_sequence":
-        await client.mongo.sequences.insert_one(test_sequence)
+        await mongo.sequences.insert_one(test_sequence)
 
-    await client.mongo.references.insert_one({"_id": "hxn167", "data_type": "genome"})
+    await mongo.references.insert_one({"_id": "hxn167", "data_type": "genome"})
 
     data = {
         "host": "Grapevine",
@@ -1004,18 +1053,22 @@ async def test_edit_sequence(
     assert resp.status == 200
     assert await resp.json() == snapshot
 
-    assert await client.mongo.otus.find_one("6116cba1") == snapshot
-    assert await client.mongo.sequences.find_one("KX269872") == snapshot
-    assert (
-        await client.mongo.history.find_one({"method_name": "edit_sequence"})
-        == snapshot
-    )
+    assert await mongo.otus.find_one("6116cba1") == snapshot
+    assert await mongo.sequences.find_one("KX269872") == snapshot
+    assert await mongo.history.find_one({"method_name": "edit_sequence"}) == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
 async def test_remove_sequence(
-    error, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
+    error,
+    snapshot,
+    mongo: Mongo,
+    spawn_client,
+    check_ref_right,
+    resp_is,
+    test_otu,
+    test_sequence,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -1023,10 +1076,10 @@ async def test_remove_sequence(
         test_otu["isolates"] = []
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
     if error != "404_sequence":
-        await client.mongo.sequences.insert_one(test_sequence)
+        await mongo.sequences.insert_one(test_sequence)
 
     resp = await client.delete(
         f"/otus/6116cba1/isolates/cab8b360/sequences/{test_sequence['_id']}"
@@ -1042,19 +1095,21 @@ async def test_remove_sequence(
 
     await resp_is.no_content(resp)
 
-    assert await client.mongo.otus.find_one("6116cba1") == snapshot
-    assert await client.mongo.history.find_one() == snapshot
+    assert await mongo.otus.find_one("6116cba1") == snapshot
+    assert await mongo.history.find_one() == snapshot
 
 
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_otu):
+async def test_download_otu(
+    error, mongo: Mongo, spawn_client, resp_is, test_sequence, test_otu
+):
     client = await spawn_client(authenticated=True)
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
-    await client.mongo.sequences.insert_one(test_sequence)
+    await mongo.sequences.insert_one(test_sequence)
 
     resp = await client.get("/otus/6116cba1.fa")
 
@@ -1068,7 +1123,7 @@ async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_ot
 @pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_download_isolate(
-    error, resp_is, spawn_client, test_otu, test_isolate, test_sequence
+    error, resp_is, mongo: Mongo, spawn_client, test_otu, test_isolate, test_sequence
 ):
     client = await spawn_client(authenticated=True)
 
@@ -1080,9 +1135,9 @@ async def test_download_isolate(
         isolate["id"] = "different"
 
     if error != "404_otu":
-        await client.mongo.otus.insert_one(test_otu)
+        await mongo.otus.insert_one(test_otu)
 
-    await client.mongo.sequences.insert_one(test_sequence)
+    await mongo.sequences.insert_one(test_sequence)
 
     resp = await client.get(f"/otus/{test_otu['_id']}/isolates/{isolate_id}.fa")
 
@@ -1097,7 +1152,7 @@ async def test_download_isolate(
 @pytest.mark.apitest
 @pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
-async def test_all(get, missing, spawn_client):
+async def test_all(get, missing, mongo: Mongo, spawn_client):
     client = await spawn_client(authenticated=True)
 
     isolates = [{"id": "baz", "source_type": "isolate", "source_name": "Baz"}]
@@ -1106,7 +1161,7 @@ async def test_all(get, missing, spawn_client):
         isolates.append({"id": "foo", "source_type": "isolate", "source_name": "Foo"})
 
     if missing != "otu":
-        await client.mongo.otus.insert_one(
+        await mongo.otus.insert_one(
             {"_id": "foobar", "name": "Foobar virus", "isolates": isolates}
         )
 
@@ -1129,7 +1184,7 @@ async def test_all(get, missing, spawn_client):
             }
         )
 
-    await client.mongo.sequences.insert_many(sequences, session=None)
+    await mongo.sequences.insert_many(sequences, session=None)
 
     url = "/otus/foobar/isolates"
 
