@@ -70,8 +70,8 @@ class SessionData(DataLayerDomain):
         self.redis = redis
 
     async def create_anonymous(
-        self,
-        ip: str,
+            self,
+            ip: str,
     ) -> Session:
         """
         Creates an anonymous session with the given ``ip`` and ``user_id``.
@@ -91,10 +91,10 @@ class SessionData(DataLayerDomain):
         return session
 
     async def create_authenticated(
-        self,
-        ip: str,
-        user_id: str,
-        remember: bool = False,
+            self,
+            ip: str,
+            user_id: str,
+            remember: bool = False,
     ) -> tuple[Session, str]:
         """
         Creates a new authenticated session with the given ``ip`` and ``user_id``.
@@ -132,7 +132,7 @@ class SessionData(DataLayerDomain):
         return Session(**session), token
 
     async def create_reset(
-        self, ip: str, user_id: str, remember: bool
+            self, ip: str, user_id: str, remember: bool
     ) -> tuple[Session, str]:
         """
         Creates a new reset session.
@@ -243,9 +243,6 @@ class SessionData(DataLayerDomain):
 
         if stored_reset_code != reset_code:
             await self.delete(session_id)
-            raise ResourceNotFoundError("Invalid reset code")
-
-        if stored_reset_code != reset_code:
             raise ResourceNotFoundError("Invalid reset code")
 
         return Session(**session)
