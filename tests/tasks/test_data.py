@@ -1,7 +1,6 @@
 from asyncio import wait_for
 
 import pytest
-from aioredis import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -10,6 +9,7 @@ from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import SQLTask
 from virtool.tasks.oas import TaskUpdate
+from virtool_core.redis import Redis
 
 
 async def test_find(

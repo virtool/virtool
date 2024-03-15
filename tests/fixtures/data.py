@@ -1,11 +1,11 @@
 """Fixtures for working with the Virtool data layer."""
 import pytest
 from aiohttp import ClientSession
-from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.data.layer import create_data_layer, DataLayer
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
+from virtool_core.redis import Redis
 
 
 @pytest.fixture

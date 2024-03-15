@@ -1,6 +1,6 @@
 import asyncio
 
-from aioredis import Redis
+from virtool_core.redis import Redis
 from virtool_core.models.basemodel import BaseModel
 
 from virtool.data.events import (

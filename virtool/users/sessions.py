@@ -44,7 +44,7 @@ authenticated session, the data layer should raise a generic
 import secrets
 from datetime import timedelta
 
-from aioredis import Redis
+from virtool_core.redis import Redis
 from virtool_core.models.session import (
     Session,
 )

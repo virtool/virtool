@@ -1,10 +1,10 @@
-from aioredis import Redis
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
 from virtool_core.models.account import Account
 from virtool_core.models.account import AccountSettings, APIKey
 from virtool_core.models.session import Session
+from virtool_core.redis import Redis
 
 import virtool.utils
 from virtool.account.mongo import (

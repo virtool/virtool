@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from aioredis import Redis
+
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
@@ -33,7 +33,7 @@ from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
 from virtool.users.sessions import SessionData
-
+from virtool_core.redis import Redis
 
 @dataclass
 class DataLayer:

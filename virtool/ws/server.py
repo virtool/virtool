@@ -1,13 +1,13 @@
 import asyncio
 from asyncio import CancelledError
 
-from aioredis import Redis
 from structlog import get_logger
 
 from virtool.data.events import EventListener, Operation
 from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSInsertMessage, WSDeleteMessage
 from virtool.ws.connection import WSConnection
+from virtool_core.redis import Redis
 
 logger = get_logger("ws")
 

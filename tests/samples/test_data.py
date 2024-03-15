@@ -1,11 +1,11 @@
 import asyncio
 
 import pytest
-from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission, LibraryType
 from virtool_core.models.samples import WorkflowState
+from virtool_core.redis import Redis
 
 from tests.fixtures.client import ClientSpawner
 from virtool.data.errors import ResourceConflictError
