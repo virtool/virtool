@@ -262,7 +262,11 @@ class JobsData:
         await self._mongo.jobs.update_one(
             {"_id": job_id},
             {
-                "$set": {"acquired": True, "key": hashed},
+                "$set": {
+                    "acquired": True,
+                    "key": hashed,
+                    "state": JobState.PREPARING.value,
+                },
                 "$push": {
                     "status": compose_status(JobState.PREPARING, None, progress=3)
                 },
@@ -500,8 +504,14 @@ class JobsData:
         async with self._mongo.create_session() as session:
             async for document in self._mongo.jobs.find(
                 {
-                    "state": {
-                        "$in": [JobState.PREPARING.value, JobState.RUNNING.value]
+                    "$expr": {
+                        "$in": [
+                            {"$last": "$status.state"},
+                            [
+                                JobState.RUNNING.value,
+                                JobState.PREPARING.value,
+                            ],
+                        ]
                     },
                     "$or": [
                         {"ping.pinged_at": {"$lt": now.shift(minutes=-5).naive}},
