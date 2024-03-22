@@ -86,7 +86,7 @@ class SessionData(DataLayerDomain):
             id=await self._create_session_id(),
         )
 
-        await self.redis.set(session.id, dump_string(session), expire=600)
+        await self.redis.set(session.id, dump_string(session), ex=600)
 
         return session
 
@@ -126,7 +126,7 @@ class SessionData(DataLayerDomain):
         await self.redis.set(
             session_id,
             dump_string(session),
-            expire=int(expires_after),
+            ex=int(expires_after),
         )
 
         return Session(**session), token
@@ -159,7 +159,7 @@ class SessionData(DataLayerDomain):
         await self.redis.set(
             session_id,
             dump_string(session),
-            expire=600,
+            ex=600,
         )
 
         return Session(**session), reset_code

@@ -389,7 +389,7 @@ def spawn_client(
                         "ip": "127.0.0.1",
                     }
                 ),
-                expire=3600,
+                ex=3600,
             )
 
             cookies = {"session_id": session_id, "session_token": session_token}
