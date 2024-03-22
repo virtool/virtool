@@ -48,8 +48,7 @@ async def shutdown_redis(app: Application):
     """
     logger.info("Closing Redis connection")
     try:
-        app["redis"].close()
-        await app["redis"].wait_closed()
+        await app["redis"].close()
     except KeyError:
         pass
 

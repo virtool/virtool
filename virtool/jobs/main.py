@@ -24,7 +24,7 @@ from virtool.types import App
 async def create_app(config: ServerConfig):
     """Create the :class:`aiohttp.web.Application` for the jobs API process."""
     app = Application(
-        client_max_size=1024**2 * 50,
+        client_max_size=1024 ** 2 * 50,
         middlewares=[
             virtool.api.accept.accept_middleware,
             error_middleware,
@@ -59,8 +59,8 @@ async def create_app(config: ServerConfig):
 
 async def shutdown(app: App):
     try:
-        app["redis"].close()
-        await app["redis"].wait_closed()
+        await app["redis"].close()
+
     except KeyError:
         pass
 

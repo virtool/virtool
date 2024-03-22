@@ -15,4 +15,4 @@ async def test_shutdown_redis(spawn_client):
     """Test that the Redis connection is properly closed on shutdown."""
     client = await spawn_client(authenticated=True)
     await shutdown_redis(client.app)
-    assert client.app["redis"].closed
+    assert client.app["redis"].close

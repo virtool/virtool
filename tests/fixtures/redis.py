@@ -24,8 +24,7 @@ async def redis(redis_connection_string, worker_id):
 
     yield client
     await client.flushdb()
-    client.close()
-    await client.wait_closed()
+    await client.close()
 
 
 @pytest.fixture()
