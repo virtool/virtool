@@ -19,7 +19,7 @@ async def test_enqueue(workflow, redis, jobs_client):
     key = f"jobs_{workflow}"
 
     assert await redis.llen(key) == 1
-    assert await redis.lpop(key, encoding="utf-8") == "foo"
+    assert await redis.lpop(key) == "foo"
 
 
 @pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
@@ -38,7 +38,7 @@ async def test_cancel_waiting(workflow, redis, jobs_client):
     assert await jobs_client.cancel("foo") == JOB_REMOVED_FROM_QUEUE
 
     for key in list_keys:
-        assert await redis.lrange(key, 0, 5, encoding="utf-8") == ["bar", "baz", "boo"]
+        assert await redis.lrange(key, 0, 5) == [b"bar", b"baz", b"boo"]
 
 
 async def test_cancel_running(mongo, redis, jobs_client):
