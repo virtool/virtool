@@ -52,8 +52,9 @@ async def test_cancel_running(mongo, redis, jobs_client):
     await jobs_client.cancel("foo")
 
     # Check that job ID was published to cancellation channel.
-    async for message in channel.iter(encoding="utf-8"):
-        assert message == "foo"
-        break
+    async for message in channel.listen():
+        if message["type"] == "message":
+            assert message["data"].decode() == "foo"
+            break
 
-    await redis.unsubscribe("channel:cancel")
+    await channel.unsubscribe("channel:cancel")
