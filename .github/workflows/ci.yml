@@ -34,7 +34,7 @@ jobs:
      - self-hosted
      - ubuntu-22.04
     env:
-      CORES: ${{ (runner.label == 'self-hosted') && '12' || '3' }}
+      CORES: ${{ (runner.name == 'self-hosted') && '12' || '3' }}
     services:
       redis:
         image: redis:6.0
