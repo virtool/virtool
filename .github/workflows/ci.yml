@@ -30,7 +30,11 @@ jobs:
         with:
           context: .
   test:
-    runs-on: ubuntu-22.04
+    runs-on:
+     - self-hosted
+     - ubuntu-22.04
+    env:
+      CORES: ${{ (runner.label == 'self-hosted') && '12' || '3' }}
     services:
       redis:
         image: redis:6.0
@@ -93,7 +97,7 @@ jobs:
           poetry run
           pytest
           --db-connection-string mongodb://localhost:27017
-          -n 3
+          -n $CORES 
           --openfga-host localhost:8080
           --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
           --redis-connection-string redis://localhost:6379
