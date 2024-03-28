@@ -11,9 +11,7 @@ on:
 
 jobs:
   commitlint:
-    runs-on:
-      - ubuntu-22.04
-      - self-hosted
+    runs-on: ubuntu-22.04
     if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
     steps:
       - name: Checkout
@@ -32,9 +30,7 @@ jobs:
         with:
           context: .
   test:
-    runs-on:
-     - self-hosted
-     - ubuntu-22.04
+    runs-on: [self-hosted, ubuntu-22.04]
     services:
       redis:
         image: redis:6.0
