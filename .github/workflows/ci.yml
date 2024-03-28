@@ -30,7 +30,7 @@ jobs:
         with:
           context: .
   test:
-    runs-on: [self-hosted, ubuntu-22.04]
+    runs-on: self-hosted
     services:
       redis:
         image: redis:6.0
