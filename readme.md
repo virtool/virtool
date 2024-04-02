@@ -5,7 +5,6 @@ Virtool is a web-based application for diagnosing pathogen infections using high
 [![ci](https://github.com/virtool/virtool/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/virtool/virtool/actions/workflows/ci.yml)
   
 Website: https://www.virtool.ca
-Gitter: https://gitter.im/virtool
 
 ## Getting Started
 
