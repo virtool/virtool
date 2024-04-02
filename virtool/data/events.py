@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import json
 import sys
 from asyncio import CancelledError
 from dataclasses import dataclass
@@ -148,7 +149,6 @@ class EventPublisher:
         try:
             while True:
                 event = await _events_target.get()
-
                 try:
                     data = event.data.dict()
                 except AttributeError:
@@ -203,11 +203,11 @@ class EventListener(AsyncIterable):
 
         while True:
             try:
-                received = await self._channel.get_json()
-                payload = received.pop("payload")
+                received = await self._channel.get_message(True, timeout=1)
+                data = json.loads(received["data"].decode())
+                payload = data.pop("payload")
                 cls = get_model_by_name(payload["model"])
-
-                return Event(**received, data=cls(**payload["data"]))
+                return Event(**data, data=cls(**payload["data"]))
             except ChannelClosedError:
                 try:
                     self._channel = await asyncio.wait_for(
