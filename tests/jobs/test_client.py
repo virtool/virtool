@@ -47,7 +47,7 @@ async def test_cancel_running(mongo, redis, jobs_client):
     list already.
 
     """
-    (channel,) = await redis.subscribe("channel:cancel")
+    channel = await redis.subscribe("channel:cancel")
 
     await jobs_client.cancel("foo")
 
