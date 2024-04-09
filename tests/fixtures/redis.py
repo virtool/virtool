@@ -1,6 +1,5 @@
-from virtool_core.redis import Redis , create_redis_pool
+from virtool_core.redis import Redis
 import pytest
-
 
 
 @pytest.fixture
@@ -19,7 +18,7 @@ async def redis(redis_connection_string, worker_id):
     """
     A connected Redis client for testing.
     """
-    client = await create_redis_pool(redis_connection_string)
+    client = Redis(redis_connection_string)
     await client.flushdb()
 
     yield client
