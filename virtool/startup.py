@@ -8,7 +8,7 @@ from aiojobs.aiohttp import get_scheduler_from_app
 from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
-from virtool_core.redis import connect as connect_redis, periodically_ping_redis
+from virtool_core.redis import connect as connect_redis
 
 from virtool.authorization.client import (
     AuthorizationClient,
@@ -136,7 +136,7 @@ async def startup_databases(app: App):
     if not get_config_from_app(app).no_revision_check:
         await check_data_revision_version(pg)
 
-    await get_scheduler_from_app(app).spawn(periodically_ping_redis(redis))
+    await get_scheduler_from_app(app).spawn(redis.periodically_ping())
 
     app.update(
         {
