@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Awaitable, Callable, AsyncIterable
 from structlog import get_logger
 from virtool_core.models.basemodel import BaseModel
-from virtool_core.redis import Redis, resubscribe, ChannelClosedError
+from virtool_core.redis import Redis, resubscribe, Channel, ChannelClosedError
 
 from virtool.api.custom_json import dump_string
 from virtool.utils import timestamp, get_model_by_name

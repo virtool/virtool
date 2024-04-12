@@ -1,7 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 
-from virtool_core.redis import Redis, ConnectionClosedError
+from virtool_core.redis import Redis
 
 REDIS_TASKS_LIST_KEY = "tasks"
 
