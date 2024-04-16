@@ -32,11 +32,10 @@ class TasksClient(AbstractTasksClient):
     async def _blpop(self):
         while True:
             try:
-                async with self.redis.client() as conn:
-                    return await conn.blpop(REDIS_TASKS_LIST_KEY)
+                return await self.redis.blpop(REDIS_TASKS_LIST_KEY)
             except (
                 ConnectionRefusedError,
                 ConnectionResetError,
-                ConnectionClosedError,
+                ConnectionError,
             ):
                 await asyncio.sleep(5)
