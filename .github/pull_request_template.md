@@ -13,36 +13,32 @@ Sources of breaking changes:
 * Changing paths or search query parameters.
 * Removing deprecated functionality.
 
-
-* [ ] Any changes I have made to the API are backwards compatible.
+- [ ] Any changes I have made to the API are backwards compatible.
 
 ### Migration
 * Making changes that require a certain migration to have been applied.
 
-
-* [ ] My changes do not require a newer migration than the currently required migration..
+- [ ] My changes do not require a newer migration than the currently required migration..
 
 ### Configuration
 * Changing configuration options that could break configurations in 
   production and development environments.
 
-
-* [ ] My changes do not change configuration value names or types.
+- [ ] My changes do not change configuration value names or types.
 
 ### Services
 
 * Making changes that require a certain version of a service like Postgres, Redis, or
   OpenFGA.
 
-
-* [ ] My changes don't impose any new requirements on services.
+- [ ] My changes don't impose any new service requirements.
 
 ### Notes
 
 _If you have introduced breaking changes, explain here._
 
 ## Pre-Review Checklist
-- [ ] All changes are tested.
-- [ ] All touched code documentation is updated.
-- [ ] Deepsource issues have been reviewed and addressed.
-- [ ] Comments and `print` statements have been removed.
+* [ ] All changes are tested.
+* [ ] All touched code documentation is updated.
+* [ ] Deepsource issues have been reviewed and addressed.
+* [ ] Comments and `print` statements have been removed.
