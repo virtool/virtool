@@ -13,25 +13,27 @@ Sources of breaking changes:
 * Changing paths or search query parameters.
 * Removing deprecated functionality.
 
+
 * [ ] Any changes I have made to the API are backwards compatible.
 
 ### Migration
 * Making changes that require a certain migration to have been applied.
+
 
 * [ ] My changes do not require a newer migration than the currently required migration..
 
 ### Configuration
 * Changing configuration options that could break configurations in 
   production and development environments.
-* My 
 
-_Choose one_:
+
 * [ ] My changes do not change configuration value names or types.
 
 ### Services
 
 * Making changes that require a certain version of a service like Postgres, Redis, or
   OpenFGA.
+
 
 * [ ] My changes don't impose any new requirements on services.
 
