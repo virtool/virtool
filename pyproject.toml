@@ -65,14 +65,11 @@ setuptools = "^69.0.3"
 virtool = "virtool.config.cli:entry"
 
 [tool.poetry.group.dev.dependencies]
-isort = "^5.12.0"
 aiohttp-devtools = "^0.0.2"
 pytest-mock = "^3.11.1"
 pytest-regressions = "^2.2.0"
 pytest-xdist = "^3.3.1"
 pytest-aiohttp = "^1.0.4"
-pre-commit = "^3.3.3"
-black = "^23.3.0"
 pytest-rerunfailures = "^10.2"
 pytest-asyncio = "^0.21.0"
 sphinx = "^7.0.1"
@@ -82,6 +79,7 @@ sphinx-autodoc-typehints = "^1.24.0"
 sphinx-toolbox = "^3.5.0"
 pytest-structlog = "^0.6"
 mypy = "^1.6.0"
+ruff = "^0.4.1"
 
 [tool.pytest.ini_options]
 addopts = "--capture tee-sys"
@@ -89,6 +87,9 @@ asyncio_mode = "auto"
 markers = ["apitest", "serial"]
 python_files = ["test_*.py", "rev_*.py"]
 testpaths = ["tests", "assets/revisions"]
+
+[tool.ruff.lint]
+select = ["ALL"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
