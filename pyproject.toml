@@ -87,7 +87,7 @@ mypy = "^1.6.0"
 addopts = "--capture tee-sys"
 asyncio_mode = "auto"
 python_files = ["test_*.py", "rev_*.py"]
-testpaths = ["tests", "assets/revisions"A]
+testpaths = ["tests", "assets/revisions"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
