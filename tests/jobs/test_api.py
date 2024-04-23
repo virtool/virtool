@@ -155,7 +155,6 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake2: DataFaker, snapshot, spawn_client):
     client = await spawn_client(authenticated=True)
@@ -302,7 +301,6 @@ class TestPing:
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error", [None, "not_found", "invalid_archived", "none_archived"]
 )
@@ -377,7 +375,6 @@ async def test_bulk_archive(
     assert body == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
@@ -421,7 +418,6 @@ async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test
     assert "key" not in body
 
 
-@pytest.mark.apitest
 class TestPushStatus:
     @pytest.mark.parametrize("error", [None, 404, 409])
     async def test(

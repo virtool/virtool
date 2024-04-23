@@ -3,7 +3,6 @@ import pytest
 from tests.fixtures.client import ClientSpawner
 
 
-@pytest.mark.apitest
 async def test_get(snapshot, spawn_client: ClientSpawner, test_settings):
     client = await spawn_client(authenticated=True)
 
@@ -13,7 +12,6 @@ async def test_get(snapshot, spawn_client: ClientSpawner, test_settings):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_update(snapshot, spawn_client: ClientSpawner, test_settings):
     client = await spawn_client(administrator=True, authenticated=True)
 

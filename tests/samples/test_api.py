@@ -247,7 +247,6 @@ async def find_samples_client(
     return client
 
 
-@pytest.mark.apitest
 class TestFind:
     @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
@@ -321,7 +320,6 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestGet:
     async def test_administrator(
         self, get_sample_data, snapshot: SnapshotAssertion, spawn_client: ClientSpawner
@@ -437,7 +435,6 @@ class TestGet:
         assert await resp.json() == snapshot(name="resp")
 
 
-@pytest.mark.apitest
 class TestCreate:
     @pytest.mark.parametrize(
         "group_setting", ["none", "users_primary_group", "force_choice"]
@@ -680,7 +677,6 @@ class TestCreate:
         await resp_is.bad_request(resp, "Labels do not exist: [1]")
 
 
-@pytest.mark.apitest
 class TestEdit:
     async def test_ok(self, get_sample_data, snapshot, spawn_client: ClientSpawner):
         """Test that an existing sample can be edited correctly."""
@@ -803,7 +799,6 @@ class TestEdit:
         assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
 async def test_finalize(
     field: str, snapshot, resp_is, spawn_job_client, tmp_path, get_sample_ready_false
@@ -841,7 +836,6 @@ async def test_finalize(
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
 
 
-@pytest.mark.apitest
 class TestDelete:
     @pytest.mark.parametrize("finalized", [True, False])
     async def test_ok(
@@ -899,7 +893,6 @@ class TestDelete:
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 async def test_find_analyses(
     fake2: DataFaker,
     snapshot: SnapshotAssertion,
@@ -1004,7 +997,6 @@ async def test_find_analyses(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [None, "400_reference", "400_index", "400_ready_index", "400_subtraction", "404"],
@@ -1085,7 +1077,6 @@ async def test_analyze(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_cache_job_remove(
@@ -1116,7 +1107,6 @@ async def test_cache_job_remove(
         assert not (tmp_path / "caches" / "foo").is_dir()
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifact(
     error: int | None,
@@ -1172,7 +1162,6 @@ async def test_upload_artifact(
         await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
 
-@pytest.mark.apitest
 class TestUploadReads:
     async def test(
         self,
@@ -1255,7 +1244,6 @@ class TestUploadReads:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get_cache(error, snapshot, mongo: Mongo, spawn_job_client, resp_is):
     client = await spawn_job_client(authorize=True)
@@ -1279,7 +1267,6 @@ async def test_get_cache(error, snapshot, mongo: Mongo, spawn_job_client, resp_i
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("suffix", ["1", "2"])
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
 async def test_download_reads(
@@ -1334,7 +1321,6 @@ async def test_download_reads(
         )
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
 async def test_download_artifact(error, tmp_path, mongo: Mongo, spawn_job_client, pg):
     client = await spawn_job_client(authorize=True)

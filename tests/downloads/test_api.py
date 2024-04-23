@@ -4,7 +4,6 @@ from tests.fixtures.client import ClientSpawner
 from virtool.mongo.core import Mongo
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_all(

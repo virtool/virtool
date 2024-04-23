@@ -81,7 +81,6 @@ class TestCreate:
         assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
@@ -106,7 +105,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestUpdate:
     async def test(
         self, fake2: DataFaker, spawn_client: ClientSpawner, snapshot: SnapshotAssertion
@@ -147,7 +145,6 @@ class TestUpdate:
         assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_delete(status: int, fake2: DataFaker, spawn_client: ClientSpawner):
     """

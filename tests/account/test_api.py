@@ -12,7 +12,6 @@ from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, hash_password
 
 
-@pytest.mark.apitest
 async def test_get(snapshot, spawn_client, static_time):
     client = await spawn_client(authenticated=True)
 
@@ -22,7 +21,6 @@ async def test_get(snapshot, spawn_client, static_time):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [
@@ -76,7 +74,6 @@ async def test_update(
     assert await resp.json() == snapshot(name="response")
 
 
-@pytest.mark.apitest
 async def test_get_settings(spawn_client):
     """
     Test that a ``GET /account/settings`` returns the settings for the session user.
@@ -96,7 +93,6 @@ async def test_get_settings(spawn_client):
     }
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "data,status",
     [
@@ -131,7 +127,6 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
     assert await resp.json() == snapshot(name="response")
 
 
-@pytest.mark.apitest
 async def test_get_api_keys(
     fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, snapshot, static_time
 ):
@@ -170,7 +165,6 @@ async def test_get_api_keys(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
@@ -240,7 +234,6 @@ class TestCreateAPIKey:
         assert await mongo.keys.find_one({"id": "foobar_1"}) == snapshot
 
 
-@pytest.mark.apitest
 class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])
     @pytest.mark.parametrize("has_perm", [True, False, "missing"])
@@ -314,7 +307,6 @@ class TestUpdateAPIKey:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_remove_api_key(
     error, mongo: Mongo, spawn_client: ClientSpawner, snapshot
@@ -342,7 +334,6 @@ async def test_remove_api_key(
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_remove_all_api_keys(
     fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner
 ):
@@ -372,7 +363,6 @@ async def test_remove_all_api_keys(
     ]
 
 
-@pytest.mark.apitest
 async def test_logout(spawn_client):
     """
     Test that calling the logout endpoint results in the current session being removed and the user being logged
@@ -394,7 +384,6 @@ async def test_logout(spawn_client):
     assert resp.status == 401
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "method,path",
     [
@@ -435,7 +424,6 @@ async def test_requires_authorization(method: str, path: str, spawn_client):
     assert resp.status == 401
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_permissions", "invalid_permissions"])
 async def test_is_permission_dict(value, spawn_client, resp_is):
     """
@@ -463,7 +451,6 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
 async def test_is_valid_email(value, spawn_client, resp_is):
     """
@@ -493,7 +480,6 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         ]
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [
@@ -528,7 +514,6 @@ async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, sn
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "request_path,correct_code",
     [

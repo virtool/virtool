@@ -5,7 +5,6 @@ from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 
 
-@pytest.mark.apitest
 class TestFind:
     async def test_find(
         self, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
@@ -63,7 +62,6 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
@@ -92,7 +90,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
 async def test_create(
     error: str | None,
@@ -134,7 +131,6 @@ async def test_create(
         assert resp.status == 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(
     error: str | None,
@@ -195,7 +191,6 @@ async def test_edit(
             assert resp.status == 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
     status: int,
@@ -240,7 +235,6 @@ async def test_remove(
         assert label_3.id in label_ids_in_samples
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
 async def test_is_valid_hex_color(value: str, resp_is, spawn_client: ClientSpawner):
     """

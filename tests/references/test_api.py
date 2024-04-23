@@ -22,7 +22,6 @@ from virtool.tasks.models import SQLTask
 from virtool.users.oas import UpdateUserRequest
 
 
-@pytest.mark.apitest
 async def test_find(
     data_layer: DataLayer,
     fake2: DataFaker,
@@ -134,7 +133,6 @@ async def test_find(
     assert {d["id"] for d in body["documents"]} == {"foo", "bar", "goo"}
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [404, None])
 async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authenticated=True, administrator=True)
@@ -196,7 +194,6 @@ async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, stati
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 class TestCreate:
     @pytest.mark.parametrize("data_type", ["genome", "barcode"])
     async def test_ok(
@@ -347,7 +344,6 @@ class TestCreate:
         )
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize(
     "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
@@ -455,7 +451,6 @@ async def test_edit(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 async def test_delete(
     fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, static_time
 ):
@@ -505,7 +500,6 @@ async def test_delete(
     assert resp.status == 204
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(
     error, mocker, mongo: Mongo, spawn_client, resp_is, snapshot
@@ -578,7 +572,6 @@ async def test_get_release(
     )
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
 async def test_list_updates(
     empty, mocker, mongo: Mongo, spawn_client, id_exists, resp_is, snapshot
@@ -626,7 +619,6 @@ async def test_list_updates(
     m_get_one_field.assert_called_with(ANY, "updates", "foo")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_update(
     error: str | None,
@@ -685,7 +677,6 @@ async def test_update(
         assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
 
 
-@pytest.mark.apitest
 class TestCreateOTU:
     @pytest.mark.parametrize("abbreviation", [None, "TMV", ""])
     @pytest.mark.parametrize("error", [None, "403", "404"])
@@ -819,7 +810,6 @@ class TestCreateOTU:
             await resp_is.bad_request(resp, message)
 
 
-@pytest.mark.apitest
 async def test_create_index(
     check_ref_right,
     fake2: DataFaker,
@@ -875,7 +865,6 @@ async def test_create_index(
     m_create_manifest.assert_called_with(ANY, "foo")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_user(
     error: str | None,
@@ -959,7 +948,6 @@ async def test_create_user(
             await resp_is.bad_request(resp, "User already exists")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_group(
     error: str | None,
@@ -1089,7 +1077,6 @@ async def test_update_user(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [None, "404_group", "404_ref"],
@@ -1156,7 +1143,6 @@ async def test_update_group(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [None, "404_ref", "404_user"],
@@ -1219,7 +1205,6 @@ async def test_delete_user(
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_group", "404_ref"])
 async def test_delete_group(
     error: str | None,
@@ -1280,7 +1265,6 @@ async def test_delete_group(
         assert await mongo.references.find_one() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "Prunus", "virus", "PVF", "VF"])
 @pytest.mark.parametrize("verified", [None, True, False])
 async def test_find_otus(

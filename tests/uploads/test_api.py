@@ -19,7 +19,6 @@ def upload_request_form(example_path: Path):
     }
 
 
-@pytest.mark.apitest
 class TestUpload:
     async def test(
         self,
@@ -77,7 +76,6 @@ class TestUpload:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestFind:
     @pytest.mark.parametrize(
         "upload_type", [UploadType.reads, UploadType.reference, None]
@@ -158,7 +156,6 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_get(
     config: ServerConfig,
     example_path: Path,
@@ -180,7 +177,6 @@ async def test_get(
     assert await resp.read() == open(example_path / "reads/single.fq.gz", "rb").read()
 
 
-@pytest.mark.apitest
 async def test_delete(fake2: DataFaker, resp_is, spawn_client: ClientSpawner):
     """
     Test `DELETE /uploads/:id to assure that it properly deletes an existing

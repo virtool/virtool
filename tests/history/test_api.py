@@ -6,7 +6,6 @@ from tests.fixtures.client import ClientSpawner
 from virtool.mongo.core import Mongo
 
 
-@pytest.mark.apitest
 async def test_find(
     snapshot, mongo: Mongo, spawn_client: ClientSpawner, test_changes, static_time
 ):
@@ -31,7 +30,6 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error,
@@ -69,7 +67,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
 async def test_revert(

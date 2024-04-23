@@ -42,7 +42,6 @@ async def setup_update_user(
     return client, group_1, group_2, await fake2.users.create(groups=[group_1])
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "fred"])
 async def test_find(
     find: str | None,
@@ -70,7 +69,6 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
@@ -96,7 +94,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
 async def test_create(
     error: str | None,
@@ -164,7 +161,6 @@ async def test_create(
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
-@pytest.mark.apitest
 class TestUpdate:
     async def test_ok(
         self, setup_update_user, snapshot: SnapshotAssertion, static_time

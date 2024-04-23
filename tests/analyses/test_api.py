@@ -30,7 +30,6 @@ def create_files(test_files_path, tmp_path):
     return files
 
 
-@pytest.mark.apitest
 async def test_find(
     mocker,
     fake2: DataFaker,
@@ -127,7 +126,6 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("ready, exists", [(True, True), (False, False)])
 @pytest.mark.parametrize(
     "error",
@@ -255,7 +253,6 @@ async def test_get(
         await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get_304(
     ready: bool,
@@ -316,7 +313,6 @@ async def test_get_304(
     assert resp.status == 304
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "403", "404_analysis", "404_sample", "409"])
 async def test_remove(
     error: str | None,
@@ -404,7 +400,6 @@ async def test_remove(
             await resp_is.conflict(resp, "Analysis is still running")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
     error: str | None,
@@ -534,7 +529,6 @@ class TestDownloadAnalysisResult:
         assert await resp.json() == {"id": "not_found", "message": "Not found"}
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("extension", ["csv", "xlsx", "bug"])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_download_analysis_document(
@@ -579,7 +573,6 @@ async def test_download_analysis_document(
             assert resp.status == 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [
@@ -674,7 +667,6 @@ async def test_blast(
         await resp_is.conflict(resp, "Analysis is still running")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
 async def test_finalize(
     error: str | None,
@@ -755,7 +747,6 @@ async def test_finalize(
         assert document["ready"] is True
 
 
-@pytest.mark.apitest
 async def test_finalize_large(
     fake2: DataFaker, snapshot: SnapshotAssertion, spawn_job_client, static_time
 ):

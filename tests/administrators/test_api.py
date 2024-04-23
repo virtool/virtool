@@ -26,7 +26,6 @@ snapshots.
 """
 
 
-@pytest.mark.apitest
 async def test_get_roles(spawn_client: ClientSpawner, snapshot):
     client = await spawn_client(
         administrator=True,
@@ -39,7 +38,6 @@ async def test_get_roles(spawn_client: ClientSpawner, snapshot):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_list_users(
     authorization_client: AuthorizationClient,
     spawn_client: ClientSpawner,
@@ -67,7 +65,6 @@ async def test_list_users(
     )
 
 
-@pytest.mark.apitest
 async def test_get_user(
     authorization_client: AuthorizationClient,
     fake2: DataFaker,
@@ -92,7 +89,6 @@ async def test_get_user(
     assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
 async def test_create(
     error: str | None,
@@ -160,7 +156,6 @@ async def test_create(
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "role", [None, AdministratorRole.USERS, AdministratorRole.FULL]
 )
@@ -180,7 +175,6 @@ async def test_update_admin_role(
     assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
-@pytest.mark.apitest
 class TestUpdateUser:
     async def test_force_reset(
         self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
@@ -386,7 +380,6 @@ class TestAdministratorRoles:
         }
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("name,status", [("relist_jobs", 202), ("foo", 400)])
 async def test_run_actions(name: str, status: int, spawn_client: ClientSpawner):
     client = await spawn_client(

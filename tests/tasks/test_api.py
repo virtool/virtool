@@ -5,7 +5,6 @@ from tests.fixtures.client import ClientSpawner
 from virtool.tasks.models import SQLTask
 
 
-@pytest.mark.apitest
 async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
     """
     Test that a ``GET /tasks`` return a complete list of tasks.
@@ -48,7 +47,6 @@ async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error: str | None,

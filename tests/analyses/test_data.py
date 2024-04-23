@@ -159,7 +159,6 @@ async def test_create_analysis_id(
     )
 
 
-@pytest.mark.apitest
 async def test_upload_file(
     data_layer: DataLayer,
     example_path: Path,
