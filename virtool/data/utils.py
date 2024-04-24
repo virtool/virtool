@@ -1,18 +1,17 @@
-from __future__ import annotations
+"""Utility functions for the data layer."""
 
-import typing
+from typing import TYPE_CHECKING
 
 from aiohttp.web_request import Request
 
 from virtool.types import App
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
 
-def get_data_from_app(app: App) -> DataLayer:
-    """
-    Get the application data layer object from the :class:``Application`` object.
+def get_data_from_app(app: App) -> "DataLayer":
+    """Get the application data layer object from the :class:``Application`` object.
 
     :param app: the application object
     :return: the application data layer
@@ -20,9 +19,8 @@ def get_data_from_app(app: App) -> DataLayer:
     return app["data"]
 
 
-def get_data_from_req(req: Request) -> DataLayer:
-    """
-    Get the application data layer object from a :class:``Request`` object.
+def get_data_from_req(req: Request) -> "DataLayer":
+    """Get the application data layer object from a :class:``Request`` object.
 
     :param req: an aiohttp request
     :return: the application data layer

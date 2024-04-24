@@ -1,5 +1,4 @@
-"""
-Transforms are used to attach additional data to a dictionary before it is sent to the
+"""Transforms are used to attach additional data to a dictionary before it is sent to the
 client.
 
 For example, you have a ``dict`` like the following:
@@ -47,7 +46,6 @@ have the same user ID, you could override :meth:`prepare_many` to only query the
 collection once for each unique user ID.
 
 """
-from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
@@ -60,8 +58,7 @@ from virtool.types import Document
 
 
 class AbstractTransform(ABC):
-    """
-    A base class for writing transforms.
+    """A base class for writing transforms.
 
     Override the :meth:`prepare_one` and :meth:`attach_one` methods to implement attach
     data to a single document.
@@ -72,15 +69,12 @@ class AbstractTransform(ABC):
     """
 
     def preprocess(self, document: Document) -> Document:
-        """
-        Perform any necessary operations on documents before the transform is applied.
-        """
+        """Perform any necessary operations on documents before the transform is applied."""
         return document
 
     @abstractmethod
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        """
-        Attaches data to a single document.
+        """Attaches data to a single document.
 
         This method must be overriden to implement a transform.
 
@@ -91,7 +85,9 @@ class AbstractTransform(ABC):
         ...
 
     async def attach_many(
-        self, documents: list[Document], prepared: Document
+        self,
+        documents: list[Document],
+        prepared: Document,
     ) -> list[Document]:
         return [
             await self.attach_one(document, prepared[document["id"]])
@@ -99,8 +95,7 @@ class AbstractTransform(ABC):
         ]
 
     @abstractmethod
-    async def prepare_one(self, document: Document) -> Any:
-        ...
+    async def prepare_one(self, document: Document) -> Any: ...
 
     async def prepare_many(self, documents: list[Document]) -> Any:
         return {
@@ -109,10 +104,10 @@ class AbstractTransform(ABC):
 
 
 async def apply_transforms(
-    documents: Document | list[Document], pipeline: list[AbstractTransform]
+    documents: Document | list[Document],
+    pipeline: list[AbstractTransform],
 ) -> Document | list[Document]:
-    """
-    Apply a list of transforms to one or more documents.
+    """Apply a list of transforms to one or more documents.
 
     The function will concurrently prepare the data to be attached and then attach it to
     the documents. **Transforms are applied in the order they are listed**.
@@ -134,12 +129,13 @@ async def apply_transforms(
                 *[
                     transform.prepare_many([transform.preprocess(d) for d in documents])
                     for transform in pipeline
-                ]
+                ],
             )
 
             for prepared, transform in zip(all_prepared, pipeline):
                 documents = await transform.attach_many(
-                    [transform.preprocess(d) for d in documents], prepared
+                    [transform.preprocess(d) for d in documents],
+                    prepared,
                 )
 
             return documents
@@ -151,7 +147,7 @@ async def apply_transforms(
             *[
                 transform.prepare_one(transform.preprocess(document))
                 for transform in pipeline
-            ]
+            ],
         )
 
         for p, transform in zip(prepared, pipeline):

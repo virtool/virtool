@@ -1,12 +1,8 @@
-"""
-Work with subtractions in the database.
-
-"""
-from __future__ import annotations
+"""Work with subtractions in the database."""
 
 import asyncio
 import glob
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -37,8 +33,7 @@ ADD_SUBTRACTION_FILES_QUERY = {"deleted": False}
 
 
 def subtraction_processor(document: Document) -> Document:
-    """
-    Process a subtraction document for client-side.
+    """Process a subtraction document for client-side.
 
     :param document: the subtraction document to process
     :return: the processed document
@@ -48,13 +43,12 @@ def subtraction_processor(document: Document) -> Document:
 
 
 class AttachSubtractionsTransform(AbstractTransform):
-    """
-    Attach more subtraction detail to a document with a field `subtractions` that
+    """Attach more subtraction detail to a document with a field `subtractions` that
     contains a list of subtraction IDs.
     """
 
-    def __init__(self, db):
-        self._db = db
+    def __init__(self, mongo: "Mongo"):
+        self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, "subtractions": prepared}
@@ -64,7 +58,9 @@ class AttachSubtractionsTransform(AbstractTransform):
             {
                 "id": subtraction_id,
                 "name": await get_one_field(
-                    self._db.subtraction, "name", subtraction_id
+                    self._mongo.subtraction,
+                    "name",
+                    subtraction_id,
                 ),
             }
             for subtraction_id in document["subtractions"]
@@ -75,8 +71,9 @@ class AttachSubtractionsTransform(AbstractTransform):
 
         subtraction_lookup = {
             d["_id"]: {"id": d["_id"], "name": d["name"]}
-            async for d in self._db.subtraction.find(
-                {"_id": {"$in": list(subtraction_ids)}}, ["_id", "name"]
+            async for d in self._mongo.subtraction.find(
+                {"_id": {"$in": list(subtraction_ids)}},
+                ["_id", "name"],
             )
         }
 
@@ -87,10 +84,12 @@ class AttachSubtractionsTransform(AbstractTransform):
 
 
 async def attach_computed(
-    mongo, pg: AsyncEngine, base_url: str, subtraction: dict[str, Any]
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    base_url: str,
+    subtraction: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
+    """Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
     document.
 
     Queries MongoDB and SQL to find the required data. Returns a new document
@@ -111,16 +110,15 @@ async def attach_computed(
     )
 
     for file in files:
-        file[
-            "download_url"
-        ] = f"{base_url}/subtractions/{subtraction_id}/files/{file['name']}"
+        file["download_url"] = (
+            f"{base_url}/subtractions/{subtraction_id}/files/{file['name']}"
+        )
 
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 
 
-async def check_subtraction_fasta_files(mongo: Mongo, config: Config) -> list:
-    """
-    Check subtraction directories for files
+async def check_subtraction_fasta_files(mongo: "Mongo", config: Config) -> list:
+    """Check subtraction directories for files
 
     :param mongo: the application database client
     :param config: the application configuration
@@ -138,9 +136,8 @@ async def check_subtraction_fasta_files(mongo: Mongo, config: Config) -> list:
     return subtractions_without_fasta
 
 
-async def get_linked_samples(mongo: Mongo, subtraction_id: str) -> list[dict]:
-    """
-    Find all samples containing given 'subtraction_id' in 'subtractions' field.
+async def get_linked_samples(mongo: "Mongo", subtraction_id: str) -> list[dict]:
+    """Find all samples containing given 'subtraction_id' in 'subtractions' field.
 
     :param mongo: the application database client
     :param subtraction_id: the ID of the subtraction
@@ -150,16 +147,18 @@ async def get_linked_samples(mongo: Mongo, subtraction_id: str) -> list[dict]:
     return [
         base_processor(d)
         async for d in mongo.samples.find(
-            {"subtractions": subtraction_id}, ["_id", "name"]
+            {"subtractions": subtraction_id},
+            ["_id", "name"],
         )
     ]
 
 
 async def unlink_default_subtractions(
-    mongo: Mongo, subtraction_id: str, session: AsyncIOMotorClientSession
+    mongo: "Mongo",
+    subtraction_id: str,
+    session: AsyncIOMotorClientSession,
 ):
-    """
-    Remove a subtraction as a default subtraction for samples.
+    """Remove a subtraction as a default subtraction for samples.
 
     :param mongo: the application mongo object
     :param subtraction_id: the id of the subtraction to remove
@@ -171,18 +170,20 @@ async def unlink_default_subtractions(
         session=session,
     )
 
+
 async def get_subtraction_names(
-    mongo: Mongo, subtraction_ids: list[str]
+    mongo: "Mongo",
+    subtraction_ids: list[str],
 ) -> list[dict[str, str]]:
-    """
-    Retrieve a list of subtraction names and ids.
+    """Retrieve a list of subtraction names and ids.
 
     :param mongo: the application database client
     :param subtraction_ids: list containing subtraction ids
     :return: list of dictionaries containing {"_id": sub_id, "name": sub_name}
     """
     subtractions = await mongo.subtraction.find(
-        {"_id": {"$in": subtraction_ids}}, projection=["_id", "name"]
+        {"_id": {"$in": subtraction_ids}},
+        projection=["_id", "name"],
     ).to_list(length=len(subtraction_ids))
 
     return subtractions

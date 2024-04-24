@@ -1,4 +1,5 @@
 import os
+from typing import TYPE_CHECKING
 
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request
@@ -8,13 +9,15 @@ from virtool.api.errors import APIUnauthorized
 from virtool.types import RouteHandler
 from virtool.utils import hash_key
 
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
+
 PUBLIC_ROUTES = [("PATCH", "/jobs")]
 
 
 @web.middleware
 async def middleware(request: Request, handler: RouteHandler):
-    """
-    Ensure that the request was sent as part of an active job.
+    """Ensure that the request was sent as part of an active job.
 
     Uses HTTP basic access authentication, where the authorization header format is:
 
@@ -35,23 +38,26 @@ async def middleware(request: Request, handler: RouteHandler):
 
         job_prefix, job_id = holder_id.split("-")
         if job_prefix != "job":
-            raise ValueError()
+            raise ValueError
     except KeyError:
         raise APIUnauthorized(
-            "No authorization header", error_id="malformed_authorization_header"
+            "No authorization header",
+            error_id="malformed_authorization_header",
         )
     except ValueError:
         raise APIUnauthorized(
-            "Invalid authorization header", error_id="malformed_authorization_header"
+            "Invalid authorization header",
+            error_id="malformed_authorization_header",
         )
 
-    db = request.app["db"]
+    mongo: "Mongo" = request.app["db"]
 
-    job = await db.jobs.find_one({"_id": job_id, "key": hash_key(key)})
+    job = await mongo.jobs.find_one({"_id": job_id, "key": hash_key(key)})
 
     if not job:
         raise APIUnauthorized(
-            "Invalid authorization header", error_id="malformed_authorization_header"
+            "Invalid authorization header",
+            error_id="malformed_authorization_header",
         )
 
     request["client"] = JobClient(job_id)

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from aioredis import Redis
@@ -9,10 +7,9 @@ from virtool.account.data import AccountData
 from virtool.administrators.data import AdministratorsData
 from virtool.analyses.data import AnalysisData
 from virtool.authorization.client import AuthorizationClient
-from virtool.data.http import HTTPClient
-from virtool.ml.data import MLData
 from virtool.blast.data import BLASTData
 from virtool.config import Config
+from virtool.data.http import HTTPClient
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmsData
@@ -21,6 +18,7 @@ from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.messages.data import MessagesData
+from virtool.ml.data import MLData
 from virtool.mongo.core import Mongo
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
@@ -37,9 +35,7 @@ from virtool.users.sessions import SessionData
 
 @dataclass
 class DataLayer:
-
-    """
-    Provides access to Virtool application data through an abstract interface over
+    """Provides access to Virtool application data through an abstract interface over
     database and storage.
 
     """
@@ -88,8 +84,7 @@ def create_data_layer(
     client,
     redis: Redis,
 ) -> DataLayer:
-    """
-    Create and return a data layer object.
+    """Create and return a data layer object.
 
     :param authorization_client: the authorization client
     :param mongo: the MongoDB client
