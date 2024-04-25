@@ -315,7 +315,7 @@ class IndexData:
         )
 
         data["documents"] = await apply_transforms(
-            data["documents"],
+            [base_processor(d) for d in data["documents"]],
             [AttachReferenceTransform(self._mongo), AttachUserTransform(self._mongo)],
         )
 

@@ -1,7 +1,7 @@
 """Core database classes."""
 
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable, Optional
+from typing import Callable
 
 from motor.motor_asyncio import (
     AsyncIOMotorClientSession,
@@ -10,11 +10,9 @@ from motor.motor_asyncio import (
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
-import virtool.references.db
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.mongo.utils import id_exists
 from virtool.types import Document, Projection
-from virtool.utils import base_processor
 
 
 class Collection:
@@ -25,16 +23,10 @@ class Collection:
 
     """
 
-    def __init__(
-        self,
-        mongo: "Mongo",
-        name: str,
-        processor: Callable[[Any, Document], Awaitable[Document]],
-    ):
+    def __init__(self, mongo: "Mongo", name: str):
         self.mongo = mongo
         self.name = name
         self._collection = mongo.motor_database[name]
-        self.processor = processor
 
         self.aggregate = self._collection.aggregate
         self.bulk_write = self._collection.bulk_write
@@ -51,12 +43,6 @@ class Collection:
         self.replace_one = self._collection.replace_one
         self.update_many = self._collection.update_many
         self.update_one = self._collection.update_one
-
-    async def apply_processor(self, document):
-        if self.processor:
-            return await self.processor(self.mongo, document)
-
-        return base_processor(document)
 
     async def find_one_and_update(
         self,
@@ -176,10 +162,7 @@ class Mongo:
         self.migrations = self.bind_collection("migrations")
         self.otus = self.bind_collection("otus")
         self.tasks = self.bind_collection("tasks")
-        self.references = self.bind_collection(
-            "references",
-            processor=virtool.references.db.processor,
-        )
+        self.references = self.bind_collection("references")
         self.samples = self.bind_collection("samples")
         self.settings = self.bind_collection("settings")
         self.sequences = self.bind_collection("sequences")
@@ -188,12 +171,8 @@ class Mongo:
         self.subtraction = self.bind_collection("subtraction")
         self.users = self.bind_collection("users")
 
-    def bind_collection(
-        self,
-        name: str,
-        processor: Optional[Callable] = None,
-    ) -> Collection:
-        return Collection(self, name, processor)
+    def bind_collection(self, name: str) -> Collection:
+        return Collection(self, name)
 
     @asynccontextmanager
     async def create_session(self):

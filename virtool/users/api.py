@@ -35,6 +35,7 @@ from virtool.users.oas import (
     UpdateUserRequest,
 )
 from virtool.users.transforms import AttachPermissionsTransform
+from virtool.utils import base_processor
 
 routes = Routes()
 
@@ -77,7 +78,7 @@ class UsersView(PydanticView):
         )
 
         data["documents"] = await apply_transforms(
-            data["documents"],
+            [base_processor(d) for d in data["documents"]],
             [AttachPermissionsTransform(pg)],
         )
 

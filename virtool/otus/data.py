@@ -751,7 +751,7 @@ class OTUData:
             )
         ):
             document = await apply_transforms(
-                document,
+                base_processor(document),
                 [AttachReferenceTransform(self._mongo)],
             )
             return Sequence(**document)

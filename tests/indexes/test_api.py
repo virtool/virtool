@@ -13,6 +13,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
@@ -34,8 +35,8 @@ class TestFind:
         self,
         fake2: DataFaker,
         mocker,
-        snapshot,
         mongo: Mongo,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time,
     ):

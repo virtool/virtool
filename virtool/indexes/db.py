@@ -21,6 +21,7 @@ from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
+from virtool.utils import base_processor
 
 INDEX_FILE_NAMES = (
     "reference.fa.gz",
@@ -136,19 +137,6 @@ async def create(
     return document
 
 
-async def processor(mongo: "Mongo", document: Document) -> dict:
-    """A processor for index documents. Adds computed data about the index.
-
-    :param mongo: the application database client
-    :param document: the document to be processed
-    :return: the processed document
-    """
-    return await apply_transforms(
-        virtool.utils.base_processor(document),
-        [AttachUserTransform(mongo), IndexCountsTransform(mongo)],
-    )
-
-
 async def find(
     mongo: "Mongo",
     req_query: Mapping,
@@ -195,7 +183,7 @@ async def find(
         **data,
         **unbuilt_stats,
         "documents": await apply_transforms(
-            data["documents"],
+            [base_processor(d) for d in data["documents"]],
             [
                 AttachJobTransform(mongo),
                 AttachReferenceTransform(mongo),

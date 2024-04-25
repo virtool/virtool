@@ -613,7 +613,7 @@ async def list_history(req):
 
     return json_response(
         await apply_transforms(
-            documents,
+            [base_processor(d) for d in documents],
             [AttachUserTransform(mongo, ignore_errors=True)],
         ),
     )

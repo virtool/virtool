@@ -186,7 +186,7 @@ class SamplesData(DataLayerDomain):
             total_count = paginate_dict.get("total_count", 0)
 
         documents = await apply_transforms(
-            [base_processor(document) for document in data],
+            [base_processor(d) for d in data],
             [
                 AttachLabelsTransform(self._pg),
                 AttachUserTransform(self._mongo),

@@ -67,28 +67,15 @@ class DiffTransform(AbstractTransform):
         return document["diff"]
 
 
-async def processor(mongo, document: Document) -> Document:
-    """Process a history document before it is returned to the client.
-
-    :param mongo: the application object
-    :param document: the document to process
-    :return: the processed document
-    """
-    return await apply_transforms(
-        base_processor(document),
-        [AttachUserTransform(mongo, ignore_errors=True)],
-    )
-
-
 async def add(
     mongo: "Mongo",
     data_path: Path,
     method_name: HistoryMethod,
-    old: Optional[dict],
-    new: Optional[dict],
+    old: dict | None,
+    new: dict | None,
     description: str,
     user_id: str,
-    session: Optional[AsyncIOMotorClientSession] = None,
+    session: AsyncIOMotorClientSession | None = None,
 ) -> dict:
     """Add a change document to the history collection.
 
@@ -205,7 +192,7 @@ async def find(mongo, req_query, base_query: Optional[Document] = None):
     return {
         **data,
         "documents": await apply_transforms(
-            data["documents"],
+            [base_processor(d) for d in data["documents"]],
             [AttachReferenceTransform(mongo), AttachUserTransform(mongo)],
         ),
     }
