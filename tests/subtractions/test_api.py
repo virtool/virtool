@@ -15,9 +15,10 @@ from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import SQLUpload
 
 
-@pytest.mark.apitest
 async def test_find_empty_subtractions(
-    snapshot, spawn_client: ClientSpawner, static_time
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -28,7 +29,6 @@ async def test_find_empty_subtractions(
 
 
 @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
-@pytest.mark.apitest
 async def test_find(
     page: int | None,
     per_page: int | None,
@@ -60,7 +60,7 @@ async def test_find(
                 "user": {"id": user.id},
                 "job": {"id": job.id},
             }
-            for number in range(0, 5)
+            for number in range(5)
         ],
         session=None,
     )
@@ -81,7 +81,6 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_get(
     fake2: DataFaker,
     mongo: Mongo,
@@ -109,7 +108,7 @@ async def test_get(
             "ready": True,
             "user": {"id": user.id},
             "job": {"id": job.id},
-        }
+        },
     )
 
     resp = await client.get("/subtractions/apple")
@@ -118,7 +117,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_get_from_job(fake, spawn_job_client, snapshot):
     client = await spawn_job_client(authorize=True)
 
@@ -130,7 +128,6 @@ async def test_get_from_job(fake, spawn_job_client, snapshot):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "data",
     [
@@ -185,7 +182,8 @@ async def test_edit(
         document["job"] = {"id": job.id}
 
     client = await spawn_client(
-        authenticated=True, permissions=[Permission.modify_subtraction]
+        authenticated=True,
+        permissions=[Permission.modify_subtraction],
     )
 
     await mongo.subtraction.insert_one(document)
@@ -197,7 +195,6 @@ async def test_edit(
     assert await mongo.subtraction.find_one() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("exists", [True, False])
 async def test_delete(
     exists: bool,
@@ -208,7 +205,8 @@ async def test_delete(
     tmp_path,
 ):
     client = await spawn_client(
-        authenticated=True, permissions=[Permission.modify_subtraction]
+        authenticated=True,
+        permissions=[Permission.modify_subtraction],
     )
 
     get_config_from_app(client.app).data_path = tmp_path
@@ -226,7 +224,7 @@ async def test_delete(
                 "nickname": "Foo Subtraction",
                 "user": {"id": user.id},
                 "job": {"id": job.id},
-            }
+            },
         )
 
     resp = await client.delete("subtractions/foo")
@@ -234,7 +232,6 @@ async def test_delete(
     assert resp.status == 204 if exists else 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
 async def test_upload(
     error: str | None,
@@ -268,7 +265,8 @@ async def test_upload(
         url = f"{url}/subtraction.1.bt2"
 
     resp = await client.put(
-        url, data={"file": open(test_dir / "subtraction.1.bt2", "rb")}
+        url,
+        data={"file": open(test_dir / "subtraction.1.bt2", "rb")},
     )
 
     match error:
@@ -276,7 +274,7 @@ async def test_upload(
             assert resp.status == 201
             assert await resp.json() == snapshot
             assert os.listdir(tmp_path / "subtractions" / "foo") == [
-                "subtraction.1.bt2"
+                "subtraction.1.bt2",
             ]
         case "404_name":
             await resp_is.not_found(resp, "Unsupported subtraction file name")
@@ -286,7 +284,6 @@ async def test_upload(
             await resp_is.conflict(resp, "File name already exists")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize(
     error: str | None,
@@ -343,11 +340,11 @@ async def test_finalize(
             await resp_is.conflict(resp, "Subtraction has already been finalized")
         case "422":
             await resp_is.invalid_input(
-                resp, {"gc": ["required field"], "count": ["required field"]}
+                resp,
+                {"gc": ["required field"], "count": ["required field"]},
             )
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_job_remove(
@@ -384,10 +381,10 @@ async def test_job_remove(
                     "ready": ready,
                     "user": {"id": user.id},
                     "job": {"job": job.id},
-                }
+                },
             ),
             mongo.samples.insert_one(
-                {"_id": "test", "name": "Test", "subtractions": ["foo"]}
+                {"_id": "test", "name": "Test", "subtractions": ["foo"]},
             ),
         )
 
@@ -404,10 +401,13 @@ async def test_job_remove(
         assert await mongo.samples.find_one("test") == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
 async def test_download_subtraction_files(
-    error, mongo, pg: AsyncEngine, spawn_job_client, tmp_path
+    error,
+    mongo,
+    pg: AsyncEngine,
+    spawn_job_client,
+    tmp_path,
 ):
     client = await spawn_job_client(authorize=True)
 
@@ -428,7 +428,10 @@ async def test_download_subtraction_files(
             session.add_all(
                 [
                     SQLSubtractionFile(
-                        id=1, name="subtraction.fa.gz", subtraction="foo", type="fasta"
+                        id=1,
+                        name="subtraction.fa.gz",
+                        subtraction="foo",
+                        type="fasta",
                     ),
                     SQLSubtractionFile(
                         id=2,
@@ -436,7 +439,7 @@ async def test_download_subtraction_files(
                         subtraction="foo",
                         type="bowtie2",
                     ),
-                ]
+                ],
             )
             await session.commit()
 
@@ -455,9 +458,14 @@ async def test_download_subtraction_files(
     assert (path / "subtraction.1.bt2").read_bytes() == await bowtie_resp.content.read()
 
 
-@pytest.mark.apitest
 async def test_create(
-    fake2, pg, mongo: Mongo, spawn_client, mocker, snapshot, static_time
+    fake2,
+    pg,
+    mongo: Mongo,
+    spawn_client,
+    mocker,
+    snapshot,
+    static_time,
 ):
     user = await fake2.users.create()
 

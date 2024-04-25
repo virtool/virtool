@@ -8,10 +8,12 @@ from virtool.groups.oas import PermissionsUpdate
 
 class TestFind:
     async def test_list(
-        self, fake2: DataFaker, snapshot: SnapshotAssertion, spawn_client: ClientSpawner
+        self,
+        fake2: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         """Test that a full list of groups is returned when pagination is not toggled."""
-
         for _ in range(10):
             await fake2.groups.create()
 
@@ -32,7 +34,8 @@ class TestFind:
         spawn_client: ClientSpawner,
     ):
         """Test that the correct page of groups and the correct search metadata values
-        are returned when `page` is `1` or `2`."""
+        are returned when `page` is `1` or `2`.
+        """
         for _ in range(4):
             await fake2.groups.create()
 
@@ -65,7 +68,10 @@ class TestCreate:
         assert await resp.json() == snapshot(name="json")
 
     async def test_duplicate(
-        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
         """Test that an error is returned when an existing group name is used."""
         client = await spawn_client(
@@ -81,7 +87,6 @@ class TestCreate:
         assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
@@ -106,10 +111,12 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestUpdate:
     async def test(
-        self, fake2: DataFaker, spawn_client: ClientSpawner, snapshot: SnapshotAssertion
+        self,
+        fake2: DataFaker,
+        spawn_client: ClientSpawner,
+        snapshot: SnapshotAssertion,
     ):
         client = await spawn_client(
             administrator=True,
@@ -147,17 +154,13 @@ class TestUpdate:
         assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_delete(status: int, fake2: DataFaker, spawn_client: ClientSpawner):
-    """
-    Test that an existing document can be removed at ``DELETE /groups/:group_id``.
-
-    """
+    """Test that an existing document can be removed at ``DELETE /groups/:group_id``."""
     client = await spawn_client(administrator=True, authenticated=True)
 
     group = await fake2.groups.create(
-        permissions=PermissionsUpdate(create_sample=True, remove_file=True)
+        permissions=PermissionsUpdate(create_sample=True, remove_file=True),
     )
 
     await fake2.users.create(groups=[group])

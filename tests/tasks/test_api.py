@@ -5,12 +5,8 @@ from tests.fixtures.client import ClientSpawner
 from virtool.tasks.models import SQLTask
 
 
-@pytest.mark.apitest
 async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
-    """
-    Test that a ``GET /tasks`` return a complete list of tasks.
-
-    """
+    """Test that a ``GET /tasks`` return a complete list of tasks."""
     client = await spawn_client(authenticated=True)
 
     async with AsyncSession(pg) as session:
@@ -38,7 +34,7 @@ async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
                     step="download",
                     type="import_reference",
                 ),
-            ]
+            ],
         )
         await session.commit()
 
@@ -48,7 +44,6 @@ async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error: str | None,
@@ -58,10 +53,7 @@ async def test_get(
     snapshot,
     static_time,
 ):
-    """
-    Test that a ``GET /tasks/:task_id`` return the correct task document.
-
-    """
+    """Test that a ``GET /tasks/:task_id`` return the correct task document."""
     client = await spawn_client(authenticated=True)
 
     if not error:
@@ -77,7 +69,7 @@ async def test_get(
                     progress=100,
                     step="download",
                     type="clone_reference",
-                )
+                ),
             )
             await session.commit()
 
