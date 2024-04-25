@@ -1,16 +1,13 @@
 import os
-from typing import TYPE_CHECKING
 
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request
 
 from virtool.api.client import JobClient
 from virtool.api.errors import APIUnauthorized
+from virtool.mongo.utils import get_mongo_from_req
 from virtool.types import RouteHandler
 from virtool.utils import hash_key
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 PUBLIC_ROUTES = [("PATCH", "/jobs")]
 
@@ -50,9 +47,9 @@ async def middleware(request: Request, handler: RouteHandler):
             error_id="malformed_authorization_header",
         )
 
-    mongo: "Mongo" = request.app["db"]
-
-    job = await mongo.jobs.find_one({"_id": job_id, "key": hash_key(key)})
+    job = await get_mongo_from_req(request).jobs.find_one(
+        {"_id": job_id, "key": hash_key(key)}
+    )
 
     if not job:
         raise APIUnauthorized(

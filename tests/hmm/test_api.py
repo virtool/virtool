@@ -8,6 +8,7 @@ from virtool_core.utils import decompress_file
 from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.mongo.core import Mongo
+from virtool.mongo.utils import get_mongo_from_app
 
 
 @pytest.fixture()
@@ -127,7 +128,7 @@ async def test_get(
 async def test_get_hmm_annotations(spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
     get_config_from_app(client.app).data_path = tmp_path
-    db = client.app["db"]
+    db = get_mongo_from_app(client.app)
 
     await db.hmm.insert_one({"_id": "foo"})
     await db.hmm.insert_one({"_id": "bar"})

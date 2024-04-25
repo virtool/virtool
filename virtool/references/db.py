@@ -28,6 +28,7 @@ from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.mongo.utils import get_mongo_from_req
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
@@ -184,7 +185,9 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
     if client.administrator_role == AdministratorRole.FULL:
         return True
 
-    reference = await req.app["db"].references.find_one(ref_id, ["groups", "users"])
+    reference = await get_mongo_from_req(req).references.find_one(
+        ref_id, ["groups", "users"]
+    )
 
     if reference is None:
         raise ResourceNotFoundError()

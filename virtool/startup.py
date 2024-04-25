@@ -25,6 +25,7 @@ from virtool.mongo.connect import connect_mongo
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate_status
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
@@ -85,7 +86,7 @@ async def startup_check_db(app: App):
     if get_config_from_app(app).no_check_db:
         return logger.info("Skipping database checks")
 
-    mongo: "Mongo" = app["db"]
+    mongo = get_mongo_from_app(app)
 
     logger.info("Checking database")
     await migrate_status(mongo)
@@ -93,7 +94,7 @@ async def startup_check_db(app: App):
     # Make sure the indexes collection exists before later trying to set an compound
     # index on it.
     try:
-        await mongo.motor_client.create_collection("indexes")
+        await mongo.motor_database.create_collection("indexes")
     except CollectionInvalid:
         pass
 
@@ -105,7 +106,7 @@ async def startup_data(app: App):
     """
     app["data"] = create_data_layer(
         get_authorization_client_from_app(app),
-        app["db"],
+        get_mongo_from_app(app),
         app["pg"],
         get_config_from_app(app),
         get_http_session_from_app(app),
@@ -140,7 +141,7 @@ async def startup_databases(app: App):
     app.update(
         {
             "authorization": AuthorizationClient(openfga_instance),
-            "db": Mongo(mongo, RandomIdProvider()),
+            "mongo": Mongo(mongo, RandomIdProvider()),
             "pg": pg,
             "redis": redis,
         },

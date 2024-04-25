@@ -1,17 +1,15 @@
 from shutil import copytree
-from typing import TYPE_CHECKING, Tuple
+from typing import Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.config import get_config_from_app
 from virtool.example import example_path
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
 from virtool.types import App
 from virtool.uploads.models import SQLUpload
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 async def create_fake_fasta_upload(app: App, user_id: str) -> Tuple[int, str]:
@@ -36,7 +34,7 @@ async def create_fake_finalized_subtraction(
     subtraction_id: str,
     user_id: str,
 ):
-    mongo: "Mongo" = app["db"]
+    mongo = get_mongo_from_app(app)
     pg = app["pg"]
 
     document = await mongo.subtraction.insert_one(

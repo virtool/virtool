@@ -1,7 +1,7 @@
-
 from virtool.api.errors import APINoContent
-from virtool.data.utils import get_data_from_req
 from virtool.api.routes import Routes
+from virtool.data.utils import get_data_from_req
+from virtool.mongo.utils import get_mongo_from_req
 from virtool.samples.fake import create_fake_sample
 from virtool.subtractions.fake import (
     create_fake_fasta_upload,
@@ -19,22 +19,33 @@ async def dev(req):
     command = data.get("command")
 
     if command == "clear_users":
-        await req.app["db"].users.delete_many({})
-        await req.app["db"].sessions.delete_many({})
-        await req.app["db"].keys.delete_many({})
+        mongo = get_mongo_from_req(req)
+
+        await mongo.users.delete_many({})
+        await mongo.sessions.delete_many({})
+        await mongo.keys.delete_many({})
 
     if command == "create_subtraction":
         upload_id, upload_name = await create_fake_fasta_upload(
-            req.app, req["client"].user_id
+            req.app,
+            req["client"].user_id,
         )
 
         await create_fake_finalized_subtraction(
-            req.app, upload_id, upload_name, random_alphanumeric(8), user_id
+            req.app,
+            upload_id,
+            upload_name,
+            random_alphanumeric(8),
+            user_id,
         )
 
     if command == "create_sample":
         await create_fake_sample(
-            req.app, random_alphanumeric(8), req["client"].user_id, False, True
+            req.app,
+            random_alphanumeric(8),
+            req["client"].user_id,
+            False,
+            True,
         )
 
     if command == "force_delete_jobs":

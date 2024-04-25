@@ -3,15 +3,19 @@ from typing import Union
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
 
-from virtool.api.errors import APIInsufficientRights, APINotFound, APIConflict, APINoContent
-from virtool.history.oas import ListHistoryResponse, HistoryResponse
-
 import virtool.api.routes
 import virtool.references.db
 from virtool.api.custom_json import json_response
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.api.errors import (
+    APIConflict,
+    APIInsufficientRights,
+    APINoContent,
+    APINotFound,
+)
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.mongo.utils import get_one_field
+from virtool.history.oas import HistoryResponse, ListHistoryResponse
+from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = virtool.api.routes.Routes()
 
@@ -19,8 +23,7 @@ routes = virtool.api.routes.Routes()
 @routes.view("/history")
 class ChangesView(PydanticView):
     async def get(self) -> Union[r200[ListHistoryResponse], r422]:
-        """
-        List history.
+        """List history.
 
         Returns a list of change documents.
 
@@ -29,7 +32,7 @@ class ChangesView(PydanticView):
             422: Invalid query
         """
         data = await get_data_from_req(self.request).history.find(
-            req_query=self.request.query
+            req_query=self.request.query,
         )
 
         return json_response(ListHistoryResponse.parse_obj(data))
@@ -38,8 +41,7 @@ class ChangesView(PydanticView):
 @routes.view("/history/{change_id}")
 class ChangeView(PydanticView):
     async def get(self, change_id: str, /) -> Union[r200[HistoryResponse], r404]:
-        """
-        Get a change document.
+        """Get a change document.
 
         Fetches a specific change document by its ``change_id``.
 
@@ -55,8 +57,7 @@ class ChangeView(PydanticView):
         return json_response(HistoryResponse.parse_obj(document).dict())
 
     async def delete(self, change_id: str, /) -> Union[r204, r403, r404, r409]:
-        """
-        Delete a change document.
+        """Delete a change document.
 
         Removes the change document with the given ``change_id`` and
         any subsequent changes.
@@ -68,11 +69,15 @@ class ChangeView(PydanticView):
             409: Not unbuilt
         """
         reference = await get_one_field(
-            self.request.app["db"].history, "reference", change_id
+            get_mongo_from_req(self.request).history,
+            "reference",
+            change_id,
         )
 
         if reference is not None and not await virtool.references.db.check_right(
-            self.request, reference["id"], "modify_otu"
+            self.request,
+            reference["id"],
+            "modify_otu",
         ):
             raise APIInsufficientRights()
 

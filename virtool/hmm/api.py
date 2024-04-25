@@ -1,7 +1,7 @@
 """API request handlers for managing and querying HMM data."""
 
 import asyncio
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
 from aiohttp.web import Response
 from aiohttp.web_fileresponse import FileResponse
@@ -22,10 +22,7 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.mongo.utils import get_one_field
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
+from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = Routes()
 
@@ -112,7 +109,7 @@ class UpdatesView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         updates = await get_one_field(mongo.status, "updates", "hmm") or []
         updates.reverse()
