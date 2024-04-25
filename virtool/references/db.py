@@ -57,29 +57,6 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
-PROJECTION = [
-    "_id",
-    "cloned_from",
-    "created_at",
-    "data_type",
-    "groups",
-    "imported_from",
-    "installed",
-    "internal_control",
-    "latest_build",
-    "name",
-    "organism",
-    "release",
-    "remotes_from",
-    "task",
-    "unbuilt_count",
-    "updates",
-    "updating",
-    "user",
-    "users",
-]
-
-
 async def processor(mongo: "Mongo", document: Document) -> Document:
     """Process a reference document to a form that can be dispatched or returned in a
     list.
@@ -186,7 +163,8 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
         return True
 
     reference = await get_mongo_from_req(req).references.find_one(
-        ref_id, ["groups", "users"]
+        ref_id,
+        ["groups", "users"],
     )
 
     if reference is None:

@@ -10,13 +10,9 @@ from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 
-PROJECTION = ["_id", "name", "size", "user", "uploaded_at", "type", "ready", "reserved"]
-
 
 class AttachUploadTransform(AbstractTransform):
-    """
-    Attaches an upload to a document that has an upload field.
-    """
+    """Attaches an upload to a document that has an upload field."""
 
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
@@ -35,13 +31,11 @@ class AttachUploadTransform(AbstractTransform):
     async def prepare_many(self, documents: List[Document]) -> Dict[int, Dict]:
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                (
-                    select(SQLUpload).where(
-                        SQLUpload.id.in_(
-                            list({document["upload"] for document in documents})
-                        )
-                    )
-                )
+                select(SQLUpload).where(
+                    SQLUpload.id.in_(
+                        list({document["upload"] for document in documents}),
+                    ),
+                ),
             )
 
             uploads = {upload.id: dict(upload) for upload in result.scalars()}
@@ -52,8 +46,7 @@ class AttachUploadTransform(AbstractTransform):
 
 
 async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]:
-    """
-    Finalize row creation for tables that store uploaded files.
+    """Finalize row creation for tables that store uploaded files.
 
     Updates table with file information and sets `ready`    to `True`.
 

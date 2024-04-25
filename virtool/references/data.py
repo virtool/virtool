@@ -123,7 +123,6 @@ class ReferencesData(DataLayerDomain):
             query,
             sort="name",
             base_query=base_query,
-            projection=virtool.references.db.PROJECTION,
         )
 
         documents, remote_slug_count = await asyncio.gather(

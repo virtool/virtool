@@ -12,7 +12,7 @@ from pymongo.errors import DuplicateKeyError
 
 import virtool.references.db
 from virtool.mongo.identifier import AbstractIdProvider
-from virtool.mongo.utils import apply_projection, id_exists
+from virtool.mongo.utils import id_exists
 from virtool.types import Document, Projection
 from virtool.utils import base_processor
 
@@ -79,18 +79,16 @@ class Collection:
         document = await self._collection.find_one_and_update(
             query,
             update,
+            projection=projection,
             return_document=ReturnDocument.AFTER,
             upsert=upsert,
             session=session,
         )
 
-        if document is None:
-            return None
+        if document:
+            return document
 
-        if projection:
-            return apply_projection(document, projection)
-
-        return document
+        return None
 
     async def insert_one(
         self,

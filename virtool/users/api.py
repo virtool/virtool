@@ -66,7 +66,14 @@ class UsersView(PydanticView):
             mongo_query,
             self.request.query,
             sort="handle",
-            projection=virtool.users.db.PROJECTION,
+            projection=(
+                "_id",
+                "force_reset",
+                "handle",
+                "groups",
+                "last_password_change",
+                "primary_group",
+            ),
         )
 
         data["documents"] = await apply_transforms(

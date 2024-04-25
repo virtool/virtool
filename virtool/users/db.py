@@ -14,15 +14,6 @@ from virtool.groups.pg import SQLGroup
 
 ATTACH_PROJECTION = ("_id", "handle")
 
-PROJECTION = (
-    "_id",
-    "force_reset",
-    "handle",
-    "groups",
-    "last_password_change",
-    "primary_group",
-)
-
 
 @dataclass
 class B2CUserAttributes:

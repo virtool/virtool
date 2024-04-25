@@ -33,43 +33,7 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
-LIST_PROJECTION = [
-    "_id",
-    "created_at",
-    "host",
-    "isolate",
-    "job",
-    "library_type",
-    "pathoscope",
-    "name",
-    "nuvs",
-    "ready",
-    "user",
-    "notes",
-    "labels",
-    "subtractions",
-    "workflows",
-]
-
-PROJECTION = [
-    "_id",
-    "created_at",
-    "labels",
-    "is_legacy",
-    "library_type",
-    "name",
-    "pathoscope",
-    "nuvs",
-    "group",
-    "group_read",
-    "group_write",
-    "all_read",
-    "all_write",
-    "ready",
-    "user",
-]
-
-RIGHTS_PROJECTION = {
+SAMPLE_RIGHTS_PROJECTION = {
     "_id": False,
     "group": True,
     "group_read": True,
@@ -80,14 +44,8 @@ RIGHTS_PROJECTION = {
 }
 
 
-UNCHANGABLE_WORKFLOW_STATES = [
-    WorkflowState.COMPLETE.value,
-    WorkflowState.INCOMPATIBLE.value,
-]
-
-
 class AttachArtifactsAndReadsTransform(AbstractTransform):
-    def __init__(self, pg):
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
@@ -154,7 +112,10 @@ async def check_rights_error_check(
 
 
 async def check_rights(db, sample_id: str | None, client, write: bool = True) -> bool:
-    sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
+    sample_rights = await db.samples.find_one(
+        {"_id": sample_id},
+        SAMPLE_RIGHTS_PROJECTION,
+    )
     if not sample_rights:
         raise virtool.errors.DatabaseError("Sample does not exist")
 
@@ -321,7 +282,10 @@ def derive_workflow_state(analyses: list, library_type) -> dict:
     for analysis in analyses:
         workflow_name = get_workflow_name(analysis["workflow"])
 
-        if workflow_states[workflow_name] in UNCHANGABLE_WORKFLOW_STATES:
+        if workflow_states[workflow_name] in (
+            WorkflowState.COMPLETE.value,
+            WorkflowState.INCOMPATIBLE.value,
+        ):
             continue
 
         workflow_states[workflow_name] = (

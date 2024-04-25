@@ -5,39 +5,10 @@ from typing import TYPE_CHECKING, Any
 from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection
 
-from virtool.types import App, Document, Projection
+from virtool.types import App
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-
-def apply_projection(document: Document, projection: Projection):
-    """Apply a Mongo-style projection to a document and return it.
-
-    :param document: the document to project
-    :param projection: the projection to apply
-    :return: the projected document
-
-    """
-    if isinstance(projection, (list, tuple)):
-        if "_id" not in projection:
-            projection.append("_id")
-
-        return {key: document[key] for key in document if key in projection}
-
-    if not isinstance(projection, dict):
-        raise TypeError(f"Invalid type for projection: {type(projection)}")
-
-    if projection == {"_id": False}:
-        return {key: document[key] for key in document if key != "_id"}
-
-    if all(value is False for value in projection.values()):
-        return {key: document[key] for key in document if key not in projection}
-
-    if "_id" not in projection:
-        projection["_id"] = True
-
-    return {key: document[key] for key in document if projection.get(key, False)}
 
 
 async def check_missing_ids(
@@ -56,15 +27,6 @@ async def check_missing_ids(
 
     """
     return set(id_list) - set(await collection.distinct("_id", query, session=session))
-
-
-async def delete_unready(collection):
-    """Delete documents in the `collection` where the `ready` field is set to `false`.
-
-    :param collection: the collection to modify
-
-    """
-    await collection.delete_many({"ready": False})
 
 
 def get_mongo_from_app(app: App) -> "Mongo":
@@ -126,19 +88,6 @@ async def get_one_field(
         return projected.get(field)
 
     return None
-
-
-async def get_non_existent_ids(collection, id_list: list[str]) -> set[str]:
-    """Return the IDs that are in `id_list`, but don't exist in the specified
-    `collection`.
-
-    :param collection: the database collection to check
-    :param id_list: a list of document IDs to check for existence
-    :return: a list of non-existent IDs
-
-    """
-    existing_group_ids = await collection.distinct("_id", {"_id": {"$in": id_list}})
-    return set(id_list) - set(existing_group_ids)
 
 
 async def id_exists(
