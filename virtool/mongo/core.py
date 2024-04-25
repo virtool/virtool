@@ -1,7 +1,7 @@
 """Core database classes."""
 
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Optional
 
 from motor.motor_asyncio import (
     AsyncIOMotorClientSession,
@@ -10,22 +10,11 @@ from motor.motor_asyncio import (
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
-import virtool.analyses.db
-import virtool.caches.db
-import virtool.history.db
-import virtool.hmm.db
-import virtool.indexes.db
-import virtool.mongo.utils
-import virtool.otus.db
 import virtool.references.db
-import virtool.samples.db
-import virtool.subtractions.db
-import virtool.uploads.db
-import virtool.users.db
-import virtool.utils
 from virtool.mongo.identifier import AbstractIdProvider
-from virtool.mongo.utils import id_exists
+from virtool.mongo.utils import apply_projection, id_exists
 from virtool.types import Document, Projection
+from virtool.utils import base_processor
 
 
 class Collection:
@@ -41,13 +30,11 @@ class Collection:
         mongo: "Mongo",
         name: str,
         processor: Callable[[Any, Document], Awaitable[Document]],
-        projection: Projection | None,
     ):
         self.mongo = mongo
         self.name = name
         self._collection = mongo.motor_database[name]
         self.processor = processor
-        self.projection = projection
 
         self.aggregate = self._collection.aggregate
         self.bulk_write = self._collection.bulk_write
@@ -69,7 +56,7 @@ class Collection:
         if self.processor:
             return await self.processor(self.mongo, document)
 
-        return virtool.utils.base_processor(document)
+        return base_processor(document)
 
     async def find_one_and_update(
         self,
@@ -101,7 +88,7 @@ class Collection:
             return None
 
         if projection:
-            return virtool.mongo.utils.apply_projection(document, projection)
+            return apply_projection(document, projection)
 
         return document
 
@@ -178,92 +165,37 @@ class Mongo:
         self.start_session = motor_database.start_session
         self.id_provider = id_provider
 
-        self.analyses = self.bind_collection(
-            "analyses",
-            projection=virtool.analyses.db.PROJECTION,
-        )
-
-        self.caches = self.bind_collection(
-            "caches",
-            projection=virtool.caches.db.PROJECTION,
-        )
-
-        self.files = self.bind_collection(
-            "files",
-            projection=virtool.uploads.db.PROJECTION,
-        )
-
+        self.analyses = self.bind_collection("analyses")
+        self.caches = self.bind_collection("caches")
+        self.files = self.bind_collection("files")
         self.groups = self.bind_collection("groups")
-
-        self.history = self.bind_collection(
-            "history",
-            projection=virtool.history.db.PROJECTION,
-        )
-
-        self.hmm = self.bind_collection("hmm", projection=virtool.hmm.db.PROJECTION)
-
-        self.indexes = self.bind_collection(
-            "indexes",
-            projection=virtool.indexes.db.INDEXES_PROJECTION,
-        )
-
-        self.jobs = self.bind_collection(
-            "jobs",
-            projection=(
-                "_id",
-                "archived",
-                "workflow",
-                "status",
-                "rights",
-                "user",
-            ),
-        )
-
+        self.history = self.bind_collection("history")
+        self.hmm = self.bind_collection("hmm")
+        self.indexes = self.bind_collection("indexes")
+        self.jobs = self.bind_collection("jobs")
         self.keys = self.bind_collection("keys")
-
         self.labels = self.bind_collection("labels")
-
         self.migrations = self.bind_collection("migrations")
-
-        self.otus = self.bind_collection("otus", projection=virtool.otus.db.PROJECTION)
-
+        self.otus = self.bind_collection("otus")
         self.tasks = self.bind_collection("tasks")
-
         self.references = self.bind_collection(
             "references",
             processor=virtool.references.db.processor,
-            projection=virtool.references.db.PROJECTION,
         )
-
-        self.samples = self.bind_collection(
-            "samples",
-            projection=virtool.samples.db.LIST_PROJECTION,
-        )
-        self.settings = self.bind_collection("settings", projection={"_id": False})
-
+        self.samples = self.bind_collection("samples")
+        self.settings = self.bind_collection("settings")
         self.sequences = self.bind_collection("sequences")
-
         self.sessions = self.bind_collection("sessions")
-
         self.status = self.bind_collection("status")
-
-        self.subtraction = self.bind_collection(
-            "subtraction",
-            projection=virtool.subtractions.db.PROJECTION,
-        )
-
-        self.users = self.bind_collection(
-            "users",
-            projection=virtool.users.db.PROJECTION,
-        )
+        self.subtraction = self.bind_collection("subtraction")
+        self.users = self.bind_collection("users")
 
     def bind_collection(
         self,
         name: str,
-        processor: Callable | None = None,
-        projection: Projection | None = None,
+        processor: Optional[Callable] = None,
     ) -> Collection:
-        return Collection(self, name, processor, projection)
+        return Collection(self, name, processor)
 
     @asynccontextmanager
     async def create_session(self):
