@@ -1,7 +1,7 @@
 import asyncio
 import math
 from asyncio import to_thread
-from typing import TYPE_CHECKING, List
+from typing import List
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -17,9 +17,6 @@ from virtool.mongo.core import Mongo
 from virtool.uploads.models import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 class UploadsData(DataLayerDomain):
@@ -200,7 +197,8 @@ class UploadsData(DataLayerDomain):
 
         return Upload(
             **await apply_transforms(
-                upload.to_dict(), [AttachUserTransform(self._mongo)]
+                upload.to_dict(),
+                [AttachUserTransform(self._mongo)],
             ),
         )
 
@@ -241,7 +239,8 @@ class UploadsData(DataLayerDomain):
         return upload
 
     async def release(self, upload_ids: int | List[int]):
-        """Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
+        """Release the uploads in `upload_ids` by setting the `reserved` field to
+        `False`.
 
         :param upload_ids: List of upload ids
         """
@@ -261,7 +260,8 @@ class UploadsData(DataLayerDomain):
             await session.commit()
 
     async def reserve(self, upload_ids: int | List[int]):
-        """Reserve the uploads in `upload_ids` by setting the `reserved` field to `True`.
+        """Reserve the uploads in `upload_ids` by setting the `reserved` field to
+        `True`.
 
         :param upload_ids: List of upload ids
         """

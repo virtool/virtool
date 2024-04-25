@@ -1,5 +1,5 @@
-"""Transforms are used to attach additional data to a dictionary before it is sent to the
-client.
+"""Transforms are used to attach additional data to a dictionary before it is sent to
+the client.
 
 For example, you have a ``dict`` like the following:
 
@@ -69,14 +69,16 @@ class AbstractTransform(ABC):
     """
 
     def preprocess(self, document: Document) -> Document:
-        """Perform any necessary operations on documents before the transform is applied."""
+        """Perform any necessary operations on documents before the transform is
+        applied.
+        """
         return document
 
     @abstractmethod
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         """Attaches data to a single document.
 
-        This method must be overriden to implement a transform.
+        This method must be overridden to implement a transform.
 
         :param document:
         :param prepared:

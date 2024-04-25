@@ -1,14 +1,7 @@
-from typing import TYPE_CHECKING
-
 from virtool_core.models.settings import Settings
 
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-PROJECTION = {"_id": False}
 
 
 class SettingsData:
@@ -25,7 +18,7 @@ class SettingsData:
         """
         settings = await self._mongo.settings.find_one(
             {"_id": "settings"},
-            projection=PROJECTION,
+            projection={"_id": False},
         )
 
         return Settings(**settings)
@@ -48,9 +41,7 @@ class SettingsData:
 
         :return: the application settings
         """
-        existing = (
-            await self._mongo.settings.find_one({"_id": "settings"}, PROJECTION) or {}
-        )
+        existing = await self.get_all()
 
         settings = {**(Settings().dict()), **existing}
 

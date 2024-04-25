@@ -80,7 +80,8 @@ PROJECTION = [
 
 
 async def processor(mongo: "Mongo", document: Document) -> Document:
-    """Process a reference document to a form that can be dispatched or returned in a list.
+    """Process a reference document to a form that can be dispatched or returned in a
+    list.
 
     Used `attach_computed` for complete representations of the reference.
 
@@ -206,8 +207,8 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
 
 
 async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bool:
-    """Check if the provided `source_type` is valid based on the current reference source
-    type configuration.
+    """Check if the provided `source_type` is valid based on the current reference
+    source type configuration.
 
     :param mongo: the application database client
     :param ref_id: the reference context
@@ -410,7 +411,8 @@ async def get_latest_build(mongo: "Mongo", ref_id: str) -> Document | None:
 
 
 async def get_official_installed(mongo: "Mongo") -> bool:
-    """Return a boolean indicating whether the official plant virus reference is installed.
+    """Return a boolean indicating whether the official plant virus reference is
+    installed.
 
     :param mongo: the application mongodb client
     :return: the install status for the official reference
@@ -649,7 +651,8 @@ async def insert_change(
     session: AsyncIOMotorClientSession,
     old: Document | None = None,
 ):
-    """Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
+    """Insert a history document for the OTU identified by `otu_id` and the passed
+    `verb`.
 
     :param data_path: system path to the applications datafolder
     :param mongo: the application database object

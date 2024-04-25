@@ -110,7 +110,8 @@ async def create(
     job_id: str,
     index_id: Optional[str] = None,
 ) -> dict:
-    """Create a new index and update history to show the version and id of the new index.
+    """Create a new index and update history to show the version and id of the new
+    index.
 
     :param mongo: the application database client
     :param ref_id: the ID of the reference to create index for
