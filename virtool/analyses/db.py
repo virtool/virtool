@@ -47,7 +47,8 @@ async def filter_analyses_by_sample_rights(
     mongo: Mongo,
     analyses: list[dict],
 ) -> list[dict]:
-    """Filter a list of analyses based on the user's rights to the samples they are associated with.
+    """Filter a list of analyses based on the user's rights to the samples they are
+    associated with.
 
     :param mongo: the application database client
     :param analyses: the analyses to filter

@@ -26,8 +26,8 @@ def compose_password_update(password: str) -> dict[str, Any]:
 
 
 async def get_alternate_id(mongo: Mongo, name: str) -> str:
-    """Get an alternate id for an API key whose provided `name` is not unique. Appends an
-    integer suffix to the end of the `name`.
+    """Get an alternate id for an API key whose provided `name` is not unique. Appends
+    an integer suffix to the end of the `name`.
 
     :param mongo: the application mongodb client
     :param name: the API key name

@@ -304,11 +304,10 @@ def get_sequence_schema(require_id: bool) -> dict:
 
 
 def load_reference_file(path: Path) -> dict:
-    """Load a list of merged otus documents from a file associated with a Virtool reference
-    file.
+    """Load a list of merged otus documents from a file associated with a Virtool
+    reference file.
 
     :param path: the path to the otus.json.gz file
-
     :return: the otus data to import
     """
     if not path.suffixes == [".json", ".gz"]:

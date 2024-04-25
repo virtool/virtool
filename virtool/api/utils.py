@@ -41,8 +41,8 @@ def compose_exists_query(field: str) -> Dict[str, Dict[str, bool]]:
 
 
 def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dict]]]:
-    """Compose a MongoDB query that checks if the values of the passed `fields` match the
-    passed search `term`.
+    """Compose a MongoDB query that checks if the values of the passed `fields` match
+    the passed search `term`.
 
     :param term: the term to search
     :param fields: the list of field to match against

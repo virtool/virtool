@@ -10,10 +10,11 @@ from aiohttp import ClientSession
 from structlog import get_logger
 
 import virtool.analyses.utils
-import virtool.errors
 import virtool.utils
+from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
+from virtool.mongo.core import Mongo
 from virtool.types import Document
 from virtool.utils import base_processor
 
@@ -30,7 +31,7 @@ HMMS_PROJECTION = ["_id", "cluster", "names", "count", "families"]
 """A MongoDB projection for HMM document lists."""
 
 
-async def get_referenced_hmm_ids(mongo, data_path: Path) -> list[str]:
+async def get_referenced_hmm_ids(mongo: Mongo, data_path: Path) -> list[str]:
     """List the IDs of HMM documents that are used in analyses.
 
     :param mongo: the application database client
@@ -46,9 +47,10 @@ async def get_referenced_hmm_ids(mongo, data_path: Path) -> list[str]:
     return sorted(list(in_db | in_files))
 
 
-async def get_hmms_referenced_in_files(mongo, data_path: Path) -> set[str]:
-    """Parse all NuVs JSON results files and return a set of found HMM profile ids. Used for removing unreferenced HMMs
-    when purging the collection.
+async def get_hmms_referenced_in_files(mongo: Mongo, data_path: Path) -> set[str]:
+    """Parse all NuVs JSON results files and return a set of found HMM profile ids.
+
+    Used for removing unreferenced HMMs when purging the collection.
 
     :param mongo: the application database object
     :param data_path: the application data path
@@ -83,7 +85,7 @@ async def get_hmms_referenced_in_files(mongo, data_path: Path) -> set[str]:
     return hmm_ids
 
 
-async def get_hmms_referenced_in_db(mongo) -> set:
+async def get_hmms_referenced_in_db(mongo: Mongo) -> set:
     """Returns a set of all HMM ids referenced in NuVs analysis documents
 
     :param mongo: the application database object
@@ -157,7 +159,7 @@ async def fetch_and_update_release(
 
     except (
         aiohttp.client_exceptions.ClientConnectorError,
-        virtool.errors.GitHubError,
+        GitHubError,
     ) as err:
         errors = []
 
@@ -178,7 +180,7 @@ async def fetch_and_update_release(
         return release
 
 
-async def generate_annotations_json_file(data_path: Path, mongo) -> Path:
+async def generate_annotations_json_file(data_path: Path, mongo: Mongo) -> Path:
     """Generate the HMMs annotation file at `config.data_path/hmm/annotations.json.gz
 
     :param data_path: the app data path

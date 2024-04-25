@@ -5,7 +5,6 @@ from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 from virtool_core.models.user import User
 
 import virtool.api.authentication
-import virtool.users.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadRequest, APIConflict, APINotFound
 from virtool.api.policy import (

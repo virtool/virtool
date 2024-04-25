@@ -108,7 +108,8 @@ class OTUData:
         otu_id: str,
         isolate_id: str,
     ) -> Tuple[str, str]:
-        """Get the OTU name and isolate name for a OTU-isolate combination specified by `otu_id` and `isolate_id`.
+        """Get the OTU name and isolate name for a OTU-isolate combination specified by
+        `otu_id` and `isolate_id`.
 
         :param otu_id: the OTU ID
         :param isolate_id: the isolate ID
@@ -131,8 +132,8 @@ class OTUData:
         return otu["name"], virtool.otus.utils.format_isolate_name(isolate)
 
     async def get_isolate_fasta(self, otu_id: str, isolate_id: str) -> Tuple[str, str]:
-        """Generate a FASTA filename and body for the sequences associated with the isolate identified by the passed
-        ``otu_id`` and ``isolate_id``.
+        """Generate a FASTA filename and body for the sequences associated with the
+        isolate identified by the passed ``otu_id`` and ``isolate_id``.
 
         :param otu_id: the id of the isolates' parent otu
         :param isolate_id: the id of the isolate to FASTA
@@ -167,7 +168,8 @@ class OTUData:
         ), "\n".join(fasta)
 
     async def get_sequence_fasta(self, sequence_id: str) -> Tuple[str, str]:
-        """Generate a FASTA filename and body for the sequence associated with the passed ``sequence_id``.
+        """Generate a FASTA filename and body for the sequence associated with the
+        passed ``sequence_id``.
 
         :param sequence_id: the id sequence of the sequence to FASTAfy
         :return: as FASTA filename and body
