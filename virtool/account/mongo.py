@@ -1,29 +1,14 @@
-"""
-Work with the current user account and its API keys.
+"""Work with the current user account and its API keys."""
 
-"""
 from typing import Any
 
 import virtool.users.utils
 import virtool.utils
 from virtool.mongo.core import Mongo
 
-ACCOUNT_PROJECTION = (
-    "_id",
-    "email",
-    "force_reset",
-    "groups",
-    "handle",
-    "last_password_change",
-    "permissions",
-    "primary_group",
-    "settings",
-)
-
 
 def compose_password_update(password: str) -> dict[str, Any]:
-    """
-    Compose an update dict for self-changing a users account password.
+    """Compose an update dict for self-changing a users account password.
 
     This will disable forced reset and won't invalidate current sessions, unlike a
     password change by an administrator.
@@ -41,9 +26,8 @@ def compose_password_update(password: str) -> dict[str, Any]:
 
 
 async def get_alternate_id(mongo: Mongo, name: str) -> str:
-    """
-    Get an alternate id for an API key whose provided `name` is not unique. Appends an
-    integer suffix to the end of the `name`.
+    """Get an alternate id for an API key whose provided `name` is not unique. Appends
+    an integer suffix to the end of the `name`.
 
     :param mongo: the application mongodb client
     :param name: the API key name

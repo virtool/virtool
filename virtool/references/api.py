@@ -1,5 +1,4 @@
-"""
-Request handlers for the API endpoints that deal with references.
+"""Request handlers for the API endpoints that deal with references.
 
 TODO: Drop support for string group ids when we fully migrate to SQL.
 """
@@ -11,47 +10,46 @@ from virtool_core.models.otu import OTU
 from virtool_core.models.roles import AdministratorRole
 
 import virtool.references.db
-from virtool.api.errors import (
-    APINotFound,
-    APIInsufficientRights,
-    APIBadRequest,
-    APIBadGateway,
-    APIConflict,
-    APINoContent,
-)
-from virtool.api.policy import policy, PermissionRoutePolicy
 from virtool.api.custom_json import json_response
+from virtool.api.errors import (
+    APIBadGateway,
+    APIBadRequest,
+    APIConflict,
+    APIInsufficientRights,
+    APINoContent,
+    APINotFound,
+)
+from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
-    ResourceNotFoundError,
-    ResourceRemoteError,
     ResourceConflictError,
     ResourceError,
+    ResourceNotFoundError,
+    ResourceRemoteError,
 )
 from virtool.data.utils import get_data_from_req
 from virtool.indexes.oas import ListIndexesResponse
-from virtool.otus.oas import CreateOTURequest
-from virtool.otus.oas import FindOTUsResponse
+from virtool.otus.oas import CreateOTURequest, FindOTUsResponse
 from virtool.references.db import check_right
 from virtool.references.oas import (
-    CreateReferenceRequest,
-    UpdateReferenceRequest,
     CreateReferenceGroupRequest,
-    ReferenceRightsRequest,
-    CreateReferenceUserRequest,
-    CreateReferenceResponse,
-    FindReferencesResponse,
-    ReferenceResponse,
-    ReferenceReleaseResponse,
-    CreateReferenceUpdateResponse,
-    GetReferenceUpdateResponse,
-    CreateReferenceIndexesResponse,
-    ReferenceGroupsResponse,
     CreateReferenceGroupResponse,
+    CreateReferenceIndexesResponse,
+    CreateReferenceRequest,
+    CreateReferenceResponse,
+    CreateReferenceUpdateResponse,
+    CreateReferenceUserRequest,
+    FindReferencesResponse,
+    GetReferenceUpdateResponse,
     ReferenceGroupResponse,
-    ReferenceUsersResponse,
+    ReferenceGroupsResponse,
     ReferenceHistoryResponse,
+    ReferenceReleaseResponse,
+    ReferenceResponse,
+    ReferenceRightsRequest,
+    ReferenceUsersResponse,
+    UpdateReferenceRequest,
 )
 
 routes = Routes()
@@ -68,8 +66,7 @@ RIGHTS_SCHEMA = {
 @routes.view("/refs")
 class ReferencesView(PydanticView):
     async def get(self, find: str | None) -> r200[FindReferencesResponse]:
-        """
-        Find references.
+        """Find references.
 
         Lists references that match the find term.
 
@@ -88,10 +85,10 @@ class ReferencesView(PydanticView):
 
     @policy(PermissionRoutePolicy(LegacyPermission.CREATE_REF))
     async def post(
-        self, data: CreateReferenceRequest
+        self,
+        data: CreateReferenceRequest,
     ) -> r200[CreateReferenceResponse] | r400 | r403 | r502:
-        """
-        Create a reference.
+        """Create a reference.
 
         Creates an empty reference.
 
@@ -103,18 +100,19 @@ class ReferencesView(PydanticView):
         """
         try:
             reference = await get_data_from_req(self.request).references.create(
-                data, self.request["client"].user_id
+                data,
+                self.request["client"].user_id,
             )
         except ResourceNotFoundError as err:
             if "Source reference does not exist" in str(err) or "File not found" in str(
-                err
+                err,
             ):
                 raise APIBadRequest(str(err))
 
             raise
         except ResourceRemoteError as err:
             if "Could not reach GitHub" in str(
-                err
+                err,
             ) or "Could not retrieve latest GitHub release" in str(err):
                 raise APIBadGateway(str(err))
 
@@ -132,8 +130,7 @@ class ReferencesView(PydanticView):
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ReferenceResponse] | r403 | r404:
-        """
-        Get a reference.
+        """Get a reference.
 
         Fetches the details of a reference.
 
@@ -156,8 +153,7 @@ class ReferenceView(PydanticView):
         /,
         data: UpdateReferenceRequest,
     ) -> r200[ReferenceResponse] | r403 | r404:
-        """
-        Update a reference.
+        """Update a reference.
 
         Updates an existing reference.
 
@@ -175,7 +171,8 @@ class ReferenceView(PydanticView):
 
         try:
             reference = await get_data_from_req(self.request).references.update(
-                ref_id, data
+                ref_id,
+                data,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -185,8 +182,7 @@ class ReferenceView(PydanticView):
         return json_response(reference)
 
     async def delete(self, ref_id: str, /) -> r202 | r403 | r404:
-        """
-        Delete a reference.
+        """Delete a reference.
 
         Deletes a reference and its associated OTUs, history, and indexes. Deleting a
         reference does not break dependent analyses and other resources.
@@ -197,10 +193,10 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
-
         try:
             await get_data_from_req(self.request).references.remove(
-                ref_id, self.request
+                ref_id,
+                self.request,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -211,8 +207,7 @@ class ReferenceView(PydanticView):
 @routes.view("/refs/{ref_id}/release")
 class ReferenceReleaseView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ReferenceReleaseResponse]:
-        """
-        Get latest update.
+        """Get latest update.
 
         Fetches the latest remote reference update from GitHub.
 
@@ -225,7 +220,8 @@ class ReferenceReleaseView(PydanticView):
         """
         try:
             release = await get_data_from_req(self.request).references.get_release(
-                ref_id, self.request.app
+                ref_id,
+                self.request.app,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -241,8 +237,7 @@ class ReferenceReleaseView(PydanticView):
 @routes.view("/refs/{ref_id}/updates")
 class ReferenceUpdatesView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[GetReferenceUpdateResponse]:
-        """
-        List updates.
+        """List updates.
 
         Lists all updates made to the reference.
 
@@ -251,7 +246,7 @@ class ReferenceUpdatesView(PydanticView):
         """
         try:
             updates = await get_data_from_req(self.request).references.get_updates(
-                ref_id
+                ref_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -259,10 +254,11 @@ class ReferenceUpdatesView(PydanticView):
         return json_response(updates)
 
     async def post(
-        self, ref_id: str, /
+        self,
+        ref_id: str,
+        /,
     ) -> r201[CreateReferenceUpdateResponse] | r403 | r404:
-        """
-        Update a reference.
+        """Update a reference.
 
         Updates the reference to the last version of the linked remote reference.
 
@@ -276,7 +272,8 @@ class ReferenceUpdatesView(PydanticView):
 
         try:
             update = await get_data_from_req(self.request).references.create_update(
-                ref_id, self.request["client"].user_id
+                ref_id,
+                self.request["client"].user_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -296,8 +293,7 @@ class ReferenceOTUsView(PydanticView):
         find: str | None,
         verified: bool | None,
     ) -> r200[FindOTUsResponse] | r404:
-        """
-        Find OTUs.
+        """Find OTUs.
 
         Lists OTUs by name or abbreviation. Results are paginated.
 
@@ -307,23 +303,30 @@ class ReferenceOTUsView(PydanticView):
         """
         try:
             data = await get_data_from_req(self.request).references.find_otus(
-                find, verified, ref_id, self.request.query
+                find,
+                verified,
+                ref_id,
+                self.request.query,
             )
         except ResourceNotFoundError:
             raise APINotFound()
         return json_response(data)
 
     async def post(
-        self, ref_id: str, /, data: CreateOTURequest
+        self,
+        ref_id: str,
+        /,
+        data: CreateOTURequest,
     ) -> r201[OTU] | r400 | r403 | r404:
-        """
-        Create OTU.
+        """Create OTU.
 
         Creates an OTU.
         """
         try:
             if not await virtool.references.db.check_right(
-                self.request, ref_id, "modify_otu"
+                self.request,
+                ref_id,
+                "modify_otu",
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -331,7 +334,9 @@ class ReferenceOTUsView(PydanticView):
 
         try:
             otu = await get_data_from_req(self.request).references.create_otu(
-                ref_id, data, self.request["client"].user_id
+                ref_id,
+                data,
+                self.request["client"].user_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -345,10 +350,12 @@ class ReferenceOTUsView(PydanticView):
 @routes.view("/refs/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
     async def get(
-        self, unbuilt: str | None, ref_id: str, /
+        self,
+        unbuilt: str | None,
+        ref_id: str,
+        /,
     ) -> r200[ReferenceHistoryResponse] | r404:
-        """
-        List history.
+        """List history.
 
         Lists changes made to OTUs in the reference.
 
@@ -358,7 +365,9 @@ class ReferenceHistoryView(PydanticView):
         """
         try:
             data = await get_data_from_req(self.request).references.find_history(
-                ref_id, unbuilt, self.request.query
+                ref_id,
+                unbuilt,
+                self.request.query,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -370,8 +379,7 @@ class ReferenceHistoryView(PydanticView):
 @routes.view("/refs/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ListIndexesResponse] | r404:
-        """
-        List indexes.
+        """List indexes.
 
         Lists indexes that have been created for the reference.
 
@@ -381,7 +389,8 @@ class ReferenceIndexesView(PydanticView):
         """
         try:
             data = await get_data_from_req(self.request).references.find_indexes(
-                ref_id, self.request.query
+                ref_id,
+                self.request.query,
             )
         except ResourceNotFoundError:
             raise APINotFound
@@ -389,10 +398,11 @@ class ReferenceIndexesView(PydanticView):
         return json_response(data)
 
     async def post(
-        self, ref_id: str, /
+        self,
+        ref_id: str,
+        /,
     ) -> r201[CreateReferenceIndexesResponse] | r403 | r404:
-        """
-        Create an index.
+        """Create an index.
 
         Starts a job to rebuild the otus Bowtie2 index on disk.
 
@@ -407,7 +417,9 @@ class ReferenceIndexesView(PydanticView):
         """
         try:
             document = await get_data_from_req(self.request).references.create_index(
-                ref_id, self.request, self.request["client"].user_id
+                ref_id,
+                self.request,
+                self.request["client"].user_id,
             )
         except ResourceConflictError as err:
             raise APIConflict(str(err))
@@ -426,8 +438,7 @@ class ReferenceIndexesView(PydanticView):
 @routes.view("/refs/{ref_id}/groups")
 class ReferenceGroupsView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ReferenceGroupsResponse] | r404:
-        """
-        List groups.
+        """List groups.
 
         Lists all groups that have access to the reference.
 
@@ -437,7 +448,7 @@ class ReferenceGroupsView(PydanticView):
         """
         try:
             groups = await get_data_from_req(self.request).references.list_groups(
-                ref_id
+                ref_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -445,10 +456,12 @@ class ReferenceGroupsView(PydanticView):
         return json_response(groups)
 
     async def post(
-        self, ref_id: str, /, data: CreateReferenceGroupRequest
+        self,
+        ref_id: str,
+        /,
+        data: CreateReferenceGroupRequest,
     ) -> r201[CreateReferenceGroupResponse] | r400 | r403 | r404:
-        """
-        Add a group.
+        """Add a group.
 
         Adds a group to the reference. Groups can view, use, and modify the reference.
 
@@ -478,10 +491,12 @@ class ReferenceGroupsView(PydanticView):
 @routes.view("/refs/{ref_id}/groups/{group_id}")
 class ReferenceGroupView(PydanticView):
     async def get(
-        self, ref_id: str, group_id: int | str, /
+        self,
+        ref_id: str,
+        group_id: int | str,
+        /,
     ) -> r200[ReferenceGroupResponse] | r404:
-        """
-        Get a group.
+        """Get a group.
 
         Fetches the details of a group that has access to the reference.
 
@@ -491,7 +506,8 @@ class ReferenceGroupView(PydanticView):
         """
         try:
             group = await get_data_from_req(self.request).references.get_group(
-                ref_id, group_id
+                ref_id,
+                group_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -505,8 +521,7 @@ class ReferenceGroupView(PydanticView):
         /,
         data: ReferenceRightsRequest,
     ) -> r200[ReferenceGroupResponse] | r403 | r404:
-        """
-        Update a group.
+        """Update a group.
 
         Updates the access rights a group has on the reference.
 
@@ -517,7 +532,9 @@ class ReferenceGroupView(PydanticView):
         """
         try:
             if not await virtool.references.db.check_right(
-                self.request, ref_id, "modify"
+                self.request,
+                ref_id,
+                "modify",
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -535,8 +552,7 @@ class ReferenceGroupView(PydanticView):
         return json_response(group)
 
     async def delete(self, ref_id: str, group_id: int | str, /) -> r204 | r403 | r404:
-        """
-        Delete a group.
+        """Delete a group.
 
         Deletes a group from the reference.
 
@@ -547,7 +563,9 @@ class ReferenceGroupView(PydanticView):
         """
         try:
             if not await virtool.references.db.check_right(
-                self.request, ref_id, "modify"
+                self.request,
+                ref_id,
+                "modify",
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -568,10 +586,12 @@ class ReferenceGroupView(PydanticView):
 @routes.view("/refs/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
     async def post(
-        self, ref_id: str, /, data: CreateReferenceUserRequest
+        self,
+        ref_id: str,
+        /,
+        data: CreateReferenceUserRequest,
     ) -> r201[list[ReferenceUsersResponse]] | r400 | r403 | r404:
-        """
-        Add a user.
+        """Add a user.
 
         Adds a user to the reference. Users can view, use, and modify the reference.
 
@@ -582,10 +602,11 @@ class ReferenceUsersView(PydanticView):
             404: Not found
 
         """
-
         try:
             if not await virtool.references.db.check_right(
-                self.request, ref_id, "modify"
+                self.request,
+                ref_id,
+                "modify",
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -593,7 +614,8 @@ class ReferenceUsersView(PydanticView):
 
         try:
             user = await get_data_from_req(self.request).references.create_user(
-                ref_id, data
+                ref_id,
+                data,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -601,7 +623,9 @@ class ReferenceUsersView(PydanticView):
             raise APIBadRequest(str(err))
 
         return json_response(
-            user, status=201, headers={"Location": f"/refs/{ref_id}/users/{user.id}"}
+            user,
+            status=201,
+            headers={"Location": f"/refs/{ref_id}/users/{user.id}"},
         )
 
 
@@ -609,10 +633,13 @@ class ReferenceUsersView(PydanticView):
 @routes.view("/refs/{ref_id}/users/{user_id}")
 class ReferenceUserView(PydanticView):
     async def patch(
-        self, ref_id: str, user_id: str, /, data: ReferenceRightsRequest
+        self,
+        ref_id: str,
+        user_id: str,
+        /,
+        data: ReferenceRightsRequest,
     ) -> r200[ReferenceGroupResponse] | r403 | r404:
-        """
-        Update a user.
+        """Update a user.
 
         Updates the access rights a user has on the reference.
 
@@ -623,7 +650,9 @@ class ReferenceUserView(PydanticView):
         """
         try:
             if not await virtool.references.db.check_right(
-                self.request, ref_id, "modify"
+                self.request,
+                ref_id,
+                "modify",
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -641,8 +670,7 @@ class ReferenceUserView(PydanticView):
         return json_response(user)
 
     async def delete(self, ref_id: str, user_id: str, /) -> r204 | r403 | r404:
-        """
-        Remove a user.
+        """Remove a user.
 
         Removes a user from the reference.
 
@@ -653,7 +681,9 @@ class ReferenceUserView(PydanticView):
         """
         try:
             if not await virtool.references.db.check_right(
-                self.request, ref_id, "modify"
+                self.request,
+                ref_id,
+                "modify",
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:

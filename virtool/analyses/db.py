@@ -1,34 +1,15 @@
-"""
-Work with analyses in the database.
+"""Work with analyses in the database."""
 
-"""
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.data.transforms import AbstractTransform
+from virtool.mongo.core import Mongo
 from virtool.samples.utils import get_sample_rights
 from virtool.types import Document
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-
-PROJECTION = (
-    "_id",
-    "workflow",
-    "created_at",
-    "index",
-    "job",
-    "ready",
-    "reference",
-    "sample",
-    "subtractions",
-    "updated_at",
-    "user",
-)
 
 TARGET_FILES = (
     "hmm.tsv",
@@ -51,7 +32,7 @@ class AttachAnalysisFileTransform(AbstractTransform):
             results = (
                 (
                     await session.execute(
-                        select(SQLAnalysisFile).filter_by(analysis=document["id"])
+                        select(SQLAnalysisFile).filter_by(analysis=document["id"]),
                     )
                 )
                 .scalars()
@@ -62,10 +43,12 @@ class AttachAnalysisFileTransform(AbstractTransform):
 
 
 async def filter_analyses_by_sample_rights(
-    client, mongo: "Mongo", analyses: list[dict]
+    client,
+    mongo: Mongo,
+    analyses: list[dict],
 ) -> list[dict]:
-    """
-    Filter a list of analyses based on the user's rights to the samples they are associated with.
+    """Filter a list of analyses based on the user's rights to the samples they are
+    associated with.
 
     :param mongo: the application database client
     :param analyses: the analyses to filter

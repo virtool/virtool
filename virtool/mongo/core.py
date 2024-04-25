@@ -1,7 +1,7 @@
 """Core database classes."""
 
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable
 
 from motor.motor_asyncio import (
     AsyncIOMotorClientSession,
@@ -10,19 +10,6 @@ from motor.motor_asyncio import (
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
-import virtool.analyses.db
-import virtool.caches.db
-import virtool.history.db
-import virtool.hmm.db
-import virtool.indexes.db
-import virtool.mongo.utils
-import virtool.otus.db
-import virtool.references.db
-import virtool.samples.db
-import virtool.subtractions.db
-import virtool.uploads.db
-import virtool.users.db
-import virtool.utils
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.mongo.utils import id_exists
 from virtool.types import Document, Projection
@@ -36,18 +23,10 @@ class Collection:
 
     """
 
-    def __init__(
-        self,
-        mongo: "Mongo",
-        name: str,
-        processor: Callable[[Any, Document], Awaitable[Document]],
-        projection: Projection | None,
-    ):
+    def __init__(self, mongo: "Mongo", name: str):
         self.mongo = mongo
         self.name = name
         self._collection = mongo.motor_database[name]
-        self.processor = processor
-        self.projection = projection
 
         self.aggregate = self._collection.aggregate
         self.bulk_write = self._collection.bulk_write
@@ -64,12 +43,6 @@ class Collection:
         self.replace_one = self._collection.replace_one
         self.update_many = self._collection.update_many
         self.update_one = self._collection.update_one
-
-    async def apply_processor(self, document):
-        if self.processor:
-            return await self.processor(self.mongo, document)
-
-        return virtool.utils.base_processor(document)
 
     async def find_one_and_update(
         self,
@@ -92,18 +65,16 @@ class Collection:
         document = await self._collection.find_one_and_update(
             query,
             update,
+            projection=projection,
             return_document=ReturnDocument.AFTER,
             upsert=upsert,
             session=session,
         )
 
-        if document is None:
-            return None
+        if document:
+            return document
 
-        if projection:
-            return virtool.mongo.utils.apply_projection(document, projection)
-
-        return document
+        return None
 
     async def insert_one(
         self,
@@ -139,31 +110,43 @@ class Collection:
         documents: list[Document],
         session: AsyncIOMotorClientSession,
     ):
-        inserted = await self.populate_bulk_ids(documents, session=session)
+        inserted = await self._bulk_set_document_ids(documents, session=session)
 
         await self._collection.insert_many(inserted, session=session)
 
         return inserted
 
-    async def populate_bulk_ids(
+    async def _bulk_set_document_ids(
         self,
         documents: list[Document],
         session: AsyncIOMotorClientSession = None,
-    ):
-        is_id_populated = any("_id" in document for document in documents)
+    ) -> list[Document]:
+        """Set the `_id` field for each document in ``documents`` that does not already
+        have one.
+
+        If a document already has an `_id`, it will be left unchanged. If an `_id`
+        provided in ``documents`` is already in use, an ``DuplicateKeyError`` will be
+        raised.
+
+        :param documents: the documents to set `_id` fields for
+        :param session: an optional Motor session to use
+        :return: the documents with `_id` fields set
+        """
+        ids_already_exists = any("_id" in document for document in documents)
 
         id_documents = [
             {**document, "_id": document["_id"] or self.mongo.id_provider.get()}
             for document in documents
         ]
 
-        if await self.find_one(
+        if await self.count_documents(
             {"_id": {"in": [document["_id"] for document in id_documents]}},
             session=session,
         ):
-            if is_id_populated:
+            if ids_already_exists:
                 raise DuplicateKeyError
-            await self.populate_bulk_ids(documents)
+
+            return await self._bulk_set_document_ids(documents)
 
         return id_documents
 
@@ -178,92 +161,30 @@ class Mongo:
         self.start_session = motor_database.start_session
         self.id_provider = id_provider
 
-        self.analyses = self.bind_collection(
-            "analyses",
-            projection=virtool.analyses.db.PROJECTION,
-        )
-
-        self.caches = self.bind_collection(
-            "caches",
-            projection=virtool.caches.db.PROJECTION,
-        )
-
-        self.files = self.bind_collection(
-            "files",
-            projection=virtool.uploads.db.PROJECTION,
-        )
-
+        self.analyses = self.bind_collection("analyses")
+        self.caches = self.bind_collection("caches")
+        self.files = self.bind_collection("files")
         self.groups = self.bind_collection("groups")
-
-        self.history = self.bind_collection(
-            "history",
-            projection=virtool.history.db.PROJECTION,
-        )
-
-        self.hmm = self.bind_collection("hmm", projection=virtool.hmm.db.PROJECTION)
-
-        self.indexes = self.bind_collection(
-            "indexes",
-            projection=virtool.indexes.db.INDEXES_PROJECTION,
-        )
-
-        self.jobs = self.bind_collection(
-            "jobs",
-            projection=(
-                "_id",
-                "archived",
-                "workflow",
-                "status",
-                "rights",
-                "user",
-            ),
-        )
-
+        self.history = self.bind_collection("history")
+        self.hmm = self.bind_collection("hmm")
+        self.indexes = self.bind_collection("indexes")
+        self.jobs = self.bind_collection("jobs")
         self.keys = self.bind_collection("keys")
-
         self.labels = self.bind_collection("labels")
-
         self.migrations = self.bind_collection("migrations")
-
-        self.otus = self.bind_collection("otus", projection=virtool.otus.db.PROJECTION)
-
+        self.otus = self.bind_collection("otus")
         self.tasks = self.bind_collection("tasks")
-
-        self.references = self.bind_collection(
-            "references",
-            processor=virtool.references.db.processor,
-            projection=virtool.references.db.PROJECTION,
-        )
-
-        self.samples = self.bind_collection(
-            "samples",
-            projection=virtool.samples.db.LIST_PROJECTION,
-        )
-        self.settings = self.bind_collection("settings", projection={"_id": False})
-
+        self.references = self.bind_collection("references")
+        self.samples = self.bind_collection("samples")
+        self.settings = self.bind_collection("settings")
         self.sequences = self.bind_collection("sequences")
-
         self.sessions = self.bind_collection("sessions")
-
         self.status = self.bind_collection("status")
+        self.subtraction = self.bind_collection("subtraction")
+        self.users = self.bind_collection("users")
 
-        self.subtraction = self.bind_collection(
-            "subtraction",
-            projection=virtool.subtractions.db.PROJECTION,
-        )
-
-        self.users = self.bind_collection(
-            "users",
-            projection=virtool.users.db.PROJECTION,
-        )
-
-    def bind_collection(
-        self,
-        name: str,
-        processor: Callable | None = None,
-        projection: Projection | None = None,
-    ) -> Collection:
-        return Collection(self, name, processor, projection)
+    def bind_collection(self, name: str) -> Collection:
+        return Collection(self, name)
 
     @asynccontextmanager
     async def create_session(self):
@@ -272,11 +193,7 @@ class Mongo:
         ) as s, s.start_transaction():
             yield s
 
-    @asynccontextmanager
-    async def with_session(self):
+    async def with_transaction(self, func: Callable) -> Any:
+        """Run the passed async function in a MongoDB transaction."""
         async with await self.motor_database.client.start_session() as s:
-            yield s
-
-    async def with_transaction(self, function: Callable):
-        async with await self.motor_database.client.start_session() as s:
-            await s.with_transaction(function)
+            return await s.with_transaction(func)

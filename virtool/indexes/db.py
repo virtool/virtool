@@ -2,7 +2,7 @@
 
 import asyncio
 import asyncio.tasks
-from typing import TYPE_CHECKING, Any, List, Mapping, Optional
+from typing import Any, List, Mapping, Optional
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -17,26 +17,11 @@ from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.models import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
+from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-INDEXES_PROJECTION = [
-    "_id",
-    "created_at",
-    "has_files",
-    "job",
-    "otu_count",
-    "modification_count",
-    "modified_count",
-    "user",
-    "ready",
-    "reference",
-    "version",
-]
+from virtool.utils import base_processor
 
 INDEX_FILE_NAMES = (
     "reference.fa.gz",
@@ -152,19 +137,6 @@ async def create(
     return document
 
 
-async def processor(mongo: "Mongo", document: Document) -> dict:
-    """A processor for index documents. Adds computed data about the index.
-
-    :param mongo: the application database client
-    :param document: the document to be processed
-    :return: the processed document
-    """
-    return await apply_transforms(
-        virtool.utils.base_processor(document),
-        [AttachUserTransform(mongo), IndexCountsTransform(mongo)],
-    )
-
-
 async def find(
     mongo: "Mongo",
     req_query: Mapping,
@@ -188,7 +160,19 @@ async def find(
         {},
         req_query,
         base_query=base_query,
-        projection=INDEXES_PROJECTION,
+        projection=[
+            "_id",
+            "created_at",
+            "has_files",
+            "job",
+            "otu_count",
+            "modification_count",
+            "modified_count",
+            "user",
+            "ready",
+            "reference",
+            "version",
+        ],
         reverse=True,
         sort="version",
     )
@@ -199,7 +183,7 @@ async def find(
         **data,
         **unbuilt_stats,
         "documents": await apply_transforms(
-            data["documents"],
+            [base_processor(d) for d in data["documents"]],
             [
                 AttachJobTransform(mongo),
                 AttachReferenceTransform(mongo),

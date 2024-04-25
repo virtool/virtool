@@ -1,6 +1,6 @@
 """Work with OTUs in the database."""
 
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
@@ -9,17 +9,13 @@ import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.utils import to_bool
+from virtool.utils import base_processor, to_bool
 
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
-
-SEQUENCE_PROJECTION = [
+SEQUENCE_PROJECTION = (
     "_id",
     "accession",
     "definition",
@@ -29,15 +25,15 @@ SEQUENCE_PROJECTION = [
     "reference",
     "sequence",
     "segment",
-]
+)
 
 
 async def check_name_and_abbreviation(
     mongo: "Mongo",
     ref_id: str,
-    name: Optional[str] = None,
-    abbreviation: Optional[str] = None,
-) -> Optional[str]:
+    name: str | None = None,
+    abbreviation: str | None = None,
+) -> str | None:
     """Check of an OTU name and abbreviation are already in use.
 
     Returns an error message if the ``name`` or ``abbreviation`` are already in use.
@@ -74,7 +70,7 @@ async def find(
     req_query: Mapping,
     verified: Optional[bool],
     ref_id: Optional[str] = None,
-) -> Union[Dict[str, Any], List[Optional[dict]]]:
+) -> dict[str, Any] | list[dict | None]:
     mongo_query = {}
 
     if term:
@@ -94,11 +90,11 @@ async def find(
         req_query,
         base_query=base_query,
         sort="name",
-        projection=PROJECTION,
+        projection=["_id", "abbreviation", "name", "reference", "verified", "version"],
     )
 
     data["documents"] = await apply_transforms(
-        data["documents"],
+        [base_processor(d) for d in data["documents"]],
         [AttachReferenceTransform(mongo)],
     )
 
@@ -116,10 +112,10 @@ async def find(
 
 async def join(
     mongo: "Mongo",
-    query: Union[dict, str],
-    document: Optional[Dict[str, Any]] = None,
-    session: Optional[AsyncIOMotorClientSession] = None,
-) -> Optional[Dict[str, Any]]:
+    query: dict | str,
+    document: dict[str, Any] | None = None,
+    session: AsyncIOMotorClientSession | None = None,
+) -> dict[str, Any] | None:
     """Join the otu associated with the supplied ``otu_id`` with its sequences.
 
     If an OTU is passed, the document will not be pulled from the database.

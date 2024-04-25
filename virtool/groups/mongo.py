@@ -1,7 +1,4 @@
-"""
-Database utilities for groups.
-
-"""
+"""Database utilities for groups."""
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
@@ -17,8 +14,7 @@ async def update_member_users_and_api_keys(
     pg_session: AsyncSession,
     group_id: int,
 ):
-    """
-    For the ``group_id``, update member users ``groups`` and ``primary_group`` fields
+    """For the ``group_id``, update member users ``groups`` and ``primary_group`` fields
     and update their API key permissions.
 
     This function should be called after a group is updated or deleted.

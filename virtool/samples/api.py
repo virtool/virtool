@@ -49,7 +49,7 @@ from virtool.groups.pg import SQLGroup
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
-    RIGHTS_PROJECTION,
+    SAMPLE_RIGHTS_PROJECTION,
     check_rights,
     get_sample_owner,
     recalculate_workflow_tags,
@@ -359,7 +359,7 @@ class RightsView(PydanticView):
         document = await mongo.samples.find_one_and_update(
             {"_id": sample_id},
             {"$set": data},
-            projection=RIGHTS_PROJECTION,
+            projection=SAMPLE_RIGHTS_PROJECTION,
         )
 
         return json_response(document)

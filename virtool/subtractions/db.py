@@ -2,34 +2,18 @@
 
 import asyncio
 import glob
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import Document
 from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-PROJECTION = [
-    "_id",
-    "count",
-    "created_at",
-    "file",
-    "ready",
-    "job",
-    "name",
-    "nickname",
-    "user",
-]
-
-ADD_SUBTRACTION_FILES_QUERY = {"deleted": False}
 
 
 def subtraction_processor(document: Document) -> Document:

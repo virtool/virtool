@@ -3,7 +3,7 @@
 import asyncio
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 import bson
 import dictdiffer
@@ -23,6 +23,7 @@ from virtool.history.utils import (
     derive_otu_information,
     write_diff_file,
 )
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -30,19 +31,7 @@ from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-MOST_RECENT_PROJECTION = [
-    "_id",
-    "description",
-    "method_name",
-    "user",
-    "otu",
-    "created_at",
-]
-
-LIST_PROJECTION = [
+HISTORY_LIST_PROJECTION = [
     "_id",
     "description",
     "method_name",
@@ -52,8 +41,10 @@ LIST_PROJECTION = [
     "reference",
     "user",
 ]
+"""A MongoDB projection for history for listing purposes."""
 
-PROJECTION = LIST_PROJECTION + ["diff"]
+HISTORY_PROJECTION = HISTORY_LIST_PROJECTION + ["diff"]
+"""A MongoDB projection for history that includes the ``diff`` field."""
 
 
 class DiffTransform(AbstractTransform):
@@ -76,28 +67,15 @@ class DiffTransform(AbstractTransform):
         return document["diff"]
 
 
-async def processor(mongo, document: Document) -> Document:
-    """Process a history document before it is returned to the client.
-
-    :param mongo: the application object
-    :param document: the document to process
-    :return: the processed document
-    """
-    return await apply_transforms(
-        base_processor(document),
-        [AttachUserTransform(mongo, ignore_errors=True)],
-    )
-
-
 async def add(
     mongo: "Mongo",
     data_path: Path,
     method_name: HistoryMethod,
-    old: Optional[dict],
-    new: Optional[dict],
+    old: dict | None,
+    new: dict | None,
     description: str,
     user_id: str,
-    session: Optional[AsyncIOMotorClientSession] = None,
+    session: AsyncIOMotorClientSession | None = None,
 ) -> dict:
     """Add a change document to the history collection.
 
@@ -207,14 +185,14 @@ async def find(mongo, req_query, base_query: Optional[Document] = None):
         req_query,
         base_query=base_query,
         sort="otu.version",
-        projection=LIST_PROJECTION,
+        projection=HISTORY_LIST_PROJECTION,
         reverse=True,
     )
 
     return {
         **data,
         "documents": await apply_transforms(
-            data["documents"],
+            [base_processor(d) for d in data["documents"]],
             [AttachReferenceTransform(mongo), AttachUserTransform(mongo)],
         ),
     }
@@ -233,7 +211,7 @@ async def get(app, change_id: str) -> Optional[Document]:
     """
     mongo = get_mongo_from_app(app)
 
-    document = await mongo.history.find_one(change_id, PROJECTION)
+    document = await mongo.history.find_one(change_id, HISTORY_PROJECTION)
 
     if document:
         return await apply_transforms(
@@ -287,7 +265,14 @@ async def get_most_recent_change(
     """
     return await mongo.history.find_one(
         {"otu.id": otu_id},
-        MOST_RECENT_PROJECTION,
+        [
+            "_id",
+            "description",
+            "method_name",
+            "user",
+            "otu",
+            "created_at",
+        ],
         sort=[("otu.version", -1)],
         session=session,
     )

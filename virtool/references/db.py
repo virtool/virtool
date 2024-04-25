@@ -52,32 +52,10 @@ from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.users.mongo import extend_user
 from virtool.users.transforms import AttachUserTransform
+from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-
-PROJECTION = [
-    "_id",
-    "cloned_from",
-    "created_at",
-    "data_type",
-    "groups",
-    "imported_from",
-    "installed",
-    "internal_control",
-    "latest_build",
-    "name",
-    "organism",
-    "release",
-    "remotes_from",
-    "task",
-    "unbuilt_count",
-    "updates",
-    "updating",
-    "user",
-    "users",
-]
 
 
 async def processor(mongo: "Mongo", document: Document) -> Document:
@@ -91,10 +69,9 @@ async def processor(mongo: "Mongo", document: Document) -> Document:
     :return: the processed document
 
     """
-    try:
-        ref_id = document.pop("_id")
-    except KeyError:
-        ref_id = document["id"]
+    document = base_processor(document)
+
+    ref_id = document["id"]
 
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_latest_build(mongo, ref_id),
@@ -186,7 +163,8 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
         return True
 
     reference = await get_mongo_from_req(req).references.find_one(
-        ref_id, ["groups", "users"]
+        ref_id,
+        ["groups", "users"],
     )
 
     if reference is None:
@@ -408,7 +386,7 @@ async def get_latest_build(mongo: "Mongo", ref_id: str) -> Document | None:
 
     if latest_build:
         return await apply_transforms(
-            virtool.utils.base_processor(latest_build),
+            base_processor(latest_build),
             [AttachUserTransform(mongo)],
         )
 

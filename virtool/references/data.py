@@ -58,6 +58,7 @@ from virtool.references.db import (
     get_unbuilt_count,
     insert_change,
     insert_joined_otu,
+    processor,
 )
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
@@ -123,12 +124,15 @@ class ReferencesData(DataLayerDomain):
             query,
             sort="name",
             base_query=base_query,
-            projection=virtool.references.db.PROJECTION,
         )
+
+        documents = [
+            await processor(self._mongo, document) for document in data["documents"]
+        ]
 
         documents, remote_slug_count = await asyncio.gather(
             apply_transforms(
-                data["documents"],
+                documents,
                 [
                     AttachUserTransform(self._mongo),
                     AttachImportedFromTransform(self._mongo, self._pg),
