@@ -17,8 +17,6 @@ from virtool.utils import base_processor
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
-PROJECTION = ("_id", "created_at", "files", "key", "program", "ready", "sample")
-
 
 async def get(mongo: "Mongo", cache_id: str) -> dict[str, Any]:
     """Get the complete representation for the cache with the given `cache_id`.

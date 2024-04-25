@@ -1,9 +1,9 @@
-from typing import List, Union
+from typing import Union
 
 from aiohttp import web
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
-from virtool_core.models.otu import OTU, OTUIsolate, Sequence
+from virtool_core.models.otu import OTU, OTUIsolate, OTUSequence, Sequence
 
 import virtool.otus.db
 import virtool.references.db
@@ -18,8 +18,9 @@ from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
-from virtool.history.db import LIST_PROJECTION
+from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
+from virtool.otus.db import SEQUENCE_PROJECTION
 from virtool.otus.oas import (
     CreateIsolateRequest,
     CreateSequenceRequest,
@@ -374,7 +375,7 @@ class SequencesView(PydanticView):
         otu_id: str,
         isolate_id: str,
         /,
-    ) -> Union[r200[List[OTUIsolate]], r401, r403, r404]:
+    ) -> r200[list[OTUSequence]] | r401 | r403 | r404:
         """List sequences.
 
         Lists the sequences for an isolate.
@@ -388,17 +389,12 @@ class SequencesView(PydanticView):
         ):
             raise APINotFound()
 
-        projection = list(virtool.otus.db.SEQUENCE_PROJECTION)
-
-        projection.remove("otu_id")
-        projection.remove("isolate_id")
-
         return json_response(
             [
-                base_processor(d)
+                OTUSequence(**d)
                 async for d in mongo.sequences.find(
                     {"otu_id": otu_id, "isolate_id": isolate_id},
-                    projection,
+                    SEQUENCE_PROJECTION,
                 )
             ],
         )
@@ -409,7 +405,7 @@ class SequencesView(PydanticView):
         isolate_id: str,
         /,
         data: CreateSequenceRequest,
-    ) -> Union[r201[Sequence], r400, r403, r404]:
+    ) -> r201[Sequence] | r400 | r403 | r404:
         """Create a sequence.
 
         Creates a new sequence for an isolate identified by `otu_id` and `isolate_id`.
@@ -612,7 +608,7 @@ async def list_history(req):
 
     documents = await mongo.history.find(
         {"otu.id": otu_id},
-        projection=LIST_PROJECTION,
+        projection=HISTORY_LIST_PROJECTION,
     ).to_list(None)
 
     return json_response(

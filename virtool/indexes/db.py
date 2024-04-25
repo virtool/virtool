@@ -2,7 +2,7 @@
 
 import asyncio
 import asyncio.tasks
-from typing import TYPE_CHECKING, Any, List, Mapping, Optional
+from typing import Any, List, Mapping, Optional
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -17,26 +17,10 @@ from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.models import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
+from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-INDEXES_PROJECTION = [
-    "_id",
-    "created_at",
-    "has_files",
-    "job",
-    "otu_count",
-    "modification_count",
-    "modified_count",
-    "user",
-    "ready",
-    "reference",
-    "version",
-]
 
 INDEX_FILE_NAMES = (
     "reference.fa.gz",
@@ -188,7 +172,19 @@ async def find(
         {},
         req_query,
         base_query=base_query,
-        projection=INDEXES_PROJECTION,
+        projection=[
+            "_id",
+            "created_at",
+            "has_files",
+            "job",
+            "otu_count",
+            "modification_count",
+            "modified_count",
+            "user",
+            "ready",
+            "reference",
+            "version",
+        ],
         reverse=True,
         sort="version",
     )

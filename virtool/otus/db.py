@@ -1,6 +1,6 @@
 """Work with OTUs in the database."""
 
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
@@ -9,17 +9,13 @@ import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.utils import to_bool
 
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
-PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
-
-SEQUENCE_PROJECTION = [
+SEQUENCE_PROJECTION = (
     "_id",
     "accession",
     "definition",
@@ -29,7 +25,7 @@ SEQUENCE_PROJECTION = [
     "reference",
     "sequence",
     "segment",
-]
+)
 
 
 async def check_name_and_abbreviation(
@@ -94,7 +90,7 @@ async def find(
         req_query,
         base_query=base_query,
         sort="name",
-        projection=PROJECTION,
+        projection=["_id", "abbreviation", "name", "reference", "verified", "version"],
     )
 
     data["documents"] = await apply_transforms(
