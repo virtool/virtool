@@ -1,17 +1,14 @@
-"""
-Utilities for working with MongoDB.
+"""Utilities for working with MongoDB."""
 
-"""
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection
 
-from virtool.types import Projection, Document
+from virtool.types import Document, Projection
 
 
 def apply_projection(document: Document, projection: Projection):
-    """
-    Apply a Mongo-style projection to a document and return it.
+    """Apply a Mongo-style projection to a document and return it.
 
     :param document: the document to project
     :param projection: the projection to apply
@@ -45,8 +42,7 @@ async def check_missing_ids(
     query: dict | None = None,
     session: AsyncIOMotorClientSession | None = None,
 ) -> set[str]:
-    """
-    Check if all IDs in the ``id_list`` exist in the database.
+    """Check if all IDs in the ``id_list`` exist in the database.
 
     :param collection: the Mongo collection to check ``id_list`` against
     :param id_list: the IDs to check for
@@ -59,8 +55,7 @@ async def check_missing_ids(
 
 
 async def delete_unready(collection):
-    """
-    Delete documents in the `collection` where the `ready` field is set to `false`.
+    """Delete documents in the `collection` where the `ready` field is set to `false`.
 
     :param collection: the collection to modify
 
@@ -69,10 +64,10 @@ async def delete_unready(collection):
 
 
 async def get_new_id(
-    collection, session: AsyncIOMotorClientSession | None = None
+    collection,
+    session: AsyncIOMotorClientSession | None = None,
 ) -> str:
-    """
-    Returns a new, unique, id that can be used for inserting a new document. Will not
+    """Returns a new, unique, id that can be used for inserting a new document. Will not
     return any id that is included in ``excluded``.
 
     :param collection: the Mongo collection to get a new _id for
@@ -94,8 +89,7 @@ async def get_one_field(
     query: str | dict,
     session: AsyncIOMotorClientSession | None = None,
 ) -> Any:
-    """
-    Get the value for a single `field` from a single document matching the `query`.
+    """Get the value for a single `field` from a single document matching the `query`.
 
     :param collection: the database collection to search
     :param field: the field to return
@@ -111,8 +105,8 @@ async def get_one_field(
 
 
 async def get_non_existent_ids(collection, id_list: list[str]) -> set[str]:
-    """
-    Return the IDs that are in `id_list`, but don't exist in the specified `collection`.
+    """Return the IDs that are in `id_list`, but don't exist in the specified
+    `collection`.
 
     :param collection: the database collection to check
     :param id_list: a list of document IDs to check for existence
@@ -124,15 +118,16 @@ async def get_non_existent_ids(collection, id_list: list[str]) -> set[str]:
 
 
 async def id_exists(
-    collection, id_: str, session: AsyncIOMotorClientSession | None = None
+    collection,
+    id_: str,
+    session: AsyncIOMotorClientSession | None = None,
 ) -> bool:
-    """
-    Check if the document id exists in the collection.
+    """Check if the document id exists in the collection.
 
     :param collection: the Mongo collection to check the _id against
     :param id_: the _id to check for
     :return: does the id exist
     """
     return bool(
-        await collection.count_documents({"_id": id_}, limit=1, session=session)
+        await collection.count_documents({"_id": id_}, limit=1, session=session),
     )

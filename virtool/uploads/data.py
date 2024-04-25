@@ -3,15 +3,15 @@ import math
 from asyncio import to_thread
 from typing import List
 
-from sqlalchemy import select, update, func
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-from virtool_core.models.upload import Upload, UploadSearchResult, UploadMinimal
+from sqlalchemy import func, select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.upload import Upload, UploadMinimal, UploadSearchResult
 from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.events import emits, Operation
+from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.mongo.core import Mongo
 from virtool.uploads.models import SQLUpload, UploadType
@@ -22,18 +22,20 @@ from virtool.users.transforms import AttachUserTransform
 class UploadsData(DataLayerDomain):
     name = "uploads"
 
-    def __init__(self, config, db, pg):
+    def __init__(self, config, mongo: "Mongo", pg):
         self._config = config
-        self._db: Mongo = db
+        self._mongo: Mongo = mongo
         self._pg: AsyncEngine = pg
 
     async def find(
-        self, user, page: int, per_page: int, upload_type, paginate
+        self,
+        user,
+        page: int,
+        per_page: int,
+        upload_type,
+        paginate,
     ) -> List[UploadMinimal] | UploadSearchResult:
-        """
-        Find and filter uploads.
-        """
-
+        """Find and filter uploads."""
         if paginate:
             return await self._find_beta(user, page, per_page, upload_type)
 
@@ -52,7 +54,7 @@ class UploadsData(DataLayerDomain):
                 filters.append(SQLUpload.type == upload_type)
 
             results = await session.execute(
-                select(SQLUpload).where(*filters).order_by(SQLUpload.created_at.desc())
+                select(SQLUpload).where(*filters).order_by(SQLUpload.created_at.desc()),
             )
 
             for result in results.unique().scalars().all():
@@ -61,12 +63,17 @@ class UploadsData(DataLayerDomain):
             return [
                 UploadMinimal(**upload)
                 for upload in await apply_transforms(
-                    uploads, [AttachUserTransform(self._db)]
+                    uploads,
+                    [AttachUserTransform(self._mongo)],
                 )
             ]
 
     async def _find_beta(
-        self, user, page: int, per_page: int, upload_type
+        self,
+        user,
+        page: int,
+        per_page: int,
+        upload_type,
     ) -> UploadSearchResult:
         base_filters = [
             SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
@@ -119,7 +126,7 @@ class UploadsData(DataLayerDomain):
 
             uploads = [row.to_dict() for row in results.unique().scalars()]
 
-        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
+        uploads = await apply_transforms(uploads, [AttachUserTransform(self._mongo)])
 
         return UploadSearchResult(
             items=uploads,
@@ -132,11 +139,13 @@ class UploadsData(DataLayerDomain):
 
     @emits(Operation.CREATE)
     async def create(
-        self, chunker, name: str, upload_type: UploadType, user: str | None = None
+        self,
+        chunker,
+        name: str,
+        upload_type: UploadType,
+        user: str | None = None,
     ) -> Upload:
-        """
-        Create an upload.
-        """
+        """Create an upload."""
         uploads_path = self._config.data_path / "files"
 
         await asyncio.to_thread(uploads_path.mkdir, parents=True, exist_ok=True)
@@ -167,12 +176,11 @@ class UploadsData(DataLayerDomain):
             await session.commit()
 
         return Upload(
-            **await apply_transforms(upload_dict, [AttachUserTransform(self._db)])
+            **await apply_transforms(upload_dict, [AttachUserTransform(self._mongo)]),
         )
 
     async def get(self, upload_id: int) -> Upload:
-        """
-        Get a single upload by its ID.
+        """Get a single upload by its ID.
 
         :param upload_id: the upload's ID
         :return: the upload
@@ -180,7 +188,7 @@ class UploadsData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             upload = (
                 await session.execute(
-                    select(SQLUpload).filter_by(id=upload_id, removed=False)
+                    select(SQLUpload).filter_by(id=upload_id, removed=False),
                 )
             ).scalar()
 
@@ -188,22 +196,23 @@ class UploadsData(DataLayerDomain):
                 raise ResourceNotFoundError
 
         return Upload(
-            **await apply_transforms(upload.to_dict(), [AttachUserTransform(self._db)])
+            **await apply_transforms(
+                upload.to_dict(),
+                [AttachUserTransform(self._mongo)],
+            ),
         )
 
     @emits(Operation.DELETE)
     async def delete(self, upload_id: int) -> Upload:
-        """
-        Delete an upload by its id.
+        """Delete an upload by its id.
 
         :param upload_id: The upload id
         :return: the upload
         """
-
         async with AsyncSession(self._pg) as session:
             upload = (
                 await session.execute(
-                    select(SQLUpload).where(SQLUpload.id == upload_id)
+                    select(SQLUpload).where(SQLUpload.id == upload_id),
                 )
             ).scalar()
 
@@ -219,7 +228,7 @@ class UploadsData(DataLayerDomain):
             await session.commit()
 
         upload = Upload(
-            **await apply_transforms(upload, [AttachUserTransform(self._db)])
+            **await apply_transforms(upload, [AttachUserTransform(self._mongo)]),
         )
 
         try:
@@ -230,8 +239,8 @@ class UploadsData(DataLayerDomain):
         return upload
 
     async def release(self, upload_ids: int | List[int]):
-        """
-        Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
+        """Release the uploads in `upload_ids` by setting the `reserved` field to
+        `False`.
 
         :param upload_ids: List of upload ids
         """
@@ -245,14 +254,14 @@ class UploadsData(DataLayerDomain):
                 update(SQLUpload)
                 .where(query)
                 .values(reserved=False)
-                .execution_options(synchronize_session="fetch")
+                .execution_options(synchronize_session="fetch"),
             )
 
             await session.commit()
 
     async def reserve(self, upload_ids: int | List[int]):
-        """
-        Reserve the uploads in `upload_ids` by setting the `reserved` field to `True`.
+        """Reserve the uploads in `upload_ids` by setting the `reserved` field to
+        `True`.
 
         :param upload_ids: List of upload ids
         """
@@ -266,21 +275,20 @@ class UploadsData(DataLayerDomain):
                 update(SQLUpload)
                 .where(query)
                 .values(reserved=True)
-                .execution_options(synchronize_session="fetch")
+                .execution_options(synchronize_session="fetch"),
             )
             await session.commit()
 
     async def migrate_to_postgres(self):
-        """
-        Transforms documents in the `files` collection into rows in the `uploads` SQL
+        """Transforms documents in the `files` collection into rows in the `uploads` SQL
         table.
 
         """
-        async for document in self._db.files.find():
+        async for document in self._mongo.files.find():
             async with AsyncSession(self._pg) as session:
                 exists = (
                     await session.execute(
-                        select(SQLUpload).filter_by(name_on_disk=document["_id"])
+                        select(SQLUpload).filter_by(name_on_disk=document["_id"]),
                     )
                 ).scalar()
 
@@ -300,4 +308,4 @@ class UploadsData(DataLayerDomain):
                     session.add(upload)
                     await session.commit()
 
-                    await self._db.files.delete_one({"_id": document["_id"]})
+                    await self._mongo.files.delete_one({"_id": document["_id"]})

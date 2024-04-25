@@ -1,21 +1,15 @@
-"""
-Database utilities for managing users.
+"""Database utilities for managing users.
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
-
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-
 from virtool.data.errors import ResourceConflictError
 from virtool.data.topg import compose_legacy_id_expression
-
 from virtool.groups.pg import SQLGroup
 
 ATTACH_PROJECTION = ("_id", "handle")
@@ -32,9 +26,7 @@ PROJECTION = (
 
 @dataclass
 class B2CUserAttributes:
-    """
-    Class to store ID token claims from Azure AD B2C
-    """
+    """Class to store ID token claims from Azure AD B2C"""
 
     display_name: str
     family_name: str
@@ -43,10 +35,11 @@ class B2CUserAttributes:
 
 
 async def compose_groups_update(
-    pg: AsyncEngine, group_ids: list[int | str], primary_group: int | str | None
+    pg: AsyncEngine,
+    group_ids: list[int | str],
+    primary_group: int | str | None,
 ) -> dict[str, list[int | str]]:
-    """
-    Compose an update dict for updating the list of groups a user is a member of.
+    """Compose an update dict for updating the list of groups a user is a member of.
 
     Any legacy string ids will be converted to modern integer ids. A
     ``ResourceConflictError`` will be raised if any of the ``group_ids`` do not exist.
@@ -62,7 +55,7 @@ async def compose_groups_update(
         expr = compose_legacy_id_expression(SQLGroup, group_ids)
 
         result = await session.execute(
-            select(SQLGroup.id, SQLGroup.legacy_id).where(expr)
+            select(SQLGroup.id, SQLGroup.legacy_id).where(expr),
         )
 
         existing_group_ids = [id_ for row in result.all() for id_ in row]

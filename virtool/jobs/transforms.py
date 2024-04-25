@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import get_safely, base_processor
+from virtool.utils import base_processor, get_safely
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -14,7 +12,7 @@ ATTACHED_JOB_PROJECTION = ["archived", "status", "user", "workflow"]
 
 
 class AttachJobTransform(AbstractTransform):
-    def __init__(self, mongo: Mongo):
+    def __init__(self, mongo: "Mongo"):
         self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: Document) -> Document:
@@ -41,20 +39,22 @@ class AttachJobTransform(AbstractTransform):
                     "progress": last_status["progress"],
                     "state": last_status["state"],
                     "stage": last_status["stage"],
-                }
+                },
             ),
             [AttachUserTransform(self._mongo)],
         )
 
     async def prepare_many(
-        self, documents: list[Document]
+        self,
+        documents: list[Document],
     ) -> dict[str, Document | None]:
         job_ids = {get_safely(d, "job", "id") for d in documents}
 
         jobs = [
             base_processor(d)
             async for d in self._mongo.jobs.find(
-                {"_id": {"$in": list(job_ids)}}, ATTACHED_JOB_PROJECTION
+                {"_id": {"$in": list(job_ids)}},
+                ATTACHED_JOB_PROJECTION,
             )
         ]
 

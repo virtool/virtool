@@ -1,11 +1,9 @@
-"""
-Work with OTU history in the database.
+"""Work with OTU history in the database."""
 
-"""
 import asyncio
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, List, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 import bson
 import dictdiffer
@@ -21,9 +19,9 @@ from virtool.config import get_config_from_app
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.utils import (
     calculate_diff,
+    compose_history_description,
     derive_otu_information,
     write_diff_file,
-    compose_history_description,
 )
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -69,15 +67,16 @@ class DiffTransform(AbstractTransform):
             otu_id, otu_version = document["id"].split(".")
 
             document["diff"] = await virtool.history.utils.read_diff_file(
-                self._data_path, otu_id, otu_version
+                self._data_path,
+                otu_id,
+                otu_version,
             )
 
         return document["diff"]
 
 
 async def processor(mongo, document: Document) -> Document:
-    """
-    Process a history document before it is returned to the client.
+    """Process a history document before it is returned to the client.
 
     :param mongo: the application object
     :param document: the document to process
@@ -90,7 +89,7 @@ async def processor(mongo, document: Document) -> Document:
 
 
 async def add(
-    db: "Mongo",
+    mongo: "Mongo",
     data_path: Path,
     method_name: HistoryMethod,
     old: Optional[dict],
@@ -99,11 +98,10 @@ async def add(
     user_id: str,
     session: Optional[AsyncIOMotorClientSession] = None,
 ) -> dict:
-    """
-    Add a change document to the history collection.
+    """Add a change document to the history collection.
 
     :param data_path: system path to the applications datafolder
-    :param db: the application database object
+    :param mongo: the application database object
     :param method_name: the name of the handler method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
@@ -112,7 +110,6 @@ async def add(
     :return: the change document
 
     """
-
     otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
     document = {
@@ -136,14 +133,14 @@ async def add(
         document["diff"] = calculate_diff(old, new)
 
     try:
-        await db.history.insert_one(document, session=session)
+        await mongo.history.insert_one(document, session=session)
     except pymongo.errors.DocumentTooLarge:
         history_path = data_path / "history"
         await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
 
         await write_diff_file(data_path, otu_id, otu_version, document["diff"])
 
-        await db.history.insert_one(dict(document, diff="file"), session=session)
+        await mongo.history.insert_one(dict(document, diff="file"), session=session)
 
     return document
 
@@ -155,8 +152,7 @@ async def prepare_add(
     user_id: str,
     data_path: Path,
 ) -> Document:
-    """
-    Add a change document to the history collection.
+    """Add a change document to the history collection.
     :param history_method: the name of the method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
@@ -224,8 +220,7 @@ async def find(mongo, req_query, base_query: Optional[Document] = None):
 
 
 async def get(app, change_id: str) -> Optional[Document]:
-    """
-    Get a complete history document identified by the passed `changed_id`.
+    """Get a complete history document identified by the passed `changed_id`.
 
     Loads diff field from file if necessary. Returns `None` if the document does not
     exist.
@@ -235,15 +230,15 @@ async def get(app, change_id: str) -> Optional[Document]:
     :return: the change
 
     """
-    db = app["db"]
+    mongo: "Mongo" = app["db"]
 
-    document = await db.history.find_one(change_id, PROJECTION)
+    document = await mongo.history.find_one(change_id, PROJECTION)
 
     if document:
         return await apply_transforms(
             base_processor(document),
             [
-                AttachUserTransform(db),
+                AttachUserTransform(mongo),
                 DiffTransform(get_config_from_app(app).data_path),
             ],
         )
@@ -251,24 +246,24 @@ async def get(app, change_id: str) -> Optional[Document]:
     return None
 
 
-async def get_contributors(db, query: dict) -> List[dict]:
-    """
-    Return list of contributors and their contribution count for a specific set of
+async def get_contributors(mongo: "Mongo", query: dict) -> list[dict]:
+    """Return list of contributors and their contribution count for a specific set of
     history.
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param query: a query to filter scanned history by
     :return: a list of contributors to the scanned history changes
 
     """
-    cursor = db.history.aggregate(
-        [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}]
+    cursor = mongo.history.aggregate(
+        [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}],
     )
 
     contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
-    users = await db.users.find(
-        {"_id": {"$in": [c["id"] for c in contributors]}}, projection=ATTACH_PROJECTION
+    users = await mongo.users.find(
+        {"_id": {"$in": [c["id"] for c in contributors]}},
+        projection=ATTACH_PROJECTION,
     ).to_list(None)
 
     users = {u.pop("_id"): u for u in users}
@@ -277,18 +272,19 @@ async def get_contributors(db, query: dict) -> List[dict]:
 
 
 async def get_most_recent_change(
-    db, otu_id: str, session: Optional[AsyncIOMotorClientSession] = None
+    mongo: "Mongo",
+    otu_id: str,
+    session: Optional[AsyncIOMotorClientSession] = None,
 ) -> Document:
-    """
-    Get the most recent change for the otu identified by the passed ``otu_id``.
+    """Get the most recent change for the otu identified by the passed ``otu_id``.
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param otu_id: the target otu_id
     :param session: a Motor session to use for database operations
     :return: the most recent change document
 
     """
-    return await db.history.find_one(
+    return await mongo.history.find_one(
         {"otu.id": otu_id},
         MOST_RECENT_PROJECTION,
         sort=[("otu.version", -1)],
@@ -297,24 +293,25 @@ async def get_most_recent_change(
 
 
 async def patch_to_version(
-    data_path: Path, db, otu_id: str, version: Union[str, int]
+    data_path: Path,
+    mongo: "Mongo",
+    otu_id: str,
+    version: str | int,
 ) -> tuple:
-    """
-    Take a joined otu back in time to the passed ``version``.
+    """Take a joined otu back in time to the passed ``version``.
 
     Uses the diffs in the change documents associated with the otu.
 
     :param data_path: the data path
-    :param db: the database object
+    :param mongo: the database object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
     :return: the current joined otu, patched otu, and the ids of reverted changes
 
     """
-
     reverted_history_ids = []
 
-    current = await virtool.otus.db.join(db, otu_id) or {}
+    current = await virtool.otus.db.join(mongo, otu_id) or {}
 
     if "version" in current and current["version"] == version:
         return current, deepcopy(current), reverted_history_ids
@@ -322,13 +319,18 @@ async def patch_to_version(
     patched = deepcopy(current)
 
     # Sort the changes by descending timestamp.
-    async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
+    async for change in mongo.history.find(
+        {"otu.id": otu_id},
+        sort=[("otu.version", -1)],
+    ):
         if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
             reverted_history_ids.append(change["_id"])
 
             if change["diff"] == "file":
                 change["diff"] = await virtool.history.utils.read_diff_file(
-                    data_path, otu_id, change["otu"]["version"]
+                    data_path,
+                    otu_id,
+                    change["otu"]["version"],
                 )
 
             if change["method_name"] == "remove":
