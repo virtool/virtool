@@ -44,7 +44,7 @@ class AttachAnalysisFileTransform(AbstractTransform):
 
 async def filter_analyses_by_sample_rights(
     client,
-    mongo: "Mongo",
+    mongo: Mongo,
     analyses: list[dict],
 ) -> list[dict]:
     """Filter a list of analyses based on the user's rights to the samples they are associated with.

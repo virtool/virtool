@@ -1,7 +1,7 @@
 """Core database classes."""
 
 from contextlib import asynccontextmanager
-from typing import Callable
+from typing import Any, Callable
 
 from motor.motor_asyncio import (
     AsyncIOMotorClientSession,
@@ -110,31 +110,43 @@ class Collection:
         documents: list[Document],
         session: AsyncIOMotorClientSession,
     ):
-        inserted = await self.populate_bulk_ids(documents, session=session)
+        inserted = await self._bulk_set_document_ids(documents, session=session)
 
         await self._collection.insert_many(inserted, session=session)
 
         return inserted
 
-    async def populate_bulk_ids(
+    async def _bulk_set_document_ids(
         self,
         documents: list[Document],
         session: AsyncIOMotorClientSession = None,
-    ):
-        is_id_populated = any("_id" in document for document in documents)
+    ) -> list[Document]:
+        """Set the `_id` field for each document in ``documents`` that does not already
+        have one.
+
+        If a document already has an `_id`, it will be left unchanged. If an `_id`
+        provided in ``documents`` is already in use, an ``DuplicateKeyError`` will be
+        raised.
+
+        :param documents: the documents to set `_id` fields for
+        :param session: an optional Motor session to use
+        :return: the documents with `_id` fields set
+        """
+        ids_already_exists = any("_id" in document for document in documents)
 
         id_documents = [
             {**document, "_id": document["_id"] or self.mongo.id_provider.get()}
             for document in documents
         ]
 
-        if await self.find_one(
+        if await self.count_documents(
             {"_id": {"in": [document["_id"] for document in id_documents]}},
             session=session,
         ):
-            if is_id_populated:
+            if ids_already_exists:
                 raise DuplicateKeyError
-            await self.populate_bulk_ids(documents)
+
+            return await self._bulk_set_document_ids(documents)
 
         return id_documents
 
@@ -181,11 +193,7 @@ class Mongo:
         ) as s, s.start_transaction():
             yield s
 
-    @asynccontextmanager
-    async def with_session(self):
+    async def with_transaction(self, func: Callable) -> Any:
+        """Run the passed async function in a MongoDB transaction."""
         async with await self.motor_database.client.start_session() as s:
-            yield s
-
-    async def with_transaction(self, function: Callable):
-        async with await self.motor_database.client.start_session() as s:
-            await s.with_transaction(function)
+            return await s.with_transaction(func)
