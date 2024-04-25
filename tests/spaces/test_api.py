@@ -1,10 +1,9 @@
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.roles import (
+    SpaceLabelRole,
+    SpaceProjectRole,
     SpaceRole,
     SpaceSampleRole,
-    SpaceProjectRole,
-    SpaceLabelRole,
 )
 
 from tests.fixtures.client import ClientSpawner
@@ -15,7 +14,6 @@ from virtool.flags import FlagName
 from virtool.spaces.models import SQLSpace
 
 
-
 async def test_list(
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
@@ -23,7 +21,9 @@ async def test_list(
     static_time,
 ):
     client = await spawn_client(
-        administrator=True, authenticated=True, flags=[FlagName.SPACES]
+        administrator=True,
+        authenticated=True,
+        flags=[FlagName.SPACES],
     )
 
     async with AsyncSession(pg) as session:
@@ -43,7 +43,7 @@ async def test_list(
                     created_at=static_time.datetime,
                     updated_at=static_time.datetime,
                 ),
-            ]
+            ],
         )
 
         await session.commit()
@@ -60,7 +60,6 @@ async def test_list(
     assert await resp.json() == snapshot
 
 
-
 async def test_get(
     fake2: DataFaker,
     pg: AsyncEngine,
@@ -69,7 +68,9 @@ async def test_get(
     static_time,
 ):
     client = await spawn_client(
-        administrator=True, authenticated=True, flags=[FlagName.SPACES]
+        administrator=True,
+        authenticated=True,
+        flags=[FlagName.SPACES],
     )
 
     user = await fake2.users.create()
@@ -82,7 +83,7 @@ async def test_get(
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
@@ -100,12 +101,16 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-
 async def test_update(
-    pg: AsyncEngine, spawn_client: ClientSpawner, snapshot, static_time
+    pg: AsyncEngine,
+    spawn_client: ClientSpawner,
+    snapshot,
+    static_time,
 ):
     client = await spawn_client(
-        administrator=True, authenticated=True, flags=[FlagName.SPACES]
+        administrator=True,
+        authenticated=True,
+        flags=[FlagName.SPACES],
     )
 
     async with AsyncSession(pg) as session:
@@ -116,18 +121,18 @@ async def test_update(
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
 
     resp = await client.patch(
-        "/spaces/0", {"name": "New Name", "description": "New description"}
+        "/spaces/0",
+        {"name": "New Name", "description": "New description"},
     )
 
     assert resp.status == 200
     assert await resp.json() == snapshot
-
 
 
 async def test_list_space_members(
@@ -138,7 +143,9 @@ async def test_list_space_members(
     static_time,
 ):
     client = await spawn_client(
-        administrator=True, authenticated=True, flags=[FlagName.SPACES]
+        administrator=True,
+        authenticated=True,
+        flags=[FlagName.SPACES],
     )
 
     user_1 = await fake2.users.create()
@@ -152,7 +159,7 @@ async def test_list_space_members(
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
@@ -170,7 +177,6 @@ async def test_list_space_members(
     assert await resp.json() == snapshot
 
 
-
 async def test_update_member_roles(
     fake2: DataFaker,
     pg: AsyncEngine,
@@ -179,7 +185,9 @@ async def test_update_member_roles(
     static_time,
 ):
     client = await spawn_client(
-        administrator=True, authenticated=True, flags=[FlagName.SPACES]
+        administrator=True,
+        authenticated=True,
+        flags=[FlagName.SPACES],
     )
 
     user = await fake2.users.create()
@@ -192,7 +200,7 @@ async def test_update_member_roles(
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
@@ -211,7 +219,6 @@ async def test_update_member_roles(
     assert await resp.json() == snapshot
 
 
-
 async def test_remove_member(
     fake2: DataFaker,
     pg: AsyncEngine,
@@ -219,7 +226,9 @@ async def test_remove_member(
     static_time,
 ):
     client = await spawn_client(
-        administrator=True, authenticated=True, flags=[FlagName.SPACES]
+        administrator=True,
+        authenticated=True,
+        flags=[FlagName.SPACES],
     )
 
     user_1 = await fake2.users.create()
@@ -232,7 +241,7 @@ async def test_remove_member(
                 description="",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
@@ -248,7 +257,8 @@ async def test_remove_member(
     assert resp.status == 204
     assert (
         await get_authorization_client_from_app(client.app).list_user_roles(
-            user_1.id, 0
+            user_1.id,
+            0,
         )
         == []
     )
