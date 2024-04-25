@@ -1,10 +1,14 @@
 """Utilities for working with MongoDB."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection
 
-from virtool.types import Document, Projection
+from virtool.types import App, Document, Projection
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
 
 
 def apply_projection(document: Document, projection: Projection):
@@ -61,6 +65,26 @@ async def delete_unready(collection):
 
     """
     await collection.delete_many({"ready": False})
+
+
+def get_mongo_from_app(app: App) -> "Mongo":
+    """Get the MongoDB client object from the application object.
+
+    :param app: the application object
+    :return: the MongoDB connection object
+
+    """
+    return app["mongo"]
+
+
+def get_mongo_from_req(req: Request) -> "Mongo":
+    """Get the MongoDB client object from the request object.
+
+    :param req: the request object
+    :return: the MongoDB connection object
+
+    """
+    return get_mongo_from_app(req.app)
 
 
 async def get_new_id(

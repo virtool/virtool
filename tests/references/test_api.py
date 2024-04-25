@@ -16,10 +16,11 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_mongo_from_app, get_one_field
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import SQLTask
 from virtool.users.oas import UpdateUserRequest
+from virtool.utils import get_http_session_from_app
 
 
 async def test_find(
@@ -585,8 +586,8 @@ async def test_get_release(
     )
 
     m_fetch_and_update_release.assert_called_with(
-        client.app["db"],
-        client.app["client"],
+        get_mongo_from_app(client.app),
+        get_http_session_from_app(client.app),
         "foo",
     )
 

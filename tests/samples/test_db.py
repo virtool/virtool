@@ -14,11 +14,12 @@ from virtool.samples.db import (
     compose_sample_workflow_query,
     compress_sample_reads,
     create_sample,
+    define_initial_workflows,
+    derive_workflow_state,
     get_sample_owner,
     recalculate_workflow_tags,
     update_is_compressed,
 )
-from virtool.samples.db import define_initial_workflows, derive_workflow_state
 from virtool.samples.utils import calculate_workflow_tags
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
@@ -53,8 +54,7 @@ class TestCalculateWorkflowTags:
         ],
     )
     def test(self, path_ready, alg1, alg2, path_tag, nuvs_ready, nuvs_tag):
-        """
-        Test that the function returns the correct update dict for every combination of pathoscope
+        """Test that the function returns the correct update dict for every combination of pathoscope
         and nuvs ready states.
 
         """
@@ -111,7 +111,7 @@ async def test_recalculate_workflow_tags(mocker, mongo: Mongo):
                 "sample": {"id": "foobar"},
                 "workflow": "pathoscope_bowtie",
                 "ready": True,
-            }
+            },
         ],
         session=None,
     )
@@ -144,9 +144,7 @@ async def test_recalculate_workflow_tags(mocker, mongo: Mongo):
 class TestDeriveWorkflowStates:
     @pytest.mark.parametrize("library_type", ["amplicon", "normal", "srna", "other"])
     def test_define_initial_workflows(self, library_type, snapshot):
-        """
-        Test that initial workflow states are correctly defined.
-        """
+        """Test that initial workflow states are correctly defined."""
         workflow_states = define_initial_workflows(library_type=library_type)
         assert workflow_states == snapshot
 
@@ -161,11 +159,12 @@ class TestDeriveWorkflowStates:
         ],
     )
     def test_derive_workflow_states(
-        self, workflow_name, analysis_states, final_workflow_state
+        self,
+        workflow_name,
+        analysis_states,
+        final_workflow_state,
     ):
-        """
-        Test that workflows are set to complete and pending as expected.
-        """
+        """Test that workflows are set to complete and pending as expected."""
         index = 0
         library_type = "other"
         ready_1, ready_2 = analysis_states
@@ -183,7 +182,7 @@ class TestDeriveWorkflowStates:
                 "iimi": "none",
                 "nuvs": "none",
                 "pathoscope": "none",
-            }
+            },
         }
 
         expected_workflow_states["workflows"][workflow_name] = final_workflow_state
@@ -215,16 +214,13 @@ class TestDeriveWorkflowStates:
                 "iimi": "incompatible",
                 "nuvs": "incompatible",
                 "pathoscope": "incompatible",
-            }
+            },
         }
 
 
 class TestGetSampleOwner:
     async def test(self, mongo):
-        """
-        Test that the correct owner id is returned given a sample id.
-
-        """
+        """Test that the correct owner id is returned given a sample id."""
         await mongo.samples.insert_many(
             [
                 {"_id": "test", "user": {"id": "foobar"}},
@@ -236,18 +232,12 @@ class TestGetSampleOwner:
         assert await get_sample_owner(mongo, "test") == "foobar"
 
     async def test_none(self, mongo):
-        """
-        Test that ``None`` is returned if the sample id does not exist.
-
-        """
+        """Test that ``None`` is returned if the sample id does not exist."""
         assert await get_sample_owner(mongo, "foobar") is None
 
 
 async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client):
-    """
-    Test that a sample can be properly created.
-
-    """
+    """Test that a sample can be properly created."""
     client = await spawn_client(administrator=True)
 
     mocker.patch("virtool.mongo.utils.get_new_id", return_value="a2oj3gfd")
@@ -284,10 +274,7 @@ class TestCheckIsLegacy:
         ],
     )
     def test_raw(self, is_legacy, files):
-        """
-        Test that checks check ``raw`` files field correctly.
-
-        """
+        """Test that checks check ``raw`` files field correctly."""
         files[0]["name"] = "reads_1.fastq"
 
         try:
@@ -301,10 +288,7 @@ class TestCheckIsLegacy:
 
     @pytest.mark.parametrize("paired", [True, False])
     def test_names(self, paired):
-        """
-        Test that checks fail when names are not as expected.
-
-        """
+        """Test that checks fail when names are not as expected."""
         files = [{"name": "reads.fastq", "raw": False}]
 
         if paired:
@@ -316,10 +300,7 @@ class TestCheckIsLegacy:
 
 
 async def test_update_is_compressed(snapshot, mongo):
-    """
-    Test that samples with both files gzipped are flagged with ``is_compressed``.
-
-    """
+    """Test that samples with both files gzipped are flagged with ``is_compressed``."""
     samples = [
         {
             "_id": "foo",
@@ -341,7 +322,8 @@ async def test_update_is_compressed(snapshot, mongo):
 @pytest.mark.parametrize("paired", [True, False])
 async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, config):
     m_update_is_compressed = mocker.patch(
-        "virtool.samples.db.update_is_compressed", make_mocked_coro()
+        "virtool.samples.db.update_is_compressed",
+        make_mocked_coro(),
     )
 
     sample_dir = tmp_path / "samples" / "foo"
@@ -352,7 +334,7 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
     if paired:
         shutil.copy(FASTQ_PATH, sample_dir / "reads_2.fastq")
 
-    app_dict = {"db": mongo, "config": config}
+    app = {"config": config, "mongo": mongo}
 
     sample_id = "foo"
 
@@ -376,7 +358,7 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
                 **reads_file,
                 "name": "reads_2.fastq",
                 "download_url": f"/download/samples/{sample_id}/reads_2.fastq",
-            }
+            },
         )
 
     sample = {"_id": sample_id, "files": files, "paired": paired}
@@ -387,7 +369,7 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
 
     assert set(os.listdir(sample_dir)) == snapshot
 
-    with open(FASTQ_PATH, "r") as f:
+    with open(FASTQ_PATH) as f:
         expected_content = f.read()
 
     with gzip.open(sample_dir / "reads_1.fq.gz", "rt") as f:
@@ -399,7 +381,7 @@ async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, 
 
     assert await mongo.samples.find_one() == snapshot
 
-    m_update_is_compressed.assert_called_with(app_dict["db"], sample)
+    m_update_is_compressed.assert_called_with(app["mongo"], sample)
 
 
 class TestComposeWorkflowQuery:
@@ -412,8 +394,7 @@ class TestComposeWorkflowQuery:
         ids=["single", "multiple"],
     )
     def test(self, workflows):
-        """
-        Test that the workflow query is composed of a single `workflows` parameter as well as
+        """Test that the workflow query is composed of a single `workflows` parameter as well as
         two.
 
         """
@@ -424,26 +405,17 @@ class TestComposeWorkflowQuery:
         assert set(result["foo"]["$in"]) == {False, "ip"}
 
     def test_empty(self):
-        """
-        Check that `None` is returned when there is no `workflows` parameter.
-
-        """
+        """Check that `None` is returned when there is no `workflows` parameter."""
         req = make_mocked_request("GET", "/samples?find=foo")
 
         assert compose_sample_workflow_query(req.query) is None
 
     def test_some_conditions_invalid(self):
-        """
-        Check that an invalid condition doesn't make it into the query.
-
-        """
+        """Check that an invalid condition doesn't make it into the query."""
         assert compose_sample_workflow_query(
-            ["pathoscope:bar", "pathoscope:ready"]
+            ["pathoscope:bar", "pathoscope:ready"],
         ) == {"pathoscope": {"$in": [True]}}
 
     def test_all_conditions_invalid(self):
-        """
-        Check that if no valid conditions are found, `None` is returned.
-
-        """
+        """Check that if no valid conditions are found, `None` is returned."""
         assert compose_sample_workflow_query(["pathoscope:bar"]) is None

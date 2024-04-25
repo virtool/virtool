@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Union
+from typing import List, Union
 
 from aiohttp import web
 from aiohttp_pydantic import PydanticView
@@ -19,7 +19,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.history.db import LIST_PROJECTION
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.oas import (
     CreateIsolateRequest,
     CreateSequenceRequest,
@@ -30,9 +30,6 @@ from virtool.otus.oas import (
 from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 routes = Routes()
 
@@ -82,7 +79,7 @@ class OTUView(PydanticView):
         in the parent reference.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         # Get existing complete otu record, at the same time ensuring it exists. Send a
         # ``404`` if not.
@@ -136,7 +133,7 @@ class OTUView(PydanticView):
         Deletes and OTU and its associated isolates and sequences.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         document = await mongo.otus.find_one(otu_id, ["reference"])
 
@@ -166,7 +163,7 @@ class IsolatesView(PydanticView):
         Lists all the isolates and sequences for an OTU.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         document = await virtool.otus.db.join_and_format(mongo, otu_id)
 
@@ -186,7 +183,7 @@ class IsolatesView(PydanticView):
         Creates an isolate on the OTU specified by `otu_id`.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         reference = await get_one_field(mongo.otus, "reference", otu_id)
 
@@ -240,7 +237,7 @@ class IsolateView(PydanticView):
         A FASTA file containing all sequences in the isolate can be downloaded by
         appending `.fa` to the path.
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         isolate_id = isolate_id.rstrip(".fa")
 
@@ -292,7 +289,7 @@ class IsolateView(PydanticView):
         Updates an isolate using 'otu_id' and 'isolate_id'.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         reference = await get_one_field(
             mongo.otus,
@@ -343,7 +340,7 @@ class IsolateView(PydanticView):
         Deletes an isolate using its 'otu id' and 'isolate id'.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         reference = await get_one_field(
             mongo.otus,
@@ -383,7 +380,7 @@ class SequencesView(PydanticView):
         Lists the sequences for an isolate.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         if not await mongo.otus.count_documents(
             {"_id": otu_id, "isolates.id": isolate_id},
@@ -418,7 +415,7 @@ class SequencesView(PydanticView):
         Creates a new sequence for an isolate identified by `otu_id` and `isolate_id`.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         document = await mongo.otus.find_one(
             {"_id": otu_id, "isolates.id": isolate_id},
@@ -524,7 +521,7 @@ class SequenceView(PydanticView):
         Updates a sequence using its 'otu id', 'isolate id' and 'sequence id'.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         document = await mongo.otus.find_one(
             {"_id": otu_id, "isolates.id": isolate_id},
@@ -570,7 +567,7 @@ class SequenceView(PydanticView):
         Deletes the specified sequence.
 
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         if not await mongo.sequences.count_documents({"_id": sequence_id}, limit=1):
             raise APINotFound()
@@ -606,7 +603,7 @@ async def list_history(req):
 
     Lists an OTU's history.
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
 
     otu_id = req.match_info["otu_id"]
 
@@ -636,7 +633,7 @@ async def set_as_default(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await req.app["db"].otus.find_one(
+    document = await get_mongo_from_req(req).otus.find_one(
         {"_id": otu_id, "isolates.id": isolate_id},
         ["reference"],
     )

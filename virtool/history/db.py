@@ -23,6 +23,7 @@ from virtool.history.utils import (
     derive_otu_information,
     write_diff_file,
 )
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION
@@ -230,7 +231,7 @@ async def get(app, change_id: str) -> Optional[Document]:
     :return: the change
 
     """
-    mongo: "Mongo" = app["db"]
+    mongo = get_mongo_from_app(app)
 
     document = await mongo.history.find_one(change_id, PROJECTION)
 

@@ -1,9 +1,11 @@
-import pytest
-import virtool.caches.db
 import os
 
+import pytest
 
-@pytest.fixture
+import virtool.caches.db
+
+
+@pytest.fixture()
 def trim_parameters():
     return {
         "end_quality": "20",
@@ -18,12 +20,14 @@ def trim_parameters():
 
 @pytest.mark.parametrize("paired", [True, False], ids=["paired", "unpaired"])
 async def test_create(
-    paired, snapshot, mongo, static_time, test_random_alphanumeric, trim_parameters
+    paired,
+    snapshot,
+    mongo,
+    static_time,
+    test_random_alphanumeric,
+    trim_parameters,
 ):
-    """
-    Test that the function works with default keyword arguments and when `paired` is either `True` or `False`.
-
-    """
+    """Test that the function works with default keyword arguments and when `paired` is either `True` or `False`."""
     cache = await virtool.caches.db.create(mongo, "foo", "aodp-abcdefgh", paired)
 
     assert cache == snapshot
@@ -31,14 +35,15 @@ async def test_create(
 
 
 async def test_create_duplicate(
-    snapshot, mongo, static_time, test_random_alphanumeric, trim_parameters
+    snapshot,
+    mongo,
+    static_time,
+    test_random_alphanumeric,
+    trim_parameters,
 ):
-    """
-    Test that the function handles duplicate document ids smoothly. The function should retry with a new id.
-
-    """
+    """Test that the function handles duplicate document ids smoothly. The function should retry with a new id."""
     await mongo.caches.insert_one(
-        {"_id": test_random_alphanumeric.next_choice[:8].lower()}
+        {"_id": test_random_alphanumeric.next_choice[:8].lower()},
     )
 
     cache = await virtool.caches.db.create(mongo, "foo", "aodp-abcdefgh", False)
@@ -52,10 +57,7 @@ async def test_create_duplicate(
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_get(exists, mongo):
-    """
-    Test that the function returns a cache document when it exists and returns `None` when it does not.
-
-    """
+    """Test that the function returns a cache document when it exists and returns `None` when it does not."""
     if exists:
         await mongo.caches.insert_one({"_id": "foo"})
 
@@ -71,8 +73,8 @@ async def test_get(exists, mongo):
 @pytest.mark.parametrize("exception", [False, True])
 async def test_remove(exception, mongo, tmp_path, config):
     app = {
-        "db": mongo,
         "config": config,
+        "mongo": mongo,
     }
 
     f1 = tmp_path / "cache"

@@ -1,19 +1,14 @@
-"""
-Code for working with samples in the database and filesystem.
+"""Code for working with samples in the database and filesystem."""
 
-"""
 import asyncio
 import os
 from asyncio import to_thread
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
-from virtool.api.errors import APINotFound
-from virtool.errors import DatabaseError
 from virtool_core.models.samples import WorkflowState
 from virtool_core.models.settings import Settings
 from virtool_core.utils import compress_file, file_stats
@@ -22,12 +17,14 @@ import virtool.errors
 import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
+from virtool.api.errors import APINotFound
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
+from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.utils import get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
-from virtool.samples.utils import join_legacy_read_paths, PATHOSCOPE_TASK_NAMES
+from virtool.samples.utils import PATHOSCOPE_TASK_NAMES, join_legacy_read_paths
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.utils import base_processor
@@ -102,13 +99,13 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
         async with AsyncSession(self._pg) as session:
             artifacts = (
                 await session.execute(
-                    select(SQLSampleArtifact).filter_by(sample=sample_id)
+                    select(SQLSampleArtifact).filter_by(sample=sample_id),
                 )
             ).scalars()
 
             reads_files = (
                 await session.execute(
-                    select(SQLSampleReads).filter_by(sample=sample_id)
+                    select(SQLSampleReads).filter_by(sample=sample_id),
                 )
             ).scalars()
 
@@ -118,30 +115,33 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
             if document["ready"]:
                 for artifact in artifacts:
                     name_on_disk = artifact["name_on_disk"]
-                    artifact[
-                        "download_url"
-                    ] = f"/samples/{sample_id}/artifacts/{name_on_disk}"
+                    artifact["download_url"] = (
+                        f"/samples/{sample_id}/artifacts/{name_on_disk}"
+                    )
 
             for reads_file in reads:
                 if upload := reads_file.get("upload"):
                     reads_file["upload"] = (
                         (
                             await session.execute(
-                                select(SQLUpload).filter_by(id=upload)
+                                select(SQLUpload).filter_by(id=upload),
                             )
                         ).scalar()
                     ).to_dict()
 
                 if document["ready"]:
-                    reads_file[
-                        "download_url"
-                    ] = f"/samples/{sample_id}/reads/{reads_file['name']}"
+                    reads_file["download_url"] = (
+                        f"/samples/{sample_id}/reads/{reads_file['name']}"
+                    )
 
         return {"artifacts": artifacts, "reads": reads}
 
 
 async def check_rights_error_check(
-    db, sample_id: str | None, client, write: bool = True
+    db,
+    sample_id: str | None,
+    client,
+    write: bool = True,
 ) -> bool:
     try:
         check_right = await check_rights(db, sample_id, client, write=write)
@@ -164,8 +164,7 @@ async def check_rights(db, sample_id: str | None, client, write: bool = True) ->
 
 
 def compose_sample_workflow_query(workflows: List[str]) -> Optional[Dict[str, Dict]]:
-    """
-    Compose a MongoDB query for filtering samples by completed workflow.
+    """Compose a MongoDB query for filtering samples by completed workflow.
 
     :param workflows:
     :return: a MongoDB query for filtering by workflow
@@ -213,8 +212,7 @@ async def create_sample(
     paired: bool = False,
     _id: str | None = None,
 ) -> Document:
-    """
-    Create, insert, and return a new sample document.
+    """Create, insert, and return a new sample document.
 
     :param mongo: the application mongo client
     :param name: the sample name
@@ -262,15 +260,14 @@ async def create_sample(
             "locale": locale,
             "workflows": define_initial_workflows(library_type),
             "paired": paired,
-        }
+        },
     )
 
     return base_processor(document)
 
 
 async def get_sample_owner(mongo: "Mongo", sample_id: str) -> Optional[str]:
-    """
-    A Shortcut function for getting the owner user id of a sample given its
+    """A Shortcut function for getting the owner user id of a sample given its
     ``sample_id``.
 
     :param mongo: the application database client
@@ -287,8 +284,7 @@ async def get_sample_owner(mongo: "Mongo", sample_id: str) -> Optional[str]:
 
 
 def define_initial_workflows(library_type) -> Dict[str, str]:
-    """
-    Checks for incompatibility workflow states
+    """Checks for incompatibility workflow states
 
     :param library_type: to check for compatability
     :return: initial workflow states
@@ -311,8 +307,7 @@ def define_initial_workflows(library_type) -> Dict[str, str]:
 
 
 def derive_workflow_state(analyses: list, library_type) -> dict:
-    """
-    Derive a workflow state dictionary for the passed analyses and library_type.
+    """Derive a workflow state dictionary for the passed analyses and library_type.
 
     Workflows that are incompatible with the library type are set to "incompatible".
 
@@ -339,8 +334,7 @@ def derive_workflow_state(analyses: list, library_type) -> dict:
 
 
 def get_workflow_name(workflow_name: str) -> str:
-    """
-    Returns the name of the workflow that is being used. If the workflow name is
+    """Returns the name of the workflow that is being used. If the workflow name is
     "pathoscope_bowtie" or "pathoscope_bowtie2", then "pathoscope" is returned.
 
     :param workflow_name: the name of the workflow
@@ -354,10 +348,11 @@ def get_workflow_name(workflow_name: str) -> str:
 
 
 async def recalculate_workflow_tags(
-    mongo: "Mongo", sample_id: str, session: AsyncIOMotorClientSession | None = None
+    mongo: "Mongo",
+    sample_id: str,
+    session: AsyncIOMotorClientSession | None = None,
 ):
-    """
-    Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
+    """Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param mongo: the application database client
     :param sample_id: the id of the sample to recalculate tags for
@@ -367,7 +362,7 @@ async def recalculate_workflow_tags(
     """
     analyses, library_type = await asyncio.gather(
         mongo.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(
-            None
+            None,
         ),
         get_one_field(mongo.samples, "library_type", sample_id),
     )
@@ -378,7 +373,7 @@ async def recalculate_workflow_tags(
             "$set": {
                 **virtool.samples.utils.calculate_workflow_tags(analyses),
                 **derive_workflow_state(analyses, library_type),
-            }
+            },
         },
         session=session,
     )
@@ -398,8 +393,8 @@ async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None
             select(SQLGroup).where(
                 (SQLGroup.id == group_id)
                 if isinstance(group_id, int)
-                else SQLGroup.legacy_id == group_id
-            )
+                else SQLGroup.legacy_id == group_id,
+            ),
         )
 
         if not result:
@@ -409,8 +404,7 @@ async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None
 
 
 def check_is_legacy(sample: Dict[str, Any]) -> bool:
-    """
-    Check if a sample has legacy read files.
+    """Check if a sample has legacy read files.
 
     :param sample: the sample document
     :return: legacy boolean
@@ -425,8 +419,7 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
 
 
 async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, Any]):
-    """
-    Compress the reads for one legacy samples.
+    """Compress the reads for one legacy samples.
 
     :param db: the application database object
     :param config: the application configuration dictionary
@@ -463,7 +456,7 @@ async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, A
                 "size": stats["size"],
                 "raw": False,
                 "from": sample["files"][i]["from"],
-            }
+            },
         )
 
     await db.samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
@@ -473,8 +466,7 @@ async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, A
 
 
 async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str, any]):
-    """
-    Creates a row in the `sample_reads` table for each file in a sample's `files` array.
+    """Creates a row in the `sample_reads` table for each file in a sample's `files` array.
 
     Also, creates a row in the `uploads` table for information stored in a file's
     `from` field with a relation to the `SampleRead`.
@@ -514,8 +506,7 @@ async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str
 
 
 async def update_is_compressed(db, sample: Dict[str, Any]):
-    """
-    Update the ``is_compressed`` field for the passed ``sample`` in the database if all
+    """Update the ``is_compressed`` field for the passed ``sample`` in the database if all
     of its files are compressed.
 
     :param db: the application database
@@ -536,19 +527,18 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
 
     if is_compressed:
         await db.samples.update_one(
-            {"_id": sample["_id"]}, {"$set": {"is_compressed": True}}
+            {"_id": sample["_id"]},
+            {"$set": {"is_compressed": True}},
         )
 
 
 class NameGenerator:
-    """
-    Generates unique incrementing sample names based on a base name and a space id.
-    """
+    """Generates unique incrementing sample names based on a base name and a space id."""
 
-    def __init__(self, db: "DB", base_name: str, space_id: str):
+    def __init__(self, mongo: "Mongo", base_name: str, space_id: str):
         self.base_name = base_name
         self.space_id = space_id
-        self.db = db
+        self.db = mongo
         self.sample_number = 1
 
     async def get(self, session: AsyncIOMotorClientSession):

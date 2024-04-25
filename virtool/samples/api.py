@@ -46,8 +46,7 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     RIGHTS_PROJECTION,
@@ -232,7 +231,11 @@ class SampleView(PydanticView):
             raise APIInsufficientRights()
 
         if (
-            await get_one_field(self.request.app["db"].samples, "ready", sample_id)
+            await get_one_field(
+                get_mongo_from_req(self.request).samples,
+                "ready",
+                sample_id,
+            )
             is False
         ):
             raise APIBadRequest("Only unfinalized samples can be deleted")
@@ -269,7 +272,7 @@ async def get_cache(req):
     Fetches a cache document by key using the Jobs API.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
 
     sample_id = req.match_info["sample_id"]
     cache_key = req.match_info["cache_key"]
@@ -321,7 +324,7 @@ class RightsView(PydanticView):
             403: Must be administrator or sample owner
             404: Not found
         """
-        mongo: Mongo = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
         pg: AsyncEngine = self.request.app["pg"]
 
         data = data.dict(exclude_unset=True)
@@ -375,7 +378,7 @@ async def job_remove(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if await get_one_field(req.app["db"].samples, "ready", sample_id):
+    if await get_one_field(get_mongo_from_req(req).samples, "ready", sample_id):
         raise APIBadRequest("Only unfinalized samples can be deleted")
 
     reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
@@ -437,7 +440,7 @@ class AnalysesView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         try:
             if not await check_rights(mongo, sample_id, self.request["client"]):
@@ -479,7 +482,7 @@ async def cache_job_remove(req: Request):
     unfinalized.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
 
     cache_key = req.match_info["cache_key"]
 
@@ -502,7 +505,7 @@ async def upload_artifact(req):
 
     Uploads artifact created during sample creation using the Jobs API.
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
@@ -567,7 +570,7 @@ async def upload_reads(req):
 
     Uploads sample reads using the Jobs API.
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     name = req.match_info["filename"]
@@ -627,7 +630,7 @@ async def create_cache(req):
     Creates a new cache document using the Jobs API.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     key = req["data"]["key"]
 
     sample_id = req.match_info["sample_id"]
@@ -659,7 +662,7 @@ async def upload_cache_reads(req):
     Upload reads files to cache using the Jobs API.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     name = req.match_info["filename"]
@@ -711,7 +714,7 @@ async def upload_cache_artifact(req):
     Uploads sample artifacts to cache using the Jobs API.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
@@ -790,7 +793,7 @@ async def finalize_cache(req):
 
     Finalizes cache documents.
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     data = req["data"]
     key = req.match_info["key"]
 
@@ -809,7 +812,7 @@ async def download_reads(req: Request):
 
     Downloads the sample reads file.
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
@@ -844,7 +847,7 @@ async def download_artifact(req: Request):
     Downloads the sample artifact.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
@@ -887,7 +890,7 @@ async def download_cache_reads(req):
     Downloads sample reads cache for a given key.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
@@ -925,7 +928,7 @@ async def download_cache_artifact(req):
     Downloads sample artifact cache for a given key.
 
     """
-    mongo: "Mongo" = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]

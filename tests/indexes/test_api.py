@@ -24,6 +24,7 @@ from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
 from virtool.jobs.client import DummyJobsClient
 from virtool.mongo.core import Mongo
+from virtool.mongo.utils import get_mongo_from_app
 
 OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 
@@ -285,7 +286,7 @@ async def test_download_otus_json(
 
     if not file_exists:
         m_get_patched_otus.assert_called_with(
-            client.app["db"],
+            get_mongo_from_app(client.app),
             get_config_from_app(client.app),
             manifest,
         )

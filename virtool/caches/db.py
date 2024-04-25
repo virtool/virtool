@@ -10,6 +10,7 @@ from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.config import get_config_from_app
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.types import App
 from virtool.utils import base_processor
 
@@ -82,7 +83,7 @@ async def remove(app: App, cache_id: str):
     :param cache_id: the id of the cache to remove
 
     """
-    mongo: "Mongo" = app["db"]
+    mongo = get_mongo_from_app(app)
 
     await mongo.caches.delete_one({"_id": cache_id})
 
