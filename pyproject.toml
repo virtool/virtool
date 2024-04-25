@@ -9,6 +9,7 @@ authors = [
     "Jake Alexander",
     "Josh Moreira",
     "Lilly Roberts",
+    "Matthew Curtis",
     "Naomi Schaufele",
     "Ryan Fang",
     "Sebastian Chen",
@@ -82,9 +83,7 @@ mypy = "^1.6.0"
 ruff = "^0.4.1"
 
 [tool.pytest.ini_options]
-addopts = "--capture tee-sys"
 asyncio_mode = "auto"
-markers = ["apitest", "serial"]
 python_files = ["test_*.py", "rev_*.py"]
 testpaths = ["tests", "assets/revisions"]
 
