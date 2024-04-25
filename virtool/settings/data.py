@@ -21,6 +21,9 @@ class SettingsData:
             projection={"_id": False},
         )
 
+        if settings is None:
+            return Settings()
+
         return Settings(**settings)
 
     async def update(self, data: UpdateSettingsRequest) -> Settings:
@@ -43,7 +46,7 @@ class SettingsData:
         """
         existing = await self.get_all()
 
-        settings = {**(Settings().dict()), **existing}
+        settings = {**(Settings().dict()), **existing.dict()}
 
         await self._mongo.settings.update_one(
             {"_id": "settings"},
