@@ -2,7 +2,6 @@ import datetime
 
 import arrow
 import pytest
-
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
@@ -12,7 +11,8 @@ from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 
 _job_response_matcher = path_type(
-    {".*created_at": (str,), ".*key": (str,), ".*timestamp": (str,)}, regex=True
+    {".*created_at": (str,), ".*key": (str,), ".*timestamp": (str,)},
+    regex=True,
 )
 
 
@@ -41,11 +41,13 @@ class TestFind:
 
     @pytest.mark.parametrize("archived", [True, False])
     async def test_archived(
-        self, archived: bool, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self,
+        archived: bool,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
-        """
-        Test that jobs are filtered correctly when archived is ``true`` or ``false``.
-        """
+        """Test that jobs are filtered correctly when archived is ``true`` or ``false``."""
         client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
@@ -64,9 +66,7 @@ class TestFind:
         assert all(job["archived"] == archived for job in body["documents"])
 
     async def test_user(self, fake2: DataFaker, spawn_client: ClientSpawner):
-        """
-        Test that jobs are filtered correctly when user id(s) are provided.
-        """
+        """Test that jobs are filtered correctly when user id(s) are provided."""
         client = await spawn_client(authenticated=True)
 
         user_1 = await fake2.users.create()
@@ -114,7 +114,11 @@ class TestFind:
         ],
     )
     async def test_state(
-        self, state: str, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self,
+        state: str,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -143,8 +147,7 @@ class TestFind:
         assert all(job["state"] == state for job in body["documents"])
 
     async def test_state_invalid(self, snapshot, spawn_client: ClientSpawner):
-        """
-        Test that a 400 error with a detailed message is returned when an invalid state
+        """Test that a 400 error with a detailed message is returned when an invalid state
         value is provided.
         """
         client = await spawn_client(authenticated=True)
@@ -155,7 +158,6 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake2: DataFaker, snapshot, spawn_client):
     client = await spawn_client(authenticated=True)
@@ -191,7 +193,8 @@ class TestAcquire:
         client = await spawn_job_client(authorize=True)
 
         job = await fake2.jobs.create(
-            await fake2.users.create(), state=JobState.WAITING
+            await fake2.users.create(),
+            state=JobState.WAITING,
         )
 
         resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
@@ -245,7 +248,9 @@ class TestArchive:
         assert await resp.json() == snapshot(matcher=_job_response_matcher)
 
     async def test_already_archived(
-        self, fake2: DataFaker, spawn_client: ClientSpawner
+        self,
+        fake2: DataFaker,
+        spawn_client: ClientSpawner,
     ):
         """Test that a 400 is returned when the job is already archived."""
         client = await spawn_client(authenticated=True)
@@ -280,7 +285,8 @@ class TestPing:
         client = await spawn_job_client(authorize=True)
 
         job = await fake2.jobs.create(
-            await fake2.users.create(), state=JobState.RUNNING
+            await fake2.users.create(),
+            state=JobState.RUNNING,
         )
 
         resp = await client.put(f"/jobs/{job.id}/ping")
@@ -290,7 +296,7 @@ class TestPing:
 
         assert len(body) == 1
         assert arrow.get(body["pinged_at"]) - arrow.utcnow() < datetime.timedelta(
-            seconds=1
+            seconds=1,
         )
 
     async def test_not_found(self, spawn_job_client):
@@ -302,9 +308,9 @@ class TestPing:
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
-    "error", [None, "not_found", "invalid_archived", "none_archived"]
+    "error",
+    [None, "not_found", "invalid_archived", "none_archived"],
 )
 async def test_bulk_archive(
     error,
@@ -324,7 +330,7 @@ async def test_bulk_archive(
             {"id": job["_id"], "archived": True}
             for job in jobs
             if job["archived"] is False
-        ]
+        ],
     }
 
     if error == "not_found":
@@ -350,7 +356,7 @@ async def test_bulk_archive(
                 "loc": ["updates", 1, "archived"],
                 "msg": "field required",
                 "type": "value_error.missing",
-            }
+            },
         ]
         return
 
@@ -362,7 +368,7 @@ async def test_bulk_archive(
                 "msg": "The `archived` field can only be `true`",
                 "type": "value_error",
                 "in": "body",
-            }
+            },
         ]
         return
 
@@ -377,9 +383,9 @@ async def test_bulk_archive(
     assert body == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
-    "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
+    "error",
+    [None, 404, "409_complete", "409_errored", "409_cancelled"],
 )
 async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test_job):
     client = await spawn_client(authenticated=True, permissions=[Permission.cancel_job])
@@ -421,7 +427,6 @@ async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test
     assert "key" not in body
 
 
-@pytest.mark.apitest
 class TestPushStatus:
     @pytest.mark.parametrize("error", [None, 404, 409])
     async def test(
@@ -463,7 +468,13 @@ class TestPushStatus:
         assert await resp.json() == snapshot
 
     async def test_name_and_description(
-        self, fake2, snapshot, mongo: Mongo, spawn_client, static_time, test_job
+        self,
+        fake2,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        static_time,
+        test_job,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -487,12 +498,14 @@ class TestPushStatus:
         assert await resp.json() == snapshot
 
     async def test_bad_state(
-        self, fake2, snapshot, mongo: Mongo, spawn_client, test_job
+        self,
+        fake2,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        test_job,
     ):
-        """
-        Check that an unallowed state is rejected with 422.
-
-        """
+        """Check that an unallowed state is rejected with 422."""
         client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
@@ -509,13 +522,19 @@ class TestPushStatus:
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize(
-        "error_type", ["KeyError", 3, None], ids=["valid", "invalid", "missing"]
+        "error_type",
+        ["KeyError", 3, None],
+        ids=["valid", "invalid", "missing"],
     )
     @pytest.mark.parametrize(
-        "traceback", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"]
+        "traceback",
+        ["Invalid", ["Valid"], None],
+        ids=["valid", "invalid", "missing"],
     )
     @pytest.mark.parametrize(
-        "details", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"]
+        "details",
+        ["Invalid", ["Valid"], None],
+        ids=["valid", "invalid", "missing"],
     )
     async def test_error(
         self,
@@ -529,10 +548,7 @@ class TestPushStatus:
         static_time,
         test_job,
     ):
-        """
-        Ensure valid and invalid error inputs are handled correctly.
-
-        """
+        """Ensure valid and invalid error inputs are handled correctly."""
         client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
@@ -560,10 +576,14 @@ class TestPushStatus:
         assert (resp.status, await resp.json()) == snapshot
 
     async def test_missing_error(
-        self, snapshot, mongo: Mongo, spawn_client, static_time, test_job
+        self,
+        snapshot,
+        mongo: Mongo,
+        spawn_client,
+        static_time,
+        test_job,
     ):
-        """
-        Ensure and error is returned when state is set to `error`, but no error field is
+        """Ensure and error is returned when state is set to `error`, but no error field is
         included.
 
         """
@@ -580,10 +600,14 @@ class TestPushStatus:
 
     @pytest.mark.parametrize("state", ["complete", "cancelled", "error", "terminated"])
     async def test_finalized_job_error(
-        self, state, resp_is, mongo: Mongo, spawn_client, test_job
+        self,
+        state,
+        resp_is,
+        mongo: Mongo,
+        spawn_client,
+        test_job,
     ):
-        """
-        Verify that job state cannot be updated once the latest status indicates the job is finished
+        """Verify that job state cannot be updated once the latest status indicates the job is finished
         or otherwise terminated
         """
         client = await spawn_client(authenticated=True)

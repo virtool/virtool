@@ -2,16 +2,25 @@ import os
 from pathlib import Path
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine
+from syrupy import SnapshotAssertion
 
 import virtool.analyses.files
 import virtool.analyses.utils
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_attach_analysis_files(exists, snapshot, pg):
+async def test_attach_analysis_files(
+    exists: bool,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+):
     if exists:
         await virtool.analyses.files.create_analysis_file(
-            pg, "foobar", "fasta", "reference-fa"
+            pg,
+            "foobar",
+            "fasta",
+            "reference-fa",
         )
 
     document = {"_id": "foobar", "ready": True}
@@ -24,8 +33,7 @@ async def test_attach_analysis_files(exists, snapshot, pg):
 
 @pytest.mark.parametrize("name", ["nuvs", "pathoscope"])
 def test_get_json_path(name):
-    """
-    Test that the function can correctly extrapolate the path to a nuvs.json file given the `data_path`, `sample_id`,
+    """Test that the function can correctly extrapolate the path to a nuvs.json file given the `data_path`, `sample_id`,
     and `analysis_id` arguments.
 
     """

@@ -3,7 +3,6 @@ from aiohttp.client import ClientSession
 from aiohttp.test_utils import make_mocked_coro
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, mocker, resp_is, spawn_client):
     client = await spawn_client(authenticated=True)
@@ -11,7 +10,8 @@ async def test_get(error, mocker, resp_is, spawn_client):
     expected = {"accession": "baz"}
 
     m_fetch = mocker.patch(
-        "virtool.genbank.http.fetch", make_mocked_coro(None if error else expected)
+        "virtool.genbank.http.fetch",
+        make_mocked_coro(None if error else expected),
     )
 
     resp = await client.get("/genbank/NC_016574.1")

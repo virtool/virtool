@@ -15,7 +15,7 @@ from virtool.flags import FlagName
 from virtool.spaces.models import SQLSpace
 
 
-@pytest.mark.apitest
+
 async def test_list(
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
@@ -60,7 +60,7 @@ async def test_list(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
+
 async def test_get(
     fake2: DataFaker,
     pg: AsyncEngine,
@@ -100,7 +100,7 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
+
 async def test_update(
     pg: AsyncEngine, spawn_client: ClientSpawner, snapshot, static_time
 ):
@@ -129,7 +129,7 @@ async def test_update(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
+
 async def test_list_space_members(
     fake2: DataFaker,
     pg: AsyncEngine,
@@ -170,7 +170,7 @@ async def test_list_space_members(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
+
 async def test_update_member_roles(
     fake2: DataFaker,
     pg: AsyncEngine,
@@ -211,7 +211,7 @@ async def test_update_member_roles(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
+
 async def test_remove_member(
     fake2: DataFaker,
     pg: AsyncEngine,

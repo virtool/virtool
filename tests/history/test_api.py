@@ -6,22 +6,23 @@ from tests.fixtures.client import ClientSpawner
 from virtool.mongo.core import Mongo
 
 
-@pytest.mark.apitest
 async def test_find(
-    snapshot, mongo: Mongo, spawn_client: ClientSpawner, test_changes, static_time
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    test_changes,
+    static_time,
 ):
-    """
-    Test that a list of processed change documents are returned with a ``200`` status.
-
-    """
+    """Test that a list of processed change documents are returned with a ``200`` status."""
     client = await spawn_client(authenticated=True)
 
     await asyncio.gather(
         mongo.references.insert_one(
-            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
+            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"},
         ),
         mongo.history.insert_many(
-            [{**c, "user": {"id": client.user.id}} for c in test_changes], session=None
+            [{**c, "user": {"id": client.user.id}} for c in test_changes],
+            session=None,
         ),
     )
 
@@ -31,7 +32,6 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error,
@@ -42,18 +42,16 @@ async def test_get(
     test_changes,
     static_time,
 ):
-    """
-    Test that a specific history change can be retrieved by its change_id.
-
-    """
+    """Test that a specific history change can be retrieved by its change_id."""
     client = await spawn_client(authenticated=True)
 
     await asyncio.gather(
         mongo.history.insert_many(
-            [{**c, "user": {"id": client.user.id}} for c in test_changes], session=None
+            [{**c, "user": {"id": client.user.id}} for c in test_changes],
+            session=None,
         ),
         mongo.references.insert_one(
-            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
+            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"},
         ),
     )
 
@@ -69,7 +67,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
 async def test_revert(
@@ -82,10 +79,7 @@ async def test_revert(
     check_ref_right,
     resp_is,
 ):
-    """
-    Test that a valid request results in a reversion and a ``204`` response.
-
-    """
+    """Test that a valid request results in a reversion and a ``204`` response."""
     client = await spawn_client(authenticated=True)
 
     await create_mock_history(remove)

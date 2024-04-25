@@ -5,15 +5,15 @@ from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 
 
-@pytest.mark.apitest
 class TestFind:
     async def test_find(
-        self, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
+        self,
+        fake2: DataFaker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
     ):
-        """
-        Test that a ``GET /labels`` return a complete list of labels.
-
-        """
+        """Test that a ``GET /labels`` return a complete list of labels."""
         client = await spawn_client(authenticated=True)
 
         label_1 = await fake2.labels.create()
@@ -40,12 +40,12 @@ class TestFind:
         assert await resp.json() == snapshot
 
     async def test_find_by_name(
-        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
-        """
-        Test that a ``GET /labels`` with a `find` query returns a particular label. Also test for partial matches.
-
-        """
+        """Test that a ``GET /labels`` with a `find` query returns a particular label. Also test for partial matches."""
         client = await spawn_client(authenticated=True)
 
         label = await fake2.labels.create()
@@ -63,15 +63,15 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
-    status: int, fake2: DataFaker, snapshot, mongo: Mongo, spawn_client: ClientSpawner
+    status: int,
+    fake2: DataFaker,
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
 ):
-    """
-    Test that a ``GET /labels/:label_id`` return the correct label document.
-
-    """
+    """Test that a ``GET /labels/:label_id`` return the correct label document."""
     client = await spawn_client(authenticated=True)
 
     label_1 = await fake2.labels.create()
@@ -92,7 +92,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
 async def test_create(
     error: str | None,
@@ -100,10 +99,7 @@ async def test_create(
     resp_is,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test that a label can be added to the database at ``POST /labels``.
-
-    """
+    """Test that a label can be added to the database at ``POST /labels``."""
     client = await spawn_client(authenticated=True)
 
     label = await fake2.labels.create()
@@ -134,7 +130,6 @@ async def test_create(
         assert resp.status == 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(
     error: str | None,
@@ -144,10 +139,7 @@ async def test_edit(
     mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test that a label can be updated at ``PATCH /labels/:label_id``.
-
-    """
+    """Test that a label can be updated at ``PATCH /labels/:label_id``."""
     client = await spawn_client(authenticated=True)
 
     label_1 = await fake2.labels.create()
@@ -178,7 +170,8 @@ async def test_edit(
         data["name"] = None
 
     resp = await client.patch(
-        f"/labels/{5 if error == '404' else label_1.id}", data=data
+        f"/labels/{5 if error == '404' else label_1.id}",
+        data=data,
     )
 
     match error:
@@ -195,7 +188,6 @@ async def test_edit(
             assert resp.status == 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
     status: int,
@@ -205,12 +197,10 @@ async def test_remove(
     mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
+    """Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
 
     Test that samples are updated when a label is deleted.
     """
-
     client = await spawn_client(authenticated=True)
 
     label_1 = await fake2.labels.create()
@@ -218,7 +208,8 @@ async def test_remove(
     label_3 = await fake2.labels.create()
 
     await mongo.subtraction.insert_many(
-        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}], session=None
+        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}],
+        session=None,
     )
 
     mock_samples[0].update({"labels": [label_1.id, label_3.id]})
@@ -240,12 +231,9 @@ async def test_remove(
         assert label_3.id in label_ids_in_samples
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
 async def test_is_valid_hex_color(value: str, resp_is, spawn_client: ClientSpawner):
-    """
-    Tests that when an invalid hex color is used, validators.is_valid_hex_color raises a 422 error.
-    """
+    """Tests that when an invalid hex color is used, validators.is_valid_hex_color raises a 422 error."""
     client = await spawn_client(authenticated=True)
 
     resp = await client.patch(
@@ -267,5 +255,5 @@ async def test_is_valid_hex_color(value: str, resp_is, spawn_client: ClientSpawn
                 "msg": "The format of the color code is invalid",
                 "type": "value_error",
                 "in": "body",
-            }
+            },
         ]

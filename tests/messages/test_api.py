@@ -27,7 +27,7 @@ async def insert_test_message(fake2, pg, static_time):
     return insert
 
 
-@pytest.mark.apitest
+
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error: str | None, insert_test_message, snapshot, spawn_client: ClientSpawner
@@ -50,7 +50,7 @@ async def test_get(
         assert await resp.json() is None
 
 
-@pytest.mark.apitest
+
 async def test_create(snapshot, spawn_client: ClientSpawner, static_time):
     """
     Test that a newly active instance message can be added
@@ -68,7 +68,7 @@ async def test_create(snapshot, spawn_client: ClientSpawner, static_time):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
+
 class TestUpdate:
     async def test_active(
         self, insert_test_message, snapshot, spawn_client: ClientSpawner

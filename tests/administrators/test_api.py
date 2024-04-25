@@ -26,8 +26,7 @@ snapshots.
 """
 
 
-@pytest.mark.apitest
-async def test_get_roles(spawn_client: ClientSpawner, snapshot):
+async def test_get_roles(spawn_client: ClientSpawner, snapshot: SnapshotAssertion):
     client = await spawn_client(
         administrator=True,
         authenticated=True,
@@ -39,12 +38,11 @@ async def test_get_roles(spawn_client: ClientSpawner, snapshot):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_list_users(
     authorization_client: AuthorizationClient,
     spawn_client: ClientSpawner,
     fake2: DataFaker,
-    snapshot,
+    snapshot: SnapshotAssertion,
 ):
     client = await spawn_client(
         administrator=True,
@@ -63,16 +61,15 @@ async def test_list_users(
 
     assert resp.status == 200
     assert await resp.json() == snapshot(
-        matcher=path_type({".*last_password_change": (str,)}, regex=True)
+        matcher=path_type({".*last_password_change": (str,)}, regex=True),
     )
 
 
-@pytest.mark.apitest
 async def test_get_user(
     authorization_client: AuthorizationClient,
     fake2: DataFaker,
     spawn_client: ClientSpawner,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     client = await spawn_client(
@@ -92,7 +89,6 @@ async def test_get_user(
     assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
 async def test_create(
     error: str | None,
@@ -104,10 +100,7 @@ async def test_create(
     spawn_client: ClientSpawner,
     static_time,
 ):
-    """
-    Test that a valid request results in a user document being properly inserted.
-
-    """
+    """Test that a valid request results in a user document being properly inserted."""
     await mongo.users.create_index("handle", unique=True, sparse=True)
 
     client = await spawn_client(administrator=True, authenticated=True)
@@ -115,7 +108,7 @@ async def test_create(
     user = await fake2.users.create()
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8)
+        UpdateSettingsRequest(minimum_password_length=8),
     )
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}
@@ -137,7 +130,8 @@ async def test_create(
 
     if error == "400_password":
         await resp_is.bad_request(
-            resp, "Password does not meet minimum length requirement (8)"
+            resp,
+            "Password does not meet minimum length requirement (8)",
         )
         return
 
@@ -160,12 +154,15 @@ async def test_create(
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
-    "role", [None, AdministratorRole.USERS, AdministratorRole.FULL]
+    "role",
+    [None, AdministratorRole.USERS, AdministratorRole.FULL],
 )
 async def test_update_admin_role(
-    fake2: DataFaker, spawn_client: ClientSpawner, snapshot, role: AdministratorRole
+    fake2: DataFaker,
+    spawn_client: ClientSpawner,
+    snapshot: SnapshotAssertion,
+    role: AdministratorRole,
 ):
     client = await spawn_client(
         administrator=True,
@@ -180,10 +177,12 @@ async def test_update_admin_role(
     assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
-@pytest.mark.apitest
 class TestUpdateUser:
     async def test_force_reset(
-        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self,
+        fake2: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         client = await spawn_client(
             administrator=True,
@@ -200,7 +199,10 @@ class TestUpdateUser:
         assert body["force_reset"] is True
 
     async def test_groups(
-        self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self,
+        fake2: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         """Test that the endpoint can handle several combos of group changes."""
         client = await spawn_client(
@@ -214,36 +216,45 @@ class TestUpdateUser:
         user = await fake2.users.create(groups=[group_1])
 
         resp = await client.patch(
-            f"/admin/users/{user.id}", {"groups": [group_1.id, group_2.id]}
+            f"/admin/users/{user.id}",
+            {"groups": [group_1.id, group_2.id]},
         )
 
         assert resp.status == 200
         assert await resp.json() == snapshot(
-            name="resp_1", matcher=_last_password_change_matcher
+            name="resp_1",
+            matcher=_last_password_change_matcher,
         )
 
         resp = await client.patch(f"/admin/users/{user.id}", {"groups": [group_2.id]})
 
         assert resp.status == 200
         assert await resp.json() == snapshot(
-            name="resp_2", matcher=_last_password_change_matcher
+            name="resp_2",
+            matcher=_last_password_change_matcher,
         )
 
         resp = await client.patch(f"/admin/users/{user.id}", {"groups": []})
 
         assert resp.status == 200
         assert await resp.json() == snapshot(
-            name="resp_3", matcher=_last_password_change_matcher
+            name="resp_3",
+            matcher=_last_password_change_matcher,
         )
 
     @pytest.mark.parametrize(
-        "password", ["a_whole_new_password","fail"]
+        "password",
+        ["a_whole_new_password", "fail"],
     )
     async def test_password(
-        self, mongo: Mongo, fake2: DataFaker, snapshot, spawn_client: ClientSpawner,password
+        self,
+        mongo: Mongo,
+        fake2: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        password,
     ):
-        """
-        Test that a password change leads to a successful credential validation with the
+        """Test that a password change leads to a successful credential validation with the
         new password.
         """
         client = await spawn_client(
@@ -254,7 +265,8 @@ class TestUpdateUser:
         user = await fake2.users.create()
 
         resp = await client.patch(
-            f"/admin/users/{user.id}", {"password": password}
+            f"/admin/users/{user.id}",
+            {"password": password},
         )
         body = await resp.json()
 
@@ -270,17 +282,20 @@ class TestUpdateUser:
 
         # Make sure last_password_change field was updated to a now-ish time.
         assert arrow.utcnow() - arrow.get(body["last_password_change"]) < timedelta(
-            seconds=1
+            seconds=1,
         )
 
         assert await validate_credentials(mongo, user.id, "a_whole_new_password")
 
     @pytest.mark.parametrize("is_member", [True, False])
     async def test_primary_group(
-        self, is_member: bool, fake2: DataFaker, snapshot, spawn_client: ClientSpawner
+        self,
+        is_member: bool,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
-        """
-        Test that the primary group can be changed.
+        """Test that the primary group can be changed.
 
         If the user is not a member of the new primary group, the request should fail.
         """
@@ -293,16 +308,15 @@ class TestUpdateUser:
         user = await fake2.users.create(groups=([group] if is_member else []))
 
         resp = await client.patch(
-            f"/admin/users/{user.id}", {"primary_group": group.id}
+            f"/admin/users/{user.id}",
+            {"primary_group": group.id},
         )
         assert resp.status == 200 if is_member else 400
         assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
 class TestAdministratorRoles:
-    """
-    Make sure users can't do bad stuff when changing other users' administrator roles.
-    """
+    """Make sure users can't do bad stuff when changing other users' administrator roles."""
 
     @pytest.mark.parametrize(
         "role",
@@ -339,7 +353,8 @@ class TestAdministratorRoles:
         )
 
         resp = await client.put(
-            f"/admin/users/{client.user.id}/role", {"role": AdministratorRole.USERS}
+            f"/admin/users/{client.user.id}/role",
+            {"role": AdministratorRole.USERS},
         )
 
         assert resp.status == 400
@@ -365,8 +380,7 @@ class TestAdministratorRoles:
         fake2: DataFaker,
         spawn_client: ClientSpawner,
     ):
-        """
-        Test that an administrator with a lower role or non-administrator can't change a
+        """Test that an administrator with a lower role or non-administrator can't change a
         user's role.
         """
         client = await spawn_client(authenticated=True)
@@ -376,7 +390,8 @@ class TestAdministratorRoles:
         user = await fake2.users.create()
 
         resp = await client.put(
-            f"/admin/users/{user.id}/role", {"role": AdministratorRole.BASE}
+            f"/admin/users/{user.id}/role",
+            {"role": AdministratorRole.BASE},
         )
 
         assert resp.status == 403
@@ -386,7 +401,6 @@ class TestAdministratorRoles:
         }
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("name,status", [("relist_jobs", 202), ("foo", 400)])
 async def test_run_actions(name: str, status: int, spawn_client: ClientSpawner):
     client = await spawn_client(

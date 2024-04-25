@@ -18,7 +18,9 @@ from virtool.users.pg import SQLUser
 
 
 @pytest.mark.parametrize(
-    "has_permission", [True, False], ids=["has_permission", "does_not_have_permission"]
+    "has_permission",
+    [True, False],
+    ids=["has_permission", "does_not_have_permission"],
 )
 async def test_create_api_key(
     has_permission: bool,
@@ -29,8 +31,7 @@ async def test_create_api_key(
     snapshot: SnapshotAssertion,
     static_time,
 ):
-    """
-    Test that an API key is created correctly with varying key owner administrator status and
+    """Test that an API key is created correctly with varying key owner administrator status and
     permissions.
 
     """
@@ -43,8 +44,8 @@ async def test_create_api_key(
             **{
                 Permission.create_sample: True,
                 Permission.modify_subtraction: has_permission,
-            }
-        )
+            },
+        ),
     )
 
     user = await fake2.users.create(groups=[group_1, group_2])
@@ -70,7 +71,8 @@ class TestGetKey:
             CreateKeysRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
-                    create_sample=True, modify_subtraction=True
+                    create_sample=True,
+                    modify_subtraction=True,
                 ),
             ),
             user.id,
@@ -86,7 +88,8 @@ class TestGetKey:
             CreateKeysRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
-                    create_sample=True, modify_subtraction=True
+                    create_sample=True,
+                    modify_subtraction=True,
                 ),
             ),
             user.id,
@@ -105,7 +108,8 @@ class TestGetKeyBySecret:
             CreateKeysRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
-                    create_sample=True, modify_subtraction=True
+                    create_sample=True,
+                    modify_subtraction=True,
                 ),
             ),
             user.id,
@@ -114,16 +118,15 @@ class TestGetKeyBySecret:
         assert await data_layer.account.get_key_by_secret(user.id, secret) == api_key
 
     async def test_not_found(self, data_layer: DataLayer, fake2: DataFaker):
-        """
-        Test that ``ResourceNotFoundError`` is raised when the key secret is invalid.
-        """
+        """Test that ``ResourceNotFoundError`` is raised when the key secret is invalid."""
         user = await fake2.users.create()
 
         await data_layer.account.create_key(
             CreateKeysRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
-                    create_sample=True, modify_subtraction=True
+                    create_sample=True,
+                    modify_subtraction=True,
                 ),
             ),
             user.id,
@@ -162,7 +165,8 @@ async def test_update(
     )
 
     (row, document) = await asyncio.gather(
-        get_row_by_id(pg, SQLUser, 1), mongo.users.find_one({"_id": user.id})
+        get_row_by_id(pg, SQLUser, 1),
+        mongo.users.find_one({"_id": user.id}),
     )
 
     assert row == snapshot_recent(name="pg", exclude=props("password"))
