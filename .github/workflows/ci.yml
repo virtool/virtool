@@ -12,7 +12,7 @@ on:
 jobs:
   commitlint:
     runs-on: ubuntu-22.04
-    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -75,7 +75,7 @@ jobs:
           installer-parallel: true
       - name: Load Cached Packages
         id: cached-poetry-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -117,7 +117,7 @@ jobs:
           installer-parallel: true
       - name: Load Cached Packages
         id: cached-poetry-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -129,7 +129,7 @@ jobs:
           mkdir -p virtool/spec
           poetry run python run.py oas > virtool/spec/openapi.json
       - name: Upload OAS
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
@@ -150,7 +150,7 @@ jobs:
             installer-parallel: true
         - name: Load Cached Packages
           id: cached-poetry-dependencies
-          uses: actions/cache@v3
+          uses: actions/cache@v4
           with:
             path: .venv
             key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -168,16 +168,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Download OAS
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 14
+          node-version: 20
       - name: Install semantic-release
-        run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
+        run: npm i semantic-release@v23.0.8 conventional-changelog-conventionalcommits@7.0.2
       - name: Run semantic-release
         id: semantic
         env:
