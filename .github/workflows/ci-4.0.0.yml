@@ -25,7 +25,7 @@ jobs:
         ports:
           - 27017:27017
     container:
-      image: ghcr.io/virtool/external-tools:0.2.0
+      image: ghcr.io/virtool/external-tools:0.2.2
     steps:
       - name: Checkout
         uses: actions/checkout@v4
