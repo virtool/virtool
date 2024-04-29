@@ -1,16 +1,17 @@
 import asyncio
+import glob
 import math
 import os
 import shutil
-from asyncio import CancelledError, to_thread
-from logging import getLogger
-from typing import Optional
+from asyncio import CancelledError
+from typing import TYPE_CHECKING
 
 from aiohttp import MultipartReader
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 from virtool_core.models.subtraction import (
     Subtraction,
     SubtractionFile,
@@ -23,16 +24,16 @@ import virtool.subtractions.files
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config import Config
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.file import FileDescriptor
-from virtool.data.piece import DataLayerPiece
-from virtool.jobs.db import lookup_minimal_job_by_id
+from virtool.data.transforms import apply_transforms
+from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import (
     attach_computed,
-    check_subtraction_fasta_files,
     unlink_default_subtractions,
 )
 from virtool.subtractions.models import SQLSubtractionFile
@@ -47,23 +48,26 @@ from virtool.subtractions.utils import (
     join_subtraction_index_path,
     join_subtraction_path,
 )
-from virtool.uploads.utils import multipart_file_chunker
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import SQLUpload
+from virtool.uploads.utils import multipart_file_chunker
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import lookup_nested_user_by_id
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
-logger = getLogger("subtractions")
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
+
+logger = get_logger("subtractions")
 
 
-class SubtractionsData(DataLayerPiece):
+class SubtractionsData(DataLayerDomain):
     name = "subtractions"
 
-    def __init__(self, base_url: str, config: Config, mongo, pg: AsyncEngine):
+    def __init__(self, base_url: str, config: Config, mongo: "Mongo", pg: AsyncEngine):
         self._base_url = base_url
         self._config = config
         self._mongo = mongo
@@ -108,8 +112,6 @@ class SubtractionsData(DataLayerPiece):
                             {"$sort": {"name": 1}},
                             {"$skip": per_page * (page - 1)},
                             {"$limit": per_page},
-                            *lookup_nested_user_by_id(local_field="user.id"),
-                            *lookup_minimal_job_by_id(local_field="job.id"),
                             {
                                 "$project": {
                                     "id": "$_id",
@@ -160,6 +162,11 @@ class SubtractionsData(DataLayerPiece):
 
         data = data[0]
 
+        data["documents"] = await apply_transforms(
+            [base_processor(d) for d in data["documents"]],
+            [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+        )
+
         return SubtractionSearchResult(
             **data,
             page=page,
@@ -173,7 +180,7 @@ class SubtractionsData(DataLayerPiece):
         data: CreateSubtractionRequest,
         user_id: str,
         space_id: int,
-        subtraction_id: Optional[str] = None,
+        subtraction_id: str | None = None,
     ) -> Subtraction:
         """
         Create a new subtraction.
@@ -226,7 +233,8 @@ class SubtractionsData(DataLayerPiece):
         return subtraction
 
     async def get(self, subtraction_id: str) -> Subtraction:
-        document = await self._mongo.subtraction.aggregate(
+        """Get a subtraction by its id."""
+        result = await self._mongo.subtraction.aggregate(
             [
                 {"$match": {"_id": subtraction_id}},
                 {
@@ -235,26 +243,30 @@ class SubtractionsData(DataLayerPiece):
                         "count": True,
                         "created_at": True,
                         "file": True,
+                        "gc": True,
                         "ready": True,
                         "job": True,
                         "name": True,
                         "nickname": True,
                         "user": True,
                         "subtraction_id": True,
-                        "gc": True,
                     }
                 },
-                *lookup_nested_user_by_id(local_field="user.id"),
-                *lookup_minimal_job_by_id(local_field="job.id"),
             ]
         ).to_list(length=1)
 
-        if len(document) != 0:
+        if result:
             document = await attach_computed(
-                self._mongo, self._pg, self._base_url, document[0]
+                self._mongo, self._pg, self._base_url, result[0]
             )
 
-            document = base_processor(document)
+            document = await apply_transforms(
+                base_processor(document),
+                [
+                    AttachUserTransform(self._mongo, ignore_errors=True),
+                    AttachJobTransform(self._mongo),
+                ],
+            )
 
             return Subtraction(**document)
 
@@ -296,7 +308,7 @@ class SubtractionsData(DataLayerPiece):
 
             await asyncio.gather(
                 unlink_default_subtractions(self._mongo, subtraction_id, session),
-                to_thread(
+                asyncio.to_thread(
                     shutil.rmtree,
                     join_subtraction_path(self._config, subtraction_id),
                     True,
@@ -306,7 +318,9 @@ class SubtractionsData(DataLayerPiece):
         return update_result.modified_count
 
     @emits(Operation.UPDATE)
-    async def finalize(self, subtraction_id: str, data: FinalizeSubtractionRequest):
+    async def finalize(
+        self, subtraction_id: str, data: FinalizeSubtractionRequest
+    ) -> Subtraction:
         """
         Finalize a subtraction.
 
@@ -315,7 +329,7 @@ class SubtractionsData(DataLayerPiece):
 
         :param subtraction_id:
         :param data:
-        :return:
+        :return: finalized subtraction
         """
         ready = await get_one_field(self._mongo.subtraction, "ready", subtraction_id)
 
@@ -390,7 +404,7 @@ class SubtractionsData(DataLayerPiece):
 
                 await session.commit()
         except CancelledError:
-            await to_thread(
+            await asyncio.to_thread(
                 rm, self._config.data_path / "subtractions" / subtraction_id / filename
             )
 
@@ -421,8 +435,12 @@ class SubtractionsData(DataLayerPiece):
 
         path = join_subtraction_path(self._config, subtraction_id) / filename
 
-        if not await to_thread(path.is_file):
-            logger.warning("")
+        if not await asyncio.to_thread(path.is_file):
+            logger.warning(
+                "Expected subtraction file not found",
+                filename=filename,
+                subtraction_id=subtraction_id,
+            )
             raise ResourceNotFoundError
 
         return FileDescriptor(path=path, size=file["size"])
@@ -431,6 +449,8 @@ class SubtractionsData(DataLayerPiece):
         """
         Generate a FASTA file for a subtraction that has Bowtie2 index files, but no
         FASTA file.
+
+        :param subtraction_id: the id of the subtraction
 
         """
         index_path = join_subtraction_index_path(self._config, subtraction_id)
@@ -445,14 +465,16 @@ class SubtractionsData(DataLayerPiece):
             stderr=asyncio.subprocess.PIPE,
         )
 
-        await proc.communicate()
+        _, stderr = await proc.communicate()
+
+        assert proc.returncode == 0
 
         target_path = (
             join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
         )
 
-        await to_thread(compress_file, fasta_path, target_path)
-        await to_thread(rm, fasta_path)
+        await asyncio.to_thread(compress_file, fasta_path, target_path)
+        await asyncio.to_thread(rm, fasta_path)
 
     async def rename_and_track_files(self, progress_handler: AbstractProgressHandler):
         """
@@ -474,7 +496,7 @@ class SubtractionsData(DataLayerPiece):
 
             subtraction_files = []
 
-            for filename in sorted(await to_thread(os.listdir, path)):
+            for filename in sorted(await asyncio.to_thread(os.listdir, path)):
                 if filename in FILES:
                     async with AsyncSession(self._pg) as session:
                         exists = (
@@ -501,4 +523,12 @@ class SubtractionsData(DataLayerPiece):
         If a subtraction has Bowtie2 index files but no FASTA file, generate one.
 
         """
-        return await check_subtraction_fasta_files(self._mongo, self._config)
+        subtractions_without_fasta = []
+
+        async for subtraction in self._mongo.subtraction.find({"deleted": False}):
+            path = join_subtraction_path(self._config, subtraction["_id"])
+
+            if not glob.glob(f"{path}/*.fa.gz"):
+                subtractions_without_fasta.append(subtraction["_id"])
+
+        return subtractions_without_fasta

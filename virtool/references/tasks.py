@@ -1,37 +1,28 @@
-from __future__ import annotations
-
 import json
 from asyncio import to_thread
-from logging import getLogger
 from pathlib import Path
-from typing import Dict, Optional, TYPE_CHECKING
+from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING, Dict, Optional
 
 from aiohttp import ClientConnectorError
-from humanfriendly.testing import TemporaryDirectory
 
 from virtool.api.custom_json import dump_string
+from virtool.data.http import download_file
 from virtool.errors import WebError
-from virtool.http.utils import download_file
 from virtool.references.utils import (
+    ReferenceSourceData,
     check_import_data,
     load_reference_file,
-    ReferenceSourceData,
 )
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
-
-logger = getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
 
 class CloneReferenceTask(BaseTask):
-    """
-    Clone an existing reference.
-
-    """
+    """Clone an existing reference."""
 
     name = "clone_reference"
 
@@ -88,7 +79,10 @@ class ImportReferenceTask(BaseTask):
         user_id = self.context["user_id"]
 
         await self.data.references.populate_imported_reference(
-            ref_id, user_id, self.import_data, self.create_progress_handler()
+            ref_id,
+            user_id,
+            self.import_data,
+            self.create_progress_handler(),
         )
 
 
@@ -110,14 +104,17 @@ class RemoteReferenceTask(BaseTask):
 
     async def download(self):
         tracker = AccumulatingProgressHandlerWrapper(
-            self.create_progress_handler(), self.context["release"]["size"]
+            self.create_progress_handler(),
+            self.context["release"]["size"],
         )
 
         path = self.temp_path / "reference.json.gz"
 
         try:
             await download_file(
-                self.context["release"]["download_url"], path, tracker.add
+                self.context["release"]["download_url"],
+                path,
+                tracker.add,
             )
         except (ClientConnectorError, WebError):
             await self._set_error("Could not download reference data")
@@ -143,7 +140,11 @@ class UpdateRemoteReferenceTask(BaseTask):
     name = "update_remote_reference"
 
     def __init__(
-        self, task_id: int, data: DataLayer, context: Dict, temp_dir: TemporaryDirectory
+        self,
+        task_id: int,
+        data: "DataLayer",
+        context: Dict,
+        temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
 
@@ -155,7 +156,8 @@ class UpdateRemoteReferenceTask(BaseTask):
 
     async def download(self):
         tracker = AccumulatingProgressHandlerWrapper(
-            self.create_progress_handler(), self.download_size
+            self.create_progress_handler(),
+            self.download_size,
         )
 
         path = self.temp_path / "reference.json.gz"

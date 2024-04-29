@@ -6,12 +6,12 @@ from pathlib import Path
 
 import arrow
 import pytest
-from aiohttp.web_exceptions import HTTPBadRequest
 from virtool_core.models.basemodel import BaseModel
 from virtool_core.models.samples import Sample
 from virtool_core.utils import decompress_tgz
 
 import virtool.utils
+from virtool.api.errors import APIBadRequest
 from virtool.data.errors import ResourceConflictError
 from virtool.utils import wait_for_checks, get_model_by_name
 
@@ -108,7 +108,7 @@ def test_timestamp(mocker):
 
     assert isinstance(timestamp, datetime.datetime)
 
-    assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).naive
+    assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304).naive
 
 
 @pytest.mark.parametrize(
@@ -136,7 +136,7 @@ async def test_wait_for_checks(exception):
     async def check_three():
         _ = 3
         await asyncio.sleep(0.5)
-        raise HTTPBadRequest(text="Exception thrown for test function check_three")
+        raise APIBadRequest("Exception thrown for test function check_three")
 
     async def check_four():
         _ = 4

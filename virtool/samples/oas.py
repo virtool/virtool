@@ -2,9 +2,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, constr, Field, conlist
 from virtool_core.models.analysis import AnalysisMinimal
-from virtool_core.models.enums import LibraryType
+from virtool_core.models.enums import LibraryType, AnalysisWorkflow
 from virtool_core.models.samples import SampleMinimal, Sample
-from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.validators import prevent_none
 
 
@@ -50,7 +49,7 @@ class GetSampleResponse(Sample):
                 "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
-                "group": "sidney",
+                "group": {"id": 4, "name": "Sidney"},
                 "group_read": True,
                 "group_write": True,
                 "hold": True,
@@ -133,7 +132,7 @@ class CreateSampleRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1)
     host: constr(strip_whitespace=True) = ""
     isolate: constr(strip_whitespace=True) = ""
-    group: Optional[str] = None
+    group: int | None = None
     locale: constr(strip_whitespace=True) = ""
     library_type: LibraryType = LibraryType.normal
     subtractions: list = Field(default_factory=lambda: [])
@@ -152,7 +151,7 @@ class CreateSampleResponse(Sample):
                 "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
-                "group": "sidney",
+                "group": {"id": 4, "name": "Sidney"},
                 "group_read": True,
                 "group_write": True,
                 "hold": True,
@@ -262,7 +261,7 @@ class UpdateSampleResponse(Sample):
                 "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
-                "group": "sidney",
+                "group": {"id": 4, "name": "Sidney"},
                 "group_read": True,
                 "group_write": True,
                 "hold": True,
@@ -342,11 +341,11 @@ class UpdateSampleResponse(Sample):
 
 
 class UpdateRightsRequest(BaseModel):
-    group: Optional[str]
-    all_read: Optional[bool]
-    all_write: Optional[bool]
-    group_read: Optional[bool]
-    group_write: Optional[bool]
+    group: int | str | None
+    all_read: bool | None
+    all_write: bool | None
+    group_read: bool | None
+    group_write: bool | None
 
     _prevent_none = prevent_none("*")
 
@@ -370,7 +369,7 @@ class UpdateRightsResponse(Sample):
                 "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
-                "group": "administrator",
+                "group": 4,
                 "group_read": True,
                 "group_write": True,
                 "hold": True,
@@ -475,9 +474,10 @@ class GetSampleAnalysesResponse(AnalysisMinimal):
 
 
 class CreateAnalysisRequest(BaseModel):
+    ml: int | None
     ref_id: str
-    subtractions: Optional[list]
-    workflow: QuickAnalyzeWorkflow
+    subtractions: list[str] | None
+    workflow: AnalysisWorkflow
 
     _prevent_none = prevent_none("subtractions")
 

@@ -1,5 +1,4 @@
 import asyncio
-from logging import getLogger
 from typing import List, Dict
 
 import arrow
@@ -7,18 +6,20 @@ from sqlalchemy import select, desc, asc
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import joinedload
+from structlog import get_logger
+from virtool_core.models.ml import (
+    MLModelListResult,
+    MLModelMinimal,
+    MLModelRelease,
+    MLModel,
+    MLModelReleaseMinimal,
+)
 
 from virtool.config import Config
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.file import FileDescriptor
 from virtool.data.http import HTTPClient
-from virtool.data.piece import DataLayerPiece
-from virtool.ml.models import (
-    MLModel,
-    MLModelMinimal,
-    MLModelRelease,
-    MLModelListResult,
-)
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.releases import (
@@ -29,10 +30,10 @@ from virtool.releases import (
 from virtool.tasks.models import SQLTask
 from virtool.utils import timestamp
 
-logger = getLogger("ml")
+logger = get_logger("ml")
 
 
-class MLData(DataLayerPiece):
+class MLData(DataLayerDomain):
     """A data layer piece for interacting with machine learning models."""
 
     def __init__(
@@ -54,41 +55,37 @@ class MLData(DataLayerPiece):
 
         """
         async with AsyncSession(self._pg) as session:
-            stmt = (
+            model_result = await session.execute(
                 select(SQLMLModel)
                 .order_by(asc(SQLMLModel.name))
                 .options(joinedload(SQLMLModel.releases))
             )
 
-            result = await session.execute(stmt)
-
             items = [
                 MLModelMinimal(
-                    id=one.id,
-                    created_at=one.created_at,
-                    description=one.description,
-                    latest_release=None,
-                    name=one.name,
-                    release_count=len(one.releases),
+                    id=model.id,
+                    created_at=model.created_at,
+                    description=model.description,
+                    latest_release=MLModelReleaseMinimal(**model.releases[0].to_dict())
+                    if model.releases
+                    else None,
+                    name=model.name,
+                    release_count=len(model.releases),
                 )
-                for one in result.scalars().unique()
+                for model in model_result.scalars().unique()
             ]
 
-            result = (
-                (
-                    await session.execute(
-                        select(SQLTask)
-                        .filter_by(type=SyncMLModelsTask.name)
-                        .order_by(desc(SQLTask.created_at))
-                    )
-                )
-                .scalars()
-                .first()
+            task_result = await session.execute(
+                select(SQLTask)
+                .where(SQLTask.type == SyncMLModelsTask.name)
+                .order_by(desc(SQLTask.created_at))
             )
+
+            task = task_result.scalars().first()
 
             # The last time the ML models were synced with be none if the task has never
             # been run.
-            last_synced_at = result.created_at if result else None
+            last_synced_at = task.created_at if task else None
 
             return MLModelListResult(items=items, last_synced_at=last_synced_at)
 
@@ -101,39 +98,60 @@ class MLData(DataLayerPiece):
 
         """
         async with AsyncSession(self._pg) as session:
-            stmt = (
+            result = await session.execute(
                 select(SQLMLModel)
                 .options(joinedload(SQLMLModel.releases))
                 .filter_by(id=model_id)
             )
-
-            result = await session.execute(stmt)
 
             model = result.scalars().unique().one_or_none()
 
             if model is None:
                 raise ValueError(f"ML model with ID {model_id} not found")
 
+            releases = [
+                MLModelReleaseMinimal(
+                    id=r.id,
+                    created_at=r.created_at,
+                    download_url=r.download_url,
+                    github_url=r.github_url,
+                    name=r.name,
+                    published_at=r.published_at,
+                    ready=r.ready,
+                    size=r.size,
+                )
+                for r in model.releases
+            ]
+
             return MLModel(
                 id=model.id,
                 created_at=model.created_at,
                 description=model.description,
-                latest_release=None,
+                latest_release=releases[0] if releases else None,
                 name=model.name,
                 release_count=len(model.releases),
-                releases=[
-                    MLModelRelease(
-                        id=r.id,
-                        created_at=r.created_at,
-                        download_url=r.download_url,
-                        github_url=r.github_url,
-                        name=r.name,
-                        published_at=r.published_at,
-                        ready=r.ready,
-                        size=r.size,
-                    )
-                    for r in model.releases
-                ],
+                releases=releases,
+            )
+
+    async def get_release(self, release_id: int) -> MLModelRelease:
+        """
+        Get an ML model release by its id.
+
+        :param release_id: the ID of the release to get.
+        :return: the ML model release.
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLMLModelRelease).where(SQLMLModelRelease.id == release_id)
+            )
+
+            release = result.scalars().unique().one_or_none()
+
+            if release is None:
+                raise ResourceNotFoundError()
+
+            return MLModelRelease(
+                **{**release.to_dict(), "model": release.model.to_dict()}
             )
 
     async def download_release(self, release_id: int) -> FileDescriptor:
@@ -279,4 +297,6 @@ class MLData(DataLayerPiece):
 
             return await self.load(data)
 
-        logger.warning("Could not fetch ML model releases from www.virtool.ca")
+        logger.warning(
+            "Could not fetch ML model releases", address="https://www.virtool.ca"
+        )

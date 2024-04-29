@@ -1,50 +1,62 @@
-import datetime
-from datetime import datetime
 import pytest
-from syrupy.matchers import path_type
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncEngine
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
-from virtool_core.models.roles import SpaceSampleRole, SpaceReferenceRole
+from virtool_core.models.roles import SpaceReferenceRole, SpaceSampleRole
 
+from tests.fixtures.client import ClientSpawner
 from virtool.authorization.relationships import UserRoleAssignment
+from virtool.data.layer import DataLayer
+from virtool.data.topg import both_transactions
 from virtool.data.utils import get_data_from_app
-from virtool.groups.oas import UpdateGroupRequest, UpdatePermissionsRequest
+from virtool.fake.next import DataFaker
+from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
+from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.users.pg import SQLUser
 from virtool.users.utils import check_password
 
 
-@pytest.fixture
-async def setup_update_user(fake2, spawn_client):
-    client = await spawn_client(authorize=True, administrator=True)
+@pytest.fixture()
+async def setup_update_user(
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    spawn_client: ClientSpawner,
+):
+    client = await spawn_client(administrator=True, authenticated=True)
 
     group_1 = await fake2.groups.create()
     group_2 = await fake2.groups.create()
 
-    groups = get_data_from_app(client.app).groups
-
-    await groups.update(
+    await data_layer.groups.update(
         group_1.id,
-        UpdateGroupRequest(permissions=UpdatePermissionsRequest(upload_file=True)),
+        UpdateGroupRequest(permissions=PermissionsUpdate(upload_file=True)),
     )
 
-    await groups.update(
+    await data_layer.groups.update(
         group_2.id,
         UpdateGroupRequest(
-            permissions=UpdatePermissionsRequest(create_sample=True, create_ref=True)
+            permissions=PermissionsUpdate(create_sample=True, create_ref=True),
         ),
     )
 
     return client, group_1, group_2, await fake2.users.create(groups=[group_1])
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "fred"])
-async def test_find(find, fake2, snapshot, spawn_client, data_layer):
-    """
-    Test that a ``GET /users`` returns a list of users.
-
-    """
+async def test_find(
+    find: str | None,
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
+):
+    """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(
-        authorize=True, administrator=True, permissions=[Permission.create_sample]
+        administrator=True,
+        authenticated=True,
+        permissions=[Permission.create_sample],
     )
 
     await fake2.users.create(handle=find)
@@ -58,33 +70,25 @@ async def test_find(find, fake2, snapshot, spawn_client, data_layer):
     resp = await client.get(url)
 
     assert resp.status == 200
-    assert await resp.json() == snapshot(
-        matcher=path_type(
-            {
-                "last_password_change": (datetime,),
-            }
-        )
-    )
+    assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
-    status,
-    fake2,
-    snapshot,
-    spawn_client,
+    status: int,
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
-    """
-    Test that a ``GET /users`` returns a list of users.
-
-    """
-    client = await spawn_client(authorize=True, administrator=True)
+    """Test that a ``GET /users`` returns a list of users."""
+    client = await spawn_client(administrator=True, authenticated=True)
 
     group = await fake2.groups.create()
 
     user = await fake2.users.create(
-        groups=[group, await fake2.groups.create()], primary_group=group
+        groups=[group, await fake2.groups.create()],
+        primary_group=group,
     )
 
     await fake2.users.create()
@@ -95,24 +99,29 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
-async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is, data_layer):
-    """
-    Test that a valid request results in a user document being properly inserted.
-
-    """
+async def test_create(
+    error: str | None,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    mongo: Mongo,
+    resp_is,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
+):
+    """Test that a valid request results in a user document being properly inserted."""
     await mongo.users.create_index("handle", unique=True, sparse=True)
 
-    client = await spawn_client(authorize=True, administrator=True)
-
-    data = {"handle": "fred", "password": "hello_world", "force_reset": False}
+    client = await spawn_client(administrator=True, authenticated=True)
 
     user = await fake2.users.create()
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8)
+        UpdateSettingsRequest(minimum_password_length=8),
     )
+
+    data = {"handle": "fred", "password": "hello_world", "force_reset": False}
 
     if error == "400_exists":
         data["handle"] = user.handle
@@ -131,7 +140,8 @@ async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is, data
 
     if error == "400_password":
         await resp_is.bad_request(
-            resp, "Password does not meet minimum length requirement (8)"
+            resp,
+            "Password does not meet minimum length requirement (8)",
         )
         return
 
@@ -146,7 +156,7 @@ async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is, data
     assert resp_json == snapshot
     assert resp.headers["Location"] == snapshot(name="location")
 
-    document = await client.db.users.find_one(resp_json["id"])
+    document = await mongo.users.find_one(resp_json["id"])
     password = document.pop("password")
 
     assert document == snapshot(name="db")
@@ -154,9 +164,13 @@ async def test_create(error, fake2, mongo, snapshot, spawn_client, resp_is, data
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
-@pytest.mark.apitest
 class TestUpdate:
-    async def test(self, setup_update_user, snapshot):
+    async def test_ok(
+        self,
+        setup_update_user,
+        snapshot: SnapshotAssertion,
+        static_time,
+    ):
         client, group_1, _, user = setup_update_user
 
         resp = await client.patch(
@@ -171,7 +185,12 @@ class TestUpdate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_with_groups(self, setup_update_user, snapshot):
+    async def test_with_groups(
+        self,
+        setup_update_user,
+        snapshot: SnapshotAssertion,
+        static_time,
+    ):
         client, group_1, group_2, user = setup_update_user
 
         resp = await client.patch(
@@ -186,7 +205,7 @@ class TestUpdate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_short_password(self, setup_update_user, snapshot):
+    async def test_short_password(self, setup_update_user, snapshot: SnapshotAssertion):
         client, _, _, user = setup_update_user
 
         resp = await client.patch(
@@ -199,20 +218,28 @@ class TestUpdate:
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-    async def test_non_existent_primary_group(self, setup_update_user, snapshot):
+    async def test_non_existent_primary_group(
+        self,
+        setup_update_user,
+        snapshot: SnapshotAssertion,
+    ):
         client, _, _, user = setup_update_user
 
         resp = await client.patch(
             f"/users/{user.id}",
             data={
-                "primary_group": "managers",
+                "primary_group": 4,
             },
         )
 
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-    async def test_not_a_member_of_primary_group(self, setup_update_user, snapshot):
+    async def test_not_a_member_of_primary_group(
+        self,
+        setup_update_user,
+        snapshot: SnapshotAssertion,
+    ):
         client, _, group_2, user = setup_update_user
 
         resp = await client.patch(
@@ -225,13 +252,13 @@ class TestUpdate:
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-    async def test_not_found(self, setup_update_user, snapshot):
+    async def test_not_found(self, setup_update_user, snapshot: SnapshotAssertion):
         client, _, _, _ = setup_update_user
 
         resp = await client.patch(
             "/users/bob",
             data={
-                "primary_group": "managers",
+                "primary_group": 1,
             },
         )
 
@@ -240,9 +267,10 @@ class TestUpdate:
 
 
 @pytest.mark.parametrize("user", ["test", "bob"])
-async def test_list_permissions(spawn_client, user, snapshot):
+async def test_list_permissions(spawn_client, user, snapshot: SnapshotAssertion):
     client = await spawn_client(
-        authorize=True, permissions=[Permission.create_sample, Permission.create_ref]
+        authenticated=True,
+        permissions=[Permission.create_sample, Permission.create_ref],
     )
 
     authorization_client = client.app["authorization"]
@@ -264,14 +292,21 @@ async def test_list_permissions(spawn_client, user, snapshot):
     "role, status",
     [
         (SpaceSampleRole.MANAGER, 200),
-        ("invalid", 400),
+        (None, 400),
     ],
     ids=["valid_permission", "invalid_permission"],
 )
-async def test_add_permission(spawn_client, role, status, snapshot):
-    client = await spawn_client(authorize=True, administrator=True)
-
-    resp = await client.put(f"/users/test/permissions/{role}", {})
+async def test_add_permission(
+    role: SpaceSampleRole,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+):
+    client = await spawn_client(administrator=True, authenticated=True)
+    if role is None:
+        resp = await client.put("/users/test/permissions/invalid", {})
+    else:
+        resp = await client.put(f"/users/test/permissions/{role.value}", {})
 
     assert resp.status == status
     assert await resp.json() == snapshot()
@@ -281,33 +316,48 @@ async def test_add_permission(spawn_client, role, status, snapshot):
     "role, status",
     [
         (SpaceSampleRole.MANAGER, 200),
-        ("invalid", 400),
+        (None, 400),
     ],
     ids=["valid_permission", "invalid_permission"],
 )
-async def test_remove_permission(spawn_client, role, status, snapshot):
-    client = await spawn_client(authorize=True, administrator=True)
+async def test_remove_permission(
+    role: SpaceSampleRole,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+):
+    client = await spawn_client(administrator=True, authenticated=True)
 
-    resp = await client.delete(f"/users/test/permissions/{role}")
+    if role is None:
+        resp = await client.put("/users/test/permissions/invalid", {})
+    else:
+        resp = await client.put(f"/users/test/permissions/{role.value}", {})
 
     assert resp.status == status
     assert await resp.json() == snapshot()
 
 
 @pytest.mark.parametrize("first_user_exists, status", [(True, 409), (False, 201)])
-async def test_first_user_view(
-    spawn_client, mongo, first_user_exists, status, snapshot
+async def test_create_first_user(
+    first_user_exists: bool,
+    status: int,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
-    """
-    Checks response when first user exists and does not exist.
-    """
+    """Checks response when first user exists and does not exist."""
     client = await spawn_client()
 
     if not first_user_exists:
-        await mongo.users.delete_many({})
+        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+            await pg_session.execute(delete(SQLUser))
+            await mongo.users.delete_many({}, session=mongo_session)
 
     resp = await client.put(
-        "/users/first", {"handle": "fred", "password": "hello_world"}
+        "/users/first",
+        {"handle": "fred", "password": "hello_world"},
     )
 
     assert resp.status == status

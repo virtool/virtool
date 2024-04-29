@@ -1,20 +1,21 @@
+# serializer version: 1
 # name: test_acquire
-  <class 'dict'> {
+  dict({
     'acquired': True,
     'archived': False,
-    'args': <class 'dict'> {
-    },
+    'args': dict({
+    }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'foo',
     'key': 'key',
     'ping': None,
     'progress': 3,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': None,
     'state': <JobState.PREPARING: 'preparing'>,
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 3,
         'stage': None,
@@ -22,28 +23,28 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
+      }),
+    ]),
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_acquire.1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'acquired': True,
     'archived': False,
-    'args': <class 'dict'> {
-    },
+    'args': dict({
+    }),
     'key': 'hashed',
-    'rights': <class 'dict'> {
-    },
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'rights': dict({
+    }),
+    'state': 'preparing',
+    'status': list([
+      dict({
         'error': None,
         'progress': 3,
         'stage': None,
@@ -51,30 +52,30 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_archive
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': True,
-    'args': <class 'dict'> {
-    },
+    'args': dict({
+    }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'foo',
     'ping': None,
     'progress': 0,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -82,28 +83,27 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
+      }),
+    ]),
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_archive.1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'acquired': False,
     'archived': True,
-    'args': <class 'dict'> {
-    },
+    'args': dict({
+    }),
     'key': None,
-    'rights': <class 'dict'> {
-    },
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'rights': dict({
+    }),
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -111,30 +111,30 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_cancel
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
-    },
+    'args': dict({
+    }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'foo',
     'ping': None,
     'progress': 0,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': 'foo',
     'state': <JobState.RUNNING: 'running'>,
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': 'foo',
@@ -142,57 +142,56 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
+      }),
+    ]),
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_cancel.1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'archived': False,
-    'args': <class 'dict'> {
-    },
-    'rights': <class 'dict'> {
-    },
+    'args': dict({
+    }),
+    'rights': dict({
+    }),
     'state': 'waiting',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0.33,
         'stage': 'foo',
         'state': 'running',
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'build_index',
-  }
----
+  })
+# ---
 # name: test_create[None]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'sample_id': 'foo',
-    },
+    }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'bf1b993c',
     'ping': None,
     'progress': 0,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -200,34 +199,33 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
+      }),
+    ]),
+    'user': dict({
       'handle': 'leeashley',
       'id': '7CtBo2yG',
-    },
+    }),
     'workflow': 'create_sample',
-  }
----
+  })
+# ---
 # name: test_create[None].1
-  <class 'dict'> {
+  dict({
     '_id': 'bf1b993c',
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'sample_id': 'foo',
-    },
+    }),
     'key': None,
     'ping': None,
-    'rights': <class 'dict'> {
-    },
-    'space': <class 'dict'> {
+    'rights': dict({
+    }),
+    'space': dict({
       'id': 0,
-    },
+    }),
     'state': 'waiting',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -235,31 +233,31 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'id': '7CtBo2yG',
-    },
+    }),
     'workflow': 'create_sample',
-  }
----
+  })
+# ---
 # name: test_create[bar]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'sample_id': 'foo',
-    },
+    }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'bar',
     'ping': None,
     'progress': 0,
-    'rights': <class 'dict'> {
-    },
+    'rights': dict({
+    }),
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -267,34 +265,33 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
+      }),
+    ]),
+    'user': dict({
       'handle': 'leeashley',
       'id': '7CtBo2yG',
-    },
+    }),
     'workflow': 'create_sample',
-  }
----
+  })
+# ---
 # name: test_create[bar].1
-  <class 'dict'> {
+  dict({
     '_id': 'bar',
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'sample_id': 'foo',
-    },
+    }),
     'key': None,
     'ping': None,
-    'rights': <class 'dict'> {
-    },
-    'space': <class 'dict'> {
+    'rights': dict({
+    }),
+    'space': dict({
       'id': 0,
-    },
+    }),
     'state': 'waiting',
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
@@ -302,162 +299,162 @@
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      },
-    ],
-    'user': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
       'id': '7CtBo2yG',
-    },
+    }),
     'workflow': 'create_sample',
-  }
----
+  })
+# ---
 # name: test_timeout
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       '_id': 'ok_new',
       'state': 'running',
-      'status': <class 'list'> [
-        <class 'dict'> {
+      'status': list([
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'waiting',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'running',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-      ],
-    },
-    <class 'dict'> {
+          'timestamp': datetime,
+        }),
+      ]),
+    }),
+    dict({
       '_id': 'ok_ping',
       'state': 'running',
-      'status': <class 'list'> [
-        <class 'dict'> {
+      'status': list([
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'waiting',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'running',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-      ],
-    },
-    <class 'dict'> {
+          'timestamp': datetime,
+        }),
+      ]),
+    }),
+    dict({
       '_id': 'ok_state',
       'state': 'complete',
-      'status': <class 'list'> [
-        <class 'dict'> {
+      'status': list([
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'waiting',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'running',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 1,
           'stage': 'Bar',
           'state': 'complete',
           'step_description': 'bar a foo',
           'step_name': 'bar',
-          'timestamp': <class 'datetime'>,
-        },
-      ],
-    },
-    <class 'dict'> {
+          'timestamp': datetime,
+        }),
+      ]),
+    }),
+    dict({
       '_id': 'bad_old',
       'state': 'timeout',
-      'status': <class 'list'> [
-        <class 'dict'> {
+      'status': list([
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'waiting',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'running',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'timeout',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-      ],
-    },
-    <class 'dict'> {
+          'timestamp': datetime,
+        }),
+      ]),
+    }),
+    dict({
       '_id': 'bad_ping',
       'state': 'timeout',
-      'status': <class 'list'> [
-        <class 'dict'> {
+      'status': list([
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'waiting',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'running',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-        <class 'dict'> {
+          'timestamp': datetime,
+        }),
+        dict({
           'error': None,
           'progress': 0.33,
           'stage': 'foo',
           'state': 'timeout',
           'step_description': 'Foo a bar',
           'step_name': 'foo',
-          'timestamp': <class 'datetime'>,
-        },
-      ],
-    },
-  ]
----
+          'timestamp': datetime,
+        }),
+      ]),
+    }),
+  ])
+# ---

@@ -1,5 +1,7 @@
 import aiohttp.web
 
+from virtool.mongo.core import Mongo
+
 test_routes = aiohttp.web.RouteTableDef()
 
 
@@ -13,11 +15,11 @@ def non_public_test_route(request: aiohttp.web.Request):
     return aiohttp.web.Response(status=200)
 
 
-async def test_public_routes_are_public(spawn_job_client):
+async def test_public_routes_are_public(mongo: Mongo, spawn_job_client):
     client = await spawn_job_client(authorize=False, add_route_table=test_routes)
 
     job_id = "test_job"
-    insert_result = await client.db.jobs.insert_one({"_id": job_id})
+    insert_result = await mongo.jobs.insert_one({"_id": job_id})
 
     assert insert_result["_id"] == job_id
 

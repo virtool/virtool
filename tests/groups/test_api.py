@@ -1,89 +1,135 @@
-import asyncio
-
 import pytest
+from syrupy import SnapshotAssertion
 
-from virtool.groups.oas import UpdatePermissionsRequest
-
-
-@pytest.fixture
-async def setup_update_group(spawn_client, fake2):
-    client = await spawn_client(authorize=True, administrator=True)
-
-    group = await fake2.groups.create()
-    await fake2.groups.create()
-
-    await fake2.users.create()
-    await fake2.users.create(groups=[group])
-    await fake2.users.create(groups=[group])
-    await fake2.users.create(groups=[group])
-
-    return client, group
+from tests.fixtures.client import ClientSpawner
+from virtool.fake.next import DataFaker
+from virtool.groups.oas import PermissionsUpdate
 
 
-async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapshot):
-    """
-    Test that a ``GET /groups`` return a complete list of groups.
+class TestFind:
+    async def test_list(
+        self,
+        fake2: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a full list of groups is returned when pagination is not toggled."""
+        for _ in range(10):
+            await fake2.groups.create()
 
-    """
-    client = await spawn_client(authorize=True, administrator=True)
+        # Need a capitalized group name to make sure ordering is case-insensitive.
+        await fake2.groups.create(name="Caps")
 
-    await fake2.groups.create()
-    await fake2.groups.create()
+        client = await spawn_client(authenticated=True)
 
-    resp = await client.get("/groups")
+        resp = await client.get("/groups")
 
-    assert resp.status == 200
-    assert await resp.json() == snapshot
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+
+    async def test_paginate(
+        self,
+        fake2: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that the correct page of groups and the correct search metadata values
+        are returned when `page` is `1` or `2`.
+        """
+        for _ in range(4):
+            await fake2.groups.create()
+
+        await fake2.groups.create(name="Caps")
+
+        for _ in range(10):
+            await fake2.groups.create()
+
+        client = await spawn_client(authenticated=True)
+
+        for page in [1, 2]:
+            resp = await client.get(f"/groups?paginate=true&page={page}&per_page=10")
+            assert resp.status == 200
+            assert await resp.json() == snapshot(name=f"page_{page}")
 
 
-@pytest.mark.apitest
-@pytest.mark.parametrize("status", [201, 400])
-async def test_create(status, fake2, mongo, spawn_client, snapshot):
-    """
-    Test that a group can be added to the database at ``POST /groups/:group_id``.
+class TestCreate:
+    async def test_ok(self, snapshot, spawn_client: ClientSpawner):
+        """Test that the request succeeds."""
+        client = await spawn_client(
+            administrator=True,
+            authenticated=True,
+            base_url="https://virtool.example.com",
+        )
 
-    """
-    await mongo.groups.create_index("name", unique=True, sparse=True)
+        resp = await client.post("/groups", data={"name": "Test"})
 
-    client = await spawn_client(
-        authorize=True, administrator=True, base_url="https://virtool.example.com"
-    )
+        assert resp.status == 201
+        assert resp.headers.get("Location") == "https://virtool.example.com/groups/1"
+        assert await resp.json() == snapshot(name="json")
 
-    group = await fake2.groups.create()
+    async def test_duplicate(
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that an error is returned when an existing group name is used."""
+        client = await spawn_client(
+            administrator=True,
+            authenticated=True,
+        )
 
-    resp = await client.post(
-        "/groups", data={"group_id": group.name if status == 400 else "Test"}
-    )
+        group = await fake2.groups.create()
 
-    assert resp.status == status
-    assert resp.headers.get("Location") == snapshot(name="location")
-    assert await resp.json() == snapshot(name="json")
+        resp = await client.post("/groups", data={"name": group.name})
+
+        assert resp.status == 400
+        assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
-async def test_get(status, fake2, spawn_client, snapshot):
-    """
-    Test that a ``GET /groups/:group_id`` return the correct group.
-
-    """
-    client = await spawn_client(authorize=True, administrator=True)
+async def test_get(
+    status: int,
+    fake2: DataFaker,
+    snapshot,
+    spawn_client: ClientSpawner,
+):
+    """Test that a ``GET /groups/:group_id`` return the correct group."""
+    client = await spawn_client(
+        administrator=True,
+        authenticated=True,
+    )
 
     group = await fake2.groups.create()
     await fake2.groups.create()
 
     await fake2.users.create(groups=[group])
 
-    resp = await client.get(f"/groups/{group.id if status == 200 else 'foo'}")
+    resp = await client.get(f"/groups/{group.id if status == 200 else 5}")
 
     assert resp.status == status
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestUpdate:
-    async def test(self, setup_update_group, snapshot, data_layer):
-        client, group = setup_update_group
+    async def test(
+        self,
+        fake2: DataFaker,
+        spawn_client: ClientSpawner,
+        snapshot: SnapshotAssertion,
+    ):
+        client = await spawn_client(
+            administrator=True,
+            authenticated=True,
+        )
+
+        group = await fake2.groups.create()
+        await fake2.groups.create()
+
+        await fake2.users.create()
+        await fake2.users.create(groups=[group])
+        await fake2.users.create(groups=[group])
+        await fake2.users.create(groups=[group])
 
         resp = await client.patch(
             f"/groups/{group.id}",
@@ -96,54 +142,37 @@ class TestUpdate:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        # Ensure that members users are updated with new permissions.
-        users = await asyncio.gather(
-            *[
-                data_layer.users.get(user["_id"])
-                async for user in client.db.users.find({})
-            ]
+    async def test_not_found(self, snapshot, spawn_client: ClientSpawner):
+        client = await spawn_client(
+            administrator=True,
+            authenticated=True,
         )
 
-        assert users == snapshot(name="users")
-
-    async def test_not_found(self, setup_update_group, snapshot):
-        client, _ = setup_update_group
-
-        resp = await client.patch("/groups/ghosts", data={"name": "Real boys"})
+        resp = await client.patch("/groups/5", data={"name": "Real boys"})
 
         assert resp.status == 404
         assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [204, 404])
-async def test_remove(status, fake2, snapshot, spawn_client):
-    """
-    Test that an existing document can be removed at ``DELETE /groups/:group_id``.
+async def test_delete(status: int, fake2: DataFaker, spawn_client: ClientSpawner):
+    """Test that an existing document can be removed at ``DELETE /groups/:group_id``."""
+    client = await spawn_client(administrator=True, authenticated=True)
 
-    """
-    client = await spawn_client(authorize=True, administrator=True)
-
-    group_1 = await fake2.groups.create(
-        permissions=UpdatePermissionsRequest(create_sample=True, remove_file=True)
+    group = await fake2.groups.create(
+        permissions=PermissionsUpdate(create_sample=True, remove_file=True),
     )
 
-    group_2 = await fake2.groups.create(
-        permissions=UpdatePermissionsRequest(upload_file=True)
-    )
+    await fake2.users.create(groups=[group])
 
-    await fake2.users.create(groups=[group_1, group_2])
-    await fake2.users.create(groups=[group_1])
-    await fake2.users.create(groups=[group_2])
-
-    resp = await client.delete(f"/groups/{'ghosts' if status == 404 else group_1.id}")
+    resp = await client.delete(f"/groups/{5 if status == 404 else group.id}")
 
     assert resp.status == status
-    assert await resp.json() == snapshot(name="json")
-
-    if status == 204:
-        assert await client.db.groups.count_documents({"_id": group_1.id}) == 0
-
-    assert await client.db.users.find({}, ["name", "groups"]).to_list(None) == snapshot(
-        name="users"
+    assert await resp.json() == (
+        None
+        if status == 204
+        else {
+            "id": "not_found",
+            "message": "Not found",
+        }
     )

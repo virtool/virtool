@@ -2,13 +2,14 @@ import json
 
 import pytest
 
+import virtool.analyses
 from virtool.analyses.format import load_results, transform_coverage_to_coordinates
+from virtool.mongo.core import Mongo
 
 
 @pytest.mark.parametrize("loadable", [True, False])
-async def test_load_results(loadable, mocker, tmp_path, config):
-    """
-    Test that results are loaded from a `results.json` as expected. Check that the file loading action is not pursued
+async def test_load_results(loadable, config, mocker, tmp_path):
+    """Test that results are loaded from a `results.json` as expected. Check that the file loading action is not pursued
     if the results are stored in the analysis document.
 
     """
@@ -24,7 +25,8 @@ async def test_load_results(loadable, mocker, tmp_path, config):
     results_file.write_text(json.dumps(results))
 
     m_join_analysis_json_path = mocker.patch(
-        "virtool.analyses.utils.join_analysis_json_path", return_value=str(results_file)
+        "virtool.analyses.utils.join_analysis_json_path",
+        return_value=str(results_file),
     )
 
     result = await load_results(config, document)
@@ -163,8 +165,53 @@ async def test_load_results(loadable, mocker, tmp_path, config):
     ],
 )
 def test_transform_coverage_to_coordinates(coverage, snapshot):
-    """
-    Test that two sample coverage data sets are correctly converted to coordinates.
+    """Test that two sample coverage data sets are correctly converted to coordinates."""
+    assert transform_coverage_to_coordinates(coverage) == snapshot
+
+
+@pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
+async def test_format_analysis(workflow: str | None, config, mocker, mongo: Mongo):
+    """Ensure that:
+    * the correct formatting function is called based on the workflow field.
+    * an exception is raised if the workflow field cannot be processed.
 
     """
-    assert transform_coverage_to_coordinates(coverage) == snapshot
+    m_format_nuvs = mocker.patch(
+        "virtool.analyses.format.format_nuvs",
+        return_value={"is_nuvs": True, "is_pathoscope": False},
+    )
+
+    m_format_pathoscope = mocker.patch(
+        "virtool.analyses.format.format_pathoscope",
+        return_value={"is_nuvs": False, "is_pathoscope": True},
+    )
+
+    document = {}
+
+    if workflow:
+        document["workflow"] = workflow
+
+    coroutine = virtool.analyses.format.format_analysis(config, mongo, document)
+
+    if workflow is None or workflow == "foobar":
+        with pytest.raises(ValueError) as err:
+            await coroutine
+
+        if workflow is None:
+            assert "Analysis has no workflow field" in str(err)
+        else:
+            assert "Unknown workflow: foobar" in str(err)
+
+    else:
+        assert await coroutine == {
+            "is_nuvs": workflow == "nuvs",
+            "is_pathoscope": workflow == "pathoscope",
+        }
+
+        if workflow == "nuvs":
+            m_format_nuvs.assert_called_with(config, mongo, document)
+            assert not m_format_pathoscope.called
+
+        elif workflow == "pathoscope":
+            m_format_pathoscope.assert_called_with(config, mongo, document)
+            assert not m_format_nuvs.called

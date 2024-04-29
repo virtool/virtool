@@ -5,7 +5,10 @@ from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 
+from virtool.data.layer import DataLayer
+from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
@@ -73,7 +76,14 @@ async def test_add_subtraction_files_task(
 
 
 async def test_check_subtraction_fasta_file_task(
-    config, data_layer, mongo, pg, snapshot, static_time, test_files_path, tmpdir
+    config,
+    data_layer: DataLayer,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+    static_time,
+    test_files_path: Path,
+    tmpdir,
 ):
     subtractions_path = Path(tmpdir.mkdir("subtractions"))
     subtraction_path = subtractions_path / "foo"
@@ -123,6 +133,8 @@ async def test_check_subtraction_fasta_file_task(
     )
 
     await task.run()
+
+    assert task.errored is False
 
     assert sorted(os.listdir(subtraction_path)) == [
         "subtraction.1.bt2",

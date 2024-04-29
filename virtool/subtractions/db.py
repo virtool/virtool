@@ -1,48 +1,38 @@
-"""
-Work with subtractions in the database.
+"""Work with subtractions in the database."""
 
-"""
 import asyncio
 import glob
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.subtraction import Subtraction
 
-import virtool.utils
 from virtool.config.cls import Config
-from virtool.data.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import Document
-from virtool.uploads.db import AttachUploadTransform
-from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
-PROJECTION = [
-    "_id",
-    "count",
-    "created_at",
-    "file",
-    "ready",
-    "job",
-    "name",
-    "nickname",
-    "user",
-]
 
-ADD_SUBTRACTION_FILES_QUERY = {"deleted": False}
+def subtraction_processor(document: Document) -> Document:
+    """Process a subtraction document for client-side.
 
+    :param document: the subtraction document to process
+    :return: the processed document
 
-class AttachSubtractionTransform(AbstractTransform):
     """
-    Attach more subtraction detail to a document with a field `subtractions` that
-    contains a list    of subtraction IDs.
+    return {**base_processor(document), "subtractions": document["subtractions"] or []}
+
+
+class AttachSubtractionsTransform(AbstractTransform):
+    """Attach more subtraction detail to a document with a field `subtractions` that
+    contains a list of subtraction IDs.
     """
 
-    def __init__(self, db):
-        self._db = db
+    def __init__(self, mongo: "Mongo"):
+        self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, "subtractions": prepared}
@@ -52,18 +42,38 @@ class AttachSubtractionTransform(AbstractTransform):
             {
                 "id": subtraction_id,
                 "name": await get_one_field(
-                    self._db.subtraction, "name", subtraction_id
+                    self._mongo.subtraction,
+                    "name",
+                    subtraction_id,
                 ),
             }
             for subtraction_id in document["subtractions"]
         ]
 
+    async def prepare_many(self, documents: list[Document]) -> dict[str, list[dict]]:
+        subtraction_ids = {s for d in documents for s in d["subtractions"]}
+
+        subtraction_lookup = {
+            d["_id"]: {"id": d["_id"], "name": d["name"]}
+            async for d in self._mongo.subtraction.find(
+                {"_id": {"$in": list(subtraction_ids)}},
+                ["_id", "name"],
+            )
+        }
+
+        return {
+            d["id"]: [subtraction_lookup[s] for s in d["subtractions"]]
+            for d in documents
+        }
+
 
 async def attach_computed(
-    mongo, pg: AsyncEngine, base_url: str, subtraction: Dict[str, Any]
-) -> Dict[str, Any]:
-    """
-    Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    base_url: str,
+    subtraction: dict[str, Any],
+) -> dict[str, Any]:
+    """Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
     document.
 
     Queries MongoDB and SQL to find the required data. Returns a new document
@@ -80,37 +90,19 @@ async def attach_computed(
 
     files, linked_samples = await asyncio.gather(
         get_subtraction_files(pg, subtraction_id),
-        virtool.subtractions.db.get_linked_samples(mongo, subtraction_id),
+        get_linked_samples(mongo, subtraction_id),
     )
 
     for file in files:
-        file[
-            "download_url"
-        ] = f"{base_url}/subtractions/{subtraction_id}/files/{file['name']}"
+        file["download_url"] = (
+            f"{base_url}/subtractions/{subtraction_id}/files/{file['name']}"
+        )
 
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 
 
-async def fetch_complete_subtraction(
-    mongo, pg: AsyncEngine, base_url: str, subtraction_id: str
-) -> Optional[Subtraction]:
-    document = await mongo.subtraction.find_one({"_id": subtraction_id})
-
-    if document:
-        document = await attach_computed(mongo, pg, base_url, document)
-
-        return await apply_transforms(
-            base_processor(document),
-            [
-                AttachUserTransform(mongo, ignore_errors=True),
-                AttachUploadTransform(pg),
-            ],
-        )
-
-
-async def check_subtraction_fasta_files(mongo, config: Config) -> list:
-    """
-    Check subtraction directories for files
+async def check_subtraction_fasta_files(mongo: "Mongo", config: Config) -> list:
+    """Check subtraction directories for files
 
     :param mongo: the application database client
     :param config: the application configuration
@@ -128,57 +120,54 @@ async def check_subtraction_fasta_files(mongo, config: Config) -> list:
     return subtractions_without_fasta
 
 
-async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
-    """
-    Find all samples containing given 'subtraction_id' in 'subtractions' field.
+async def get_linked_samples(mongo: "Mongo", subtraction_id: str) -> list[dict]:
+    """Find all samples containing given 'subtraction_id' in 'subtractions' field.
 
-    :param db: the application database client
+    :param mongo: the application database client
     :param subtraction_id: the ID of the subtraction
     :return: a list of dicts containing linked samples with 'id' and 'name' field.
 
     """
-    cursor = db.samples.find({"subtractions": subtraction_id}, ["_id", "name"])
-    return [virtool.utils.base_processor(d) async for d in cursor]
+    return [
+        base_processor(d)
+        async for d in mongo.samples.find(
+            {"subtractions": subtraction_id},
+            ["_id", "name"],
+        )
+    ]
 
 
 async def unlink_default_subtractions(
-    db, subtraction_id: str, session: AsyncIOMotorClientSession
+    mongo: "Mongo",
+    subtraction_id: str,
+    session: AsyncIOMotorClientSession,
 ):
-    """
-    Remove a subtraction as a default subtraction for samples.
+    """Remove a subtraction as a default subtraction for samples.
 
-    :param db: the application mongo object
+    :param mongo: the application mongo object
     :param subtraction_id: the id of the subtraction to remove
     :param session: a motor session to use
     """
-    await db.samples.update_many(
+    await mongo.samples.update_many(
         {"subtractions": subtraction_id},
         {"$pull": {"subtractions": subtraction_id}},
         session=session,
     )
 
 
-def lookup_nested_subtractions(
-    local_field: str = "subtractions", set_as: str = "subtractions"
-) -> list[dict]:
-    """
-    Create a mongoDB aggregation pipeline step to look up nested subtractions.
+async def get_subtraction_names(
+    mongo: "Mongo",
+    subtraction_ids: list[str],
+) -> list[dict[str, str]]:
+    """Retrieve a list of subtraction names and ids.
 
-    :param local_field: subtractions field to look up
-    :param set_as: desired name of the returned record
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
+    :param mongo: the application database client
+    :param subtraction_ids: list containing subtraction ids
+    :return: list of dictionaries containing {"_id": sub_id, "name": sub_name}
     """
-    return [
-        {
-            "$lookup": {
-                "from": "subtraction",
-                "let": {"subtraction_ids": f"${local_field}"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$in": ["$_id", "$$subtraction_ids"]}}},
-                    {"$sort": {"_id": 1}},
-                    {"$project": {"id": "$_id", "_id": False, "name": True}},
-                ],
-                "as": set_as,
-            }
-        },
-    ]
+    subtractions = await mongo.subtraction.find(
+        {"_id": {"$in": subtraction_ids}},
+        projection=["_id", "name"],
+    ).to_list(length=len(subtraction_ids))
+
+    return subtractions

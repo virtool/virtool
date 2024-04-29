@@ -1,68 +1,69 @@
+# serializer version: 1
 # name: test_attach_task_transform
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'id': 1,
-      'task': <class 'dict'> {
+      'task': dict({
         'complete': False,
-        'context': <class 'dict'> {
-        },
+        'context': dict({
+        }),
         'count': 0,
-        'created_at': <class 'datetime'>,
+        'created_at': datetime,
         'error': None,
         'file_size': None,
         'id': 3,
         'progress': 0,
         'step': 'ensure_index_files',
         'type': 'ensure_index_files',
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       'id': 2,
-      'task': <class 'dict'> {
+      'task': dict({
         'complete': False,
-        'context': <class 'dict'> {
-        },
+        'context': dict({
+        }),
         'count': 0,
-        'created_at': <class 'datetime'>,
+        'created_at': datetime,
         'error': None,
         'file_size': None,
         'id': 4,
         'progress': 0,
         'step': 'clone_reference',
         'type': 'clone_reference',
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       'id': 3,
       'task': None,
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'id': 4,
       'task': None,
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_attach_task_transform_single
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'id': 1,
-      'task': <class 'dict'> {
+      'task': dict({
         'complete': False,
-        'context': <class 'dict'> {
-        },
+        'context': dict({
+        }),
         'count': 0,
-        'created_at': <class 'datetime'>,
+        'created_at': datetime,
         'error': None,
         'file_size': None,
         'id': 2,
         'progress': 0,
         'step': 'clean_references',
         'type': 'clean_references',
-      },
-    },
-    <class 'dict'> {
+      }),
+    }),
+    dict({
       'id': 2,
       'task': None,
-    },
-  ]
----
+    }),
+  ])
+# ---

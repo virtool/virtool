@@ -1,7 +1,7 @@
 import asyncio
 from copy import deepcopy
 from pathlib import Path
-from typing import Optional, Tuple, Mapping
+from typing import Mapping, Optional, Tuple
 
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
@@ -11,6 +11,7 @@ import virtool.history.db
 import virtool.otus.db
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.transforms import apply_transforms
 from virtool.downloads.utils import format_fasta_entry, format_fasta_filename
 from virtool.history.utils import (
     compose_create_description,
@@ -18,14 +19,17 @@ from virtool.history.utils import (
     compose_remove_description,
 )
 from virtool.mongo.core import Mongo
-from virtool.data.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
-from virtool.otus.db import increment_otu_version, update_otu_verification
-from virtool.otus.oas import UpdateSequenceRequest, CreateOTURequest, UpdateOTURequest
+from virtool.otus.db import (
+    SEQUENCE_PROJECTION,
+    increment_otu_version,
+    update_otu_verification,
+)
+from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceRequest
 from virtool.otus.utils import find_isolate, format_isolate_name
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 
@@ -40,8 +44,7 @@ class OTUData:
         return await virtool.otus.db.find(self._mongo, term, query, verified)
 
     async def get(self, otu_id: str) -> OTU:
-        """
-        Get a single OTU by ID.
+        """Get a single OTU by ID.
 
         :param otu_id: the ID of the OTU to get
         :return: the OTU
@@ -52,21 +55,22 @@ class OTUData:
             raise ResourceNotFoundError
 
         document = await apply_transforms(
-            document, [AttachReferenceTransform(self._mongo)]
+            document,
+            [AttachReferenceTransform(self._mongo)],
         )
 
         return OTU(
             **{
                 **document,
                 "most_recent_change": await apply_transforms(
-                    document["most_recent_change"], [AttachUserTransform(self._mongo)]
+                    document["most_recent_change"],
+                    [AttachUserTransform(self._mongo)],
                 ),
-            }
+            },
         )
 
     async def get_fasta(self, otu_id: str) -> Optional[Tuple[str, str]]:
-        """
-        Generate a FASTA filename and body for an OTU's sequences.
+        """Generate a FASTA filename and body for an OTU's sequences.
 
         :param otu_id: the ID of the OTU
         :return: a FASTA filename and body
@@ -85,21 +89,27 @@ class OTUData:
             fasta.extend(
                 [
                     format_fasta_entry(
-                        otu["name"], isolate_name, sequence["_id"], sequence["sequence"]
+                        otu["name"],
+                        isolate_name,
+                        sequence["_id"],
+                        sequence["sequence"],
                     )
                     async for sequence in self._mongo.sequences.find(
-                        {"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]
+                        {"otu_id": otu_id, "isolate_id": isolate["id"]},
+                        ["sequence"],
                     )
-                ]
+                ],
             )
 
         return format_fasta_filename(otu["name"]), "\n".join(fasta)
 
     async def get_otu_and_isolate_names(
-        self, otu_id: str, isolate_id: str
+        self,
+        otu_id: str,
+        isolate_id: str,
     ) -> Tuple[str, str]:
-        """
-        Get the OTU name and isolate name for a OTU-isolate combination specified by `otu_id` and `isolate_id`.
+        """Get the OTU name and isolate name for a OTU-isolate combination specified by
+        `otu_id` and `isolate_id`.
 
         :param otu_id: the OTU ID
         :param isolate_id: the isolate ID
@@ -107,7 +117,8 @@ class OTUData:
 
         """
         otu = await self._mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"]
+            {"_id": otu_id, "isolates.id": isolate_id},
+            ["name", "isolates"],
         )
 
         if not otu:
@@ -121,9 +132,8 @@ class OTUData:
         return otu["name"], virtool.otus.utils.format_isolate_name(isolate)
 
     async def get_isolate_fasta(self, otu_id: str, isolate_id: str) -> Tuple[str, str]:
-        """
-        Generate a FASTA filename and body for the sequences associated with the isolate identified by the passed
-        ``otu_id`` and ``isolate_id``.
+        """Generate a FASTA filename and body for the sequences associated with the
+        isolate identified by the passed ``otu_id`` and ``isolate_id``.
 
         :param otu_id: the id of the isolates' parent otu
         :param isolate_id: the id of the isolate to FASTA
@@ -133,57 +143,69 @@ class OTUData:
         _, isolate_name = await self.get_otu_and_isolate_names(otu_id, isolate_id)
 
         otu = await self._mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"]
+            {"_id": otu_id, "isolates.id": isolate_id},
+            ["name", "isolates"],
         )
 
         fasta = []
 
         async for sequence in self._mongo.sequences.find(
-            {"otu_id": otu_id, "isolate_id": isolate_id}, ["sequence"]
+            {"otu_id": otu_id, "isolate_id": isolate_id},
+            ["sequence"],
         ):
             fasta.append(
                 virtool.downloads.utils.format_fasta_entry(
-                    otu["name"], isolate_name, sequence["_id"], sequence["sequence"]
-                )
+                    otu["name"],
+                    isolate_name,
+                    sequence["_id"],
+                    sequence["sequence"],
+                ),
             )
 
         return virtool.downloads.utils.format_fasta_filename(
-            otu["name"], isolate_name
+            otu["name"],
+            isolate_name,
         ), "\n".join(fasta)
 
     async def get_sequence_fasta(self, sequence_id: str) -> Tuple[str, str]:
-        """
-        Generate a FASTA filename and body for the sequence associated with the passed ``sequence_id``.
+        """Generate a FASTA filename and body for the sequence associated with the
+        passed ``sequence_id``.
 
         :param sequence_id: the id sequence of the sequence to FASTAfy
         :return: as FASTA filename and body
 
         """
         sequence = await self._mongo.sequences.find_one(
-            sequence_id, ["sequence", "otu_id", "isolate_id"]
+            sequence_id,
+            ["sequence", "otu_id", "isolate_id"],
         )
 
         if not sequence:
             raise ResourceNotFoundError("Sequence does not exist")
 
         otu_name, isolate_name = await self.get_otu_and_isolate_names(
-            sequence["otu_id"], sequence["isolate_id"]
+            sequence["otu_id"],
+            sequence["isolate_id"],
         )
 
         fasta = virtool.downloads.utils.format_fasta_entry(
-            otu_name, isolate_name, sequence_id, sequence["sequence"]
+            otu_name,
+            isolate_name,
+            sequence_id,
+            sequence["sequence"],
         )
 
         return (
             virtool.downloads.utils.format_fasta_filename(
-                otu_name, isolate_name, sequence["_id"]
+                otu_name,
+                isolate_name,
+                sequence["_id"],
             ),
             fasta,
         )
 
     async def create(self, ref_id: str, data: CreateOTURequest, user_id: str) -> OTU:
-        """
-        Create an OTU and it's first history record.
+        """Create an OTU and it's first history record.
 
         :param ref_id: the ID of the parent reference
         :param data: an OTU creation request
@@ -220,8 +242,7 @@ class OTUData:
         return await self.get(document["_id"])
 
     async def update(self, otu_id: str, data: UpdateOTURequest, user_id: str) -> OTU:
-        """
-        Update an OTU.
+        """Update an OTU.
 
         Modifiable fields are `name`, `abbreviation`, and `schema`. Method creates a
         corresponding history record.
@@ -259,11 +280,17 @@ class OTUData:
             )
 
             await virtool.otus.db.update_sequence_segments(
-                self._mongo, old, document, session=session
+                self._mongo,
+                old,
+                document,
+                session=session,
             )
 
             new = await virtool.otus.db.join(
-                self._mongo, otu_id, document, session=session
+                self._mongo,
+                otu_id,
+                document,
+                session=session,
             )
 
             await update_otu_verification(self._mongo, new, session=session)
@@ -275,7 +302,10 @@ class OTUData:
                 old,
                 new,
                 compose_edit_description(
-                    new["name"], new["abbreviation"], old["abbreviation"], new["schema"]
+                    new["name"],
+                    new["abbreviation"],
+                    old["abbreviation"],
+                    new["schema"],
                 ),
                 user_id,
                 session=session,
@@ -284,8 +314,7 @@ class OTUData:
         return await self.get(otu_id)
 
     async def remove(self, otu_id: str, user_id: str) -> Optional[DeleteResult]:
-        """
-        Remove an OTU.
+        """Remove an OTU.
 
         Create a history document to record the change.
 
@@ -369,14 +398,18 @@ class OTUData:
 
             # Get the complete, joined entry before the update.
             old = await virtool.otus.db.join(
-                self._mongo, otu_id, document, session=session
+                self._mongo,
+                otu_id,
+                document,
+                session=session,
             )
 
             existing_ids = [isolate["id"] for isolate in isolates]
 
             if isolate_id is None:
                 isolate_id = virtool.utils.random_alphanumeric(
-                    length=3, excluded=existing_ids
+                    length=3,
+                    excluded=existing_ids,
                 )
 
             if isolate_id in existing_ids:
@@ -458,11 +491,16 @@ class OTUData:
 
             # Get the joined entry now that it has been updated.
             new = await virtool.otus.db.join(
-                self._mongo, otu_id, document, session=session
+                self._mongo,
+                otu_id,
+                document,
+                session=session,
             )
 
             await virtool.otus.db.update_otu_verification(
-                self._mongo, new, session=session
+                self._mongo,
+                new,
+                session=session,
             )
 
             # Use the old and new entry to add a new history document for the change.
@@ -478,16 +516,20 @@ class OTUData:
             )
 
         complete = await virtool.otus.db.join_and_format(
-            self._mongo, otu_id, joined=new
+            self._mongo,
+            otu_id,
+            joined=new,
         )
 
         return find_isolate(complete["isolates"], isolate_id)
 
     async def set_isolate_as_default(
-        self, otu_id: str, isolate_id: str, user_id: str
+        self,
+        otu_id: str,
+        isolate_id: str,
+        user_id: str,
     ) -> Document:
-        """
-        Set a new default isolate.
+        """Set a new default isolate.
 
         :param otu_id: the ID of the parent OTU
         :param isolate_id: the ID of the isolate set as default
@@ -501,7 +543,10 @@ class OTUData:
             isolate = find_isolate(document["isolates"], isolate_id)
 
             old = await virtool.otus.db.join(
-                self._mongo, otu_id, document, session=session
+                self._mongo,
+                otu_id,
+                document,
+                session=session,
             )
 
             # If the default isolate will be unchanged, immediately return the existing
@@ -528,7 +573,10 @@ class OTUData:
 
             # Get the joined entry now that it has been updated.
             new = await virtool.otus.db.join(
-                self._mongo, otu_id, document, session=session
+                self._mongo,
+                otu_id,
+                document,
+                session=session,
             )
 
             await virtool.otus.db.update_otu_verification(self._mongo, new)
@@ -569,7 +617,10 @@ class OTUData:
                 new_default["default"] = True
 
             old = await virtool.otus.db.join(
-                self._mongo, otu_id, document, session=session
+                self._mongo,
+                otu_id,
+                document,
+                session=session,
             )
 
             document = await self._mongo.otus.find_one_and_update(
@@ -582,15 +633,21 @@ class OTUData:
             )
 
             new = await virtool.otus.db.join(
-                self._mongo, otu_id, document, session=session
+                self._mongo,
+                otu_id,
+                document,
+                session=session,
             )
 
             await asyncio.gather(
                 virtool.otus.db.update_otu_verification(
-                    self._mongo, new, session=session
+                    self._mongo,
+                    new,
+                    session=session,
                 ),
                 self._mongo.sequences.delete_many(
-                    {"otu_id": otu_id, "isolate_id": isolate_id}, session=session
+                    {"otu_id": otu_id, "isolate_id": isolate_id},
+                    session=session,
                 ),
             )
 
@@ -642,24 +699,29 @@ class OTUData:
                 to_insert["_id"] = sequence_id
 
             sequence_document = await self._mongo.sequences.insert_one(
-                to_insert, session=session
+                to_insert,
+                session=session,
             )
 
             new = await virtool.otus.db.join(
                 self._mongo,
                 otu_id,
                 document=await increment_otu_version(
-                    self._mongo, otu_id, session=session
+                    self._mongo,
+                    otu_id,
+                    session=session,
                 ),
                 session=session,
             )
 
             await virtool.otus.db.update_otu_verification(
-                self._mongo, new, session=session
+                self._mongo,
+                new,
+                session=session,
             )
 
             isolate_name = format_isolate_name(
-                find_isolate(old["isolates"], isolate_id)
+                find_isolate(old["isolates"], isolate_id),
             )
 
             await virtool.history.db.add(
@@ -676,18 +738,23 @@ class OTUData:
         return base_processor(sequence_document)
 
     async def get_sequence(
-        self, otu_id: str, isolate_id: str, sequence_id: str
+        self,
+        otu_id: str,
+        isolate_id: str,
+        sequence_id: str,
     ) -> Sequence:
         if await self._mongo.otus.count_documents(
-            {"_id": otu_id, "isolates.id": isolate_id}, limit=1
+            {"_id": otu_id, "isolates.id": isolate_id},
+            limit=1,
         ) and (
             document := await self._mongo.sequences.find_one(
                 {"_id": sequence_id, "otu_id": otu_id, "isolate_id": isolate_id},
-                virtool.otus.db.SEQUENCE_PROJECTION,
+                SEQUENCE_PROJECTION,
             )
         ):
             document = await apply_transforms(
-                document, [AttachReferenceTransform(self._mongo)]
+                base_processor(document),
+                [AttachReferenceTransform(self._mongo)],
             )
             return Sequence(**document)
 
@@ -716,7 +783,9 @@ class OTUData:
 
         async with self._mongo.create_session() as session:
             sequence_document = await self._mongo.sequences.find_one_and_update(
-                {"_id": sequence_id}, {"$set": update}, session=session
+                {"_id": sequence_id},
+                {"$set": update},
+                session=session,
             )
 
             await increment_otu_version(self._mongo, otu_id, session=session)
@@ -726,7 +795,7 @@ class OTUData:
             await update_otu_verification(self._mongo, new, session=session)
 
             isolate_name = format_isolate_name(
-                find_isolate(old["isolates"], isolate_id)
+                find_isolate(old["isolates"], isolate_id),
             )
 
             await virtool.history.db.add(
@@ -743,10 +812,13 @@ class OTUData:
         return base_processor(sequence_document)
 
     async def remove_sequence(
-        self, otu_id: str, isolate_id: str, sequence_id: str, user_id: str
+        self,
+        otu_id: str,
+        isolate_id: str,
+        sequence_id: str,
+        user_id: str,
     ):
-        """
-        Remove a sequence.
+        """Remove a sequence.
 
         :param otu_id: the ID of the parent OTU:
         :param isolate_id: the ID of the parent isolate
@@ -758,14 +830,17 @@ class OTUData:
 
         async with self._mongo.create_session() as session:
             await self._mongo.sequences.delete_one(
-                {"_id": sequence_id}, session=session
+                {"_id": sequence_id},
+                session=session,
             )
 
             new = await virtool.otus.db.join(
                 self._mongo,
                 otu_id,
                 document=await increment_otu_version(
-                    self._mongo, otu_id, session=session
+                    self._mongo,
+                    otu_id,
+                    session=session,
                 ),
                 session=session,
             )
@@ -773,7 +848,7 @@ class OTUData:
             await update_otu_verification(self._mongo, new, session=session)
 
             isolate_name = format_isolate_name(
-                find_isolate(old["isolates"], isolate_id)
+                find_isolate(old["isolates"], isolate_id),
             )
 
             await virtool.history.db.add(

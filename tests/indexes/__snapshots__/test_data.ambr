@@ -1,119 +1,118 @@
+# serializer version: 1
 # name: test_finalize
-  <class 'dict'> {
+  dict({
     'change_count': 0,
-    'contributors': <class 'list'> [
-    ],
+    'contributors': list([
+    ]),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'files': <class 'list'> [
-      <class 'dict'> {
+    'files': list([
+      dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.1.bt2',
         'id': 1,
         'index': 'foo',
         'name': 'reference.1.bt2',
         'size': 1234567,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.2.bt2',
         'id': 2,
         'index': 'foo',
         'name': 'reference.2.bt2',
         'size': 1234567,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.3.bt2',
         'id': 3,
         'index': 'foo',
         'name': 'reference.3.bt2',
         'size': 1234567,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.4.bt2',
         'id': 4,
         'index': 'foo',
         'name': 'reference.4.bt2',
         'size': 1234567,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.rev.1.bt2',
         'id': 5,
         'index': 'foo',
         'name': 'reference.rev.1.bt2',
         'size': 1234567,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.rev.2.bt2',
         'id': 6,
         'index': 'foo',
         'name': 'reference.rev.2.bt2',
         'size': 1234567,
         'type': 'bowtie2',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.fa.gz',
         'id': 7,
         'index': 'foo',
         'name': 'reference.fa.gz',
         'size': 1234567,
         'type': 'fasta',
-      },
-    ],
+      }),
+    ]),
     'has_files': True,
     'id': 'foo',
-    'job': <class 'dict'> {
+    'job': dict({
       'archived': False,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 'fb085f7f',
-      'progress': 0,
-      'stage': None,
-      'state': <JobState.WAITING: 'waiting'>,
-      'user': <class 'dict'> {
-        'administrator': False,
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': <JobState.PREPARING: 'preparing'>,
+      'user': dict({
         'handle': 'leeashley',
         'id': 'bf1b993c',
-      },
+      }),
       'workflow': 'jobs_pathoscope_bowtie',
-    },
-    'manifest': <class 'dict'> {
-    },
+    }),
+    'manifest': dict({
+    }),
     'modified_otu_count': 0,
-    'otus': <class 'list'> [
-    ],
+    'otus': list([
+    ]),
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
       'id': 'bar',
       'name': 'Bar',
-    },
-    'user': <class 'dict'> {
-      'administrator': False,
+    }),
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'version': 2,
-  }
----
+  })
+# ---
 # name: test_finalize.1
-  <class 'dict'> {
+  dict({
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
-    'job': <class 'dict'> {
+    'job': dict({
       'id': 'fb085f7f',
-    },
-    'manifest': <class 'dict'> {
-    },
+    }),
+    'manifest': dict({
+    }),
     'ready': True,
-    'reference': <class 'dict'> {
+    'reference': dict({
       'id': 'bar',
-    },
-    'user': <class 'dict'> {
+    }),
+    'user': dict({
       'id': 'bf1b993c',
-    },
+    }),
     'version': 2,
-  }
----
+  })
+# ---

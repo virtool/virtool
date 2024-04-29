@@ -1,0 +1,123 @@
+# serializer version: 1
+# name: test_attach_user_transform[False]
+  dict({
+    'id': 'bar',
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_attach_user_transform[True]
+  list([
+    dict({
+      'id': 'bar',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+    }),
+    dict({
+      'id': 'foo',
+      'user': dict({
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+      }),
+    }),
+    dict({
+      'id': 'baz',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+    }),
+  ])
+# ---
+# name: test_permission_transform[multi]
+  list([
+    dict({
+      'groups': list([
+        1,
+        'group_5',
+      ]),
+      'id': 'joe',
+      'permissions': dict({
+        'cancel_job': False,
+        'create_ref': True,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': True,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
+      }),
+    }),
+    dict({
+      'groups': list([
+        3,
+        4,
+      ]),
+      'id': 'mae',
+      'permissions': dict({
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      }),
+    }),
+    dict({
+      'groups': list([
+      ]),
+      'id': 'wil',
+      'permissions': dict({
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      }),
+    }),
+    dict({
+      'groups': list([
+        'group_2',
+      ]),
+      'id': 'pam',
+      'permissions': dict({
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': True,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
+      }),
+    }),
+  ])
+# ---
+# name: test_permission_transform[single]
+  dict({
+    'groups': list([
+      1,
+      'group_5',
+    ]),
+    'id': 'bob',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': True,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': True,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': True,
+    }),
+  })
+# ---

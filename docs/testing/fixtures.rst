@@ -12,7 +12,10 @@ Client
 ------
 
 .. automodule:: tests.fixtures.client
-    :members:
+
+.. autofixture:: tests.fixtures.client.spawn_client
+
+.. autofixture:: tests.fixtures.client.spawn_job_client
 
 Data
 ----
@@ -20,6 +23,14 @@ Data
 .. automodule:: tests.fixtures.data
     :members:
 
+Faking
+------
+
+.. automodule:: tests.fixtures.fake
+
+.. autofixture:: tests.fixtures.fake.fake2
+
+.. autofixture:: tests.fixtures.fake.fake
 
 Migration
 ---------

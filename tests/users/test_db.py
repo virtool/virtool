@@ -1,91 +1,139 @@
 import hashlib
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.errors
-from virtool.data.transforms import apply_transforms
+from virtool.data.errors import ResourceConflictError
+from virtool.groups.pg import SQLGroup
+from virtool.mongo.core import Mongo
 from virtool.users.db import (
-    AttachUserTransform,
     compose_groups_update,
-    compose_primary_group_update,
-    update_keys,
-    validate_credentials,
 )
-from virtool.users.utils import Permission
+from virtool.users.mongo import (
+    validate_credentials,
+    compose_primary_group_update,
+)
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric
 
 
-@pytest.mark.parametrize("multiple", [True, False])
-async def test_attach_user_transform(multiple, snapshot, mongo, fake2):
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+@pytest.fixture
+async def _group_one_and_two(no_permissions: dict[str, bool], pg: AsyncEngine):
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                SQLGroup(
+                    id=1,
+                    name="group_1",
+                    legacy_id="group_1",
+                    permissions=no_permissions,
+                ),
+                SQLGroup(
+                    id=2,
+                    name="group_2",
+                    legacy_id="group_2",
+                    permissions=no_permissions,
+                ),
+            ]
+        )
 
-    documents = {"_id": "bar", "user": {"id": user_1.id}}
-
-    if multiple:
-        documents = [
-            documents,
-            {"_id": "foo", "user": {"id": user_2.id}},
-            {"_id": "baz", "user": {"id": user_1.id}},
-        ]
-
-    assert await apply_transforms(documents, [AttachUserTransform(mongo)]) == snapshot
+        await session.commit()
 
 
-@pytest.mark.parametrize("groups", [None, [], ["kings"], ["kings", "peasants"]])
-async def test_compose_groups_update(
-    groups, mongo, kings, all_permissions, no_permissions
-):
-    await mongo.groups.insert_many([kings], session=None)
+class TestComposeGroupsUpdate:
+    async def test_ok(self, no_permissions: dict[str, bool], pg: AsyncEngine):
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                [
+                    SQLGroup(
+                        id=1,
+                        name="group_1",
+                        legacy_id="group_1",
+                        permissions=no_permissions,
+                    ),
+                    SQLGroup(
+                        id=2,
+                        name="group_2",
+                        legacy_id="group_2",
+                        permissions=no_permissions,
+                    ),
+                ]
+            )
 
-    coroutine = compose_groups_update(mongo, groups)
+            await session.commit()
 
-    if groups == ["kings", "peasants"]:
-        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
-            await coroutine
+        assert await compose_groups_update(pg, ["group_1", 2], None) == {
+            "groups": ["group_1", 2],
+            "primary_group": None,
+        }
 
-        assert "Non-existent groups: peasants" in str(excinfo.value)
-        return
+    async def test_non_existent_groups(self, _group_one_and_two, pg: AsyncEngine):
+        """Test that an exception is raised if one or more groups do not exist."""
+        with pytest.raises(ResourceConflictError) as err:
+            await compose_groups_update(pg, ["group_1", 2, "group_3", 4], None)
 
-    update = await coroutine
+        assert "Non-existent groups: 'group_3', 4" in str(err.value)
 
-    if groups is None:
-        assert update == {}
-    else:
-        assert update == {
-            "groups": groups,
+    async def test_primary_group(self, _group_one_and_two, pg: AsyncEngine):
+        """
+        Test that the primary group id is set to `None` in the update if it is not
+        included in the list of groups.
+        """
+        assert await compose_groups_update(pg, [1], 2) == {
+            "groups": [1],
+            "primary_group": None,
         }
 
 
-@pytest.mark.parametrize("primary_group", [None, "kings", "lords", "peasants", "none"])
-async def test_compose_primary_group_update(primary_group, mongo, bob, kings, peasants):
-    await mongo.users.insert_one(bob)
+class TestComposePrimaryGroupUpdate:
+    async def test_ok(self, _group_one_and_two, mongo: Mongo, pg: AsyncEngine):
+        """
+        Test that the ``primary_group`` is set correctly when the user is a member of
+        the group.
+        """
+        await mongo.users.insert_one({"_id": "bob", "groups": [1, "group_2"]})
 
-    await mongo.groups.insert_many([kings, peasants], session=None)
+        assert await compose_primary_group_update(
+            mongo, pg, [1, "group_2"], 1, "bob"
+        ) == {"primary_group": 1}
 
-    coroutine = compose_primary_group_update(mongo, bob["_id"], primary_group)
+    async def test_non_existent_group(self, mongo: Mongo, pg: AsyncEngine):
+        """
+        Test that an exception is raised if the provided ``primary_group`` does not
+        exist in Postgres.
+        """
+        await mongo.users.insert_one({"_id": "bob", "groups": [5]})
 
-    if primary_group == "lords" or primary_group == "kings":
-        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
-            await coroutine
+        with pytest.raises(ResourceConflictError) as err:
+            await compose_primary_group_update(
+                mongo,
+                pg,
+                [],
+                5,
+                "bob",
+            )
 
-        if primary_group == "lords":
-            assert "Non-existent group: lords" in str(excinfo.value)
-            return
+        assert "Non-existent group: 5" in str(err.value)
 
-        if primary_group == "kings":
-            assert "User is not member of group" in str(excinfo.value)
-            return
+    async def test_not_a_member(
+        self, _group_one_and_two, mongo: Mongo, pg: AsyncEngine
+    ):
+        """
+        Test that an exception is raised if the user is not a member of the provided
+        ``primary_group``.
+        """
+        await mongo.users.insert_one({"_id": "bob", "groups": [1]})
 
-        raise excinfo
+        with pytest.raises(ResourceConflictError) as err:
+            await compose_primary_group_update(
+                mongo,
+                pg,
+                [1],
+                2,
+                "bob",
+            )
 
-    update = await coroutine
-
-    if primary_group is None:
-        assert update == {}
-    else:
-        assert update == {"primary_group": primary_group}
+        assert "User is not member of primary group" in str(err.value)
 
 
 @pytest.mark.parametrize(
@@ -98,7 +146,9 @@ async def test_compose_primary_group_update(primary_group, mongo, bob, kings, pe
     ],
 )
 @pytest.mark.parametrize("legacy", [True, False])
-async def test_validate_credentials(legacy, user_id, password, result, mongo):
+async def test_validate_credentials(
+    legacy: bool, user_id: str, password: str, result: bool, mongo: Mongo
+):
     """
     Test that valid, bcrypt-based credentials work.
 
@@ -122,45 +172,3 @@ async def test_validate_credentials(legacy, user_id, password, result, mongo):
     await mongo.users.insert_one(document)
 
     assert await validate_credentials(mongo, user_id, password) is result
-
-
-@pytest.mark.parametrize("administrator", [True, False])
-@pytest.mark.parametrize("elevate", [True, False])
-@pytest.mark.parametrize("missing", [True, False])
-async def test_update_keys(
-    administrator, elevate, missing, snapshot, mongo, all_permissions, no_permissions
-):
-    """
-    Test that permissions assigned to keys and sessions are updated correctly.
-
-    Keys should only lose permissions that are disabled on the account. They should not received new permissions as part
-    of a user update.
-
-    Sessions should be changed to match the user account permissions.
-
-    """
-    permissions = dict(no_permissions if elevate else all_permissions)
-
-    if missing and not elevate:
-        permissions.update(
-            {Permission.create_sample.value: False, Permission.upload_file.value: False}
-        )
-
-    await mongo.keys.insert_one(
-        {
-            "_id": "foobar",
-            "administrator": False,
-            "groups": ["peasants"],
-            "permissions": permissions,
-            "user": {"id": "bob"},
-        }
-    )
-
-    target_permissions = all_permissions if elevate else no_permissions
-
-
-    await update_keys(
-        mongo, "bob", administrator, ["peasants", "kings"], target_permissions
-    )
-
-    assert await mongo.keys.find_one() == snapshot

@@ -1,9 +1,12 @@
-import pytest
+from syrupy import SnapshotAssertion
+
+from tests.fixtures.client import ClientSpawner
 
 
-@pytest.mark.apitest
-async def test_get(snapshot, spawn_client, test_settings):
-    client = await spawn_client(authorize=True)
+async def test_get(
+    snapshot: SnapshotAssertion, spawn_client: ClientSpawner, test_settings
+):
+    client = await spawn_client(authenticated=True)
 
     resp = await client.get("/settings")
 
@@ -11,13 +14,17 @@ async def test_get(snapshot, spawn_client, test_settings):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
-async def test_update(snapshot, spawn_client, test_settings):
-    client = await spawn_client(authorize=True, administrator=True)
+async def test_update(
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    test_settings,
+):
+    client = await spawn_client(administrator=True, authenticated=True)
 
-    data = {"enable_api": False, "enable_sentry": False, "minimum_password_length": 10}
-
-    resp = await client.patch("/settings", data)
+    resp = await client.patch(
+        "/settings",
+        {"enable_api": False, "enable_sentry": False, "minimum_password_length": 10},
+    )
 
     assert resp.status == 200
     assert await resp.json() == snapshot

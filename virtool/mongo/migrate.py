@@ -1,19 +1,16 @@
-from __future__ import annotations
-
-from logging import getLogger
 from typing import TYPE_CHECKING
 
 from pymongo.errors import DuplicateKeyError
+from structlog import get_logger
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
-logger = getLogger("mongo")
+logger = get_logger("mongo")
 
 
-async def migrate_status(mongo: Mongo):
-    """
-    Automatically update the status collection.
+async def migrate_status(mongo: "Mongo"):
+    """Automatically update the status collection.
 
     :param mongo: the application MongoDB object
 
@@ -29,7 +26,7 @@ async def migrate_status(mongo: Mongo):
                 "task": None,
                 "updates": [],
                 "release": None,
-            }
+            },
         )
     except DuplicateKeyError:
         if await mongo.hmm.count_documents({}):

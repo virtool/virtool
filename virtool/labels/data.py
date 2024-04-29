@@ -2,29 +2,28 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import emits, Operation, emit
-from virtool.labels.db import SampleCountTransform
+from virtool.data.events import Operation, emit, emits
+from virtool.data.transforms import apply_transforms
 from virtool.labels.models import SQLLabel
 from virtool.labels.oas import UpdateLabelRequest
+from virtool.labels.transforms import AttachSampleCountsTransform
 from virtool.mongo.core import Mongo
-from virtool.data.transforms import apply_transforms
 from virtool.pg.utils import get_generic
 
 
 class LabelsData:
     name = "labels"
 
-    def __init__(self, db: Mongo, pg: AsyncEngine):
-        self._db = db
+    def __init__(self, mongo: Mongo, pg: AsyncEngine):
+        self._mongo = mongo
         self._pg = pg
 
     async def find(self, term: str) -> List[LabelMinimal]:
-        """
-        List all sample labels.
+        """List all sample labels.
 
         :param term: the query term
         :return: a list of all sample labels.
@@ -32,20 +31,20 @@ class LabelsData:
         statement = select(SQLLabel).order_by(SQLLabel.name)
 
         if term:
-            statement = statement.filter(SQLLabel.name.ilike(f"%{term}%"))
+            statement = statement.where(SQLLabel.name.ilike(f"%{term}%"))
 
         labels = await get_generic(self._pg, statement)
 
         documents = await apply_transforms(
-            [label.to_dict() for label in labels], [SampleCountTransform(self._db)]
+            [label.to_dict() for label in labels],
+            [AttachSampleCountsTransform(self._mongo)],
         )
 
         return [LabelMinimal(**label) for label in documents]
 
     @emits(Operation.CREATE)
     async def create(self, name: str, color: str, description: str) -> Label:
-        """
-        Create a new sample label given a label name, color and description.
+        """Create a new sample label given a label name, color and description.
 
         :param name: the label's name
         :param color: the label's color
@@ -64,18 +63,18 @@ class LabelsData:
             except IntegrityError:
                 raise ResourceConflictError()
 
-        document = await apply_transforms(row, [SampleCountTransform(self._db)])
+        document = await apply_transforms(
+            row, [AttachSampleCountsTransform(self._mongo)]
+        )
 
         return Label(**document)
 
     async def get(self, label_id: int) -> Label:
-        """
-        Get a single label by its ID.
+        """Get a single label by its ID.
 
         :param label_id: the label's ID
         :return: the label
         """
-
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLLabel).filter_by(id=label_id))
             label = result.scalar()
@@ -84,15 +83,15 @@ class LabelsData:
             raise ResourceNotFoundError()
 
         document = await apply_transforms(
-            label.to_dict(), [SampleCountTransform(self._db)]
+            label.to_dict(),
+            [AttachSampleCountsTransform(self._mongo)],
         )
 
         return Label(**document)
 
     @emits(Operation.UPDATE)
     async def update(self, label_id: int, data: UpdateLabelRequest) -> Label:
-        """
-        Edit an existing label.
+        """Edit an existing label.
 
         :param label_id: the ID of the existing label to edit
         :param data: label fields for editing the existing label
@@ -123,27 +122,28 @@ class LabelsData:
             except IntegrityError:
                 raise ResourceConflictError()
 
-        document = await apply_transforms(row, [SampleCountTransform(self._db)])
+        document = await apply_transforms(
+            row, [AttachSampleCountsTransform(self._mongo)]
+        )
 
         return Label(**document)
 
     async def delete(self, label_id: int):
-        """
-        Delete an existing label.
+        """Delete an existing label.
 
         :param label_id: ID of the label to delete
         """
         label = await self.get(label_id)
 
         async with AsyncSession(self._pg) as session:
-            async with self._db.create_session() as mongo_session:
+            async with self._mongo.create_session() as mongo_session:
                 result = await session.execute(select(SQLLabel).filter_by(id=label_id))
                 label = result.scalar()
 
                 if label is None:
                     raise ResourceNotFoundError
 
-                await self._db.samples.update_many(
+                await self._mongo.samples.update_many(
                     {"labels": label_id},
                     {"$pull": {"labels": label_id}},
                     session=mongo_session,

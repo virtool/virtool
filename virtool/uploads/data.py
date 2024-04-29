@@ -1,7 +1,6 @@
 import asyncio
 import math
 from asyncio import to_thread
-from logging import getLogger
 from typing import List
 
 from sqlalchemy import select, update, func
@@ -10,24 +9,22 @@ from virtool_core.models.upload import Upload, UploadSearchResult
 from virtool_core.utils import rm
 
 import virtool.utils
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.events import emits, Operation
-from virtool.data.piece import DataLayerPiece
+from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.mongo.core import Mongo
 from virtool.uploads.models import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import AttachUserTransform
-
-logger = getLogger("uploads")
+from virtool.users.transforms import AttachUserTransform
 
 
-class UploadsData(DataLayerPiece):
+class UploadsData(DataLayerDomain):
     name = "uploads"
 
-    def __init__(self, config, db, pg):
+    def __init__(self, config, mongo: "Mongo", pg):
         self._config = config
-        self._db: Mongo = db
+        self._mongo: Mongo = mongo
         self._pg: AsyncEngine = pg
 
     async def find(
@@ -52,13 +49,13 @@ class UploadsData(DataLayerPiece):
 
         total_query = (
             select(func.count(SQLUpload.id).label("total"))
-            .filter(*base_filters)
+            .where(*base_filters)
             .subquery()
         )
 
         found_query = (
             select(func.count(SQLUpload.id).label("found"))
-            .filter(*base_filters, *filters)
+            .where(*base_filters, *filters)
             .subquery()
         )
 
@@ -70,7 +67,7 @@ class UploadsData(DataLayerPiece):
         async with AsyncSession(self._pg) as session:
             query = (
                 select(SQLUpload)
-                .filter(*base_filters, *filters)
+                .where(*base_filters, *filters)
                 .order_by(SQLUpload.created_at.desc())
                 .offset(skip)
                 .limit(per_page)
@@ -87,7 +84,7 @@ class UploadsData(DataLayerPiece):
 
             uploads = [row.to_dict() for row in results.unique().scalars()]
 
-        uploads = await apply_transforms(uploads, [AttachUserTransform(self._db)])
+        uploads = await apply_transforms(uploads, [AttachUserTransform(self._mongo)])
 
         return UploadSearchResult(
             items=uploads,
@@ -100,11 +97,13 @@ class UploadsData(DataLayerPiece):
 
     @emits(Operation.CREATE)
     async def create(
-        self, chunker, name: str, upload_type: UploadType, user: str | None = None
+        self,
+        chunker,
+        name: str,
+        upload_type: UploadType,
+        user: str | None = None,
     ) -> Upload:
-        """
-        Create an upload.
-        """
+        """Create an upload."""
         uploads_path = self._config.data_path / "files"
 
         await asyncio.to_thread(uploads_path.mkdir, parents=True, exist_ok=True)
@@ -129,20 +128,17 @@ class UploadsData(DataLayerPiece):
 
             size = await naive_writer(chunker, uploads_path / upload.name_on_disk)
 
-            logger.info("Size=%i", size)
-
             upload.size = size
             upload_dict = upload.to_dict()
 
             await session.commit()
 
         return Upload(
-            **await apply_transforms(upload_dict, [AttachUserTransform(self._db)])
+            **await apply_transforms(upload_dict, [AttachUserTransform(self._mongo)]),
         )
 
     async def get(self, upload_id: int) -> Upload:
-        """
-        Get a single upload by its ID.
+        """Get a single upload by its ID.
 
         :param upload_id: the upload's ID
         :return: the upload
@@ -150,7 +146,7 @@ class UploadsData(DataLayerPiece):
         async with AsyncSession(self._pg) as session:
             upload = (
                 await session.execute(
-                    select(SQLUpload).filter_by(id=upload_id, removed=False)
+                    select(SQLUpload).filter_by(id=upload_id, removed=False),
                 )
             ).scalar()
 
@@ -158,22 +154,23 @@ class UploadsData(DataLayerPiece):
                 raise ResourceNotFoundError
 
         return Upload(
-            **await apply_transforms(upload.to_dict(), [AttachUserTransform(self._db)])
+            **await apply_transforms(
+                upload.to_dict(),
+                [AttachUserTransform(self._mongo)],
+            ),
         )
 
     @emits(Operation.DELETE)
     async def delete(self, upload_id: int) -> Upload:
-        """
-        Delete an upload by its id.
+        """Delete an upload by its id.
 
         :param upload_id: The upload id
         :return: the upload
         """
-
         async with AsyncSession(self._pg) as session:
             upload = (
                 await session.execute(
-                    select(SQLUpload).where(SQLUpload.id == upload_id)
+                    select(SQLUpload).where(SQLUpload.id == upload_id),
                 )
             ).scalar()
 
@@ -189,7 +186,7 @@ class UploadsData(DataLayerPiece):
             await session.commit()
 
         upload = Upload(
-            **await apply_transforms(upload, [AttachUserTransform(self._db)])
+            **await apply_transforms(upload, [AttachUserTransform(self._mongo)]),
         )
 
         try:
@@ -200,8 +197,8 @@ class UploadsData(DataLayerPiece):
         return upload
 
     async def release(self, upload_ids: int | List[int]):
-        """
-        Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
+        """Release the uploads in `upload_ids` by setting the `reserved` field to
+        `False`.
 
         :param upload_ids: List of upload ids
         """
@@ -215,14 +212,14 @@ class UploadsData(DataLayerPiece):
                 update(SQLUpload)
                 .where(query)
                 .values(reserved=False)
-                .execution_options(synchronize_session="fetch")
+                .execution_options(synchronize_session="fetch"),
             )
 
             await session.commit()
 
     async def reserve(self, upload_ids: int | List[int]):
-        """
-        Reserve the uploads in `upload_ids` by setting the `reserved` field to `True`.
+        """Reserve the uploads in `upload_ids` by setting the `reserved` field to
+        `True`.
 
         :param upload_ids: List of upload ids
         """
@@ -236,21 +233,20 @@ class UploadsData(DataLayerPiece):
                 update(SQLUpload)
                 .where(query)
                 .values(reserved=True)
-                .execution_options(synchronize_session="fetch")
+                .execution_options(synchronize_session="fetch"),
             )
             await session.commit()
 
     async def migrate_to_postgres(self):
-        """
-        Transforms documents in the `files` collection into rows in the `uploads` SQL
+        """Transforms documents in the `files` collection into rows in the `uploads` SQL
         table.
 
         """
-        async for document in self._db.files.find():
+        async for document in self._mongo.files.find():
             async with AsyncSession(self._pg) as session:
                 exists = (
                     await session.execute(
-                        select(SQLUpload).filter_by(name_on_disk=document["_id"])
+                        select(SQLUpload).filter_by(name_on_disk=document["_id"]),
                     )
                 ).scalar()
 
@@ -270,4 +266,4 @@ class UploadsData(DataLayerPiece):
                     session.add(upload)
                     await session.commit()
 
-                    await self._db.files.delete_one({"_id": document["_id"]})
+                    await self._mongo.files.delete_one({"_id": document["_id"]})

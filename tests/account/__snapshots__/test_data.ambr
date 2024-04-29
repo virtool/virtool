@@ -1,182 +1,22 @@
-# name: test_create_api_key[has permission-full][dl]
-  <class 'dict'> {
-    'administrator': True,
+# serializer version: 1
+# name: test_create_api_key[does_not_have_permission][data]
+  dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
-        'id': 'bf1b993c',
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
-      },
-    ],
-    'id': 'baz',
-    'name': 'Foo',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-  }
----
-# name: test_create_api_key[has permission-full][mongo]
-  <class 'dict'> {
-    '_id': 'baz',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      'bf1b993c',
-      'fb085f7f',
-    ],
+      }),
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': '7cf872dc',
-    },
-  }
----
-# name: test_create_api_key[has permission-none][dl]
-  <class 'dict'> {
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-      },
-    ],
-    'id': 'baz',
-    'name': 'Foo',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-  }
----
-# name: test_create_api_key[has permission-none][mongo]
-  <class 'dict'> {
-    '_id': 'baz',
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      'bf1b993c',
-      'fb085f7f',
-    ],
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': '7cf872dc',
-    },
-  }
----
-# name: test_create_api_key[missing permission-full][dl]
-  <class 'dict'> {
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-      },
-    ],
-    'id': 'baz',
-    'name': 'Foo',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-  }
----
-# name: test_create_api_key[missing permission-full][mongo]
-  <class 'dict'> {
-    '_id': 'baz',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      'bf1b993c',
-      'fb085f7f',
-    ],
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': '7cf872dc',
-    },
-  }
----
-# name: test_create_api_key[missing permission-none][dl]
-  <class 'dict'> {
-    'administrator': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-      <class 'dict'> {
-        'id': 'bf1b993c',
-        'name': 'musicians',
-      },
-    ],
-    'id': 'baz',
-    'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -185,32 +25,141 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-  }
----
-# name: test_create_api_key[missing permission-none][mongo]
-  <class 'dict'> {
+    }),
+  })
+# ---
+# name: test_create_api_key[does_not_have_permission][mongo]
+  dict({
     '_id': 'baz',
-    'administrator': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': <class 'list'> [
-      'bf1b993c',
-      'fb085f7f',
-    ],
+    'groups': list([
+      2,
+      1,
+    ]),
     'id': 'foo_0',
     'name': 'Foo',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
+      'create_sample': True,
+      'modify_subtraction': True,
+    }),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_create_api_key[has_permission][data]
+  dict({
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
+    ]),
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
       'modify_hmm': False,
-      'modify_subtraction': False,
+      'modify_subtraction': True,
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'user': <class 'dict'> {
-      'id': '7cf872dc',
-    },
-  }
----
+    }),
+  })
+# ---
+# name: test_create_api_key[has_permission][mongo]
+  dict({
+    '_id': 'baz',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': list([
+      2,
+      1,
+    ]),
+    'id': 'foo_0',
+    'name': 'Foo',
+    'permissions': dict({
+      'create_sample': True,
+      'modify_subtraction': True,
+    }),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_update[email][mongo]
+  dict({
+    '_id': 'bf1b993c',
+    'active': True,
+    'email': 'hello@world.com',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'leeashley',
+    'invalidate_sessions': False,
+    'last_password_change': 'approximately_now_datetime',
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: test_update[email][pg]
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='hello@world.com', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='[]')>
+# ---
+# name: test_update[password and email][mongo]
+  dict({
+    '_id': 'bf1b993c',
+    'active': True,
+    'email': 'hello@world.com',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'leeashley',
+    'invalidate_sessions': False,
+    'last_password_change': 'approximately_now_datetime',
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: test_update[password and email][pg]
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='hello@world.com', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='[]')>
+# ---
+# name: test_update[password][mongo]
+  dict({
+    '_id': 'bf1b993c',
+    'active': True,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'leeashley',
+    'invalidate_sessions': False,
+    'last_password_change': 'approximately_now_datetime',
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: test_update[password][pg]
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='[]')>
+# ---

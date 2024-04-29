@@ -1,7 +1,25 @@
-# name: TestUpdate.test
-  <class 'dict'> {
+# serializer version: 1
+# name: TestUpdate.test_non_existent_primary_group
+  dict({
+    'id': 'bad_request',
+    'message': 'Non-existent group: 4',
+  })
+# ---
+# name: TestUpdate.test_not_a_member_of_primary_group
+  dict({
+    'id': 'bad_request',
+    'message': 'User is not member of primary group',
+  })
+# ---
+# name: TestUpdate.test_not_found
+  dict({
+    'id': 'not_found',
+    'message': 'User does not exist',
+  })
+# ---
+# name: TestUpdate.test_ok
+  dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -9,16 +27,17 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': True,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
+    'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
-      },
-    ],
-    'handle': 'qtaylor',
-    'id': '7cf872dc',
+      }),
+    ]),
+    'handle': 'lindawest',
+    'id': 'fb085f7f',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -27,41 +46,23 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': True,
-    },
-    'primary_group': <class 'dict'> {
-      'id': 'bf1b993c',
+    }),
+    'primary_group': dict({
+      'id': 1,
+      'legacy_id': None,
       'name': 'musicians',
-    },
-  }
----
-# name: TestUpdate.test_non_existent_primary_group
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': 'Non-existent group: managers',
-  }
----
-# name: TestUpdate.test_not_a_member_of_primary_group
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': 'User is not member of group',
-  }
----
-# name: TestUpdate.test_not_found
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'User does not exist',
-  }
----
+    }),
+  })
+# ---
 # name: TestUpdate.test_short_password
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'Password does not meet minimum length requirement (8)',
-  }
----
+  })
+# ---
 # name: TestUpdate.test_with_groups
-  <class 'dict'> {
+  dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -69,20 +70,22 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': True,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
-      },
-      <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-    ],
-    'handle': 'qtaylor',
-    'id': '7cf872dc',
+      }),
+    ]),
+    'handle': 'lindawest',
+    'id': 'fb085f7f',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': True,
       'create_sample': True,
@@ -91,125 +94,124 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': True,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_add_permission[invalid_permission]
-  <class 'list'> [
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+  list([
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'owner',
           'member',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'owner', 'member'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'label_manager',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'label_manager'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'project_manager',
           'project_editor',
           'project_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'project_manager', 'project_editor', 'project_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'reference_manager',
           'reference_builder',
           'reference_editor',
           'reference_contributor',
           'reference_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'sample_manager',
           'sample_editor',
           'sample_analyzer',
           'sample_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'subtraction_manager',
           'subtraction_editor',
           'subtraction_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'upload_manager',
           'upload_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'upload_manager', 'upload_viewer'",
       'type': 'type_error.enum',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_add_permission[valid_permission]
   True
----
+# ---
 # name: test_create[None]
-  <class 'dict'> {
+  dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -217,12 +219,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'fred',
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -231,14 +233,13 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_create[None][data_layer]
-  <class 'dict'> {
+  dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -246,12 +247,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'fred',
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -260,46 +261,78 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_create[None][db]
-  <class 'dict'> {
-    '_id': 'fb085f7f',
+  dict({
+    '_id': '7cf872dc',
     'active': True,
-    'administrator': False,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
+    'groups': list([
+    ]),
     'handle': 'fred',
     'invalidate_sessions': False,
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'primary_group': None,
-    'settings': <class 'dict'> {
+    'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create[None][location]
-  '/users/fb085f7f'
----
+  '/users/7cf872dc'
+# ---
+# name: test_create_first_user[False-201]
+  dict({
+    'active': True,
+    'administrator_role': 'full',
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'fred',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+  })
+# ---
+# name: test_create_first_user[True-409]
+  dict({
+    'id': 'conflict',
+    'message': 'Virtool already has at least one user',
+  })
+# ---
 # name: test_find[None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'administrator': True,
+  dict({
+    'documents': list([
+      dict({
         'force_reset': False,
-        'groups': <class 'list'> [
-          'perms_group',
-        ],
+        'groups': list([
+          1,
+        ]),
         'handle': 'bob',
-        'id': 'test',
+        'id': 'bf1b993c',
         'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': True,
@@ -308,38 +341,17 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
-        'primary_group': 'technician',
-      },
-      <class 'dict'> {
-        'administrator': False,
-        'force_reset': False,
-        'groups': <class 'list'> [
-        ],
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-        'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-      <class 'dict'> {
-        'administrator': False,
+      }),
+      dict({
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
-        'handle': 'zclark',
+        'groups': list([
+        ]),
+        'handle': 'leeashley',
         'id': 'fb085f7f',
         'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -348,29 +360,47 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+      dict({
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'zclark',
+        'id': '7cf872dc',
+        'last_password_change': '2015-10-06T20:00:00Z',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': None,
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
 # name: test_find[fred]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
+  dict({
+    'documents': list([
+      dict({
         'force_reset': False,
-        'groups': <class 'list'> [
-        ],
+        'groups': list([
+        ]),
         'handle': 'fred',
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
         'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
+        'permissions': dict({
           'cancel_job': False,
           'create_ref': False,
           'create_sample': False,
@@ -379,56 +409,20 @@
           'remove_file': False,
           'remove_job': False,
           'upload_file': False,
-        },
+        }),
         'primary_group': None,
-      },
-    ],
+      }),
+    ]),
     'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: test_first_user_view[False-201]
-  <class 'dict'> {
-    'active': True,
-    'administrator': True,
-    'administrator_role': 'full',
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
-    'force_reset': False,
-    'groups': <class 'list'> [
-    ],
-    'handle': 'fred',
-    'id': 'bf1b993c',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'primary_group': None,
-  }
----
-# name: test_first_user_view[True-409]
-  <class 'dict'> {
-    'id': 'conflict',
-    'message': 'Virtool already has at least one user',
-  }
----
+  })
+# ---
 # name: test_get[200]
-  <class 'dict'> {
+  dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -436,20 +430,22 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
-      },
-      <class 'dict'> {
-        'id': 'fb085f7f',
-        'name': 'hydrogeologists',
-      },
-    ],
-    'handle': 'qtaylor',
-    'id': '7cf872dc',
+      }),
+    ]),
+    'handle': 'lindawest',
+    'id': 'fb085f7f',
     'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -458,141 +454,142 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'primary_group': <class 'dict'> {
-      'id': 'bf1b993c',
+    }),
+    'primary_group': dict({
+      'id': 1,
+      'legacy_id': None,
       'name': 'musicians',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_get[404]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
+  })
+# ---
 # name: test_list_permissions[bob]
-  <class 'list'> [
-  ]
----
+  list([
+  ])
+# ---
 # name: test_list_permissions[test]
-  <class 'list'> [
-    <class 'dict'> {
+  list([
+    dict({
       'id': 'reference_builder',
-    },
-    <class 'dict'> {
+    }),
+    dict({
       'id': 'sample_editor',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_remove_permission[invalid_permission]
-  <class 'list'> [
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+  list([
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'owner',
           'member',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'owner', 'member'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'label_manager',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'label_manager'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'project_manager',
           'project_editor',
           'project_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'project_manager', 'project_editor', 'project_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'reference_manager',
           'reference_builder',
           'reference_editor',
           'reference_contributor',
           'reference_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'reference_manager', 'reference_builder', 'reference_editor', 'reference_contributor', 'reference_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'sample_manager',
           'sample_editor',
           'sample_analyzer',
           'sample_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'sample_manager', 'sample_editor', 'sample_analyzer', 'sample_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'subtraction_manager',
           'subtraction_editor',
           'subtraction_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'subtraction_manager', 'subtraction_editor', 'subtraction_viewer'",
       'type': 'type_error.enum',
-    },
-    <class 'dict'> {
-      'ctx': <class 'dict'> {
-        'enum_values': <class 'list'> [
+    }),
+    dict({
+      'ctx': dict({
+        'enum_values': list([
           'upload_manager',
           'upload_viewer',
-        ],
-      },
+        ]),
+      }),
       'in': 'path',
-      'loc': <class 'list'> [
+      'loc': list([
         'role',
-      ],
+      ]),
       'msg': "value is not a valid enumeration member; permitted: 'upload_manager', 'upload_viewer'",
       'type': 'type_error.enum',
-    },
-  ]
----
+    }),
+  ])
+# ---
 # name: test_remove_permission[valid_permission]
   True
----
+# ---

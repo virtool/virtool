@@ -1,8 +1,10 @@
+# serializer version: 1
 # name: test_groups_and_users
-  <class 'dict'> {
-    'id': 'bf1b993c',
+  dict({
+    'id': 1,
+    'legacy_id': None,
     'name': 'musicians',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -11,15 +13,14 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
-    'users': <class 'list'> [
-    ],
-  }
----
+    }),
+    'users': list([
+    ]),
+  })
+# ---
 # name: test_groups_and_users.1
-  <class 'dict'> {
+  dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -27,12 +28,12 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-    ],
-    'handle': 'laura56',
-    'id': 'fb085f7f',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+    'groups': list([
+    ]),
+    'handle': 'leeashley',
+    'id': 'bf1b993c',
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -41,14 +42,13 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_groups_and_users.2
-  <class 'dict'> {
+  dict({
     'active': True,
-    'administrator': False,
     'administrator_role': None,
     'b2c': None,
     'b2c_display_name': None,
@@ -56,16 +56,17 @@
     'b2c_given_name': None,
     'b2c_oid': None,
     'force_reset': False,
-    'groups': <class 'list'> [
-      <class 'dict'> {
-        'id': 'bf1b993c',
+    'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
         'name': 'musicians',
-      },
-    ],
-    'handle': 'sjohnson',
-    'id': '7cf872dc',
-    'last_password_change': <class 'datetime'>,
-    'permissions': <class 'dict'> {
+      }),
+    ]),
+    'handle': 'zclark',
+    'id': 'fb085f7f',
+    'last_password_change': datetime,
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': False,
@@ -74,91 +75,143 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    },
+    }),
     'primary_group': None,
-  }
----
+  })
+# ---
 # name: test_groups_and_users[job]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
-      'age': 'tphorteObohEsZgfLWqS',
-      'beat': -72199579.2991181,
-      'face': -5262745923324.53,
-      'local': 'ufCpVOLlelZEijfQSbBN',
-      'product': 'SgBHsToacJDXWVcMKILU',
-      'white': 'fVyRYryKwpMUVGtYHdeM',
-    },
-    'created_at': <class 'datetime'>,
-    'id': '3cbb22cc',
+    'args': dict({
+      'foreign': -9158348948.40671,
+      'movie': 748,
+      'outside': 2513,
+      'two': 468.89084383643,
+      'we': -899431834.68956,
+      'whose': 8388626647.46166,
+    }),
+    'created_at': datetime,
+    'id': '7cf872dc',
     'ping': None,
-    'progress': 0,
-    'rights': <class 'dict'> {
-    },
-    'stage': None,
-    'state': <JobState.WAITING: 'waiting'>,
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'progress': 50,
+    'rights': dict({
+    }),
+    'stage': 'JURZHTCWaKMqqBTFitpK',
+    'state': <JobState.TIMEOUT: 'timeout'>,
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
         'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
-        'timestamp': <class 'datetime'>,
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'laura56',
-      'id': 'fb085f7f',
-    },
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 10,
+        'stage': 'MReEKilxKJTbTDOKidKx',
+        'state': <JobState.PREPARING: 'preparing'>,
+        'step_description': 'UVFacqRcQYvCYYRgaXva',
+        'step_name': 'MReEKilxKJTbTDOKidKx',
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 20,
+        'stage': 'aNYJFjFkpJjyVGbVPgnH',
+        'state': <JobState.RUNNING: 'running'>,
+        'step_description': 'QHfiScknqtDSSXFzHxwT',
+        'step_name': 'aNYJFjFkpJjyVGbVPgnH',
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 30,
+        'stage': 'kEahrPLrGciZpuCpymcj',
+        'state': <JobState.RUNNING: 'running'>,
+        'step_description': 'BdurvfVyRYryKwpMUVGt',
+        'step_name': 'kEahrPLrGciZpuCpymcj',
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 40,
+        'stage': 'deMdauAxzEJvtZnOwsdS',
+        'state': <JobState.RUNNING: 'running'>,
+        'step_description': 'KUxJgukcXlhktChZZhvJ',
+        'step_name': 'deMdauAxzEJvtZnOwsdS',
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 50,
+        'stage': 'JURZHTCWaKMqqBTFitpK',
+        'state': <JobState.TIMEOUT: 'timeout'>,
+        'step_description': 'yPAVdgpNxSPTxttBbePA',
+        'step_name': 'JURZHTCWaKMqqBTFitpK',
+        'timestamp': datetime,
+      }),
+    ]),
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
     'workflow': 'jobs_aodp',
-  }
----
+  })
+# ---
 # name: test_jobs[job]
-  <class 'dict'> {
+  dict({
     'acquired': False,
     'archived': False,
-    'args': <class 'dict'> {
+    'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
       'network': 'fhKcDVBJbHFDutYbbXjg',
       'season': 6981,
       'task': 'RrnFxjyvDAqsRnDaMrco',
       'third': 'SUEXExIZVPeFzGRmMglP',
-    },
-    'created_at': <class 'datetime'>,
+    }),
+    'created_at': datetime,
     'id': 'fb085f7f',
     'ping': None,
-    'progress': 0,
-    'rights': <class 'dict'> {
-    },
-    'stage': None,
-    'state': <JobState.WAITING: 'waiting'>,
-    'status': <class 'list'> [
-      <class 'dict'> {
+    'progress': 10,
+    'rights': dict({
+    }),
+    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'state': <JobState.PREPARING: 'preparing'>,
+    'status': list([
+      dict({
         'error': None,
         'progress': 0,
         'stage': None,
         'state': <JobState.WAITING: 'waiting'>,
         'step_description': None,
         'step_name': None,
-        'timestamp': <class 'datetime'>,
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 10,
+        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'state': <JobState.PREPARING: 'preparing'>,
+        'step_description': 'bTDOKidKxUVFacqRcQYv',
+        'step_name': 'NzFJEUSgqMReEKilxKJT',
+        'timestamp': datetime,
+      }),
+    ]),
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
+    }),
     'workflow': 'jobs_pathoscope_bowtie',
-  }
----
+  })
+# ---
 # name: test_uploads[upload[reserved]]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'id': 3,
     'name': 'test.fq.gz',
     'name_on_disk': '3-test.fq.gz',
@@ -168,17 +221,16 @@
     'reserved': True,
     'size': 16700094,
     'type': 'reads',
-    'uploaded_at': <class 'datetime'>,
-    'user': <class 'dict'> {
-      'administrator': False,
+    'uploaded_at': datetime,
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_uploads[upload[subtraction]]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'id': 2,
     'name': 'test.fq.gz',
     'name_on_disk': '2-test.fq.gz',
@@ -188,17 +240,16 @@
     'reserved': False,
     'size': 16700094,
     'type': 'subtraction',
-    'uploaded_at': <class 'datetime'>,
-    'user': <class 'dict'> {
-      'administrator': False,
+    'uploaded_at': datetime,
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_uploads[upload]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'id': 1,
     'name': 'test.fq.gz',
     'name_on_disk': '1-test.fq.gz',
@@ -208,11 +259,10 @@
     'reserved': False,
     'size': 16700094,
     'type': 'reads',
-    'uploaded_at': <class 'datetime'>,
-    'user': <class 'dict'> {
-      'administrator': False,
+    'uploaded_at': datetime,
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---

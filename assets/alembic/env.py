@@ -5,6 +5,21 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from virtool.analyses.models import SQLAnalysisFile
+from virtool.blast.models import SQLNuVsBlast
+from virtool.caches.models import SQLSampleReadsCache, SQLSampleArtifactCache
+from virtool.groups.pg import SQLGroup
+from virtool.indexes.models import SQLIndexFile
+from virtool.labels.models import SQLLabel
+from virtool.messages.models import SQLInstanceMessage
+from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
+from virtool.pg.base import Base
+from virtool.samples.models import SQLSampleReads, SQLSampleArtifact
+from virtool.spaces.models import SQLSpace
+from virtool.subtractions.models import SQLSubtractionFile
+from virtool.uploads.models import SQLUpload
+from virtool.users.pg import SQLUser, SQLUserGroup
+
 config = context.config
 
 # Interpret the config file for Python logging.
@@ -16,7 +31,28 @@ config = context.config
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
+
+__models__ = (
+    SQLAnalysisFile,
+    SQLGroup,
+    SQLIndexFile,
+    SQLInstanceMessage,
+    SQLLabel,
+    SQLMLModel,
+    SQLMLModelRelease,
+    SQLNuVsBlast,
+    SQLSampleArtifact,
+    SQLSampleArtifactCache,
+    SQLSampleReads,
+    SQLSampleReadsCache,
+    SQLSpace,
+    SQLSubtractionFile,
+    SQLUpload,
+    SQLUser,
+    SQLUserGroup,
+)
+
 
 try:
     sqlalchemy_url = os.environ["SQLALCHEMY_URL"].replace("%", "%%")

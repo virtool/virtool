@@ -2,21 +2,11 @@ import os
 
 import pytest
 
+from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_sample
-
-
-@pytest.fixture
-def app(mongo, pg, tmp_path, config):
-    return {
-        "db": mongo,
-        "fake": FakerWrapper(),
-        "pg": pg,
-        "config": config,
-    }
 
 
 @pytest.mark.parametrize("paired", [True, False])
@@ -24,14 +14,13 @@ def app(mongo, pg, tmp_path, config):
 async def test_create_fake_sample(
     paired,
     finalized,
-    app,
     data_layer: DataLayer,
     fake2: DataFaker,
-    spawn_client,
     snapshot,
+    spawn_client: ClientSpawner,
     static_time,
 ):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     user = await fake2.users.create()
 

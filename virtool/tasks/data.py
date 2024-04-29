@@ -1,5 +1,4 @@
 """The data layer piece for tasks."""
-from logging import getLogger
 from typing import List, Type
 
 from sqlalchemy import select, delete, desc
@@ -13,8 +12,6 @@ from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import SQLTask
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.task import BaseTask
-
-logger = getLogger("tasks")
 
 
 class TasksData:
@@ -93,7 +90,7 @@ class TasksData:
         return task
 
     @emits(Operation.UPDATE)
-    async def complete(self, task_id: int):
+    async def complete(self, task_id: int) -> Task:
         """
         Update a task record as completed.
 
@@ -137,7 +134,9 @@ class TasksData:
         emit(task, "tasks", "delete", Operation.DELETE)
 
     @emits(Operation.CREATE)
-    async def create(self, task_class: Type[BaseTask], context: dict = None) -> Task:
+    async def create(
+        self, task_class: Type[BaseTask], context: dict | None = None
+    ) -> Task:
         """
         Register a new task.
 

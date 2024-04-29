@@ -1,14 +1,19 @@
 import pytest
+from syrupy import SnapshotAssertion
 
+from tests.fixtures.client import ClientSpawner
+from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
-from virtool.groups.oas import UpdatePermissionsRequest
+from virtool.fake.next import DataFaker
+from virtool.groups.oas import PermissionsUpdate
+from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, hash_password
 
 
-@pytest.mark.apitest
 async def test_get(snapshot, spawn_client, static_time):
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     resp = await client.get("/account")
 
@@ -16,7 +21,6 @@ async def test_get(snapshot, spawn_client, static_time):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [
@@ -24,7 +28,7 @@ async def test_get(snapshot, spawn_client, static_time):
             {
                 "email": "virtool.devs@gmail.com",
                 "password": "foo_bar_1",
-                "old_password": "hello_world",
+                "old_password": "bob_is_testing",
             },
             200,
         ),
@@ -34,7 +38,7 @@ async def test_get(snapshot, spawn_client, static_time):
         ({"password": "foo_bar_1"}, 400),
         ({"password": "foo_bar_1", "old_password": "not_right"}, 400),
         ({"old_password": "hello_world"}, 400),
-        ({"password": "foo_bar_1", "old_password": "hello_world"}, 200),
+        ({"password": "foo_bar_1", "old_password": "bob_is_testing"}, 200),
         ({}, 200),
         ({"email": None, "old_password": None, "password": None}, 400),
     ],
@@ -51,11 +55,17 @@ async def test_get(snapshot, spawn_client, static_time):
         "none_all",
     ],
 )
-async def test_edit(body, status, snapshot, spawn_client, resp_is, static_time):
-    client = await spawn_client(authorize=True)
+async def test_update(
+    body: dict,
+    status: int,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
+):
+    client = await spawn_client(authenticated=True)
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8)
+        UpdateSettingsRequest(minimum_password_length=8),
     )
 
     resp = await client.patch("/account", body)
@@ -64,13 +74,9 @@ async def test_edit(body, status, snapshot, spawn_client, resp_is, static_time):
     assert await resp.json() == snapshot(name="response")
 
 
-@pytest.mark.apitest
 async def test_get_settings(spawn_client):
-    """
-    Test that a ``GET /account/settings`` returns the settings for the session user.
-
-    """
-    client = await spawn_client(authorize=True)
+    """Test that a ``GET /account/settings`` returns the settings for the session user."""
+    client = await spawn_client(authenticated=True)
 
     resp = await client.get("/account/settings")
 
@@ -84,7 +90,6 @@ async def test_get_settings(spawn_client):
     }
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "data,status",
     [
@@ -106,12 +111,11 @@ async def test_get_settings(spawn_client):
     ids=["valid_input", "invalid_input", "null_values"],
 )
 async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
-    """
-    Test that account settings can be updated at ``POST /account/settings`` and that requests to
+    """Test that account settings can be updated at ``POST /account/settings`` and that requests to
     ``POST /account/settings`` return 422 for invalid JSON fields.
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     resp = await client.patch("/account/settings", data)
 
@@ -119,19 +123,24 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
     assert await resp.json() == snapshot(name="response")
 
 
-@pytest.mark.apitest
-async def test_get_api_keys(spawn_client, static_time, fake2, snapshot):
-    client = await spawn_client(authorize=True)
+async def test_get_api_keys(
+    fake2: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    snapshot,
+    static_time,
+):
+    client = await spawn_client(authenticated=True)
 
     group = await fake2.groups.create()
 
-    await client.db.keys.insert_many(
+    await mongo.keys.insert_many(
         [
             {
                 "_id": "abc123",
                 "id": "foobar_0",
                 "name": "Foobar",
-                "user": {"id": "test"},
+                "user": {"id": client.user.id},
                 "created_at": static_time.datetime,
                 "administrator": True,
                 "groups": [group.id],
@@ -141,7 +150,7 @@ async def test_get_api_keys(spawn_client, static_time, fake2, snapshot):
                 "_id": "xyz321",
                 "id": "baz_1",
                 "name": "Baz",
-                "user": {"id": "test"},
+                "user": {"id": client.user.id},
                 "created_at": static_time.datetime,
                 "administrator": False,
                 "groups": [],
@@ -156,7 +165,6 @@ async def test_get_api_keys(spawn_client, static_time, fake2, snapshot):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
@@ -164,31 +172,29 @@ class TestCreateAPIKey:
         self,
         has_perm,
         req_perm,
+        data_layer: DataLayer,
+        fake2: DataFaker,
         mocker,
         snapshot,
-        spawn_client,
+        spawn_client: ClientSpawner,
         static_time,
-        no_permissions,
-        fake2,
     ):
-        """
-        Test that creation of an API key functions properly. Check that different permission inputs work.
-
-        """
+        """Test that creation of an API key functions properly. Check that different permission inputs work."""
         mocker.patch(
-            "virtool.utils.generate_key", return_value=("raw_key", "hashed_key")
+            "virtool.utils.generate_key",
+            return_value=("raw_key", "hashed_key"),
         )
 
         group = await fake2.groups.create(
-            UpdatePermissionsRequest(**{Permission.create_sample: True})
+            PermissionsUpdate(**{Permission.create_sample: True}),
         )
 
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
         if has_perm:
-            await client.db.users.update_one(
-                {"_id": "test"},
-                {"$set": {"groups": [group.id]}},
+            await data_layer.users.update(
+                client.user.id,
+                UpdateUserRequest(groups=[group.id]),
             )
 
         body = {"name": "Foobar"}
@@ -200,21 +206,25 @@ class TestCreateAPIKey:
 
         assert resp.status == 201
         assert await resp.json() == snapshot
-        assert await client.db.keys.find_one() == snapshot
 
-    async def test_naming(self, mocker, snapshot, spawn_client, static_time):
-        """
-        Test that uniqueness is ensured on the ``id`` field.
-
-        """
+    async def test_naming(
+        self,
+        mocker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that uniqueness is ensured on the ``id`` field."""
         mocker.patch(
-            "virtool.utils.generate_key", return_value=("raw_key", "hashed_key")
+            "virtool.utils.generate_key",
+            return_value=("raw_key", "hashed_key"),
         )
 
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authenticated=True)
 
-        await client.db.keys.insert_one(
-            {"_id": "foobar", "id": "foobar_0", "name": "Foobar"}
+        await mongo.keys.insert_one(
+            {"_id": "foobar", "id": "foobar_0", "name": "Foobar"},
         )
 
         body = {"name": "Foobar"}
@@ -223,47 +233,55 @@ class TestCreateAPIKey:
 
         assert resp.status == 201
         assert await resp.json() == snapshot
-        assert await client.db.keys.find_one({"id": "foobar_1"}) == snapshot
+        assert await mongo.keys.find_one({"id": "foobar_1"}) == snapshot
 
 
-@pytest.mark.apitest
 class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])
     @pytest.mark.parametrize("has_perm", [True, False, "missing"])
-    async def test(self, has_admin, has_perm, snapshot, spawn_client, static_time):
-        client = await spawn_client(authorize=True)
+    async def test(
+        self,
+        has_admin: bool,
+        has_perm: bool,
+        data_layer: DataLayer,
+        fake2: DataFaker,
+        mongo: Mongo,
+        snapshot,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        client = await spawn_client(authenticated=True)
 
-        modify_subtraction = has_perm if has_perm != "missing" else False
-
-        await client.db.users.update_one(
-            {"_id": "test"},
-            {
-                "$set": {
-                    "administrator": has_admin,
-                    "permissions.create_sample": True,
-                    "permissions.modify_subtraction": modify_subtraction,
-                }
-            },
+        group = await fake2.groups.create(
+            permissions=PermissionsUpdate(
+                create_sample=True,
+                modify_subtraction=(has_perm if has_perm != "missing" else False),
+            ),
         )
 
-        await client.db.keys.insert_one(
+        await data_layer.users.update(
+            client.user.id,
+            UpdateUserRequest(administrator=has_admin, groups=[group.id]),
+        )
+
+        await mongo.keys.insert_one(
             {
                 "_id": "foobar",
                 "id": "foobar_0",
                 "name": "Foobar",
                 "created_at": static_time.datetime,
                 "administrator": True,
-                "user": {"id": "test"},
+                "user": {"id": client.user.id},
                 "groups": [],
                 "permissions": {p.value: False for p in Permission},
-            }
+            },
         )
 
         data = {
             "permissions": {
                 Permission.create_sample.value: True,
                 Permission.modify_subtraction.value: True,
-            }
+            },
         }
 
         if has_perm == "missing":
@@ -276,74 +294,88 @@ class TestUpdateAPIKey:
 
         assert resp.status == 200
         assert await resp.json() == snapshot
-        assert await client.db.keys.find_one() == snapshot
+        assert await mongo.keys.find_one() == snapshot
 
-    async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
+    async def test_not_found(self, snapshot, spawn_client: ClientSpawner):
+        """Test that a 404 is returned when the key is not found."""
+        client = await spawn_client(authenticated=True)
 
         resp = await client.patch(
             "/account/keys/foobar_0",
             {"permissions": {Permission.create_sample.value: True}},
         )
 
-        await resp_is.not_found(resp)
+        assert resp.status == 404
+        assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_remove_api_key(error, spawn_client, resp_is):
-    client = await spawn_client(authorize=True)
+async def test_remove_api_key(
+    error,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    snapshot,
+):
+    client = await spawn_client(authenticated=True)
 
-    if not error:
-        await client.db.keys.insert_one(
+    if error is None:
+        await mongo.keys.insert_one(
             {
                 "_id": "foobar",
                 "id": "foobar_0",
                 "name": "Foobar",
-                "user": {"id": "test"},
-            }
+                "user": {"id": client.user.id},
+            },
         )
 
     resp = await client.delete("/account/keys/foobar_0")
 
-    if error:
-        await resp_is.not_found(resp)
-        return
+    if error is None:
+        assert resp.status == 204
+        assert await mongo.keys.count_documents({}) == 0
 
-    await resp_is.no_content(resp)
-    assert await client.db.keys.count_documents({}) == 0
+    else:
+        assert resp.status == 404
+        assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
-async def test_remove_all_api_keys(spawn_client, resp_is):
-    client = await spawn_client(authorize=True)
+async def test_remove_all_api_keys(
+    fake2: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+):
+    client = await spawn_client(authenticated=True)
 
-    await client.db.keys.insert_many(
+    user = await fake2.users.create()
+
+    await mongo.keys.insert_many(
         [
-            {"_id": "hello_world", "id": "hello_world_0", "user": {"id": "test"}},
-            {"_id": "foobar", "id": "foobar_0", "user": {"id": "test"}},
-            {"_id": "baz", "id": "baz_0", "user": {"id": "fred"}},
+            {
+                "_id": "hello_world",
+                "id": "hello_world_0",
+                "user": {"id": client.user.id},
+            },
+            {"_id": "foobar", "id": "foobar_0", "user": {"id": client.user.id}},
+            {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
         ],
         session=None,
     )
 
     resp = await client.delete("/account/keys")
 
-    await resp_is.no_content(resp)
+    assert resp.status == 204
 
-    assert await client.db.keys.find().to_list(None) == [
-        {"_id": "baz", "id": "baz_0", "user": {"id": "fred"}}
+    assert await mongo.keys.find().to_list(None) == [
+        {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
     ]
 
 
-@pytest.mark.apitest
 async def test_logout(spawn_client):
-    """
-    Test that calling the logout endpoint results in the current session being removed and the user being logged
+    """Test that calling the logout endpoint results in the current session being removed and the user being logged
     out.
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
     # Make sure the session is authorized
     resp = await client.get("/account")
@@ -358,7 +390,6 @@ async def test_logout(spawn_client):
     assert resp.status == 401
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "method,path",
     [
@@ -375,8 +406,7 @@ async def test_logout(spawn_client):
     ],
 )
 async def test_requires_authorization(method: str, path: str, spawn_client):
-    """
-    Test that a '401 Requires authorization' response is sent when the session is not
+    """Test that a '401 Requires authorization' response is sent when the session is not
     authenticated.
 
     """
@@ -399,13 +429,10 @@ async def test_requires_authorization(method: str, path: str, spawn_client):
     assert resp.status == 401
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_permissions", "invalid_permissions"])
 async def test_is_permission_dict(value, spawn_client, resp_is):
-    """
-    Tests that when an invalid permission is used, validators.is_permission_dict raises a 422 error.
-    """
-    client = await spawn_client(authorize=True)
+    """Tests that when an invalid permission is used, validators.is_permission_dict raises a 422 error."""
+    client = await spawn_client(authenticated=True)
 
     permissions = {
         Permission.cancel_job.value: True,
@@ -427,13 +454,10 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
 async def test_is_valid_email(value, spawn_client, resp_is):
-    """
-    Tests that when an invalid email is used, validators.is_valid_email raises a 422 error.
-    """
-    client = await spawn_client(authorize=True)
+    """Tests that when an invalid email is used, validators.is_valid_email raises a 422 error."""
+    client = await spawn_client(authenticated=True)
 
     data = {
         "email": "valid@email.ca" if value == "valid_email" else "-foo-bar-@baz!.ca",
@@ -453,11 +477,10 @@ async def test_is_valid_email(value, spawn_client, resp_is):
                 "msg": "The format of the email is invalid",
                 "type": "value_error",
                 "in": "body",
-            }
+            },
         ]
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [
@@ -475,20 +498,67 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         "remember_is_none",
     ],
 )
-async def test_login(
-    spawn_client, create_user, resp_is, body, status, mocker, snapshot
-):
+async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, snapshot):
     client = await spawn_client()
 
-    await client.db.users.insert_one(
+    await mongo.users.insert_one(
         {
             "user_id": "abc123",
             "handle": "foobar",
             "password": hash_password("p@ssword123"),
-        }
+        },
     )
 
     resp = await client.post("/account/login", body)
 
     assert resp.status == status
+    assert await resp.json() == snapshot
+
+
+@pytest.mark.parametrize(
+    "request_path,correct_code",
+    [
+        ("account/keys", True),
+        ("account/reset", True),
+        ("account/reset", False),
+    ],
+)
+async def test_login_reset(
+    spawn_client,
+    snapshot,
+    fake2,
+    request_path,
+    correct_code,
+    data_layer: DataLayer,
+) -> None:
+    client = await spawn_client(authenticated=False)
+
+    data = {
+        "username": "foobar",
+        "handle": "foobar",
+        "password": "hello_world",
+        "force_reset": True,
+    }
+    await data_layer.users.create("foobar", "hello_world", True)
+    resp = await client.post("/account/login", data)
+    reset_json_data = await resp.json()
+
+    assert "session_id=session" in resp.headers.get("Set-Cookie")
+    assert reset_json_data.get("reset_code") is not None
+    assert reset_json_data.get("reset") is True
+
+    reset_data = {
+        "password": "invalid",
+        "reset_code": reset_json_data.get("reset_code")
+        if correct_code
+        else "wrong_code",
+    }
+
+    resp = await client.post(request_path, reset_data)
+    assert await resp.json() == snapshot
+
+    reset_data["password"] = "hello_world"
+
+    resp = await client.post(request_path, reset_data)
+
     assert await resp.json() == snapshot

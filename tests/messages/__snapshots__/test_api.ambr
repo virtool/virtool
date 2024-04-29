@@ -1,60 +1,57 @@
+# serializer version: 1
 # name: TestUpdate.test_active
-  <class 'dict'> {
+  dict({
     'active': True,
     'color': 'grey',
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,
     'message': 'Change test message content',
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': False,
+    'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
+      'id': 'fb085f7f',
+    }),
+  })
+# ---
 # name: TestUpdate.test_deactivate
-  <class 'dict'> {
+  dict({
     'active': False,
     'color': 'grey',
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,
     'message': 'Change message',
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': False,
+    'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
+      'id': 'fb085f7f',
+    }),
+  })
+# ---
 # name: test_create
-  <class 'dict'> {
+  dict({
     'active': True,
     'color': 'red',
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,
     'message': 'This is a new message',
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': True,
+    'user': dict({
       'handle': 'bob',
-      'id': 'test',
-    },
-  }
----
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: test_get[None]
-  <class 'dict'> {
+  dict({
     'active': True,
     'color': 'yellow',
     'created_at': '2015-10-06T20:00:00Z',
     'id': 1,
     'message': 'This is a test message',
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'administrator': False,
+    'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
+      'id': 'fb085f7f',
+    }),
+  })
+# ---

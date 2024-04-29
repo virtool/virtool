@@ -3,39 +3,41 @@ import shutil
 from asyncio import to_thread
 from functools import cached_property
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.hmm import HMMSearchResult, HMM, HMMStatus, HMMInstalled
+from virtool_core.models.hmm import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool_core.utils import compress_file_with_gzip
 
 import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config.cls import Config
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
-    ResourceNotFoundError,
     ResourceConflictError,
     ResourceError,
+    ResourceNotFoundError,
 )
-from virtool.data.piece import DataLayerPiece
-from virtool.github import create_update_subdocument
-from virtool.hmm.db import PROJECTION, generate_annotations_json_file
-from virtool.hmm.tasks import HMMInstallTask
-from virtool.hmm.utils import hmm_data_exists
-from virtool.hmm.db import fetch_and_update_release
 from virtool.data.transforms import apply_transforms
+from virtool.github import create_update_subdocument
+from virtool.hmm.db import (
+    HMMS_PROJECTION,
+    fetch_and_update_release,
+    generate_annotations_json_file,
+)
+from virtool.hmm.tasks import HMMInstallTask
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.tasks.transforms import AttachTaskTransform
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 
 
-class HmmsData(DataLayerPiece):
+class HmmsData(DataLayerDomain):
     name = "hmms"
 
     def __init__(self, client: ClientSession, config: Config, mongo, pg: AsyncEngine):
@@ -61,7 +63,7 @@ class HmmsData(DataLayerPiece):
                 db_query,
                 query,
                 sort="cluster",
-                projection=PROJECTION,
+                projection=HMMS_PROJECTION,
                 base_query={"hidden": False},
             ),
             self.get_status(),
@@ -70,8 +72,7 @@ class HmmsData(DataLayerPiece):
         return HMMSearchResult(**data, status=status)
 
     async def get(self, hmm_id: str) -> HMM:
-        """
-        Get an HMM resource.
+        """Get an HMM resource.
 
         :param hmm_id: the id of the hmm to get
         :return: the hmm
@@ -92,7 +93,8 @@ class HmmsData(DataLayerPiece):
 
         if installed := document.get("installed"):
             document["installed"] = await apply_transforms(
-                installed, [AttachUserTransform(self._mongo)]
+                installed,
+                [AttachUserTransform(self._mongo)],
             )
 
         document = await apply_transforms(document, [AttachTaskTransform(self._pg)])
@@ -101,14 +103,16 @@ class HmmsData(DataLayerPiece):
 
     async def install_update(self, user_id: str) -> HMMInstalled:
         if await self._mongo.status.count_documents(
-            {"_id": "hmm", "updates.ready": False}
+            {"_id": "hmm", "updates.ready": False},
         ):
             raise ResourceConflictError("Install already in progress")
 
         settings = await self.data.settings.get_all()
 
         await virtool.hmm.db.fetch_and_update_release(
-            self._client, self._mongo, settings.hmm_slug
+            self._client,
+            self._mongo,
+            settings.hmm_slug,
         )
 
         release = await get_one_field(self._mongo.status, "release", "hmm")
@@ -117,7 +121,8 @@ class HmmsData(DataLayerPiece):
             raise ResourceError("Target release does not exist")
 
         task = await self.data.tasks.create(
-            HMMInstallTask, context={"user_id": user_id, "release": release}
+            HMMInstallTask,
+            context={"user_id": user_id, "release": release},
         )
 
         update = create_update_subdocument(release, False, user_id)
@@ -128,7 +133,8 @@ class HmmsData(DataLayerPiece):
         )
 
         installed = await apply_transforms(
-            {**release, **update}, [AttachUserTransform(self._mongo)]
+            {**release, **update},
+            [AttachUserTransform(self._mongo)],
         )
 
         return HMMInstalled(**installed)
@@ -141,8 +147,7 @@ class HmmsData(DataLayerPiece):
         progress_handler: AbstractProgressHandler,
         hmm_temp_profile_path,
     ):
-        """
-        Installs annotation and profiles given a list of annotation dictionaries and
+        """Installs annotation and profiles given a list of annotation dictionaries and
         path to profile file.
 
         """
@@ -156,7 +161,8 @@ class HmmsData(DataLayerPiece):
         async with self._mongo.create_session() as session:
             for annotation in annotations:
                 await self._mongo.hmm.insert_one(
-                    dict(annotation, hidden=False), session=session
+                    dict(annotation, hidden=False),
+                    session=session,
                 )
                 await tracker.add(1)
 
@@ -166,44 +172,49 @@ class HmmsData(DataLayerPiece):
                     "$set": {
                         "installed": create_update_subdocument(release, True, user_id),
                         "updates.$.ready": True,
-                    }
+                    },
                 },
                 session=session,
             )
 
             try:
                 await to_thread(
-                    shutil.move, str(hmm_temp_profile_path), str(self.profiles_path)
+                    self.profiles_path.parent.mkdir,
+                    parents=True,
+                    exist_ok=True,
+                )
+                await to_thread(
+                    shutil.move,
+                    str(hmm_temp_profile_path),
+                    str(self.profiles_path),
                 )
             except Exception:
                 await session.abort_transaction()
                 raise
 
     async def get_profiles_path(self) -> Path:
-        file_path = self._config.data_path / "hmm" / "profiles.hmm"
+        path = self._config.data_path / "hmm" / "profiles.hmm"
 
-        if await to_thread(hmm_data_exists, file_path):
-            return file_path
+        if await to_thread(path.is_file):
+            return path
 
         raise ResourceNotFoundError("Profiles file could not be found")
 
     async def get_annotations_path(self) -> Path:
         path = self._config.data_path / "hmm" / "annotations.json.gz"
 
-        if await to_thread(path.exists):
-            return path
+        if not await to_thread(path.is_file):
+            json_path = await generate_annotations_json_file(
+                self._config.data_path,
+                self._mongo,
+            )
 
-        json_path = await generate_annotations_json_file(
-            self._config.data_path, self._mongo
-        )
-
-        await to_thread(compress_file_with_gzip, json_path, path)
+            await to_thread(compress_file_with_gzip, json_path, path)
 
         return path
 
     async def clean_status(self):
-        """
-        Reset the HMM status to its starting state.
+        """Reset the HMM status to its starting state.
 
         This is called in the event that an HMM data installation fails.
         """

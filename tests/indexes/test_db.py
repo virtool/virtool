@@ -1,8 +1,8 @@
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.indexes.db
-from aiohttp.test_utils import make_mocked_coro
 from virtool.indexes.db import (
     attach_files,
     get_current_id_and_version,
@@ -15,7 +15,12 @@ from virtool.indexes.models import SQLIndexFile
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
 async def test_create(
-    index_id, mocker, snapshot, mongo, test_random_alphanumeric, static_time
+    index_id,
+    mocker,
+    snapshot,
+    mongo,
+    test_random_alphanumeric,
+    static_time,
 ):
     await mongo.references.insert_one({"_id": "foo"})
 
@@ -24,13 +29,17 @@ async def test_create(
             "_id": "abc",
             "index": {"id": "unbuilt", "version": "unbuilt"},
             "reference": {"id": "foo"},
-        }
+        },
     )
 
     mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
 
     document = await virtool.indexes.db.create(
-        mongo, "foo", "test", "bar", index_id=index_id
+        mongo,
+        "foo",
+        "test",
+        "bar",
+        index_id=index_id,
     )
 
     assert document == snapshot
@@ -72,29 +81,6 @@ async def test_get_next_version(empty, has_ref, test_indexes, mongo):
     assert await get_next_version(mongo, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_processor(snapshot, fake2, mongo):
-    user = await fake2.users.create()
-
-    await mongo.history.insert_many(
-        [
-            {"_id": "foo.0", "index": {"id": "baz"}, "otu": {"id": "foo"}},
-            {"_id": "foo.1", "index": {"id": "baz"}, "otu": {"id": "foo"}},
-            {"_id": "bar.0", "index": {"id": "baz"}, "otu": {"id": "bar"}},
-            {"_id": "bar.1", "index": {"id": "baz"}, "otu": {"id": "bar"}},
-            {"_id": "bar.2", "index": {"id": "baz"}, "otu": {"id": "bar"}},
-            {"_id": "far.0", "index": {"id": "boo"}, "otu": {"id": "foo"}},
-        ],
-        session=None,
-    )
-
-    assert (
-        await virtool.indexes.db.processor(
-            mongo, {"_id": "baz", "user": {"id": user.id}}
-        )
-        == snapshot
-    )
-
-
 async def test_get_patched_otus(mocker, mongo, config):
     m = mocker.patch(
         "virtool.history.db.patch_to_version",
@@ -112,30 +98,38 @@ async def test_get_patched_otus(mocker, mongo, config):
             mocker.call(config.data_path, mongo, "foo", 2),
             mocker.call(config.data_path, mongo, "bar", 10),
             mocker.call(config.data_path, mongo, "baz", 4),
-        ]
+        ],
     )
 
 
 async def test_update_last_indexed_versions(mongo, test_otu, spawn_client):
-    client = await spawn_client(authorize=True)
+    await spawn_client(authenticated=True)
     test_otu["version"] = 1
 
-    await client.db.otus.insert_one(test_otu)
+    await mongo.otus.insert_one(test_otu)
 
     async with mongo.create_session() as session:
         await update_last_indexed_versions(mongo, "hxn167", session)
 
-    document = await client.db.otus.find_one({"reference.id": "hxn167"})
+    document = await mongo.otus.find_one({"reference.id": "hxn167"})
 
     assert document["last_indexed_version"] == document["version"]
 
 
 async def test_attach_files(snapshot, pg: AsyncEngine):
     index_1 = SQLIndexFile(
-        id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567
+        id=1,
+        name="reference.1.bt2",
+        index="foo",
+        type="bowtie2",
+        size=1234567,
     )
     index_2 = SQLIndexFile(
-        id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567
+        id=2,
+        name="reference.2.bt2",
+        index="foo",
+        type="bowtie2",
+        size=1234567,
     )
 
     async with AsyncSession(pg) as session:

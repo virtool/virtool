@@ -1,17 +1,17 @@
 import sys
 from datetime import datetime
-from logging import getLogger
 
 import arrow
 from sqlalchemy import select, Column, Integer, String, DateTime
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 
 from virtool.migration.cls import AppliedRevision
 from virtool.pg.base import Base
 
-REQUIRED_VIRTOOL_REVISION = "011389a5ae19"
+REQUIRED_VIRTOOL_REVISION = "141c7ecb99b7"
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 class SQLRevision(Base):
@@ -108,17 +108,16 @@ async def check_data_revision_version(pg: AsyncEngine):
 
     :param pg: the application database object
     """
+    log = logger.bind(revision=REQUIRED_VIRTOOL_REVISION)
+
     async with AsyncSession(pg) as session:
         result = await session.execute(
             select(SQLRevision).where(SQLRevision.revision == REQUIRED_VIRTOOL_REVISION)
         )
 
         if result.first():
-            logger.info("Found required revision id=%s", REQUIRED_VIRTOOL_REVISION)
+            log.info("Found required revision")
             return
 
-    logger.critical(
-        "The required revision has not been applied id=%s", REQUIRED_VIRTOOL_REVISION
-    )
-
+    log.critical("The required revision has not been applied")
     sys.exit(1)

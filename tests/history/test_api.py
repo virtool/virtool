@@ -2,20 +2,28 @@ import asyncio
 
 import pytest
 
+from tests.fixtures.client import ClientSpawner
+from virtool.mongo.core import Mongo
 
-@pytest.mark.apitest
-async def test_find(snapshot, spawn_client, test_changes, static_time):
-    """
-    Test that a list of processed change documents are returned with a ``200`` status.
 
-    """
-    client = await spawn_client(authorize=True)
+async def test_find(
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    test_changes,
+    static_time,
+):
+    """Test that a list of processed change documents are returned with a ``200`` status."""
+    client = await spawn_client(authenticated=True)
 
     await asyncio.gather(
-        client.db.references.insert_one(
-            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
+        mongo.references.insert_one(
+            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"},
         ),
-        client.db.history.insert_many(test_changes, session=None),
+        mongo.history.insert_many(
+            [{**c, "user": {"id": client.user.id}} for c in test_changes],
+            session=None,
+        ),
     )
 
     resp = await client.get("/history")
@@ -24,19 +32,26 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_time):
-    """
-    Test that a specific history change can be retrieved by its change_id.
-
-    """
-    client = await spawn_client(authorize=True)
+async def test_get(
+    error,
+    snapshot,
+    resp_is,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    test_changes,
+    static_time,
+):
+    """Test that a specific history change can be retrieved by its change_id."""
+    client = await spawn_client(authenticated=True)
 
     await asyncio.gather(
-        client.db.history.insert_many(test_changes, session=None),
-        client.db.references.insert_one(
-            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"}
+        mongo.history.insert_many(
+            [{**c, "user": {"id": client.user.id}} for c in test_changes],
+            session=None,
+        ),
+        mongo.references.insert_one(
+            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"},
         ),
     )
 
@@ -52,17 +67,20 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
 async def test_revert(
-    error, remove, snapshot, create_mock_history, spawn_client, check_ref_right, resp_is
+    error,
+    remove,
+    snapshot,
+    create_mock_history,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    check_ref_right,
+    resp_is,
 ):
-    """
-    Test that a valid request results in a reversion and a ``204`` response.
-
-    """
-    client = await spawn_client(authorize=True)
+    """Test that a valid request results in a reversion and a ``204`` response."""
+    client = await spawn_client(authenticated=True)
 
     await create_mock_history(remove)
 
@@ -80,6 +98,6 @@ async def test_revert(
 
     await resp_is.no_content(resp)
 
-    assert await client.db.otus.find_one() == snapshot
-    assert await client.db.history.find().to_list(None) == snapshot
-    assert await client.db.sequences.find().to_list(None) == snapshot
+    assert await mongo.otus.find_one() == snapshot
+    assert await mongo.history.find().to_list(None) == snapshot
+    assert await mongo.sequences.find().to_list(None) == snapshot

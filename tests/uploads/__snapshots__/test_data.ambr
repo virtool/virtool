@@ -1,6 +1,7 @@
+# serializer version: 1
 # name: test_create[obj]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'id': 1,
     'name': 'sample_1.fq.gz',
     'name_on_disk': '1-sample_1.fq.gz',
@@ -10,17 +11,16 @@
     'reserved': False,
     'size': 16700094,
     'type': 'reads',
-    'uploaded_at': <class 'datetime'>,
-    'user': <class 'dict'> {
-      'administrator': False,
+    'uploaded_at': datetime,
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_create[sql]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': datetime,
     'id': 1,
     'name': 'sample_1.fq.gz',
     'name_on_disk': '1-sample_1.fq.gz',
@@ -29,28 +29,28 @@
     'removed_at': None,
     'reserved': False,
     'size': 16700094,
+    'space': None,
     'type': 'reads',
-    'uploaded_at': <class 'datetime'>,
+    'uploaded_at': datetime,
     'user': 'bf1b993c',
-  }
----
+  })
+# ---
 # name: test_delete[after]
-  <class 'dict'> {
-    'created_at': <class 'datetime'>,
+  dict({
+    'created_at': 'approximately_now_datetime',
     'id': 1,
     'name': 'test.fq.gz',
     'name_on_disk': '1-test.fq.gz',
     'ready': True,
     'removed': True,
-    'removed_at': <class 'datetime'>,
+    'removed_at': 'approximately_now_datetime',
     'reserved': False,
     'size': 16700094,
     'type': 'reads',
-    'uploaded_at': <class 'datetime'>,
-    'user': <class 'dict'> {
-      'administrator': False,
+    'uploaded_at': 'approximately_now_datetime',
+    'user': dict({
       'handle': 'leeashley',
       'id': 'bf1b993c',
-    },
-  }
----
+    }),
+  })
+# ---

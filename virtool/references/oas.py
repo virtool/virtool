@@ -18,10 +18,7 @@ ALLOWED_DATA_TYPE = ["barcode", "genome"]
 
 
 def check_data_type(data_type: str) -> str:
-    """
-    Checks that the data type is valid.
-    """
-
+    """Checks that the data type is valid."""
     if data_type not in ALLOWED_DATA_TYPE:
         raise ValueError("data type not allowed")
 
@@ -30,37 +27,41 @@ def check_data_type(data_type: str) -> str:
 
 class CreateReferenceRequest(BaseModel):
     name: constr(strip_whitespace=True) = Field(
-        default="", description="the virus name"
+        default="",
+        description="the virus name",
     )
     description: constr(strip_whitespace=True) = Field(
-        default="", description="a longer description for the reference"
+        default="",
+        description="a longer description for the reference",
     )
     data_type: str = Field(default="genome", description="the sequence data type")
     organism: str = Field(default="", description="the organism")
     release_id: Optional[str] = Field(
-        default=11447367, description="the id of the GitHub release to install"
+        default=11447367,
+        description="the id of the GitHub release to install",
     )
     clone_from: Optional[str] = Field(
-        description="a valid ref_id that the new reference should be cloned from"
+        description="a valid ref_id that the new reference should be cloned from",
     )
     import_from: Optional[str] = Field(
-        description="a valid file_id that the new reference should be imported from"
+        description="a valid file_id that the new reference should be imported from",
     )
     remote_from: Optional[str] = Field(
-        description="a valid GitHub slug to download and update the new reference from"
+        description="a valid GitHub slug to download and update the new reference from",
     )
 
     _prevent_none = prevent_none(
-        "release_id", "clone_from", "import_from", "remote_from"
+        "release_id",
+        "clone_from",
+        "import_from",
+        "remote_from",
     )
 
     @root_validator
     def check_values(cls, values: Union[str, constr]):
-        """
-        Checks that only one of clone_from, import_from or
+        """Checks that only one of clone_from, import_from or
         remote_from are inputted, if any.
         """
-
         clone_from, import_from, remote_from = (
             values.get("clone_from"),
             values.get("import_from"),
@@ -70,17 +71,17 @@ class CreateReferenceRequest(BaseModel):
         if clone_from:
             if import_from or remote_from:
                 raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed"
+                    "Only one of clone_from, import_from and remote_from are allowed",
                 )
         elif import_from:
             if clone_from or remote_from:
                 raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed"
+                    "Only one of clone_from, import_from and remote_from are allowed",
                 )
         elif remote_from:
             if clone_from or import_from:
                 raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed"
+                    "Only one of clone_from, import_from and remote_from are allowed",
                 )
 
             if remote_from not in ALLOWED_REMOTE:
@@ -96,7 +97,7 @@ class CreateReferenceRequest(BaseModel):
                 "name": "Plant Viruses",
                 "organism": "viruses",
                 "data_type": "genome",
-            }
+            },
         }
 
 
@@ -142,7 +143,7 @@ class CreateReferenceResponse(Reference):
                         "modify": False,
                         "modify_otu": False,
                         "remove": False,
-                    }
+                    },
                 ],
                 "id": "d19exr83",
                 "internal_control": None,
@@ -176,7 +177,7 @@ class CreateReferenceResponse(Reference):
                         "remove": True,
                     },
                 ],
-            }
+            },
         }
 
 
@@ -197,7 +198,7 @@ class FindReferencesResponse(ReferenceSearchResult):
                                 "modify": False,
                                 "modify_otu": False,
                                 "remove": False,
-                            }
+                            },
                         ],
                         "id": "d19exr83",
                         "internal_control": None,
@@ -235,7 +236,7 @@ class FindReferencesResponse(ReferenceSearchResult):
                 "page_count": 1,
                 "per_page": 25,
                 "total_count": 2,
-            }
+            },
         }
 
 
@@ -254,7 +255,7 @@ class ReferenceResponse(Reference):
                         "modify": False,
                         "modify_otu": False,
                         "remove": False,
-                    }
+                    },
                 ],
                 "id": "d19exr83",
                 "internal_control": None,
@@ -304,7 +305,7 @@ class ReferenceReleaseResponse(ReferenceRelease):
                 "content_type": "application/gzip",
                 "retrieved_at": "2018-06-14T19:52:17.465000Z",
                 "newer": True,
-            }
+            },
         }
 
 
@@ -318,26 +319,26 @@ class ReferenceTargetRequest(BaseModel):
 
 
 class UpdateReferenceRequest(BaseModel):
-    name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
-        description="the virus name"
+    name: constr(strip_whitespace=True, min_length=1) | None = Field(
+        description="the virus name",
     )
-    description: Optional[constr(strip_whitespace=True)] = Field(
-        description="a longer description for the reference"
+    description: constr(strip_whitespace=True) | None = Field(
+        description="a longer description for the reference",
     )
-    internal_control: Optional[str] = Field(
-        description="set the OTU identified by the passed id as the internal control for the reference"
+    internal_control: str | None = Field(
+        description="set the OTU identified by the passed id as the internal control for the reference",
     )
     organism: Optional[constr(strip_whitespace=True)] = Field(
-        description="the organism"
+        description="the organism",
     )
     restrict_source_types: Optional[bool] = Field(
-        description="option to restrict source types"
+        description="option to restrict source types",
     )
     source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
-        description="source types"
+        description="source types",
     )
     targets: Optional[List[ReferenceTargetRequest]] = Field(
-        description="list of target sequences"
+        description="list of target sequences",
     )
 
     _prevent_none = prevent_none(
@@ -356,14 +357,12 @@ class UpdateReferenceRequest(BaseModel):
                 "name": "Regulated Pests",
                 "organism": "phytoplasma",
                 "internal_control": "ah4m5jqz",
-            }
+            },
         }
 
     @validator("targets", check_fields=False)
     def check_targets_name(cls, targets):
-        """
-        Sets `name` to the provided `id` if it is `None`.
-        """
+        """Sets `name` to the provided `id` if it is `None`."""
         names = [t.name for t in targets]
 
         if len(names) != len(set(names)):
@@ -373,16 +372,16 @@ class UpdateReferenceRequest(BaseModel):
 
 
 class ReferenceRightsRequest(BaseModel):
-    build: Optional[bool] = Field(
-        description="allow members to build new indexes for the reference"
+    build: bool | None = Field(
+        description="allow members to build new indexes for the reference",
     )
-    modify: Optional[bool] = Field(
-        description="allow members to modify the reference metadata and settings"
+    modify: bool | None = Field(
+        description="allow members to modify the reference metadata and settings",
     )
-    modify_otu: Optional[bool] = Field(
-        description="allow members to modify the reference’s member OTUs"
+    modify_otu: bool | None = Field(
+        description="allow members to modify the reference’s member OTUs",
     )
-    remove: Optional[bool] = Field(description="allow members to remove the reference")
+    remove: bool | None = Field(description="allow members to remove the reference")
 
     class Config:
         schema_extra = {"example": {"build": True, "modify": True}}
@@ -390,11 +389,11 @@ class ReferenceRightsRequest(BaseModel):
     _prevent_none = prevent_none("*")
 
 
-class CreateReferenceGroupsSchema(ReferenceRightsRequest):
-    group_id: str = Field(description="the id of the group to add")
+class CreateReferenceGroupRequest(ReferenceRightsRequest):
+    group_id: int = Field(description="the id of the group to add")
 
     class Config:
-        schema_extra = {"example": {"group_id": "baz", "modify_otu": True}}
+        schema_extra = {"example": {"group_id": 2, "modify_otu": True}}
 
 
 class CreateReferenceGroupResponse(ReferenceGroup):
@@ -404,12 +403,12 @@ class CreateReferenceGroupResponse(ReferenceGroup):
                 {
                     "build": False,
                     "created_at": "2022-06-10T20:00:34.129000Z",
-                    "id": "baz",
+                    "id": 5,
                     "modify": False,
                     "modify_otu": True,
                     "remove": False,
-                }
-            ]
+                },
+            ],
         }
 
 
@@ -420,12 +419,12 @@ class ReferenceGroupsResponse(ReferenceGroup):
                 {
                     "build": False,
                     "created_at": "2022-06-10T20:00:34.129000Z",
-                    "id": "sidney",
+                    "id": 5,
                     "modify": False,
                     "modify_otu": False,
                     "remove": False,
-                }
-            ]
+                },
+            ],
         }
 
 
@@ -435,15 +434,15 @@ class ReferenceGroupResponse(ReferenceGroup):
             "example": {
                 "build": False,
                 "created_at": "2022-06-10T20:00:34.129000Z",
-                "id": "sidney",
+                "id": 4,
                 "modify": False,
                 "modify_otu": False,
                 "remove": False,
-            }
+            },
         }
 
 
-class CreateReferenceUsersRequest(ReferenceRightsRequest):
+class CreateReferenceUserRequest(ReferenceRightsRequest):
     user_id: str = Field(description="the id of the user to add")
 
     class Config:
@@ -460,7 +459,7 @@ class ReferenceUsersResponse(ReferenceUser):
                 "modify": False,
                 "modify_otu": True,
                 "remove": False,
-            }
+            },
         }
 
 
@@ -479,8 +478,8 @@ class GetReferenceUpdateResponse(ReferenceInstalled):
                     "created_at": "2018-06-14T18:37:54.242000Z",
                     "user": {"id": "igboyes"},
                     "ready": True,
-                }
-            ]
+                },
+            ],
         }
 
 
@@ -518,7 +517,7 @@ class CreateReferenceIndexesResponse(IndexMinimal):
                 "reference": {"id": "foo"},
                 "user": {"administrator": False, "handle": "bob", "id": "test"},
                 "version": 9,
-            }
+            },
         }
 
 
@@ -544,12 +543,12 @@ class ReferenceHistoryResponse(HistorySearchResult):
                             "handle": "igboyes",
                             "id": "igboyes",
                         },
-                    }
+                    },
                 ],
                 "total_count": 1419,
                 "found_count": 1419,
                 "page_count": 710,
                 "per_page": 1,
                 "page": 1,
-            }
+            },
         }

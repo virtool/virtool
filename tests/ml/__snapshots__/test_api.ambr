@@ -1,65 +1,87 @@
+# serializer version: 1
 # name: test_get[json]
-  <class 'dict'> {
-    'created_at': <class 'str'>,
+  dict({
+    'created_at': str,
     'description': '',
     'id': 1,
-    'latest_release': None,
+    'latest_release': dict({
+      'created_at': str,
+      'github_url': 'http://wiggins.com/',
+      'id': 3,
+      'name': 'cknqtDSSXFzHxwTjtpho',
+      'published_at': '2023-09-26T04:33:42Z',
+      'ready': False,
+      'size': 6016,
+    }),
     'name': 'ml-plant-viruses',
     'release_count': 3,
-    'releases': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'str'>,
-        'download_url': 'https://www.snyder.com/',
+    'releases': list([
+      dict({
+        'created_at': str,
+        'github_url': 'http://wiggins.com/',
+        'id': 3,
+        'name': 'cknqtDSSXFzHxwTjtpho',
+        'published_at': '2023-09-26T04:33:42Z',
+        'ready': False,
+        'size': 6016,
+      }),
+      dict({
+        'created_at': str,
         'github_url': 'https://carlson.com/',
         'id': 1,
         'name': 'DpjjFIyeNTWRUWCuKoQS',
         'published_at': '2009-06-13T09:32:41Z',
         'ready': False,
         'size': 4509,
-      },
-      <class 'dict'> {
-        'created_at': <class 'str'>,
-        'download_url': 'http://walker.com/',
+      }),
+      dict({
+        'created_at': str,
         'github_url': 'https://www.ruiz.org/',
         'id': 2,
         'name': 'TVHuIhJxeMChNzFJEUSg',
         'published_at': '1996-05-28T05:17:47Z',
         'ready': False,
         'size': 6789,
-      },
-      <class 'dict'> {
-        'created_at': <class 'str'>,
-        'download_url': 'http://www.morales.biz/',
-        'github_url': 'http://wiggins.com/',
-        'id': 3,
-        'name': 'cknqtDSSXFzHxwTjtpho',
-        'published_at': '1994-12-27T20:12:38Z',
-        'ready': False,
-        'size': 1535,
-      },
-    ],
-  }
----
+      }),
+    ]),
+  })
+# ---
 # name: test_list[json]
-  <class 'dict'> {
-    'items': <class 'list'> [
-      <class 'dict'> {
-        'created_at': <class 'str'>,
+  dict({
+    'items': list([
+      dict({
+        'created_at': str,
         'description': '',
         'id': 2,
-        'latest_release': None,
+        'latest_release': dict({
+          'created_at': str,
+          'github_url': 'https://giles-rubio.com/',
+          'id': 6,
+          'name': 'jZfEiUXPqmNpvcgbedvC',
+          'published_at': '2010-03-23T06:52:47Z',
+          'ready': False,
+          'size': 6917,
+        }),
         'name': 'ml-insect-viruses',
         'release_count': 3,
-      },
-      <class 'dict'> {
-        'created_at': <class 'str'>,
+      }),
+      dict({
+        'created_at': str,
         'description': '',
         'id': 1,
-        'latest_release': None,
+        'latest_release': dict({
+          'created_at': str,
+          'github_url': 'http://wiggins.com/',
+          'id': 3,
+          'name': 'cknqtDSSXFzHxwTjtpho',
+          'published_at': '2023-09-26T04:33:42Z',
+          'ready': False,
+          'size': 6016,
+        }),
         'name': 'ml-plant-viruses',
         'release_count': 3,
-      },
-    ],
+      }),
+    ]),
     'last_synced_at': None,
-  }
----
+  })
+# ---

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import arrow
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
 
@@ -21,12 +21,10 @@ from virtool.uploads.models import SQLUpload
 
 class AbstractFakeDataGenerator(ABC):
     @abstractmethod
-    async def insert(self) -> Document:
-        ...
+    async def insert(self) -> Document: ...
 
     @abstractmethod
-    async def get_id(self) -> str:
-        ...
+    async def get_id(self) -> str: ...
 
 
 class FakeJobGenerator(AbstractFakeDataGenerator):
@@ -44,7 +42,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
                 self._faker.fake.date_time_between(
                     start_date=datetime.datetime(2016, 1, 1, 12, 32, 33),
                     end_date=datetime.datetime(2025, 12, 31, 23, 59, 59),
-                )
+                ),
             ).naive
 
             end_timestamp = timestamp + datetime.timedelta(days=1.5)
@@ -57,8 +55,9 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
                 progress = self._faker.fake.random_int(min=progress, max=100)
                 timestamp = arrow.get(
                     self._faker.fake.date_time_between(
-                        start_date=timestamp, end_date=end_timestamp
-                    )
+                        start_date=timestamp,
+                        end_date=end_timestamp,
+                    ),
                 ).naive
         else:
             status = [
@@ -68,7 +67,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
                     "error": None,
                     "progress": 0,
                     "timestamp": self._faker.date_time(),
-                }
+                },
             ]
 
         workflow = self._faker.fake.workflow() if randomize else "nuvs"
@@ -129,7 +128,8 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
             upload = SQLUpload(
                 id=1,
                 created_at=self._faker.fake.date_time_between(
-                    datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
+                    datetime.datetime(2015, 10, 6),
+                    datetime.datetime(2050, 1, 1),
                 ),
                 name="palm.fa.gz",
                 name_on_disk="1-palm.fa.gz",
@@ -140,7 +140,8 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
                 type="subtraction",
                 user=user["_id"],
                 uploaded_at=self._faker.fake.date_time_between(
-                    datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
+                    datetime.datetime(2015, 10, 6),
+                    datetime.datetime(2050, 1, 1),
                 ),
             )
 
@@ -165,7 +166,7 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
                         type="bowtie2",
                         size=93845,
                     ),
-                ]
+                ],
             )
 
             await session.commit()
@@ -181,7 +182,7 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
                     "count": self._faker.integer(max_value=36),
                 },
                 {"ready": False},
-            ]
+            ],
         )
 
         document = {
@@ -195,7 +196,8 @@ class FakeSubtractionGenerator(AbstractFakeDataGenerator):
             "upload": 1,
             "user": {"id": user["_id"]},
             "created_at": self._faker.fake.date_time_between(
-                datetime.datetime(2015, 10, 6), datetime.datetime(2050, 1, 1)
+                datetime.datetime(2015, 10, 6),
+                datetime.datetime(2050, 1, 1),
             ),
             **finalization_update,
         }
@@ -249,33 +251,55 @@ class FakeGenerator:
         self.subtractions = FakeSubtractionGenerator(self, mongo, pg)
 
 
-@pytest.fixture
+@pytest.fixture()
 def app(mongo, pg, tmp_path, config, data_layer):
     return {
-        "db": mongo,
-        "fake": FakerWrapper(),
-        "pg": pg,
         "config": config,
         "data": data_layer,
+        "fake": FakerWrapper(),
+        "mongo": mongo,
+        "pg": pg,
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def fake(mongo, pg):
+    """Provides a :class:`FakeGenerator` object for generating deterministic fake data.
+
+    This is a legacy fixture and should not be used in new tests.
+    """
     return FakeGenerator(mongo, pg)
 
 
-@pytest.fixture
-def fake2(data_layer: "DataLayer", example_path: Path, mocker, mongo: Mongo):
-    """A fixture for generating deterministic fake data."""
+@pytest.fixture()
+def fake2(
+    data_layer: "DataLayer",
+    example_path: Path,
+    mocker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+):
+    """Provides a :class:`DataFaker` object for generating deterministic fake data.
 
+    This fixture supercedes :fixture:`fake` and should be used in all new tests.
+
+    .. code-block:: python
+
+        async def test_example(data_layer: DataLayer, fake2: DataFaker):
+            # Create a fake job.
+            job = await fake2.jobs.create()
+
+
+            assert await data_layer.jobs.get(job.id) == job
+    """
     # Use a local example ML model instead of downloading from GitHub.
     mocker.patch.object(
         HTTPClient,
         "download",
         side_effect=lambda url, target: shutil.copy(
-            example_path / "ml/model.tar.gz", target
+            example_path / "ml/model.tar.gz",
+            target,
         ),
     )
 
-    return DataFaker(data_layer, mongo)
+    return DataFaker(data_layer, mongo, pg)

@@ -4,9 +4,11 @@ from unittest.mock import call
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.tasks.models import SQLTask
 
@@ -15,9 +17,9 @@ from virtool.tasks.models import SQLTask
 async def test_list(
     has_last_checked_at: bool,
     data_layer: DataLayer,
-    fake2,
+    fake2: DataFaker,
     pg: AsyncEngine,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     """
@@ -49,9 +51,7 @@ async def test_list(
 async def test_get(
     data_layer: DataLayer,
     fake2,
-    pg: AsyncEngine,
     snapshot,
-    static_time,
 ):
     """Test that MLData.get() returns a complete representation of an ML model."""
     await fake2.ml.populate()
@@ -123,7 +123,7 @@ async def test_load(
             call("https://www.snyder.com/", config.data_path / "ml/1/model.tar.gz"),
             call("http://walker.com/", config.data_path / "ml/2/model.tar.gz"),
             call("http://www.morales.biz/", config.data_path / "ml/3/model.tar.gz"),
-            call("http://www.smith.com/", config.data_path / "ml/9/model.tar.gz"),
+            call("http://johnson.com/", config.data_path / "ml/9/model.tar.gz"),
         ],
         any_order=True,
     )

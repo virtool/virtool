@@ -4,7 +4,6 @@ from dataclasses import dataclass, asdict
 
 import jwt
 from aiohttp.web import Application
-from jose.jwt import decode, get_unverified_header
 
 from virtool.config import get_config_from_app
 
@@ -18,7 +17,7 @@ class JWKArgs:
     e: str
 
 
-async def validate_token(app: Application, token: jwt) -> dict:
+async def validate_token(app: Application, token) -> dict:
     """
     Validate token and return claims using JWK_ARGS environment variable.
 
@@ -29,7 +28,7 @@ async def validate_token(app: Application, token: jwt) -> dict:
 
     jwk_args = app["b2c"].jwk_args or await update_jwk_args(app, token)
 
-    return decode(
+    return jwt.decode(
         token,
         asdict(jwk_args),
         algorithms=["RS256"],
@@ -45,7 +44,7 @@ async def update_jwk_args(app: Application, token: jwt) -> JWKArgs:
     :param app: the app object
     :return: jwk_args
     """
-    header = await to_thread(get_unverified_header, token)
+    header = await to_thread(jwt.get_unverified_header, token)
     authority = app["b2c"].authority
     resp = await app["client"].get(
         f"{authority}/discovery/v2.0/keys", allow_redirects=True

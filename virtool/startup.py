@@ -2,13 +2,14 @@ import asyncio
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from logging import getLogger
 
 from aiohttp import ClientSession
 from aiojobs.aiohttp import get_scheduler_from_app
 from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
-from virtool_core.redis import connect as connect_redis, periodically_ping_redis
+from structlog import get_logger
+from virtool_core.redis import connect as connect_redis
+from virtool_core.redis import periodically_ping_redis
 
 from virtool.authorization.client import (
     AuthorizationClient,
@@ -24,6 +25,7 @@ from virtool.mongo.connect import connect_mongo
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate_status
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
@@ -35,7 +37,7 @@ from virtool.utils import get_http_session_from_app
 from virtool.version import determine_server_version, get_version_from_app
 from virtool.ws.server import WSServer
 
-logger = getLogger("startup")
+logger = get_logger("startup")
 
 
 @dataclass
@@ -47,8 +49,7 @@ class B2C:
 
 
 async def startup_b2c(app: App):
-    """
-    Initiate connection to Azure AD B2C tenant.
+    """Initiate connection to Azure AD B2C tenant.
 
     :param app: Application object
     """
@@ -63,10 +64,10 @@ async def startup_b2c(app: App):
             config.b2c_client_secret,
             config.b2c_tenant,
             config.b2c_user_flow,
-        ]
+        ],
     ):
         logger.critical(
-            "Required B2C client information not provided for --use-b2c option"
+            "Required B2C client information not provided for --use-b2c option",
         )
         sys.exit(1)
 
@@ -85,29 +86,27 @@ async def startup_check_db(app: App):
     if get_config_from_app(app).no_check_db:
         return logger.info("Skipping database checks")
 
-    db = app["db"]
+    mongo = get_mongo_from_app(app)
 
     logger.info("Checking database")
-    await migrate_status(db)
+    await migrate_status(mongo)
 
     # Make sure the indexes collection exists before later trying to set an compound
     # index on it.
     try:
-        await db.motor_client.create_collection("indexes")
+        await mongo.motor_database.create_collection("indexes")
     except CollectionInvalid:
         pass
 
 
 async def startup_data(app: App):
-    """
-    Create the application data layer object.
+    """Create the application data layer object.
 
     :param app: the application object
     """
-
     app["data"] = create_data_layer(
         get_authorization_client_from_app(app),
-        app["db"],
+        get_mongo_from_app(app),
         app["pg"],
         get_config_from_app(app),
         get_http_session_from_app(app),
@@ -116,8 +115,7 @@ async def startup_data(app: App):
 
 
 async def startup_databases(app: App):
-    """
-    Connects to MongoDB, Redis and Postgres concurrently
+    """Connects to MongoDB, Redis and Postgres concurrently
 
     :param app: the app object
 
@@ -129,7 +127,9 @@ async def startup_databases(app: App):
         connect_pg(config.postgres_connection_string),
         connect_redis(config.redis_connection_string),
         connect_openfga(
-            config.openfga_host, config.openfga_scheme, config.openfga_store_name
+            config.openfga_host,
+            config.openfga_scheme,
+            config.openfga_store_name,
         ),
     )
 
@@ -141,10 +141,10 @@ async def startup_databases(app: App):
     app.update(
         {
             "authorization": AuthorizationClient(openfga_instance),
-            "db": Mongo(mongo, RandomIdProvider()),
+            "mongo": Mongo(mongo, RandomIdProvider()),
             "pg": pg,
             "redis": redis,
-        }
+        },
     )
 
 
@@ -155,8 +155,7 @@ async def startup_events(app: App):
 
 
 async def startup_executors(app: App):
-    """
-    An application ``on_startup`` callback that initializes a
+    """An application ``on_startup`` callback that initializes a
     :class:`~ThreadPoolExecutor` and attaches it to the ``app`` object.
 
     :param app: the application object
@@ -174,8 +173,7 @@ async def startup_executors(app: App):
 
 
 async def startup_http_client_session(app: App):
-    """
-    Create an async HTTP client session for the server.
+    """Create an async HTTP client session for the server.
 
     The client session is used to make requests to GitHub, NCBI, and
     https://www.virtool.ca.
@@ -186,7 +184,7 @@ async def startup_http_client_session(app: App):
     logger.info("Starting HTTP client")
 
     app["client"] = ClientSession(
-        headers={"User-Agent": f"virtool/{get_version_from_app(app)}"}
+        headers={"User-Agent": f"virtool/{get_version_from_app(app)}"},
     )
 
 
@@ -195,8 +193,7 @@ async def startup_routes(app: App):
 
 
 async def startup_sentry(app: App):
-    """
-    Create a Sentry client and attach it to the application if a DSN was configured.
+    """Create a Sentry client and attach it to the application if a DSN was configured.
 
     :param app: the application object
     """
@@ -208,8 +205,7 @@ async def startup_sentry(app: App):
 
 
 async def startup_settings(app: App):
-    """
-    Draws settings from the settings database collection.
+    """Draws settings from the settings database collection.
 
     Performs migration of old settings style to `v3.3.0` if necessary.
 
@@ -220,8 +216,7 @@ async def startup_settings(app: App):
 
 
 async def startup_task_runner(app: App):
-    """
-    An application `on_startup` callback that initializes a Virtool
+    """An application `on_startup` callback that initializes a Virtool
     :class:`virtool.tasks.runner.TaskRunner` object and puts it in app state.
 
     :param app: the app object
@@ -232,16 +227,14 @@ async def startup_task_runner(app: App):
 
 
 async def startup_version(app: App):
-    """
-    Store and log the Virtool version.
+    """Store and log the Virtool version.
 
     :param app: the application object
 
     """
     version = await determine_server_version()
 
-    logger.info("Virtool %s", version)
-    logger.info("Mode: %s", app["mode"])
+    logger.info("Starting Virtool", version=version, mode=app["mode"])
 
     app["version"] = version
 
@@ -256,7 +249,5 @@ async def startup_ws(app: App):
 
     await scheduler.spawn(ws.run())
     await scheduler.spawn(ws.periodically_close_expired_websocket_connections())
-
-    logger.info("Closing expired WS connections")
 
     app["ws"] = ws

@@ -1,8 +1,191 @@
+# serializer version: 1
+# name: TestCreate.test_duplicate[json]
+  dict({
+    'id': 'bad_request',
+    'message': 'Group already exists',
+  })
+# ---
+# name: TestCreate.test_ok[json]
+  dict({
+    'id': 1,
+    'legacy_id': None,
+    'name': 'Test',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'users': list([
+    ]),
+  })
+# ---
+# name: TestFind.test_list
+  list([
+    dict({
+      'id': 2,
+      'legacy_id': None,
+      'name': 'architects',
+    }),
+    dict({
+      'id': 11,
+      'legacy_id': None,
+      'name': 'Caps',
+    }),
+    dict({
+      'id': 7,
+      'legacy_id': None,
+      'name': 'chiropractors',
+    }),
+    dict({
+      'id': 10,
+      'legacy_id': None,
+      'name': 'gaffers',
+    }),
+    dict({
+      'id': 5,
+      'legacy_id': None,
+      'name': 'herbalists',
+    }),
+    dict({
+      'id': 4,
+      'legacy_id': None,
+      'name': 'immunologists',
+    }),
+    dict({
+      'id': 8,
+      'legacy_id': None,
+      'name': 'interpreters',
+    }),
+    dict({
+      'id': 6,
+      'legacy_id': None,
+      'name': 'lawyers',
+    }),
+    dict({
+      'id': 1,
+      'legacy_id': None,
+      'name': 'musicians',
+    }),
+    dict({
+      'id': 3,
+      'legacy_id': None,
+      'name': 'ophthalmologists',
+    }),
+    dict({
+      'id': 9,
+      'legacy_id': None,
+      'name': 'subs',
+    }),
+  ])
+# ---
+# name: TestFind.test_paginate[page_1]
+  dict({
+    'found_count': 15,
+    'items': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 5,
+        'legacy_id': None,
+        'name': 'Caps',
+      }),
+      dict({
+        'id': 8,
+        'legacy_id': None,
+        'name': 'chiropractors',
+      }),
+      dict({
+        'id': 13,
+        'legacy_id': None,
+        'name': 'curators',
+      }),
+      dict({
+        'id': 11,
+        'legacy_id': None,
+        'name': 'gaffers',
+      }),
+      dict({
+        'id': 6,
+        'legacy_id': None,
+        'name': 'herbalists',
+      }),
+      dict({
+        'id': 14,
+        'legacy_id': None,
+        'name': 'illustrators',
+      }),
+      dict({
+        'id': 4,
+        'legacy_id': None,
+        'name': 'immunologists',
+      }),
+      dict({
+        'id': 9,
+        'legacy_id': None,
+        'name': 'interpreters',
+      }),
+      dict({
+        'id': 7,
+        'legacy_id': None,
+        'name': 'lawyers',
+      }),
+    ]),
+    'page': 1,
+    'page_count': 2,
+    'per_page': 10,
+    'total_count': 15,
+  })
+# ---
+# name: TestFind.test_paginate[page_2]
+  dict({
+    'found_count': 15,
+    'items': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
+      dict({
+        'id': 12,
+        'legacy_id': None,
+        'name': 'oceanographers',
+      }),
+      dict({
+        'id': 3,
+        'legacy_id': None,
+        'name': 'ophthalmologists',
+      }),
+      dict({
+        'id': 10,
+        'legacy_id': None,
+        'name': 'subs',
+      }),
+      dict({
+        'id': 15,
+        'legacy_id': None,
+        'name': 'toxicologists',
+      }),
+    ]),
+    'page': 2,
+    'page_count': 2,
+    'per_page': 10,
+    'total_count': 15,
+  })
+# ---
 # name: TestUpdate.test
-  <class 'dict'> {
-    'id': 'bf1b993c',
+  dict({
+    'id': 1,
+    'legacy_id': None,
     'name': 'Technicians',
-    'permissions': <class 'dict'> {
+    'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
       'create_sample': True,
@@ -11,172 +194,55 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': True,
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
-        'handle': 'fcarpenter',
-        'id': '3cbb22cc',
-      },
-      <class 'dict'> {
-        'administrator': False,
-        'handle': 'chelsea34',
+    }),
+    'users': list([
+      dict({
+        'handle': 'garciaregina',
         'id': 'da42dca3',
-      },
-      <class 'dict'> {
-        'administrator': False,
-        'handle': 'michelle34',
-        'id': '09d01419',
-      },
-    ],
-  }
----
-# name: TestUpdate.test[users]
-  <class 'list'> [
-    User(id='test', administrator=True, handle='bob', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=False, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False), primary_group=None, administrator_role=<AdministratorRole.FULL: 'full'>),
-    User(id='7cf872dc', administrator=False, handle='qtaylor', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=False, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False), primary_group=None, administrator_role=None),
-    User(id='3cbb22cc', administrator=False, handle='fcarpenter', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
-    User(id='da42dca3', administrator=False, handle='chelsea34', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
-    User(id='09d01419', administrator=False, handle='michelle34', active=True, b2c=None, b2c_display_name=None, b2c_family_name=None, b2c_given_name=None, b2c_oid=None, force_reset=False, groups=[GroupMinimal(id='bf1b993c', name='Technicians')], last_password_change=datetime.datetime(2015, 10, 6, 20, 0), permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=True), primary_group=None, administrator_role=None),
-  ]
----
-# name: TestUpdate.test_not_found[json]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_create[201][json]
-  <class 'dict'> {
-    'id': 'fb085f7f',
-    'name': 'Test',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'users': <class 'list'> [
-    ],
-  }
----
-# name: test_create[201][location]
-  'https://virtool.example.com/groups/fb085f7f'
----
-# name: test_create[400][json]
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': 'Group already exists',
-  }
----
-# name: test_create[400][location]
-  None
----
-# name: test_find
-  <class 'list'> [
-    <class 'dict'> {
-      'id': 'bf1b993c',
-      'name': 'musicians',
-    },
-    <class 'dict'> {
-      'id': 'fb085f7f',
-      'name': 'hydrogeologists',
-    },
-  ]
----
-# name: test_get[200]
-  <class 'dict'> {
-    'id': 'bf1b993c',
-    'name': 'musicians',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'users': <class 'list'> [
-      <class 'dict'> {
-        'administrator': False,
-        'handle': 'qtaylor',
+      }),
+      dict({
+        'handle': 'jacobsjames',
         'id': '7cf872dc',
-      },
-    ],
-  }
----
+      }),
+      dict({
+        'handle': 'modonnell',
+        'id': '3cbb22cc',
+      }),
+    ]),
+  })
+# ---
+# name: TestUpdate.test_not_found[json]
+  dict({
+    'id': 'not_found',
+    'message': 'Not found',
+  })
+# ---
+# name: test_get[200]
+  dict({
+    'id': 1,
+    'legacy_id': None,
+    'name': 'musicians',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'users': list([
+      dict({
+        'handle': 'lindawest',
+        'id': 'fb085f7f',
+      }),
+    ]),
+  })
+# ---
 # name: test_get[404]
-  <class 'dict'> {
+  dict({
     'id': 'not_found',
     'message': 'Not found',
-  }
----
-# name: test_remove[204][json]
-  None
----
-# name: test_remove[204][users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '7cf872dc',
-      'groups': <class 'list'> [
-        'fb085f7f',
-      ],
-    },
-    <class 'dict'> {
-      '_id': '3cbb22cc',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'da42dca3',
-      'groups': <class 'list'> [
-        'fb085f7f',
-      ],
-    },
-  ]
----
-# name: test_remove[404][json]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_remove[404][users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'groups': <class 'list'> [
-      ],
-    },
-    <class 'dict'> {
-      '_id': '7cf872dc',
-      'groups': <class 'list'> [
-        'bf1b993c',
-        'fb085f7f',
-      ],
-    },
-    <class 'dict'> {
-      '_id': '3cbb22cc',
-      'groups': <class 'list'> [
-        'bf1b993c',
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'da42dca3',
-      'groups': <class 'list'> [
-        'fb085f7f',
-      ],
-    },
-  ]
----
+  })
+# ---

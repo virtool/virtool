@@ -1,19 +1,26 @@
 import asyncio
 import os
+from pathlib import Path
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
+from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
+from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import SQLUpload
 
 
-@pytest.mark.apitest
-async def test_find_empty_subtractions(fake2, spawn_client, snapshot, static_time):
-    client = await spawn_client(authorize=True, administrator=True)
+async def test_find_empty_subtractions(
+    snapshot,
+    spawn_client: ClientSpawner,
+    static_time,
+):
+    client = await spawn_client(authenticated=True)
 
     resp = await client.get("/subtractions")
 
@@ -22,14 +29,21 @@ async def test_find_empty_subtractions(fake2, spawn_client, snapshot, static_tim
 
 
 @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
-@pytest.mark.apitest
-async def test_find(fake2, spawn_client, snapshot, static_time, per_page, page):
-    client = await spawn_client(authorize=True, administrator=True)
+async def test_find(
+    page: int | None,
+    per_page: int | None,
+    fake2: DataFaker,
+    snapshot,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    static_time,
+):
+    client = await spawn_client(authenticated=True)
 
     user = await fake2.users.create()
     job = await fake2.jobs.create(user)
 
-    await client.db.subtraction.insert_many(
+    await mongo.subtraction.insert_many(
         [
             {
                 "_id": f"id_{number}",
@@ -46,15 +60,17 @@ async def test_find(fake2, spawn_client, snapshot, static_time, per_page, page):
                 "user": {"id": user.id},
                 "job": {"id": job.id},
             }
-            for number in range(0, 5)
+            for number in range(5)
         ],
         session=None,
     )
 
     query = []
     path = "/subtractions"
+
     if per_page is not None:
         query.append(f"per_page={per_page}")
+
     if page is not None:
         query.append(f"page={page}")
         path += f"?{'&'.join(query)}"
@@ -65,40 +81,42 @@ async def test_find(fake2, spawn_client, snapshot, static_time, per_page, page):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
-async def test_get(fake2, spawn_client, static_time, snapshot):
+async def test_get(
+    fake2: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    snapshot,
+    static_time,
+):
     user = await fake2.users.create()
-
     job = await fake2.jobs.create(user)
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authenticated=True)
 
-    subtraction = {
-        "_id": "apple",
-        "count": 11,
-        "created_at": static_time.datetime,
-        "file": {
-            "id": 642,
-            "name": "Apis_mellifera.1.fa.gz",
+    await mongo.subtraction.insert_one(
+        {
+            "_id": "apple",
+            "count": 11,
+            "created_at": static_time.datetime,
+            "file": {
+                "id": 642,
+                "name": "Apis_mellifera.1.fa.gz",
+            },
+            "gc": {"a": 0.21, "t": 0.26, "g": 0.19, "c": 0.29, "n": 0.2},
+            "name": "Malus domestica",
+            "nickname": "Apple",
+            "ready": True,
+            "user": {"id": user.id},
+            "job": {"id": job.id},
         },
-        "gc": {"a": 0.21, "t": 0.26, "g": 0.19, "c": 0.29, "n": 0.2},
-        "name": "Malus domestica",
-        "nickname": "Apple",
-        "ready": True,
-        "user": {"id": user.id},
-        "job": {"id": job.id},
-    }
+    )
 
-    await client.db.subtraction.insert_one(subtraction)
-
-    resp = await client.get(f"/subtractions/{subtraction['_id']}")
+    resp = await client.get("/subtractions/apple")
 
     assert resp.status == 200
-
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_get_from_job(fake, spawn_job_client, snapshot):
     client = await spawn_job_client(authorize=True)
 
@@ -110,7 +128,6 @@ async def test_get_from_job(fake, spawn_job_client, snapshot):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "data",
     [
@@ -123,16 +140,24 @@ async def test_get_from_job(fake, spawn_job_client, snapshot):
 @pytest.mark.parametrize("has_user", [True, False])
 @pytest.mark.parametrize("has_job", [True, False])
 async def test_edit(
-    data, fake2, has_user, has_job, mocker, snapshot, spawn_client, static_time
+    data: dict,
+    has_job: bool,
+    has_user: bool,
+    fake2: DataFaker,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
-    mocker.patch(
-        "virtool.subtractions.db.get_linked_samples",
-        make_mocked_coro(
-            [{"id": "12", "name": "Sample 12"}, {"id": "22", "name": "Sample 22"}]
-        ),
-    )
-
     user = await fake2.users.create()
+
+    await mongo.samples.insert_many(
+        [
+            {"_id": "12", "name": "Sample 12", "subtractions": ["apple"]},
+            {"_id": "22", "name": "Sample 22", "subtractions": ["apple"]},
+        ],
+        session=None,
+    )
 
     document = {
         "_id": "apple",
@@ -146,6 +171,7 @@ async def test_edit(
         "name": "Malus domestica",
         "nickname": "Apple",
         "ready": True,
+        "user": None,
     }
 
     if has_user:
@@ -156,35 +182,40 @@ async def test_edit(
         document["job"] = {"id": job.id}
 
     client = await spawn_client(
-        authorize=True, permissions=[Permission.modify_subtraction]
+        authenticated=True,
+        permissions=[Permission.modify_subtraction],
     )
 
-    await client.db.subtraction.insert_one(document)
+    await mongo.subtraction.insert_one(document)
 
     resp = await client.patch("/subtractions/apple", data)
 
     assert resp.status == 200
-
-    test_resp = await resp.json()
-
-    assert test_resp == snapshot
-
-    assert await client.db.subtraction.find_one() == snapshot
+    assert await resp.json() == snapshot
+    assert await mongo.subtraction.find_one() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("exists", [True, False])
-async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
+async def test_delete(
+    exists: bool,
+    fake2: DataFaker,
+    resp_is,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    tmp_path,
+):
     client = await spawn_client(
-        authorize=True, permissions=[Permission.modify_subtraction]
+        authenticated=True,
+        permissions=[Permission.modify_subtraction],
     )
+
     get_config_from_app(client.app).data_path = tmp_path
 
     if exists:
         user = await fake2.users.create()
         job = await fake2.jobs.create(user)
 
-        await client.db.subtraction.insert_one(
+        await mongo.subtraction.insert_one(
             {
                 "_id": "foo",
                 "name": "Foo",
@@ -193,7 +224,7 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
                 "nickname": "Foo Subtraction",
                 "user": {"id": user.id},
                 "job": {"id": job.id},
-            }
+            },
         )
 
     resp = await client.delete("subtractions/foo")
@@ -201,67 +232,75 @@ async def test_delete(exists, fake2, spawn_client, tmp_path, resp_is):
     assert resp.status == 204 if exists else 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
 async def test_upload(
-    error, tmp_path, spawn_job_client, snapshot, resp_is, pg: AsyncEngine
+    error: str | None,
+    pg: AsyncEngine,
+    resp_is,
+    mongo: Mongo,
+    spawn_job_client,
+    snapshot,
+    tmp_path: Path,
 ):
     client = await spawn_job_client(authorize=True)
     test_dir = tmp_path / "files"
     test_dir.mkdir()
     test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
-    path = test_dir / "subtraction.1.bt2"
-
-    files = {"file": open(path, "rb")}
 
     get_config_from_app(client.app).data_path = tmp_path
-
-    subtraction = {"_id": "foo", "name": "Foo"}
 
     if error == "409":
         async with AsyncSession(pg) as session:
             session.add(SQLSubtractionFile(name="subtraction.1.bt2", subtraction="foo"))
             await session.commit()
 
-    await client.db.subtraction.insert_one(subtraction)
+    if error != "404":
+        await mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"})
 
     url = "/subtractions/foo/files"
 
     if error == "404_name":
-        url += "/reference.1.bt2"
+        url = f"{url}/reference.1.bt2"
     else:
-        url += "/subtraction.1.bt2"
+        url = f"{url}/subtraction.1.bt2"
 
-    resp = await client.put(url, data=files)
+    resp = await client.put(
+        url,
+        data={"file": open(test_dir / "subtraction.1.bt2", "rb")},
+    )
 
-    if error == "404_name":
-        await resp_is.not_found(resp, "Unsupported subtraction file name")
-        return
+    match error:
+        case None:
+            assert resp.status == 201
+            assert await resp.json() == snapshot
+            assert os.listdir(tmp_path / "subtractions" / "foo") == [
+                "subtraction.1.bt2",
+            ]
+        case "404_name":
+            await resp_is.not_found(resp, "Unsupported subtraction file name")
+        case "404":
+            await resp_is.not_found(resp)
+        case "409":
+            await resp_is.conflict(resp, "File name already exists")
 
-    if error == "409":
-        await resp_is.conflict(resp, "File name already exists")
-        return
 
-    assert resp.status == 201
-    assert await resp.json() == snapshot
-    assert os.listdir(tmp_path / "subtractions" / "foo") == ["subtraction.1.bt2"]
-
-
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
-async def test_finalize_subtraction(
-    error,
+async def test_finalize(
+    error: str | None,
     fake2,
-    spawn_job_client,
     snapshot,
+    mongo: Mongo,
+    spawn_job_client,
     resp_is,
-    test_subtraction_files,
     static_time,
+    test_subtraction_files,
 ):
+    client = await spawn_job_client(authorize=True)
+
     user = await fake2.users.create()
     job = await fake2.jobs.create(user)
 
-    subtraction = {
+    document = {
         "_id": "foo",
         "created_at": static_time.datetime,
         "file": {
@@ -274,50 +313,53 @@ async def test_finalize_subtraction(
         "job": {"id": job.id},
     }
 
-    data = {
-        "gc": {"a": 0.319, "t": 0.319, "g": 0.18, "c": 0.18, "n": 0.002},
-        "count": 100,
-    }
-
-    client = await spawn_job_client(authorize=True)
-
     if error == "409":
-        subtraction["ready"] = True
-
-    if error == "422":
-        data = {}
+        document["ready"] = True
 
     if error != "404":
-        await client.db.subtraction.insert_one(subtraction)
+        await mongo.subtraction.insert_one(document)
+
+    data = {}
+
+    if error != "422":
+        data = {
+            "gc": {"a": 0.319, "t": 0.319, "g": 0.18, "c": 0.18, "n": 0.002},
+            "count": 100,
+        }
 
     resp = await client.patch("/subtractions/foo", json=data)
 
-    if error == "404":
-        await resp_is.not_found(resp)
-        return
-
-    if error == "409":
-        await resp_is.conflict(resp, "Subtraction has already been finalized")
-        return
-
-    if error == "422":
-        await resp_is.invalid_input(
-            resp, {"gc": ["required field"], "count": ["required field"]}
-        )
-        return
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-    assert await client.db.subtraction.find_one("foo") == snapshot
+    match error:
+        case None:
+            assert resp.status == 200
+            assert await resp.json() == snapshot
+            assert await mongo.subtraction.find_one() == snapshot
+        case "404":
+            await resp_is.not_found(resp)
+        case "409":
+            await resp_is.conflict(resp, "Subtraction has already been finalized")
+        case "422":
+            await resp_is.invalid_input(
+                resp,
+                {"gc": ["required field"], "count": ["required field"]},
+            )
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_job_remove(
-    exists, fake2, ready, tmp_path, spawn_job_client, snapshot, resp_is, static_time
+    exists: bool,
+    ready: bool,
+    fake2: DataFaker,
+    resp_is,
+    snapshot,
+    mongo: Mongo,
+    spawn_job_client: ClientSpawner,
+    static_time,
+    tmp_path: Path,
 ):
     client = await spawn_job_client(authorize=True)
+
     get_config_from_app(client.app).data_path = tmp_path
 
     user = await fake2.users.create()
@@ -325,7 +367,7 @@ async def test_job_remove(
 
     if exists:
         await asyncio.gather(
-            client.db.subtraction.insert_one(
+            mongo.subtraction.insert_one(
                 {
                     "_id": "foo",
                     "created_at": static_time.datetime,
@@ -339,10 +381,10 @@ async def test_job_remove(
                     "ready": ready,
                     "user": {"id": user.id},
                     "job": {"job": job.id},
-                }
+                },
             ),
-            client.db.samples.insert_one(
-                {"_id": "test", "name": "Test", "subtractions": ["foo"]}
+            mongo.samples.insert_one(
+                {"_id": "test", "name": "Test", "subtractions": ["foo"]},
             ),
         )
 
@@ -350,21 +392,22 @@ async def test_job_remove(
 
     if not exists:
         assert resp.status == 404
-        return
-
-    if ready:
+    elif ready:
         await resp_is.conflict(resp, "Only unfinalized subtractions can be deleted")
         return
+    else:
+        await resp_is.no_content(resp)
+        assert await mongo.subtraction.find_one("foo") == snapshot
+        assert await mongo.samples.find_one("test") == snapshot
 
-    await resp_is.no_content(resp)
-    assert await client.db.subtraction.find_one("foo") == snapshot
-    assert await client.db.samples.find_one("test") == snapshot
 
-
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
 async def test_download_subtraction_files(
-    error, tmp_path, spawn_job_client, pg: AsyncEngine
+    error,
+    mongo,
+    pg: AsyncEngine,
+    spawn_job_client,
+    tmp_path,
 ):
     client = await spawn_job_client(authorize=True)
 
@@ -377,22 +420,27 @@ async def test_download_subtraction_files(
         test_dir.joinpath("subtraction.fa.gz").write_text("FASTA file")
         test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
 
-    subtraction = {"_id": "foo", "name": "Foo"}
-
     if error != "400_subtraction":
-        await client.db.subtraction.insert_one(subtraction)
-
-    file_1 = SQLSubtractionFile(
-        id=1, name="subtraction.fa.gz", subtraction="foo", type="fasta"
-    )
-
-    file_2 = SQLSubtractionFile(
-        id=2, name="subtraction.1.bt2", subtraction="foo", type="bowtie2"
-    )
+        await mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"})
 
     if error != "400_file":
         async with AsyncSession(pg) as session:
-            session.add_all([file_1, file_2])
+            session.add_all(
+                [
+                    SQLSubtractionFile(
+                        id=1,
+                        name="subtraction.fa.gz",
+                        subtraction="foo",
+                        type="fasta",
+                    ),
+                    SQLSubtractionFile(
+                        id=2,
+                        name="subtraction.1.bt2",
+                        subtraction="foo",
+                        type="bowtie2",
+                    ),
+                ],
+            )
             await session.commit()
 
     fasta_resp = await client.get("/subtractions/foo/files/subtraction.fa.gz")
@@ -404,25 +452,21 @@ async def test_download_subtraction_files(
         assert fasta_resp.status == bowtie_resp.status == 404
         return
 
-    fasta_expected_path = (
-        get_config_from_app(client.app).data_path
-        / "subtractions"
-        / "foo"
-        / "subtraction.fa.gz"
-    )
-    bowtie_expected_path = (
-        get_config_from_app(client.app).data_path
-        / "subtractions"
-        / "foo"
-        / "subtraction.1.bt2"
-    )
+    path = get_config_from_app(client.app).data_path / "subtractions" / "foo"
 
-    assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()
-    assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()
+    assert (path / "subtraction.fa.gz").read_bytes() == await fasta_resp.content.read()
+    assert (path / "subtraction.1.bt2").read_bytes() == await bowtie_resp.content.read()
 
 
-@pytest.mark.apitest
-async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
+async def test_create(
+    fake2,
+    pg,
+    mongo: Mongo,
+    spawn_client,
+    mocker,
+    snapshot,
+    static_time,
+):
     user = await fake2.users.create()
 
     async with AsyncSession(pg) as session:
@@ -450,17 +494,16 @@ async def test_create(fake2, pg, spawn_client, mocker, snapshot, static_time):
     mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
 
     client = await spawn_client(
-        authorize=True,
+        authenticated=True,
         base_url="https://virtool.example.com",
         permissions=[Permission.modify_subtraction],
     )
 
-    data = {"name": "Calamus", "nickname": "Rim Palm", "upload_id": upload_id}
-
-    resp = await client.post("/subtractions", data)
+    resp = await client.post(
+        "/subtractions",
+        {"name": "Calamus", "nickname": "Rim Palm", "upload_id": upload_id},
+    )
 
     assert resp.status == 201
-
     assert await resp.json() == snapshot
-
-    assert await client.db.jobs.find_one() == snapshot(name="job")
+    assert await mongo.jobs.find_one() == snapshot(name="job")

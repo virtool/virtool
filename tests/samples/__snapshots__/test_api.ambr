@@ -1,253 +1,325 @@
-# name: TestCreate.test[force_choice]
-  '/samples/fb085f7f'
----
-# name: TestCreate.test[force_choice].1
-  <class 'dict'> {
-    'all_read': True,
-    'all_write': True,
-    'artifacts': <class 'list'> [
-    ],
-    'caches': <class 'list'> [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
-    'format': 'fastq',
-    'group': 'diagnostics',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'id': 'fb085f7f',
-    'is_legacy': False,
-    'isolate': '',
-    'job': <class 'dict'> {
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
-      'user': <class 'dict'> {
-        'administrator': False,
-        'handle': 'bob',
-        'id': 'test',
-      },
-      'workflow': 'create_sample',
-    },
-    'labels': <class 'list'> [
-      <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
-        'id': 1,
-        'name': 'Three',
-      },
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'reads': <class 'list'> [
-    ],
-    'ready': False,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
-        'id': 'apple',
-        'name': 'Apple',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-    'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    },
-  }
----
-# name: TestCreate.test[force_choice][mongo]
-  <class 'dict'> {
-    '_id': 'fb085f7f',
+# serializer version: 1
+# name: TestChangeSampleRights.test_set_none_group_id[mongo]
+  dict({
+    '_id': 'test',
     'all_read': True,
     'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'format': 'fastq',
-    'group': 'diagnostics',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'job': <class 'dict'> {
-      'id': 'bf1b993c',
-    },
-    'labels': <class 'list'> [
-      1,
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': <class 'dict'> {
-      'id': 0,
-    },
-    'subtractions': <class 'list'> [
-      'apple',
-    ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-    'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    },
-  }
----
-# name: TestCreate.test[none]
-  '/samples/fb085f7f'
----
-# name: TestCreate.test[none].1
-  <class 'dict'> {
-    'all_read': True,
-    'all_write': True,
-    'artifacts': <class 'list'> [
-    ],
-    'caches': <class 'list'> [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
     'group_write': True,
-    'hold': True,
+    'hold': False,
     'host': '',
-    'id': 'fb085f7f',
     'is_legacy': False,
     'isolate': '',
-    'job': <class 'dict'> {
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 0,
-      'stage': None,
-      'state': 'waiting',
-      'user': <class 'dict'> {
-        'administrator': False,
-        'handle': 'bob',
-        'id': 'test',
-      },
-      'workflow': 'create_sample',
-    },
-    'labels': <class 'list'> [
-      <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
-        'id': 1,
-        'name': 'Three',
-      },
-    ],
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
     'library_type': 'normal',
     'locale': '',
-    'name': 'Foobar',
+    'name': 'Test',
     'notes': '',
     'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'reads': <class 'list'> [
-    ],
-    'ready': False,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
-        'id': 'apple',
-        'name': 'Apple',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-    'workflows': <class 'dict'> {
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    },
-  }
----
-# name: TestCreate.test[none][mongo]
-  <class 'dict'> {
-    '_id': 'fb085f7f',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_set_none_group_id[resp]
+  dict({
     'all_read': True,
     'all_write': True,
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_rights[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': False,
+    'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
+    'format': 'fastq',
+    'group': 1,
+    'group_read': False,
+    'group_write': False,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_rights[resp]
+  dict({
+    'all_read': False,
+    'all_write': False,
+    'group': 1,
+    'group_read': False,
+    'group_write': False,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_user_rights[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': False,
+    'all_write': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
     'group_write': True,
-    'hold': True,
+    'hold': False,
     'host': '',
     'is_legacy': False,
     'isolate': '',
-    'job': <class 'dict'> {
-      'id': 'bf1b993c',
-    },
-    'labels': <class 'list'> [
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
       1,
-    ],
+    ]),
     'library_type': 'normal',
     'locale': '',
-    'name': 'Foobar',
+    'name': 'Test',
     'notes': '',
     'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': <class 'dict'> {
-      'id': 0,
-    },
-    'subtractions': <class 'list'> [
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
       'apple',
-    ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-    'workflows': <class 'dict'> {
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    },
-  }
----
-# name: TestCreate.test[users_primary_group]
-  '/samples/fb085f7f'
----
-# name: TestCreate.test[users_primary_group].1
-  <class 'dict'> {
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_all_user_rights[resp]
+  dict({
+    'all_read': False,
+    'all_write': False,
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_id[mongo]
+  dict({
+    '_id': 'test',
     'all_read': True,
     'all_write': True,
-    'artifacts': <class 'list'> [
-    ],
-    'caches': <class 'list'> [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
     'format': 'fastq',
-    'group': 'technician',
+    'group': 1,
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_id[resp]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'group': 1,
+    'group_read': True,
+    'group_write': True,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_rights[mongo]
+  dict({
+    '_id': 'test',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      }),
+    ]),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': False,
+    'hold': False,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'labels': list([
+      1,
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'pathoscope': True,
+    'ready': True,
+    'subtractions': list([
+      'apple',
+      'pear',
+    ]),
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestChangeSampleRights.test_update_group_rights[resp]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'group': 'none',
+    'group_read': False,
+    'group_write': False,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestCreate.test_name_exists[/samples][json]
+  dict({
+    'id': 'bad_request',
+    'message': 'Sample name is already in use',
+  })
+# ---
+# name: TestCreate.test_name_exists[/spaces/0/samples][json]
+  dict({
+    'id': 'bad_request',
+    'message': 'Sample name is already in use',
+  })
+# ---
+# name: TestCreate.test_ok[force_choice][resp]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'artifacts': list([
+    ]),
+    'created_at': 'approximately_now_isoformat',
+    'format': 'fastq',
+    'group': 2,
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -255,28 +327,27 @@
     'id': 'fb085f7f',
     'is_legacy': False,
     'isolate': '',
-    'job': <class 'dict'> {
+    'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
-        'administrator': False,
+      'user': dict({
         'handle': 'bob',
-        'id': 'test',
-      },
+        'id': 'bf1b993c',
+      }),
       'workflow': 'create_sample',
-    },
-    'labels': <class 'list'> [
-      <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
+    }),
+    'labels': list([
+      dict({
+        'color': '#f728b5',
+        'description': 'Magazine truth stop whose group through despite.',
         'id': 1,
-        'name': 'Three',
-      },
-    ],
+        'name': 'Event',
+      }),
+    ]),
     'library_type': 'normal',
     'locale': '',
     'name': 'Foobar',
@@ -285,47 +356,63 @@
     'paired': False,
     'pathoscope': False,
     'quality': None,
-    'reads': <class 'list'> [
-    ],
+    'reads': list([
+    ]),
     'ready': False,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    'subtractions': list([
+      dict({
         'id': 'apple',
         'name': 'Apple',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
+      }),
+    ]),
+    'user': dict({
       'handle': 'bob',
-      'id': 'test',
-    },
-    'workflows': <class 'dict'> {
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
-    },
-  }
----
-# name: TestCreate.test[users_primary_group][mongo]
-  <class 'dict'> {
-    '_id': 'fb085f7f',
+    }),
+  })
+# ---
+# name: TestCreate.test_ok[none][resp]
+  dict({
     'all_read': True,
     'all_write': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'artifacts': list([
+    ]),
+    'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
-    'group': 'technician',
+    'group': None,
     'group_read': True,
     'group_write': True,
     'hold': True,
     'host': '',
+    'id': 'fb085f7f',
     'is_legacy': False,
     'isolate': '',
-    'job': <class 'dict'> {
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
       'id': 'bf1b993c',
-    },
-    'labels': <class 'list'> [
-      1,
-    ],
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#f728b5',
+        'description': 'Magazine truth stop whose group through despite.',
+        'id': 1,
+        'name': 'Event',
+      }),
+    ]),
     'library_type': 'normal',
     'locale': '',
     'name': 'Foobar',
@@ -334,42 +421,109 @@
     'paired': False,
     'pathoscope': False,
     'quality': None,
+    'reads': list([
+    ]),
     'ready': False,
-    'results': None,
-    'space': <class 'dict'> {
-      'id': 0,
-    },
-    'subtractions': <class 'list'> [
-      'apple',
-    ],
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-    'workflows': <class 'dict'> {
+    'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+    ]),
+    'user': dict({
+      'handle': 'bob',
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'none',
       'pathoscope': 'none',
-    },
-  }
----
-# name: TestEdit.test
-  <class 'dict'> {
+    }),
+  })
+# ---
+# name: TestCreate.test_ok[users_primary_group][resp]
+  dict({
     'all_read': True,
     'all_write': True,
-    'artifacts': <class 'list'> [
-      <class 'dict'> {
+    'artifacts': list([
+    ]),
+    'created_at': 'approximately_now_isoformat',
+    'format': 'fastq',
+    'group': 2,
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 'fb085f7f',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'bf1b993c',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#f728b5',
+        'description': 'Magazine truth stop whose group through despite.',
+        'id': 1,
+        'name': 'Event',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': list([
+    ]),
+    'ready': False,
+    'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+    ]),
+    'user': dict({
+      'handle': 'bob',
+      'id': 'bf1b993c',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
+    }),
+  })
+# ---
+# name: TestEdit.test_label_exists[json]
+  dict({
+    'id': 'bad_request',
+    'message': 'Labels do not exist: [1]',
+  })
+# ---
+# name: TestEdit.test_ok
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'artifacts': list([
+      dict({
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
-      },
-    ],
-    'caches': <class 'list'> [
-    ],
+        'size': 34879234,
+      }),
+    ]),
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': 'none',
@@ -380,15 +534,27 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
-    'labels': <class 'list'> [
-      <class 'dict'> {
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
         'color': '#629f70',
         'description': 'American whole magazine truth stop whose.',
         'id': 1,
         'name': 'Three',
-      },
-    ],
+      }),
+    ]),
     'library_type': 'normal',
     'locale': '',
     'name': 'test_sample',
@@ -397,8 +563,8 @@
     'paired': False,
     'pathoscope': True,
     'quality': None,
-    'reads': <class 'list'> [
-      <class 'dict'> {
+    'reads': list([
+      dict({
         'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
@@ -407,1496 +573,1422 @@
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
-      },
-    ],
+      }),
+    ]),
     'ready': True,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    'subtractions': list([
+      dict({
         'id': 'peach',
         'name': 'Peach',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'kellylopez',
+      }),
+    ]),
+    'user': dict({
+      'handle': 'sallywalker',
       'id': 'bf1b993c',
-    },
-    'workflows': <class 'dict'> {
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'pending',
       'pathoscope': 'complete',
-    },
-  }
----
-# name: TestEdit.test_label_exists[json]
-  <class 'dict'> {
-    'id': 'bad_request',
-    'message': 'Labels do not exist: [1]',
-  }
----
+    }),
+  })
+# ---
 # name: TestEdit.test_subtraction_exists[json]
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'Subtractions do not exist: bar',
-  }
----
-# name: TestFindSamples.test_labels[None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_labels[None]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_labels[labels1]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_labels[labels1]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_labels[labels2]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_labels[labels2]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_labels[labels3]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
+  })
+# ---
+# name: TestFind.test_labels[labels3]
+  dict({
+    'documents': list([
+    ]),
     'found_count': 0,
     'page': 1,
     'page_count': 0,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_page_perpage[2-1]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_page_per_page[2-1]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 2,
     'per_page': 2,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_page_perpage[2-2]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_page_per_page[2-2]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 2,
     'page_count': 2,
     'per_page': 2,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_page_perpage[None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_page_per_page[None-None]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_term[None-/samples]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_term[None-/samples]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_term[None-/spaces/0/samples]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_term[None-/spaces/0/samples]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_term[gv-/samples]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_term[gv-/samples]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_term[gv-/spaces/0/samples]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_term[gv-/spaces/0/samples]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_term[sp-/samples]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_term[sp-/samples]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_term[sp-/spaces/0/samples]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_term[sp-/spaces/0/samples]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_workflows[None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_workflows[None]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_workflows[workflows1]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_workflows[workflows1]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_workflows[workflows2]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_workflows[workflows2]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
         'isolate': 'Thing',
-        'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-          <class 'dict'> {
+          }),
+          dict({
             'color': '#8f837f',
             'description': 'Leader bad school.',
             'id': 2,
             'name': 'Class',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'leeashley',
           'id': 'bf1b993c',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestFindSamples.test_workflows[workflows3]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+  })
+# ---
+# name: TestFind.test_workflows[workflows3]
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
         'id': 'cb400e6d',
         'isolate': '',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#47e7f6',
             'description': 'Drive well good explain.',
             'id': 3,
             'name': 'Off',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-      <class 'dict'> {
+        }),
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': '72bb8b31',
         'isolate': 'Test',
         'job': None,
-        'labels': <class 'list'> [
-          <class 'dict'> {
+        'labels': list([
+          dict({
             'color': '#ae686a',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
             'name': 'Market',
-          },
-        ],
+          }),
+        ]),
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
+        'user': dict({
           'handle': 'zclark',
           'id': 'fb085f7f',
-        },
-        'workflows': <class 'dict'> {
+        }),
+        'workflows': dict({
           'aodp': 'none',
           'nuvs': 'none',
           'pathoscope': 'none',
-        },
-      },
-    ],
+        }),
+      }),
+    ]),
     'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
-# name: TestGet.test_get[administrator][json]
-  <class 'dict'> {
-    'all_read': False,
-    'all_write': True,
-    'artifacts': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
-        'id': 1,
-        'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
-      },
-    ],
-    'caches': <class 'list'> [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
-    'format': 'fastq',
-    'group': 'none',
-    'group_read': False,
-    'group_write': True,
-    'hold': False,
-    'host': '',
-    'id': 'test',
-    'is_legacy': False,
-    'isolate': '',
-    'job': None,
-    'labels': <class 'list'> [
-      <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
-        'id': 1,
-        'name': 'Three',
-      },
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Test',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': True,
-    'quality': None,
-    'reads': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
-        'id': 1,
-        'name': 'reads_1.fq.gz',
-        'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
-        'size': 2903109210,
-        'upload': None,
-        'uploaded_at': '2015-10-06T20:00:00Z',
-      },
-    ],
-    'ready': True,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
-        'id': 'apple',
-        'name': 'Apple',
-      },
-      <class 'dict'> {
-        'id': 'pear',
-        'name': 'Pear',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'kellylopez',
-      'id': 'bf1b993c',
-    },
-    'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
-    },
-  }
----
-# name: TestGet.test_get[all_read][json]
-  <class 'dict'> {
+  })
+# ---
+# name: TestGet.test_administrator[resp]
+  dict({
     'all_read': True,
     'all_write': True,
-    'artifacts': <class 'list'> [
-      <class 'dict'> {
+    'artifacts': list([
+      dict({
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
-      },
-    ],
-    'caches': <class 'list'> [
-    ],
+        'size': 34879234,
+      }),
+    ]),
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': 'none',
-    'group_read': False,
-    'group_write': True,
-    'hold': False,
-    'host': '',
-    'id': 'test',
-    'is_legacy': False,
-    'isolate': '',
-    'job': None,
-    'labels': <class 'list'> [
-      <class 'dict'> {
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
-        'id': 1,
-        'name': 'Three',
-      },
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Test',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': True,
-    'quality': None,
-    'reads': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
-        'id': 1,
-        'name': 'reads_1.fq.gz',
-        'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
-        'size': 2903109210,
-        'upload': None,
-        'uploaded_at': '2015-10-06T20:00:00Z',
-      },
-    ],
-    'ready': True,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
-        'id': 'apple',
-        'name': 'Apple',
-      },
-      <class 'dict'> {
-        'id': 'pear',
-        'name': 'Pear',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'kellylopez',
-      'id': 'bf1b993c',
-    },
-    'workflows': <class 'dict'> {
-      'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
-    },
-  }
----
-# name: TestGet.test_get[group_read][json]
-  <class 'dict'> {
-    'all_read': False,
-    'all_write': True,
-    'artifacts': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
-        'id': 1,
-        'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
-      },
-    ],
-    'caches': <class 'list'> [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
-    'format': 'fastq',
-    'group': 'technicians',
     'group_read': True,
     'group_write': True,
     'hold': False,
@@ -1904,15 +1996,27 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
-    'labels': <class 'list'> [
-      <class 'dict'> {
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
         'color': '#629f70',
         'description': 'American whole magazine truth stop whose.',
         'id': 1,
         'name': 'Three',
-      },
-    ],
+      }),
+    ]),
     'library_type': 'normal',
     'locale': '',
     'name': 'Test',
@@ -1921,8 +2025,8 @@
     'paired': False,
     'pathoscope': True,
     'quality': None,
-    'reads': <class 'list'> [
-      <class 'dict'> {
+    'reads': list([
+      dict({
         'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
@@ -1931,55 +2035,42 @@
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
-      },
-    ],
+      }),
+    ]),
     'ready': True,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    'subtractions': list([
+      dict({
         'id': 'apple',
         'name': 'Apple',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'pear',
         'name': 'Pear',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'kellylopez',
+      }),
+    ]),
+    'user': dict({
+      'handle': 'sallywalker',
       'id': 'bf1b993c',
-    },
-    'workflows': <class 'dict'> {
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'pending',
       'pathoscope': 'complete',
-    },
-  }
----
-# name: TestGet.test_get[not_in_group][json]
-  <class 'dict'> {
-    'id': 'insufficient_rights',
-    'message': 'Insufficient rights',
-  }
----
-# name: TestGet.test_get[owner][json]
-  <class 'dict'> {
-    'all_read': False,
+    }),
+  })
+# ---
+# name: TestGet.test_all_read[resp]
+  dict({
+    'all_read': True,
     'all_write': True,
-    'artifacts': <class 'list'> [
-      <class 'dict'> {
+    'artifacts': list([
+      dict({
         'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
-      },
-    ],
-    'caches': <class 'list'> [
-    ],
+        'size': 34879234,
+      }),
+    ]),
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': 'none',
@@ -1990,15 +2081,27 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
-    'labels': <class 'list'> [
-      <class 'dict'> {
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
         'color': '#629f70',
         'description': 'American whole magazine truth stop whose.',
         'id': 1,
         'name': 'Three',
-      },
-    ],
+      }),
+    ]),
     'library_type': 'normal',
     'locale': '',
     'name': 'Test',
@@ -2007,8 +2110,8 @@
     'paired': False,
     'pathoscope': True,
     'quality': None,
-    'reads': <class 'list'> [
-      <class 'dict'> {
+    'reads': list([
+      dict({
         'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
@@ -2017,108 +2120,273 @@
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
-      },
-    ],
+      }),
+    ]),
     'ready': True,
-    'subtractions': <class 'list'> [
-      <class 'dict'> {
+    'subtractions': list([
+      dict({
         'id': 'apple',
         'name': 'Apple',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'id': 'pear',
         'name': 'Pear',
-      },
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'bob',
-      'id': 'test',
-    },
-    'workflows': <class 'dict'> {
+      }),
+    ]),
+    'user': dict({
+      'handle': 'monica23',
+      'id': '3cbb22cc',
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'pending',
       'pathoscope': 'complete',
-    },
-  }
----
+    }),
+  })
+# ---
+# name: TestGet.test_group_read[False][resp]
+  dict({
+    'id': 'insufficient_rights',
+    'message': 'Insufficient rights',
+  })
+# ---
+# name: TestGet.test_group_read[True][resp]
+  dict({
+    'all_read': False,
+    'all_write': False,
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 1,
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 'pear',
+        'name': 'Pear',
+      }),
+    ]),
+    'user': dict({
+      'handle': 'mathissusan',
+      'id': '3cbb22cc',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
+# name: TestGet.test_owner[resp]
+  dict({
+    'all_read': False,
+    'all_write': True,
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 'pear',
+        'name': 'Pear',
+      }),
+    ]),
+    'user': dict({
+      'handle': 'bob',
+      'id': '7cf872dc',
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
+  })
+# ---
 # name: TestUploadReads.test[409]
-  <class 'dict'> {
+  dict({
     'id': 'conflict',
     'message': 'Reads file name is already uploaded for this sample',
-  }
----
+  })
+# ---
 # name: TestUploadReads.test_uncompressed
-  <class 'dict'> {
+  dict({
     'id': 'bad_request',
     'message': 'File is not compressed',
-  }
----
+  })
+# ---
 # name: test_analyze[None]
-  <class 'dict'> {
+  dict({
     'created_at': '2015-10-06T20:00:00Z',
-    'files': <class 'list'> [
-    ],
+    'files': list([
+    ]),
     'id': 'fb085f7f',
-    'index': <class 'dict'> {
+    'index': dict({
       'id': 'test',
       'version': 4,
-    },
-    'job': <class 'dict'> {
+    }),
+    'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'bf1b993c',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
-      'user': <class 'dict'> {
-        'administrator': False,
+      'user': dict({
         'handle': 'bob',
-        'id': 'test',
-      },
+        'id': 'bf1b993c',
+      }),
       'workflow': 'pathoscope_bowtie',
-    },
+    }),
+    'ml': None,
     'ready': False,
-    'reference': <class 'dict'> {
-      'id': 'foo',
-      'name': None,
-    },
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'test_ref',
+      'name': 'Test Reference',
+    }),
     'results': None,
-    'sample': <class 'dict'> {
+    'sample': dict({
       'id': 'test',
-    },
-    'space': <class 'dict'> {
-      'id': 0,
-    },
-    'subtractions': <class 'list'> [
-      'bar',
-    ],
+    }),
+    'subtractions': list([
+      dict({
+        'id': 'subtraction_1',
+        'name': 'Subtraction 1',
+      }),
+    ]),
     'updated_at': '2015-10-06T20:00:00Z',
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
+    'user': dict({
+      'handle': 'bob',
+      'id': 'bf1b993c',
+    }),
     'workflow': 'pathoscope_bowtie',
-  }
----
+  })
+# ---
 # name: test_finalize[quality]
-  <class 'dict'> {
+  dict({
     'all_read': True,
     'all_write': True,
-    'artifacts': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
-        'id': 1,
-        'name': 'reference.fa.gz',
-        'name_on_disk': 'reference.fa.gz',
-        'sample': 'test',
-        'size': None,
-        'type': 'fasta',
-        'uploaded_at': None,
-      },
-    ],
-    'caches': <class 'list'> [
-    ],
-    'created_at': '1970-01-01T00:00:13Z',
+    'artifacts': list([
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
@@ -2128,15 +2396,27 @@
     'id': 'test',
     'is_legacy': False,
     'isolate': '',
-    'job': None,
-    'labels': <class 'list'> [
-      <class 'dict'> {
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'fb085f7f',
+      'progress': 10,
+      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'state': 'preparing',
+      'user': dict({
+        'handle': 'sallywalker',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
         'color': '#629f70',
         'description': 'American whole magazine truth stop whose.',
         'id': 1,
         'name': 'Three',
-      },
-    ],
+      }),
+    ]),
     'library_type': 'normal',
     'locale': '',
     'name': 'Test',
@@ -2144,233 +2424,407 @@
     'nuvs': False,
     'paired': False,
     'pathoscope': True,
-    'quality': <class 'dict'> {
-      'bases': <class 'list'> [
-        <class 'list'> [
+    'quality': dict({
+      'bases': list([
+        list([
           1543,
-        ],
-      ],
-      'composition': <class 'list'> [
-        <class 'list'> [
+        ]),
+      ]),
+      'composition': list([
+        list([
           6372,
-        ],
-      ],
+        ]),
+      ]),
       'count': 7069,
       'encoding': 'OuBQPPuwYimrxkNpPWUx',
       'gc': 34222440,
-      'length': <class 'list'> [
+      'length': list([
         3237,
-      ],
-      'sequences': <class 'list'> [
+      ]),
+      'sequences': list([
         7091,
-      ],
-    },
-    'reads': <class 'list'> [
-      <class 'dict'> {
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
-        'id': 1,
-        'name': 'reads_1.fq.gz',
-        'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
-        'size': 12,
-        'upload': None,
-        'uploaded_at': '2023-09-01T01:01:00Z',
-      },
-    ],
+      ]),
+    }),
+    'reads': list([
+    ]),
     'ready': True,
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'kellylopez',
+    'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 'pear',
+        'name': 'Pear',
+      }),
+    ]),
+    'user': dict({
+      'handle': 'sallywalker',
       'id': 'bf1b993c',
-    },
-    'workflows': <class 'dict'> {
+    }),
+    'workflows': dict({
       'aodp': 'incompatible',
       'nuvs': 'pending',
       'pathoscope': 'complete',
-    },
-  }
----
-# name: test_find_analyses[Baz-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
+    }),
+  })
+# ---
+# name: test_find_analyses
+  dict({
+    'documents': list([
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 'test_1',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foo',
           'version': 2,
-        },
-        'job': <class 'dict'> {
-          'id': '7cf872dc',
-        },
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'jobs_aodp',
+        }),
+        'ml': None,
         'ready': True,
-        'reference': <class 'dict'> {
+        'reference': dict({
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
-        },
-        'sample': <class 'dict'> {
+        }),
+        'sample': dict({
           'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-        ],
-        'user': <class 'dict'> {
-          'administrator': False,
+        }),
+        'subtractions': list([
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
+          'id': 'fb085f7f',
+        }),
         'workflow': 'pathoscope_bowtie',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 'test_2',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foo',
           'version': 2,
-        },
-        'job': <class 'dict'> {
-          'id': 'foo',
-        },
+        }),
+        'job': None,
+        'ml': None,
         'ready': True,
-        'reference': <class 'dict'> {
+        'reference': dict({
+          'data_type': 'genome',
           'id': 'baz',
           'name': 'Baz',
-        },
-        'sample': <class 'dict'> {
+        }),
+        'sample': dict({
           'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-          <class 'dict'> {
+        }),
+        'subtractions': list([
+          dict({
             'id': 'foo',
             'name': 'Malus domestica',
-          },
-        ],
-        'user': <class 'dict'> {
-          'administrator': False,
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
           'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
+          'id': 'fb085f7f',
+        }),
         'workflow': 'pathoscope_bowtie',
-      },
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find_analyses[None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_1',
-        'index': <class 'dict'> {
-          'id': 'foo',
-          'version': 2,
-        },
-        'job': <class 'dict'> {
-          'id': '7cf872dc',
-        },
-        'ready': True,
-        'reference': <class 'dict'> {
-          'id': 'baz',
-          'name': 'Baz',
-        },
-        'sample': <class 'dict'> {
-          'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-        ],
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-        'workflow': 'pathoscope_bowtie',
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_2',
-        'index': <class 'dict'> {
-          'id': 'foo',
-          'version': 2,
-        },
-        'job': <class 'dict'> {
-          'id': 'foo',
-        },
-        'ready': True,
-        'reference': <class 'dict'> {
-          'id': 'baz',
-          'name': 'Baz',
-        },
-        'sample': <class 'dict'> {
-          'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-          <class 'dict'> {
-            'id': 'foo',
-            'name': 'Malus domestica',
-          },
-        ],
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'leeashley',
-          'id': 'bf1b993c',
-        },
-        'workflow': 'pathoscope_bowtie',
-      },
-      <class 'dict'> {
+      }),
+      dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 'test_3',
-        'index': <class 'dict'> {
+        'index': dict({
           'id': 'foo',
           'version': 2,
-        },
+        }),
         'job': None,
+        'ml': None,
         'ready': True,
-        'reference': <class 'dict'> {
+        'reference': dict({
+          'data_type': 'genome',
           'id': 'foo',
           'name': 'Foo',
-        },
-        'sample': <class 'dict'> {
+        }),
+        'sample': dict({
           'id': 'test',
-        },
-        'subtractions': <class 'list'> [
-          <class 'dict'> {
+        }),
+        'subtractions': list([
+          dict({
             'id': 'foo',
             'name': 'Malus domestica',
-          },
-        ],
-        'user': <class 'dict'> {
-          'administrator': False,
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
           'handle': 'zclark',
-          'id': 'fb085f7f',
-        },
+          'id': '7cf872dc',
+        }),
         'workflow': 'pathoscope_bowtie',
-      },
-    ],
+      }),
+    ]),
     'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  }
----
+  })
+# ---
+# name: test_find_analyses[Baz-None]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'jobs_aodp',
+        }),
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+    ]),
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 4,
+  })
+# ---
+# name: test_find_analyses[None-None]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': dict({
+          'archived': False,
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '3cbb22cc',
+          'progress': 50,
+          'stage': 'JURZHTCWaKMqqBTFitpK',
+          'state': 'timeout',
+          'user': dict({
+            'administrator': False,
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'jobs_aodp',
+        }),
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'administrator': False,
+          'handle': 'zclark',
+          'id': '7cf872dc',
+        }),
+        'workflow': 'pathoscope_bowtie',
+      }),
+    ]),
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 4,
+  })
+# ---
 # name: test_get_cache[None]
-  <class 'dict'> {
+  dict({
     'id': 'bar',
     'key': 'abc123',
     'program': 'skewer-0.2.2',
-    'sample': <class 'dict'> {
+    'sample': dict({
       'id': 'foo',
-    },
-  }
----
+    }),
+  })
+# ---
 # name: test_upload_artifact[None]
-  <class 'dict'> {
+  dict({
     'id': 1,
     'name': 'small.fq',
     'name_on_disk': 'small.fq',
@@ -2378,5 +2832,5 @@
     'size': 3130756,
     'type': 'fastq',
     'uploaded_at': '2015-10-06T20:00:00Z',
-  }
----
+  })
+# ---

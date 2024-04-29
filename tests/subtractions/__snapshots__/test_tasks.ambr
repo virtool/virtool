@@ -1,11 +1,12 @@
+# serializer version: 1
 # name: test_add_subtraction_files_task
-  <class 'list'> [
+  list([
     <SQLSubtractionFile(id=1, name=subtraction.1.bt2, subtraction=foo, type=bowtie2, size=12)>,
     <SQLSubtractionFile(id=2, name=subtraction.fa.gz, subtraction=foo, type=fasta, size=10)>,
-  ]
----
+  ])
+# ---
 # name: test_check_subtraction_fasta_file_task
-  '
+  '''
   >host_1
   ATTGAGCCCATGGTTAGAAAAGAAAACATTGGAAATTGTACATTGGGATGTACATAGACA
   TATTGCCACTGGTCCTCGTAATGCACTGGTTGCATGCTTTCTGCAGGAGGGGAGAGC
@@ -25,5 +26,5 @@
   GGACCCAGTCTTATTGTATCCATCGTTTCCTTTTCTTTTCTCCTTAGTTCGTCACTCTAA
   CGTTTTCCCGAACCACTCCATTTCTTTTCATTTCCTTTCATTTCGCGGTGGACCACAT
   
-  '
----
+  '''
+# ---

@@ -1,0 +1,25 @@
+# serializer version: 1
+# name: test_nested_timestamps
+  dict({
+    'data': dict({
+      'active': True,
+      'color': 'red',
+      'created_at': 'not_approximately_now_isoformat',
+      'id': 1,
+      'message': 'Administrative instance message',
+      'updated_at': 'not_approximately_now_isoformat',
+    }),
+  })
+# ---
+# name: test_time_not_recent_datetime
+  'not_approximately_now_datetime'
+# ---
+# name: test_time_not_recent_iso_string
+  'not_approximately_now_isoformat'
+# ---
+# name: test_time_recent_datetime
+  'approximately_now_datetime'
+# ---
+# name: test_time_recent_iso_string
+  'approximately_now_isoformat'
+# ---

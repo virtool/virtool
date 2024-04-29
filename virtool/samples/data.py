@@ -1,27 +1,30 @@
 """The sample data layer domain."""
+
 import asyncio
 import math
 from asyncio import gather, to_thread
-from logging import getLogger
-from typing import List, Optional, Any, Dict
+from typing import Any
 
 import virtool_core.utils
 from pymongo.results import UpdateResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
+from virtool.api.client import UserClient
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import emits, Operation
-from virtool.data.piece import DataLayerPiece
+from virtool.data.events import Operation, emits
+from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
-from virtool.http.client import UserClient
+from virtool.groups.pg import SQLGroup
 from virtool.jobs.client import JobsClient
-from virtool.jobs.db import create_job, lookup_minimal_job_by_id
-from virtool.labels.db import AttachLabelsTransform
+from virtool.jobs.transforms import AttachJobTransform
+from virtool.labels.transforms import AttachLabelsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
@@ -30,34 +33,36 @@ from virtool.samples.checks import (
     check_subtractions_do_not_exist,
 )
 from virtool.samples.db import (
-    LIST_PROJECTION,
-    ArtifactsAndReadsTransform,
+    AttachArtifactsAndReadsTransform,
     NameGenerator,
     compose_sample_workflow_query,
     define_initial_workflows,
     recalculate_workflow_tags,
-    validate_force_choice_group,
 )
 from virtool.samples.models import SQLSampleReads
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.utils import SampleRight, join_sample_path
-from virtool.subtractions.db import lookup_nested_subtractions
+from virtool.subtractions.db import (
+    AttachSubtractionsTransform,
+)
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import SQLUpload
-from virtool.users.db import lookup_nested_user_by_id
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
-logger = getLogger("samples")
 
-
-class SamplesData(DataLayerPiece):
+class SamplesData(DataLayerDomain):
     name = "samples"
 
     def __init__(
-        self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient
+        self,
+        config: Config,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        jobs_client: JobsClient,
     ):
         self._config = config
         self._mongo = mongo
@@ -66,16 +71,14 @@ class SamplesData(DataLayerPiece):
 
     async def find(
         self,
-        labels: List[int],
+        labels: list[int],
         page: int,
         per_page: int,
         term: str,
-        workflows: List[str],
+        workflows: list[str],
         client,
     ) -> SampleSearchResult:
-        """
-        Find and filter samples.
-        """
+        """Find and filter samples."""
         queries = []
 
         if term:
@@ -100,9 +103,24 @@ class SamplesData(DataLayerPiece):
         ]
 
         if client.groups:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLGroup).where(
+                        compose_legacy_id_expression(SQLGroup, client.groups),
+                    ),
+                )
+
+                group_ids = []
+
+                for group in result.scalars().all():
+                    group_ids.append(group.id)
+
+                    if group.legacy_id is not None:
+                        group_ids.append(group.legacy_id)
+
             # The sample rights allow owner group members to view the sample and the
             # requesting user is a member of the owner group.
-            rights_filter.append({"group_read": True, "group": {"$in": client.groups}})
+            rights_filter.append({"group_read": True, "group": {"$in": group_ids}})
 
         search_query = {"$and": [{"$or": rights_filter}, query]}
 
@@ -128,30 +146,52 @@ class SamplesData(DataLayerPiece):
                             {"$sort": {"created_at": -1}},
                             {"$skip": skip_count},
                             {"$limit": per_page},
-                            *lookup_nested_user_by_id(local_field="user.id"),
                         ],
-                    }
+                    },
                 },
                 {
                     "$project": {
-                        "data": {item: True for item in LIST_PROJECTION},
+                        "data": {
+                            item: True
+                            for item in (
+                                "_id",
+                                "created_at",
+                                "host",
+                                "isolate",
+                                "job",
+                                "library_type",
+                                "pathoscope",
+                                "name",
+                                "nuvs",
+                                "ready",
+                                "user",
+                                "notes",
+                                "labels",
+                                "subtractions",
+                                "workflows",
+                            )
+                        },
                         "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0]
+                            "$arrayElemAt": ["$total_count.total_count", 0],
                         },
                         "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0]
+                            "$arrayElemAt": ["$found_count.found_count", 0],
                         },
-                    }
+                    },
                 },
-            ]
+            ],
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
 
         documents = await apply_transforms(
-            [base_processor(document) for document in data],
-            [AttachLabelsTransform(self._pg)],
+            [base_processor(d) for d in data],
+            [
+                AttachLabelsTransform(self._pg),
+                AttachUserTransform(self._mongo),
+                AttachJobTransform(self._mongo),
+            ],
         )
 
         return SampleSearchResult(
@@ -164,33 +204,32 @@ class SamplesData(DataLayerPiece):
         )
 
     async def get(self, sample_id: str) -> Sample:
-        """
-        Get a sample by its id.
+        """Get a sample by its id.
+
+        TODO: Remove the ``caches`` field from document as it is deprecated.
+        TODO: Return `None` for unset group instead of `"none"`.
 
         :param sample_id: the id of the sample
         :return: the sample
         :raises ResourceNotFoundError: when the sample does not exist
         """
-        documents = await self._mongo.samples.aggregate(
-            [
-                {"$match": {"_id": sample_id}},
-                *lookup_nested_user_by_id(local_field="user.id"),
-                *lookup_nested_subtractions(local_field="subtractions"),
-                *lookup_minimal_job_by_id(local_field="job.id"),
-            ]
-        ).to_list(length=1)
+        document = await self._mongo.samples.find_one({"_id": sample_id})
 
-        if not documents:
-            raise ResourceNotFoundError
+        if document is None:
+            raise ResourceNotFoundError()
 
         document = await apply_transforms(
-            base_processor(documents[0]),
-            [ArtifactsAndReadsTransform(self._pg), AttachLabelsTransform(self._pg)],
+            base_processor(document),
+            [
+                AttachArtifactsAndReadsTransform(self._pg),
+                AttachJobTransform(self._mongo),
+                AttachLabelsTransform(self._pg),
+                AttachSubtractionsTransform(self._mongo),
+                AttachUserTransform(self._mongo),
+            ],
         )
 
-        document.update({"caches": [], "paired": len(document["reads"]) == 2})
-
-        return Sample(**document)
+        return Sample(**{**document, "paired": len(document["reads"]) == 2})
 
     @emits(Operation.CREATE)
     async def create(
@@ -198,11 +237,9 @@ class SamplesData(DataLayerPiece):
         data: CreateSampleRequest,
         user_id: str,
         space_id: int,
-        _id: Optional[str] = None,
+        _id: str | None = None,
     ) -> Sample:
-        """
-        Create a sample.
-        """
+        """Create a sample."""
         settings = await self.data.settings.get_all()
 
         await wait_for_checks(
@@ -218,15 +255,20 @@ class SamplesData(DataLayerPiece):
         except ResourceNotFoundError:
             raise ResourceConflictError("File does not exist")
 
-        group = "none"
+        group = None
 
         # Require a valid ``group`` field if the ``sample_group`` setting is
         # ``users_primary_group``.
         if settings.sample_group == "force_choice":
-            if force_choice_error_message := await validate_force_choice_group(
-                self._mongo, data.dict(exclude_unset=True)
-            ):
-                raise ResourceConflictError(force_choice_error_message)
+            if data.group is None:
+                raise ResourceConflictError("Group value required for sample creation")
+
+            async with AsyncSession(self._pg) as session:
+                if not await session.get(
+                    SQLGroup,
+                    data.group,
+                ):
+                    raise ResourceConflictError("Group does not exist")
 
             group = data.group
 
@@ -234,6 +276,17 @@ class SamplesData(DataLayerPiece):
         # setting is ``users_primary_group``.
         elif settings.sample_group == "users_primary_group":
             group = await get_one_field(self._mongo.users, "primary_group", user_id)
+
+            if isinstance(group, str):
+                async with AsyncSession(self._pg) as session:
+                    group = await session.execute(
+                        select(SQLGroup).where(SQLGroup.legacy_id == group),
+                    )
+
+                    group = group.scalar_one().id
+
+            if not group:
+                group = None
 
         async with self._mongo.create_session() as session:
             job_id = await get_new_id(self._mongo.jobs, session=session)
@@ -248,9 +301,9 @@ class SamplesData(DataLayerPiece):
                         "created_at": virtool.utils.timestamp(),
                         "format": "fastq",
                         "group": group,
-                        "hold": True,
                         "group_read": settings.sample_group_read,
                         "group_write": settings.sample_group_write,
+                        "hold": True,
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
@@ -278,11 +331,9 @@ class SamplesData(DataLayerPiece):
 
             sample_id = document["_id"]
 
-            await create_job(
-                mongo=self._mongo,
-                client=self.jobs_client,
-                workflow="create_sample",
-                job_args={
+            await self.data.jobs.create(
+                "create_sample",
+                {
                     "sample_id": sample_id,
                     "files": [
                         {
@@ -293,18 +344,15 @@ class SamplesData(DataLayerPiece):
                         for upload in uploads
                     ],
                 },
-                user_id=user_id,
-                space_id=0,
+                user_id,
                 job_id=job_id,
-                session=session,
             )
 
         return await self.get(sample_id)
 
     @emits(Operation.DELETE)
     async def delete(self, sample_id: str) -> Sample:
-        """
-        Deletes the sample identified by ``sample_id`` and all its analyses.
+        """Deletes the sample identified by ``sample_id`` and all its analyses.
 
         :param sample_id: the id of the sample to delete
         :return: the mongodb deletion result
@@ -316,7 +364,8 @@ class SamplesData(DataLayerPiece):
             result, _ = await asyncio.gather(
                 self._mongo.samples.delete_many({"_id": sample_id}, session=session),
                 self._mongo.analyses.delete_many(
-                    {"sample.id": sample_id}, session=session
+                    {"sample.id": sample_id},
+                    session=session,
                 ),
             )
 
@@ -335,18 +384,21 @@ class SamplesData(DataLayerPiece):
     async def finalize(
         self,
         sample_id: str,
-        quality: Dict[str, Any],
+        quality: dict[str, Any],
     ) -> Sample:
-        """
-        Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
+        """Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
 
         :param sample_id: the id of the sample
         :param quality: a dict containing quality data
         :return: the sample after finalizing
 
         """
+        if await get_one_field(self._mongo.samples, "ready", sample_id):
+            raise ResourceConflictError("Sample already finalized")
+
         result: UpdateResult = await self._mongo.samples.update_one(
-            {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
+            {"_id": sample_id},
+            {"$set": {"quality": quality, "ready": True}},
         )
 
         if not result.modified_count:
@@ -357,8 +409,8 @@ class SamplesData(DataLayerPiece):
                 (
                     await session.execute(
                         select(SQLUpload)
-                        .filter(SQLSampleReads.sample == sample_id)
-                        .join_from(SQLSampleReads, SQLUpload)
+                        .where(SQLSampleReads.sample == sample_id)
+                        .join_from(SQLSampleReads, SQLUpload),
                     )
                 )
                 .unique()
@@ -386,8 +438,7 @@ class SamplesData(DataLayerPiece):
 
     @emits(Operation.UPDATE)
     async def update(self, sample_id: str, data: UpdateSampleRequest) -> Sample:
-        """
-        Update the sample identified by ``sample_id``.
+        """Update the sample identified by ``sample_id``.
 
         :param sample_id: the id of the sample to update
         :param data: the update data
@@ -400,7 +451,7 @@ class SamplesData(DataLayerPiece):
 
         if "name" in data:
             aws.append(
-                check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id)
+                check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id),
             )
 
         if "labels" in data:
@@ -408,7 +459,7 @@ class SamplesData(DataLayerPiece):
 
         if "subtractions" in data:
             aws.append(
-                check_subtractions_do_not_exist(self._mongo, data["subtractions"])
+                check_subtractions_do_not_exist(self._mongo, data["subtractions"]),
             )
 
         await wait_for_checks(*aws)
@@ -418,16 +469,23 @@ class SamplesData(DataLayerPiece):
         return await self.get(sample_id)
 
     async def has_right(
-        self, sample_id: str, client: UserClient, right: SampleRight
+        self,
+        sample_id: str,
+        client: UserClient,
+        right: SampleRight,
     ) -> bool:
         document = await self._mongo.samples.find_one(
-            {"_id": sample_id}, ["all_read", "all_write", "group", "group_read", "user"]
+            {"_id": sample_id},
+            ["all_read", "all_write", "group", "group_read", "user"],
         )
 
         if document is None:
             return True
 
-        if client.administrator or document["user"]["id"] == client.user_id:
+        if (
+            client.administrator_role == AdministratorRole.FULL
+            or client.user_id == document["user"]["id"]
+        ):
             return True
 
         is_group_member = bool(document["group"] and document["group"] in client.groups)
@@ -442,9 +500,32 @@ class SamplesData(DataLayerPiece):
 
         raise ValueError(f"Invalid sample right: {right}")
 
-    async def compress_samples(self, progress_handler: AbstractProgressHandler):
+    async def has_resources_for_analysis_job(self, ref_id, subtractions):
+        """Checks that resources for analysis job exist.
+        :param ref_id: the reference id
+        :param subtractions: list of subtractions
         """
-        Compress all uncompressed legacy samples.
+        if not await self._mongo.references.count_documents({"_id": ref_id}):
+            raise ResourceConflictError("Reference does not exist")
+
+        if not await self._mongo.indexes.count_documents(
+            {"reference.id": ref_id, "ready": True},
+        ):
+            raise ResourceConflictError("No ready index")
+
+        if subtractions is not None:
+            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
+                self._mongo.subtraction,
+                subtractions,
+            )
+
+            if non_existent_subtractions:
+                raise ResourceConflictError(
+                    f"Subtractions do not exist: {','.join(non_existent_subtractions)}",
+                )
+
+    async def compress_samples(self, progress_handler: AbstractProgressHandler):
+        """Compress all uncompressed legacy samples.
 
         :param progress_handler: a progress handler object
         """
@@ -461,7 +542,9 @@ class SamplesData(DataLayerPiece):
                 break
 
             await virtool.samples.db.compress_sample_reads(
-                self._mongo, self._config, sample
+                self._mongo,
+                self._config,
+                sample,
             )
 
             await tracker.add(1)
@@ -483,13 +566,14 @@ class SamplesData(DataLayerPiece):
                 break
 
             await virtool.samples.db.move_sample_files_to_pg(
-                self._mongo, self._pg, sample
+                self._mongo,
+                self._pg,
+                sample,
             )
             await tracker.add(1)
 
     async def deduplicate_sample_names(self):
-        """
-        Find all samples with duplicate names in the same space and rename
+        """Find all samples with duplicate names in the same space and rename
         them with increasing integers by order of creation.
         """
         async with self._mongo.create_session() as session:
@@ -500,9 +584,9 @@ class SamplesData(DataLayerPiece):
                             "_id": {"name": "$name", "space_id": "$space_id"},
                             "count": {"$sum": 1},
                             "documents": {
-                                "$push": {"_id": "$_id", "created_at": "$created_at"}
+                                "$push": {"_id": "$_id", "created_at": "$created_at"},
                             },
-                        }
+                        },
                     },
                     {"$match": {"count": {"$gt": 1}}},
                     {"$unwind": "$documents"},
@@ -511,7 +595,7 @@ class SamplesData(DataLayerPiece):
                         "$group": {
                             "_id": "$_id",
                             "sample_ids": {"$push": "$documents._id"},
-                        }
+                        },
                     },
                     {
                         "$project": {
@@ -519,7 +603,7 @@ class SamplesData(DataLayerPiece):
                             "space_id": "$_id.space_id",
                             "_id": 0,
                             "sample_ids": 1,
-                        }
+                        },
                     },
                 ],
                 session=session,
@@ -545,5 +629,5 @@ class SamplesData(DataLayerPiece):
                 *[
                     recalculate_workflow_tags(self._mongo, sample_id)
                     for sample_id in chunk
-                ]
+                ],
             )

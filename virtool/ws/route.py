@@ -3,11 +3,9 @@ Provides handlers for managing Websocket related requests.
 """
 
 from aiohttp.web import Request, WebSocketResponse
-from logging import getLogger
-from virtool.ws.connection import WSConnection
-from virtool.http.policy import policy, WebSocketRoutePolicy
 
-logger = getLogger(__name__)
+from virtool.api.policy import policy, WebSocketRoutePolicy
+from virtool.ws.connection import WSConnection
 
 
 @policy(WebSocketRoutePolicy)
@@ -34,8 +32,6 @@ async def root(req: Request) -> WebSocketResponse:
     except RuntimeError as err:
         if "TCPTransport" not in str(err):
             raise
-
-    logger.info("Connection closed")
 
     req.app["ws"].remove_connection(connection)
 

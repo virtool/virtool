@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 
@@ -5,5 +7,6 @@ import pytest
 def config(tmp_path, mocker):
     config = mocker.Mock()
     config.base_url = "https://virtool.example.com/api"
-    config.data_path = tmp_path
+    config.data_path = Path(tmp_path)
+
     return config

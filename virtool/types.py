@@ -1,5 +1,4 @@
 """Custom types aliases for Virtool."""
-from __future__ import annotations
 
 from datetime import datetime
 from typing import (
@@ -20,13 +19,15 @@ In testing ``dict``-like objects are sometimes used in place of an application.
 """
 
 Document: TypeAlias = dict[
-    str, dict | list | bool | str | int | float | datetime | None
+    str,
+    dict | list | bool | str | int | float | datetime | None,
 ]
 """
 A MongoDB document or similar dictionary.
 
 Keys must be strings.
 """
+
 
 Projection: TypeAlias = dict[str, bool] | Sequence[str]
 """

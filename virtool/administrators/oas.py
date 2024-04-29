@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 
 from pydantic import BaseModel, Field
 from virtool_core.models.roles import AdministratorRole
@@ -30,19 +30,23 @@ class UpdateAdministratorRoleRequest(BaseModel):
 
 
 class UpdateUserRequest(BaseModel):
-    active: Optional[bool] = Field(description="deactivate a user")
-    force_reset: Optional[bool] = Field(
+    active: bool | None = Field(description="deactivate a user")
+
+    force_reset: bool | None = Field(
         description="Forces a password reset next time the user logs in"
     )
-    groups: Optional[List[str]] = Field(
+
+    groups: list[int | str] | None = Field(
         description="Sets the IDs of groups the user belongs to"
     )
-    password: Optional[str] = Field(description="the new password")
-    primary_group: Optional[str] = Field(
+
+    password: str | None = Field(description="the new password")
+
+    primary_group: int | None = Field(
         description="Sets the ID of the user's primary group"
     )
 
-    _prevent_none = prevent_none("force_reset", "groups", "password")
+    _prevent_none = prevent_none("active", "force_reset", "groups", "password")
 
 
 class ListRolesResponse(BaseModel):
@@ -87,7 +91,6 @@ class ListAdministratorResponse(BaseModel):
                 "items": [
                     {
                         "handle": "leeashley",
-                        "administrator": True,
                         "id": "TxWalSSn",
                         "active": True,
                         "b2c": None,
@@ -113,7 +116,6 @@ class ListAdministratorResponse(BaseModel):
                     },
                     {
                         "handle": "zclark",
-                        "administrator": True,
                         "id": "fb085f7f",
                         "active": True,
                         "b2c": None,
@@ -147,7 +149,6 @@ class UserResponse(BaseModel):
         schema_extra = {
             "example": {
                 "id": "TxWalSSn",
-                "administrator": False,
                 "handle": "user_handle",
                 "active": True,
                 "b2c": None,

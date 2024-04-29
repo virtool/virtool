@@ -4,7 +4,6 @@ Context for migrations.
 import asyncio
 import sys
 from dataclasses import dataclass
-from logging import getLogger
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -13,6 +12,7 @@ from motor.motor_asyncio import (
 )
 from orjson import orjson
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from structlog import get_logger
 
 import virtool.mongo.connect
 from virtool.api.custom_json import dump_string
@@ -20,7 +20,7 @@ from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.openfga import connect_openfga
 from virtool.config.cls import MigrationConfig
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 @dataclass

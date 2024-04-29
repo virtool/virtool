@@ -1,0 +1,77 @@
+# serializer version: 1
+# name: TestAttachMLTransform.test_multi
+  list([
+    dict({
+      'id': 1,
+      'ml': dict({
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'download_url': 'test',
+        'github_url': 'test',
+        'id': 1,
+        'model': dict({
+          'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+          'description': 'test',
+          'id': 1,
+          'name': 'Test 1',
+        }),
+        'model_id': 1,
+        'name': '0.1.0',
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1,
+      }),
+    }),
+    dict({
+      'id': 2,
+      'ml': None,
+    }),
+    dict({
+      'id': 3,
+      'ml': dict({
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'download_url': 'test',
+        'github_url': 'test',
+        'id': 3,
+        'model': dict({
+          'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+          'description': 'test',
+          'id': 2,
+          'name': 'Test 2',
+        }),
+        'model_id': 2,
+        'name': '1.2.1',
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestAttachMLTransform.test_single[none]
+  dict({
+    'id': 1,
+    'ml': None,
+  })
+# ---
+# name: TestAttachMLTransform.test_single[not_none]
+  dict({
+    'id': 1,
+    'ml': dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'download_url': 'test',
+      'github_url': 'test',
+      'id': 2,
+      'model': dict({
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'description': 'test',
+        'id': 1,
+        'name': 'Test 1',
+      }),
+      'model_id': 1,
+      'name': '0.1.1',
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'ready': True,
+      'size': 1,
+    }),
+  })
+# ---

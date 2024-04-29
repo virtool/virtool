@@ -43,7 +43,7 @@ authenticated session, the data layer should raise a generic
 
 import secrets
 from datetime import timedelta
-from typing import Tuple
+
 from aioredis import Redis
 from virtool_core.models.session import (
     Session,
@@ -52,14 +52,14 @@ from virtool_core.models.session import (
 import virtool.utils
 from virtool.api.custom_json import dump_string
 from virtool.api.custom_json import isoformat_to_datetime, loads
+from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceNotFoundError,
 )
-from virtool.data.piece import DataLayerPiece
 from virtool.utils import get_safely, hash_key
 
 
-class SessionData(DataLayerPiece):
+class SessionData(DataLayerDomain):
     """
     The data layer piece for user sessions.
 
@@ -70,8 +70,8 @@ class SessionData(DataLayerPiece):
         self.redis = redis
 
     async def create_anonymous(
-        self,
-        ip: str,
+            self,
+            ip: str,
     ) -> Session:
         """
         Creates an anonymous session with the given ``ip`` and ``user_id``.
@@ -79,20 +79,23 @@ class SessionData(DataLayerPiece):
         :param ip: the ip address of the client
         :return: the session id, the session model, and the session token
         """
-        session_id = await self._create_session_id()
 
-        session = Session(created_at=virtool.utils.timestamp(), ip=ip, id=session_id)
+        session = Session(
+            created_at=virtool.utils.timestamp(),
+            ip=ip,
+            id=await self._create_session_id(),
+        )
 
-        await self.redis.set(session_id, dump_string(session), expire=600)
+        await self.redis.set(session.id, dump_string(session), expire=600)
 
         return session
 
     async def create_authenticated(
-        self,
-        ip: str,
-        user_id: str,
-        remember: bool = False,
-    ) -> Tuple[Session, str]:
+            self,
+            ip: str,
+            user_id: str,
+            remember: bool = False,
+    ) -> tuple[Session, str]:
         """
         Creates a new authenticated session with the given ``ip`` and ``user_id``.
 
@@ -129,8 +132,8 @@ class SessionData(DataLayerPiece):
         return Session(**session), token
 
     async def create_reset(
-        self, ip: str, user_id: str, remember: bool
-    ) -> Tuple[Session, str]:
+            self, ip: str, user_id: str, remember: bool
+    ) -> tuple[Session, str]:
         """
         Creates a new reset session.
 
@@ -173,7 +176,11 @@ class SessionData(DataLayerPiece):
 
         session = await self._get(session_id)
 
-        if not session.get("authentication") or session.get("reset"):
+        if not session.get("authentication"):
+            raise ResourceNotFoundError("Session not found")
+
+        if session.get("reset"):
+            await self.delete(session_id)
             raise ResourceNotFoundError("Session not found")
 
         if session["authentication"]["token"] != hash_key(session_token):
@@ -205,7 +212,11 @@ class SessionData(DataLayerPiece):
         """
         session = await self._get(session_id)
 
-        if session.get("authentication") or session.get("reset"):
+        if session.get("authentication"):
+            raise ResourceNotFoundError("Session not found")
+
+        if session.get("reset"):
+            await self.delete(session_id)
             raise ResourceNotFoundError("Session not found")
 
         return Session(**session)
@@ -227,14 +238,11 @@ class SessionData(DataLayerPiece):
 
         stored_reset_code: str = get_safely(session, "reset", "code")
 
-        if (
-            not reset_code
-            or session.get("authentication")
-            or stored_reset_code != reset_code
-        ):
+        if not reset_code or session.get("authentication"):
             raise ResourceNotFoundError("Session not found")
 
         if stored_reset_code != reset_code:
+            await self.delete(session_id)
             raise ResourceNotFoundError("Invalid reset code")
 
         return Session(**session)

@@ -1,19 +1,20 @@
+# serializer version: 1
 # name: TestBothTransactions.test_both[mongo]
-  <class 'dict'> {
+  dict({
     '_id': 'test',
-  }
----
+  })
+# ---
 # name: TestBothTransactions.test_both[pg]
   <SQLGroup(id=1, legacy_id=None, name=test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
----
+# ---
 # name: TestBothTransactions.test_mongo_only
-  <class 'dict'> {
+  dict({
     '_id': 'test',
-  }
----
+  })
+# ---
 # name: TestBothTransactions.test_pg_exception[pg]
   <SQLGroup(id=1, legacy_id=None, name=Test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
----
+# ---
 # name: TestBothTransactions.test_pg_only
   <SQLGroup(id=1, legacy_id=None, name=test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
----
+# ---

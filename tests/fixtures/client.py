@@ -1,60 +1,121 @@
-"""
-Fixtures for creating test clients.
+"""Fixtures for creating test clients that can be used to test API endpoints."""
 
-When clients are created, a testing server instance is also created. All methods called
-on the client (eg. ``client.get()``) are directed to the server instance.
-
-"""
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import pytest
-from aiohttp import BasicAuth
-from aiohttp.test_utils import make_mocked_coro
-from aiohttp.web import Response, RouteTableDef
+from aiohttp import BasicAuth, ClientResponse
+from aiohttp.web import RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
+from virtool_core.models.group import GroupMinimal
+from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.user import User
 
 import virtool.jobs.main
 from virtool.api.custom_json import dump_bytes, dump_string
 from virtool.app import create_app
-from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.openfga import OpenfgaScheme
 from virtool.config.cls import ServerConfig
+from virtool.data.layer import DataLayer
+from virtool.data.utils import get_data_from_app
+from virtool.fake.next import DataFaker
 from virtool.flags import FeatureFlags, FlagName
+from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
-from virtool.users.utils import generate_base_permissions
+from virtool.mongo.utils import get_mongo_from_app
+from virtool.users.oas import UpdateUserRequest
 from virtool.utils import hash_key
 
 
+class VirtoolTestClientUser:
+    """Manages the user associated with a test client."""
+
+    def __init__(self, data_layer: DataLayer, tester_user: User):
+        self._data_layer = data_layer
+
+        self.groups: list[GroupMinimal] = tester_user.groups
+        """The groups the user belongs to."""
+
+        self.id = tester_user.id
+        """The user's unique identifier."""
+
+    async def set_groups(self, group_ids: list[int]):
+        """Set the groups the user belongs to.
+
+        .. code-block:: python
+
+           # Spawn a client.
+           client = await spawn_client(authenticated=True)
+
+           # Set a user's groups by providing a list of group IDs.
+           await client.user.set_groups([1, 3])
+
+           # [
+           #   GroupMinimal(id=1, name="Administrator"),
+           #   GroupMinimal(id=3, name="Testers")
+           # ]
+           print(client.user.groups)
+
+
+        :param group_ids: the groups the user will be a member of
+        :return: the user
+        """
+        user = await self._data_layer.users.update(
+            self.id,
+            UpdateUserRequest(groups=group_ids),
+        )
+
+        self.groups = user.groups
+
+
 class VirtoolTestClient:
-    def __init__(self, test_client):
+    """The test client provided by the :fixture:`spawn_client` fixture."""
+
+    def __init__(self, test_client, test_client_user: VirtoolTestClientUser):
         self._test_client = test_client
-        self.server = self._test_client.server
 
-        self.app = self.server.app
-        self.db = self.app["db"]
+        self.app = self._test_client.server.app
+        """The test server's application object."""
 
-        self.auth = self._test_client.session.auth
-        self.cookie_jar = self._test_client.session.cookie_jar
+        self.mongo = get_mongo_from_app(self.app)
+        """The server Mongo object."""
 
-    def get_cookie(self, key) -> Any | None:
-        for cookie in self._test_client.session.cookie_jar:
-            if cookie.key == key:
-                return cookie.value
+        self.user: VirtoolTestClientUser = test_client_user
+        """
+        The user associated with the client.
+        
+        This attribute will be ``None`` if the client is not authenticated.
+        """
 
-        return None
+    async def set_user(self, user_id: str):
+        """Authenticate the client as a specific existing user.
 
-    def has_cookie(self, key, value):
-        return self.get_cookie(key) == value
+        The :attr:`user` attribute will be updated to reflect the new user.
 
-    async def get(self, url: str, headers=None, params=None) -> Response:
+        :param user_id: the ID of the user to authenticate as
+        :return:
+        """
+        data_layer = get_data_from_app(self.app)
+
+        self.user = VirtoolTestClientUser(
+            data_layer,
+            await data_layer.users.get(user_id),
+        )
+
+    async def get(
+        self,
+        url: str,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> ClientResponse:
         return await self._test_client.get(url, headers=headers, params=params)
 
-    async def post(self, url: str, data=None) -> Response:
+    async def post(self, url: str, data: dict | None) -> ClientResponse:
         payload = None
 
         if data:
@@ -62,52 +123,192 @@ class VirtoolTestClient:
 
         return await self._test_client.post(url, data=payload)
 
-    async def post_form(self, url: str, data) -> Response:
+    async def post_form(self, url: str, data) -> ClientResponse:
         return await self._test_client.post(url, data=data)
 
-    async def patch(self, url: str, data) -> Response:
+    async def patch(self, url: str, data) -> ClientResponse:
         return await self._test_client.patch(url, data=json.dumps(data))
 
-    async def put(self, url: str, data) -> Response:
+    async def put(self, url: str, data) -> ClientResponse:
         return await self._test_client.put(url, data=json.dumps(data))
 
-    async def delete(self, url: str) -> Response:
+    async def delete(self, url: str) -> ClientResponse:
         return await self._test_client.delete(url)
 
 
-@pytest.fixture
+class ClientSpawner(Protocol):
+    """A protocol the describes a function that can spawn a test client.
+
+    The fixtures :func:`spawn_client` and :func:`spawn_job_client` both return functions
+    that conform to this protocol.
+
+    """
+
+    async def __call__(
+        self,
+        addon_route_table: RouteTableDef | None = None,
+        administrator: bool = False,
+        auth: BasicAuth | None = None,
+        authenticated: bool = False,
+        base_url: str = "",
+        config_overrides: dict[str, Any] | None = None,
+        flags: list[FlagName] | None = None,
+        permissions: list[Permission] | None = None,
+    ) -> VirtoolTestClient:
+        """Spawn a test client.
+
+        :param addon_route_table: a route table that will be added to the app
+        :param administrator: whether the client should be an administrator
+        :param auth: a basic authentication object to use
+        :param authenticated: whether the client should be authenticated
+        :param base_url: the base URL to use for the client
+        :param config_overrides: overrides for the server config
+        :param flags: a list of feature flags to enable
+        :param permissions: a list of permissions to give the user
+        :return: the test client
+        """
+        ...
+
+
+@pytest.fixture()
 def spawn_client(
     aiohttp_client,
-    authorization_client,
-    create_user,
-    mongo,
-    mongo_connection_string,
-    mongo_name,
-    openfga_host,
-    openfga_scheme,
-    openfga_store_name,
+    fake2: DataFaker,
+    mongo_connection_string: str,
+    mongo_name: str,
+    openfga_host: str,
+    openfga_scheme: OpenfgaScheme,
+    openfga_store_name: str,
     pg_connection_string,
     pg,
     redis,
     redis_connection_string,
     mocker,
 ):
-    """A factory for spawning test clients."""
+    """A factory for spawning test clients
+
+    The function conforms to the :class:`ClientSpawner` protocol, which describes which
+    configuration arguments can be passed to the function.
+
+    When clients are created, a testing server instance is also created. All methods called
+    on the client (eg. ``await client.get("/samples")``) are directed to the server
+    instance.
+
+    Basic Usage
+    -----------
+
+    The simplest usage of the test client spawn a client that is unauthenticated and
+    unprivileged.
+
+    .. code-block:: python
+
+        async def test_get(spawn_client: ClientSpawner):
+            client = await spawn_client()
+
+            resp = await client.get("/")
+
+            assert resp.status == 200
+
+    The client can be authenticated as fake user by setting the ``authenticated`` flag.
+
+    .. code-block:: python
+
+        client = await spawn_client(authenticated=True)
+
+    This automatically:
+
+    1. Creates a fake user.
+    2. Creates an authenticated session for the user.
+    3. Sets the test client cookies to use the session.
+
+    This means that the client can be used to test any endpoints that don't require
+    administrator privileges.
+
+    The client can be authenticated as an administrator by setting the ``administrator``
+    flag.
+
+    .. code-block:: python
+
+        client = await spawn_client(administrator=True)
+
+    This allows the client to test any endpoint. The ``authenticated`` flag must still
+    be used when the ``administrator`` flag is used.
+
+    Permissions
+    -----------
+
+    The permissions of the user can be set by passing a list of permissions when the
+    client is spawned.
+
+    .. code-block:: python
+
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample, Permission.create_subtraction]
+        )
+
+    This will create a one-off group with the specified permissions and assign the user
+    to it.
+
+    Feature Flags
+    -------------
+
+    The feature flags enabled on the test server can be configured **only** when
+    spawning the client.
+
+    .. code-block:: python
+
+        client = await spawn_client(flags=[FlagName.ML_MODELS, FlagName.SPACES])
+
+    This will enable the ``ML_MODELS`` and ``SPACES`` feature flags on the test server
+    so that features that are not generally available can still be tested.
+
+    Server Configuration
+    --------------------
+
+    The basic configuration of the test server can be overridden by passing a dictionary
+    of configuration value keys and replacement values as ``config_overrides``.
+
+    .. code-block:: python
+
+        client = await spawn_client(
+            config_overrides={"base_url": "https://virtool.example.com"}
+        )
+
+    Attempts to override invalid configuration values will raise an exception.
+
+    Addon Routes
+    ------------
+
+    Additional routes can be added to the test server by passing an instance of
+    :class:`RouteTableDef` as ``addon_route_table`` when spawning the client.
+
+    .. code-block:: python
+
+        client = await spawn_client(authenticated=True, addon_route_table=Routes)
+
+    """
 
     async def func(
         addon_route_table: RouteTableDef | None = None,
         administrator: bool = False,
         auth: BasicAuth | None = None,
         authenticated: bool = False,
-        authorize: bool = False,
         base_url: str = "",
         config_overrides: dict[str, Any] | None = None,
         flags: list[FlagName] | None = None,
-        groups: list[str] | None = None,
         permissions: list[Permission] | None = None,
     ):
-        authenticated = authenticated or authorize
-
+        """:param addon_route_table:
+        :param administrator: whether the client should be an administrator
+        :param auth: a basic authentication object to use
+        :param authenticated: whether the client should be authenticated
+        :param base_url:
+        :param config_overrides:
+        :param flags:
+        :param permissions:
+        :return:
+        """
         config = ServerConfig(
             base_url=base_url,
             b2c_client_id="",
@@ -122,7 +323,7 @@ def spawn_client(
             no_check_db=True,
             no_revision_check=True,
             openfga_host=openfga_host,
-            openfga_scheme="http",
+            openfga_scheme=openfga_scheme,
             openfga_store_name=openfga_store_name,
             port=9950,
             postgres_connection_string=pg_connection_string,
@@ -142,56 +343,44 @@ def spawn_client(
         if addon_route_table:
             app.add_routes(addon_route_table)
 
-        if groups is not None:
-            await mongo.groups.insert_many(
-                [
-                    {
-                        "_id": group,
-                        "name": group,
-                        "permissions": generate_base_permissions(),
-                    }
-                    for group in groups
-                ],
-                session=None,
-            )
+        groups = []
 
-        if permissions is not None:
-            await mongo.groups.insert_one(
-                {
-                    "_id": "perms_group",
-                    "name": "perms_group",
-                    "permissions": {
-                        permission.value: True for permission in permissions
-                    },
-                }
-            )
-            groups = ["perms_group"] if groups is None else ["perms_group", *groups]
+        if permissions:
+            groups = [
+                await fake2.groups.create(
+                    permissions=PermissionsUpdate(
+                        **{
+                            permission: True
+                            for permission in permissions
+                            if permission in permissions
+                        },
+                    ),
+                ),
+            ]
 
-        await mongo.users.insert_one(
-            await create_user(
-                user_id="test",
-                administrator=administrator,
-                groups=groups,
-                authorization_client=authorization_client if administrator else None,
-            )
+        test_client_user = await fake2.users.create(
+            administrator_role=AdministratorRole.FULL if administrator else None,
+            groups=groups,
+            handle="bob",
+            password="bob_is_testing",
         )
 
         if authenticated:
-            session_token = "bar"
             session_id = "foobar"
+            session_token = "bar"
 
             await redis.set(
                 session_id,
                 dump_bytes(
                     {
-                        "id": session_id,
-                        "created_at": virtool.utils.timestamp(),
-                        "ip": "127.0.0.1",
                         "authentication": {
                             "token": hash_key(session_token),
-                            "user_id": "test",
+                            "user_id": test_client_user.id,
                         },
-                    }
+                        "created_at": virtool.utils.timestamp(),
+                        "id": session_id,
+                        "ip": "127.0.0.1",
+                    },
                 ),
                 expire=3600,
             )
@@ -204,35 +393,36 @@ def spawn_client(
             cookies = {"session_id": "dne"}
 
         test_client = await aiohttp_client(
-            app, auth=auth, cookies=cookies, auto_decompress=False
+            app,
+            auth=auth,
+            auto_decompress=False,
+            cookies=cookies,
         )
 
-        test_client.app["db"].id_provider = FakeIdProvider()
+        get_mongo_from_app(test_client.app).id_provider = FakeIdProvider()
 
         if flags:
             test_client.app["flags"] = FeatureFlags(flags)
 
-        client = VirtoolTestClient(test_client)
-
-        assert client.app["pg"] is pg
+        client = VirtoolTestClient(test_client, test_client_user)
 
         return client
 
     return func
 
 
-@pytest.fixture
+@pytest.fixture()
 def spawn_job_client(
-    mongo: "Mongo",
     aiohttp_client,
+    config: ServerConfig,
+    mongo: Mongo,
     mongo_connection_string,
-    redis_connection_string: str,
-    pg_connection_string: str,
-    pg: AsyncEngine,
-    mongo_name,
-    openfga_store_name: str,
+    mongo_name: str,
     openfga_host: str,
-    authorization_client: AuthorizationClient,
+    openfga_store_name: str,
+    pg: AsyncEngine,
+    pg_connection_string: str,
+    redis_connection_string: str,
     mocker,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
@@ -261,7 +451,7 @@ def spawn_job_client(
                 b2c_client_secret="",
                 b2c_tenant="",
                 b2c_user_flow="",
-                data_path=Path("data"),
+                data_path=config.data_path,
                 dev=dev,
                 flags=[],
                 host="localhost",
@@ -276,7 +466,7 @@ def spawn_job_client(
                 redis_connection_string=redis_connection_string,
                 sentry_dsn="",
                 use_b2c=False,
-            )
+            ),
         )
 
         if add_route_table:

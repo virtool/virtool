@@ -5,8 +5,16 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 import arrow
+from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.job import Job, JobMinimal, JobPing, JobSearchResult, JobState
+from virtool_core.models.job import (
+    Job,
+    JobAcquired,
+    JobMinimal,
+    JobPing,
+    JobSearchResult,
+    JobState,
+)
 from virtool_core.models.user import UserNested
 
 import virtool.utils
@@ -14,12 +22,12 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.client import JOB_REMOVED_FROM_QUEUE, AbstractJobsClient
-from virtool.jobs.db import PROJECTION, create_job, fetch_complete_job
 from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
-from virtool.users.db import AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
+from virtool.utils import base_processor
 
 
 class JobsData:
@@ -41,9 +49,9 @@ class JobsData:
                     "$group": {
                         "_id": {"workflow": "$workflow", "state": "$last_status.state"},
                         "count": {"$sum": 1},
-                    }
+                    },
                 },
-            ]
+            ],
         ):
             workflow = a["_id"]["workflow"]
             state = a["_id"]["state"]
@@ -53,7 +61,7 @@ class JobsData:
 
     async def find(
         self,
-        archived: bool,
+        archived: bool | None,
         page: int,
         per_page: int,
         states: List[JobState],
@@ -63,8 +71,6 @@ class JobsData:
 
         if page > 1:
             skip_count = (page - 1) * per_page
-
-        sort = {"created_at": -1}
 
         match_query = {
             **({"archived": archived} if archived is not None else {}),
@@ -98,7 +104,7 @@ class JobsData:
                                 "$set": {
                                     "last_status": {"$last": "$status"},
                                     "first_status": {"$first": "$status"},
-                                }
+                                },
                             },
                             {
                                 "$set": {
@@ -106,14 +112,14 @@ class JobsData:
                                     "progress": "$last_status.progress",
                                     "state": "$last_status.state",
                                     "stage": "$last_status.stage",
-                                }
+                                },
                             },
                             {"$match": match_state},
-                            {"$sort": sort},
+                            {"$sort": {"created_at": -1}},
                             {"$skip": skip_count},
                             {"$limit": per_page},
                         ],
-                    }
+                    },
                 },
                 {
                     "$project": {
@@ -128,21 +134,24 @@ class JobsData:
                             "workflow": True,
                         },
                         "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0]
+                            "$arrayElemAt": ["$total_count.total_count", 0],
                         },
                         "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0]
+                            "$arrayElemAt": ["$found_count.found_count", 0],
                         },
-                    }
+                    },
                 },
-            ]
+            ],
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
             page_count = int(math.ceil(found_count / per_page))
 
-        documents = await apply_transforms(data, [AttachUserTransform(self._mongo)])
+        documents = await apply_transforms(
+            [base_processor(d) for d in data],
+            [AttachUserTransform(self._mongo)],
+        )
 
         for document in documents:
             document["user"] = UserNested(**document["user"])
@@ -163,11 +172,10 @@ class JobsData:
         workflow: str,
         job_args: Document,
         user_id: str,
-        space_id: int,
-        job_id: Optional[str] = None,
+        space_id: int = 1,
+        job_id: str | None = None,
     ) -> Job:
-        """
-        Create a job record and queue it.
+        """Create a job record and queue it.
 
         Create job record in MongoDB and get an ID. Queue the ID using the JobsClient so
         that it is picked up by a workflow runner.
@@ -175,39 +183,64 @@ class JobsData:
         :param workflow: the name of the workflow to run
         :param job_args: the arguments required to run the job
         :param user_id: the user that started the job
-        :param rights: the rights the job will have on Virtool resources
+        :param space_id: the space that the job belongs to
         :param job_id: an optional ID to use for the new job
 
         """
+        document = {
+            "acquired": False,
+            "archived": False,
+            "args": job_args,
+            "key": None,
+            "ping": None,
+            "rights": {},
+            "space": {"id": space_id},
+            "state": JobState.WAITING.value,
+            "status": [compose_status(JobState.WAITING, None)],
+            "user": {"id": user_id},
+            "workflow": workflow,
+        }
 
-        return await create_job(
-            self._mongo,
-            self._client,
-            workflow,
-            job_args,
-            user_id,
-            space_id,
-            job_id,
-        )
+        if job_id:
+            document["_id"] = job_id
+
+        document = await self._mongo.jobs.insert_one(document)
+        await self._client.enqueue(workflow, document["_id"])
+
+        return await self.get(document["_id"])
 
     async def get(self, job_id: str) -> Job:
-        """
-        Get a job document.
+        """Get a job document.
 
         :param job_id: the ID of the job document to get.
         :return: the job document
         """
-        document = await self._mongo.jobs.find_one(job_id, projection=PROJECTION)
+        document = await self._mongo.jobs.find_one(job_id)
 
         if document is None:
-            raise ResourceNotFoundError
+            raise ResourceNotFoundError()
 
-        return await fetch_complete_job(self._mongo, document)
+        status = document["status"]
+
+        last_update = status[-1]
+
+        document = await apply_transforms(
+            {
+                **document,
+                "id": document["_id"],
+                "state": last_update["state"],
+                "stage": last_update["stage"],
+                "created_at": status[0]["timestamp"],
+                "progress": status[-1]["progress"],
+            },
+            [AttachUserTransform(self._mongo)],
+        )
+
+        return Job(**document)
 
     @emits(Operation.UPDATE)
-    async def acquire(self, job_id: str):
-        """
-        Set the `started` field on a job to `True` and return the complete document.
+    async def acquire(self, job_id: str) -> JobAcquired:
+        """Set the `started` field on a job to `True` and return the complete document.
 
         :param job_id: the ID of the job to start
         :return: the complete job document
@@ -223,29 +256,32 @@ class JobsData:
 
         key, hashed = virtool.utils.generate_key()
 
-        document = await self._mongo.jobs.find_one_and_update(
+        await self._mongo.jobs.update_one(
             {"_id": job_id},
             {
-                "$set": {"acquired": True, "key": hashed},
+                "$set": {
+                    "acquired": True,
+                    "key": hashed,
+                    "state": JobState.PREPARING.value,
+                },
                 "$push": {
-                    "status": compose_status(JobState.PREPARING, None, progress=3)
+                    "status": compose_status(JobState.PREPARING, None, progress=3),
                 },
             },
-            projection=PROJECTION,
         )
 
-        return await fetch_complete_job(self._mongo, document, key=key)
+        job = await self.get(job_id)
+
+        return JobAcquired(**job.dict(), key=key)
 
     @emits(Operation.UPDATE)
     async def archive(self, job_id: str) -> Job:
-        """
-        Set the `archived` field on a job to `True` and return the complete document.
+        """Set the `archived` field on a job to `True` and return the complete document.
 
         :param job_id: the ID of the job to start
         :return: the complete job document
 
         """
-
         archived = await get_one_field(self._mongo.jobs, "archived", job_id)
 
         if archived is None:
@@ -254,20 +290,16 @@ class JobsData:
         if archived is True:
             raise ResourceConflictError("Job already archived")
 
-        document = await self._mongo.jobs.find_one_and_update(
-            {"_id": job_id}, {"$set": {"archived": True}}, projection=PROJECTION
-        )
+        await self._mongo.jobs.update_one({"_id": job_id}, {"$set": {"archived": True}})
 
-        return await fetch_complete_job(self._mongo, document)
+        return await self.get(job_id)
 
     async def bulk_archive(self, job_ids: List[str]) -> List[JobMinimal]:
-        """
-        Archive multiple jobs at the same time.
+        """Archive multiple jobs at the same time.
 
         :param job_ids: the ids of the jobs to archive
         :return: the archived jobs
         """
-
         existing_jobs = await self._mongo.jobs.distinct("_id")
 
         jobs_not_found = [job for job in job_ids if job not in existing_jobs]
@@ -277,7 +309,9 @@ class JobsData:
 
         async with self._mongo.create_session() as session:
             await self._mongo.jobs.update_many(
-                {"_id": {"$in": job_ids}}, {"$set": {"archived": True}}, session=session
+                {"_id": {"$in": job_ids}},
+                {"$set": {"archived": True}},
+                session=session,
             )
 
         pipeline = [
@@ -292,7 +326,7 @@ class JobsData:
                     "state": {"$first": "$state"},
                     "user": {"$first": "$user"},
                     "workflow": {"$first": "$workflow"},
-                }
+                },
             },
         ]
 
@@ -311,46 +345,42 @@ class JobsData:
                     "user": {
                         "id": user["_id"],
                         "handle": user["handle"],
-                        "administrator": user["administrator"],
                     },
                     "workflow": agg["workflow"],
-                }
+                },
             )
 
         return [JobMinimal(**document) for document in archived_jobs]
 
     async def ping(self, job_id: str) -> JobPing:
-        """
-        Update the `ping` field on a job to the current time and
+        """Update the `ping` field on a job to the current time and
         return .
 
         :param job_id: the ID of the job to start
         :return: the complete job document
         """
-
         ping = {"pinged_at": virtool.utils.timestamp()}
 
         document = await self._mongo.jobs.find_one_and_update(
-            {"_id": job_id}, {"$set": {"ping": ping}}, projection=PROJECTION
+            {"_id": job_id},
+            {"$set": {"ping": ping}},
+            projection=["ping"],
         )
 
-        if document is None:
-            raise ResourceNotFoundError("Job not found")
+        if document:
+            return JobPing(**ping)
 
-        return JobPing(**ping)
+        raise ResourceNotFoundError("Job not found")
 
     @emits(Operation.UPDATE)
     async def cancel(self, job_id: str) -> Job:
-        """
-        Add a cancellation status sub-document to the job identified by `job_id`.
+        """Add a cancellation status sub-document to the job identified by `job_id`.
 
         :param job_id: the ID of the job to add a cancellation status for
         :return: the updated job document
 
         """
-        document = await self._mongo.jobs.find_one(
-            {"_id": job_id}, projection=PROJECTION
-        )
+        document = await self._mongo.jobs.find_one({"_id": job_id}, ["status"])
 
         if document is None:
             raise ResourceNotFoundError
@@ -363,7 +393,7 @@ class JobsData:
         if result == JOB_REMOVED_FROM_QUEUE:
             latest = document["status"][-1]
 
-            document = await self._mongo.jobs.find_one_and_update(
+            update_result: UpdateResult = await self._mongo.jobs.update_one(
                 {"_id": job_id},
                 {
                     "$push": {
@@ -371,16 +401,15 @@ class JobsData:
                             JobState.CANCELLED,
                             latest["stage"],
                             progress=latest["progress"],
-                        )
-                    }
+                        ),
+                    },
                 },
-                projection=PROJECTION,
             )
 
-            if document is None:
+            if update_result.modified_count == 0:
                 raise ResourceNotFoundError
 
-        return await fetch_complete_job(self._mongo, document)
+        return await self.get(job_id)
 
     async def push_status(
         self,
@@ -407,7 +436,12 @@ class JobsData:
             raise ResourceConflictError("Job is finished")
 
         status_update = compose_status(
-            state, stage, step_name, step_description, error, progress
+            state,
+            stage,
+            step_name,
+            step_description,
+            error,
+            progress,
         )
 
         await self._mongo.jobs.update_one(
@@ -422,8 +456,7 @@ class JobsData:
         return job.status[-1]
 
     async def delete(self, job_id: str):
-        """
-        Delete a job by its ID.
+        """Delete a job by its ID.
 
         :param job_id: the ID of the job to delete
         """
@@ -434,7 +467,7 @@ class JobsData:
 
         if check_job_is_running_or_waiting(job.dict()):
             raise ResourceConflictError(
-                "Job is running or waiting and cannot be removed."
+                "Job is running or waiting and cannot be removed.",
             )
 
         delete_result = await self._mongo.jobs.delete_one({"_id": job_id})
@@ -445,17 +478,13 @@ class JobsData:
         emit(job, "jobs", "delete", Operation.DELETE)
 
     async def force_delete(self):
-        """
-        Force the deletion of all jobs.
-
-        """
+        """Force the deletion of all jobs."""
         job_ids = await self._mongo.jobs.distinct("_id")
         await gather(*[self._client.cancel(job_id) for job_id in job_ids])
         await self._mongo.jobs.delete_many({"_id": {"$in": job_ids}})
 
     async def timeout(self):
-        """
-        Timeout dead jobs.
+        """Timeout dead jobs.
 
         Times out all jobs that have been running or preparing for more than 30 days.
         This conservatively cleans up legacy jobs that do not have a ping field.
@@ -469,8 +498,14 @@ class JobsData:
         async with self._mongo.create_session() as session:
             async for document in self._mongo.jobs.find(
                 {
-                    "state": {
-                        "$in": [JobState.PREPARING.value, JobState.RUNNING.value]
+                    "$expr": {
+                        "$in": [
+                            {"$last": "$status.state"},
+                            [
+                                JobState.RUNNING.value,
+                                JobState.PREPARING.value,
+                            ],
+                        ],
                     },
                     "$or": [
                         {"ping.pinged_at": {"$lt": now.shift(minutes=-5).naive}},
@@ -496,15 +531,14 @@ class JobsData:
                                 latest["step_description"],
                                 None,
                                 latest["progress"],
-                            )
+                            ),
                         },
                     },
                     session=session,
                 )
 
     async def relist(self):
-        """
-        Relist jobs in redis.
+        """Relist jobs in redis.
 
         Relists jobs in redis which are in the waiting state and are not in the queue.
 
@@ -512,7 +546,7 @@ class JobsData:
         listed_jobs = await self._client.list()
 
         relistable_jobs = await self._mongo.jobs.find(
-            {"_id": {"$nin": listed_jobs}, "state": JobState.WAITING.value}
+            {"_id": {"$nin": listed_jobs}, "state": JobState.WAITING.value},
         ).to_list(None)
 
         await asyncio.sleep(10)
@@ -526,6 +560,6 @@ class JobsData:
                     "$in": [job["_id"] for job in relistable_jobs],
                 },
                 "state": JobState.WAITING.value,
-            }
+            },
         ):
             await self._client.enqueue(job["workflow"], job["_id"])

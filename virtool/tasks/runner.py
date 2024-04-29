@@ -1,14 +1,14 @@
 import asyncio
 from asyncio import Task as AsyncioTask, CancelledError
-from logging import getLogger
 
+from structlog import get_logger
 from virtool_core.models.task import Task
 
 from virtool.data.layer import DataLayer
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.task import BaseTask, get_task_from_name
 
-logger = getLogger("tasks")
+logger = get_logger("tasks")
 
 
 class TaskRunner:
@@ -60,19 +60,21 @@ class TaskRunner:
 
         :param task_id: the ID of the task to run
         """
+
         sql_task: Task = await self._data.tasks.get(task_id)
 
-        logger.info("Starting task: id=%s name=%s", sql_task.id, sql_task.type)
+        log = logger.bind(id=task_id, name=sql_task.type)
+
+        log.info("Starting task")
 
         cls = get_task_from_name(sql_task.type)
 
         self.current_task = await cls.from_task_id(self._data, task_id)
-
         self.asyncio_task = asyncio.create_task(self.current_task.run())
 
         await asyncio.shield(self.asyncio_task)
 
-        logger.info("Finished task: %s", task_id)
+        log.info("Finished task")
 
     async def _shutdown(self):
         """
@@ -85,24 +87,14 @@ class TaskRunner:
         logger.info("Received stop signal")
 
         if self.asyncio_task and not self.asyncio_task.done():
+            log = logger.bind(name=self.current_task.name, id=self.current_task.task_id)
+
             try:
-                logger.info(
-                    "Waiting for task to finish: name=%s id=%s",
-                    self.current_task.name,
-                    self.current_task.task_id,
-                )
+                log.info("Waiting for task to finish")
                 await self.asyncio_task
-                logger.info(
-                    "Finished task: name=%s id=%s",
-                    self.current_task.name,
-                    self.current_task.task_id,
-                )
+                logger.info("Finished task")
             except asyncio.CancelledError:
-                logger.critical(
-                    "Shutdown forced before task completed: name=%s id=%s",
-                    self.current_task.name,
-                    self.current_task.task_id,
-                )
+                logger.critical("Shutdown forced before task completed")
                 raise
 
         logger.info("Closing")

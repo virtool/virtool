@@ -1,0 +1,93 @@
+# serializer version: 1
+# name: TestAttachLabels.test_multi
+  list([
+    dict({
+      'id': 'foo',
+      'labels': list([
+        dict({
+          'color': '#03fc20',
+          'description': 'This is a question',
+          'id': 2,
+          'name': 'Question',
+          'space': None,
+        }),
+      ]),
+      'name': 'Foo',
+    }),
+    dict({
+      'id': 'bar',
+      'labels': list([
+        dict({
+          'color': '#a83432',
+          'description': 'This is a bug',
+          'id': 1,
+          'name': 'Bug',
+          'space': None,
+        }),
+        dict({
+          'color': '#03fc20',
+          'description': 'This is a question',
+          'id': 2,
+          'name': 'Question',
+          'space': None,
+        }),
+      ]),
+      'name': 'Bar',
+    }),
+    dict({
+      'id': 'baz',
+      'labels': list([
+      ]),
+      'name': 'Baz',
+    }),
+  ])
+# ---
+# name: TestAttachLabels.test_single
+  dict({
+    'id': 'foo',
+    'labels': list([
+      dict({
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+        'space': None,
+      }),
+      dict({
+        'color': '#03fc20',
+        'description': 'This is a question',
+        'id': 2,
+        'name': 'Question',
+        'space': None,
+      }),
+    ]),
+    'name': 'Foo',
+  })
+# ---
+# name: TestAttachSampleCounts.test_multiple
+  list([
+    dict({
+      'color': '#03fc20',
+      'count': 2,
+      'description': 'This is a question',
+      'id': 2,
+      'name': 'Question',
+    }),
+    dict({
+      'color': '#02db21',
+      'count': 0,
+      'description': 'This is a info',
+      'id': 3,
+      'name': 'Info',
+    }),
+  ])
+# ---
+# name: TestAttachSampleCounts.test_single
+  dict({
+    'color': '#a83432',
+    'count': 1,
+    'description': 'This is a bug',
+    'id': 1,
+    'name': 'Bug',
+  })
+# ---

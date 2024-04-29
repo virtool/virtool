@@ -1,9 +1,10 @@
+# serializer version: 1
 # name: test_get
-  <class 'dict'> {
-    'default_source_types': <class 'list'> [
+  dict({
+    'default_source_types': list([
       'isolate',
       'strain',
-    ],
+    ]),
     'enable_api': True,
     'enable_sentry': True,
     'hmm_slug': 'virtool/virtool-hmm',
@@ -14,14 +15,14 @@
     'sample_group_read': True,
     'sample_group_write': False,
     'sample_unique_names': True,
-  }
----
+  })
+# ---
 # name: test_update
-  <class 'dict'> {
-    'default_source_types': <class 'list'> [
+  dict({
+    'default_source_types': list([
       'isolate',
       'strain',
-    ],
+    ]),
     'enable_api': False,
     'enable_sentry': False,
     'hmm_slug': 'virtool/virtool-hmm',
@@ -32,5 +33,5 @@
     'sample_group_read': True,
     'sample_group_write': False,
     'sample_unique_names': True,
-  }
----
+  })
+# ---

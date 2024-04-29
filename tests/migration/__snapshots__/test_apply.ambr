@@ -1,144 +1,208 @@
+# serializer version: 1
 # name: test_apply_revisions
-  <class 'list'> [
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+  list([
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 1,
       'name': 'Add missing schemas',
       'revision': 'e694fb270acb',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 2,
       'name': 'upgrade file size types',
       'revision': '90bf491700cb',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 3,
       'name': 'Nest analysis results field',
       'revision': '7emq1brv0zz6',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 4,
       'name': 'Add subtractions field',
       'revision': '1keyha5n6l0j',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 5,
       'name': 'Rename cache hash field to key',
       'revision': 'jhqn47cauoea',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 6,
       'name': 'Remove ref process field',
       'revision': '1p681ke9wedv',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 7,
       'name': 'Remove software_update status document',
       'revision': 'gr5j6jx8ap7f',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 8,
       'name': 'Add user handle',
       'revision': 'ydvidjp34n4c',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 9,
       'name': 'Add user active field',
       'revision': 'tlogeiyxl9uz',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 10,
       'name': 'Use null for unset analysis results fields',
       'revision': 'i0ljixkr0wxg',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 11,
       'name': 'Add jobs ping field',
       'revision': '6q5k8tz8uph3',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 12,
       'name': 'Create all database indexes',
       'revision': 'l20h8fsbbb28',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 13,
       'name': 'Add space field',
       'revision': 's607ucxpct81',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 14,
       'name': 'Add space table and columns',
       'revision': '8af76adc9706',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 15,
       'name': 'Populate sample workflows field',
       'revision': '1zg28cpib2uj',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 16,
       'name': 'Add groups table',
       'revision': '7bd75961d130',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 17,
       'name': 'Fix group permission type',
       'revision': '011389a5ae19',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 18,
       'name': 'Create ML model tables.',
       'revision': '814389ec5021',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 19,
       'name': 'Move groups to SQL',
       'revision': 'r4txubh413sp',
-    },
-    <class 'dict'> {
-      'applied_at': <class 'datetime'>,
-      'created_at': <class 'datetime'>,
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
       'id': 20,
       'name': 'Add ML model release size',
       'revision': 'f8ad70032e9c',
-    },
-  ]
----
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 21,
+      'name': 'Use integer nested group ids',
+      'revision': 'okd9db53g0il',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 22,
+      'name': 'Use integer group ids in users',
+      'revision': 'f4md6q93mtud',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 23,
+      'name': 'Use integer group ids in samples',
+      'revision': 'qg7bo42yvavg',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 24,
+      'name': 'add users table',
+      'revision': '4104346698df',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 25,
+      'name': 'rename users table primary_group to primary_group_id',
+      'revision': '8f3810c1c2c9',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 26,
+      'name': 'promote mongo administrators in openFGA',
+      'revision': 'xtbq4bjlpocu',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 27,
+      'name': 'repair schema',
+      'revision': '77be1d95da09',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 28,
+      'name': 'update user schema',
+      'revision': '5df816cef12f',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 29,
+      'name': 'add user email',
+      'revision': '141c7ecb99b7',
+    }),
+  ])
+# ---

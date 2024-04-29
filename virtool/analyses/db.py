@@ -1,33 +1,15 @@
-"""
-Work with analyses in the database.
+"""Work with analyses in the database."""
 
-"""
-from typing import Any, List
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.mongo.utils
-import virtool.utils
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.data.transforms import AbstractTransform
-from virtool.indexes.db import get_current_id_and_version
+from virtool.mongo.core import Mongo
+from virtool.samples.utils import get_sample_rights
 from virtool.types import Document
-from virtool.utils import base_processor
-
-PROJECTION = (
-    "_id",
-    "workflow",
-    "created_at",
-    "index",
-    "job",
-    "ready",
-    "reference",
-    "sample",
-    "subtractions",
-    "updated_at",
-    "user",
-)
 
 TARGET_FILES = (
     "hmm.tsv",
@@ -50,7 +32,7 @@ class AttachAnalysisFileTransform(AbstractTransform):
             results = (
                 (
                     await session.execute(
-                        select(SQLAnalysisFile).filter_by(analysis=document["id"])
+                        select(SQLAnalysisFile).filter_by(analysis=document["id"]),
                     )
                 )
                 .scalars()
@@ -60,64 +42,42 @@ class AttachAnalysisFileTransform(AbstractTransform):
         return [result.to_dict() for result in results]
 
 
-async def create(
-    db,
-    sample_id: str,
-    ref_id: str,
-    subtractions: List[str],
-    user_id: str,
-    workflow: str,
-    job_id: str,
-    space_id: int,
-    analysis_id: str | None = None,
-) -> dict:
-    """
-    Creates a new analysis.
+async def filter_analyses_by_sample_rights(
+    client,
+    mongo: Mongo,
+    analyses: list[dict],
+) -> list[dict]:
+    """Filter a list of analyses based on the user's rights to the samples they are
+    associated with.
 
-    Ensures that a valid subtraction host was the submitted. Configures read and write
-    permissions on the sample document and assigns it a creator username based on the
-    requesting connection.
-
-    :param db: the application database object
-    :param sample_id: the ID of the sample to create an analysis for
-    :param ref_id: the ID of the reference to analyze against
-    :param subtractions: the list of the subtraction IDs to remove from the analysis
-    :param user_id: the ID of the user starting the job
-    :param workflow: the analysis workflow to run
-    :param job_id: the ID of the job
-    :param space_id: the ID of the parent space
-    :param analysis_id: the ID of the analysis
-    :return: the analysis document
+    :param mongo: the application database client
+    :param analyses: the analyses to filter
+    :return: the filtered analyses
 
     """
-    index_id, index_version = await get_current_id_and_version(db, ref_id)
+    sample_ids = {a["sample"]["id"] for a in analyses}
 
-    created_at = virtool.utils.timestamp()
+    sample_rights = await mongo.samples.find(
+        {"_id": {"$in": list(sample_ids)}},
+        [
+            "_id",
+            "group",
+            "group_read",
+            "group_write",
+            "all_read",
+            "all_write",
+            "user",
+        ],
+    ).to_list(None)
 
-    document = {
-        "created_at": created_at,
-        "files": [],
-        "job": {"id": job_id},
-        "index": {"id": index_id, "version": index_version},
-        "reference": {
-            "id": ref_id,
-            "name": await virtool.mongo.utils.get_one_field(
-                db.references, "name", ref_id
-            ),
-        },
-        "ready": False,
-        "results": None,
-        "sample": {"id": sample_id},
-        "space": {"id": space_id},
-        "subtractions": subtractions,
-        "updated_at": created_at,
-        "user": {"id": user_id},
-        "workflow": workflow,
-    }
+    sample_rights_lookup = {s["_id"]: s for s in sample_rights}
 
-    if analysis_id:
-        document["_id"] = analysis_id
+    filtered = []
 
-    document = await db.analyses.insert_one(document)
+    for analysis in analyses:
+        sample_id = analysis["sample"]["id"]
 
-    return base_processor(document)
+        if get_sample_rights(sample_rights_lookup[sample_id], client):
+            filtered.append(analysis)
+
+    return filtered

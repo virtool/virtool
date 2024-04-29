@@ -7,6 +7,7 @@ migration-flavoured fixtures dispose of the database after each test to eliminat
 schema conflicts between tests.
 
 """
+import os
 from pathlib import Path
 
 import py.path
@@ -21,6 +22,9 @@ from virtool.authorization.openfga import OpenfgaScheme
 from virtool.config.cls import MigrationConfig
 from virtool.migration.ctx import create_migration_context, MigrationContext
 from virtool.migration.pg import SQLRevision
+
+import alembic.command
+import alembic.config
 
 
 @pytest.fixture
@@ -125,3 +129,18 @@ async def ctx(migration_config: MigrationConfig, mongo_name) -> MigrationContext
     ctx = await create_migration_context(migration_config)
     yield ctx
     await ctx.mongo.client.drop_database(ctx.mongo.client.get_database(mongo_name))
+
+
+@pytest.fixture
+def apply_alembic(migration_pg_connection_string: str):
+    os.environ["SQLALCHEMY_URL"] = migration_pg_connection_string
+
+    def func(revision: str = "head"):
+        alembic.command.upgrade(
+            alembic.config.Config(Path(__file__).parent.parent.parent / "alembic.ini"),
+            revision,
+        )
+
+    yield func
+
+    os.environ["SQLALCHEMY_URL"] = ""

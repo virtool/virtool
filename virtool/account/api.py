@@ -5,15 +5,12 @@ These endpoints modify and return data about the user account associated with th
 session or API key making the requests.
 
 """
-from typing import Union, List
-
-from aiohttp.web import HTTPNoContent, Response
-from aiohttp.web_exceptions import HTTPBadRequest
+from aiohttp.web import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
-import virtool.http.authentication
-import virtool.http.routes
+import virtool.api.authentication
+import virtool.api.routes
 from virtool.account.oas import (
     UpdateAccountRequest,
     UpdateSettingsRequest,
@@ -30,14 +27,15 @@ from virtool.account.oas import (
     AccountResetPasswordResponse,
     ListAPIKeysResponse,
 )
-from virtool.api.response import NotFound, json_response
+from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
+from virtool.api.policy import policy, PublicRoutePolicy
+from virtool.api.custom_json import json_response
+from virtool.api.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.policy import policy, PublicRoutePolicy
-from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 
-routes = virtool.http.routes.Routes()
+routes = virtool.api.routes.Routes()
 """
 A :class:`aiohttp.web.RouteTableDef` for account API routes.
 """
@@ -45,7 +43,7 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 
 @routes.view("/account")
 class AccountView(PydanticView):
-    async def get(self) -> Union[r200[AccountResponse], r401]:
+    async def get(self) -> r200[AccountResponse] | r401:
         """
         Get an account.
 
@@ -64,7 +62,7 @@ class AccountView(PydanticView):
 
     async def patch(
         self, data: UpdateAccountRequest
-    ) -> Union[r200[UpdateAccountResponse], r400, r401]:
+    ) -> r200[UpdateAccountResponse] | r400 | r401:
         """
         Update an account.
 
@@ -87,21 +85,21 @@ class AccountView(PydanticView):
             error = await check_password_length(self.request, data.password)
 
             if error:
-                raise HTTPBadRequest(text=error)
+                raise APIBadRequest(error)
 
         try:
             account = await get_data_from_req(self.request).account.update(
                 self.request["client"].user_id, data
             )
         except ResourceError:
-            raise HTTPBadRequest(text="Invalid credentials")
+            raise APIBadRequest("Invalid credentials")
 
         return json_response(UpdateAccountResponse.parse_obj(account))
 
 
 @routes.view("/account/settings")
-class SettingsView(PydanticView):
-    async def get(self) -> Union[r200[AccountSettingsResponse], r401]:
+class AccountsSettingsView(PydanticView):
+    async def get(self) -> r200[AccountSettingsResponse] | r401:
         """
         Get account settings.
 
@@ -112,14 +110,14 @@ class SettingsView(PydanticView):
             401: Requires authorization
         """
         account_settings = await get_data_from_req(self.request).account.get_settings(
-            "settings", self.request["client"].user_id
+            self.request["client"].user_id
         )
 
         return json_response(AccountSettingsResponse.parse_obj(account_settings))
 
     async def patch(
         self, data: UpdateSettingsRequest
-    ) -> Union[r200[AccountSettingsResponse], r400, r401]:
+    ) -> r200[AccountSettingsResponse] | r400 | r401:
         """
         Update account settings.
 
@@ -131,7 +129,7 @@ class SettingsView(PydanticView):
             401: Requires Authorization
         """
         settings = await get_data_from_req(self.request).account.update_settings(
-            data, "settings", self.request["client"].user_id
+            data, self.request["client"].user_id
         )
 
         return json_response(AccountSettingsResponse.parse_obj(settings))
@@ -139,7 +137,7 @@ class SettingsView(PydanticView):
 
 @routes.view("/account/keys")
 class KeysView(PydanticView):
-    async def get(self) -> Union[r200[List[ListAPIKeysResponse]], r401]:
+    async def get(self) -> r200[list[ListAPIKeysResponse]] | r401:
         """
         List API keys.
 
@@ -159,7 +157,7 @@ class KeysView(PydanticView):
 
     async def post(
         self, data: CreateKeysRequest
-    ) -> Union[r201[CreateAPIKeyResponse], r400, r401]:
+    ) -> r201[CreateAPIKeyResponse] | r400 | r401:
         """
         Create an API key.
 
@@ -177,17 +175,13 @@ class KeysView(PydanticView):
             data, self.request["client"].user_id
         )
 
-        headers = {"Location": f"/account/keys/{key.id}"}
-
-        key_dict = key.dict()
-
-        key_dict["key"] = raw
-
         return json_response(
-            CreateAPIKeyResponse.parse_obj(key_dict), headers=headers, status=201
+            CreateAPIKeyResponse(**{**key.dict(), "key": raw}),
+            headers={"Location": f"/account/keys/{key.id}"},
+            status=201,
         )
 
-    async def delete(self) -> Union[r204, r401]:
+    async def delete(self) -> r204 | r401:
         """
         Purge API keys.
 
@@ -201,12 +195,12 @@ class KeysView(PydanticView):
             self.request["client"].user_id
         )
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.view("/account/keys/{key_id}")
 class KeyView(PydanticView):
-    async def get(self, key_id: str, /) -> Union[r200[APIKeyResponse], r404]:
+    async def get(self, key_id: str, /) -> r200[APIKeyResponse] | r404:
         """
         Get an API key.
 
@@ -222,13 +216,13 @@ class KeyView(PydanticView):
                 self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(APIKeyResponse.parse_obj(key), status=200)
 
     async def patch(
         self, key_id: str, /, data: UpdateKeyRequest
-    ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
+    ) -> r200[APIKeyResponse] | r400 | r401 | r404:
         """
         Update an API key.
 
@@ -248,11 +242,11 @@ class KeyView(PydanticView):
                 data,
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
         return json_response(APIKeyResponse.parse_obj(key))
 
-    async def delete(self, key_id: str, /) -> Union[r204, r401, r404]:
+    async def delete(self, key_id: str, /) -> r204 | r401 | r404:
         """
         Delete an API key.
 
@@ -268,15 +262,15 @@ class KeyView(PydanticView):
                 self.request["client"].user_id, key_id
             )
         except ResourceNotFoundError:
-            raise NotFound()
+            raise APINotFound()
 
-        raise HTTPNoContent
+        raise APINoContent()
 
 
 @routes.view("/account/login")
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(self, data: CreateLoginRequest) -> Union[r201[LoginResponse], r400]:
+    async def post(self, data: CreateLoginRequest) -> r201[LoginResponse] | r400:
         """
         Login.
 
@@ -290,13 +284,13 @@ class LoginView(PydanticView):
             400: Invalid input
         """
 
-        session_id = self.request.cookies.get("session_id")
-        ip = virtool.http.authentication.get_ip(self.request)
+        session_id = self.request["client"].session_id
+        ip = virtool.api.authentication.get_ip(self.request)
 
         try:
             user_id = await get_data_from_req(self.request).account.login(data)
         except ResourceError:
-            raise HTTPBadRequest(text="Invalid username or password")
+            raise APIBadRequest("Invalid username or password")
 
         session = None
         reset_code = None
@@ -318,7 +312,8 @@ class LoginView(PydanticView):
             set_session_id_cookie(resp, session.id)
             return resp
 
-        await get_data_from_req(self.request).sessions.delete(session_id)
+        if session_id is not None:
+            await get_data_from_req(self.request).sessions.delete(session_id)
 
         session, token = await get_data_from_req(
             self.request
@@ -349,8 +344,8 @@ class LogoutView(PydanticView):
             204: Successful operation
         """
         session = await get_data_from_req(self.request).account.logout(
-            self.request.cookies.get("session_id"),
-            virtool.http.authentication.get_ip(self.request),
+            self.request["client"].session_id,
+            virtool.api.authentication.get_ip(self.request),
         )
 
         resp = Response(status=200)
@@ -366,7 +361,7 @@ class ResetView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(
         self, data: ResetPasswordRequest
-    ) -> Union[r200[AccountResetPasswordResponse], r400]:
+    ) -> r200[AccountResetPasswordResponse] | r400:
         """
         Reset password.
 
@@ -377,16 +372,16 @@ class ResetView(PydanticView):
             400: Invalid input
         """
         if error := await check_password_length(self.request, data.password):
-            raise HTTPBadRequest(text=error)
+            raise APIBadRequest(error)
 
         try:
             session, token = await get_data_from_req(self.request).account.reset(
-                self.request.cookies.get("session_id"),
+                self.request["client"].session_id,
                 data,
-                virtool.http.authentication.get_ip(self.request),
+                virtool.api.authentication.get_ip(self.request),
             )
         except ResourceNotFoundError:
-            raise HTTPBadRequest(text="Invalid session")
+            raise APIBadRequest("Invalid session")
 
         try:
             self.request["client"].authorize(session, is_api=False)

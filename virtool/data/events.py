@@ -5,17 +5,18 @@ from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from logging import getLogger
+
 from typing import Awaitable, Callable, AsyncIterable
 
 from aioredis import Redis, Channel, ChannelClosedError
+from structlog import get_logger
 from virtool_core.models.basemodel import BaseModel
 from virtool_core.redis import resubscribe
 
 from virtool.api.custom_json import dump_string
 from virtool.utils import timestamp, get_model_by_name
 
-logger = getLogger("events")
+logger = get_logger("events")
 
 
 class Operation(str, Enum):
@@ -51,7 +52,14 @@ class _InternalEventsTarget:
     q = asyncio.Queue(maxsize=1000)
 
     def emit(self, event: Event):
-        self.q.put_nowait(event)
+
+        for _ in range(3):
+            try:
+                self.q.put_nowait(event)
+                return
+            except asyncio.QueueFull:
+                asyncio.sleep(5)
+        logger.error("Event queue full after multiple retries. Dropping event.")
 
     async def get(self) -> Event:
         """
@@ -92,15 +100,19 @@ def emit(data: BaseModel, domain: str, name: str, operation: Operation):
 
 
     """
-    _events_target.emit(
-        Event(
-            data=data,
-            domain=domain,
-            name=name,
-            operation=operation,
-            timestamp=timestamp(),
+
+    if data is None:
+        logger.warning("emit event with no data")
+    else:
+        _events_target.emit(
+            Event(
+                data=data,
+                domain=domain,
+                name=name,
+                operation=operation,
+                timestamp=timestamp(),
+            )
         )
-    )
 
 
 def emits(operation: Operation, domain: str | None = None, name: str | None = None):
@@ -151,10 +163,10 @@ class EventPublisher:
                     data = event.data.dict()
                 except AttributeError:
                     logger.exception(
-                        "Encountered exception while publishing event: name=%s.%s operation=%s",
-                        event.domain,
-                        event.name,
-                        event.operation,
+                        "Encountered exception while publishing event",
+                        domain=event.domain,
+                        name=event.name,
+                        operation=event.operation,
                     )
                     continue
 
@@ -175,10 +187,10 @@ class EventPublisher:
                 )
 
                 logger.info(
-                    "Published event: name=%s.%s operation=%s",
-                    event.domain,
-                    event.name,
-                    event.operation,
+                    "Published event",
+                    domain=event.domain,
+                    name=event.name,
+                    operation=event.operation,
                 )
         except CancelledError:
             pass
@@ -202,7 +214,6 @@ class EventListener(AsyncIterable):
         while True:
             try:
                 received = await self._channel.get_json()
-
                 payload = received.pop("payload")
                 cls = get_model_by_name(payload["model"])
 
@@ -214,7 +225,8 @@ class EventListener(AsyncIterable):
                     )
                 except asyncio.TimeoutError:
                     logger.critical(
-                        "Could not resubscribe to Redis channel %s", self._channel_name
+                        "Could not resubscribe to Redis channel",
+                        channel=self._channel_name,
                     )
                     sys.exit(1)
             except TypeError:

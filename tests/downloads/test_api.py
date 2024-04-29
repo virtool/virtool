@@ -1,11 +1,18 @@
 import pytest
 
+from tests.fixtures.client import ClientSpawner
+from virtool.mongo.core import Mongo
 
-@pytest.mark.apitest
+
 @pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
-async def test_all(get, missing, spawn_client):
-    client = await spawn_client(authorize=True)
+async def test_all(
+    get,
+    missing,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+):
+    client = await spawn_client(authenticated=True)
 
     isolates = [{"id": "baz", "source_type": "isolate", "source_name": "Baz"}]
 
@@ -13,8 +20,8 @@ async def test_all(get, missing, spawn_client):
         isolates.append({"id": "foo", "source_type": "isolate", "source_name": "Foo"})
 
     if missing != "otu":
-        await client.db.otus.insert_one(
-            {"_id": "foobar", "name": "Foobar virus", "isolates": isolates}
+        await mongo.otus.insert_one(
+            {"_id": "foobar", "name": "Foobar virus", "isolates": isolates},
         )
 
     sequences = [
@@ -23,7 +30,7 @@ async def test_all(get, missing, spawn_client):
             "otu_id": "foobar",
             "isolate_id": "baz",
             "sequence": "ATAGGGACATA",
-        }
+        },
     ]
 
     if missing != "sequence":
@@ -33,10 +40,10 @@ async def test_all(get, missing, spawn_client):
                 "otu_id": "foobar",
                 "isolate_id": "foo",
                 "sequence": "ATAGGGACATA",
-            }
+            },
         )
 
-    await client.db.sequences.insert_many(sequences, session=None)
+    await mongo.sequences.insert_many(sequences, session=None)
 
     url = "/download/otus/foobar"
 

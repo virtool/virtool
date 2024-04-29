@@ -12,7 +12,7 @@ from virtool.data.events import (
     EventListener,
     dangerously_clear_events,
 )
-from virtool.data.piece import DataLayerPiece
+from virtool.data.domain import DataLayerDomain
 
 
 class Emitted(BaseModel):
@@ -25,7 +25,7 @@ async def test_emits():
     Test that the ``@emits`` decorator can derive the event name from the method name.
     """
 
-    class Example(DataLayerPiece):
+    class Example(DataLayerDomain):
         name = "example"
 
         @emits(Operation.CREATE)
@@ -50,7 +50,7 @@ async def test_emits_named():
     Test that the ``@emits`` decorator can be used with an explicit name.
     """
 
-    class Example(DataLayerPiece):
+    class Example(DataLayerDomain):
         name = "example"
 
         @emits(Operation.UPDATE, name="explicit")

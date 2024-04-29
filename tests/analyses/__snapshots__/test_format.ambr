@@ -1,416 +1,417 @@
+# serializer version: 1
 # name: test_transform_coverage_to_coordinates[coverage0]
-  <class 'list'> [
-    <class 'tuple'> (
+  list([
+    tuple(
       0,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       1,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       2,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       3,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       4,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       5,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       7,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       8,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       9,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       10,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       11,
       2,
     ),
-  ]
----
+  ])
+# ---
 # name: test_transform_coverage_to_coordinates[coverage1]
-  <class 'list'> [
-    <class 'tuple'> (
+  list([
+    tuple(
       0,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       1,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       2,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       3,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       4,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       5,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       7,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       8,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       9,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       10,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       11,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       12,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       13,
       1,
     ),
-  ]
----
+  ])
+# ---
 # name: test_transform_coverage_to_coordinates[coverage2]
-  <class 'list'> [
-    <class 'tuple'> (
+  list([
+    tuple(
       0,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       2,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       3,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       5,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       6,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       7,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       8,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       10,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       11,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       15,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       16,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       18,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       19,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       21,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       22,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       23,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       24,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       25,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       26,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       27,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       28,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       29,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       30,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       31,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       32,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       34,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       35,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       37,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       38,
       7,
     ),
-    <class 'tuple'> (
+    tuple(
       39,
       8,
     ),
-    <class 'tuple'> (
+    tuple(
       40,
       7,
     ),
-    <class 'tuple'> (
+    tuple(
       41,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       42,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       45,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       46,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       47,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       48,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       49,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       50,
       7,
     ),
-    <class 'tuple'> (
+    tuple(
       51,
       9,
     ),
-    <class 'tuple'> (
+    tuple(
       52,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       56,
       0,
     ),
-    <class 'tuple'> (
+    tuple(
       57,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       58,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       59,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       60,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       61,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       62,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       63,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       64,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       65,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       67,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       68,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       70,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       71,
       7,
     ),
-    <class 'tuple'> (
+    tuple(
       72,
       7,
     ),
-    <class 'tuple'> (
+    tuple(
       73,
       8,
     ),
-    <class 'tuple'> (
+    tuple(
       74,
       7,
     ),
-    <class 'tuple'> (
+    tuple(
       75,
       7,
     ),
-    <class 'tuple'> (
+    tuple(
       76,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       77,
       6,
     ),
-    <class 'tuple'> (
+    tuple(
       78,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       85,
       5,
     ),
-    <class 'tuple'> (
+    tuple(
       86,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       91,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       92,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       95,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       96,
       4,
     ),
-    <class 'tuple'> (
+    tuple(
       97,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       98,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       105,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       106,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       107,
       1,
     ),
-    <class 'tuple'> (
+    tuple(
       108,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       109,
       3,
     ),
-    <class 'tuple'> (
+    tuple(
       110,
       2,
     ),
-    <class 'tuple'> (
+    tuple(
       111,
       3,
     ),
-  ]
----
+  ])
+# ---

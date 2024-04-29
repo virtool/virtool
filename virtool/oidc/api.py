@@ -5,8 +5,8 @@ import jwt
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPFound
 
-from virtool.http.policy import PublicRoutePolicy, policy
-from virtool.http.routes import Routes
+from virtool.api.policy import PublicRoutePolicy, policy
+from virtool.api.routes import Routes
 
 routes = Routes()
 

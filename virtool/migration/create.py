@@ -1,11 +1,10 @@
-from logging import getLogger
 from pathlib import Path
 from random import choice
 from string import ascii_lowercase, digits
-from typing import List
 
 import arrow
 from alembic.util import load_python_file, template_to_file
+from structlog import get_logger
 
 from virtool.migration.cls import RevisionSource
 from virtool.migration.show import load_all_revisions
@@ -15,7 +14,7 @@ from virtool.migration.utils import (
     derive_revision_filename,
 )
 
-logger = getLogger("migration")
+logger = get_logger("migration")
 
 
 def create_revision(name: str):
@@ -28,7 +27,7 @@ def create_revision(name: str):
     """
     revisions_path = get_revisions_path()
 
-    most_recent_revision = load_all_revisions()[0]
+    most_recent_revision = load_all_revisions()[-1]
 
     revision_id = _generate_revision_id(_get_existing_revisions(revisions_path))
 
@@ -55,7 +54,7 @@ def create_revision(name: str):
         virtool_down_revision=virtool_down_revision,
     )
 
-    logger.info('Created empty revision "%s" with id "%s"', name, revision_id)
+    logger.info("Created empty revision", name=name, id=revision_id)
 
     return revision_id
 
@@ -77,7 +76,7 @@ def _generate_revision_id(excluded: list[str]):
     return candidate
 
 
-def _get_existing_revisions(revisions_path: Path) -> List[str]:
+def _get_existing_revisions(revisions_path: Path) -> list[str]:
     """
     List all migration revisions in a revisions directory.
     """

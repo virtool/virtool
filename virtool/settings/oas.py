@@ -22,7 +22,7 @@ class GetSettingsResponse(Settings):
 
 
 class UpdateSettingsRequest(BaseModel):
-    sample_group: str = "none"
+    sample_group: str | None = "none"
     sample_group_read: bool = True
     sample_group_write: bool = False
     sample_all_read: bool = True

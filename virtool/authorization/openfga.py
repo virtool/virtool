@@ -1,6 +1,5 @@
 import sys
 from enum import Enum
-from logging import getLogger
 
 from aiohttp import ClientConnectorError
 from openfga_sdk import (
@@ -13,11 +12,12 @@ from openfga_sdk import (
     OpenFgaApi,
     CreateStoreRequest,
 )
+from structlog import get_logger
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.authorization.permissions import ResourceType, Permission
 
-logger = getLogger("openfga")
+logger = get_logger("openfga")
 
 
 class OpenfgaScheme(str, Enum):
@@ -67,7 +67,7 @@ async def delete_openfga_tuples(
     """
     response = await api_instance.read(
         ReadRequest(
-            tuple_key=TupleKey(object=f"{object_type}:{object_id}"),
+            tuple_key=TupleKey(object=f"{object_type.value}:{object_id}"),
         )
     )
 
