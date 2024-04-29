@@ -18,7 +18,7 @@ COPY client/src /build/src
 RUN ls
 RUN npx webpack --config webpack.production.config.babel.js
 
-FROM virtool/external-tools:0.2.0
+FROM ghcr.io/virtool/external-tools:0.2.2
 WORKDIR /app
 COPY --from=pip /root/.local /root/.local
 COPY --from=node /build/dist /app/client
