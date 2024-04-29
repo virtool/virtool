@@ -8,9 +8,8 @@ from virtool.mongo.core import Mongo
 
 
 @pytest.mark.parametrize("loadable", [True, False])
-async def test_load_results(loadable, mocker, tmp_path, config):
-    """
-    Test that results are loaded from a `results.json` as expected. Check that the file loading action is not pursued
+async def test_load_results(loadable, config, mocker, tmp_path):
+    """Test that results are loaded from a `results.json` as expected. Check that the file loading action is not pursued
     if the results are stored in the analysis document.
 
     """
@@ -26,7 +25,8 @@ async def test_load_results(loadable, mocker, tmp_path, config):
     results_file.write_text(json.dumps(results))
 
     m_join_analysis_json_path = mocker.patch(
-        "virtool.analyses.utils.join_analysis_json_path", return_value=str(results_file)
+        "virtool.analyses.utils.join_analysis_json_path",
+        return_value=str(results_file),
     )
 
     result = await load_results(config, document)
@@ -165,22 +165,17 @@ async def test_load_results(loadable, mocker, tmp_path, config):
     ],
 )
 def test_transform_coverage_to_coordinates(coverage, snapshot):
-    """
-    Test that two sample coverage data sets are correctly converted to coordinates.
-
-    """
+    """Test that two sample coverage data sets are correctly converted to coordinates."""
     assert transform_coverage_to_coordinates(coverage) == snapshot
 
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
 async def test_format_analysis(workflow: str | None, config, mocker, mongo: Mongo):
-    """
-    Ensure that:
+    """Ensure that:
     * the correct formatting function is called based on the workflow field.
     * an exception is raised if the workflow field cannot be processed.
 
     """
-
     m_format_nuvs = mocker.patch(
         "virtool.analyses.format.format_nuvs",
         return_value={"is_nuvs": True, "is_pathoscope": False},

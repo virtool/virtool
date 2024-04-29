@@ -67,9 +67,9 @@ logger = get_logger("analyses")
 class AnalysisData(DataLayerDomain):
     name = "analyses"
 
-    def __init__(self, db: Mongo, config, pg: AsyncEngine):
+    def __init__(self, mongo: Mongo, config, pg: AsyncEngine):
         self._config = config
-        self._mongo = db
+        self._mongo = mongo
         self._pg = pg
 
     async def find(

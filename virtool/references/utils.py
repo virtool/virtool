@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
-from typing import List, Set, Optional, Dict
+from typing import Dict, List, Optional, Set
 
 from cerberus import Validator
 from pydantic import BaseModel
@@ -11,11 +11,7 @@ from virtool_core.models.reference import ReferenceDataType
 
 import virtool.otus.utils
 
-ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
-
 RIGHTS = ["build", "modify", "modify_otu", "remove"]
-
-SEQUENCE_KEYS = ["accession", "definition", "host", "sequence"]
 
 
 class ReferenceSourceData(BaseModel):
@@ -26,7 +22,9 @@ class ReferenceSourceData(BaseModel):
 
 
 def check_import_data(
-    data: Dict, strict: bool = True, verify: bool = True
+    data: Dict,
+    strict: bool = True,
+    verify: bool = True,
 ) -> List[dict]:
     errors = detect_duplicates(data["otus"])
 
@@ -73,7 +71,8 @@ def check_will_change(old: dict, imported: dict) -> bool:
 
     # Will change if the schema has changed.
     if json.dumps(old["schema"], sort_keys=True) != json.dumps(
-        imported["schema"], sort_keys=True
+        imported["schema"],
+        sort_keys=True,
     ):
         return True
 
@@ -83,7 +82,7 @@ def check_will_change(old: dict, imported: dict) -> bool:
     # Check isolate by isolate. Order is ignored.
     for new_isolate, old_isolate in zip(new_isolates, old_isolates):
         # Will change if a value property of the isolate has changed.
-        for key in ISOLATE_KEYS:
+        for key in ("id", "source_type", "source_name", "default"):
             if new_isolate[key] != old_isolate[key]:
                 return True
 
@@ -96,11 +95,12 @@ def check_will_change(old: dict, imported: dict) -> bool:
         # Check sequence-by-sequence. Order is ignored.
         new_sequences = sorted(new_isolate["sequences"], key=itemgetter("_id"))
         old_sequences = sorted(
-            old_isolate["sequences"], key=lambda d: d["remote"]["id"]
+            old_isolate["sequences"],
+            key=lambda d: d["remote"]["id"],
         )
 
         for new_sequence, old_sequence in zip(new_sequences, old_sequences):
-            for key in SEQUENCE_KEYS:
+            for key in ("accession", "definition", "host", "sequence"):
                 if new_sequence[key] != old_sequence[key]:
                     return True
 
@@ -141,13 +141,15 @@ def detect_duplicate_isolate_ids(joined: dict, duplicate_isolate_ids: dict):
 
 
 def detect_duplicate_sequence_ids(
-    joined: dict, duplicate_sequence_ids: Set[str], seen_sequence_ids: Set[str]
+    joined: dict,
+    duplicate_sequence_ids: Set[str],
+    seen_sequence_ids: Set[str],
 ):
     sequence_ids = virtool.otus.utils.extract_sequence_ids(joined)
 
     # Add sequence ids that are duplicated within an OTU to the duplicate set.
     duplicate_sequence_ids.update(
-        {i for i in sequence_ids if sequence_ids.count(i) > 1}
+        {i for i in sequence_ids if sequence_ids.count(i) > 1},
     )
 
     sequence_ids = set(sequence_ids)
@@ -182,7 +184,9 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
 
     for joined in otus:
         detect_duplicate_abbreviation(
-            joined, duplicate_abbreviations, seen_abbreviations
+            joined,
+            duplicate_abbreviations,
+            seen_abbreviations,
         )
 
         detect_duplicate_name(joined, duplicate_names, seen_names)
@@ -197,7 +201,9 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
             detect_duplicate_isolate_ids(joined, duplicate_isolate_ids)
 
             detect_duplicate_sequence_ids(
-                joined, duplicate_sequence_ids, seen_sequence_ids
+                joined,
+                duplicate_sequence_ids,
+                seen_sequence_ids,
             )
 
     errors = []
@@ -208,7 +214,7 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
                 "id": "duplicate_abbreviations",
                 "message": "Duplicate OTU abbreviations found",
                 "duplicates": list(duplicate_abbreviations),
-            }
+            },
         )
 
     if duplicate_ids:
@@ -217,7 +223,7 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
                 "id": "duplicate_ids",
                 "message": "Duplicate OTU ids found",
                 "duplicates": list(duplicate_ids),
-            }
+            },
         )
 
     if duplicate_isolate_ids:
@@ -226,7 +232,7 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
                 "id": "duplicate_isolate_ids",
                 "message": "Duplicate isolate ids found in some OTUs",
                 "duplicates": duplicate_isolate_ids,
-            }
+            },
         )
 
     if duplicate_names:
@@ -235,7 +241,7 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
                 "id": "duplicate_names",
                 "message": "Duplicate OTU names found",
                 "duplicates": list(duplicate_names),
-            }
+            },
         )
 
     if duplicate_sequence_ids:
@@ -244,7 +250,7 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
                 "id": "duplicate_sequence_ids",
                 "message": "Duplicate sequence ids found",
                 "duplicates": duplicate_sequence_ids,
-            }
+            },
         )
 
     return errors
@@ -298,12 +304,10 @@ def get_sequence_schema(require_id: bool) -> dict:
 
 
 def load_reference_file(path: Path) -> dict:
-    """
-    Load a list of merged otus documents from a file associated with a Virtool reference
-    file.
+    """Load a list of merged otus documents from a file associated with a Virtool
+    reference file.
 
     :param path: the path to the otus.json.gz file
-
     :return: the otus data to import
     """
     if not path.suffixes == [".json", ".gz"]:

@@ -3,8 +3,8 @@ import os
 from asyncio import to_thread
 
 from aiohttp.web import (
-    Request,
     FileResponse,
+    Request,
     Response,
 )
 from aiohttp_pydantic import PydanticView
@@ -12,7 +12,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import Field, conint, constr
 from pymongo.errors import DuplicateKeyError
 from sqlalchemy import exc, select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.samples import SampleSearchResult
@@ -22,16 +22,16 @@ import virtool.caches.db
 import virtool.uploads.db
 import virtool.uploads.utils
 from virtool.api.client import UserClient
+from virtool.api.custom_json import json_response
 from virtool.api.errors import (
-    APINotFound,
-    APIInsufficientRights,
     APIBadRequest,
     APIConflict,
-    APINoContent,
+    APIInsufficientRights,
     APIInvalidQuery,
+    APINoContent,
+    APINotFound,
 )
 from virtool.api.policy import PermissionRoutePolicy, policy
-from virtool.api.custom_json import json_response
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
@@ -40,17 +40,16 @@ from virtool.caches.utils import join_cache_path
 from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceNotFoundError,
     ResourceError,
+    ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
-    RIGHTS_PROJECTION,
+    SAMPLE_RIGHTS_PROJECTION,
     check_rights,
     get_sample_owner,
     recalculate_workflow_tags,
@@ -92,13 +91,12 @@ class SamplesView(PydanticView):
     async def get(
         self,
         find: constr(strip_whitespace=True) = "",
-        label: list[int] = Field(default_factory=lambda: []),
+        label: list[int] = Field(default_factory=list),
         page: conint(gt=0) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        workflows: list[str] = Field(default_factory=lambda: []),
+        workflows: list[str] = Field(default_factory=list),
     ) -> r200[SampleSearchResult] | r400:
-        """
-        Find samples.
+        """Find samples.
 
         Lists samples, filtering by data passed as URL parameters.
 
@@ -107,17 +105,22 @@ class SamplesView(PydanticView):
             400: Invalid query
         """
         search_result = await get_data_from_req(self.request).samples.find(
-            label, page, per_page, find, workflows, self.request["client"]
+            label,
+            page,
+            per_page,
+            find,
+            workflows,
+            self.request["client"],
         )
 
         return json_response(search_result)
 
     @policy(PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE))
     async def post(
-        self, data: CreateSampleRequest
+        self,
+        data: CreateSampleRequest,
     ) -> r201[CreateSampleResponse] | r400 | r403:
-        """
-        Create a sample.
+        """Create a sample.
 
         Creates a new sample with the given name, labels and subtractions.
 
@@ -133,7 +136,9 @@ class SamplesView(PydanticView):
         """
         try:
             sample = await get_data_from_req(self.request).samples.create(
-                data, self.request["client"].user_id, 0
+                data,
+                self.request["client"].user_id,
+                0,
             )
         except ResourceConflictError as err:
             raise APIBadRequest(str(err))
@@ -149,8 +154,7 @@ class SamplesView(PydanticView):
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
     async def get(self, sample_id: str, /) -> r200[GetSampleResponse] | r403 | r404:
-        """
-        Get a sample.
+        """Get a sample.
 
         Fetches the details for a sample.
 
@@ -159,7 +163,9 @@ class SampleView(PydanticView):
             400: Invalid query
         """
         if not await get_data_from_req(self.request).samples.has_right(
-            sample_id, self.request["client"], SampleRight.read
+            sample_id,
+            self.request["client"],
+            SampleRight.read,
         ):
             raise APIInsufficientRights()
 
@@ -172,10 +178,12 @@ class SampleView(PydanticView):
         return json_response(sample)
 
     async def patch(
-        self, sample_id: str, /, data: UpdateSampleRequest
+        self,
+        sample_id: str,
+        /,
+        data: UpdateSampleRequest,
     ) -> r200[UpdateSampleResponse] | r400 | r403 | r404:
-        """
-        Update a sample.
+        """Update a sample.
 
         Updates a sample using its 'sample id'.
 
@@ -187,13 +195,16 @@ class SampleView(PydanticView):
             404: Not found
         """
         if not await get_data_from_req(self.request).samples.has_right(
-            sample_id, self.request["client"], SampleRight.write
+            sample_id,
+            self.request["client"],
+            SampleRight.write,
         ):
             raise APIInsufficientRights()
 
         try:
             sample = await get_data_from_req(self.request).samples.update(
-                sample_id, data
+                sample_id,
+                data,
             )
         except ResourceConflictError as err:
             raise APIBadRequest(str(err))
@@ -203,8 +214,7 @@ class SampleView(PydanticView):
         return json_response(sample)
 
     async def delete(self, sample_id: str, /) -> r204 | r403 | r404:
-        """
-        Delete a sample.
+        """Delete a sample.
 
         Removes a sample document and all associated analyses.
 
@@ -214,12 +224,18 @@ class SampleView(PydanticView):
             404: Not found
         """
         if not await get_data_from_req(self.request).samples.has_right(
-            sample_id, self.request["client"], SampleRight.write
+            sample_id,
+            self.request["client"],
+            SampleRight.write,
         ):
             raise APIInsufficientRights()
 
         if (
-            await get_one_field(self.request.app["db"].samples, "ready", sample_id)
+            await get_one_field(
+                get_mongo_from_req(self.request).samples,
+                "ready",
+                sample_id,
+            )
             is False
         ):
             raise APIBadRequest("Only unfinalized samples can be deleted")
@@ -234,8 +250,7 @@ class SampleView(PydanticView):
 
 @routes.jobs_api.get("/samples/{sample_id}")
 async def get_sample(req):
-    """
-    Get a sample.
+    """Get a sample.
 
     Fetches a complete sample document from a job.
 
@@ -252,18 +267,17 @@ async def get_sample(req):
 
 @routes.jobs_api.get("/samples/{sample_id}/caches/{cache_key}")
 async def get_cache(req):
-    """
-    Get cache.
+    """Get cache.
 
     Fetches a cache document by key using the Jobs API.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
 
     sample_id = req.match_info["sample_id"]
     cache_key = req.match_info["cache_key"]
 
-    document = await db.caches.find_one({"key": cache_key, "sample.id": sample_id})
+    document = await mongo.caches.find_one({"key": cache_key, "sample.id": sample_id})
 
     if document is None:
         raise APINotFound()
@@ -274,8 +288,7 @@ async def get_cache(req):
 @routes.jobs_api.patch("/samples/{sample_id}")
 @schema({"quality": {"type": "dict", "required": True}})
 async def finalize(req):
-    """
-    Finalize a sample.
+    """Finalize a sample.
 
     Set the sample's quality field and the `ready` field to `True`.
 
@@ -295,10 +308,12 @@ async def finalize(req):
 @routes.view("/samples/{sample_id}/rights")
 class RightsView(PydanticView):
     async def patch(
-        self, sample_id: str, /, data: UpdateRightsRequest
+        self,
+        sample_id: str,
+        /,
+        data: UpdateRightsRequest,
     ) -> r200[UpdateRightsResponse] | r400 | r403 | r404:
-        """
-        Update rights settings.
+        """Update rights settings.
 
         Updates the rights settings for the specified sample document.
 
@@ -309,7 +324,7 @@ class RightsView(PydanticView):
             403: Must be administrator or sample owner
             404: Not found
         """
-        mongo: Mongo = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
         pg: AsyncEngine = self.request.app["pg"]
 
         data = data.dict(exclude_unset=True)
@@ -333,8 +348,8 @@ class RightsView(PydanticView):
                     select(SQLGroup.id).where(
                         (SQLGroup.id == group)
                         if isinstance(group, int)
-                        else (SQLGroup.legacy_id == group)
-                    )
+                        else (SQLGroup.legacy_id == group),
+                    ),
                 )
 
                 if not result.scalars().one_or_none():
@@ -344,7 +359,7 @@ class RightsView(PydanticView):
         document = await mongo.samples.find_one_and_update(
             {"_id": sample_id},
             {"$set": data},
-            projection=RIGHTS_PROJECTION,
+            projection=SAMPLE_RIGHTS_PROJECTION,
         )
 
         return json_response(document)
@@ -352,8 +367,7 @@ class RightsView(PydanticView):
 
 @routes.jobs_api.delete("/samples/{sample_id}")
 async def job_remove(req):
-    """
-    Remove a job.
+    """Remove a job.
 
     Removes a sample document and all associated analyses.
 
@@ -364,7 +378,7 @@ async def job_remove(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if await get_one_field(req.app["db"].samples, "ready", sample_id):
+    if await get_one_field(get_mongo_from_req(req).samples, "ready", sample_id):
         raise APIBadRequest("Only unfinalized samples can be deleted")
 
     reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
@@ -388,10 +402,9 @@ class AnalysesView(PydanticView):
         sample_id: str,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
-            /
+        /,
     ) -> r200[list[GetSampleAnalysesResponse]] | r403 | r404:
-        """
-        Get analyses.
+        """Get analyses.
 
         Lists the analyses associated with the given `sample_id`.
 
@@ -401,16 +414,21 @@ class AnalysesView(PydanticView):
             404: Not found
         """
         search_result = await get_data_from_req(self.request).analyses.find(
-            page, per_page, self.request["client"], sample_id
+            page,
+            per_page,
+            self.request["client"],
+            sample_id,
         )
 
         return json_response(search_result)
 
     async def post(
-        self, sample_id: str, /, data: CreateAnalysisRequest
+        self,
+        sample_id: str,
+        /,
+        data: CreateAnalysisRequest,
     ) -> r201[CreateAnalysisResponse] | r400 | r403 | r404:
-        """
-        Start analysis job.
+        """Start analysis job.
 
         Starts an analysis job for a given sample.
 
@@ -422,7 +440,7 @@ class AnalysesView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        mongo: "Mongo" = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
         try:
             if not await check_rights(mongo, sample_id, self.request["client"]):
@@ -435,7 +453,7 @@ class AnalysesView(PydanticView):
 
         try:
             await get_data_from_req(
-                self.request
+                self.request,
             ).samples.has_resources_for_analysis_job(data.ref_id, data.subtractions)
         except ResourceError as err:
             raise APIBadRequest(str(err))
@@ -458,23 +476,22 @@ class AnalysesView(PydanticView):
 
 @routes.jobs_api.delete("/samples/{sample_id}/caches/{cache_key}")
 async def cache_job_remove(req: Request):
-    """
-    Remove cache document.
+    """Remove cache document.
 
     Removes a cache document. Only usable in the Jobs API and when caches are
     unfinalized.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
 
     cache_key = req.match_info["cache_key"]
 
-    document = await db.caches.find_one({"key": cache_key})
+    document = await mongo.caches.find_one({"key": cache_key})
 
     if document is None:
         raise APINotFound()
 
-    if "ready" in document and document["ready"]:
+    if document.get("ready"):
         raise APIConflict("Jobs cannot delete finalized caches")
 
     await virtool.caches.db.remove(req.app, document["_id"])
@@ -484,18 +501,17 @@ async def cache_job_remove(req: Request):
 
 @routes.jobs_api.post("/samples/{sample_id}/artifacts")
 async def upload_artifact(req):
-    """
-    Upload an artifact.
+    """Upload an artifact.
 
     Uploads artifact created during sample creation using the Jobs API.
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
     artifact_type = req.query.get("type")
 
-    if not await db.samples.find_one(sample_id):
+    if not await mongo.samples.find_one(sample_id):
         raise APINotFound()
 
     if errors := naive_validator(req):
@@ -520,11 +536,14 @@ async def upload_artifact(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            multipart_file_chunker(await req.multipart()), artifact_file_path
+            multipart_file_chunker(await req.multipart()),
+            artifact_file_path,
         )
     except asyncio.CancelledError:
         logger.info(
-            "Sample artifact file upload aborted", id=artifact_id, sample_id=sample_id
+            "Sample artifact file upload aborted",
+            id=artifact_id,
+            sample_id=sample_id,
         )
         await delete_row(pg, artifact_id, SQLSampleArtifact)
         await to_thread(os.remove, artifact_file_path)
@@ -532,7 +551,10 @@ async def upload_artifact(req):
         return Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(
-        pg, size, artifact_id, SQLSampleArtifact
+        pg,
+        size,
+        artifact_id,
+        SQLSampleArtifact,
     )
 
     return json_response(
@@ -544,12 +566,11 @@ async def upload_artifact(req):
 
 @routes.jobs_api.put("/samples/{sample_id}/reads/{filename}")
 async def upload_reads(req):
-    """
-    Upload reads.
+    """Upload reads.
 
     Uploads sample reads using the Jobs API.
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     name = req.match_info["filename"]
@@ -568,7 +589,7 @@ async def upload_reads(req):
 
     reads_path = sample_path / name
 
-    if not await db.samples.find_one(sample_id):
+    if not await mongo.samples.find_one(sample_id):
         raise APINotFound()
 
     try:
@@ -584,37 +605,48 @@ async def upload_reads(req):
         return Response(status=499)
     try:
         reads = await create_reads_file(
-            pg, size, name, name, sample_id, upload_id=upload
+            pg,
+            size,
+            name,
+            name,
+            sample_id,
+            upload_id=upload,
         )
     except exc.IntegrityError:
         raise APIConflict("Reads file name is already uploaded for this sample")
 
-    headers = {"Location": f"/samples/{sample_id}/reads/{reads['name_on_disk']}"}
-
-    return json_response(reads, status=201, headers=headers)
+    return json_response(
+        reads,
+        status=201,
+        headers={"Location": f"/samples/{sample_id}/reads/{reads['name_on_disk']}"},
+    )
 
 
 @routes.jobs_api.post("/samples/{sample_id}/caches")
 @schema({"key": {"type": "string", "required": True}})
 async def create_cache(req):
-    """
-    Create cache document.
+    """Create cache document.
 
     Creates a new cache document using the Jobs API.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     key = req["data"]["key"]
 
     sample_id = req.match_info["sample_id"]
 
-    sample = await db.samples.find_one({"_id": sample_id}, ["paired"])
+    sample = await mongo.samples.find_one({"_id": sample_id}, ["paired"])
 
     if not sample:
         raise APINotFound("Sample does not exist")
 
     try:
-        document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
+        document = await virtool.caches.db.create(
+            mongo,
+            sample_id,
+            key,
+            sample["paired"],
+        )
     except DuplicateKeyError:
         raise APIConflict(f"Cache with key {key} already exists for this sample")
 
@@ -625,13 +657,12 @@ async def create_cache(req):
 
 @routes.jobs_api.put("/samples/{sample_id}/caches/{key}/reads/{filename}")
 async def upload_cache_reads(req):
-    """
-    Upload reads files to cache.
+    """Upload reads files to cache.
 
     Upload reads files to cache using the Jobs API.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     name = req.match_info["filename"]
@@ -644,7 +675,7 @@ async def upload_cache_reads(req):
     cache_path = join_cache_path(get_config_from_req(req), key) / name
     await asyncio.to_thread(cache_path.mkdir, parents=True, exist_ok=True)
 
-    if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
+    if not await mongo.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise APINotFound("Cache doesn't exist with given key")
 
     try:
@@ -662,7 +693,13 @@ async def upload_cache_reads(req):
         return Response(status=499)
 
     reads = await create_reads_file(
-        pg, size, name, name, sample_id, key=key, cache=True
+        pg,
+        size,
+        name,
+        name,
+        sample_id,
+        key=key,
+        cache=True,
     )
 
     headers = {"Location": f"/samples/{sample_id}/caches/{key}/reads/{reads['id']}"}
@@ -672,20 +709,19 @@ async def upload_cache_reads(req):
 
 @routes.jobs_api.post("/samples/{sample_id}/caches/{key}/artifacts")
 async def upload_cache_artifact(req):
-    """
-    Upload artifacts to cache.
+    """Upload artifacts to cache.
 
     Uploads sample artifacts to cache using the Jobs API.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
     artifact_type = req.query.get("type")
 
-    if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
+    if not await mongo.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise APINotFound()
 
     errors = virtool.uploads.utils.naive_validator(req)
@@ -705,18 +741,24 @@ async def upload_cache_artifact(req):
 
     try:
         artifact = await create_artifact_file(
-            pg, name, name, sample_id, artifact_type, key=key
+            pg,
+            name,
+            name,
+            sample_id,
+            artifact_type,
+            key=key,
         )
     except exc.IntegrityError:
         raise APIConflict(
-            "Artifact file has already been uploaded for this sample cache"
+            "Artifact file has already been uploaded for this sample cache",
         )
 
     artifact_id = artifact["id"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            multipart_file_chunker(await req.multipart()), cache_path
+            multipart_file_chunker(await req.multipart()),
+            cache_path,
         )
     except asyncio.CancelledError:
         logger.info(
@@ -731,7 +773,10 @@ async def upload_cache_artifact(req):
         return Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(
-        pg, size, artifact_id, SQLSampleArtifactCache
+        pg,
+        size,
+        artifact_id,
+        SQLSampleArtifactCache,
     )
 
     return json_response(
@@ -744,17 +789,17 @@ async def upload_cache_artifact(req):
 @routes.jobs_api.patch("/samples/{sample_id}/caches/{key}")
 @schema({"quality": {"type": "dict", "required": True}})
 async def finalize_cache(req):
-    """
-    Finalize cache.
+    """Finalize cache.
 
     Finalizes cache documents.
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     data = req["data"]
     key = req.match_info["key"]
 
-    document = await db.caches.find_one_and_update(
-        {"key": key}, {"$set": {"quality": data["quality"], "ready": True}}
+    document = await mongo.caches.find_one_and_update(
+        {"key": key},
+        {"$set": {"quality": data["quality"], "ready": True}},
     )
 
     return json_response(base_processor(document))
@@ -763,12 +808,11 @@ async def finalize_cache(req):
 @routes.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 @routes.jobs_api.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 async def download_reads(req: Request):
-    """
-    Download reads.
+    """Download reads.
 
     Downloads the sample reads file.
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
@@ -776,7 +820,7 @@ async def download_reads(req: Request):
 
     file_name = f"reads_{suffix}.fq.gz"
 
-    if not await db.samples.find_one(sample_id):
+    if not await mongo.samples.find_one(sample_id):
         raise APINotFound()
 
     existing_reads = await get_existing_reads(pg, sample_id)
@@ -798,25 +842,24 @@ async def download_reads(req: Request):
 
 @routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
 async def download_artifact(req: Request):
-    """
-    Download artifact.
+    """Download artifact.
 
     Downloads the sample artifact.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
     filename = req.match_info["filename"]
 
-    if not await db.samples.find_one(sample_id):
+    if not await mongo.samples.find_one(sample_id):
         raise APINotFound()
 
     async with AsyncSession(pg) as session:
         result = (
             await session.execute(
-                select(SQLSampleArtifact).filter_by(sample=sample_id, name=filename)
+                select(SQLSampleArtifact).filter_by(sample=sample_id, name=filename),
             )
         ).scalar()
 
@@ -842,13 +885,12 @@ async def download_artifact(req: Request):
 
 @routes.jobs_api.get("/samples/{sample_id}/caches/{key}/reads/reads_{suffix}.fq.gz")
 async def download_cache_reads(req):
-    """
-    Download reads cache.
+    """Download reads cache.
 
     Downloads sample reads cache for a given key.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
@@ -857,9 +899,9 @@ async def download_cache_reads(req):
 
     file_name = f"reads_{suffix}.fq.gz"
 
-    if not await db.samples.count_documents(
-        {"_id": sample_id}
-    ) or not await db.caches.count_documents({"key": key}):
+    if not await mongo.samples.count_documents(
+        {"_id": sample_id},
+    ) or not await mongo.caches.count_documents({"key": key}):
         raise APINotFound()
 
     existing_reads = await get_existing_reads(pg, sample_id, key=key)
@@ -881,30 +923,31 @@ async def download_cache_reads(req):
 
 @routes.jobs_api.get("/samples/{sample_id}/caches/{key}/artifacts/{filename}")
 async def download_cache_artifact(req):
-    """
-    Download artifact cache.
+    """Download artifact cache.
 
     Downloads sample artifact cache for a given key.
 
     """
-    db = req.app["db"]
+    mongo = get_mongo_from_req(req)
     pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
     filename = req.match_info["filename"]
 
-    if not await db.samples.count_documents(
-        {"_id": sample_id}
-    ) or not await db.caches.count_documents({"key": key}):
+    if not await mongo.samples.count_documents(
+        {"_id": sample_id},
+    ) or not await mongo.caches.count_documents({"key": key}):
         raise APINotFound()
 
     async with AsyncSession(pg) as session:
         result = (
             await session.execute(
                 select(SQLSampleArtifactCache).filter_by(
-                    name=filename, key=key, sample=sample_id
-                )
+                    name=filename,
+                    key=key,
+                    sample=sample_id,
+                ),
             )
         ).scalar()
 

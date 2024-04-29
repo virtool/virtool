@@ -1,23 +1,21 @@
 import asyncio
 from pathlib import Path
 
-from virtool_core.models.enums import AnalysisWorkflow
-
-from virtool.data.layer import DataLayer
-from virtool.fake.next import DataFaker, fake_file_chunker
-from virtool.api.client import UserClient
-from virtool.mongo.core import Mongo
-from virtool.analyses.models import SQLAnalysisFile
-from virtool.pg.utils import get_row_by_id
 import pytest
-
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
+from virtool_core.models.enums import AnalysisWorkflow
 
+from virtool.analyses.models import SQLAnalysisFile
+from virtool.api.client import UserClient
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker, fake_file_chunker
+from virtool.mongo.core import Mongo
+from virtool.pg.utils import get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
 
 
-@pytest.fixture
+@pytest.fixture()
 async def setup_sample(mongo: "Mongo", fake2: DataFaker) -> str:
     user = await fake2.users.create()
 
@@ -29,14 +27,14 @@ async def setup_sample(mongo: "Mongo", fake2: DataFaker) -> str:
                 "version": 11,
                 "ready": True,
                 "reference": {"id": "test_ref"},
-            }
+            },
         ),
         mongo.references.insert_one(
             {
                 "_id": "test_ref",
                 "name": "Test Reference",
                 "data_type": "genome",
-            }
+            },
         ),
         mongo.subtraction.insert_many(
             [
@@ -64,9 +62,7 @@ async def test_find(
     setup_sample: str,
     mocker,
 ):
-    """
-    Tests that all analysis are listed.
-    """
+    """Tests that all analysis are listed."""
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
     client = mocker.Mock(spec=UserClient)
     user_id = setup_sample
@@ -106,11 +102,12 @@ async def test_find(
 
 
 async def test_create(
-    data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion, setup_sample: str
+    data_layer: DataLayer,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
+    setup_sample: str,
 ):
-    """
-    Tests that an analysis is created given an analysis id with the expected fields.
-    """
+    """Tests that an analysis is created given an analysis id with the expected fields."""
     user_id: str = setup_sample
 
     analysis = await data_layer.analyses.create(
@@ -128,16 +125,18 @@ async def test_create(
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
     assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
-        name="mongo", exclude=props("created_at", "updated_at")
+        name="mongo",
+        exclude=props("created_at", "updated_at"),
     )
 
 
 async def test_create_analysis_id(
-    data_layer: DataLayer, mongo: Mongo, snapshot: SnapshotAssertion, setup_sample: str
+    data_layer: DataLayer,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
+    setup_sample: str,
 ):
-    """
-    Tests that an analysis is created with the expected fields.
-    """
+    """Tests that an analysis is created with the expected fields."""
     user_id = setup_sample
 
     analysis = await data_layer.analyses.create(
@@ -155,11 +154,11 @@ async def test_create_analysis_id(
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
     assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
-        name="mongo", exclude=props("created_at", "updated_at")
+        name="mongo",
+        exclude=props("created_at", "updated_at"),
     )
 
 
-@pytest.mark.apitest
 async def test_upload_file(
     data_layer: DataLayer,
     example_path: Path,
@@ -168,8 +167,7 @@ async def test_upload_file(
     spawn_job_client,
     tmp_path,
 ):
-    """
-    Test that an analysis result file is properly uploaded and a row is inserted into
+    """Test that an analysis result file is properly uploaded and a row is inserted into
     the `analysis_files` SQL table.
     """
     user_id = setup_sample
@@ -189,7 +187,10 @@ async def test_upload_file(
     chunks = fake_file_chunker(example_path / "reads/single.fq.gz")
 
     analysis_file = await data_layer.analyses.upload_file(
-        chunks, analysis.id, "fasta", "test"
+        chunks,
+        analysis.id,
+        "fasta",
+        "test",
     )
 
     assert analysis_file == snapshot_recent()

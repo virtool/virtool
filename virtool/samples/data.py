@@ -1,4 +1,5 @@
 """The sample data layer domain."""
+
 import asyncio
 import math
 from asyncio import gather, to_thread
@@ -12,15 +13,15 @@ from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
+from virtool.api.client import UserClient
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import emits, Operation
+from virtool.data.events import Operation, emits
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
-from virtool.api.client import UserClient
 from virtool.jobs.client import JobsClient
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
@@ -32,7 +33,6 @@ from virtool.samples.checks import (
     check_subtractions_do_not_exist,
 )
 from virtool.samples.db import (
-    LIST_PROJECTION,
     AttachArtifactsAndReadsTransform,
     NameGenerator,
     compose_sample_workflow_query,
@@ -58,7 +58,11 @@ class SamplesData(DataLayerDomain):
     name = "samples"
 
     def __init__(
-        self, config: Config, mongo: Mongo, pg: AsyncEngine, jobs_client: JobsClient
+        self,
+        config: Config,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        jobs_client: JobsClient,
     ):
         self._config = config
         self._mongo = mongo
@@ -74,9 +78,7 @@ class SamplesData(DataLayerDomain):
         workflows: list[str],
         client,
     ) -> SampleSearchResult:
-        """
-        Find and filter samples.
-        """
+        """Find and filter samples."""
         queries = []
 
         if term:
@@ -104,8 +106,8 @@ class SamplesData(DataLayerDomain):
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLGroup).where(
-                        compose_legacy_id_expression(SQLGroup, client.groups)
-                    )
+                        compose_legacy_id_expression(SQLGroup, client.groups),
+                    ),
                 )
 
                 group_ids = []
@@ -145,27 +147,46 @@ class SamplesData(DataLayerDomain):
                             {"$skip": skip_count},
                             {"$limit": per_page},
                         ],
-                    }
+                    },
                 },
                 {
                     "$project": {
-                        "data": {item: True for item in LIST_PROJECTION},
+                        "data": {
+                            item: True
+                            for item in (
+                                "_id",
+                                "created_at",
+                                "host",
+                                "isolate",
+                                "job",
+                                "library_type",
+                                "pathoscope",
+                                "name",
+                                "nuvs",
+                                "ready",
+                                "user",
+                                "notes",
+                                "labels",
+                                "subtractions",
+                                "workflows",
+                            )
+                        },
                         "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0]
+                            "$arrayElemAt": ["$total_count.total_count", 0],
                         },
                         "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0]
+                            "$arrayElemAt": ["$found_count.found_count", 0],
                         },
-                    }
+                    },
                 },
-            ]
+            ],
         ):
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
 
         documents = await apply_transforms(
-            [base_processor(document) for document in data],
+            [base_processor(d) for d in data],
             [
                 AttachLabelsTransform(self._pg),
                 AttachUserTransform(self._mongo),
@@ -174,7 +195,7 @@ class SamplesData(DataLayerDomain):
         )
 
         return SampleSearchResult(
-            **{"documents": documents},
+            documents=documents,
             found_count=found_count,
             total_count=total_count,
             page=page,
@@ -183,8 +204,7 @@ class SamplesData(DataLayerDomain):
         )
 
     async def get(self, sample_id: str) -> Sample:
-        """
-        Get a sample by its id.
+        """Get a sample by its id.
 
         TODO: Remove the ``caches`` field from document as it is deprecated.
         TODO: Return `None` for unset group instead of `"none"`.
@@ -219,9 +239,7 @@ class SamplesData(DataLayerDomain):
         space_id: int,
         _id: str | None = None,
     ) -> Sample:
-        """
-        Create a sample.
-        """
+        """Create a sample."""
         settings = await self.data.settings.get_all()
 
         await wait_for_checks(
@@ -262,7 +280,7 @@ class SamplesData(DataLayerDomain):
             if isinstance(group, str):
                 async with AsyncSession(self._pg) as session:
                     group = await session.execute(
-                        select(SQLGroup).where(SQLGroup.legacy_id == group)
+                        select(SQLGroup).where(SQLGroup.legacy_id == group),
                     )
 
                     group = group.scalar_one().id
@@ -334,8 +352,7 @@ class SamplesData(DataLayerDomain):
 
     @emits(Operation.DELETE)
     async def delete(self, sample_id: str) -> Sample:
-        """
-        Deletes the sample identified by ``sample_id`` and all its analyses.
+        """Deletes the sample identified by ``sample_id`` and all its analyses.
 
         :param sample_id: the id of the sample to delete
         :return: the mongodb deletion result
@@ -347,7 +364,8 @@ class SamplesData(DataLayerDomain):
             result, _ = await asyncio.gather(
                 self._mongo.samples.delete_many({"_id": sample_id}, session=session),
                 self._mongo.analyses.delete_many(
-                    {"sample.id": sample_id}, session=session
+                    {"sample.id": sample_id},
+                    session=session,
                 ),
             )
 
@@ -368,20 +386,19 @@ class SamplesData(DataLayerDomain):
         sample_id: str,
         quality: dict[str, Any],
     ) -> Sample:
-        """
-        Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
+        """Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
 
         :param sample_id: the id of the sample
         :param quality: a dict containing quality data
         :return: the sample after finalizing
 
         """
-
         if await get_one_field(self._mongo.samples, "ready", sample_id):
             raise ResourceConflictError("Sample already finalized")
 
         result: UpdateResult = await self._mongo.samples.update_one(
-            {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
+            {"_id": sample_id},
+            {"$set": {"quality": quality, "ready": True}},
         )
 
         if not result.modified_count:
@@ -393,7 +410,7 @@ class SamplesData(DataLayerDomain):
                     await session.execute(
                         select(SQLUpload)
                         .where(SQLSampleReads.sample == sample_id)
-                        .join_from(SQLSampleReads, SQLUpload)
+                        .join_from(SQLSampleReads, SQLUpload),
                     )
                 )
                 .unique()
@@ -421,8 +438,7 @@ class SamplesData(DataLayerDomain):
 
     @emits(Operation.UPDATE)
     async def update(self, sample_id: str, data: UpdateSampleRequest) -> Sample:
-        """
-        Update the sample identified by ``sample_id``.
+        """Update the sample identified by ``sample_id``.
 
         :param sample_id: the id of the sample to update
         :param data: the update data
@@ -435,7 +451,7 @@ class SamplesData(DataLayerDomain):
 
         if "name" in data:
             aws.append(
-                check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id)
+                check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id),
             )
 
         if "labels" in data:
@@ -443,7 +459,7 @@ class SamplesData(DataLayerDomain):
 
         if "subtractions" in data:
             aws.append(
-                check_subtractions_do_not_exist(self._mongo, data["subtractions"])
+                check_subtractions_do_not_exist(self._mongo, data["subtractions"]),
             )
 
         await wait_for_checks(*aws)
@@ -453,10 +469,14 @@ class SamplesData(DataLayerDomain):
         return await self.get(sample_id)
 
     async def has_right(
-        self, sample_id: str, client: UserClient, right: SampleRight
+        self,
+        sample_id: str,
+        client: UserClient,
+        right: SampleRight,
     ) -> bool:
         document = await self._mongo.samples.find_one(
-            {"_id": sample_id}, ["all_read", "all_write", "group", "group_read", "user"]
+            {"_id": sample_id},
+            ["all_read", "all_write", "group", "group_read", "user"],
         )
 
         if document is None:
@@ -481,33 +501,31 @@ class SamplesData(DataLayerDomain):
         raise ValueError(f"Invalid sample right: {right}")
 
     async def has_resources_for_analysis_job(self, ref_id, subtractions):
-        """
-        Checks that resources for analysis job exist.
+        """Checks that resources for analysis job exist.
         :param ref_id: the reference id
         :param subtractions: list of subtractions
         """
-
         if not await self._mongo.references.count_documents({"_id": ref_id}):
             raise ResourceConflictError("Reference does not exist")
 
         if not await self._mongo.indexes.count_documents(
-            {"reference.id": ref_id, "ready": True}
+            {"reference.id": ref_id, "ready": True},
         ):
             raise ResourceConflictError("No ready index")
 
         if subtractions is not None:
             non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-                self._mongo.subtraction, subtractions
+                self._mongo.subtraction,
+                subtractions,
             )
 
             if non_existent_subtractions:
                 raise ResourceConflictError(
-                    f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+                    f"Subtractions do not exist: {','.join(non_existent_subtractions)}",
                 )
 
     async def compress_samples(self, progress_handler: AbstractProgressHandler):
-        """
-        Compress all uncompressed legacy samples.
+        """Compress all uncompressed legacy samples.
 
         :param progress_handler: a progress handler object
         """
@@ -524,7 +542,9 @@ class SamplesData(DataLayerDomain):
                 break
 
             await virtool.samples.db.compress_sample_reads(
-                self._mongo, self._config, sample
+                self._mongo,
+                self._config,
+                sample,
             )
 
             await tracker.add(1)
@@ -546,13 +566,14 @@ class SamplesData(DataLayerDomain):
                 break
 
             await virtool.samples.db.move_sample_files_to_pg(
-                self._mongo, self._pg, sample
+                self._mongo,
+                self._pg,
+                sample,
             )
             await tracker.add(1)
 
     async def deduplicate_sample_names(self):
-        """
-        Find all samples with duplicate names in the same space and rename
+        """Find all samples with duplicate names in the same space and rename
         them with increasing integers by order of creation.
         """
         async with self._mongo.create_session() as session:
@@ -563,9 +584,9 @@ class SamplesData(DataLayerDomain):
                             "_id": {"name": "$name", "space_id": "$space_id"},
                             "count": {"$sum": 1},
                             "documents": {
-                                "$push": {"_id": "$_id", "created_at": "$created_at"}
+                                "$push": {"_id": "$_id", "created_at": "$created_at"},
                             },
-                        }
+                        },
                     },
                     {"$match": {"count": {"$gt": 1}}},
                     {"$unwind": "$documents"},
@@ -574,7 +595,7 @@ class SamplesData(DataLayerDomain):
                         "$group": {
                             "_id": "$_id",
                             "sample_ids": {"$push": "$documents._id"},
-                        }
+                        },
                     },
                     {
                         "$project": {
@@ -582,7 +603,7 @@ class SamplesData(DataLayerDomain):
                             "space_id": "$_id.space_id",
                             "_id": 0,
                             "sample_ids": 1,
-                        }
+                        },
                     },
                 ],
                 session=session,
@@ -608,5 +629,5 @@ class SamplesData(DataLayerDomain):
                 *[
                     recalculate_workflow_tags(self._mongo, sample_id)
                     for sample_id in chunk
-                ]
+                ],
             )

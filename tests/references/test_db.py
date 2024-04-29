@@ -7,15 +7,15 @@ from virtool.api.client import UserClient
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
-    get_manifest,
     check_right,
     fetch_and_update_release,
+    get_manifest,
     get_reference_groups,
 )
 from virtool.startup import startup_http_client_session
 
 
-@pytest.fixture
+@pytest.fixture()
 async def fake_app():
     version = "v1.2.3"
 
@@ -33,7 +33,8 @@ async def fake_app():
 @pytest.mark.parametrize("is_administrator", [True, False])
 @pytest.mark.parametrize("membership", [None, "group", "user"])
 @pytest.mark.parametrize(
-    "right,expect", [("read", True), ("modify_otu", True), ("modify", False)]
+    "right,expect",
+    [("read", True), ("modify_otu", True), ("modify", False)],
 )
 async def test_check_right(
     is_administrator: bool,
@@ -44,7 +45,7 @@ async def test_check_right(
     mocker,
     mongo: Mongo,
 ):
-    mock_req.app = {"db": mongo}
+    mock_req.app = {"mongo": mongo}
 
     mock_req["client"] = mocker.Mock(spec=UserClient)
     mock_req["client"].administrator_role = (
@@ -62,7 +63,7 @@ async def test_check_right(
                     "read": True,
                     "modify": False,
                     "modify_otu": True,
-                }
+                },
             ],
             "users": [
                 {
@@ -70,9 +71,9 @@ async def test_check_right(
                     "read": True,
                     "modify": False,
                     "modify_otu": True,
-                }
+                },
             ],
-        }
+        },
     )
 
     result = await check_right(mock_req, "baz", right)
@@ -112,7 +113,7 @@ async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static
             "installed": {"name": "1.0.0-fake-install"},
             "release": {"name": "1.0.0-fake-release"},
             "remotes_from": {"slug": "virtool/ref-plant-viruses"},
-        }
+        },
     )
 
     assert (
@@ -122,11 +123,11 @@ async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static
 
 
 async def test_get_reference_groups(
-    fake2: DataFaker, pg: AsyncEngine, snapshot: SnapshotAssertion
+    fake2: DataFaker,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
 ):
-    """
-    Test that reference groups are returned whether they have integer or string ids.
-    """
+    """Test that reference groups are returned whether they have integer or string ids."""
     group_1 = await fake2.groups.create()
     group_2 = await fake2.groups.create(legacy_id="group_2")
 
@@ -149,7 +150,7 @@ async def test_get_reference_groups(
                         "modify_otu": True,
                         "remove": True,
                     },
-                ]
+                ],
             },
         )
         == snapshot

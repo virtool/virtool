@@ -1,7 +1,7 @@
-from dataclasses import dataclass, astuple, field
-from typing import Optional, List, Union, Callable, Any, Coroutine
+from dataclasses import astuple, dataclass, field
+from typing import Any, Callable, Coroutine, List, Optional, Union
 
-from pymongo import UpdateOne, DeleteMany, DeleteOne
+from pymongo import DeleteMany, DeleteOne, UpdateOne
 from virtool_core.models.enums import HistoryMethod
 
 from virtool.types import Document
@@ -46,7 +46,11 @@ class OTUChange:
 class OTUUpdate(OTUChange):
     def __init__(self, otu_change, sequences, old, otu_id):
         super().__init__(
-            otu_change, sequences, HistoryMethod.update, old, otu_id=otu_id
+            otu_change,
+            sequences,
+            HistoryMethod.update,
+            old,
+            otu_id=otu_id,
         )
 
 
@@ -58,7 +62,11 @@ class OTUInsert(OTUChange):
 class OTUDelete(OTUChange):
     def __init__(self, otu_change, sequences, old, reference_update, otu_id):
         super().__init__(
-            otu_change, sequences, HistoryMethod.remove, old, otu_id=otu_id
+            otu_change,
+            sequences,
+            HistoryMethod.remove,
+            old,
+            otu_id=otu_id,
         )
         self.is_reference_updated = False
         self.reference_update = reference_update

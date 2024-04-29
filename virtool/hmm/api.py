@@ -1,7 +1,5 @@
-"""
-API request handlers for managing and querying HMM data.
+"""API request handlers for managing and querying HMM data."""
 
-"""
 import asyncio
 from typing import Union
 
@@ -9,22 +7,22 @@ from aiohttp.web import Response
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
-from virtool_core.models.hmm import HMM, HMMSearchResult, HMMInstalled
+from virtool_core.models.hmm import HMM, HMMInstalled, HMMSearchResult
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.errors import APINotFound, APIBadGateway, APIConflict
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadGateway, APIConflict, APINotFound
+from virtool.api.policy import AdministratorRoutePolicy, policy
+from virtool.api.routes import Routes
 from virtool.config import get_config_from_req
 from virtool.data.errors import (
-    ResourceNotFoundError,
-    ResourceRemoteError,
     ResourceConflictError,
     ResourceError,
+    ResourceNotFoundError,
+    ResourceRemoteError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.api.policy import policy, AdministratorRoutePolicy
-from virtool.api.routes import Routes
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = Routes()
 
@@ -32,8 +30,7 @@ routes = Routes()
 @routes.view("/hmms")
 class HmmsView(PydanticView):
     async def get(self) -> r200[HMMSearchResult]:
-        """
-        Find HMMs.
+        """Find HMMs.
 
         Lists profile hidden Markov model (HMM) annotations that are used in Virtool for
         novel virus prediction.
@@ -49,7 +46,7 @@ class HmmsView(PydanticView):
             200: Successful operation
         """
         search_results = await get_data_from_req(self.request).hmms.find(
-            self.request.query
+            self.request.query,
         )
 
         return json_response(search_results)
@@ -58,8 +55,7 @@ class HmmsView(PydanticView):
 @routes.view("/hmms/status")
 class StatusView(PydanticView):
     async def get(self) -> r200[Response]:
-        """
-        Get HMM status.
+        """Get HMM status.
 
         Lists the installation status of the HMM data. Contains the following
         fields:
@@ -84,8 +80,7 @@ class StatusView(PydanticView):
 @routes.view("/hmms/status/release")
 class ReleaseView(PydanticView):
     async def get(self) -> Union[r200[Response], r502]:
-        """
-        Get the latest HMM release.
+        """Get the latest HMM release.
 
         Fetches the latest release for the HMM data.
 
@@ -107,25 +102,23 @@ class ReleaseView(PydanticView):
 @routes.view("/hmms/status/updates")
 class UpdatesView(PydanticView):
     async def get(self) -> r200[Response]:
-        """
-        List updates.
+        """List updates.
 
         Lists all updates applied to the HMM collection.
 
         Status Codes:
             200: Successful operation
         """
-        db = self.request.app["db"]
+        mongo = get_mongo_from_req(self.request)
 
-        updates = await get_one_field(db.status, "updates", "hmm") or []
+        updates = await get_one_field(mongo.status, "updates", "hmm") or []
         updates.reverse()
 
         return json_response(updates)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def post(self) -> Union[r201[HMMInstalled], r400, r403]:
-        """
-        Install HMMs.
+        """Install HMMs.
 
         Installs the latest official HMM database from GitHub.
 
@@ -136,7 +129,7 @@ class UpdatesView(PydanticView):
         """
         try:
             update = await get_data_from_req(self.request).hmms.install_update(
-                self.request["client"].user_id
+                self.request["client"].user_id,
             )
         except ResourceConflictError as err:
             raise APIConflict(str(err))
@@ -149,8 +142,7 @@ class UpdatesView(PydanticView):
 @routes.view("/hmms/{hmm_id}")
 class HMMView(PydanticView):
     async def get(self, hmm_id: str, /) -> Union[r200[HMM], r404]:
-        """
-        Get an HMM.
+        """Get an HMM.
 
         Fetches the details for an HMM annotation.
 
@@ -168,8 +160,7 @@ class HMMView(PydanticView):
 
 @routes.jobs_api.get("/hmms/{hmm_id}")
 async def get(req):
-    """
-    Get a HMM annotation document.
+    """Get a HMM annotation document.
 
     Fetches a complete individual HMM annotation document.
     """
@@ -184,12 +175,10 @@ async def get(req):
 @routes.jobs_api.get("/hmms/files/annotations.json.gz")
 @routes.get("/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(req):
-    """
-    Get HMM annotations.
+    """Get HMM annotations.
 
     Fetches a compressed json file containing the database documents for all HMMs.
     """
-
     hmm_path = get_config_from_req(req).data_path / "hmm"
     await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
 
@@ -206,8 +195,7 @@ async def get_hmm_annotations(req):
 
 @routes.jobs_api.get("/hmms/files/profiles.hmm")
 async def get_hmm_profiles(req):
-    """
-    Get HMM profiles.
+    """Get HMM profiles.
 
     Downloads the HMM profiles file if HMM data is available.
 

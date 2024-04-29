@@ -4,13 +4,13 @@ from virtool.account.mongo import compose_password_update, get_alternate_id
 
 
 def test_compose_password_update(mocker, static_time):
-    """
-    Test that compose password returns the expected update `dict`. Ensure the password is hashed
+    """Test that compose password returns the expected update `dict`. Ensure the password is hashed
     using :func:`hash_password`.
 
     """
     m_hash_password = mocker.patch(
-        "virtool.users.utils.hash_password", return_value="foobar"
+        "virtool.users.utils.hash_password",
+        return_value="foobar",
     )
 
     update = compose_password_update("baz")

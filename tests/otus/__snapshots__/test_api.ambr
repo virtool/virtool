@@ -3174,11 +3174,10 @@
       'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
       'host': 'sweet cherry',
       'id': 'abcd1234',
-      'reference': dict({
-        'id': 'ref',
-      }),
+      'remote': None,
       'segment': None,
       'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+      'target': None,
     }),
   ])
 # ---

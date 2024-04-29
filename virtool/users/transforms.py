@@ -1,11 +1,9 @@
-"""
-Transforms for attaching user data to documents or additional data to user documents.
+"""Transforms for attaching user data to documents or additional data to user documents.
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
-from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -29,7 +27,9 @@ class AttachPermissionsTransform(AbstractTransform):
         self._pg = pg
 
     async def attach_one(
-        self, document: Document, prepared: dict[str, bool]
+        self,
+        document: Document,
+        prepared: dict[str, bool],
     ) -> Document:
         return {
             **document,
@@ -43,12 +43,12 @@ class AttachPermissionsTransform(AbstractTransform):
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 select(SQLGroup).where(
-                    compose_legacy_id_expression(SQLGroup, document["groups"])
-                )
+                    compose_legacy_id_expression(SQLGroup, document["groups"]),
+                ),
             )
 
             return merge_group_permissions(
-                [group.to_dict() for group in result.scalars().all()]
+                [group.to_dict() for group in result.scalars().all()],
             )
 
     async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
@@ -60,8 +60,8 @@ class AttachPermissionsTransform(AbstractTransform):
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLGroup).where(
-                        compose_legacy_id_expression(SQLGroup, all_group_ids)
-                    )
+                        compose_legacy_id_expression(SQLGroup, all_group_ids),
+                    ),
                 )
 
                 groups = [group.to_dict() for group in result.scalars().all()]
@@ -73,7 +73,7 @@ class AttachPermissionsTransform(AbstractTransform):
 
             return {
                 document["id"]: merge_group_permissions(
-                    [all_groups_map[group_id] for group_id in document["groups"]]
+                    [all_groups_map[group_id] for group_id in document["groups"]],
                 )
                 for document in documents
             }
@@ -82,12 +82,9 @@ class AttachPermissionsTransform(AbstractTransform):
 
 
 class AttachUserTransform(AbstractTransform):
-    """
-    Attaches more complete user data to a document with a `user.id` field.
+    """Attaches more complete user data to a document with a `user.id` field."""
 
-    """
-
-    def __init__(self, mongo: Mongo, ignore_errors: bool = False):
+    def __init__(self, mongo: "Mongo", ignore_errors: bool = False):
         self._mongo = mongo
         self._ignore_errors = ignore_errors
 
@@ -138,7 +135,7 @@ class AttachUserTransform(AbstractTransform):
         user_id = get_safely(document, "user", "id")
 
         if user_data := base_processor(
-            await self._mongo.users.find_one(user_id, ATTACH_PROJECTION)
+            await self._mongo.users.find_one(user_id, ATTACH_PROJECTION),
         ):
             return user_data
 
@@ -151,14 +148,15 @@ class AttachUserTransform(AbstractTransform):
         user_map = {
             document["_id"]: base_processor(document)
             async for document in self._mongo.users.find(
-                {"_id": {"$in": list(user_ids)}}, ATTACH_PROJECTION
+                {"_id": {"$in": list(user_ids)}},
+                ATTACH_PROJECTION,
             )
         }
 
         if len(user_map) != len(user_ids):
             non_existent_user_ids = user_ids - set(user_map.keys())
             raise KeyError(
-                f"Document contains non-existent user(s): {non_existent_user_ids}"
+                f"Document contains non-existent user(s): {non_existent_user_ids}",
             )
 
         return {d["id"]: user_map.get(get_safely(d, "user", "id")) for d in documents}

@@ -4,7 +4,6 @@ from tests.fixtures.client import ClientSpawner
 from virtool.mongo.core import Mongo
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_all(
@@ -22,7 +21,7 @@ async def test_all(
 
     if missing != "otu":
         await mongo.otus.insert_one(
-            {"_id": "foobar", "name": "Foobar virus", "isolates": isolates}
+            {"_id": "foobar", "name": "Foobar virus", "isolates": isolates},
         )
 
     sequences = [
@@ -31,7 +30,7 @@ async def test_all(
             "otu_id": "foobar",
             "isolate_id": "baz",
             "sequence": "ATAGGGACATA",
-        }
+        },
     ]
 
     if missing != "sequence":
@@ -41,7 +40,7 @@ async def test_all(
                 "otu_id": "foobar",
                 "isolate_id": "foo",
                 "sequence": "ATAGGGACATA",
-            }
+            },
         )
 
     await mongo.sequences.insert_many(sequences, session=None)

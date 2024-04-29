@@ -1,7 +1,5 @@
-"""
-Fixtures for creating test clients that can be used to test API endpoints.
+"""Fixtures for creating test clients that can be used to test API endpoints."""
 
-"""
 from __future__ import annotations
 
 import json
@@ -29,6 +27,7 @@ from virtool.flags import FeatureFlags, FlagName
 from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import hash_key
 
@@ -46,8 +45,7 @@ class VirtoolTestClientUser:
         """The user's unique identifier."""
 
     async def set_groups(self, group_ids: list[int]):
-        """
-        Set the groups the user belongs to.
+        """Set the groups the user belongs to.
 
         .. code-block:: python
 
@@ -68,16 +66,15 @@ class VirtoolTestClientUser:
         :return: the user
         """
         user = await self._data_layer.users.update(
-            self.id, UpdateUserRequest(groups=group_ids)
+            self.id,
+            UpdateUserRequest(groups=group_ids),
         )
 
         self.groups = user.groups
 
 
 class VirtoolTestClient:
-    """
-    The test client provided by the :fixture:`spawn_client` fixture.
-    """
+    """The test client provided by the :fixture:`spawn_client` fixture."""
 
     def __init__(self, test_client, test_client_user: VirtoolTestClientUser):
         self._test_client = test_client
@@ -85,7 +82,7 @@ class VirtoolTestClient:
         self.app = self._test_client.server.app
         """The test server's application object."""
 
-        self.mongo = self.app["db"]
+        self.mongo = get_mongo_from_app(self.app)
         """The server Mongo object."""
 
         self.user: VirtoolTestClientUser = test_client_user
@@ -96,8 +93,7 @@ class VirtoolTestClient:
         """
 
     async def set_user(self, user_id: str):
-        """
-        Authenticate the client as a specific existing user.
+        """Authenticate the client as a specific existing user.
 
         The :attr:`user` attribute will be updated to reflect the new user.
 
@@ -107,7 +103,8 @@ class VirtoolTestClient:
         data_layer = get_data_from_app(self.app)
 
         self.user = VirtoolTestClientUser(
-            data_layer, await data_layer.users.get(user_id)
+            data_layer,
+            await data_layer.users.get(user_id),
         )
 
     async def get(
@@ -140,8 +137,7 @@ class VirtoolTestClient:
 
 
 class ClientSpawner(Protocol):
-    """
-    A protocol the describes a function that can spawn a test client.
+    """A protocol the describes a function that can spawn a test client.
 
     The fixtures :func:`spawn_client` and :func:`spawn_job_client` both return functions
     that conform to this protocol.
@@ -159,8 +155,7 @@ class ClientSpawner(Protocol):
         flags: list[FlagName] | None = None,
         permissions: list[Permission] | None = None,
     ) -> VirtoolTestClient:
-        """
-        Spawn a test client.
+        """Spawn a test client.
 
         :param addon_route_table: a route table that will be added to the app
         :param administrator: whether the client should be an administrator
@@ -175,7 +170,7 @@ class ClientSpawner(Protocol):
         ...
 
 
-@pytest.fixture
+@pytest.fixture()
 def spawn_client(
     aiohttp_client,
     fake2: DataFaker,
@@ -304,9 +299,7 @@ def spawn_client(
         flags: list[FlagName] | None = None,
         permissions: list[Permission] | None = None,
     ):
-        """
-
-        :param addon_route_table:
+        """:param addon_route_table:
         :param administrator: whether the client should be an administrator
         :param auth: a basic authentication object to use
         :param authenticated: whether the client should be authenticated
@@ -360,9 +353,9 @@ def spawn_client(
                             permission: True
                             for permission in permissions
                             if permission in permissions
-                        }
-                    )
-                )
+                        },
+                    ),
+                ),
             ]
 
         test_client_user = await fake2.users.create(
@@ -387,7 +380,7 @@ def spawn_client(
                         "created_at": virtool.utils.timestamp(),
                         "id": session_id,
                         "ip": "127.0.0.1",
-                    }
+                    },
                 ),
                 expire=3600,
             )
@@ -400,10 +393,13 @@ def spawn_client(
             cookies = {"session_id": "dne"}
 
         test_client = await aiohttp_client(
-            app, auth=auth, auto_decompress=False, cookies=cookies
+            app,
+            auth=auth,
+            auto_decompress=False,
+            cookies=cookies,
         )
 
-        test_client.app["db"].id_provider = FakeIdProvider()
+        get_mongo_from_app(test_client.app).id_provider = FakeIdProvider()
 
         if flags:
             test_client.app["flags"] = FeatureFlags(flags)
@@ -415,11 +411,11 @@ def spawn_client(
     return func
 
 
-@pytest.fixture
+@pytest.fixture()
 def spawn_job_client(
     aiohttp_client,
     config: ServerConfig,
-    mongo: "Mongo",
+    mongo: Mongo,
     mongo_connection_string,
     mongo_name: str,
     openfga_host: str,
@@ -470,7 +466,7 @@ def spawn_job_client(
                 redis_connection_string=redis_connection_string,
                 sentry_dsn="",
                 use_b2c=False,
-            )
+            ),
         )
 
         if add_route_table:

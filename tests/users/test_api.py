@@ -2,25 +2,25 @@ import pytest
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from tests.fixtures.client import ClientSpawner
 from virtool_core.models.enums import Permission
-from virtool_core.models.roles import SpaceSampleRole, SpaceReferenceRole
+from virtool_core.models.roles import SpaceReferenceRole, SpaceSampleRole
 
+from tests.fixtures.client import ClientSpawner
 from virtool.authorization.relationships import UserRoleAssignment
-from virtool.data.topg import both_transactions
-from virtool.users.pg import SQLUser
 from virtool.data.layer import DataLayer
+from virtool.data.topg import both_transactions
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.groups.oas import UpdateGroupRequest, PermissionsUpdate
+from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.users.pg import SQLUser
 from virtool.users.utils import check_password
 
 
-@pytest.fixture
+@pytest.fixture()
 async def setup_update_user(
-        data_layer: DataLayer, fake2: DataFaker, spawn_client: ClientSpawner
+    data_layer: DataLayer, fake2: DataFaker, spawn_client: ClientSpawner
 ):
     client = await spawn_client(administrator=True, authenticated=True)
 
@@ -35,14 +35,13 @@ async def setup_update_user(
     await data_layer.groups.update(
         group_2.id,
         UpdateGroupRequest(
-            permissions=PermissionsUpdate(create_sample=True, create_ref=True)
+            permissions=PermissionsUpdate(create_sample=True, create_ref=True),
         ),
     )
 
     return client, group_1, group_2, await fake2.users.create(groups=[group_1])
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "fred"])
 async def test_find(
         find: str | None,
@@ -53,7 +52,9 @@ async def test_find(
 ):
     """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(
-        administrator=True, authenticated=True, permissions=[Permission.create_sample]
+        administrator=True,
+        authenticated=True,
+        permissions=[Permission.create_sample],
     )
 
     await fake2.users.create(handle=find)
@@ -70,7 +71,6 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
         status: int,
@@ -85,7 +85,8 @@ async def test_get(
     group = await fake2.groups.create()
 
     user = await fake2.users.create(
-        groups=[group, await fake2.groups.create()], primary_group=group
+        groups=[group, await fake2.groups.create()],
+        primary_group=group,
     )
 
     await fake2.users.create()
@@ -96,7 +97,6 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
 async def test_create(
         error: str | None,
@@ -108,10 +108,7 @@ async def test_create(
         spawn_client: ClientSpawner,
         static_time,
 ):
-    """
-    Test that a valid request results in a user document being properly inserted.
-
-    """
+    """Test that a valid request results in a user document being properly inserted."""
     await mongo.users.create_index("handle", unique=True, sparse=True)
 
     client = await spawn_client(administrator=True, authenticated=True)
@@ -119,7 +116,7 @@ async def test_create(
     user = await fake2.users.create()
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8)
+        UpdateSettingsRequest(minimum_password_length=8),
     )
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}
@@ -141,7 +138,8 @@ async def test_create(
 
     if error == "400_password":
         await resp_is.bad_request(
-            resp, "Password does not meet minimum length requirement (8)"
+            resp,
+            "Password does not meet minimum length requirement (8)",
         )
         return
 
@@ -164,10 +162,9 @@ async def test_create(
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
-@pytest.mark.apitest
 class TestUpdate:
     async def test_ok(
-            self, setup_update_user, snapshot: SnapshotAssertion, static_time
+        self, setup_update_user, snapshot: SnapshotAssertion, static_time
     ):
         client, group_1, _, user = setup_update_user
 
@@ -184,7 +181,8 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
     async def test_with_groups(
-            self, setup_update_user, snapshot: SnapshotAssertion, static_time
+        self, setup_update_user, snapshot: SnapshotAssertion, static_time
+
     ):
         client, group_1, group_2, user = setup_update_user
 
@@ -214,7 +212,9 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
     async def test_non_existent_primary_group(
-            self, setup_update_user, snapshot: SnapshotAssertion
+        self,
+        setup_update_user,
+        snapshot: SnapshotAssertion,
     ):
         client, _, _, user = setup_update_user
 
@@ -229,7 +229,9 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
     async def test_not_a_member_of_primary_group(
-            self, setup_update_user, snapshot: SnapshotAssertion
+        self,
+        setup_update_user,
+        snapshot: SnapshotAssertion,
     ):
         client, _, group_2, user = setup_update_user
 
@@ -304,7 +306,7 @@ class TestUpdate:
             else:
                 assert user["primary_group"] is None
 
-        # Fix the bug in the code
+
 @pytest.mark.parametrize("user", ["test", "bob"])
 async def test_list_permissions(spawn_client, user, snapshot: SnapshotAssertion):
     client = await spawn_client(
@@ -386,9 +388,7 @@ async def test_create_first_user(
         spawn_client: ClientSpawner,
         static_time,
 ):
-    """
-    Checks response when first user exists and does not exist.
-    """
+    """Checks response when first user exists and does not exist."""
     client = await spawn_client()
 
     if not first_user_exists:
@@ -397,7 +397,8 @@ async def test_create_first_user(
             await mongo.users.delete_many({}, session=mongo_session)
 
     resp = await client.put(
-        "/users/first", {"handle": "fred", "password": "hello_world"}
+        "/users/first",
+        {"handle": "fred", "password": "hello_world"},
     )
 
     assert resp.status == status

@@ -20,7 +20,7 @@ from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 
 
-@pytest.fixture
+@pytest.fixture()
 def create_files(test_files_path, tmp_path):
     def files():
         path = test_files_path / "aodp" / "reference.fa"
@@ -30,7 +30,6 @@ def create_files(test_files_path, tmp_path):
     return files
 
 
-@pytest.mark.apitest
 async def test_find(
     mocker,
     fake2: DataFaker,
@@ -67,10 +66,10 @@ async def test_find(
                 "group_write": False,
                 "user": {"id": user_1.id},
                 "labels": [],
-            }
+            },
         ),
         mongo.subtraction.insert_one(
-            {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
+            {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"},
         ),
         mongo.analyses.insert_many(
             [
@@ -127,7 +126,6 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("ready, exists", [(True, True), (False, False)])
 @pytest.mark.parametrize(
     "error",
@@ -164,7 +162,7 @@ async def test_get(
             session=None,
         ),
         mongo.references.insert_one(
-            {"_id": "baz", "data_type": "genome", "name": "Baz"}
+            {"_id": "baz", "data_type": "genome", "name": "Baz"},
         ),
     )
 
@@ -180,7 +178,7 @@ async def test_get(
                 "labels": [],
                 "subtractions": ["apple", "plum"],
                 "user": {"id": user_1.id},
-            }
+            },
         )
 
     if error != "404_analysis":
@@ -197,7 +195,7 @@ async def test_get(
                 "reference": {"id": "baz"},
                 "subtractions": ["plum", "apple"],
                 "user": {"id": user_1.id},
-            }
+            },
         )
 
         await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
@@ -218,7 +216,7 @@ async def test_get(
                         "name_on_disk": "1-reference.fa",
                         "size": None,
                         "uploaded_at": None,
-                    }
+                    },
                 ],
                 "index": {"version": 3, "id": "bar"},
                 "job": {
@@ -231,7 +229,7 @@ async def test_get(
                 "subtractions": ["apple", "plum"],
                 "user": {"id": user_1.id},
                 "workflow": "pathoscope_bowtie",
-            }
+            },
         ),
     )
 
@@ -255,7 +253,6 @@ async def test_get(
         await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get_304(
     ready: bool,
@@ -275,7 +272,7 @@ async def test_get_304(
             session=None,
         ),
         mongo.references.insert_one(
-            {"_id": "baz", "data_type": "genome", "name": "Baz"}
+            {"_id": "baz", "data_type": "genome", "name": "Baz"},
         ),
         mongo.samples.insert_one(
             {
@@ -288,7 +285,7 @@ async def test_get_304(
                 "labels": [],
                 "subtractions": ["apple", "plum"],
                 "user": {"id": user.id},
-            }
+            },
         ),
         mongo.analyses.insert_one(
             {
@@ -303,20 +300,20 @@ async def test_get_304(
                 "reference": {"id": "baz"},
                 "subtractions": ["plum", "apple"],
                 "user": {"id": user.id},
-            }
+            },
         ),
     )
 
     await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     resp = await client.get(
-        url="/analyses/foobar", headers={"If-Modified-Since": "2015-10-06T20:00:00Z"}
+        url="/analyses/foobar",
+        headers={"If-Modified-Since": "2015-10-06T20:00:00Z"},
     )
 
     assert resp.status == 304
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "403", "404_analysis", "404_sample", "409"])
 async def test_remove(
     error: str | None,
@@ -335,10 +332,10 @@ async def test_remove(
 
     await asyncio.gather(
         mongo.indexes.insert_one(
-            {"_id": "bar", "version": 3, "reference": {"id": "baz"}}
+            {"_id": "bar", "version": 3, "reference": {"id": "baz"}},
         ),
         mongo.references.insert_one(
-            {"_id": "baz", "data_type": "genome", "name": "Baz"}
+            {"_id": "baz", "data_type": "genome", "name": "Baz"},
         ),
         mongo.subtraction.insert_many(
             [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
@@ -368,7 +365,7 @@ async def test_remove(
                 "ready": True,
                 "subtractions": [],
                 "user": {"id": user.id},
-            }
+            },
         )
 
     if error != "404_analysis":
@@ -385,7 +382,7 @@ async def test_remove(
                 "user": {"id": user.id},
                 "workflow": "pathoscope_bowtie",
                 "results": {"hits": []},
-            }
+            },
         )
 
     resp = await client.delete("/analyses/foobar")
@@ -404,7 +401,6 @@ async def test_remove(
             await resp_is.conflict(resp, "Analysis is still running")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
     error: str | None,
@@ -417,10 +413,7 @@ async def test_upload_file(
     static_time,
     tmp_path,
 ):
-    """
-    Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
-
-    """
+    """Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table."""
     client = await spawn_job_client(authorize=True)
 
     get_config_from_app(client.app).data_path = tmp_path
@@ -429,15 +422,17 @@ async def test_upload_file(
 
     if error != 404:
         await mongo.analyses.insert_one(
-            {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
+            {"_id": "foobar", "ready": True, "job": {"id": "hello"}},
         )
 
     if error == 422:
         resp_put = await client.put(
-            "/analyses/foobar/files?format=fasta", data=create_files()
+            "/analyses/foobar/files?format=fasta",
+            data=create_files(),
         )
         resp = await client.post(
-            "/analyses/foobar/files?format=fasta", data=create_files()
+            "/analyses/foobar/files?format=fasta",
+            data=create_files(),
         )
     else:
         resp_put = await client.put(
@@ -486,9 +481,7 @@ class TestDownloadAnalysisResult:
         test_files_path,
         tmp_path,
     ):
-        """
-        Test that an uploaded analysis result file can subsequently be downloaded.
-        """
+        """Test that an uploaded analysis result file can subsequently be downloaded."""
         client, job_client = await asyncio.gather(
             spawn_client(administrator=True, authenticated=True),
             spawn_job_client(authorize=True),
@@ -498,11 +491,12 @@ class TestDownloadAnalysisResult:
         get_config_from_app(job_client.app).data_path = tmp_path
 
         await mongo.analyses.insert_one(
-            {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
+            {"_id": "foobar", "ready": True, "job": {"id": "hello"}},
         )
 
         await job_client.put(
-            "/analyses/foobar/files?name=reference.fa&format=fasta", data=create_files()
+            "/analyses/foobar/files?name=reference.fa&format=fasta",
+            data=create_files(),
         )
 
         resp = await client.get("/analyses/foobar/files/1")
@@ -519,13 +513,11 @@ class TestDownloadAnalysisResult:
         mongo: Mongo,
         spawn_client: ClientSpawner,
     ):
-        """
-        Test that a 404 response is returned when the requested file does not exist.
-        """
+        """Test that a 404 response is returned when the requested file does not exist."""
         client = await spawn_client(administrator=True, authenticated=True)
 
         await mongo.analyses.insert_one(
-            {"_id": "foobar", "ready": True, "job": {"id": "hello"}}
+            {"_id": "foobar", "ready": True, "job": {"id": "hello"}},
         )
 
         resp = await client.get("/analyses/foobar/files/2")
@@ -534,11 +526,14 @@ class TestDownloadAnalysisResult:
         assert await resp.json() == {"id": "not_found", "message": "Not found"}
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("extension", ["csv", "xlsx", "bug"])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_download_analysis_document(
-    extension, exists, mocker, mongo: Mongo, spawn_client: ClientSpawner
+    extension,
+    exists,
+    mocker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -579,7 +574,6 @@ async def test_download_analysis_document(
             assert resp.status == 400
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [
@@ -594,15 +588,20 @@ async def test_download_analysis_document(
     ],
 )
 async def test_blast(
-    error, mongo: Mongo, spawn_client: ClientSpawner, resp_is, snapshot, static_time
+    error,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    resp_is,
+    snapshot,
+    static_time,
 ):
-    """
-    Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
+    """Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
     correctly.
 
     """
     client = await spawn_client(
-        authenticated=True, base_url="https://virtool.example.com"
+        authenticated=True,
+        base_url="https://virtool.example.com",
     )
 
     if error != "404_analysis":
@@ -615,7 +614,7 @@ async def test_blast(
                     {"index": 3, "sequence": "ATAGAGATTAGAT"},
                     {"index": 5, "sequence": "GGAGTTAGATTGG"},
                     {"index": 8, "sequence": "ACCAATAGACATT"},
-                ]
+                ],
             },
             "sample": {"id": "baz"},
         }
@@ -639,7 +638,7 @@ async def test_blast(
                     "group_read": True,
                     "group_write": True,
                     "user": {"id": "fred"},
-                }
+                },
             )
 
         await mongo.analyses.insert_one(analysis_document)
@@ -674,7 +673,6 @@ async def test_blast(
         await resp_is.conflict(resp, "Analysis is still running")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
 async def test_finalize(
     error: str | None,
@@ -697,7 +695,7 @@ async def test_finalize(
 
     await asyncio.gather(
         client.db.references.insert_one(
-            {"_id": "baz", "name": "Baz", "data_type": "genome"}
+            {"_id": "baz", "name": "Baz", "data_type": "genome"},
         ),
         client.db.samples.insert_one(
             {
@@ -720,7 +718,7 @@ async def test_finalize(
                 "ready": True,
                 "subtractions": [],
                 "user": {"id": user_1.id},
-            }
+            },
         ),
     )
 
@@ -738,7 +736,7 @@ async def test_finalize(
                 "subtractions": [],
                 "user": {"id": user_1.id},
                 "workflow": "nuvs",
-            }
+            },
         )
 
     resp = await client.patch("/analyses/analysis1", json=patch_json)
@@ -755,9 +753,11 @@ async def test_finalize(
         assert document["ready"] is True
 
 
-@pytest.mark.apitest
 async def test_finalize_large(
-    fake2: DataFaker, snapshot: SnapshotAssertion, spawn_job_client, static_time
+    fake2: DataFaker,
+    snapshot: SnapshotAssertion,
+    spawn_job_client,
+    static_time,
 ):
     user = await fake2.users.create()
 
@@ -774,7 +774,7 @@ async def test_finalize_large(
                 "mail",
                 "name",
                 "username",
-            ]
+            ],
         )
         for _ in range(100)
     ]
@@ -782,7 +782,7 @@ async def test_finalize_large(
     patch_json = {"results": {"hits": [], "extra_data": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
-    assert len(json.dumps(patch_json)) > 1024 ** 2
+    assert len(json.dumps(patch_json)) > 1024**2
 
     client = await spawn_job_client(authorize=True)
 
@@ -800,10 +800,10 @@ async def test_finalize_large(
                 "user": {"id": user.id},
                 "ready": False,
                 "subtractions": [],
-            }
+            },
         ),
         client.db.references.insert_one(
-            {"_id": "baz", "name": "Baz", "data_type": "genome"}
+            {"_id": "baz", "name": "Baz", "data_type": "genome"},
         ),
         client.db.samples.insert_one(
             {
@@ -826,7 +826,7 @@ async def test_finalize_large(
                 "ready": True,
                 "subtractions": [],
                 "user": {"id": user.id},
-            }
+            },
         ),
     )
 

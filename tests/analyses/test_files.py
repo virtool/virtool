@@ -12,7 +12,10 @@ async def test_create_nuvs_analysis_files(snapshot, tmp_path, pg: AsyncEngine):
     test_dir.joinpath("hmm.tsv").write_text("HMM file")
 
     await virtool.analyses.files.create_nuvs_analysis_files(
-        pg, "foo", ["assembly.fa", "hmm.tsv"], test_dir
+        pg,
+        "foo",
+        ["assembly.fa", "hmm.tsv"],
+        test_dir,
     )
 
     async with AsyncSession(pg) as session:

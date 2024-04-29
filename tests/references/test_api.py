@@ -1,10 +1,10 @@
 import asyncio
 from pathlib import Path
-from unittest.mock import call, ANY
+from unittest.mock import ANY, call
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
@@ -16,13 +16,13 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
+from virtool.mongo.utils import get_mongo_from_app, get_one_field
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.models import SQLTask
 from virtool.users.oas import UpdateUserRequest
+from virtool.utils import get_http_session_from_app
 
 
-@pytest.mark.apitest
 async def test_find(
     data_layer: DataLayer,
     fake2: DataFaker,
@@ -119,7 +119,7 @@ async def test_find(
                     step="download",
                     type="import_reference",
                 ),
-            ]
+            ],
         )
         await session.commit()
 
@@ -134,7 +134,6 @@ async def test_find(
     assert {d["id"] for d in body["documents"]} == {"foo", "bar", "goo"}
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [404, None])
 async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, static_time):
     client = await spawn_client(authenticated=True, administrator=True)
@@ -167,7 +166,7 @@ async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, stati
                         "remove": True,
                     },
                 ],
-            }
+            },
         )
 
     async with AsyncSession(pg) as session:
@@ -182,7 +181,7 @@ async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, stati
                 progress=100,
                 step="download",
                 type="clone_reference",
-            )
+            ),
         )
 
         await session.commit()
@@ -196,7 +195,6 @@ async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, stati
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 class TestCreate:
     @pytest.mark.parametrize("data_type", ["genome", "barcode"])
     async def test_ok(
@@ -216,7 +214,7 @@ class TestCreate:
         default_source_type = ["strain", "isolate"]
 
         await data_layer.settings.update(
-            UpdateSettingsRequest(default_source_types=default_source_type)
+            UpdateSettingsRequest(default_source_types=default_source_type),
         )
 
         resp = await client.post(
@@ -278,7 +276,8 @@ class TestCreate:
         tmpdir,
     ):
         client = await spawn_client(
-            authenticated=True, permissions=[Permission.create_ref]
+            authenticated=True,
+            permissions=[Permission.create_ref],
         )
 
         user_1 = await fake2.users.create()
@@ -306,7 +305,7 @@ class TestCreate:
                         "remove": True,
                     },
                 ],
-            }
+            },
         )
 
         resp = await client.post(
@@ -324,10 +323,15 @@ class TestCreate:
         assert await resp.json() == snapshot(name="resp")
 
     async def test_remote(
-        self, snapshot, spawn_client: ClientSpawner, static_time, tmpdir
+        self,
+        snapshot,
+        spawn_client: ClientSpawner,
+        static_time,
+        tmpdir,
     ):
         client = await spawn_client(
-            authenticated=True, permissions=[Permission.create_ref]
+            authenticated=True,
+            permissions=[Permission.create_ref],
         )
 
         resp = await client.post(
@@ -343,14 +347,15 @@ class TestCreate:
         assert resp.status == 201
         assert resp.headers["Location"] == snapshot(name="location")
         assert await resp.json() == snapshot(
-            matcher=path_type({".*etag": (str,)}, regex=True), name="resp"
+            matcher=path_type({".*etag": (str,)}, regex=True),
+            name="resp",
         )
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize(
-    "error", [None, "403", "404", "400_invalid_input", "400_duplicates"]
+    "error",
+    [None, "403", "404", "400_invalid_input", "400_duplicates"],
 )
 async def test_edit(
     data_type: str,
@@ -400,7 +405,7 @@ async def test_edit(
                         "remove": True,
                     },
                 ],
-            }
+            },
         )
 
     data = {
@@ -418,13 +423,14 @@ async def test_edit(
                 "name": "CPN60",
                 "description": "This has a duplicate name",
                 "required": False,
-            }
+            },
         )
 
     can_modify = error != "403"
 
     mocker.patch(
-        "virtool.references.api.check_right", make_mocked_coro(return_value=can_modify)
+        "virtool.references.api.check_right",
+        make_mocked_coro(return_value=can_modify),
     )
 
     resp = await client.patch("/refs/foo", data)
@@ -442,7 +448,7 @@ async def test_edit(
                     "msg": "field required",
                     "type": "value_error.missing",
                     "in": "body",
-                }
+                },
             ]
 
         case "400_duplicates":
@@ -455,9 +461,11 @@ async def test_edit(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 async def test_delete(
-    fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, static_time
+    fake2: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -495,7 +503,7 @@ async def test_delete(
                     "remove": True,
                 },
             ],
-        }
+        },
     )
 
     resp = await client.delete("/refs/foo")
@@ -505,10 +513,14 @@ async def test_delete(
     assert resp.status == 204
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(
-    error, mocker, mongo: Mongo, spawn_client, resp_is, snapshot
+    error,
+    mocker,
+    mongo: Mongo,
+    spawn_client,
+    resp_is,
+    snapshot,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -553,7 +565,7 @@ async def test_get_release(
                 "content_type": "application/gzip",
                 "retrieved_at": "2018-06-14T19:52:17.465000Z",
                 "newer": True,
-            }
+            },
         ),
     )
 
@@ -570,18 +582,25 @@ async def test_get_release(
     assert resp.status == 200
 
     assert await resp.json() == snapshot(
-        matcher=path_type({".*etag": (str,)}, regex=True)
+        matcher=path_type({".*etag": (str,)}, regex=True),
     )
 
     m_fetch_and_update_release.assert_called_with(
-        client.app["db"], client.app["client"], "foo"
+        get_mongo_from_app(client.app),
+        get_http_session_from_app(client.app),
+        "foo",
     )
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("empty", [True, False])
 async def test_list_updates(
-    empty, mocker, mongo: Mongo, spawn_client, id_exists, resp_is, snapshot
+    empty,
+    mocker,
+    mongo: Mongo,
+    spawn_client,
+    id_exists,
+    resp_is,
+    snapshot,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -607,8 +626,8 @@ async def test_list_updates(
                     },
                     "ready": True,
                     "newer": True,
-                }
-            ]
+                },
+            ],
         ),
     )
 
@@ -626,7 +645,6 @@ async def test_list_updates(
     m_get_one_field.assert_called_with(ANY, "updates", "foo")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_update(
     error: str | None,
@@ -665,7 +683,8 @@ async def test_update(
         await mongo.references.insert_one(reference)
 
         m_enqueue = mocker.patch.object(
-            get_data_from_app(client.app).tasks._tasks_client, "enqueue"
+            get_data_from_app(client.app).tasks._tasks_client,
+            "enqueue",
         )
 
     resp = await client.post("/refs/foo/updates", {})
@@ -679,13 +698,13 @@ async def test_update(
     else:
         assert resp.status == 201
         assert await resp.json() == snapshot(
-            name="json", matcher=path_type({".*etag": (str,)}, regex=True)
+            name="json",
+            matcher=path_type({".*etag": (str,)}, regex=True),
         )
         assert m_enqueue.call_args == call("update_remote_reference", 1)
         assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
 
 
-@pytest.mark.apitest
 class TestCreateOTU:
     @pytest.mark.parametrize("abbreviation", [None, "TMV", ""])
     @pytest.mark.parametrize("error", [None, "403", "404"])
@@ -699,12 +718,12 @@ class TestCreateOTU:
         spawn_client,
         static_time,
     ):
-        """
-        Test that a valid request results in the creation of a otu document and a
+        """Test that a valid request results in the creation of a otu document and a
         ``201`` response.
         """
         client = await spawn_client(
-            authenticated=True, base_url="https://virtool.example.com"
+            authenticated=True,
+            base_url="https://virtool.example.com",
         )
 
         if error != "404":
@@ -723,9 +742,9 @@ class TestCreateOTU:
                             "modify": True,
                             "modify_otu": True,
                             "remove": True,
-                        }
+                        },
                     ],
-                }
+                },
             )
 
         data = {"name": "Tobacco mosaic virus"}
@@ -744,7 +763,8 @@ class TestCreateOTU:
                 )
                 assert await resp.json() == snapshot(name="json")
                 assert await asyncio.gather(
-                    mongo.otus.find_one(), mongo.history.find_one()
+                    mongo.otus.find_one(),
+                    mongo.history.find_one(),
                 ) == snapshot(name="db")
             case "403":
                 await resp_is.insufficient_rights(resp)
@@ -771,14 +791,13 @@ class TestCreateOTU:
         spawn_client: ClientSpawner,
         static_time,
     ):
-        """
-        Test that the request fails with ``409 Conflict`` if the requested otu name
+        """Test that the request fails with ``409 Conflict`` if the requested otu name
         already exists.
         """
-
         # Pass name and abbreviation check.
         m_check_name_and_abbreviation = mocker.patch(
-            "virtool.otus.db.check_name_and_abbreviation", make_mocked_coro(message)
+            "virtool.otus.db.check_name_and_abbreviation",
+            make_mocked_coro(message),
         )
 
         client = await spawn_client(authenticated=True)
@@ -798,20 +817,24 @@ class TestCreateOTU:
                             "modify": True,
                             "modify_otu": True,
                             "remove": True,
-                        }
+                        },
                     ],
-                }
+                },
             )
 
         resp = await client.post(
-            "/refs/foo/otus", {"name": "Tobacco mosaic virus", "abbreviation": "TMV"}
+            "/refs/foo/otus",
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
         )
 
         if error is None:
             assert resp.status == 201
             # Abbreviation defaults to empty string for OTU creation.
             m_check_name_and_abbreviation.assert_called_with(
-                ANY, "foo", "Tobacco mosaic virus", "TMV"
+                ANY,
+                "foo",
+                "Tobacco mosaic virus",
+                "TMV",
             )
         elif error == "404":
             await resp_is.not_found(resp)
@@ -819,7 +842,6 @@ class TestCreateOTU:
             await resp_is.bad_request(resp, message)
 
 
-@pytest.mark.apitest
 async def test_create_index(
     check_ref_right,
     fake2: DataFaker,
@@ -830,19 +852,17 @@ async def test_create_index(
     spawn_client: ClientSpawner,
     static_time,
 ):
-    """
-    Test that a valid request results in the creation of a otu document and a ``201`` response.
-
-    """
+    """Test that a valid request results in the creation of a otu document and a ``201`` response."""
     client = await spawn_client(
-        authenticated=True, base_url="https://virtool.example.com"
+        authenticated=True,
+        base_url="https://virtool.example.com",
     )
 
     user = await fake2.users.create()
 
     await asyncio.gather(
         mongo.references.insert_one(
-            {"_id": "foo", "name": "Foo", "data_type": "genome"}
+            {"_id": "foo", "name": "Foo", "data_type": "genome"},
         ),
         # Insert unbuilt changes to prevent initial check failure.
         mongo.history.insert_one(
@@ -851,12 +871,13 @@ async def test_create_index(
                 "index": {"id": "unbuilt", "version": "unbuilt"},
                 "reference": {"id": "foo"},
                 "user": {"id": user.id},
-            }
+            },
         ),
     )
 
     m_create_manifest = mocker.patch(
-        "virtool.references.db.get_manifest", new=make_mocked_coro({"foo": 2, "bar": 5})
+        "virtool.references.db.get_manifest",
+        new=make_mocked_coro({"foo": 2, "bar": 5}),
     )
 
     # Pass ref exists check.
@@ -875,7 +896,6 @@ async def test_create_index(
     m_create_manifest.assert_called_with(ANY, "foo")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_user(
     error: str | None,
@@ -886,8 +906,7 @@ async def test_create_user(
     spawn_client: ClientSpawner,
     static_time,
 ):
-    """
-    Test that the group or user is added to the reference when no error condition
+    """Test that the group or user is added to the reference when no error condition
     exists.
 
     Test for the following error conditions:
@@ -919,7 +938,7 @@ async def test_create_user(
                 "modify": True,
                 "modify_otu": True,
                 "remove": True,
-            }
+            },
         ],
     }
 
@@ -934,7 +953,7 @@ async def test_create_user(
                 "modify": True,
                 "modify_otu": True,
                 "remove": True,
-            }
+            },
         )
 
     # Don't insert the ref document if we want to trigger a 404.
@@ -959,7 +978,6 @@ async def test_create_user(
             await resp_is.bad_request(resp, "User already exists")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_group(
     error: str | None,
@@ -970,8 +988,7 @@ async def test_create_group(
     spawn_client: ClientSpawner,
     static_time,
 ):
-    """
-    Test that a group is added to the reference when no error condition exists.
+    """Test that a group is added to the reference when no error condition exists.
 
     * 400_dne: user group does not exist
     * 400_exists: group already a member of ref
@@ -998,7 +1015,7 @@ async def test_create_group(
                         "modify": True,
                         "modify_otu": True,
                         "remove": True,
-                    }
+                    },
                 ],
                 "name": "Test",
                 "organism": "virus",
@@ -1006,7 +1023,7 @@ async def test_create_group(
                 "source_types": [],
                 "user": {"id": client.user.id},
                 "users": [],
-            }
+            },
         )
 
     resp = await client.post(
@@ -1072,7 +1089,7 @@ async def test_update_user(
                         "remove": False,
                     },
                 ],
-            }
+            },
         )
 
     resp = await client.patch(
@@ -1089,7 +1106,6 @@ async def test_update_user(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [None, "404_group", "404_ref"],
@@ -1139,7 +1155,7 @@ async def test_update_group(
                         "remove": True,
                     },
                 ],
-            }
+            },
         )
 
     resp = await client.patch(
@@ -1156,7 +1172,6 @@ async def test_update_group(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "error",
     [None, "404_ref", "404_user"],
@@ -1205,11 +1220,11 @@ async def test_delete_user(
                         "remove": False,
                     },
                 ],
-            }
+            },
         )
 
     resp = await client.delete(
-        f"/refs/foo/users/{21 if error == '404_user' else user.id}"
+        f"/refs/foo/users/{21 if error == '404_user' else user.id}",
     )
 
     if error:
@@ -1219,7 +1234,6 @@ async def test_delete_user(
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404_group", "404_ref"])
 async def test_delete_group(
     error: str | None,
@@ -1249,7 +1263,7 @@ async def test_delete_group(
                         "modify": False,
                         "modify_otu": False,
                         "remove": False,
-                    }
+                    },
                 ],
                 "name": "Test",
                 "organism": "virus",
@@ -1264,13 +1278,13 @@ async def test_delete_group(
                         "modify": True,
                         "modify_otu": True,
                         "remove": True,
-                    }
+                    },
                 ],
-            }
+            },
         )
 
     resp = await client.delete(
-        f"/refs/foo/groups/{21 if error == '404_group' else group.id}"
+        f"/refs/foo/groups/{21 if error == '404_group' else group.id}",
     )
 
     if error:
@@ -1280,7 +1294,6 @@ async def test_delete_group(
         assert await mongo.references.find_one() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("find", [None, "Prunus", "virus", "PVF", "VF"])
 @pytest.mark.parametrize("verified", [None, True, False])
 async def test_find_otus(
@@ -1290,16 +1303,14 @@ async def test_find_otus(
     mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test to check that the api returns the correct OTUs based on how the results are
+    """Test to check that the api returns the correct OTUs based on how the results are
     filtered.
     """
-
     client = await spawn_client(authenticated=True)
 
     await asyncio.gather(
         mongo.references.insert_one(
-            {"_id": "foo", "name": "Foo", "data_type": "genome"}
+            {"_id": "foo", "name": "Foo", "data_type": "genome"},
         ),
         mongo.otus.insert_many(
             [

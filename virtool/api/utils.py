@@ -2,14 +2,13 @@ import asyncio
 import math
 import re
 from dataclasses import dataclass
-from typing import Union
-from typing import Dict, List, Optional, Tuple, Mapping, Any
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from aiohttp.web import Request
 from aiohttp.web_response import Response
 from multidict import MultiDictProxy
 
-from virtool.types import Projection, Document
+from virtool.types import Document, Projection
 from virtool.utils import coerce_list, to_bool
 
 
@@ -32,8 +31,7 @@ class Paginated:
 
 
 def compose_exists_query(field: str) -> Dict[str, Dict[str, bool]]:
-    """
-    Compose a MongoDB query that checks if the passed `field` exists.
+    """Compose a MongoDB query that checks if the passed `field` exists.
 
     :param field: the field to check for existence
     :return: a query
@@ -43,9 +41,8 @@ def compose_exists_query(field: str) -> Dict[str, Dict[str, bool]]:
 
 
 def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dict]]]:
-    """
-    Compose a MongoDB query that checks if the values of the passed `fields` match the
-    passed search `term`.
+    """Compose a MongoDB query that checks if the values of the passed `fields` match
+    the passed search `term`.
 
     :param term: the term to search
     :param fields: the list of field to match against
@@ -63,21 +60,20 @@ def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dic
         "$or": [
             {field: {"$regex": regex}}
             for field in [str(field) for field in coerce_list(fields)]
-        ]
+        ],
     }
 
 
 async def paginate(
     collection,
-    db_query: Union[Dict, MultiDictProxy[str]],
-    url_query: Union[Dict, MultiDictProxy[str]],
-    sort: Optional[Union[List[Tuple[str, int]], str]] = None,
-    projection: Optional[Projection] = None,
-    base_query: Optional[Dict] = None,
+    mongo_query: dict | MultiDictProxy[str],
+    url_query: dict | MultiDictProxy[str],
+    base_query: dict | None = None,
+    projection: Projection | None = None,
     reverse: bool = False,
+    sort: list[tuple[str, int]] | str | None = None,
 ):
-    """
-    A function for searching and paging collections.
+    """A function for searching and paging collections.
 
     Uses a number of different queries to return search results.
 
@@ -103,7 +99,7 @@ async def paginate(
     `page`: the page number to return (starts at one)
 
     :param collection: the database collection
-    :param db_query: a query derived from user supplied - affects found count
+    :param mongo_query: a query derived from user supplied - affects found count
     :param url_query: the raw URL query; used to get the `page` and `page_count` values
     :param sort: a field to sort by
     :param projection: the projection to apply to the returned documents
@@ -127,11 +123,11 @@ async def paginate(
     if isinstance(sort, str):
         sort = [(sort, -1 if reverse else 1)]
 
-    db_query = {"$and": [base_query, db_query]}
+    mongo_query = {"$and": [base_query, mongo_query]}
 
-    cursor = collection.find(db_query, projection, sort=sort)
+    cursor = collection.find(mongo_query, projection, sort=sort)
 
-    found_count = await collection.count_documents(db_query)
+    found_count = await collection.count_documents(mongo_query)
 
     page_count = int(math.ceil(found_count / per_page))
 
@@ -141,9 +137,7 @@ async def paginate(
         if page > 1:
             cursor.skip((page - 1) * per_page)
 
-        documents = [
-            await collection.apply_processor(d) for d in await cursor.to_list(per_page)
-        ]
+        documents = await cursor.to_list(per_page)
 
     total_count = await collection.count_documents(base_query)
 
@@ -168,8 +162,7 @@ async def paginate_aggregate(
     sort: Optional[Union[List[Tuple[str, int]], str]] = None,
     reverse: bool = False,
 ):
-    """
-    A function to return parameters used in aggregate.
+    """A function to return parameters used in aggregate.
 
     Uses a number of different queries to return search results.
 
@@ -204,7 +197,6 @@ async def paginate_aggregate(
     :param reverse: reverse the sort order
 
     """
-
     base_query = base_query or {}
 
     client_query = client_query or {}
@@ -242,16 +234,16 @@ async def paginate_aggregate(
                         {"$limit": per_page},
                         *lookup_steps,
                     ],
-                }
+                },
             },
             {
                 "$project": {
                     "data": projection,
                     "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
                     "found_count": {"$arrayElemAt": ["$found_count.found_count", 0]},
-                }
+                },
             },
-        ]
+        ],
     ):
         data = paginate_dict["data"]
         total_count = paginate_dict.get("total_count", 0)
@@ -277,8 +269,7 @@ async def paginate2(
     reverse: bool = False,
     sort: Optional[Union[List[Tuple[str, int]], str]] = None,
 ) -> Paginated:
-    """
-    A function for searching and paging collections.
+    """A function for searching and paging collections.
 
     Uses a number of different queries to return search results.
 
@@ -323,7 +314,8 @@ async def paginate2(
     cursor = collection.find(search_query, projection, sort=sort)
 
     found_count, total_count = await asyncio.gather(
-        collection.count_documents(search_query), collection.count_documents(base_query)
+        collection.count_documents(search_query),
+        collection.count_documents(base_query),
     )
 
     if page > 1:
@@ -345,8 +337,7 @@ async def paginate2(
 
 
 def get_query_bool(query: Mapping, key: str, default: Optional[Any] = None) -> bool:
-    """
-    Return a `bool` calculated from a URL query given its `key`.
+    """Return a `bool` calculated from a URL query given its `key`.
 
     :param query: the URL query
     :param key: the URL query key
@@ -361,8 +352,7 @@ def get_query_bool(query: Mapping, key: str, default: Optional[Any] = None) -> b
 
 
 def get_req_bool(req: Request, key: str, default: Optional[Any] = None) -> bool:
-    """
-    Return a `bool` calculated from the request's query given its `key`.
+    """Return a `bool` calculated from the request's query given its `key`.
 
     :param req: the request
     :param key: the URL query key

@@ -9,6 +9,7 @@ from virtool.config import get_config_from_app
 from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
 from virtool.types import App
@@ -71,10 +72,10 @@ async def create_fake_sample(
 ):
     fake = app.get("fake", FakerWrapper())
 
-    db = app["db"]
+    mongo = get_mongo_from_app(app)
     pg = app["pg"]
 
-    subtraction_ids = [doc["_id"] async for doc in db.subtraction.find()][:2]
+    subtraction_ids = [doc["_id"] async for doc in mongo.subtraction.find()][:2]
 
     if finalized is True:
         if paired:
@@ -111,7 +112,7 @@ async def create_fake_sample(
 
     await create_sample(
         _id=sample_id,
-        mongo=db,
+        mongo=mongo,
         name=f"Fake {sample_id.upper()}",
         host="Vine",
         isolate="Isolate A1",
@@ -133,8 +134,7 @@ async def create_fake_sample(
 
 
 async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: str):
-    """
-    Copy the example reads file to the sample directory.
+    """Copy the example reads file to the sample directory.
 
     :param app: the application object
     :param file_path: the path to the reads file

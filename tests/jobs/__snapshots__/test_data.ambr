@@ -42,6 +42,7 @@
     'key': 'hashed',
     'rights': dict({
     }),
+    'state': 'preparing',
     'status': list([
       dict({
         'error': None,

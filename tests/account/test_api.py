@@ -12,7 +12,6 @@ from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, hash_password
 
 
-@pytest.mark.apitest
 async def test_get(snapshot, spawn_client, static_time):
     client = await spawn_client(authenticated=True)
 
@@ -22,7 +21,6 @@ async def test_get(snapshot, spawn_client, static_time):
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [
@@ -67,7 +65,7 @@ async def test_update(
     client = await spawn_client(authenticated=True)
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8)
+        UpdateSettingsRequest(minimum_password_length=8),
     )
 
     resp = await client.patch("/account", body)
@@ -76,12 +74,8 @@ async def test_update(
     assert await resp.json() == snapshot(name="response")
 
 
-@pytest.mark.apitest
 async def test_get_settings(spawn_client):
-    """
-    Test that a ``GET /account/settings`` returns the settings for the session user.
-
-    """
+    """Test that a ``GET /account/settings`` returns the settings for the session user."""
     client = await spawn_client(authenticated=True)
 
     resp = await client.get("/account/settings")
@@ -96,7 +90,6 @@ async def test_get_settings(spawn_client):
     }
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "data,status",
     [
@@ -118,8 +111,7 @@ async def test_get_settings(spawn_client):
     ids=["valid_input", "invalid_input", "null_values"],
 )
 async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
-    """
-    Test that account settings can be updated at ``POST /account/settings`` and that requests to
+    """Test that account settings can be updated at ``POST /account/settings`` and that requests to
     ``POST /account/settings`` return 422 for invalid JSON fields.
 
     """
@@ -131,9 +123,12 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
     assert await resp.json() == snapshot(name="response")
 
 
-@pytest.mark.apitest
 async def test_get_api_keys(
-    fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner, snapshot, static_time
+    fake2: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    snapshot,
+    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -170,7 +165,6 @@ async def test_get_api_keys(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
@@ -185,23 +179,22 @@ class TestCreateAPIKey:
         spawn_client: ClientSpawner,
         static_time,
     ):
-        """
-        Test that creation of an API key functions properly. Check that different permission inputs work.
-
-        """
+        """Test that creation of an API key functions properly. Check that different permission inputs work."""
         mocker.patch(
-            "virtool.utils.generate_key", return_value=("raw_key", "hashed_key")
+            "virtool.utils.generate_key",
+            return_value=("raw_key", "hashed_key"),
         )
 
         group = await fake2.groups.create(
-            PermissionsUpdate(**{Permission.create_sample: True})
+            PermissionsUpdate(**{Permission.create_sample: True}),
         )
 
         client = await spawn_client(authenticated=True)
 
         if has_perm:
             await data_layer.users.update(
-                client.user.id, UpdateUserRequest(groups=[group.id])
+                client.user.id,
+                UpdateUserRequest(groups=[group.id]),
             )
 
         body = {"name": "Foobar"}
@@ -215,20 +208,23 @@ class TestCreateAPIKey:
         assert await resp.json() == snapshot
 
     async def test_naming(
-        self, mocker, snapshot, mongo: Mongo, spawn_client: ClientSpawner, static_time
+        self,
+        mocker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
     ):
-        """
-        Test that uniqueness is ensured on the ``id`` field.
-
-        """
+        """Test that uniqueness is ensured on the ``id`` field."""
         mocker.patch(
-            "virtool.utils.generate_key", return_value=("raw_key", "hashed_key")
+            "virtool.utils.generate_key",
+            return_value=("raw_key", "hashed_key"),
         )
 
         client = await spawn_client(authenticated=True)
 
         await mongo.keys.insert_one(
-            {"_id": "foobar", "id": "foobar_0", "name": "Foobar"}
+            {"_id": "foobar", "id": "foobar_0", "name": "Foobar"},
         )
 
         body = {"name": "Foobar"}
@@ -240,7 +236,6 @@ class TestCreateAPIKey:
         assert await mongo.keys.find_one({"id": "foobar_1"}) == snapshot
 
 
-@pytest.mark.apitest
 class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])
     @pytest.mark.parametrize("has_perm", [True, False, "missing"])
@@ -261,7 +256,7 @@ class TestUpdateAPIKey:
             permissions=PermissionsUpdate(
                 create_sample=True,
                 modify_subtraction=(has_perm if has_perm != "missing" else False),
-            )
+            ),
         )
 
         await data_layer.users.update(
@@ -279,14 +274,14 @@ class TestUpdateAPIKey:
                 "user": {"id": client.user.id},
                 "groups": [],
                 "permissions": {p.value: False for p in Permission},
-            }
+            },
         )
 
         data = {
             "permissions": {
                 Permission.create_sample.value: True,
                 Permission.modify_subtraction.value: True,
-            }
+            },
         }
 
         if has_perm == "missing":
@@ -314,10 +309,12 @@ class TestUpdateAPIKey:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_remove_api_key(
-    error, mongo: Mongo, spawn_client: ClientSpawner, snapshot
+    error,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    snapshot,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -328,7 +325,7 @@ async def test_remove_api_key(
                 "id": "foobar_0",
                 "name": "Foobar",
                 "user": {"id": client.user.id},
-            }
+            },
         )
 
     resp = await client.delete("/account/keys/foobar_0")
@@ -342,9 +339,10 @@ async def test_remove_api_key(
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_remove_all_api_keys(
-    fake2: DataFaker, mongo: Mongo, spawn_client: ClientSpawner
+    fake2: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -368,14 +366,12 @@ async def test_remove_all_api_keys(
     assert resp.status == 204
 
     assert await mongo.keys.find().to_list(None) == [
-        {"_id": "baz", "id": "baz_0", "user": {"id": user.id}}
+        {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
     ]
 
 
-@pytest.mark.apitest
 async def test_logout(spawn_client):
-    """
-    Test that calling the logout endpoint results in the current session being removed and the user being logged
+    """Test that calling the logout endpoint results in the current session being removed and the user being logged
     out.
 
     """
@@ -394,7 +390,6 @@ async def test_logout(spawn_client):
     assert resp.status == 401
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "method,path",
     [
@@ -411,8 +406,7 @@ async def test_logout(spawn_client):
     ],
 )
 async def test_requires_authorization(method: str, path: str, spawn_client):
-    """
-    Test that a '401 Requires authorization' response is sent when the session is not
+    """Test that a '401 Requires authorization' response is sent when the session is not
     authenticated.
 
     """
@@ -435,12 +429,9 @@ async def test_requires_authorization(method: str, path: str, spawn_client):
     assert resp.status == 401
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_permissions", "invalid_permissions"])
 async def test_is_permission_dict(value, spawn_client, resp_is):
-    """
-    Tests that when an invalid permission is used, validators.is_permission_dict raises a 422 error.
-    """
+    """Tests that when an invalid permission is used, validators.is_permission_dict raises a 422 error."""
     client = await spawn_client(authenticated=True)
 
     permissions = {
@@ -463,12 +454,9 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
         assert resp.status == 404
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
 async def test_is_valid_email(value, spawn_client, resp_is):
-    """
-    Tests that when an invalid email is used, validators.is_valid_email raises a 422 error.
-    """
+    """Tests that when an invalid email is used, validators.is_valid_email raises a 422 error."""
     client = await spawn_client(authenticated=True)
 
     data = {
@@ -489,11 +477,10 @@ async def test_is_valid_email(value, spawn_client, resp_is):
                 "msg": "The format of the email is invalid",
                 "type": "value_error",
                 "in": "body",
-            }
+            },
         ]
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "body,status",
     [
@@ -519,7 +506,7 @@ async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, sn
             "user_id": "abc123",
             "handle": "foobar",
             "password": hash_password("p@ssword123"),
-        }
+        },
     )
 
     resp = await client.post("/account/login", body)
@@ -528,7 +515,6 @@ async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, sn
     assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 @pytest.mark.parametrize(
     "request_path,correct_code",
     [
@@ -538,7 +524,12 @@ async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, sn
     ],
 )
 async def test_login_reset(
-    spawn_client, snapshot, fake2, request_path, correct_code, data_layer: DataLayer
+    spawn_client,
+    snapshot,
+    fake2,
+    request_path,
+    correct_code,
+    data_layer: DataLayer,
 ) -> None:
     client = await spawn_client(authenticated=False)
 

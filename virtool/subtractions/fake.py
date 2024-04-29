@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.config import get_config_from_app
 from virtool.example import example_path
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
 from virtool.types import App
@@ -27,12 +28,16 @@ async def create_fake_fasta_upload(app: App, user_id: str) -> Tuple[int, str]:
 
 
 async def create_fake_finalized_subtraction(
-    app: App, upload_id: int, upload_name: str, subtraction_id: str, user_id: str
+    app: App,
+    upload_id: int,
+    upload_name: str,
+    subtraction_id: str,
+    user_id: str,
 ):
-    db = app["db"]
+    mongo = get_mongo_from_app(app)
     pg = app["pg"]
 
-    document = await db.subtraction.insert_one(
+    document = await mongo.subtraction.insert_one(
         {
             "_id": subtraction_id,
             "name": "subtraction_1",
@@ -43,7 +48,7 @@ async def create_fake_finalized_subtraction(
             "gc": {"a": 0.25, "t": 0.25, "g": 0.25, "c": 0.25},
             "ready": True,
             "count": 100,
-        }
+        },
     )
 
     subtractions_path = (

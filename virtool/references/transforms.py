@@ -1,16 +1,13 @@
-from __future__ import annotations
-
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.data.transforms import AbstractTransform
-from virtool.data.transforms import apply_transforms
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import get_safely, base_processor
+from virtool.utils import base_processor, get_safely
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -22,7 +19,7 @@ PROJECTION = ["_id", "name", "data_type"]
 class AttachReferenceTransform(AbstractTransform):
     """Attach nested references to documents with a ``reference.id`` field."""
 
-    def __init__(self, mongo: Mongo):
+    def __init__(self, mongo: "Mongo"):
         self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: Any) -> Document | None:
@@ -33,20 +30,25 @@ class AttachReferenceTransform(AbstractTransform):
 
         if reference_id:
             return base_processor(
-                await self._mongo.references.find_one({"_id": reference_id}, PROJECTION)
+                await self._mongo.references.find_one(
+                    {"_id": reference_id},
+                    PROJECTION,
+                ),
             )
 
         raise ValueError("Missing reference id")
 
     async def prepare_many(
-        self, documents: list[Document]
+        self,
+        documents: list[Document],
     ) -> dict[str, Document | None]:
         reference_ids = {get_safely(d, "reference", "id") for d in documents}
 
         reference_lookup = {
             d["_id"]: d
             async for d in self._mongo.references.find(
-                {"_id": {"$in": list(reference_ids)}}, PROJECTION
+                {"_id": {"$in": list(reference_ids)}},
+                PROJECTION,
             )
         }
 
@@ -58,7 +60,7 @@ class AttachReferenceTransform(AbstractTransform):
 class AttachImportedFromTransform(AbstractTransform):
     """Attach the upload and upload user data to an imported reference."""
 
-    def __init__(self, mongo: Mongo, pg: AsyncEngine):
+    def __init__(self, mongo: "Mongo", pg: AsyncEngine):
         self._mongo = mongo
         self._pg = pg
 
@@ -73,7 +75,9 @@ class AttachImportedFromTransform(AbstractTransform):
         return await apply_transforms(row.to_dict(), [AttachUserTransform(self._mongo)])
 
     async def attach_one(
-        self, document: Document, prepared: Document | None
+        self,
+        document: Document,
+        prepared: Document | None,
     ) -> Document:
         if prepared is None:
             return document

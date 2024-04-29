@@ -12,14 +12,13 @@ from virtool.fake.next import DataFaker
 from virtool.uploads.models import UploadType
 
 
-@pytest.fixture
+@pytest.fixture()
 def upload_request_form(example_path: Path):
     return {
         "file": open(example_path / "reads/single.fq.gz", "rb"),
     }
 
 
-@pytest.mark.apitest
 class TestUpload:
     async def test(
         self,
@@ -29,12 +28,10 @@ class TestUpload:
         spawn_client: ClientSpawner,
         static_time,
     ):
-        """
-        Test `POST /uploads` to assure a file can be uploaded.
-
-        """
+        """Test `POST /uploads` to assure a file can be uploaded."""
         client = await spawn_client(
-            authenticated=True, permissions=[Permission.upload_file]
+            authenticated=True,
+            permissions=[Permission.upload_file],
         )
 
         resp = await client.post_form(
@@ -46,11 +43,15 @@ class TestUpload:
         assert await resp.json() == snapshot(matcher=path_type({"created_at": (str,)}))
 
     async def test_no_upload_type(
-        self, upload_request_form, snapshot, spawn_client: ClientSpawner
+        self,
+        upload_request_form,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
         """Test that not supplying ``type`` in the query string leads to a ``400``."""
         client = await spawn_client(
-            authenticated=True, permissions=[Permission.upload_file]
+            authenticated=True,
+            permissions=[Permission.upload_file],
         )
 
         resp = await client.post_form(
@@ -62,25 +63,30 @@ class TestUpload:
         assert await resp.json() == snapshot
 
     async def test_bad_upload_type(
-        self, snapshot, spawn_client: ClientSpawner, upload_request_form
+        self,
+        snapshot,
+        spawn_client: ClientSpawner,
+        upload_request_form,
     ):
         """Test that supplying a bad ``type`` in the query string leads to a ``400``."""
         client = await spawn_client(
-            authenticated=True, permissions=[Permission.upload_file]
+            authenticated=True,
+            permissions=[Permission.upload_file],
         )
 
         resp = await client.post_form(
-            "/uploads?name=Test.fq.gz&type=bad", data=upload_request_form
+            "/uploads?name=Test.fq.gz&type=bad",
+            data=upload_request_form,
         )
 
         assert resp.status == 400
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 class TestFind:
     @pytest.mark.parametrize(
-        "upload_type", [UploadType.reads, UploadType.reference, None]
+        "upload_type",
+        [UploadType.reads, UploadType.reference, None],
     )
     async def test(
         self,
@@ -90,10 +96,7 @@ class TestFind:
         snapshot,
         static_time,
     ):
-        """
-        Test `GET /uploads` to assure that it returns the correct `upload` documents.
-
-        """
+        """Test `GET /uploads` to assure that it returns the correct `upload` documents."""
         client = await spawn_client(authenticated=True)
 
         user = await fake2.users.create()
@@ -158,17 +161,13 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.apitest
 async def test_get(
     config: ServerConfig,
     example_path: Path,
     fake2: DataFaker,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test `GET /uploads/:id` to assure that it lets you download a file.
-
-    """
+    """Test `GET /uploads/:id` to assure that it lets you download a file."""
     client = await spawn_client(authenticated=True)
     get_config_from_app(client.app).data_path = config.data_path
 
@@ -180,10 +179,8 @@ async def test_get(
     assert await resp.read() == open(example_path / "reads/single.fq.gz", "rb").read()
 
 
-@pytest.mark.apitest
 async def test_delete(fake2: DataFaker, resp_is, spawn_client: ClientSpawner):
-    """
-    Test `DELETE /uploads/:id to assure that it properly deletes an existing
+    """Test `DELETE /uploads/:id to assure that it properly deletes an existing
     `uploads` row and file.
 
     """
