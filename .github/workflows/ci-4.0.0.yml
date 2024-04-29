@@ -13,22 +13,22 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v4
   server:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     services:
       mongo:
         image: mongo:4.0
         ports:
           - 27017:27017
     container:
-      image: virtool/external-tools:0.2.0
+      image: ghcr.io/virtool/external-tools:0.2.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - uses: actions/setup-python@v2
         with:
           python-version: '3.6'
@@ -37,11 +37,11 @@ jobs:
           pip install -qr requirements.txt
           pytest  -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
   client:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '12'
       - name: Test
@@ -51,12 +51,12 @@ jobs:
           npx jest --coverage
           npx webpack --config webpack.production.config.babel.js
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container:
       image: python:3.6-jessie
     needs: [client, server]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v1
         with:
           node-version: '12'
