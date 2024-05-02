@@ -46,14 +46,13 @@ class UsersView(PydanticView):
         find: str | None = Field(
             description="Filter by partial matches to user handles.",
         ),
-    ) -> r200[User] | r403:
+    ) -> r200[User]:
         """List all users.
 
         Lists all users in the instance.
 
         Status Codes:
             200: Successful operation
-            403: Not permitted
         """
         mongo = get_mongo_from_req(self.request)
         pg = self.request.app["pg"]
