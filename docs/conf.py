@@ -1,3 +1,15 @@
+import os
+import sys
+
+
+#  -- Autodoc configuration ---------------------------------------------------
+# Note:
+
+# For Sphinx (actually, the Python interpreter that executes Sphinx) to find your module, it must be importable. That means that the module or the package must be in one of the directories on sys.path - adapt your sys.path in the configuration file accordingly.
+
+# Autodoc requires the project root to be in the sys.path
+sys.path.insert(0, os.path.abspath("../"))
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -28,10 +40,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "piccolo_theme"
-html_theme_options = {
-    "page_width": "1200px",
-}
-html_static_path = ["_static"]
+# html_theme_options = {
+#     "page_width": "1200px",
+# }
+# html_static_path = ["_static"]
 
 # -- Autodoc configuration ---------------------------------------------------
 
