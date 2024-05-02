@@ -1,7 +1,6 @@
 # A short tutorial on how to configure Read the Docs with a .readthedocs.yaml file
 
 # https://docs.readthedocs.io/en/stable/config-file/index.html
-https://docs.readthedocs.io/en/stable/config-file/index.html
 
 # Read the Docs configuration file for Sphinx projects
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
@@ -36,6 +35,7 @@ sphinx:
 # Optional but recommended, declare the Python requirements required
 # to build your documentation
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-# python:
-#   install:
-#     - requirements: docs/requirements.txt
+python:
+  install:
+    - method: pip
+    - path: .
