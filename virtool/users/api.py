@@ -41,7 +41,6 @@ routes = Routes()
 
 @routes.view("/users")
 class UsersView(PydanticView):
-    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
         self,
         find: str | None = Field(
