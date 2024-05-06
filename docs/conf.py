@@ -4,7 +4,7 @@ import sys
 
 #  -- Autodoc configuration ---------------------------------------------------
 # Note:
-
+#
 # For Sphinx (actually, the Python interpreter that executes Sphinx) to find your module, it must be importable. That means that the module or the package must be in one of the directories on sys.path - adapt your sys.path in the configuration file accordingly.
 
 # Autodoc requires the project root to be in the sys.path
@@ -25,6 +25,9 @@ author = "Ian Boyes"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
@@ -33,8 +36,20 @@ extensions = [
     "sphinx_toolbox.more_autodoc.autoprotocol",
 ]
 
-templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+intersphinx_mapping = {
+    "Workflow": (
+        "https://virtool-test.readthedocs.io/projects/workflow/en/latest/",
+        None,
+    ),
+    "Core": ("https://virtool-test.readthedocs.io/projects/core/en/latest/", None),
+    "Virtool": (
+        "https://virtool-test.readthedocs.io/en/latest/",
+        None,
+    ),
+}
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_disabled_reftypes
+intersphinx_disabled_reftypes = ["*"]
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
