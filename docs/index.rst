@@ -1,7 +1,9 @@
 Welcome to Virtool's documentation!
 ===================================
 
-This is great!
+
+See the :ref:`workflow:index` section for more details.
+
 
 .. toctree::
    :maxdepth: 2
@@ -14,5 +16,3 @@ This is great!
 
    testing/faking
    testing/fixtures
-
-    :ref: `workflow:ref-role``
