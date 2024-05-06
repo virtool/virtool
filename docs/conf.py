@@ -31,25 +31,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
-    "sphinx.ext.intersphinx",
     "sphinx_autofixture",
     "sphinx_toolbox.more_autodoc.autoprotocol",
+    "sphinx.ext.intersphinx",
 ]
-
-intersphinx_mapping = {
-    "workflow": (
-        "https://virtool-test.readthedocs.io/projects/workflow/en/latest/",
-        None,
-    ),
-    "core": ("https://virtool-test.readthedocs.io/projects/core/en/latest/", None),
-    "virtool": (
-        "https://virtool-test.readthedocs.io/en/latest/",
-        None,
-    ),
-}
-# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_disabled_reftypes
-intersphinx_disabled_reftypes = ["*"]
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -64,8 +49,18 @@ html_theme = "piccolo_theme"
 
 autodoc_type_aliases = {"Document": "~virtool.types.Document"}
 
-# -- Intersphinx configuration -----------------------------------------------
+# -- Intersphinx configuration ---------------------------------------------------
 
 intersphinx_mapping = {
-    "pymongo": ("https://pymongo.readthedocs.io/en/stable/", None),
+    "virtool": (
+        "https://virtool-test.readthedocs.io/en/latest/",
+        None,
+    ),
+    "workflow": (
+        "https://virtool-test.readthedocs.io/projects/workflow/en/latest/",
+        None,
+    ),
+    "core": ("https://virtool-test.readthedocs.io/projects/core/en/latest/", None),
 }
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_disabled_reftypes
+# intersphinx_disabled_reftypes = ["*"]
