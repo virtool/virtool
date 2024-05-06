@@ -37,12 +37,12 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-    "Workflow": (
+    "workflow": (
         "https://virtool-test.readthedocs.io/projects/workflow/en/latest/",
         None,
     ),
-    "Core": ("https://virtool-test.readthedocs.io/projects/core/en/latest/", None),
-    "Virtool": (
+    "core": ("https://virtool-test.readthedocs.io/projects/core/en/latest/", None),
+    "virtool": (
         "https://virtool-test.readthedocs.io/en/latest/",
         None,
     ),
