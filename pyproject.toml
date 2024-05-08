@@ -61,6 +61,7 @@ virtool-core = "^11.1.0"
 pytest = "^7.4.0"
 syrupy = "^4.5.0"
 setuptools = "^69.0.3"
+piccolo-theme = "^0.21.0"
 
 [tool.poetry.scripts]
 virtool = "virtool.config.cli:entry"

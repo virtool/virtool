@@ -1,7 +1,7 @@
 Welcome to Virtool's documentation!
 ===================================
 
-This is great!
+See the :ref:`index <workflow:index>` section for more details.
 
 .. toctree::
    :maxdepth: 2

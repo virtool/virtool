@@ -1972,6 +1972,20 @@ files = [
 ]
 
 [[package]]
+name = "piccolo-theme"
+version = "0.21.0"
+description = "A modern Sphinx theme."
+optional = false
+python-versions = ">=3.6.0"
+files = [
+    {file = "piccolo_theme-0.21.0-py3-none-any.whl", hash = "sha256:77b4bfd1f11694683290f0bdc21a26071ea0d719d534fd5dfdb51c5935e818eb"},
+    {file = "piccolo_theme-0.21.0.tar.gz", hash = "sha256:990a99e91c31d15a03055434cdbbc23a600c28032febb5ddd64b185bac3640f3"},
+]
+
+[package.dependencies]
+sphinx = "*"
+
+[[package]]
 name = "platformdirs"
 version = "3.11.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
@@ -3490,4 +3504,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "c35a078423c2a41b5ee3e4c36495cd36df2cc6a0ea84ea3abb4328e242167061"
+content-hash = "a698079fc688eaf0280c9d161dae94540605873442809fc9ea15a742b22a0373"
