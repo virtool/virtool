@@ -53,14 +53,14 @@ autodoc_type_aliases = {"Document": "~virtool.types.Document"}
 
 intersphinx_mapping = {
     "virtool": (
-        "https://virtool-test.readthedocs.io/en/latest/",
+        "https://dev.virtool.ca/projects/virtool/en/latest/",
         None,
     ),
+    "core": ("https://dev.virtool.ca/projects/virtool-core/en/latest/", None),
     "workflow": (
-        "https://virtool-test.readthedocs.io/projects/workflow/en/latest/",
+        "https://dev.virtool.ca/projects/virtool-workflow/en/latest/",
         None,
     ),
-    "core": ("https://virtool-test.readthedocs.io/projects/core/en/latest/", None),
 }
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_disabled_reftypes
 # intersphinx_disabled_reftypes = ["*"]
