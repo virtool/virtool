@@ -1,7 +1,5 @@
-import concurrent.futures
-import subprocess
-
 import pytest
+
 import virtool.version
 
 
