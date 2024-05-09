@@ -10,6 +10,12 @@ logger = get_logger("app")
 
 
 async def determine_server_version(install_path: Optional[Path] = Path.cwd()):
+    """
+        Get from the server version from the installation directory
+
+        :param install_path: the absolute path to the root virtool directory
+        :return: the application version
+    """
     try:
         async with aiofiles.open(install_path / "VERSION", "r") as version_file:
             return (await version_file.read()).rstrip()
