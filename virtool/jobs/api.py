@@ -68,10 +68,8 @@ class JobsView(PydanticView):
             400: Archived field not set
             400: Invalid archived field
         """
-        job_ids = [job.id for job in data.updates]
-
         try:
-            jobs = await get_data_from_req(self.request).jobs.bulk_archive(job_ids)
+            jobs = await get_data_from_req(self.request).jobs.archive(job_id=data.update.id)
         except ResourceNotFoundError as err:
             raise APIBadRequest(str(err))
 
