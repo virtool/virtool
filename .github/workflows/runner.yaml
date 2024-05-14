@@ -1,0 +1,75 @@
+name: dispatch
+
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    services:
+      redis:
+        image: redis:6.0
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: virtool
+          POSTGRES_PASSWORD: virtool
+          POSTGRES_DB: virtool
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Start OpenFGA
+        run: |
+          bash .github/workflows/scripts/setup_postgres.sh          
+          docker run --network ${{ job.services.postgres.network }} --rm openfga/openfga:v0.2.5 migrate --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@postgres:5432/openfga?sslmode=disable'
+          docker run -d --name openfga --network=${{ job.services.postgres.network }} -p 8080:8080 openfga/openfga:v0.2.5 run --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@postgres:5432/openfga?sslmode=disable' --playground-enabled=false
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: 4.4
+          mongodb-replica-set: rs
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Install bowtie
+        run: | 
+          wget https://github.com/BenLangmead/bowtie2/releases/download/v2.5.3/bowtie2-2.5.3-linux-x86_64.zip
+          unzip bowtie2-2.5.3-linux-x86_64.zip
+          cp -rv bowtie2-2.5.3-linux-x86_64 /opt/bowtie2
+          ln -s /opt/bowtie2/bowtie* /usr/local/bin
+      - name: Run
+        run: >-
+          poetry run
+          pytest
+          --db-connection-string mongodb://localhost:27017
+          -n 1
+          --openfga-host localhost:8080
+          --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
+          --redis-connection-string redis://localhost:6379
+          --snapshot-details
+          --snapshot-warn-unused
