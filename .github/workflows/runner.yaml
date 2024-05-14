@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: arc-sid
     services:
       redis:
         image: redis:6.0
