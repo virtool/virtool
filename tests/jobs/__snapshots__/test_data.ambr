@@ -183,7 +183,7 @@
       'sample_id': 'foo',
     }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'ping': None,
     'progress': 0,
     'rights': dict({
@@ -203,14 +203,14 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     }),
     'workflow': 'create_sample',
   })
 # ---
 # name: test_create[None].1
   dict({
-    '_id': 'bf1b993c',
+    '_id': 'fb085f7f',
     'acquired': False,
     'archived': False,
     'args': dict({
@@ -236,7 +236,7 @@
       }),
     ]),
     'user': dict({
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     }),
     'workflow': 'create_sample',
   })
@@ -269,7 +269,7 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     }),
     'workflow': 'create_sample',
   })
@@ -302,7 +302,7 @@
       }),
     ]),
     'user': dict({
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     }),
     'workflow': 'create_sample',
   })
