@@ -11,8 +11,17 @@ RUN poetry install --without dev --no-root && rm -rf "$POETRY_CACHE_DIR"
 
 FROM python:3.12-bookworm as version
 COPY .git .
-RUN git describe --tags #This line is for testing ONLY remove before merge
-RUN git describe --tags  > VERSION
+RUN <<EOF
+git describe --tags | awk -F - '
+  {
+    version = $1
+    if (length($3) > 0) {
+      version = version "-pre+g" $3
+    }
+    print version
+  }' > VERSION
+EOF
+
 
 FROM python:3.12-bookworm as runtime
 WORKDIR /app
