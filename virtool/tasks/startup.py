@@ -1,4 +1,5 @@
 """AIOHTTP startup functions for the task spawner and runner services."""
+
 import asyncio
 
 from aiohttp.web_app import Application
@@ -25,7 +26,6 @@ from virtool.subtractions.tasks import (
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.spawner import TaskSpawnerService
-from virtool.uploads.tasks import MigrateFilesTask
 
 
 async def startup_databases_for_spawner(app: Application):
@@ -67,7 +67,6 @@ async def startup_task_spawner(app: Application):
         (CompressSamplesTask, 3600),
         (EnsureIndexFilesTask, 3600),
         (HMMRefreshTask, 600),
-        (MigrateFilesTask, 3600),
         (MoveSampleFilesTask, 3600),
         (RefreshReferenceReleasesTask, 600),
         (StoreNuvsFilesTask, 3600),
