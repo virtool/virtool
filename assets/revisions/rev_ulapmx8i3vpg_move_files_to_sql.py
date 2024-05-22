@@ -7,7 +7,7 @@ Date: 2024-05-16 22:44:08.942465
 """
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
@@ -26,8 +26,9 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    async for document in ctx.mongo.files.find():
-        async with AsyncSession(ctx.pg) as session:
+    
+    async with AsyncSession(ctx.pg) as session:
+        async for document in ctx.mongo.files.find():
             exists = (
                 await session.execute(
                     select(SQLUpload).filter_by(name_on_disk=document["_id"]),
@@ -35,20 +36,21 @@ async def upgrade(ctx: MigrationContext):
             ).scalar()
 
             if not exists:
-                upload = SQLUpload(
-                    name=document["name"],
-                    name_on_disk=document["_id"],
-                    ready=document["ready"],
-                    removed=False,
-                    reserved=document["reserved"],
-                    size=document["size"],
-                    type=document["type"],
-                    user=document["user"]["id"],
-                    uploaded_at=document["uploaded_at"],
+                session.add(
+                    SQLUpload(
+                        name=document["name"],
+                        name_on_disk=document["_id"],
+                        ready=document["ready"],
+                        removed=False,
+                        reserved=document["reserved"],
+                        size=document["size"],
+                        type=document["type"],
+                        user=document["user"]["id"],
+                        uploaded_at=document["uploaded_at"],
+                    )
                 )
 
-                session.add(upload)
-                await session.commit()
+        await session.commit()
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):
