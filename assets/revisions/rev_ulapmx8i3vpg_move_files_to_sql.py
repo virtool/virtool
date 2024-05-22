@@ -7,7 +7,7 @@ Date: 2024-05-16 22:44:08.942465
 """
 
 import arrow
-from sqlalchemy import select, insert
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
@@ -56,7 +56,6 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
     async with ctx.pg.begin() as conn:
         await conn.run_sync(SQLUpload.metadata.create_all)
         await conn.commit()
-    pass
 
     await ctx.mongo.files.insert_many(
         [
