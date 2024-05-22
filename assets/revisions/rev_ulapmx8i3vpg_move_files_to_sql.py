@@ -19,14 +19,13 @@ created_at = arrow.get("2024-05-16 22:44:08.942465")
 revision_id = "ulapmx8i3vpg"
 
 alembic_down_revision = "141c7ecb99b7"
-virtool_down_revision = "None"
+virtool_down_revision = None
 
 # Change this if an Alembic revision is required to run this migration.
-required_alembic_revision = None
+required_alembic_revision = "e694fb270acb"
 
 
 async def upgrade(ctx: MigrationContext):
-    
     async with AsyncSession(ctx.pg) as session:
         async for document in ctx.mongo.files.find():
             exists = (
