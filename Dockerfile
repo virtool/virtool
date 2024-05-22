@@ -9,13 +9,28 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml ./
 RUN poetry install --without dev --no-root && rm -rf "$POETRY_CACHE_DIR"
 
+FROM python:3.12-bookworm as version
+COPY .git .
+RUN <<EOF
+git describe --tags | awk -F - '
+  {
+    version = $1
+    if (length($3) > 0) {
+      version = version "-pre+g" $3
+    }
+    print version
+  }' > VERSION
+EOF
+
+
 FROM python:3.12-bookworm as runtime
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=ghcr.io/virtool/workflow-tools:2.0.1 /usr/local/bin/bowtie* /usr/local/bin/
 COPY --from=build /app/.venv /app/.venv
-COPY alembic.ini run.py VERSION* ./
+COPY alembic.ini run.py ./
+COPY --from=version /VERSION .
 COPY assets ./assets
 COPY virtool ./virtool
 COPY assets/bowtie2-inspect /user/local/bin/bowtie2-inspect
