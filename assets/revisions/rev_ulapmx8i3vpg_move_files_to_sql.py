@@ -57,12 +57,9 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
         await conn.commit()
     pass
 
-    # TODO check the shape of the data from the database, the name on disk may very well be wrong. Make sur eit all makes sense
     await ctx.mongo.files.insert_many(
         [
             {
-                # ask Ian about created field
-                # ask Ian about expires_at
                 "_id": "file_1.fasta.gz",
                 "name": "File 1",
                 "ready": True,
@@ -75,8 +72,8 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
             {
                 "_id": "file_2.fasta.gz",
                 "name": "File 2",
-                "ready": True,
-                "reserved": False,
+                "ready": False,
+                "reserved": True,
                 "size": 1,
                 "type": "reads",
                 "user": {"id": "user_2_id"},
