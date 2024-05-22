@@ -204,5 +204,12 @@
       'name': 'add user email',
       'revision': '141c7ecb99b7',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 30,
+      'name': 'move_files_to_sql',
+      'revision': 'ulapmx8i3vpg',
+    }),
   ])
 # ---
