@@ -208,7 +208,7 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 30,
-      'name': 'move_files_to_sql',
+      'name': 'move files to sql',
       'revision': 'ulapmx8i3vpg',
     }),
   ])
