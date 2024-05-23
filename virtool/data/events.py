@@ -1,29 +1,23 @@
 import asyncio
 import functools
-import sys
 from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import AsyncGenerator, Awaitable, Callable
 
-from typing import Awaitable, Callable, AsyncIterable
-
-from aioredis import Redis, Channel, ChannelClosedError
 from structlog import get_logger
 from virtool_core.models.basemodel import BaseModel
-from virtool_core.redis import resubscribe
+from virtool_core.redis import Redis
 
 from virtool.api.custom_json import dump_string
-from virtool.utils import timestamp, get_model_by_name
+from virtool.utils import get_model_by_name, timestamp
 
 logger = get_logger("events")
 
 
 class Operation(str, Enum):
-    """
-    The possible operations that can be performed on a resource.
-
-    """
+    """The possible operations that can be performed on a resource."""
 
     CREATE = "create"
     READ = "read"
@@ -41,8 +35,7 @@ class Event:
 
 
 class _InternalEventsTarget:
-    """
-    A target for emitting events that are used internally by the application.
+    """A target for emitting events that are used internally by the application.
 
     Calls to ``emit()`` and functions decorated with ``@emits`` will add an event to
     the queue via this target.
@@ -52,7 +45,6 @@ class _InternalEventsTarget:
     q = asyncio.Queue(maxsize=1000)
 
     def emit(self, event: Event):
-
         for _ in range(3):
             try:
                 self.q.put_nowait(event)
@@ -62,9 +54,7 @@ class _InternalEventsTarget:
         logger.error("Event queue full after multiple retries. Dropping event.")
 
     async def get(self) -> Event:
-        """
-        Get an event from the target.
-        """
+        """Get an event from the target."""
         return await self.q.get()
 
     def clear(self):
@@ -75,8 +65,7 @@ _events_target = _InternalEventsTarget()
 
 
 def dangerously_clear_events():
-    """
-    Clear all events from the internal queue.
+    """Clear all events from the internal queue.
 
     This should only be used in tests.
 
@@ -85,8 +74,7 @@ def dangerously_clear_events():
 
 
 async def dangerously_get_event() -> Event:
-    """
-    Get an event directly from the target.
+    """Get an event directly from the target.
 
     This should only be used in tests.
 
@@ -95,12 +83,7 @@ async def dangerously_get_event() -> Event:
 
 
 def emit(data: BaseModel, domain: str, name: str, operation: Operation):
-    """
-    Emit an event.
-
-
-    """
-
+    """Emit an event."""
     if data is None:
         logger.warning("emit event with no data")
     else:
@@ -111,15 +94,12 @@ def emit(data: BaseModel, domain: str, name: str, operation: Operation):
                 name=name,
                 operation=operation,
                 timestamp=timestamp(),
-            )
+            ),
         )
 
 
 def emits(operation: Operation, domain: str | None = None, name: str | None = None):
-    """
-    Emits the return value of decorated method as an event.
-
-    """
+    """Emits the return value of decorated method as an event."""
 
     def decorator(func: Callable[..., Awaitable[BaseModel]]):
         emitted_name = name or func.__name__
@@ -141,8 +121,7 @@ def emits(operation: Operation, domain: str | None = None, name: str | None = No
 
 
 class EventPublisher:
-    """
-    Publishes events emitted in the application.
+    """Publishes events emitted in the application.
 
     Events are published using Redis pub/sub.
 
@@ -182,7 +161,7 @@ class EventPublisher:
                                 "model": event.data.__class__.__name__,
                             },
                             "timestamp": event.timestamp,
-                        }
+                        },
                     ),
                 )
 
@@ -196,38 +175,10 @@ class EventPublisher:
             pass
 
 
-class EventListener(AsyncIterable):
-    """Pulls events as they are received and yields them as :class:`.Event` objects."""
+async def listen_for_events(redis: Redis) -> AsyncGenerator[Event, None]:
+    """Yield events as they are received."""
+    async for received in redis.subscribe("channel:events"):
+        payload = received.pop("payload")
+        cls = get_model_by_name(payload["model"])
 
-    def __init__(self, redis: Redis):
-        self._redis = redis
-        self._channel: Channel | None = None
-        self._channel_name = "channel:events"
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self) -> Event:
-        if not self._channel:
-            (self._channel,) = await self._redis.subscribe(self._channel_name)
-
-        while True:
-            try:
-                received = await self._channel.get_json()
-                payload = received.pop("payload")
-                cls = get_model_by_name(payload["model"])
-
-                return Event(**received, data=cls(**payload["data"]))
-            except ChannelClosedError:
-                try:
-                    self._channel = await asyncio.wait_for(
-                        resubscribe(self._redis, self._channel_name), 10
-                    )
-                except asyncio.TimeoutError:
-                    logger.critical(
-                        "Could not resubscribe to Redis channel",
-                        channel=self._channel_name,
-                    )
-                    sys.exit(1)
-            except TypeError:
-                pass
+        yield Event(**received, data=cls(**payload["data"]))

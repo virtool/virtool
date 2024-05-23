@@ -1,18 +1,18 @@
 import asyncio
 
-from aioredis import Redis
+from redis import Redis
 from virtool_core.models.basemodel import BaseModel
 
-from virtool.data.events import (
-    emits,
-    EventPublisher,
-    emit,
-    dangerously_get_event,
-    Operation,
-    EventListener,
-    dangerously_clear_events,
-)
 from virtool.data.domain import DataLayerDomain
+from virtool.data.events import (
+    EventPublisher,
+    Operation,
+    dangerously_clear_events,
+    dangerously_get_event,
+    emit,
+    emits,
+    listen_for_events,
+)
 
 
 class Emitted(BaseModel):
@@ -21,9 +21,7 @@ class Emitted(BaseModel):
 
 
 async def test_emits():
-    """
-    Test that the ``@emits`` decorator can derive the event name from the method name.
-    """
+    """Test that the ``@emits`` decorator can derive the event name from the method name."""
 
     class Example(DataLayerDomain):
         name = "example"
@@ -46,9 +44,7 @@ async def test_emits():
 
 
 async def test_emits_named():
-    """
-    Test that the ``@emits`` decorator can be used with an explicit name.
-    """
+    """Test that the ``@emits`` decorator can be used with an explicit name."""
 
     class Example(DataLayerDomain):
         name = "example"
@@ -71,15 +67,14 @@ async def test_emits_named():
 
 
 async def test_publish_and_listen(loop, redis: Redis):
-    """
-    Test that an event published with ``emit()`` can be received by an
+    """Test that an event published with ``emit()`` can be received by an
     ``EventListener``.
     """
     task = asyncio.create_task(EventPublisher(redis).run())
 
     emit(Emitted(name="Wilfred", age=72), "example", "publish", Operation.CREATE)
 
-    async for event in EventListener(redis):
+    async for event in listen_for_events(redis):
         assert event.data == Emitted(name="Wilfred", age=72)
         assert event.domain == "example"
         assert event.name == "publish"
