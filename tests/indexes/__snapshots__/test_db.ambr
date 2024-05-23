@@ -89,14 +89,3 @@
     }),
   })
 # ---
-# name: test_processor
-  dict({
-    'change_count': 5,
-    'id': 'baz',
-    'modified_otu_count': 2,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-  })
-# ---

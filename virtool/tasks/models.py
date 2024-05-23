@@ -1,5 +1,6 @@
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, BigInteger
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
 
@@ -7,7 +8,7 @@ from virtool.pg.base import Base
 class SQLTask(Base):
     __tablename__ = "tasks"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     complete = Column(Boolean, default=False)
     context = Column(JSONB)
     count = Column(Integer, default=0)
