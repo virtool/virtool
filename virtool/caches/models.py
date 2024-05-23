@@ -6,10 +6,7 @@ from virtool.samples.models import ArtifactType
 
 
 class SQLSampleArtifactCache(Base):
-    """
-    SQL model to store a cached sample artifact
-
-    """
+    """SQL model to store a cached sample artifact"""
 
     __tablename__ = "sample_artifacts_cache"
     __table_args__ = (UniqueConstraint("key", "name", "sample"),)
@@ -25,10 +22,7 @@ class SQLSampleArtifactCache(Base):
 
 
 class SQLSampleReadsCache(Base):
-    """
-    SQL model to store cached sample reads files
-
-    """
+    """SQL model to store cached sample reads files"""
 
     __tablename__ = "sample_reads_cache"
     __tableargs__ = (UniqueConstraint("key", "name", "sample"),)
