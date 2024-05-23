@@ -30,7 +30,7 @@ class DummyTriggerTask(BaseTask):
         self.done_flag.set()
 
 
-@pytest.fixture
+@pytest.fixture()
 def task_runner(data_layer, redis):
     return TaskRunner(data_layer, TasksClient(redis))
 
@@ -44,10 +44,12 @@ async def test_run_task(
 ):
     task = await data_layer.tasks.create(DummyTriggerTask)
 
+    assert await redis.lrange("tasks", 0, -1) == [1]
+
     task_runner_runtime = asyncio.create_task(task_runner.run())
 
-    assert await redis.lrange("tasks", 0, -1) == [b"1"]
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(0.3)
+
     assert await redis.lrange("tasks", 0, -1) == []
 
     task_runner.current_task.done()
@@ -69,14 +71,20 @@ async def test_run_task(
 
 @pytest.mark.parametrize("timeout", [0, 1])
 async def test_graceful_shutdown(
-    timeout, task_runner, redis, data_layer, static_time, snapshot
+    timeout,
+    task_runner,
+    redis,
+    data_layer,
+    static_time,
+    snapshot,
 ):
     task = await data_layer.tasks.create(DummyTriggerTask)
 
+    assert await redis.lrange("tasks", 0, -1) == [1]
+
     task_runner_runtime = asyncio.create_task(task_runner.run())
 
-    assert await redis.lrange("tasks", 0, -1) == [b"1"]
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(0.3)
     assert await redis.lrange("tasks", 0, -1) == []
 
     task_runner_runtime.cancel()
@@ -86,14 +94,16 @@ async def test_graceful_shutdown(
     task_runner_runtime.cancel()
 
     retries = 0
+
     while True:
         try:
             assert await data_layer.tasks.get(task.id) == snapshot(
-                name=f"take timeout {timeout}s"
+                name=f"take timeout {timeout}s",
             )
             break
         except AssertionError:
             if retries >= 3:
                 raise
+
             await asyncio.sleep(0.2)
             retries += 1

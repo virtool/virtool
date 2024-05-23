@@ -1,7 +1,5 @@
 """Fixtures for creating test clients that can be used to test API endpoints."""
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 from typing import Any, Protocol
@@ -14,9 +12,10 @@ from virtool_core.models.enums import Permission
 from virtool_core.models.group import GroupMinimal
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User
+from virtool_core.redis import Redis
 
 import virtool.jobs.main
-from virtool.api.custom_json import dump_bytes, dump_string
+from virtool.api.custom_json import dump_string
 from virtool.app import create_app
 from virtool.authorization.openfga import OpenfgaScheme
 from virtool.config.cls import ServerConfig
@@ -174,16 +173,16 @@ class ClientSpawner(Protocol):
 def spawn_client(
     aiohttp_client,
     fake2: DataFaker,
+    mocker,
     mongo_connection_string: str,
     mongo_name: str,
     openfga_host: str,
     openfga_scheme: OpenfgaScheme,
     openfga_store_name: str,
-    pg_connection_string,
-    pg,
-    redis,
-    redis_connection_string,
-    mocker,
+    pg_connection_string: str,
+    pg: AsyncEngine,
+    redis: Redis,
+    redis_connection_string: str,
 ):
     """A factory for spawning test clients
 
@@ -371,7 +370,7 @@ def spawn_client(
 
             await redis.set(
                 session_id,
-                dump_bytes(
+                dump_string(
                     {
                         "authentication": {
                             "token": hash_key(session_token),

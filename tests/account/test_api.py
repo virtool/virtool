@@ -12,7 +12,9 @@ from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, hash_password
 
 
-async def test_get(snapshot, spawn_client, static_time):
+async def test_get(
+    snapshot: SnapshotAssertion, spawn_client: ClientSpawner, static_time
+):
     client = await spawn_client(authenticated=True)
 
     resp = await client.get("/account")

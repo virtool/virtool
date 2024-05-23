@@ -49,7 +49,7 @@ async def create_app(config: ServerConfig):
             startup_routes,
             startup_settings,
             startup_sentry,
-        ]
+        ],
     )
 
     app.on_shutdown.extend([shutdown])
@@ -60,9 +60,8 @@ async def create_app(config: ServerConfig):
 async def shutdown(app: App):
     try:
         app["redis"].close()
-        await app["redis"].wait_closed()
     except KeyError:
-        pass
+        ...
 
 
 def run_jobs_server(config: ServerConfig):
