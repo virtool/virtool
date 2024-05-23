@@ -32,11 +32,12 @@ name = "ensure index files"
 created_at = arrow.get("2024-05-22 20:47:09.866326")
 revision_id = "0p3nhjg1fcfj"
 
-alembic_down_revision = "141c7ecb99b7"
-virtool_down_revision = None
+alembic_down_revision = None
+virtool_down_revision = "ulapmx8i3vpg"
+
 
 # Change this if an Alembic revision is required to run this migration.
-required_alembic_revision = None
+required_alembic_revision = "e694fb270acb"
 
 
 async def upgrade(ctx: MigrationContext):
