@@ -236,34 +236,3 @@ class UploadsData(DataLayerDomain):
                 .execution_options(synchronize_session="fetch"),
             )
             await session.commit()
-
-    async def migrate_to_postgres(self):
-        """Transforms documents in the `files` collection into rows in the `uploads` SQL
-        table.
-
-        """
-        async for document in self._mongo.files.find():
-            async with AsyncSession(self._pg) as session:
-                exists = (
-                    await session.execute(
-                        select(SQLUpload).filter_by(name_on_disk=document["_id"]),
-                    )
-                ).scalar()
-
-                if not exists:
-                    upload = SQLUpload(
-                        name=document["name"],
-                        name_on_disk=document["_id"],
-                        ready=document["ready"],
-                        removed=False,
-                        reserved=document["reserved"],
-                        size=document["size"],
-                        type=document["type"],
-                        user=document["user"]["id"],
-                        uploaded_at=document["uploaded_at"],
-                    )
-
-                    session.add(upload)
-                    await session.commit()
-
-                    await self._mongo.files.delete_one({"_id": document["_id"]})

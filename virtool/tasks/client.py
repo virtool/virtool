@@ -1,45 +1,25 @@
-import asyncio
 from abc import ABC, abstractmethod
 
-from aioredis import (
-    Redis,
-    ConnectionClosedError,
-)
+from virtool_core.redis import Redis
 
 REDIS_TASKS_LIST_KEY = "tasks"
+"""The key for the list used to queue tasks in Redis."""
 
 
 class AbstractTasksClient(ABC):
     @abstractmethod
-    async def enqueue(self, task_type: str, task_id: int):
-        ...
+    async def enqueue(self, task_type: str, task_id: int): ...
 
     @abstractmethod
-    async def pop(self) -> int:
-        ...
+    async def pop(self) -> int: ...
 
 
 class TasksClient(AbstractTasksClient):
     def __init__(self, redis: Redis):
-        self.redis = redis
+        self._redis = redis
 
     async def enqueue(self, task_type: str, task_id: int):
-        await self.redis.rpush(REDIS_TASKS_LIST_KEY, task_id)
+        await self._redis.rpush(REDIS_TASKS_LIST_KEY, task_id)
 
-    async def pop(self) -> int:
-        result = await self._blpop()
-
-        if result is not None:
-            return int(result[1])
-
-    async def _blpop(self):
-        while True:
-            try:
-                with await self.redis as exclusive_redis:
-                    return await exclusive_redis.blpop(REDIS_TASKS_LIST_KEY)
-            except (
-                ConnectionRefusedError,
-                ConnectionResetError,
-                ConnectionClosedError,
-            ):
-                await asyncio.sleep(5)
+    async def pop(self) -> int | None:
+        return await self._redis.blpop(REDIS_TASKS_LIST_KEY)

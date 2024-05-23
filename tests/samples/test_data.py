@@ -1,30 +1,26 @@
 import asyncio
 
 import pytest
-from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import Permission, LibraryType
+from virtool_core.models.enums import LibraryType, Permission
 from virtool_core.models.samples import WorkflowState
+from virtool_core.redis import Redis
 
 from tests.fixtures.client import ClientSpawner
 from virtool.data.errors import ResourceConflictError
-
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-
+from virtool.pg.utils import get_row_by_id
 from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.uploads.models import SQLUpload
 from virtool.users.oas import UpdateUserRequest
 
-from virtool.pg.utils import get_row_by_id
 
-from virtool.uploads.models import SQLUpload
-
-
-@pytest.fixture
-async def get_sample_ready_false(static_time, fake2, mongo):
+@pytest.fixture()
+async def get_sample_ready_false(fake2: DataFaker, mongo: Mongo, static_time):
     label = await fake2.labels.create()
     user = await fake2.users.create()
     job = await fake2.jobs.create(user, workflow="create_sample")
@@ -49,7 +45,7 @@ async def get_sample_ready_false(static_time, fake2, mongo):
                     "id": "foo",
                     "name": "Bar.fq.gz",
                     "download_url": "/download/samples/files/file_1.fq.gz",
-                }
+                },
             ],
             "format": "fastq",
             "group": "none",
@@ -75,27 +71,29 @@ async def get_sample_ready_false(static_time, fake2, mongo):
                 "pathoscope": WorkflowState.COMPLETE.value,
                 "nuvs": WorkflowState.PENDING.value,
             },
-        }
+        },
     )
 
 
 class TestCreate:
     @pytest.mark.parametrize(
-        "group_setting", ["none", "users_primary_group", "force_choice"]
+        "group_setting",
+        ["none", "users_primary_group", "force_choice"],
     )
     async def test_ok(
         self,
         group_setting: str,
         data_layer: DataLayer,
-        pg: AsyncEngine,
         fake2: DataFaker,
-        snapshot_recent,
+        pg: AsyncEngine,
         mongo: Mongo,
+        snapshot_recent,
         spawn_client: ClientSpawner,
         redis: Redis,
     ):
         client = await spawn_client(
-            authenticated=True, permissions=[Permission.create_sample]
+            authenticated=True,
+            permissions=[Permission.create_sample],
         )
 
         group = await fake2.groups.create()
@@ -105,7 +103,7 @@ class TestCreate:
                 sample_group=group_setting,
                 sample_all_write=True,
                 sample_group_write=True,
-            )
+            ),
         )
         await data_layer.users.update(
             client.user.id,
@@ -143,7 +141,7 @@ class TestCreate:
 
         assert sample == snapshot_recent(name="mongo")
         assert await redis.lrange("jobs_create_sample", 0, -1) == snapshot_recent(
-            name="jobs_create_sample"
+            name="jobs_create_sample",
         )
 
 
@@ -155,10 +153,7 @@ async def test_finalize(
     spawn_client: ClientSpawner,
     tmp_path,
 ):
-    """
-    Test that sample can be finalized
-    """
-
+    """Test that sample can be finalized"""
     quality = {
         "bases": [[1543]],
         "composition": [[6372]],

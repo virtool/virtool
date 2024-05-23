@@ -21,7 +21,7 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
-from virtool.jobs.client import JOB_REMOVED_FROM_QUEUE, AbstractJobsClient
+from virtool.jobs.client import AbstractJobsClient, JobCancellationResult
 from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
@@ -390,7 +390,7 @@ class JobsData:
 
         result = await self._client.cancel(job_id)
 
-        if result == JOB_REMOVED_FROM_QUEUE:
+        if result == JobCancellationResult.REMOVED_FROM_QUEUE:
             latest = document["status"][-1]
 
             update_result: UpdateResult = await self._mongo.jobs.update_one(

@@ -9,8 +9,7 @@ logger = get_logger("shutdown")
 
 
 async def shutdown_authorization_client(app: Application):
-    """
-    Attempt to close the OpenFGA client session.
+    """Attempt to close the OpenFGA client session.
 
     :param app: The application object
     """
@@ -19,8 +18,7 @@ async def shutdown_authorization_client(app: Application):
 
 
 async def shutdown_executors(app: Application):
-    """
-    Attempt to close the `ThreadPoolExecutor` and `ProcessPoolExecutor`.
+    """Attempt to close the `ThreadPoolExecutor` and `ProcessPoolExecutor`.
 
     :param app: the application object
     """
@@ -31,8 +29,7 @@ async def shutdown_executors(app: Application):
 
 
 async def shutdown_http_client(app: Application):
-    """
-    Attempt to close the async HTTP client session.
+    """Attempt to close the async HTTP client session.
 
     :param app: The application object
     """
@@ -41,22 +38,20 @@ async def shutdown_http_client(app: Application):
 
 
 async def shutdown_redis(app: Application):
-    """
-    Attempt to close the application :class:`Redis` instance.
+    """Attempt to close the application :class:`Redis` instance.
 
     :param app: the application object
     """
     logger.info("Closing Redis connection")
+
     try:
-        app["redis"].close()
-        await app["redis"].wait_closed()
+        await app["redis"].close()
     except KeyError:
-        pass
+        ...
 
 
 async def shutdown_scheduler(app: Application):
-    """
-    Attempt to the close the app's `aiojobs` scheduler.
+    """Attempt to the close the app's `aiojobs` scheduler.
 
     :param app: The application object
     """

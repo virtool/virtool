@@ -1,9 +1,10 @@
 from asyncio import wait_for
 
 import pytest
-from aioredis import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
+from virtool_core.redis import Redis
 
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.client import TasksClient
@@ -13,7 +14,11 @@ from virtool.tasks.oas import TaskUpdate
 
 
 async def test_find(
-    snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksData, static_time
+    snapshot,
+    spawn_client,
+    pg: AsyncEngine,
+    tasks_data: TasksData,
+    static_time,
 ):
     task_1 = SQLTask(
         id=1,
@@ -47,7 +52,11 @@ async def test_find(
 
 
 async def test_get(
-    snapshot, spawn_client, pg: AsyncEngine, tasks_data: TasksData, static_time
+    snapshot,
+    spawn_client,
+    pg: AsyncEngine,
+    tasks_data: TasksData,
+    static_time,
 ):
     async with AsyncSession(pg) as session:
         session.add(
@@ -61,7 +70,7 @@ async def test_get(
                 progress=100,
                 step="download",
                 type="clone_reference",
-            )
+            ),
         )
         await session.commit()
 
@@ -79,7 +88,11 @@ async def test_get(
     ids=["step", "step_progress", "progress", "error"],
 )
 async def test_update(
-    update: TaskUpdate, pg: AsyncEngine, tasks_data: TasksData, snapshot, static_time
+    update: TaskUpdate,
+    pg: AsyncEngine,
+    tasks_data: TasksData,
+    snapshot,
+    static_time,
 ):
     async with AsyncSession(pg) as session:
         session.add(
@@ -91,7 +104,7 @@ async def test_update(
                 progress=22,
                 step="one",
                 type="dummy_task",
-            )
+            ),
         )
         await session.commit()
 
@@ -100,12 +113,14 @@ async def test_update(
 
 
 async def test_add(
-    loop, snapshot, pg, redis: Redis, static_time, tasks_data: TasksData
+    loop,
+    pg: AsyncEngine,
+    redis: Redis,
+    snapshot: SnapshotAssertion,
+    static_time,
+    tasks_data: TasksData,
 ):
-    """
-    Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel.
-
-    """
+    """Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel."""
     tasks_client = TasksClient(redis)
 
     await tasks_data.create(AddSubtractionFilesTask)
