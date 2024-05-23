@@ -1,5 +1,5 @@
 """
-move_files_to_sql
+move files to sql
 
 Revision ID: ulapmx8i3vpg
 Date: 2024-05-16 22:44:08.942465
@@ -14,7 +14,7 @@ from virtool.migration import MigrationContext
 from virtool.uploads.models import SQLUpload
 
 # Revision identifiers.
-name = "move_files_to_sql"
+name = "move files to sql"
 created_at = arrow.get("2024-05-16 22:44:08.942465")
 revision_id = "ulapmx8i3vpg"
 
