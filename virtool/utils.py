@@ -93,9 +93,8 @@ def generate_key() -> Tuple[str, str]:
 
 
 def get_safely(dct: Dict, *keys) -> Any:
-    """Get values from nested dictionaries while returning ``None`` when a ``KeyError`` or
-    ``TypeError`` is raised.
-
+    """Get values from nested dictionaries while returning ``None`` when a ``KeyError``
+    or ``TypeError`` is raised.
     """
     for key in keys:
         try:
