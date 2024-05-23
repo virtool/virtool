@@ -3,8 +3,6 @@ from typing import Dict, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-# Keep this so models are recognized by the ORM.
-import virtool.caches.models
 import virtool.utils
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.uploads.models import SQLUpload
