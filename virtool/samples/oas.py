@@ -1,9 +1,9 @@
 from typing import Any, Optional
 
-from pydantic import BaseModel, constr, Field, conlist
+from pydantic import BaseModel, Field, conlist, constr
 from virtool_core.models.analysis import AnalysisMinimal
-from virtool_core.models.enums import LibraryType, AnalysisWorkflow
-from virtool_core.models.samples import SampleMinimal, Sample
+from virtool_core.models.enums import AnalysisWorkflow, LibraryType
+from virtool_core.models.samples import Sample, SampleMinimal
 from virtool_core.models.validators import prevent_none
 
 
@@ -34,8 +34,8 @@ class GetSamplesResponse(SampleMinimal):
                         "nuvs": "none",
                         "pathoscope": "none",
                     },
-                }
-            ]
+                },
+            ],
         }
 
 
@@ -46,7 +46,6 @@ class GetSampleResponse(Sample):
                 "all_read": False,
                 "all_write": False,
                 "artifacts": [],
-                "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
                 "group": {"id": 4, "name": "Sidney"},
@@ -124,7 +123,7 @@ class GetSampleResponse(Sample):
                     "nuvs": "none",
                     "pathoscope": "none",
                 },
-            }
+            },
         }
 
 
@@ -135,10 +134,10 @@ class CreateSampleRequest(BaseModel):
     group: int | None = None
     locale: constr(strip_whitespace=True) = ""
     library_type: LibraryType = LibraryType.normal
-    subtractions: list = Field(default_factory=lambda: [])
+    subtractions: list = Field(default_factory=list)
     files: conlist(item_type=Any, min_items=1, max_items=2)
     notes: str = ""
-    labels: list = Field(default_factory=lambda: [])
+    labels: list = Field(default_factory=list)
 
 
 class CreateSampleResponse(Sample):
@@ -148,7 +147,6 @@ class CreateSampleResponse(Sample):
                 "all_read": False,
                 "all_write": False,
                 "artifacts": [],
-                "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
                 "group": {"id": 4, "name": "Sidney"},
@@ -226,7 +224,7 @@ class CreateSampleResponse(Sample):
                     "nuvs": "none",
                     "pathoscope": "none",
                 },
-            }
+            },
         }
 
 
@@ -247,7 +245,7 @@ class UpdateSampleRequest(BaseModel):
                 "name": "Tobacco mosaic viru",
                 "host": "Tobacco",
                 "labels": [1, 5, 6],
-            }
+            },
         }
 
 
@@ -258,7 +256,6 @@ class UpdateSampleResponse(Sample):
                 "all_read": False,
                 "all_write": False,
                 "artifacts": [],
-                "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
                 "group": {"id": 4, "name": "Sidney"},
@@ -336,7 +333,7 @@ class UpdateSampleResponse(Sample):
                     "nuvs": "none",
                     "pathoscope": "none",
                 },
-            }
+            },
         }
 
 
@@ -355,7 +352,7 @@ class UpdateRightsRequest(BaseModel):
                 "group": "administrator",
                 "group_read": True,
                 "group_write": True,
-            }
+            },
         }
 
 
@@ -366,7 +363,6 @@ class UpdateRightsResponse(Sample):
                 "all_read": False,
                 "all_write": False,
                 "artifacts": [],
-                "caches": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
                 "group": 4,
@@ -444,7 +440,7 @@ class UpdateRightsResponse(Sample):
                     "nuvs": "none",
                     "pathoscope": "none",
                 },
-            }
+            },
         }
 
 
@@ -468,8 +464,8 @@ class GetSampleAnalysesResponse(AnalysisMinimal):
                         "id": "ihvze2u9",
                     },
                     "workflow": "pathoscope_bowtie",
-                }
-            ]
+                },
+            ],
         }
 
 
@@ -497,5 +493,5 @@ class CreateAnalysisResponse(AnalysisMinimal):
                 "updated_at": "2022-05-21T01:28:55.441000Z",
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
                 "workflow": "pathoscope_bowtie",
-            }
+            },
         }

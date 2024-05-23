@@ -7,14 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.blast.models import SQLNuVsBlast
-from virtool.caches.models import SQLSampleReadsCache, SQLSampleArtifactCache
 from virtool.groups.pg import SQLGroup
 from virtool.indexes.models import SQLIndexFile
 from virtool.labels.models import SQLLabel
 from virtool.messages.models import SQLInstanceMessage
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.pg.base import Base
-from virtool.samples.models import SQLSampleReads, SQLSampleArtifact
+from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.spaces.models import SQLSpace
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.uploads.models import SQLUpload
@@ -43,9 +42,7 @@ __models__ = (
     SQLMLModelRelease,
     SQLNuVsBlast,
     SQLSampleArtifact,
-    SQLSampleArtifactCache,
     SQLSampleReads,
-    SQLSampleReadsCache,
     SQLSpace,
     SQLSubtractionFile,
     SQLUpload,
@@ -107,7 +104,7 @@ async def run_migrations_online():
             prefix="sqlalchemy.",
             poolclass=pool.NullPool,
             future=True,
-        )
+        ),
     )
 
     async with connectable.connect() as connection:
