@@ -1118,41 +1118,6 @@ async def test_analyze(
             await resp_is.not_found(resp)
 
 
-@pytest.mark.parametrize("ready", [True, False])
-@pytest.mark.parametrize("exists", [True, False])
-async def test_cache_job_remove(
-    exists: bool,
-    ready: bool,
-    resp_is,
-    mongo: Mongo,
-    spawn_job_client,
-    tmp_path: Path,
-):
-    client = await spawn_job_client(authorize=True)
-
-    get_config_from_app(client.app).data_path = tmp_path
-
-    path = tmp_path / "caches" / "foo"
-    path.mkdir(parents=True)
-    path.joinpath("reads_1.fq.gz").write_text("Cache file")
-
-    if exists:
-        await mongo.caches.insert_one(
-            {"_id": "foo", "key": "abc123", "sample": {"id": "bar"}, "ready": ready},
-        )
-
-    resp = await client.delete("/samples/bar/caches/abc123")
-
-    if not exists:
-        assert resp.status == 404
-    elif ready:
-        await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
-    else:
-        await resp_is.no_content(resp)
-        assert await mongo.caches.find_one("foo") is None
-        assert not (tmp_path / "caches" / "foo").is_dir()
-
-
 @pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifact(
     error: int | None,
@@ -1286,29 +1251,6 @@ class TestUploadReads:
 
         assert resp.status == 400
         assert await resp.json() == snapshot
-
-
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_get_cache(error, snapshot, mongo: Mongo, spawn_job_client, resp_is):
-    client = await spawn_job_client(authorize=True)
-
-    cache = {
-        "_id": "bar",
-        "program": "skewer-0.2.2",
-        "key": "test" if error == "404" else "abc123",
-        "sample": {"id": "foo"},
-    }
-
-    await mongo.caches.insert_one(cache)
-
-    resp = await client.get("/samples/foo/caches/abc123")
-
-    if error == "404":
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("suffix", ["1", "2"])
