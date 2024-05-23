@@ -7,11 +7,10 @@ from structlog import get_logger
 from virtool.migration.cls import GenericRevision, RevisionSource
 from virtool.migration.utils import (
     get_alembic_path,
-    get_virtool_revisions_path,
     get_revision_create_date,
     get_revision_name,
+    get_virtool_revisions_path,
 )
-
 
 logger = get_logger("migration")
 
@@ -39,26 +38,24 @@ def load_alembic_revisions() -> list[GenericRevision]:
                 GenericRevision(
                     alembic_downgrade=getattr(module, "down_revision", None),
                     created_at=get_revision_create_date(path),
-                    id=getattr(module, "revision"),
+                    id=module.revision,
                     name=get_revision_name(path),
                     source=RevisionSource.ALEMBIC,
                     upgrade=None,
                     virtool_downgrade=None,
-                )
+                ),
             )
 
     return revisions
 
 
 def load_virtool_revisions() -> list[GenericRevision]:
-    """
-    Load all Virtool revisions.
+    """Load all Virtool revisions.
 
     This is used to interleave Virtool revisions with Alembic revisions.
 
     :return: a list of revisions
     """
-
     revisions = []
 
     for module_path in get_virtool_revisions_path().iterdir():
@@ -74,15 +71,14 @@ def load_virtool_revisions() -> list[GenericRevision]:
                     source=RevisionSource.VIRTOOL,
                     upgrade=module.upgrade,
                     virtool_downgrade=module.virtool_down_revision,
-                )
+                ),
             )
 
     return revisions
 
 
 def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
-    """
-    Order a list of revisions by their dependencies.
+    """Order a list of revisions by their dependencies.
 
     :param revisions: the revisions to order
     :return: the ordered revisions
@@ -95,13 +91,15 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
     for revision in revisions:
         if revision.alembic_downgrade and revision.virtool_downgrade:
             raise ValueError(
-                f"Revision {revision.id} has both an Alembic and Virtool downgrade."
+                f"Revision {revision.id} has both an Alembic and Virtool downgrade.",
             )
 
         if revision.alembic_downgrade:
             revisions_by_downgrade[
                 DowngradeSpecifier(
-                    revision.alembic_downgrade, RevisionSource.ALEMBIC, revision.source
+                    revision.alembic_downgrade,
+                    RevisionSource.ALEMBIC,
+                    revision.source,
                 )
             ] = revision
 
@@ -109,7 +107,9 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
             # Only Virtool revisions have Virtool downgrades.
             revisions_by_downgrade[
                 DowngradeSpecifier(
-                    revision.virtool_downgrade, RevisionSource.VIRTOOL, revision.source
+                    revision.virtool_downgrade,
+                    RevisionSource.VIRTOOL,
+                    revision.source,
                 )
             ] = revision
 
@@ -141,7 +141,7 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
         # Alembic downgrades.
         try:
             next_revision = revisions_by_downgrade.pop(
-                DowngradeSpecifier(current.id, current.source, RevisionSource.VIRTOOL)
+                DowngradeSpecifier(current.id, current.source, RevisionSource.VIRTOOL),
             )
         except KeyError:
             next_revision = None
@@ -158,7 +158,7 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
                         last_seen_alembic_revision.id,
                         RevisionSource.ALEMBIC,
                         RevisionSource.ALEMBIC,
-                    )
+                    ),
                 )
 
                 last_seen_alembic_revision = next_revision
@@ -171,8 +171,7 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
 
 
 def load_all_revisions() -> list[GenericRevision]:
-    """
-    Load Virtool and Alembic revisions.
+    """Load Virtool and Alembic revisions.
 
     The returned list is sorted by dependency. A revision in the list is dependent on
     the previous revision. The first revision in the list has no dependencies.
@@ -183,7 +182,6 @@ def load_all_revisions() -> list[GenericRevision]:
 
 def show_revisions():
     """Show all available revisions."""
-
     all_revisions = load_all_revisions()
 
     logger.info("Found revisions", count=len(all_revisions))

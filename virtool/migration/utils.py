@@ -7,8 +7,7 @@ from virtool.migration.cls import GenericRevision
 
 
 def get_revisions_path() -> Path:
-    """
-    Get the hardcoded path to Virtool revision files.
+    """Get the hardcoded path to Virtool revision files.
 
     :return: the revisions path
 
@@ -17,8 +16,7 @@ def get_revisions_path() -> Path:
 
 
 def get_template_path() -> Path:
-    """
-    Get the hardcoded path to migration template files.
+    """Get the hardcoded path to migration template files.
 
     :return: the template path
 
@@ -27,8 +25,7 @@ def get_template_path() -> Path:
 
 
 def derive_revision_filename(revision_id: str, name: str) -> str:
-    """
-    Derive the revision filename from the id and name.
+    """Derive the revision filename from the id and name.
 
     :param revision_id: the revision id
     :param name: the revision name
@@ -60,7 +57,7 @@ def get_single_virtool_revision_path(revision: GenericRevision) -> Path:
 
 def get_revision_create_date(path: Path) -> datetime.datetime:
     """Get the date the revision was created."""
-    with open(path, "r") as f:
+    with open(path) as f:
         for line in f:
             if line.startswith("Create Date:"):
                 return arrow.get(line.replace("Create Date:", "").strip()).naive
@@ -70,6 +67,6 @@ def get_revision_create_date(path: Path) -> datetime.datetime:
 
 def get_revision_name(path: Path) -> str:
     """Get the date the revision was created."""
-    with open(path, "r") as f:
+    with open(path) as f:
         for line in f:
             return line.replace('"""', "").strip()

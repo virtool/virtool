@@ -70,9 +70,8 @@ class BaseTask:
 
     @classmethod
     async def from_task_id(cls, data: "DataLayer", task_id: int):
-        """Create a task object given a ``task_id`` and a reference to the application data
-        layer.
-
+        """Create a task object given a ``task_id`` and a reference to the application
+        data layer.
         """
         task, temp_dir = await asyncio.gather(
             data.tasks.get(task_id),

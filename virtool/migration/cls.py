@@ -26,9 +26,7 @@ class AppliedRevision:
 
 @dataclass
 class GenericRevision:
-    """
-    Represents either a Virtool or Alembic revision.
-    """
+    """Represents either a Virtool or Alembic revision."""
 
     alembic_downgrade: str | None
     created_at: datetime
@@ -39,5 +37,4 @@ class GenericRevision:
     virtool_downgrade: str | None
 
 
-class MigrationError(Exception):
-    ...
+class MigrationError(Exception): ...

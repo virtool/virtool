@@ -9,17 +9,16 @@ from structlog import get_logger
 from virtool.migration.cls import RevisionSource
 from virtool.migration.show import load_all_revisions
 from virtool.migration.utils import (
+    derive_revision_filename,
     get_revisions_path,
     get_template_path,
-    derive_revision_filename,
 )
 
 logger = get_logger("migration")
 
 
 def create_revision(name: str):
-    """
-    Create a new Virtool revision.
+    """Create a new Virtool revision.
 
     The revision will be created at ``./assets/revisions``. It will automatically have
     its downgrades set to the last created revision.
@@ -60,8 +59,7 @@ def create_revision(name: str):
 
 
 def _generate_revision_id(excluded: list[str]):
-    """
-    Generate a random revision id.
+    """Generate a random revision id.
 
     :param excluded: the list of ids that should be excluded from the results
     :return: a revision id
@@ -77,9 +75,7 @@ def _generate_revision_id(excluded: list[str]):
 
 
 def _get_existing_revisions(revisions_path: Path) -> list[str]:
-    """
-    List all migration revisions in a revisions directory.
-    """
+    """List all migration revisions in a revisions directory."""
     revisions = []
 
     try:
@@ -87,9 +83,10 @@ def _get_existing_revisions(revisions_path: Path) -> list[str]:
             if revision_path.suffix == ".py" and revisions_path.stem.startswith("rev_"):
                 with open(revision_path):
                     module = load_python_file(
-                        str(revision_path.parent), str(revision_path.name)
+                        str(revision_path.parent),
+                        str(revision_path.name),
                     )
-                    revisions.append(getattr(module, "revision_id"))
+                    revisions.append(module.revision_id)
     except FileNotFoundError:
         revisions_path.mkdir(parents=True)
         return _get_existing_revisions(revisions_path)

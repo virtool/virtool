@@ -11,6 +11,7 @@ from structlog import get_logger
 
 import virtool.analyses.utils
 import virtool.utils
+from virtool.api.custom_json import dump_bytes
 from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
@@ -136,8 +137,9 @@ async def fetch_and_update_release(
         installed = document["updates"][0]
 
     try:
-        # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
-        # has not changed and `None` is returned from `get_release()`.
+        # The release dict will only be replaced if there is a 200 response from GitHub.
+        # A 304 indicates the release has not changed and `None` is returned from
+        # `get_release()`.
         updated = await get_release(http_client, slug, etag)
 
         # Release is replace with updated release if an update was found on GitHub.
@@ -192,7 +194,7 @@ async def generate_annotations_json_file(data_path: Path, mongo: Mongo) -> Path:
 
     documents = [base_processor(document) async for document in mongo.hmm.find({})]
 
-    async with aiofiles.open(annotations_path, "w") as f:
-        await f.write(json.dumps(documents))
+    async with aiofiles.open(annotations_path, "wb") as f:
+        await f.write(dump_bytes(documents))
 
     return annotations_path

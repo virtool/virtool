@@ -26,7 +26,7 @@ async def test_upgrade(
                 SQLGroup(name="Foo", permissions=all_permissions),
                 SQLGroup(name="Boo", permissions=all_permissions),
                 SQLGroup(name="Foo", permissions=all_permissions),
-            ]
+            ],
         )
 
         await session.commit()
@@ -35,7 +35,7 @@ async def test_upgrade(
 
     async with AsyncSession(migration_pg) as session:
         result = await session.execute(
-            select(SQLGroup.id, SQLGroup.name).order_by(SQLGroup.id)
+            select(SQLGroup.id, SQLGroup.name).order_by(SQLGroup.id),
         )
 
-        assert [r for r in result.all()] == snapshot
+        assert result.all() == snapshot
