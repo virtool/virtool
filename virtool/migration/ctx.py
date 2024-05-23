@@ -1,9 +1,11 @@
 """
 Context for migrations.
 """
+
 import asyncio
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -60,6 +62,7 @@ class MigrationContext:
     authorization: AuthorizationClient
     mongo: AsyncIOMotorDatabase
     pg: AsyncEngine
+    data_path: Path
 
 
 async def create_migration_context(config: MigrationConfig) -> MigrationContext:
@@ -100,5 +103,8 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
     )
 
     return MigrationContext(
-        authorization=AuthorizationClient(openfga), mongo=mongo_database, pg=pg
+        authorization=AuthorizationClient(openfga),
+        mongo=mongo_database,
+        pg=pg,
+        data_path=config.data_path,
     )
