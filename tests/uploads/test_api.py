@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from aiohttp import ClientResponse
-from syrupy.matchers import path_type
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner
@@ -24,9 +24,8 @@ class TestUpload:
         self,
         upload_request_form,
         tmp_path,
-        snapshot,
+        snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Test `POST /uploads` to assure a file can be uploaded."""
         client = await spawn_client(
@@ -40,7 +39,8 @@ class TestUpload:
         )
 
         assert resp.status == 201
-        assert await resp.json() == snapshot(matcher=path_type({"created_at": (str,)}))
+        print(await resp.json())
+        assert await resp.json() == snapshot_recent()
 
     async def test_no_upload_type(
         self,
@@ -64,7 +64,6 @@ class TestUpload:
 
     async def test_bad_upload_type(
         self,
-        snapshot,
         spawn_client: ClientSpawner,
         upload_request_form,
     ):
@@ -80,7 +79,20 @@ class TestUpload:
         )
 
         assert resp.status == 400
-        assert await resp.json() == snapshot
+        assert await resp.json() == [
+            {
+                "ctx": {
+                    "enum_values": ["hmm", "reference", "reads", "subtraction"],
+                },
+                "in": "query string",
+                "loc": ["type"],
+                "msg": (
+                    "value is not a valid enumeration member; permitted: 'hmm', "
+                    "'reference', 'reads', 'subtraction'"
+                ),
+                "type": "type_error.enum",
+            },
+        ]
 
 
 class TestFind:
