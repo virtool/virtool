@@ -9,7 +9,6 @@ from virtool_core.redis import Redis
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
-from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.tasks import TimeoutJobsTask
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.pg.utils import connect_pg
