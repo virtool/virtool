@@ -430,7 +430,8 @@ async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, A
 
 
 async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str, any]):
-    """Creates a row in the `sample_reads` table for each file in a sample's `files` array.
+    """Creates a row in the `sample_reads` table for each file in a sample's `files`
+    array.
 
     Also, creates a row in the `uploads` table for information stored in a file's
     `from` field with a relation to the `SampleRead`.
@@ -470,8 +471,8 @@ async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str
 
 
 async def update_is_compressed(db, sample: Dict[str, Any]):
-    """Update the ``is_compressed`` field for the passed ``sample`` in the database if all
-    of its files are compressed.
+    """Update the ``is_compressed`` field for the passed ``sample`` in the database if
+    all of its files are compressed.
 
     :param db: the application database
     :param sample: the sample document

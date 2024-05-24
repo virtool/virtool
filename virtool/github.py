@@ -31,8 +31,7 @@ def create_update_subdocument(
 
 
 def format_release(release: dict) -> dict:
-    """
-    Format a raw release record from GitHub into a release usable by Virtool.
+    """Format a raw release record from GitHub into a release usable by Virtool.
 
     :param release: the GitHub release record
     :return: a release for use within Virtool
@@ -55,8 +54,7 @@ def format_release(release: dict) -> dict:
 
 
 def get_etag(release: Document | None) -> str | None:
-    """
-    Get the ETag from a release dict.
+    """Get the ETag from a release dict.
 
     Return `None` when the key is missing or the input is not a `dict`.
 
@@ -76,8 +74,7 @@ async def get_release(
     etag: str | None = None,
     release_id: str | None = "latest",
 ) -> dict | None:
-    """
-    GET data from a GitHub API url.
+    """GET data from a GitHub API url.
 
     :param session: the application HTTP client session
     :param slug: the slug for the GitHub repo
@@ -110,7 +107,10 @@ async def get_release(
             )
 
         logger.debug(
-            "Fetched GitHub release", slug=slug, id=release_id, http_status=resp.status
+            "Fetched GitHub release",
+            slug=slug,
+            id=release_id,
+            http_status=resp.status,
         )
 
         if resp.status == 200:
@@ -121,13 +121,12 @@ async def get_release(
 
             return dict(data, etag=resp.headers["etag"])
 
-        elif resp.status == 304:
+        if resp.status == 304:
             return None
 
-        else:
-            logger.warning(
-                "Encountered error during GitHub request",
-                http_status=resp.status,
-                body=await resp.json(),
-            )
-            raise GitHubError("Encountered error {resp.status} {await resp.json()}")
+        logger.warning(
+            "Encountered error during GitHub request",
+            http_status=resp.status,
+            body=await resp.json(),
+        )
+        raise GitHubError("Encountered error {resp.status} {await resp.json()}")

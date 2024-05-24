@@ -175,8 +175,7 @@ async def wait_for_checks(*aws):
     As soon as the first exception is raised, pending checks are cancelled and exception
     is raised.
 
-    :param aws:
-    :return:
+    :param aws: a list of awaitables to wait for
     """
     results = await asyncio.gather(*aws, return_exceptions=True)
 
