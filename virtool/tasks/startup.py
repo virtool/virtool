@@ -61,7 +61,6 @@ async def startup_task_spawner(app: Application):
         (CleanReferencesTask, 3600),
         (CheckSubtractionsFASTATask, 3600),
         (CompressSamplesTask, 3600),
-        (EnsureIndexFilesTask, 3600),
         (HMMRefreshTask, 600),
         (MoveSampleFilesTask, 3600),
         (RefreshReferenceReleasesTask, 600),
