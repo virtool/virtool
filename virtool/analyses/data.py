@@ -215,6 +215,7 @@ class AnalysisData(DataLayerDomain):
             **{**analysis, "job": analysis["job"] if analysis["job"] else None},
         )
 
+    @emits(Operation.CREATE, "analyses")
     async def create(
         self,
         data: CreateAnalysisRequest,
