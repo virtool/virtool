@@ -1,8 +1,9 @@
-"""
-Functions and data to use for formatting Pathoscope and NuVs analysis document. Formatted documents
-are destined for API responses or CSV/Excel formatted file downloads.
+"""Functions and data to use for formatting Pathoscope and NuVs analysis document.
 
+Formatted documents are destined for API responses or CSV/Excel formatted file
+downloads.
 """
+
 import asyncio
 import csv
 import io
@@ -10,7 +11,7 @@ import json
 import statistics
 from asyncio import gather
 from collections import defaultdict
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import aiofiles
 import openpyxl.styles
@@ -38,8 +39,8 @@ CSV_HEADERS = (
 
 
 def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
-    """
-    Calculate the median depth for all hits (sequences) in a Pathoscope result document.
+    """Calculate the median depth for all hits (sequences) in a Pathoscope result
+    document.
 
     :param hits: the pathoscope analysis document to calculate depths for
     :return: a dict of median depths keyed by hit (sequence) ids
@@ -49,8 +50,9 @@ def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
 
 
 async def load_results(config: Config, document: dict[str, Any]) -> dict:
-    """
-    Load the analysis results. Hide the alternative loading from a `results.json` file.
+    """Load the analysis results. Hide the alternative loading from a `results.json`
+    file.
+
     These files are only generated if the analysis data had exceeded the MongoDB size
     limit (16 MB.
 
@@ -63,7 +65,9 @@ async def load_results(config: Config, document: dict[str, Any]) -> dict:
     """
     if document["results"] == "file":
         path = virtool.analyses.utils.join_analysis_json_path(
-            config.data_path, document["_id"], document["sample"]["id"]
+            config.data_path,
+            document["_id"],
+            document["sample"]["id"],
         )
 
         async with aiofiles.open(path, "r") as f:
@@ -74,11 +78,12 @@ async def load_results(config: Config, document: dict[str, Any]) -> dict:
 
 
 async def format_aodp(
-    config, mongo: "Mongo", document: dict[str, Any]
+    config,
+    mongo: "Mongo",
+    document: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Format an AODP analysis document by retrieving the detected OTUs and incorporating them into
-    the returned document.
+    """Format an AODP analysis document by retrieving the detected OTUs and
+    incorporating them into the returned document.
 
     :param config: the application config object
     :param mongo: the application Mongo object
@@ -110,12 +115,14 @@ async def format_aodp(
 
 
 async def format_pathoscope(
-    config, mongo: "Mongo", document: dict[str, Any]
+    config,
+    mongo: "Mongo",
+    document: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Format a Pathoscope analysis document by retrieving the detected OTUs and incorporating them
-    into the returned document. Calculate metrics for different organizational levels: OTU,
-    isolate, and sequence.
+    """Format a Pathoscope analysis document by retrieving the detected OTUs and
+    incorporating them into the returned document.
+
+    Calculate metrics for different organizational levels: OTU, isolate, and sequence.
 
     :param config: the application config object
     :param mongo: the application Mongo object
@@ -146,17 +153,25 @@ async def format_pathoscope(
 
 
 async def format_pathoscope_hits(
-    config, mongo: "Mongo", otu_id: str, otu_version, hits: list[dict]
+    config,
+    mongo: "Mongo",
+    otu_id: str,
+    otu_version,
+    hits: list[dict],
 ):
     _, patched_otu, _ = await patch_to_version(
-        config.data_path, mongo, otu_id, otu_version
+        config.data_path,
+        mongo,
+        otu_id,
+        otu_version,
     )
 
     max_sequence_length = 0
 
     for isolate in patched_otu["isolates"]:
         max_sequence_length = max(
-            max_sequence_length, max(len(s["sequence"]) for s in isolate["sequences"])
+            max_sequence_length,
+            max(len(s["sequence"]) for s in isolate["sequences"]),
         )
 
     hits_by_sequence_id = {hit["id"]: hit for hit in hits}
@@ -166,7 +181,7 @@ async def format_pathoscope_hits(
         "abbreviation": patched_otu["abbreviation"],
         "name": patched_otu["name"],
         "isolates": list(
-            format_pathoscope_isolates(patched_otu["isolates"], hits_by_sequence_id)
+            format_pathoscope_isolates(patched_otu["isolates"], hits_by_sequence_id),
         ),
         "length": max_sequence_length,
         "version": patched_otu["version"],
@@ -174,11 +189,12 @@ async def format_pathoscope_hits(
 
 
 def format_pathoscope_isolates(
-    isolates: list[dict[str, Any]], hits_by_sequence_ids: dict[str, dict]
+    isolates: list[dict[str, Any]],
+    hits_by_sequence_ids: dict[str, dict],
 ) -> list[dict[str, Any]]:
     for isolate in isolates:
         sequences = list(
-            format_pathoscope_sequences(isolate["sequences"], hits_by_sequence_ids)
+            format_pathoscope_sequences(isolate["sequences"], hits_by_sequence_ids),
         )
 
         if any((key in sequence for sequence in sequences) for key in ("pi", "final")):
@@ -186,7 +202,8 @@ def format_pathoscope_isolates(
 
 
 def format_pathoscope_sequences(
-    sequences: list[dict[str, Any]], hits_by_sequence_id: dict[str, dict]
+    sequences: list[dict[str, Any]],
+    hits_by_sequence_id: dict[str, dict],
 ):
     for sequence in sequences:
         try:
@@ -218,10 +235,12 @@ def format_pathoscope_sequences(
 
 
 async def format_nuvs(
-    config: Config, mongo: "Mongo", document: dict[str, Any]
+    config: Config,
+    mongo: "Mongo",
+    document: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Format a NuVs analysis document by attaching the HMM annotation data to the results.
+    """Format a NuVs analysis document by attaching the HMM annotation data to the
+    results.
 
     :param config: the config object
     :param mongo: the database object
@@ -248,10 +267,11 @@ async def format_nuvs(
 
 
 async def format_analysis_to_excel(
-    config: Config, mongo: "Mongo", document: dict[str, Any]
+    config: Config,
+    mongo: "Mongo",
+    document: dict[str, Any],
 ) -> bytes:
-    """
-    Convert a pathoscope analysis document to byte-encoded Excel format for download.
+    """Convert a pathoscope analysis document to byte-encoded Excel format for download.
 
     :param config: the config object
     :param mongo: the database object
@@ -307,10 +327,11 @@ async def format_analysis_to_excel(
 
 
 async def format_analysis_to_csv(
-    config: Config, mongo: "Mongo", document: dict[str, Any]
+    config: Config,
+    mongo: "Mongo",
+    document: dict[str, Any],
 ) -> str:
-    """
-    Convert a pathoscope analysis document to CSV format for download.
+    """Convert a pathoscope analysis document to CSV format for download.
 
     :param config: the app config object
     :param mongo: the app mongo object
@@ -347,10 +368,11 @@ async def format_analysis_to_csv(
 
 
 async def format_analysis(
-    config: Config, mongo: "Mongo", document: dict[str, Any]
+    config: Config,
+    mongo: "Mongo",
+    document: dict[str, Any],
 ) -> dict[str, any]:
-    """
-    Format an analysis document to be returned by the API.
+    """Format an analysis document to be returned by the API.
 
     :param config: the config object
     :param mongo: the database object
@@ -379,11 +401,12 @@ async def format_analysis(
 
 
 async def gather_patched_otus(
-    config, mongo: "Mongo", results: list[dict]
+    config,
+    mongo: "Mongo",
+    results: list[dict],
 ) -> dict[str, dict]:
-    """
-    Gather patched OTUs for each result item. Only fetch each id-version combination once. Make
-    database requests concurrently to save time.
+    """Gather patched OTUs for each result item. Only fetch each id-version combination
+    once.
 
     :param config: the config object
     :param mongo: the database object
@@ -398,7 +421,7 @@ async def gather_patched_otus(
         *[
             patch_to_version(config.data_path, mongo, otu_id, version)
             for otu_id, version in otu_specifiers
-        ]
+        ],
     )
 
     return {patched["_id"]: patched for _, patched, _ in patched_otus}
@@ -407,11 +430,12 @@ async def gather_patched_otus(
 def transform_coverage_to_coordinates(
     coverage_list: list[int],
 ) -> list[tuple[int, int]]:
-    """
-    Takes a list of read depths where the list index is equal to the read position + 1 and returns
-    a list of (x, y) coordinates.
-    The coordinates will be simplified using Visvalingham-Wyatt algorithm if the list exceeds 100
-    pairs.
+    """Takes a list of read depths where the list index is equal to the read position
+    plus one and returns a list of (x, y) coordinates.
+
+    The coordinates will be simplified using Visvalingham-Wyatt algorithm if the list
+    exceeds 100 pairs.
+
     :param coverage_list: a list of position-indexed depth values
     :return: a list of (x, y) coordinates
     """
