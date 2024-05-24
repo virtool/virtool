@@ -62,7 +62,8 @@ class MigrationContext:
 
 
 async def create_migration_context(config: MigrationConfig) -> MigrationContext:
-    """Create a migration context that provides access to MongoDB, OpenFGA, and PostgreSQL.
+    """Create a migration context that provides access to MongoDB, OpenFGA, and
+    PostgreSQL.
 
     Connect to all data services and expose their clients
     in the returned context object.

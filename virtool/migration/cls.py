@@ -37,4 +37,5 @@ class GenericRevision:
     virtool_downgrade: str | None
 
 
-class MigrationError(Exception): ...
+class MigrationError(Exception):
+    """Raised when an error occurs during a migration."""
