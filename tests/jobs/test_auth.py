@@ -16,7 +16,7 @@ def non_public_test_route(request: aiohttp.web.Request):
 
 
 async def test_public_routes_are_public(mongo: Mongo, spawn_job_client):
-    client = await spawn_job_client(authorize=False, add_route_table=test_routes)
+    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
 
     job_id = "test_job"
     insert_result = await mongo.jobs.insert_one({"_id": job_id})
@@ -29,7 +29,7 @@ async def test_public_routes_are_public(mongo: Mongo, spawn_job_client):
 
 
 async def test_unauthorized_when_header_missing(spawn_job_client):
-    client = await spawn_job_client(authorize=False, add_route_table=test_routes)
+    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
 
     response = await client.get("/not_public")
 
@@ -37,7 +37,7 @@ async def test_unauthorized_when_header_missing(spawn_job_client):
 
 
 async def test_unauthorized_when_header_invalid(spawn_job_client):
-    client = await spawn_job_client(authorize=False, add_route_table=test_routes)
+    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
 
     response = await client.get(
         "/not_public",
@@ -50,7 +50,7 @@ async def test_unauthorized_when_header_invalid(spawn_job_client):
 
 
 async def test_authorized_when_header_is_valid(spawn_job_client):
-    client = await spawn_job_client(authorize=True, add_route_table=test_routes)
+    client = await spawn_job_client(authenticated=True, add_route_table=test_routes)
 
     response = await client.get("/not_public")
 

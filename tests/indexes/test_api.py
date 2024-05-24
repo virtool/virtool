@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.config import get_config_from_app
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -251,7 +251,7 @@ async def test_download_otus_json(
     file_exists: bool,
     mocker,
     mongo: Mongo,
-    spawn_job_client,
+    spawn_job_client: JobClientSpawner,
     tmp_path: Path,
 ):
     with gzip.open(OTUS_JSON_PATH, "rt") as f:
@@ -262,7 +262,7 @@ async def test_download_otus_json(
         make_mocked_coro(expected),
     )
 
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
 
@@ -300,7 +300,7 @@ class TestCreate:
         fake2: DataFaker,
         mocker,
         resp_is,
-        snapshot,
+        snapshot: SnapshotAssertion,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
@@ -482,10 +482,16 @@ async def test_find_history(
 
 
 @pytest.mark.parametrize("error", [None, 404])
-async def test_delete_index(error, fake2, mongo: Mongo, spawn_job_client, static_time):
+async def test_delete_index(
+    error,
+    fake2,
+    mongo: Mongo,
+    spawn_job_client: JobClientSpawner,
+    static_time,
+):
     index_id = "index1"
 
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     user = await fake2.users.create()
 
@@ -540,11 +546,11 @@ async def test_upload(
     resp_is,
     snapshot,
     mongo: Mongo,
-    spawn_job_client,
+    spawn_job_client: JobClientSpawner,
     static_time,
     tmp_path: Path,
 ):
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
 
     files = {"file": open(path, "rb")}
@@ -612,12 +618,12 @@ async def test_finalize(
     pg: AsyncEngine,
     snapshot,
     mongo: Mongo,
-    spawn_job_client,
+    spawn_job_client: JobClientSpawner,
     static_time,
     test_otu,
 ):
     """Test that an index can be finalized using the Jobs API."""
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     user = await fake2.users.create()
     job = await fake2.jobs.create(user=user, workflow="build_index")
@@ -670,8 +676,13 @@ async def test_finalize(
 
 
 @pytest.mark.parametrize("status", [200, 404])
-async def test_download(status: int, mongo: Mongo, spawn_job_client, tmp_path):
-    client = await spawn_job_client(authorize=True)
+async def test_download(
+    status: int,
+    mongo: Mongo,
+    spawn_job_client: JobClientSpawner,
+    tmp_path,
+):
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
 

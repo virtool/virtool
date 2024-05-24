@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 from virtool_core.models.job import JobState
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.config import get_config_from_app
@@ -409,12 +409,14 @@ async def test_upload_file(
     pg: AsyncEngine,
     resp_is,
     snapshot,
-    spawn_job_client,
+    spawn_job_client: JobClientSpawner,
     static_time,
     tmp_path,
 ):
-    """Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table."""
-    client = await spawn_job_client(authorize=True)
+    """Test that an analysis result file is properly uploaded and a row is inserted into
+    the `analysis_files` SQL table.
+    """
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
 
@@ -477,14 +479,14 @@ class TestDownloadAnalysisResult:
         create_files,
         mongo: Mongo,
         spawn_client: ClientSpawner,
-        spawn_job_client,
+        spawn_job_client: JobClientSpawner,
         test_files_path,
         tmp_path,
     ):
         """Test that an uploaded analysis result file can subsequently be downloaded."""
         client, job_client = await asyncio.gather(
             spawn_client(administrator=True, authenticated=True),
-            spawn_job_client(authorize=True),
+            spawn_job_client(authenticated=True),
         )
 
         get_config_from_app(client.app).data_path = tmp_path
@@ -678,7 +680,7 @@ async def test_finalize(
     error: str | None,
     fake2: DataFaker,
     snapshot: SnapshotAssertion,
-    spawn_job_client,
+    spawn_job_client: JobClientSpawner,
     static_time,
 ):
     user_1 = await fake2.users.create()
@@ -691,7 +693,7 @@ async def test_finalize(
     if error == 422:
         del patch_json["results"]
 
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     await asyncio.gather(
         client.db.references.insert_one(
@@ -756,7 +758,7 @@ async def test_finalize(
 async def test_finalize_large(
     fake2: DataFaker,
     snapshot: SnapshotAssertion,
-    spawn_job_client,
+    spawn_job_client: JobClientSpawner,
     static_time,
 ):
     user = await fake2.users.create()
@@ -784,7 +786,7 @@ async def test_finalize_large(
     # Make sure this test actually checks that the max body size is increased.
     assert len(json.dumps(patch_json)) > 1024**2
 
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     await asyncio.gather(
         client.db.analyses.insert_one(

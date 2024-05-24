@@ -849,7 +849,8 @@ async def test_finalize(
     get_sample_ready_false,
 ):
     """Test that sample can be finalized using the Jobs API."""
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
+
     json = {
         field: {
             "bases": [[1543]],
@@ -861,6 +862,7 @@ async def test_finalize(
             "sequences": [7091],
         },
     }
+
     resp = await client.patch("/samples/test", json=json)
 
     if field == "quality":
@@ -908,7 +910,7 @@ class TestDelete:
         spawn_job_client,
     ):
         """Test that job client can delete a sample only when it is unfinalized."""
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
 
         (config.data_path / "samples/test").mkdir(parents=True)
 
@@ -929,7 +931,7 @@ class TestDelete:
         assert resp.status == 404
 
     async def test_not_found_from_job(self, spawn_job_client):
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
         resp = await client.delete("/samples/test")
         assert resp.status == 404
 
@@ -1132,7 +1134,7 @@ async def test_upload_artifact(
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
     path = test_files_path / "nuvs" / "reads_1.fq"
 
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
     sample_file_path = tmp_path / "samples" / "test"
@@ -1183,7 +1185,7 @@ class TestUploadReads:
         """Test that paired sample reads can be uploaded using the Jobs API and that
         conflicts are properly handled.
         """
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
         get_config_from_app(client.app).data_path = tmp_path
 
         await client.db.samples.insert_one(
@@ -1231,7 +1233,7 @@ class TestUploadReads:
         tmp_path: Path,
     ):
         """Test that uncompressed sample reads are rejected."""
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
 
         await client.db.samples.insert_one(
             {
@@ -1265,7 +1267,7 @@ async def test_download_reads(
     pg,
 ):
     client = await spawn_client(authenticated=True)
-    job_client = await spawn_job_client(authorize=True)
+    job_client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
     get_config_from_app(job_client.app).data_path = tmp_path
@@ -1318,7 +1320,7 @@ async def test_download_reads(
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
 async def test_download_artifact(error, tmp_path, mongo: Mongo, spawn_job_client, pg):
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
 
