@@ -218,17 +218,17 @@ def format_sequence_for_export(sequence: Document) -> Document:
     return cleaned_sequence
 
 
-def get_index_file_type_from_name(name: str) -> IndexType:
-    if ".json" in name:
+def get_index_file_type_from_name(file_name: str) -> IndexType:
+    if ".json" in file_name:
         return IndexType.json
 
-    if ".fa" in name:
+    if ".fa" in file_name:
         return IndexType.fasta
 
-    if ".bt" in name:
+    if ".bt" in file_name:
         return IndexType.bowtie2
 
-    raise ValueError(f"Filename does not map to valid IndexType: {name}")
+    raise ValueError(f"Filename does not map to valid IndexType: {file_name}")
 
 
 @pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
@@ -236,7 +236,6 @@ async def test_upgrade(
     ctx: MigrationContext,
     snapshot,
     files,
-    static_time,
     create_task_index,
 ):
     """

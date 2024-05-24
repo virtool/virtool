@@ -1,10 +1,9 @@
 import asyncio
 from asyncio import to_thread
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import List, Union
 
 from multidict import MultiDictProxy
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
