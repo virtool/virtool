@@ -1,11 +1,9 @@
-"""
-HTTP utilities for collecting data from GenBank on the API server.
+"""HTTP utilities for collecting data from GenBank on the API server."""
 
-"""
 import io
 
-import Bio.SeqIO
 import aiohttp
+import Bio.SeqIO
 from structlog import get_logger
 
 logger = get_logger("genbank")
@@ -17,8 +15,9 @@ FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 
 async def fetch(session: aiohttp.ClientSession, accession: int | str) -> dict | None:
-    """
-    Fetch the Genbank record for the passed `accession`. Returns `None` if the Genbank record can not be found.
+    """Fetch the Genbank record for the passed `accession`.
+
+    Returns `None` if the Genbank record can not be found.
 
     :param session: an aiohttp client session
     :param accession: the accession to fetch

@@ -206,7 +206,6 @@ class SamplesData(DataLayerDomain):
     async def get(self, sample_id: str) -> Sample:
         """Get a sample by its id.
 
-        TODO: Remove the ``caches`` field from document as it is deprecated.
         TODO: Return `None` for unset group instead of `"none"`.
 
         :param sample_id: the id of the sample

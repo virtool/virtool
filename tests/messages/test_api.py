@@ -20,22 +20,21 @@ async def insert_test_message(fake2, pg, static_time):
                     created_at=static_time.datetime,
                     updated_at=static_time.datetime,
                     user=user.id,
-                )
+                ),
             )
             await session.commit()
 
     return insert
 
 
-
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-    error: str | None, insert_test_message, snapshot, spawn_client: ClientSpawner
+    error: str | None,
+    insert_test_message,
+    snapshot,
+    spawn_client: ClientSpawner,
 ):
-    """
-    Test that a ``GET /instance_message`` return the active instance message.
-
-    """
+    """Test that a ``GET /instance_message`` return the active instance message."""
     client = await spawn_client(authenticated=True)
 
     if not error:
@@ -50,17 +49,16 @@ async def test_get(
         assert await resp.json() is None
 
 
-
 async def test_create(snapshot, spawn_client: ClientSpawner, static_time):
-    """
-    Test that a newly active instance message can be added
+    """Test that a newly active instance message can be added
     to the database at ``PUT /instance_message``.
 
     """
     client = await spawn_client(administrator=True, authenticated=True)
 
     resp = await client.put(
-        "/instance_message", {"color": "red", "message": "This is a new message"}
+        "/instance_message",
+        {"color": "red", "message": "This is a new message"},
     )
 
     assert resp.status == 200
@@ -68,10 +66,12 @@ async def test_create(snapshot, spawn_client: ClientSpawner, static_time):
     assert await resp.json() == snapshot
 
 
-
 class TestUpdate:
     async def test_active(
-        self, insert_test_message, snapshot, spawn_client: ClientSpawner
+        self,
+        insert_test_message,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
         client = await spawn_client(administrator=True, authenticated=True)
 
@@ -96,7 +96,10 @@ class TestUpdate:
         assert resp.status == 404
 
     async def test_inactive(
-        self, insert_test_message, resp_is, spawn_client: ClientSpawner
+        self,
+        insert_test_message,
+        resp_is,
+        spawn_client: ClientSpawner,
     ):
         client = await spawn_client(administrator=True, authenticated=True)
 
@@ -110,7 +113,10 @@ class TestUpdate:
         await resp_is.conflict(resp, "No active message set")
 
     async def test_deactivate(
-        self, insert_test_message, snapshot, spawn_client: ClientSpawner
+        self,
+        insert_test_message,
+        snapshot,
+        spawn_client: ClientSpawner,
     ):
         client = await spawn_client(administrator=True, authenticated=True)
 

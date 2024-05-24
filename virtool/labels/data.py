@@ -64,7 +64,8 @@ class LabelsData:
                 raise ResourceConflictError()
 
         document = await apply_transforms(
-            row, [AttachSampleCountsTransform(self._mongo)]
+            row,
+            [AttachSampleCountsTransform(self._mongo)],
         )
 
         return Label(**document)
@@ -123,7 +124,8 @@ class LabelsData:
                 raise ResourceConflictError()
 
         document = await apply_transforms(
-            row, [AttachSampleCountsTransform(self._mongo)]
+            row,
+            [AttachSampleCountsTransform(self._mongo)],
         )
 
         return Label(**document)
@@ -135,21 +137,22 @@ class LabelsData:
         """
         label = await self.get(label_id)
 
-        async with AsyncSession(self._pg) as session:
-            async with self._mongo.create_session() as mongo_session:
-                result = await session.execute(select(SQLLabel).filter_by(id=label_id))
-                label = result.scalar()
+        async with AsyncSession(
+            self._pg,
+        ) as session, self._mongo.create_session() as mongo_session:
+            result = await session.execute(select(SQLLabel).filter_by(id=label_id))
+            label = result.scalar()
 
-                if label is None:
-                    raise ResourceNotFoundError
+            if label is None:
+                raise ResourceNotFoundError
 
-                await self._mongo.samples.update_many(
-                    {"labels": label_id},
-                    {"$pull": {"labels": label_id}},
-                    session=mongo_session,
-                )
+            await self._mongo.samples.update_many(
+                {"labels": label_id},
+                {"$pull": {"labels": label_id}},
+                session=mongo_session,
+            )
 
-                await session.delete(label)
-                await session.commit()
+            await session.delete(label)
+            await session.commit()
 
         emit(label, "labels", "delete", Operation.DELETE)

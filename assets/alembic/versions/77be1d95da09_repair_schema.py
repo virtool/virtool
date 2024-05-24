@@ -5,12 +5,12 @@ Revises: 8f3810c1c2c9
 Create Date: 2024-01-02 21:52:48.763886+00:00
 
 """
-from alembic import op
+
 import sqlalchemy as sa
-from sqlalchemy import text, select
+from alembic import op
+from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
-
 
 # revision identifiers, used by Alembic.
 revision = "77be1d95da09"
@@ -24,7 +24,8 @@ def upgrade() -> None:
 
     # Create a new column for deduplicated values
     op.add_column(
-        "groups", sa.Column("name_dedup", sa.String(length=255), nullable=True)
+        "groups",
+        sa.Column("name_dedup", sa.String(length=255), nullable=True),
     )
 
     op.alter_column(
@@ -39,7 +40,7 @@ def upgrade() -> None:
 
     with Session(bind=op.get_bind()) as session:
         distinct_names = session.execute(
-            text("SELECT DISTINCT name FROM groups")
+            text("SELECT DISTINCT name FROM groups"),
         ).fetchall()
 
         # Update the new column with deduplicated values
@@ -47,7 +48,7 @@ def upgrade() -> None:
             name = value[0]
 
             result = session.execute(
-                select(table.c).where(table.c.name == name)
+                select(table.c).where(table.c.name == name),
             ).fetchall()
 
             suffix = 0

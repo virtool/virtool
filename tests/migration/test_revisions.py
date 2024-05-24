@@ -24,7 +24,7 @@ def test_create_revision(revisions_path: Path):
 
         assert revision_id in revision_ids
 
-        with open(revision_path, "r") as f:
+        with open(revision_path) as f:
             text = f.read()
             name = f"Test {transformed_name[-1].upper()}"
 

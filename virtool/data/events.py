@@ -99,14 +99,26 @@ def emit(data: BaseModel, domain: str, name: str, operation: Operation):
 
 
 def emits(operation: Operation, domain: str | None = None, name: str | None = None):
-    """Emits the return value of decorated method as an event."""
+    """Emits the return value of the decorated method as an event.
+
+    By default, ``domain`` is the name of the ``DataLayerDomain`` object the decorated
+    method is bound to. It can be overridden by passing a value to the decorator.
+
+    By default, ``name`` is the name of the decorated method. It can be overridden by
+    passing a value to the decorator.
+
+    :param operation: The operation that was performed on the resource.
+    :param domain: The domain of the resource.
+    :param name: The name of the event.
+
+    """
 
     def decorator(func: Callable[..., Awaitable[BaseModel]]):
         emitted_name = name or func.__name__
 
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            # This is the DataLayerPiece instance the method is bound to.
+            # This is the DataLayerDomain object the method is bound to.
             obj = args[0]
 
             return_value = await func(*args, **kwargs)
