@@ -1,6 +1,5 @@
 from asyncio import to_thread
 from pathlib import Path
-from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.utils import file_stats
@@ -10,10 +9,14 @@ from virtool.analyses.utils import check_nuvs_file_type
 
 
 async def create_analysis_file(
-    pg: AsyncEngine, analysis_id: str, analysis_format: str, name: str, size: int = None
-) -> Dict[str, any]:
-    """
-    Create a row in the `analysis_files` SQL table that represents an analysis result file.
+    pg: AsyncEngine,
+    analysis_id: str,
+    analysis_format: str,
+    name: str,
+    size: int = None,
+) -> dict[str, any]:
+    """Create a row in the `analysis_files` SQL table that represents an analysis result
+    file.
 
     :param pg: PostgreSQL AsyncEngine object
     :param analysis_id: ID that corresponds to a parent analysis
@@ -24,7 +27,10 @@ async def create_analysis_file(
     """
     async with AsyncSession(pg) as session:
         analysis_file = SQLAnalysisFile(
-            name=name, analysis=analysis_id, format=analysis_format, size=size
+            name=name,
+            analysis=analysis_id,
+            format=analysis_format,
+            size=size,
         )
 
         session.add(analysis_file)
@@ -41,10 +47,13 @@ async def create_analysis_file(
 
 
 async def create_nuvs_analysis_files(
-    pg: AsyncEngine, analysis_id: str, files: list, file_path: Path
+    pg: AsyncEngine,
+    analysis_id: str,
+    files: list,
+    file_path: Path,
 ):
-    """
-    Create a row in the `analysis_files` SQL table that represents an NuVs analysis result file.
+    """Create a row in the `analysis_files` SQL table that represents an NuVs analysis
+    result file.
 
     :param pg: PostgreSQL AsyncEngine object
     :param analysis_id: ID that corresponds to a parent analysis
@@ -63,8 +72,11 @@ async def create_nuvs_analysis_files(
 
         analysis_files.append(
             SQLAnalysisFile(
-                name=filename, analysis=analysis_id, format=file_type, size=size
-            )
+                name=filename,
+                analysis=analysis_id,
+                format=file_type,
+                size=size,
+            ),
         )
 
     async with AsyncSession(pg) as session:

@@ -4,7 +4,7 @@ import asyncio
 import os
 from asyncio import to_thread
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
@@ -22,16 +22,13 @@ from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import PATHOSCOPE_TASK_NAMES, join_legacy_read_paths
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
 
 SAMPLE_RIGHTS_PROJECTION = {
     "_id": False,
@@ -498,7 +495,9 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
 
 
 class NameGenerator:
-    """Generates unique incrementing sample names based on a base name and a space id."""
+    """Generates unique incrementing sample names based on a base name and a space
+    id.
+    """
 
     def __init__(self, mongo: "Mongo", base_name: str, space_id: str):
         self.base_name = base_name

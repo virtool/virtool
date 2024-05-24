@@ -5,9 +5,9 @@ from aiohttp.web import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
 from virtool.config.cls import Config
-from virtool.api.client import AbstractClient
 from virtool.labels.models import SQLLabel
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
@@ -19,9 +19,8 @@ class SampleRight(Enum):
 
 
 def calculate_workflow_tags(analyses: list) -> dict:
-    """
-    Calculate the workflow tags (eg. "ip", True) that should be applied to a sample document based
-    on a list of its associated analyses.
+    """Calculate the workflow tags (eg. "ip", True) that should be applied to a sample
+    document based on a list of its associated analyses.
 
     :param analyses: the analyses to calculate tags for
     :return: workflow tags to apply to the sample document
@@ -44,8 +43,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
 
 
 async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
-    """
-    Check for existence of label IDs given in sample creation request
+    """Check for existence of label IDs given in sample creation request
 
     :param pg: PostgreSQL database connection object
     :param labels: list of label IDs given in the sample creation request
@@ -53,7 +51,7 @@ async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
     """
     async with AsyncSession(pg) as session:
         query = await session.execute(
-            select(SQLLabel.id).where(SQLLabel.id.in_(labels))
+            select(SQLLabel.id).where(SQLLabel.id.in_(labels)),
         )
         results = set(query.scalars().all())
 
@@ -81,20 +79,18 @@ def get_sample_rights(sample: dict, client: AbstractClient):
 
 
 def bad_labels_response(labels: list[int]) -> Response:
-    """
-    Creates a response that indicates that some label IDs do not exist
+    """Creates a response that indicates that some label IDs do not exist
 
     :param labels: A list of label IDs that do not exist
     :return: A `bad_request()` response
     """
     raise APIBadRequest(
-        f"Labels do not exist: {', '.join(str(label) for label in labels)}"
+        f"Labels do not exist: {', '.join(str(label) for label in labels)}",
     )
 
 
 def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:
-    """
-    Create a path string for a sample read file using the old file naming
+    """Create a path string for a sample read file using the old file naming
     convention (eg. reads_1.fastq).
 
     :param sample_path: the path to the sample directory
@@ -106,8 +102,7 @@ def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:
 
 
 def join_legacy_read_paths(config: Config, sample):
-    """
-    Create a list of paths for the read files associated with the `sample`.
+    """Create a list of paths for the read files associated with the `sample`.
 
     :param config: the application configuration
     :param sample: the sample document
