@@ -2584,10 +2584,10 @@
 # name: test_upload_artifact[None]
   dict({
     'id': 1,
-    'name': 'small.fq',
-    'name_on_disk': 'small.fq',
+    'name': 'small.fq.gz',
+    'name_on_disk': 'small.fq.gz',
     'sample': 'test',
-    'size': 3130756,
+    'size': 9081,
     'type': 'fastq',
     'uploaded_at': '2015-10-06T20:00:00Z',
   })

@@ -4,18 +4,18 @@ from pathlib import Path
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
-from virtool.config.cls import ServerConfig
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.pg.utils import get_row_by_id
-from virtool.uploads.models import UploadType, SQLUpload
+from virtool.uploads.models import SQLUpload, UploadType
 
 
 async def test_create(
-    config: ServerConfig,
+    data_path: Path,
     data_layer: DataLayer,
     example_path: Path,
     fake2: DataFaker,
@@ -36,27 +36,32 @@ async def test_create(
     assert upload == snapshot(
         name="obj",
         matcher=path_type(
-            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)}
+            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)},
         ),
     )
 
     assert (await get_row_by_id(pg, SQLUpload, upload.id)).to_dict() == snapshot(
         name="sql",
         matcher=path_type(
-            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)}
+            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)},
         ),
     )
 
-    path = config.data_path / "files" / upload.name_on_disk
-    assert open(path, "rb").read() == open(fake_file_path, "rb").read()
+    assert (
+        open(data_path / "files" / upload.name_on_disk, "rb").read()
+        == open(fake_file_path, "rb").read()
+    )
 
 
 async def test_delete(
-    config: ServerConfig, data_layer: DataLayer, fake2: DataFaker, snapshot_recent
+    data_path: Path,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    snapshot_recent: SnapshotAssertion,
 ):
     before = await fake2.uploads.create(user=await fake2.users.create())
 
-    path = config.data_path / "files" / before.name_on_disk
+    path = data_path / "files" / before.name_on_disk
 
     assert path.is_file()
 
@@ -79,7 +84,10 @@ async def test_delete(
 
 @pytest.mark.parametrize("multi", [True, False])
 async def test_release(
-    multi: bool, data_layer: DataLayer, fake2: DataFaker, pg: AsyncEngine
+    multi: bool,
+    data_layer: DataLayer,
+    fake2: DataFaker,
+    pg: AsyncEngine,
 ):
     user = await fake2.users.create()
 
@@ -91,7 +99,7 @@ async def test_release(
 
     assert (
         await data_layer.uploads.release(
-            [upload_1.id, upload_3.id] if multi else upload_2.id
+            [upload_1.id, upload_3.id] if multi else upload_2.id,
         )
         is None
     )

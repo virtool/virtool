@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+from tests.fixtures.client import ClientSpawner
 from virtool.data.layer import DataLayer
 from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
@@ -19,19 +20,18 @@ from virtool.utils import get_temp_dir
 
 
 async def test_add_subtraction_files_task(
-    config,
-    data_layer,
-    mongo,
+    data_path: Path,
+    data_layer: DataLayer,
+    mongo: Mongo,
     pg: AsyncEngine,
-    snapshot,
-    spawn_client,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
     static_time,
-    tmp_path,
 ):
-    test_dir = tmp_path / "subtractions" / "foo"
-    test_dir.mkdir(parents=True)
-    test_dir.joinpath("subtraction.fa.gz").write_text("FASTA file")
-    test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
+    path = data_path / "subtractions" / "foo"
+    path.mkdir(parents=True)
+    path.joinpath("subtraction.fa.gz").write_text("FASTA file")
+    path.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
 
     await mongo.subtraction.insert_one(
         {
@@ -39,7 +39,7 @@ async def test_add_subtraction_files_task(
             "name": "Foo",
             "nickname": "Foo Subtraction",
             "deleted": False,
-        }
+        },
     )
 
     async with AsyncSession(pg) as session:
@@ -53,18 +53,16 @@ async def test_add_subtraction_files_task(
                 step="rename_index_files",
                 type="add_subtraction_files",
                 created_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
 
-    temp_dir = get_temp_dir()
-
-    task = AddSubtractionFilesTask(1, data_layer, {}, temp_dir)
+    task = AddSubtractionFilesTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 
-    assert sorted(os.listdir(config.data_path / "subtractions" / "foo")) == [
+    assert sorted(os.listdir(data_path / "subtractions" / "foo")) == [
         "subtraction.1.bt2",
         "subtraction.fa.gz",
     ]
@@ -76,23 +74,22 @@ async def test_add_subtraction_files_task(
 
 
 async def test_check_subtraction_fasta_file_task(
-    config,
     data_layer: DataLayer,
+    data_path: Path,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
     test_files_path: Path,
-    tmpdir,
 ):
-    subtractions_path = Path(tmpdir.mkdir("subtractions"))
-    subtraction_path = subtractions_path / "foo"
-    subtraction_path.mkdir()
+    subtraction_path = data_path / "subtractions" / "foo"
+    subtraction_path.mkdir(parents=True)
 
     for path in (test_files_path / "index").iterdir():
         if path.name.startswith("host."):
             shutil.copy(
-                path, subtraction_path / path.name.replace("host", "subtraction")
+                path,
+                subtraction_path / path.name.replace("host", "subtraction"),
             )
 
     assert sorted(os.listdir(subtraction_path)) == [
@@ -109,7 +106,7 @@ async def test_check_subtraction_fasta_file_task(
             "_id": "foo",
             "name": "Foo",
             "deleted": False,
-        }
+        },
     )
 
     async with AsyncSession(pg) as session:
@@ -123,13 +120,16 @@ async def test_check_subtraction_fasta_file_task(
                 step="check_subtractions_fasta_files",
                 type="check_subtractions_fasta_files",
                 created_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
 
     task = CheckSubtractionsFASTATask(
-        1, data_layer, {"subtraction": "foo"}, get_temp_dir()
+        1,
+        data_layer,
+        {"subtraction": "foo"},
+        get_temp_dir(),
     )
 
     await task.run()

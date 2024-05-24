@@ -5,18 +5,19 @@ from pathlib import Path
 
 import arrow
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
-from virtool.fake.next import fake_file_chunker, DataFaker
+from virtool.fake.next import DataFaker, fake_file_chunker
+from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
 from virtool.references.tasks import (
     CleanReferencesTask,
+    CloneReferenceTask,
     ImportReferenceTask,
     RemoteReferenceTask,
-    CloneReferenceTask,
 )
 from virtool.tasks.models import SQLTask
 from virtool.uploads.models import UploadType
@@ -45,10 +46,16 @@ TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
     ids=["no_updates", "too_old", "ready", "too_new", "clean"],
 )
 async def test_clean_references_task(
-    update, data_layer, fake2, mocker, mongo, pg, snapshot, static_time
+    update,
+    data_layer,
+    fake2,
+    mocker,
+    mongo,
+    pg,
+    snapshot,
+    static_time,
 ):
-    """
-    Test the following situations:
+    """Test the following situations:
 
     * no updates have been applied to the references (`[]`)
     * the latest update is older than the installed version
@@ -83,7 +90,7 @@ async def test_clean_references_task(
                 "published_at": datetime.datetime(2020, 1, 1, 21, 0, 0),
                 "size": 1234567,
                 "user": {"id": user.id},
-            }
+            },
         ]
     else:
         updates = []
@@ -106,7 +113,7 @@ async def test_clean_references_task(
             "user": {
                 "id": user.id,
             },
-        }
+        },
     )
 
     async with AsyncSession(pg) as session:
@@ -124,7 +131,7 @@ async def test_clean_references_task(
     assert await mongo.references.find_one({}) == snapshot
 
 
-@pytest.fixture
+@pytest.fixture()
 def assert_reference_created(mongo, snapshot):
     async def func(
         query: dict | None = None,
@@ -167,11 +174,11 @@ def assert_reference_created(mongo, snapshot):
 @pytest.mark.flaky(reruns=2)
 async def test_import_reference_task(
     assert_reference_created,
-    config,
     data_layer: DataLayer,
-    fake2,
-    mongo,
-    pg,
+    data_path: Path,
+    fake2: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
     static_time,
     tmpdir,
 ):
@@ -194,7 +201,7 @@ async def test_import_reference_task(
             "user": {
                 "id": user.id,
             },
-        }
+        },
     )
 
     async with AsyncSession(pg) as session:
@@ -203,7 +210,7 @@ async def test_import_reference_task(
                 id=1,
                 complete=False,
                 context={
-                    "path": str(config.data_path / "files" / upload.name_on_disk),
+                    "path": str(data_path / "files" / upload.name_on_disk),
                     "ref_id": "foo",
                     "user_id": user.id,
                 },
@@ -212,7 +219,7 @@ async def test_import_reference_task(
                 step="load_file",
                 type="import_reference",
                 created_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()
@@ -256,7 +263,7 @@ async def test_remote_reference_task(
                 step="download",
                 type="remote_reference",
                 created_at=static_time.datetime,
-            )
+            ),
         )
 
         await asyncio.gather(
@@ -266,7 +273,7 @@ async def test_remote_reference_task(
                     "_id": "foo",
                     "created_at": static_time.datetime,
                     "updates": [{"id": 12345, "ready": False}],
-                }
+                },
             ),
         )
 
@@ -311,7 +318,7 @@ async def create_reference(
                 progress=0,
                 step="load_file",
                 type="import_reference",
-            )
+            ),
         )
 
         await asyncio.gather(
@@ -329,7 +336,7 @@ async def create_reference(
                     "source_types": [],
                     "user": {"id": user.id},
                     "users": [],
-                }
+                },
             ),
         )
 
@@ -370,7 +377,7 @@ async def test_clone_reference_task(
                 "id": user.id,
             },
             "users": [],
-        }
+        },
     )
 
     async with AsyncSession(pg) as session:
@@ -388,7 +395,7 @@ async def test_clone_reference_task(
                 step="load_file",
                 type="import_reference",
                 created_at=static_time.datetime,
-            )
+            ),
         )
 
         await session.commit()

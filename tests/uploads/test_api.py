@@ -6,8 +6,6 @@ from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner
-from virtool.config import get_config_from_app
-from virtool.config.cls import ServerConfig
 from virtool.fake.next import DataFaker
 from virtool.uploads.models import UploadType
 
@@ -174,14 +172,12 @@ class TestFind:
 
 
 async def test_get(
-    config: ServerConfig,
     example_path: Path,
     fake2: DataFaker,
     spawn_client: ClientSpawner,
 ):
     """Test `GET /uploads/:id` to assure that it lets you download a file."""
     client = await spawn_client(authenticated=True)
-    get_config_from_app(client.app).data_path = config.data_path
 
     upload = await fake2.uploads.create(user=await fake2.users.create())
 

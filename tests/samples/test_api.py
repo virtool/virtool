@@ -11,9 +11,7 @@ from syrupy import SnapshotAssertion
 from virtool_core.models.enums import LibraryType, Permission
 from virtool_core.models.samples import WorkflowState
 
-from tests.fixtures.client import ClientSpawner, VirtoolTestClient
-from virtool.config import get_config_from_app
-from virtool.config.cls import ServerConfig
+from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -883,7 +881,7 @@ class TestDelete:
     @pytest.mark.parametrize("finalized", [True, False])
     async def test_ok(
         self,
-        config: ServerConfig,
+        data_path: Path,
         finalized: bool,
         fake2: DataFaker,
         spawn_client: ClientSpawner,
@@ -891,7 +889,7 @@ class TestDelete:
     ):
         client = await spawn_client(authenticated=True)
 
-        (config.data_path / "samples/test").mkdir(parents=True)
+        (data_path / "samples/test").mkdir(parents=True)
 
         user = await fake2.users.create()
 
@@ -905,14 +903,14 @@ class TestDelete:
     async def test_from_job(
         self,
         finalized: bool,
-        config: ServerConfig,
+        data_path: Path,
         fake2: DataFaker,
         spawn_job_client,
     ):
         """Test that job client can delete a sample only when it is unfinalized."""
         client = await spawn_job_client(authenticated=True)
 
-        (config.data_path / "samples/test").mkdir(parents=True)
+        (data_path / "samples/test").mkdir(parents=True)
 
         user = await fake2.users.create()
 
@@ -1123,21 +1121,20 @@ async def test_analyze(
 @pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifact(
     error: int | None,
-    resp_is,
-    snapshot,
+    data_path: Path,
+    example_path: Path,
     mongo: Mongo,
-    spawn_job_client,
-    test_files_path: Path,
-    tmp_path,
+    resp_is,
+    snapshot: SnapshotAssertion,
+    spawn_job_client: JobClientSpawner,
     static_time,
 ):
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
-    path = test_files_path / "nuvs" / "reads_1.fq"
+    path = example_path / "reads" / "reads_1.fq.gz"
 
     client = await spawn_job_client(authenticated=True)
 
-    get_config_from_app(client.app).data_path = tmp_path
-    sample_file_path = tmp_path / "samples" / "test"
+    sample_file_path = data_path / "samples" / "test"
 
     await mongo.samples.insert_one(
         {
@@ -1151,13 +1148,13 @@ async def test_upload_artifact(
     data = {"file": open(path, "rb")}
 
     resp = await client.post(
-        f"/samples/test/artifacts?name=small.fq&type={artifact_type}",
+        f"/samples/test/artifacts?name=small.fq.gz&type={artifact_type}",
         data=data,
     )
 
     if error == 409:
         resp_2 = await client.post(
-            f"/samples/test/artifacts?name=small.fq&type={artifact_type}",
+            f"/samples/test/artifacts?name=small.fq.gz&type={artifact_type}",
             data={**data, "file": open(path, "rb")},
         )
 
@@ -1169,7 +1166,7 @@ async def test_upload_artifact(
     if not error:
         assert resp.status == 201
         assert await resp.json() == snapshot
-        assert os.listdir(sample_file_path) == ["small.fq"]
+        assert os.listdir(sample_file_path) == ["small.fq.gz"]
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
@@ -1177,65 +1174,63 @@ async def test_upload_artifact(
 class TestUploadReads:
     async def test(
         self,
-        snapshot,
-        spawn_job_client,
-        test_files_path: Path,
-        tmp_path,
+        data_path: Path,
+        example_path: Path,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        spawn_job_client: JobClientSpawner,
     ):
         """Test that paired sample reads can be uploaded using the Jobs API and that
         conflicts are properly handled.
         """
         client = await spawn_job_client(authenticated=True)
-        get_config_from_app(client.app).data_path = tmp_path
 
-        await client.db.samples.insert_one(
+        await mongo.samples.insert_one(
             {
                 "_id": "test",
                 "ready": True,
             },
         )
 
-        path = test_files_path / "samples"
-
         resp_1 = await client.put(
             "/samples/test/reads/reads_1.fq.gz",
-            data={"file": open(path / "reads_1.fq.gz", "rb")},
+            data={"file": open(example_path / "reads" / "reads_1.fq.gz", "rb")},
         )
 
         assert resp_1.status == 201
 
         resp_2 = await client.put(
             "/samples/test/reads/reads_2.fq.gz",
-            data={"file": open(path / "reads_2.fq.gz", "rb")},
+            data={"file": open(example_path / "reads" / "reads_2.fq.gz", "rb")},
         )
 
         assert resp_2.status == 201
 
         resp_3 = await client.put(
             "/samples/test/reads/reads_2.fq.gz",
-            data={"file": open(path / "reads_2.fq.gz", "rb")},
+            data={"file": open(example_path / "reads" / "reads_2.fq.gz", "rb")},
         )
 
         assert resp_3.status == 409
         assert await resp_3.json() == snapshot(name="409")
 
-        assert set(os.listdir(tmp_path / "samples" / "test")) == {
+        assert set(os.listdir(data_path / "samples" / "test")) == {
             "reads_1.fq.gz",
             "reads_2.fq.gz",
         }
 
     async def test_uncompressed(
         self,
+        example_path: Path,
         fake2: DataFaker,
-        snapshot,
-        spawn_job_client,
-        test_files_path,
-        tmp_path: Path,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        spawn_job_client: JobClientSpawner,
     ):
         """Test that uncompressed sample reads are rejected."""
         client = await spawn_job_client(authenticated=True)
 
-        await client.db.samples.insert_one(
+        await mongo.samples.insert_one(
             {
                 "_id": "test",
                 "ready": True,
@@ -1247,7 +1242,7 @@ class TestUploadReads:
         resp = await client.put(
             f"/samples/test/reads/reads_1.fq.gz?upload={upload.id}",
             data={
-                "file": gzip.open(test_files_path / "samples" / "reads_1.fq.gz", "rb"),
+                "file": gzip.open(example_path / "reads" / "reads_1.fq.gz", "rb"),
             },
         )
 
@@ -1258,24 +1253,21 @@ class TestUploadReads:
 @pytest.mark.parametrize("suffix", ["1", "2"])
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
 async def test_download_reads(
-    suffix,
-    error,
-    tmp_path,
+    suffix: str,
+    error: str | None,
+    data_path: Path,
     mongo: Mongo,
-    spawn_client,
-    spawn_job_client,
-    pg,
+    pg: AsyncEngine,
+    spawn_client: ClientSpawner,
+    spawn_job_client: JobClientSpawner,
 ):
     client = await spawn_client(authenticated=True)
     job_client = await spawn_job_client(authenticated=True)
 
-    get_config_from_app(client.app).data_path = tmp_path
-    get_config_from_app(job_client.app).data_path = tmp_path
-
     file_name = f"reads_{suffix}.fq.gz"
 
     if error != "404_file":
-        path = tmp_path / "samples" / "foo"
+        path = data_path / "samples" / "foo"
         path.mkdir(parents=True)
         path.joinpath(file_name).write_text("test")
 
@@ -1307,25 +1299,24 @@ async def test_download_reads(
     else:
         assert resp.status == job_resp.status == 200
         assert (
-            (
-                get_config_from_app(client.app).data_path
-                / "samples"
-                / "foo"
-                / file_name
-            ).read_bytes()
+            (data_path / "samples" / "foo" / file_name).read_bytes()
             == await resp.content.read()
             == await job_resp.content.read()
         )
 
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
-async def test_download_artifact(error, tmp_path, mongo: Mongo, spawn_job_client, pg):
+async def test_download_artifact(
+    error: str | None,
+    data_path: Path,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    spawn_job_client: JobClientSpawner,
+):
     client = await spawn_job_client(authenticated=True)
 
-    get_config_from_app(client.app).data_path = tmp_path
-
     if error != "404_file":
-        path = tmp_path / "samples" / "foo"
+        path = data_path / "samples" / "foo"
         path.mkdir(parents=True)
         path.joinpath("fastqc.txt").write_text("test")
 
@@ -1359,7 +1350,7 @@ async def test_download_artifact(error, tmp_path, mongo: Mongo, spawn_job_client
 
     assert resp.status == 200
     assert (
-        get_config_from_app(client.app).data_path / "samples" / "foo" / "fastqc.txt"
+        data_path / "samples" / "foo" / "fastqc.txt"
     ).read_bytes() == await resp.content.read()
 
 
@@ -1423,9 +1414,9 @@ class TestChangeSampleRights:
     async def test_update_all_user_rights(
         self,
         get_sample_data,
-        mongo,
-        snapshot,
-        spawn_client,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         client = await spawn_client(administrator=True, authenticated=True)
         resp = await client.patch(
@@ -1439,10 +1430,10 @@ class TestChangeSampleRights:
     async def test_update_all_rights(
         self,
         get_sample_data,
-        fake2,
-        mongo,
-        snapshot,
-        spawn_client,
+        fake2: DataFaker,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         group = await fake2.groups.create()
 

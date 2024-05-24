@@ -11,6 +11,7 @@ from unittest.mock import ANY
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
@@ -249,10 +250,10 @@ async def test_get(
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_download_otus_json(
     file_exists: bool,
-    mocker,
+    data_path: Path,
+    mocker: MockerFixture,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
-    tmp_path: Path,
 ):
     with gzip.open(OTUS_JSON_PATH, "rt") as f:
         expected = json.load(f)
@@ -264,9 +265,7 @@ async def test_download_otus_json(
 
     client = await spawn_job_client(authenticated=True)
 
-    get_config_from_app(client.app).data_path = tmp_path
-
-    index_dir = tmp_path / "references" / "foo" / "bar"
+    index_dir = data_path / "references" / "foo" / "bar"
     index_dir.mkdir(parents=True)
 
     if file_exists:
@@ -540,22 +539,20 @@ async def test_delete_index(
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
-    error,
-    fake2,
+    error: str | None,
+    data_path: Path,
+    fake2: DataFaker,
+    mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
-    snapshot,
-    mongo: Mongo,
+    snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
     static_time,
-    tmp_path: Path,
 ):
     client = await spawn_job_client(authenticated=True)
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
 
     files = {"file": open(path, "rb")}
-
-    get_config_from_app(client.app).data_path = tmp_path
 
     user, _ = await asyncio.gather(
         fake2.users.create(),
@@ -600,10 +597,10 @@ async def test_upload(
         return
 
     assert resp.status == 201
-    assert os.listdir(tmp_path / "references" / "bar" / "foo") == ["reference.1.bt2"]
+    assert os.listdir(data_path / "references" / "bar" / "foo") == ["reference.1.bt2"]
 
     assert await resp.json() == snapshot
-    assert await client.db.indexes.find_one("foo") == snapshot
+    assert await mongo.indexes.find_one("foo") == snapshot
 
     async with AsyncSession(pg) as session:
         assert (
@@ -613,11 +610,11 @@ async def test_upload(
 
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
-    error,
+    error: str | None,
     fake2: DataFaker,
-    pg: AsyncEngine,
-    snapshot,
     mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
     static_time,
     test_otu,
@@ -678,13 +675,11 @@ async def test_finalize(
 @pytest.mark.parametrize("status", [200, 404])
 async def test_download(
     status: int,
+    data_path: Path,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
-    tmp_path,
 ):
     client = await spawn_job_client(authenticated=True)
-
-    get_config_from_app(client.app).data_path = tmp_path
 
     await asyncio.gather(
         mongo.indexes.insert_one(
@@ -696,7 +691,7 @@ async def test_download(
     )
 
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
-    target_path = tmp_path / "references" / "test_reference" / "test_index"
+    target_path = data_path / "references" / "test_reference" / "test_index"
     target_path.mkdir(parents=True)
     shutil.copyfile(path, target_path / "reference.1.bt2")
 

@@ -1,8 +1,10 @@
 import datetime
 import shutil
+from pathlib import Path
 from unittest.mock import call
 
 import pytest
+from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
@@ -22,8 +24,7 @@ async def test_list(
     snapshot: SnapshotAssertion,
     static_time,
 ):
-    """
-    Test that MLData.list() returns a list of MLModel objects.
+    """Test that MLData.list() returns a list of MLModel objects.
 
     This test also indirectly tests that MLData.load() can be used by the data faker
     to populate the database with ML models and releases.
@@ -39,12 +40,12 @@ async def test_list(
                     progress=100,
                     step="sync",
                     type=SyncMLModelsTask.name,
-                )
+                ),
             )
             await session.commit()
 
     assert await data_layer.ml.list() == snapshot(
-        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True)
+        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
 
 
@@ -57,18 +58,18 @@ async def test_get(
     await fake2.ml.populate()
 
     assert await data_layer.ml.get(1) == snapshot(
-        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True)
+        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
 
 
 async def test_load(
-    config,
+    data_path: Path,
     data_layer: DataLayer,
     example_path,
-    fake2,
-    mocker,
+    fake2: DataFaker,
+    mocker: MockerFixture,
     pg: AsyncEngine,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     """Test that MLData.load() can load updated models into the database."""
@@ -100,7 +101,7 @@ async def test_load(
                 *[fake2.ml.create_release_manifest_item() for _ in range(2)],
             ],
             "ml-insect-viruses": [fake2.ml.create_release_manifest_item()],
-        }
+        },
     )
 
     assert await data_layer.ml.list() == snapshot(
@@ -120,10 +121,10 @@ async def test_load(
 
     spy.assert_has_calls(
         [
-            call("https://www.snyder.com/", config.data_path / "ml/1/model.tar.gz"),
-            call("http://walker.com/", config.data_path / "ml/2/model.tar.gz"),
-            call("http://www.morales.biz/", config.data_path / "ml/3/model.tar.gz"),
-            call("http://johnson.com/", config.data_path / "ml/9/model.tar.gz"),
+            call("https://www.snyder.com/", data_path / "ml/1/model.tar.gz"),
+            call("http://walker.com/", data_path / "ml/2/model.tar.gz"),
+            call("http://www.morales.biz/", data_path / "ml/3/model.tar.gz"),
+            call("http://johnson.com/", data_path / "ml/9/model.tar.gz"),
         ],
         any_order=True,
     )
