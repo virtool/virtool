@@ -194,6 +194,7 @@ class ClientSpawner(Protocol):
 @pytest.fixture()
 def spawn_client(
     aiohttp_client,
+    data_path: Path,
     fake2: DataFaker,
     mocker,
     mongo_connection_string: str,
@@ -336,7 +337,7 @@ def spawn_client(
             b2c_client_secret="",
             b2c_tenant="",
             b2c_user_flow="",
-            data_path=Path("data"),
+            data_path=data_path,
             dev=dev,
             flags=[],
             host="localhost",
@@ -431,7 +432,7 @@ def spawn_client(
 @pytest.fixture()
 def spawn_job_client(
     aiohttp_client,
-    config: ServerConfig,
+    data_path: Path,
     mongo: Mongo,
     mongo_connection_string,
     mongo_name: str,
@@ -446,16 +447,19 @@ def spawn_job_client(
     API as a Job.
     """
 
-    async def _spawn_job_client(
+    async def func(
         add_route_table: RouteTableDef = None,
         authenticated: bool = False,
         base_url: str = "",
         dev: bool = False,
     ):
-        # Create a test job to use for authentication.
         if authenticated:
+            # Create a test job to use for authentication.
             job_id, key = "test_job", "test_key"
-            await mongo.jobs.insert_one({"_id": job_id, "key": hash_key(key)})
+
+            await mongo.jobs.insert_one(
+                {"_id": "test_job", "key": hash_key("test_key")}
+            )
 
             # Create Basic Authentication header.
             auth = BasicAuth(login=f"job-{job_id}", password=key)
@@ -471,7 +475,7 @@ def spawn_job_client(
                 b2c_client_secret="",
                 b2c_tenant="",
                 b2c_user_flow="",
-                data_path=config.data_path,
+                data_path=data_path,
                 dev=dev,
                 flags=[],
                 host="localhost",
@@ -493,10 +497,7 @@ def spawn_job_client(
             app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
-        client.db = mongo
-
-        assert client.app["pg"] is pg
 
         return client
 
-    return _spawn_job_client
+    return func

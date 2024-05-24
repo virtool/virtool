@@ -4,17 +4,18 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.layer import DataLayer
 from virtool.indexes.models import SQLIndexFile
 from virtool.indexes.tasks import EnsureIndexFilesTask
+from virtool.mongo.core import Mongo
 from virtool.tasks.models import SQLTask
 from virtool.utils import get_temp_dir
 
 
-@pytest.fixture
-async def task_index(config, mongo, reference, test_otu, test_sequence):
+@pytest.fixture()
+async def task_index(data_path: Path, mongo: Mongo, reference, test_otu, test_sequence):
     test_sequence["accession"] = "KX269872"
     ref_id = test_otu["reference"]["id"]
 
@@ -39,11 +40,11 @@ async def task_index(config, mongo, reference, test_otu, test_sequence):
                 "manifest": {test_otu["_id"]: test_otu["version"]},
                 "ready": True,
                 "reference": {"id": ref_id},
-            }
+            },
         ),
     )
 
-    index_dir = config.data_path / "references" / ref_id / "index_1"
+    index_dir = data_path / "references" / ref_id / "index_1"
     index_dir.mkdir(parents=True)
 
     return index
@@ -61,8 +62,7 @@ async def test_ensure_index_files(
     task_index,
     tmp_path,
 ):
-    """
-    Test that ``files`` field is populated for index documents in the following cases:
+    """Test that ``files`` field is populated for index documents in the following cases:
 
     - Index document has no existing "files" field
     - ``files`` field is an empty list
@@ -99,7 +99,7 @@ async def test_ensure_index_files(
                 step="rename_index_files",
                 type="add_index_files",
                 created_at=static_time.datetime,
-            )
+            ),
         )
         await session.commit()
 

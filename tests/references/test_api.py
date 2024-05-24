@@ -1,5 +1,4 @@
 import asyncio
-from pathlib import Path
 from unittest.mock import ANY, call
 
 import pytest
@@ -11,7 +10,6 @@ from virtool_core.models.enums import Permission
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
-from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -234,18 +232,15 @@ class TestCreate:
     @pytest.mark.flaky(reruns=2)
     async def test_import(
         self,
-        snapshot,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time,
         test_files_path,
-        tmpdir,
     ):
         client = await spawn_client(
             authenticated=True,
             permissions=[Permission.create_ref, Permission.upload_file],
         )
-
-        get_config_from_app(client.app).data_path = Path(tmpdir)
 
         resp = await client.post_form(
             "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
@@ -269,11 +264,10 @@ class TestCreate:
     async def test_clone(
         self,
         fake2: DataFaker,
-        snapshot,
         mongo: Mongo,
         spawn_client: ClientSpawner,
+        snapshot: SnapshotAssertion,
         static_time,
-        tmpdir,
     ):
         client = await spawn_client(
             authenticated=True,
@@ -324,10 +318,9 @@ class TestCreate:
 
     async def test_remote(
         self,
-        snapshot,
         spawn_client: ClientSpawner,
+        snapshot: SnapshotAssertion,
         static_time,
-        tmpdir,
     ):
         client = await spawn_client(
             authenticated=True,
