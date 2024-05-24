@@ -145,6 +145,7 @@ class JobClientSpawner(Protocol):
     async def __call__(
         self,
         add_route_table: RouteTableDef | None = None,
+        auth: BasicAuth | None = None,
         authenticated: bool = False,
         base_url: str = "",
         dev: bool = False,
