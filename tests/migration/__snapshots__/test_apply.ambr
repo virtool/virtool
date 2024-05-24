@@ -211,5 +211,12 @@
       'name': 'move files to sql',
       'revision': 'ulapmx8i3vpg',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 31,
+      'name': 'ensure index files',
+      'revision': '0p3nhjg1fcfj',
+    }),
   ])
 # ---
