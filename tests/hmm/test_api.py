@@ -1,11 +1,12 @@
 import json
 import shutil
+from pathlib import Path
 
 import aiofiles
 import pytest
 from virtool_core.utils import decompress_file
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.config import get_config_from_app
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
@@ -125,8 +126,8 @@ async def test_get(
     assert await resp.json() == snapshot(name="json")
 
 
-async def test_get_hmm_annotations(spawn_job_client, tmp_path):
-    client = await spawn_job_client(authorize=True)
+async def test_get_hmm_annotations(spawn_job_client: JobClientSpawner, tmp_path: Path):
+    client = await spawn_job_client(authenticated=True)
     get_config_from_app(client.app).data_path = tmp_path
     db = get_mongo_from_app(client.app)
 
@@ -153,14 +154,14 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
 @pytest.mark.parametrize("data_exists", [True, False])
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_get_hmm_profiles(
-    data_exists,
-    file_exists,
-    example_path,
-    spawn_job_client,
+    data_exists: bool,
+    file_exists: bool,
+    example_path: Path,
+    spawn_job_client: JobClientSpawner,
     tmp_path,
 ):
     """Test that HMM profiles can be properly downloaded once they are available."""
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
     hmms_path = tmp_path / "hmm"
