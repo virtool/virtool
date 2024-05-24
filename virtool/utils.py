@@ -16,7 +16,6 @@ from aiohttp.web import Application
 from pydantic import BaseModel
 
 SUB_DIRS = [
-    "caches",
     "files",
     "references",
     "subtractions",

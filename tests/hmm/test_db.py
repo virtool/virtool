@@ -3,30 +3,30 @@ import shutil
 from pathlib import Path
 
 from aiohttp.test_utils import make_mocked_coro
+from pytest_mock import MockerFixture
 
 from virtool.hmm.db import (
+    generate_annotations_json_file,
     get_hmms_referenced_in_db,
     get_hmms_referenced_in_files,
-    generate_annotations_json_file,
     get_referenced_hmm_ids,
 )
+from virtool.mongo.core import Mongo
 
 JSON_RESULT_PATH = Path.cwd() / "tests" / "test_files" / "nuvs" / "results.json"
 
 
-async def test_get_hmms_referenced_in_files(mongo, tmp_path, config):
-    path = tmp_path / "samples" / "foo" / "analysis" / "bar"
+async def test_get_hmms_referenced_in_files(data_path: Path, mongo: Mongo):
+    path = data_path / "samples" / "foo" / "analysis" / "bar"
     path.mkdir(parents=True)
 
     shutil.copy(JSON_RESULT_PATH, path / "results.json")
 
     await mongo.analyses.insert_one(
-        {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}, "results": "file"}
+        {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}, "results": "file"},
     )
 
-    result = await get_hmms_referenced_in_files(mongo, config.data_path)
-
-    assert result == {
+    assert await get_hmms_referenced_in_files(mongo, data_path) == {
         "rejiddnd",
         "dltwctfw",
         "wotaqhkz",
@@ -36,7 +36,7 @@ async def test_get_hmms_referenced_in_files(mongo, tmp_path, config):
     }
 
 
-async def test_get_hmms_referenced_in_db(mongo):
+async def test_get_hmms_referenced_in_db(mongo: Mongo):
     await mongo.analyses.insert_many(
         [
             {
@@ -48,7 +48,7 @@ async def test_get_hmms_referenced_in_db(mongo):
                         "orfs": [
                             {"hits": [{"hit": "y"}, {"hit": "z"}]},
                             {"hits": [{"hit": "w"}]},
-                        ]
+                        ],
                     },
                 ],
             },
@@ -64,22 +64,25 @@ async def test_get_hmms_referenced_in_db(mongo):
         session=None,
     )
 
-    results = await get_hmms_referenced_in_db(mongo)
-
-    assert results == {"a", "b", "y", "z", "w", "d", "e"}
+    assert await get_hmms_referenced_in_db(mongo) == {"a", "b", "y", "z", "w", "d", "e"}
 
 
-async def test_get_referenced_hmm_ids(mocker, mongo, tmp_path, config):
+async def test_get_referenced_hmm_ids(
+    data_path: Path,
+    mocker: MockerFixture,
+    mongo: Mongo,
+):
     mocker.patch(
         "virtool.hmm.db.get_hmms_referenced_in_db",
         make_mocked_coro({"a", "b", "d", "f"}),
     )
 
     mocker.patch(
-        "virtool.hmm.db.get_hmms_referenced_in_files", make_mocked_coro({"a", "e", "f"})
+        "virtool.hmm.db.get_hmms_referenced_in_files",
+        make_mocked_coro({"a", "e", "f"}),
     )
 
-    assert await get_referenced_hmm_ids(mongo, config.data_path) == [
+    assert await get_referenced_hmm_ids(mongo, data_path) == [
         "a",
         "b",
         "d",
@@ -88,11 +91,11 @@ async def test_get_referenced_hmm_ids(mocker, mongo, tmp_path, config):
     ]
 
 
-async def test_generate_annotations_json_file(mongo, tmp_path, config):
+async def test_generate_annotations_json_file(data_path: Path, mongo: Mongo):
     await mongo.hmm.insert_one({"_id": "foo"})
     await mongo.hmm.insert_one({"_id": "bar"})
 
-    path = await generate_annotations_json_file(config.data_path, mongo)
+    path = await generate_annotations_json_file(data_path, mongo)
 
     assert path.exists()
 

@@ -1,12 +1,12 @@
 import json
 import shutil
+from pathlib import Path
 
 import aiofiles
 import pytest
 from virtool_core.utils import decompress_file
 
-from tests.fixtures.client import ClientSpawner
-from virtool.config import get_config_from_app
+from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 
@@ -125,16 +125,15 @@ async def test_get(
     assert await resp.json() == snapshot(name="json")
 
 
-async def test_get_hmm_annotations(spawn_job_client, tmp_path):
-    client = await spawn_job_client(authorize=True)
-    get_config_from_app(client.app).data_path = tmp_path
-    db = get_mongo_from_app(client.app)
+async def test_get_hmm_annotations(data_path: Path, spawn_job_client: JobClientSpawner):
+    client = await spawn_job_client(authenticated=True)
+    mongo = get_mongo_from_app(client.app)
 
-    await db.hmm.insert_one({"_id": "foo"})
-    await db.hmm.insert_one({"_id": "bar"})
+    await mongo.hmm.insert_one({"_id": "foo"})
+    await mongo.hmm.insert_one({"_id": "bar"})
 
-    compressed_hmm_annotations = tmp_path / "annotations.json.gz"
-    decompressed_hmm_annotations = tmp_path / "annotations.json"
+    compressed_hmm_annotations = data_path / "annotations.json.gz"
+    decompressed_hmm_annotations = data_path / "annotations.json"
 
     async with client.get("/hmms/files/annotations.json.gz") as response:
         assert response.status == 200
@@ -153,17 +152,16 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
 @pytest.mark.parametrize("data_exists", [True, False])
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_get_hmm_profiles(
-    data_exists,
-    file_exists,
-    example_path,
-    spawn_job_client,
-    tmp_path,
+    data_exists: bool,
+    file_exists: bool,
+    data_path: Path,
+    example_path: Path,
+    spawn_job_client: JobClientSpawner,
 ):
     """Test that HMM profiles can be properly downloaded once they are available."""
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
-    get_config_from_app(client.app).data_path = tmp_path
-    hmms_path = tmp_path / "hmm"
+    hmms_path = data_path / "hmm"
     profiles_path = hmms_path / "profiles.hmm"
 
     if data_exists:

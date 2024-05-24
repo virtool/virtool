@@ -1,7 +1,8 @@
 # serializer version: 1
 # name: TestFind.test[None]
   dict({
-    'documents': list([
+    'found_count': 3,
+    'items': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 2,
@@ -54,11 +55,16 @@
         }),
       }),
     ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
   })
 # ---
 # name: TestFind.test[reads]
   dict({
-    'documents': list([
+    'found_count': 1,
+    'items': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -77,11 +83,16 @@
         }),
       }),
     ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
   })
 # ---
 # name: TestFind.test[reference]
   dict({
-    'documents': list([
+    'found_count': 1,
+    'items': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 2,
@@ -100,6 +111,10 @@
         }),
       }),
     ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
   })
 # ---
 # name: TestFind.test_pagination[1-2]
@@ -340,6 +355,85 @@
 # ---
 # name: TestUpload.test
   dict({
+    'created_at': 'approximately_now_isoformat',
+    'id': 1,
+    'name': 'single.fq.gz',
+    'name_on_disk': '1-single.fq.gz',
+    'ready': True,
+    'removed': False,
+    'removed_at': None,
+    'reserved': False,
+    'size': 16700094,
+    'type': 'reads',
+    'uploaded_at': 'approximately_now_isoformat',
+    'user': dict({
+      'handle': 'bob',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestUpload.test_bad_upload_type
+  dict({
+    'found_count': 3,
+    'items': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 4,
+        'name': 'test.fq.gz',
+        'name_on_disk': '4-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'subtraction',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'reads',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': '3-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'reference',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+  dict({
     'created_at': str,
     'id': 1,
     'name': 'single.fq.gz',
@@ -351,13 +445,12 @@
     'size': 16700094,
     'type': 'reads',
     'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': dict({
+    'user': <class 'dict'> {
+      'administrator': False,
       'handle': 'bob',
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: TestUpload.test_bad_upload_type
+      'id': 'test',
+    },
+  }
   list([
     dict({
       'ctx': dict({

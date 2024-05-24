@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
@@ -118,7 +118,7 @@ async def test_get(
 
 
 async def test_get_from_job(fake, spawn_job_client, snapshot):
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     subtraction = await fake.subtractions.insert()
 
@@ -242,7 +242,7 @@ async def test_upload(
     snapshot,
     tmp_path: Path,
 ):
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
     test_dir = tmp_path / "files"
     test_dir.mkdir()
     test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
@@ -295,7 +295,7 @@ async def test_finalize(
     static_time,
     test_subtraction_files,
 ):
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     user = await fake2.users.create()
     job = await fake2.jobs.create(user)
@@ -354,11 +354,11 @@ async def test_job_remove(
     resp_is,
     snapshot,
     mongo: Mongo,
-    spawn_job_client: ClientSpawner,
+    spawn_job_client: JobClientSpawner,
     static_time,
     tmp_path: Path,
 ):
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
 
@@ -409,7 +409,7 @@ async def test_download_subtraction_files(
     spawn_job_client,
     tmp_path,
 ):
-    client = await spawn_job_client(authorize=True)
+    client = await spawn_job_client(authenticated=True)
 
     get_config_from_app(client.app).data_path = tmp_path
 

@@ -1,8 +1,11 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.indexes.db
+from tests.fixtures.client import ClientSpawner
+from virtool.config import Config
 from virtool.indexes.db import (
     attach_files,
     get_current_id_and_version,
@@ -11,6 +14,7 @@ from virtool.indexes.db import (
     update_last_indexed_versions,
 )
 from virtool.indexes.models import SQLIndexFile
+from virtool.mongo.core import Mongo
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -81,7 +85,7 @@ async def test_get_next_version(empty, has_ref, test_indexes, mongo):
     assert await get_next_version(mongo, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_get_patched_otus(mocker, mongo, config):
+async def test_get_patched_otus(config: Config, mocker: MockerFixture, mongo: Mongo):
     m = mocker.patch(
         "virtool.history.db.patch_to_version",
         make_mocked_coro((None, {"_id": "foo"}, None)),
@@ -102,7 +106,11 @@ async def test_get_patched_otus(mocker, mongo, config):
     )
 
 
-async def test_update_last_indexed_versions(mongo, test_otu, spawn_client):
+async def test_update_last_indexed_versions(
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    test_otu,
+):
     await spawn_client(authenticated=True)
     test_otu["version"] = 1
 

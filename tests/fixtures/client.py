@@ -135,12 +135,35 @@ class VirtoolTestClient:
         return await self._test_client.delete(url)
 
 
+class JobClientSpawner(Protocol):
+    """A protocol the describes a function that can spawn a test job client.
+
+    The fixture :func:`spawn_job_client` returns a function that conforms to this
+    protocol.
+    """
+
+    async def __call__(
+        self,
+        add_route_table: RouteTableDef | None = None,
+        auth: BasicAuth | None = None,
+        authenticated: bool = False,
+        base_url: str = "",
+        dev: bool = False,
+    ) -> VirtoolTestClient:
+        """Spawn a test job client.
+
+        :param add_route_table: a route table that will be added to the app
+        :param authenticated: whether the client should be authenticated
+        :param dev: whether the client should be in development mode
+        :return: the test client
+        """
+        ...
+
+
 class ClientSpawner(Protocol):
-    """A protocol the describes a function that can spawn a test client.
+    """A protocol the describes a function that can spawn a user test client.
 
-    The fixtures :func:`spawn_client` and :func:`spawn_job_client` both return functions
-    that conform to this protocol.
-
+    The fixture :func:`spawn_client` returns a function that conforms to this protocol.
     """
 
     async def __call__(
@@ -150,7 +173,7 @@ class ClientSpawner(Protocol):
         auth: BasicAuth | None = None,
         authenticated: bool = False,
         base_url: str = "",
-        config_overrides: dict[str, Any] | None = None,
+        dev: bool = False,
         flags: list[FlagName] | None = None,
         permissions: list[Permission] | None = None,
     ) -> VirtoolTestClient:
@@ -166,12 +189,12 @@ class ClientSpawner(Protocol):
         :param permissions: a list of permissions to give the user
         :return: the test client
         """
-        ...
 
 
 @pytest.fixture()
 def spawn_client(
     aiohttp_client,
+    data_path: Path,
     fake2: DataFaker,
     mocker,
     mongo_connection_string: str,
@@ -183,15 +206,15 @@ def spawn_client(
     pg: AsyncEngine,
     redis: Redis,
     redis_connection_string: str,
-):
+) -> ClientSpawner:
     """A factory for spawning test clients
 
     The function conforms to the :class:`ClientSpawner` protocol, which describes which
     configuration arguments can be passed to the function.
 
-    When clients are created, a testing server instance is also created. All methods called
-    on the client (eg. ``await client.get("/samples")``) are directed to the server
-    instance.
+    When clients are created, a testing server instance is also created. All methods
+    called on the client (eg. ``await client.get("/samples")``) are directed to the
+    server instance.
 
     Basic Usage
     -----------
@@ -294,7 +317,7 @@ def spawn_client(
         auth: BasicAuth | None = None,
         authenticated: bool = False,
         base_url: str = "",
-        config_overrides: dict[str, Any] | None = None,
+        dev: bool = False,
         flags: list[FlagName] | None = None,
         permissions: list[Permission] | None = None,
     ):
@@ -303,7 +326,7 @@ def spawn_client(
         :param auth: a basic authentication object to use
         :param authenticated: whether the client should be authenticated
         :param base_url:
-        :param config_overrides:
+        :param dev:
         :param flags:
         :param permissions:
         :return:
@@ -314,8 +337,8 @@ def spawn_client(
             b2c_client_secret="",
             b2c_tenant="",
             b2c_user_flow="",
-            data_path=Path("data"),
-            dev=False,
+            data_path=data_path,
+            dev=dev,
             flags=[],
             host="localhost",
             mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
@@ -330,10 +353,6 @@ def spawn_client(
             sentry_dsn="",
             use_b2c=False,
         )
-
-        if config_overrides:
-            for key, value in config_overrides.items():
-                setattr(config, key, value)
 
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
 
@@ -413,7 +432,7 @@ def spawn_client(
 @pytest.fixture()
 def spawn_job_client(
     aiohttp_client,
-    config: ServerConfig,
+    data_path: Path,
     mongo: Mongo,
     mongo_connection_string,
     mongo_name: str,
@@ -423,18 +442,24 @@ def spawn_job_client(
     pg_connection_string: str,
     redis_connection_string: str,
     mocker,
-):
-    """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
+) -> JobClientSpawner:
+    """A factory method for creating an aiohttp client which can authenticate with the
+    API as a Job.
+    """
 
-    async def _spawn_job_client(
-        authorize: bool = False,
-        dev: bool = False,
+    async def func(
         add_route_table: RouteTableDef = None,
+        authenticated: bool = False,
+        base_url: str = "",
+        dev: bool = False,
     ):
-        # Create a test job to use for authentication.
-        if authorize:
+        if authenticated:
+            # Create a test job to use for authentication.
             job_id, key = "test_job", "test_key"
-            await mongo.jobs.insert_one({"_id": job_id, "key": hash_key(key)})
+
+            await mongo.jobs.insert_one(
+                {"_id": "test_job", "key": hash_key("test_key")}
+            )
 
             # Create Basic Authentication header.
             auth = BasicAuth(login=f"job-{job_id}", password=key)
@@ -445,12 +470,12 @@ def spawn_job_client(
 
         app = await virtool.jobs.main.create_app(
             ServerConfig(
-                base_url="",
+                base_url=base_url,
                 b2c_client_id="",
                 b2c_client_secret="",
                 b2c_tenant="",
                 b2c_user_flow="",
-                data_path=config.data_path,
+                data_path=data_path,
                 dev=dev,
                 flags=[],
                 host="localhost",
@@ -472,10 +497,7 @@ def spawn_job_client(
             app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
-        client.db = mongo
-
-        assert client.app["pg"] is pg
 
         return client
 
-    return _spawn_job_client
+    return func

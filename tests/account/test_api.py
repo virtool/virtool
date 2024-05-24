@@ -13,7 +13,9 @@ from virtool.users.utils import Permission, hash_password
 
 
 async def test_get(
-    snapshot: SnapshotAssertion, spawn_client: ClientSpawner, static_time
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -500,7 +502,13 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         "remember_is_none",
     ],
 )
-async def test_login(mongo: Mongo, spawn_client: ClientSpawner, body, status, snapshot):
+async def test_login(
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    body,
+    status,
+    snapshot,
+):
     client = await spawn_client()
 
     await mongo.users.insert_one(

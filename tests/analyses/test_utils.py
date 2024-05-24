@@ -32,7 +32,7 @@ async def test_attach_analysis_files(
 
 
 @pytest.mark.parametrize("name", ["nuvs", "pathoscope"])
-def test_get_json_path(name):
+def test_get_json_path(name: str):
     """Test that the function can correctly extrapolate the path to a nuvs.json file given the `data_path`, `sample_id`,
     and `analysis_id` arguments.
 

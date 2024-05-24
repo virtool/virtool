@@ -1,8 +1,5 @@
-"""
-Fixtures for working with the Postgres testing instance.
+"""Fixtures for working with the Postgres testing instance."""
 
-
-"""
 import asyncio
 
 import orjson
@@ -17,8 +14,7 @@ from virtool.pg.utils import Base
 
 @pytest.fixture(scope="session")
 def pg_base_connection_string(request, pg_db_name: str):
-    """
-    A Postgres connection string without the database name at the end.
+    """A Postgres connection string without the database name at the end.
 
     This is used to manage databases in the Postgres instance. It is used by
     migration-specific fixtures like :func:`migration_pg` to create and drop databases.
@@ -31,8 +27,7 @@ def pg_base_connection_string(request, pg_db_name: str):
 
 @pytest.fixture(scope="session")
 def pg_db_name(worker_id: str):
-    """
-    An auto-generated Postgres database name. One database is generated for each xdist worker.
+    """An auto-generated Postgres database name. One database is generated for each xdist worker.
 
     eg. test_2 (for worker-2)
 
@@ -42,8 +37,7 @@ def pg_db_name(worker_id: str):
 
 @pytest.fixture(scope="session")
 def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
-    """
-    A full Postgres connection string with the auto-generated test database name
+    """A full Postgres connection string with the auto-generated test database name
     appended.
 
      eg. postgresql+asyncpg://virtool:virtool@localhost/test_2
@@ -67,8 +61,7 @@ async def engine(
     pg_base_connection_string: str,
     pg_connection_string: str,
 ) -> AsyncEngine:
-    """
-    Return a SQLAlchemy :class:`AsyncEngine` object for an auto-generated test database.
+    """Return a SQLAlchemy :class:`AsyncEngine` object for an auto-generated test database.
 
     Test database are specific to xdist workers.
 
@@ -117,8 +110,6 @@ async def pg(engine: AsyncEngine):
                     instance_messages,
                     labels,
                     sample_artifacts,
-                    sample_artifacts_cache,
-                    sample_reads_cache,
                     subtraction_files,
                     ml_model_releases,
                     ml_models,
@@ -131,12 +122,12 @@ async def pg(engine: AsyncEngine):
                     user_groups,
                     users
                 RESTART IDENTITY
-                """
-            )
+                """,
+            ),
         )
         await session.commit()
 
     # This is necessary to prevent InvalidCachedStatementError exceptions in some tests.
     await engine.dispose()
 
-    yield engine
+    return engine
