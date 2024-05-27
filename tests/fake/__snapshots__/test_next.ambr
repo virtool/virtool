@@ -209,6 +209,48 @@
     'workflow': 'jobs_pathoscope_bowtie',
   })
 # ---
+# name: test_subtractions
+  dict({
+    'count': 1,
+    'created_at': datetime.datetime(2024, 5, 27, 21, 36, 45, 590000),
+    'file': dict({
+      'id': 1,
+      'name': 'foobar.fq.gz',
+    }),
+    'files': list([
+    ]),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': 'foobar',
+    'job': dict({
+      'archived': False,
+      'created_at': datetime.datetime(2024, 5, 27, 21, 36, 45, 647000),
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.WAITING: 'waiting'>,
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+    ]),
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: test_uploads[upload[reserved]]
   dict({
     'created_at': datetime,

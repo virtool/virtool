@@ -1,11 +1,13 @@
 from typing import Union, Optional
 
 import aiohttp.web
+from aiohttp.web import Response
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
 from virtool_core.models.subtraction import SubtractionSearchResult
 
+from virtool.uploads.utils import multipart_file_chunker
 from virtool.api.errors import APINotFound, APIBadRequest, APIConflict, APINoContent
 from virtool.api.custom_json import json_response
 from virtool.authorization.permissions import LegacyPermission
@@ -158,7 +160,7 @@ class SubtractionView(PydanticView):
 
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
-async def upload(req):
+async def upload(req) -> Response:
     """
     Upload subtraction file.
 
@@ -169,7 +171,7 @@ async def upload(req):
 
     try:
         subtraction_file = await get_data_from_req(req).subtractions.upload_file(
-            subtraction_id, filename, await req.multipart()
+            subtraction_id, filename, multipart_file_chunker(await req.multipart())
         )
     except ResourceConflictError as err:
         raise APIConflict(str(err))

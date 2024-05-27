@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 import aiofiles
 from aiohttp import MultipartReader
+from typing import AsyncGenerator
 from cerberus import Validator
 from structlog import get_logger
 
@@ -41,7 +42,7 @@ def naive_validator(req) -> Validator.errors:
         return v.errors
 
 
-async def multipart_file_chunker(reader: MultipartReader) -> bytearray:
+async def multipart_file_chunker(reader: MultipartReader) -> AsyncGenerator[bytearray, None]:
     """Iterates through a ``MultipartReader`` as ``bytearray`` chunks."""
     file = await reader.next()
 
