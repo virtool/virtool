@@ -28,6 +28,7 @@ from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.task import Task
 from virtool_core.models.upload import Upload
 from virtool_core.models.user import User
+from virtool_core.models.subtraction import Subtraction
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
@@ -43,6 +44,7 @@ from virtool.tasks.task import BaseTask
 from virtool.uploads.models import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.oas import UpdateUserRequest
+from virtool.subtractions.oas import CreateSubtractionRequest, FinalizeSubtractionRequest, NucleotideComposition
 
 
 async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
@@ -119,6 +121,7 @@ class DataFaker:
         self.tasks = TasksFakerPiece(self)
         self.users = UsersFakerPiece(self)
         self.uploads = UploadsFakerPiece(self)
+        self.subtractions = SubtractionFakerPiece(self)
 
         self.mongo = mongo
 
@@ -499,3 +502,42 @@ class UsersFakerPiece(DataFakerPiece):
             )
 
         return user
+
+
+class SubtractionFakerPiece(DataFakerPiece):
+    model = Subtraction
+
+    async def create(
+            self,
+            user_id: str,
+            upload: Upload
+    ) -> Subtraction:
+        """
+        Create a fake subtraction.
+
+        This method will:
+        - Create a new subtraction using data_layer.subtractions.create().
+        - Upload files using data_layer.subtractions.upload_file().
+        - Finalize the subtraction using data_layer.subtractions.finalize().
+
+        :param user_id: the user
+        :param upload the fake upload
+        :return: the created subtraction
+        """
+
+        subtraction_request = CreateSubtractionRequest(
+            name="foo",
+            nickname="bar",
+            upload_id=upload.id
+        )
+
+        subtraction = await self._layer.subtractions.create(data=subtraction_request,
+                                                            subtraction_id="foobar",
+                                                            user_id=user_id,
+                                                            space_id=0)
+
+        gc = NucleotideComposition(**{k: 0.2 for k in "actgn"})
+        finalize_request = FinalizeSubtractionRequest(count=1, gc=gc)
+        subtraction = await self._layer.subtractions.finalize(subtraction_id=subtraction.id, data=finalize_request)
+
+        return subtraction
