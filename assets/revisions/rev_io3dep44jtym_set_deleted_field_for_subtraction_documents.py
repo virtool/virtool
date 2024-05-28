@@ -1,5 +1,5 @@
 """
-set subtractions field in for analysis documents
+set deleted field for subtraction documents
 
 Revision ID: io3dep44jtym
 Date: 2024-05-27 20:43:33.597733
