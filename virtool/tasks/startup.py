@@ -9,7 +9,6 @@ from virtool_core.redis import Redis
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
-from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.tasks import TimeoutJobsTask
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.pg.utils import connect_pg
@@ -61,7 +60,6 @@ async def startup_task_spawner(app: Application):
         (CleanReferencesTask, 3600),
         (CheckSubtractionsFASTATask, 3600),
         (CompressSamplesTask, 3600),
-        (EnsureIndexFilesTask, 3600),
         (HMMRefreshTask, 600),
         (MoveSampleFilesTask, 3600),
         (RefreshReferenceReleasesTask, 600),
