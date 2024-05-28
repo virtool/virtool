@@ -9,7 +9,6 @@ Date: 2024-05-22 20:47:09.866326
 import gzip
 from asyncio import to_thread, gather
 from pathlib import Path
-from typing import Dict, List
 
 import arrow
 import pytest
@@ -37,7 +36,7 @@ virtool_down_revision = "ulapmx8i3vpg"
 
 
 # Change this if an Alembic revision is required to run this migration.
-required_alembic_revision = "e694fb270acb"
+required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
@@ -92,7 +91,7 @@ async def ensure_json(
     index_path: Path,
     data_path: Path,
     ref_id: str,
-    manifest: Dict,
+    manifest: dict,
 ):
     """
     Ensure that a there is a compressed JSON representation of the index found at
@@ -129,8 +128,8 @@ async def ensure_json(
 
 
 async def export_index(
-    data_path: Path, mongo: "Mongo", manifest: Dict[str, int]
-) -> List[Document]:
+    data_path: Path, mongo: "Mongo", manifest: dict[str, int]
+) -> list[Document]:
     """
     Dump OTUs to a JSON-serializable data structure based on an index manifest.
 
