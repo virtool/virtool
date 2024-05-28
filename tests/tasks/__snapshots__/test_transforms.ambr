@@ -13,8 +13,8 @@
         'file_size': None,
         'id': 3,
         'progress': 0,
-        'step': 'ensure_index_files',
-        'type': 'ensure_index_files',
+        'step': 'refresh_reference_releases',
+        'type': 'refresh_reference_releases',
       }),
     }),
     dict({
