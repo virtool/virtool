@@ -22,12 +22,9 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    async for subtraction in ctx.mongo.subtraction.find(
-        {"deleted": {"$exists": False}}
-    ):
-        await ctx.mongo.subtraction.update_one(
-            {"_id": subtraction["_id"]}, {"$set": {"deleted": False}}
-        )
+    ctx.mongo.subtraction.update_many(
+        {"deleted": {"$exists": False}}, {"$set": {"deleted": False}}
+    )
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):
