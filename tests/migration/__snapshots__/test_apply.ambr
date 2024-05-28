@@ -218,5 +218,12 @@
       'name': 'ensure index files',
       'revision': '0p3nhjg1fcfj',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 32,
+      'name': 'set deleted field for subtraction documents',
+      'revision': 'io3dep44jtym',
+    }),
   ])
 # ---
