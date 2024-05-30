@@ -1,7 +1,5 @@
 import asyncio
-import glob
 import math
-import os
 import shutil
 from asyncio import CancelledError
 from typing import TYPE_CHECKING
@@ -17,7 +15,7 @@ from virtool_core.models.subtraction import (
     SubtractionFile,
     SubtractionSearchResult,
 )
-from virtool_core.utils import compress_file, rm
+from virtool_core.utils import rm
 
 import virtool.mongo.utils
 import virtool.subtractions.files
@@ -45,12 +43,7 @@ from virtool.subtractions.oas import (
 from virtool.subtractions.utils import (
     FILES,
     check_subtraction_file_type,
-    join_subtraction_index_path,
     join_subtraction_path,
-)
-from virtool.tasks.progress import (
-    AbstractProgressHandler,
-    AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import SQLUpload
 from virtool.uploads.utils import multipart_file_chunker, naive_writer

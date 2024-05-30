@@ -111,7 +111,7 @@ async def generate_fasta_file(data_path: Path, subtraction_id: str):
 
 
 async def test_upgrade(
-    ctx: MigrationContext, snapshot: SnapshotAssertion, static_time, test_files_path
+    ctx: MigrationContext, snapshot: SnapshotAssertion, test_files_path
 ):
     async with ctx.pg.begin() as conn:
         await conn.run_sync(SQLSubtractionFile.metadata.create_all)
