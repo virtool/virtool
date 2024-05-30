@@ -49,14 +49,11 @@ def join_subtraction_index_path(data_path: Path, subtraction_id: str) -> Path:
 
 async def upgrade(ctx: MigrationContext):
     async for subtraction in ctx.mongo.subtraction.find({"deleted": False}):
-        path = join_subtraction_path(ctx.data_path, subtraction["_id"])
+        subtraction_id = subtraction["_id"]
+        path = join_subtraction_path(ctx.data_path, subtraction_id)
 
         if not glob(f"{path}/*.fa.gz"):
-            await generate_fasta_file(ctx, subtraction["_id"])
-
-        subtraction_id = subtraction["_id"]
-
-        path = join_subtraction_path(ctx.data_path, subtraction_id)
+            await generate_fasta_file(ctx.data_path, subtraction_id)
 
         await rename_bowtie_files(path)
 
@@ -85,17 +82,16 @@ async def upgrade(ctx: MigrationContext):
         )
 
 
-async def generate_fasta_file(ctx: MigrationContext, subtraction_id: str):
+async def generate_fasta_file(data_path: Path, subtraction_id: str):
     """Generate a FASTA file for a subtraction that has Bowtie2 index files, but no
     FASTA file.
 
+    :param data_path: the path to the data directory
     :param subtraction_id: the id of the subtraction
-
     """
+    index_path = join_subtraction_index_path(data_path, subtraction_id)
 
-    index_path = join_subtraction_index_path(ctx.data_path, subtraction_id)
-
-    fasta_path = join_subtraction_path(ctx.data_path, subtraction_id) / "subtraction.fa"
+    fasta_path = join_subtraction_path(data_path, subtraction_id) / "subtraction.fa"
 
     proc = await asyncio.create_subprocess_shell(
         f"bowtie2-inspect {index_path} > {fasta_path}",
@@ -108,9 +104,7 @@ async def generate_fasta_file(ctx: MigrationContext, subtraction_id: str):
     if proc.returncode != 0:
         raise RuntimeError(f"bowtie2-inspect failed: {stderr.decode()}")
 
-    target_path = (
-        join_subtraction_path(ctx.data_path, subtraction_id) / "subtraction.fa.gz"
-    )
+    target_path = join_subtraction_path(data_path, subtraction_id) / "subtraction.fa.gz"
 
     await asyncio.to_thread(compress_file, fasta_path, target_path)
     await asyncio.to_thread(rm, fasta_path)
