@@ -10,8 +10,8 @@
     'file_size': None,
     'id': 1,
     'progress': 0,
-    'step': 'add_subtraction_files',
-    'type': 'add_subtraction_files',
+    'step': 'timeout_jobs',
+    'type': 'timeout_jobs',
   })
 # ---
 # name: test_find

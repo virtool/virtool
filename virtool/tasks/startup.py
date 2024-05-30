@@ -18,10 +18,6 @@ from virtool.samples.tasks import (
     MoveSampleFilesTask,
     UpdateSampleWorkflowsTask,
 )
-from virtool.subtractions.tasks import (
-    AddSubtractionFilesTask,
-    CheckSubtractionsFASTATask,
-)
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.spawner import TaskSpawnerService
@@ -56,9 +52,7 @@ async def startup_datalayer_for_spawner(app: Application):
 async def startup_task_spawner(app: Application):
     """Starts the task spawner."""
     tasks = [
-        (AddSubtractionFilesTask, 3600),
         (CleanReferencesTask, 3600),
-        (CheckSubtractionsFASTATask, 3600),
         (CompressSamplesTask, 3600),
         (HMMRefreshTask, 600),
         (MoveSampleFilesTask, 3600),
