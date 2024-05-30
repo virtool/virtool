@@ -18,7 +18,6 @@ from virtool_core.models.subtraction import (
 from virtool_core.utils import rm
 
 import virtool.mongo.utils
-import virtool.subtractions.files
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config import Config
