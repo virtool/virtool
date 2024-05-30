@@ -1,0 +1,35 @@
+# serializer version: 1
+# name: test_upgrade
+  '''
+  >host_1
+  ATTGAGCCCATGGTTAGAAAAGAAAACATTGGAAATTGTACATTGGGATGTACATAGACA
+  TATTGCCACTGGTCCTCGTAATGCACTGGTTGCATGCTTTCTGCAGGAGGGGAGAGC
+  >host_2
+  ATTGGACACCCCATGGTTAGAAAAGAAAACATTGGAAATTGTACATTGGGATGTACATAG
+  ACATATTGCCACTGGTCCTCGTAATGCACTGGTTGCATGCTTTCTGCAGGAAAATTT
+  >host_3
+  AAAGGGATAGCGCCCACTCCCCTAAAATCCAAAGGGACCGTTTCGGTCTCATTCCCAAAG
+  GCTGCTGGGGTTGAGCCCAGCATCCAAAAATCCAAAGGAGCTTCAGGACACACACAT
+  >host_4
+  TTGTCAGCAAAAGGCGCCAATACGCTTTAATCGACGCGTATATTATGATTATTATTGTTC
+  TAATAATGTTGTTAGTGCTTACTTTTTATTTAATTAAGAAGAGGCGATACCCACCCT
+  >host_6
+  AAAATTTCTTATTGTATCCATCGTTTCCTTTTCTTTTCTCCTTAGTTCGTCACTCTAACG
+  TTTTCCCGAACCACTCCATTTCTTTTCATTTCCTTTCATTTCGCGACACCCACAATTT
+  >host_7
+  GGACCCAGTCTTATTGTATCCATCGTTTCCTTTTCTTTTCTCCTTAGTTCGTCACTCTAA
+  CGTTTTCCCGAACCACTCCATTTCTTTTCATTTCCTTTCATTTCGCGGTGGACCACAT
+  
+  '''
+# ---
+# name: test_upgrade.1
+  list([
+    <SQLSubtractionFile(id=1, name=subtraction.1.bt2, subtraction=foo, type=bowtie2, size=4194843)>,
+    <SQLSubtractionFile(id=2, name=subtraction.2.bt2, subtraction=foo, type=bowtie2, size=184)>,
+    <SQLSubtractionFile(id=3, name=subtraction.3.bt2, subtraction=foo, type=bowtie2, size=62)>,
+    <SQLSubtractionFile(id=4, name=subtraction.4.bt2, subtraction=foo, type=bowtie2, size=176)>,
+    <SQLSubtractionFile(id=5, name=subtraction.fa.gz, subtraction=foo, type=fasta, size=275)>,
+    <SQLSubtractionFile(id=6, name=subtraction.rev.1.bt2, subtraction=foo, type=bowtie2, size=4194843)>,
+    <SQLSubtractionFile(id=7, name=subtraction.rev.2.bt2, subtraction=foo, type=bowtie2, size=184)>,
+  ])
+# ---
