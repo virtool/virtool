@@ -225,5 +225,19 @@
       'name': 'set deleted field for subtraction documents',
       'revision': 'io3dep44jtym',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 33,
+      'name': 'migrate subtraction files',
+      'revision': 'ohcocrre6rha',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 34,
+      'name': 'set job field for indexes, samples, and subtractions',
+      'revision': 't05gnq2g81qz',
+    }),
   ])
 # ---

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from virtool_core.redis import Redis
 
-from virtool.subtractions.tasks import AddSubtractionFilesTask
+from virtool.jobs.tasks import TimeoutJobsTask
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.models import SQLTask
@@ -123,7 +123,7 @@ async def test_add(
     """Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel."""
     tasks_client = TasksClient(redis)
 
-    await tasks_data.create(AddSubtractionFilesTask)
+    await tasks_data.create(TimeoutJobsTask)
 
     task_id = await wait_for(tasks_client.pop(), timeout=3)
 
