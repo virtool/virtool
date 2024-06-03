@@ -11,14 +11,6 @@ from virtool.mongo.core import Mongo
 from virtool.samples.utils import get_sample_rights
 from virtool.types import Document
 
-TARGET_FILES = (
-    "hmm.tsv",
-    "assembly.fa",
-    "orfs.fa",
-    "unmapped_hosts.fq",
-    "unmapped_otus.fq",
-)
-
 
 class AttachAnalysisFileTransform(AbstractTransform):
     def __init__(self, pg: AsyncEngine):

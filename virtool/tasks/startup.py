@@ -6,7 +6,6 @@ from aiohttp.web_app import Application
 from aiojobs.aiohttp import get_scheduler_from_app
 from virtool_core.redis import Redis
 
-from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.jobs.tasks import TimeoutJobsTask
@@ -63,7 +62,6 @@ async def startup_task_spawner(app: Application):
         (HMMRefreshTask, 600),
         (MoveSampleFilesTask, 3600),
         (RefreshReferenceReleasesTask, 600),
-        (StoreNuvsFilesTask, 3600),
         (SyncMLModelsTask, 600),
         (TimeoutJobsTask, 3600),
         (UpdateSampleWorkflowsTask, 3600),
