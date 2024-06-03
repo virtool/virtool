@@ -1,7 +1,5 @@
 import asyncio
-import glob
 import math
-import os
 import shutil
 from asyncio import CancelledError
 from typing import TYPE_CHECKING
@@ -17,10 +15,9 @@ from virtool_core.models.subtraction import (
     SubtractionFile,
     SubtractionSearchResult,
 )
-from virtool_core.utils import compress_file, rm
+from virtool_core.utils import rm
 
 import virtool.mongo.utils
-import virtool.subtractions.files
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config import Config
@@ -45,12 +42,7 @@ from virtool.subtractions.oas import (
 from virtool.subtractions.utils import (
     FILES,
     check_subtraction_file_type,
-    join_subtraction_index_path,
     join_subtraction_path,
-)
-from virtool.tasks.progress import (
-    AbstractProgressHandler,
-    AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.models import SQLUpload
 from virtool.uploads.utils import multipart_file_chunker, naive_writer
@@ -456,93 +448,3 @@ class SubtractionsData(DataLayerDomain):
             raise ResourceNotFoundError
 
         return FileDescriptor(path=path, size=file["size"])
-
-    async def generate_fasta_file(self, subtraction_id: str):
-        """Generate a FASTA file for a subtraction that has Bowtie2 index files, but no
-        FASTA file.
-
-        :param subtraction_id: the id of the subtraction
-
-        """
-        index_path = join_subtraction_index_path(self._config, subtraction_id)
-
-        fasta_path = (
-            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa"
-        )
-
-        proc = await asyncio.create_subprocess_shell(
-            f"bowtie2-inspect {index_path} > {fasta_path}",
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        _, stderr = await proc.communicate()
-
-        if proc.returncode != 0:
-            raise RuntimeError(f"bowtie2-inspect failed: {stderr.decode()}")
-
-        target_path = (
-            join_subtraction_path(self._config, subtraction_id) / "subtraction.fa.gz"
-        )
-
-        await asyncio.to_thread(compress_file, fasta_path, target_path)
-        await asyncio.to_thread(rm, fasta_path)
-
-    async def rename_and_track_files(self, progress_handler: AbstractProgressHandler):
-        """Rename index files and add a ``files`` field to any legacy subtractions.
-
-        Changes Bowtie2 index name from 'reference' to 'subtraction'.
-
-        """
-        count = await self._mongo.subtraction.count_documents({"deleted": False})
-
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
-
-        async for subtraction in self._mongo.subtraction.find({"deleted": False}):
-            subtraction_id = subtraction["_id"]
-
-            path = join_subtraction_path(self._config, subtraction_id)
-
-            await virtool.subtractions.utils.rename_bowtie_files(path)
-
-            subtraction_files = []
-
-            for filename in sorted(await asyncio.to_thread(os.listdir, path)):
-                if filename in FILES:
-                    async with AsyncSession(self._pg) as session:
-                        exists = (
-                            await session.execute(
-                                select(SQLSubtractionFile).filter_by(
-                                    subtraction=subtraction_id,
-                                    name=filename,
-                                ),
-                            )
-                        ).scalar()
-
-                    if not exists:
-                        subtraction_files.append(filename)
-
-            await virtool.subtractions.files.create_subtraction_files(
-                self._pg,
-                subtraction_id,
-                subtraction_files,
-                path,
-            )
-
-            await tracker.add(1)
-
-    async def check_fasta_files(self):
-        """Check that all subtractions have a FASTA file.
-
-        If a subtraction has Bowtie2 index files but no FASTA file, generate one.
-
-        """
-        subtractions_without_fasta = []
-
-        async for subtraction in self._mongo.subtraction.find({"deleted": False}):
-            path = join_subtraction_path(self._config, subtraction["_id"])
-
-            if not glob.glob(f"{path}/*.fa.gz"):
-                subtractions_without_fasta.append(subtraction["_id"])
-
-        return subtractions_without_fasta
