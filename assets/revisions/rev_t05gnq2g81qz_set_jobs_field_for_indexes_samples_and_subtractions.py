@@ -1,5 +1,5 @@
 """
-set job field for indexes, samples and subtractions
+set job field for indexes, samples, and subtractions
 
 Revision ID: t05gnq2g81qz
 Date: 2024-05-31 18:43:38.988811
@@ -12,12 +12,12 @@ import pytest
 from virtool.migration import MigrationContext
 
 # Revision identifiers.
-name = "set job field for indexes, samples and subtractions"
+name = "set job field for indexes, samples, and subtractions"
 created_at = arrow.get("2024-05-31 18:43:38.988811")
 revision_id = "t05gnq2g81qz"
 
 alembic_down_revision = None
-virtool_down_revision = "io3dep44jtym"
+virtool_down_revision = "ohcocrre6rha"
 
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None
@@ -42,6 +42,8 @@ async def test_upgrade(ctx, collection, snapshot):
             },
         ]
     )
+
+    assert await ctx.mongo[collection].find().to_list(None) == snapshot
 
     await upgrade(ctx)
 

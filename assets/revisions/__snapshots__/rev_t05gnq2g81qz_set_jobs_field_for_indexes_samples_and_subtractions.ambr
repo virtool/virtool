@@ -1,0 +1,124 @@
+# serializer version: 1
+# name: test_upgrade[indexes]
+  list([
+    dict({
+      '_id': 'indexes_1',
+      'job': None,
+      'name': 'indexes_1',
+    }),
+    dict({
+      '_id': 'indexes_2',
+      'job': list([
+        'job_id',
+      ]),
+      'name': 'indexes_2',
+    }),
+    dict({
+      '_id': 'indexes_3',
+      'name': 'indexes_3',
+    }),
+  ])
+# ---
+# name: test_upgrade[indexes].1
+  list([
+    dict({
+      '_id': 'indexes_1',
+      'job': None,
+      'name': 'indexes_1',
+    }),
+    dict({
+      '_id': 'indexes_2',
+      'job': list([
+        'job_id',
+      ]),
+      'name': 'indexes_2',
+    }),
+    dict({
+      '_id': 'indexes_3',
+      'job': None,
+      'name': 'indexes_3',
+    }),
+  ])
+# ---
+# name: test_upgrade[samples]
+  list([
+    dict({
+      '_id': 'samples_1',
+      'job': None,
+      'name': 'samples_1',
+    }),
+    dict({
+      '_id': 'samples_2',
+      'job': list([
+        'job_id',
+      ]),
+      'name': 'samples_2',
+    }),
+    dict({
+      '_id': 'samples_3',
+      'name': 'samples_3',
+    }),
+  ])
+# ---
+# name: test_upgrade[samples].1
+  list([
+    dict({
+      '_id': 'samples_1',
+      'job': None,
+      'name': 'samples_1',
+    }),
+    dict({
+      '_id': 'samples_2',
+      'job': list([
+        'job_id',
+      ]),
+      'name': 'samples_2',
+    }),
+    dict({
+      '_id': 'samples_3',
+      'job': None,
+      'name': 'samples_3',
+    }),
+  ])
+# ---
+# name: test_upgrade[subtractions]
+  list([
+    dict({
+      '_id': 'subtractions_1',
+      'job': None,
+      'name': 'subtractions_1',
+    }),
+    dict({
+      '_id': 'subtractions_2',
+      'job': list([
+        'job_id',
+      ]),
+      'name': 'subtractions_2',
+    }),
+    dict({
+      '_id': 'subtractions_3',
+      'name': 'subtractions_3',
+    }),
+  ])
+# ---
+# name: test_upgrade[subtractions].1
+  list([
+    dict({
+      '_id': 'subtractions_1',
+      'job': None,
+      'name': 'subtractions_1',
+    }),
+    dict({
+      '_id': 'subtractions_2',
+      'job': list([
+        'job_id',
+      ]),
+      'name': 'subtractions_2',
+    }),
+    dict({
+      '_id': 'subtractions_3',
+      'job': None,
+      'name': 'subtractions_3',
+    }),
+  ])
+# ---
