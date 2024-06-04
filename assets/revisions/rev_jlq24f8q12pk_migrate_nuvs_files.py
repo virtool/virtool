@@ -13,9 +13,8 @@ import shutil
 import arrow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.utils import compress_file
+from virtool_core.utils import compress_file, file_stats
 
-from virtool.analyses.files import create_nuvs_analysis_files
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.migration import MigrationContext
 
@@ -60,7 +59,6 @@ async def upgrade(ctx: MigrationContext):
                     "unmapped_otus.fq",
                 ):
                     analysis_files.append(filename)
-
                     if filename == "hmm.tsv":
                         await asyncio.to_thread(
                             shutil.copy, old_path / "hmm.tsv", target_path / "hmm.tsv"
@@ -72,12 +70,57 @@ async def upgrade(ctx: MigrationContext):
                             target_path / f"{filename}.gz",
                         )
 
-            await create_nuvs_analysis_files(
-                ctx.pg,
-                analysis_id,
-                analysis_files,
-                target_path,
-            )
+            sql_analysis_files = []
+
+            for filename in analysis_files:
+                file_type = check_nuvs_file_type(filename)
+
+                if not filename.endswith(".tsv"):
+                    filename += ".gz"
+
+                size = (await asyncio.to_thread(file_stats, target_path / filename))[
+                    "size"
+                ]
+
+                sql_analysis_files.append(
+                    SQLAnalysisFile(
+                        name=filename,
+                        analysis=analysis_id,
+                        format=file_type,
+                        size=size,
+                    ),
+                )
+
+            async with AsyncSession(ctx.pg) as session:
+                session.add_all(sql_analysis_files)
+
+                await session.flush()
+
+                for analysis_file in sql_analysis_files:
+                    analysis_file.name_on_disk = (
+                        f"{analysis_file.id}-{analysis_file.name}"
+                    )
+
+                await session.commit()
+
+
+def check_nuvs_file_type(file_name: str) -> str:
+    """
+    Get the NuVs analysis file type based on the extension of given `file_name`
+
+    :param file_name: NuVs analysis file name
+    :return: file type
+    """
+    if file_name.endswith(".tsv"):
+        return "tsv"
+
+    if file_name.endswith(".fa"):
+        return "fasta"
+
+    if file_name.endswith(".fq"):
+        return "fastq"
+
+    raise ValueError("Filename has unrecognized extension")
 
 
 async def test_upgrade(ctx, snapshot):
