@@ -1,12 +1,10 @@
 import asyncio
 import math
-import os
 from datetime import datetime
-from shutil import rmtree
 from typing import Optional, Tuple
 
 import sentry_sdk
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 from virtool_core.models.analysis import Analysis, AnalysisFile, AnalysisSearchResult
@@ -20,13 +18,11 @@ from virtool.analyses.checks import (
     check_if_analysis_modified,
     check_if_analysis_running,
 )
-from virtool.analyses.db import TARGET_FILES, filter_analyses_by_sample_rights
-from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
+from virtool.analyses.db import filter_analyses_by_sample_rights
+from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.analyses.utils import (
     attach_analysis_files,
-    join_analysis_path,
-    move_nuvs_files,
 )
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
@@ -51,10 +47,6 @@ from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
     subtraction_processor,
-)
-from virtool.tasks.progress import (
-    AbstractProgressHandler,
-    AccumulatingProgressHandlerWrapper,
 )
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
@@ -552,53 +544,3 @@ class AnalysisData(DataLayerDomain):
         )
 
         return analysis
-
-    async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
-        """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
-        count = await self._mongo.analyses.count_documents({"workflow": "nuvs"})
-
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
-
-        async for analysis in self._mongo.analyses.find({"workflow": "nuvs"}):
-            analysis_id = analysis["_id"]
-            sample_id = analysis["sample"]["id"]
-
-            old_path = join_analysis_path(
-                self._config.data_path,
-                analysis_id,
-                sample_id,
-            )
-
-            target_path = self._config.data_path / "analyses" / analysis_id
-
-            async with AsyncSession(self._pg) as session:
-                exists = (
-                    await session.execute(
-                        select(SQLAnalysisFile).filter_by(analysis=analysis_id),
-                    )
-                ).scalar()
-
-            if await asyncio.to_thread(old_path.is_dir) and not exists:
-                try:
-                    await asyncio.to_thread(os.makedirs, target_path)
-                except FileExistsError:
-                    pass
-
-                analysis_files = []
-
-                for filename in sorted(os.listdir(old_path)):
-                    if filename in TARGET_FILES:
-                        analysis_files.append(filename)
-
-                        await move_nuvs_files(filename, old_path, target_path)
-
-                await create_nuvs_analysis_files(
-                    self._pg,
-                    analysis_id,
-                    analysis_files,
-                    target_path,
-                )
-
-                await asyncio.to_thread(rmtree, old_path, ignore_errors=True)
-
-            await tracker.add(1)
