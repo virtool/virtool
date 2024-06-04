@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -55,20 +54,3 @@ async def test_check_nuvs_file_type(file_type):
     if file_type == "tsv":
         result = virtool.analyses.utils.check_nuvs_file_type("hmm.tsv")
         assert result == "tsv"
-
-
-async def test_move_nuvs_files(tmp_path, spawn_client):
-    file_path = tmp_path.joinpath("files")
-    file_path.mkdir()
-    file_path.joinpath("hmm.tsv").write_text("HMM file")
-    file_path.joinpath("assembly.fa").write_text("FASTA file")
-
-    target_path = tmp_path.joinpath("analyses")
-    target_path.mkdir()
-
-    await virtool.analyses.utils.move_nuvs_files("hmm.tsv", file_path, target_path)
-    assert set(os.listdir(target_path)) == {"hmm.tsv"}
-
-    await virtool.analyses.utils.move_nuvs_files("assembly.fa", file_path, target_path)
-
-    assert set(os.listdir(target_path)) == {"hmm.tsv", "assembly.fa.gz"}

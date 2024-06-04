@@ -8,14 +8,15 @@ Date: 2024-05-31 20:25:49.413590
 
 import asyncio
 import os
+import shutil
 
 import arrow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from virtool_core.utils import compress_file
 
 from virtool.analyses.files import create_nuvs_analysis_files
 from virtool.analyses.models import SQLAnalysisFile
-from virtool.analyses.utils import move_nuvs_files
 from virtool.migration import MigrationContext
 
 # Revision identifiers.
@@ -28,15 +29,6 @@ virtool_down_revision = "t05gnq2g81qz"
 
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None
-
-
-TARGET_FILES = (
-    "hmm.tsv",
-    "assembly.fa",
-    "orfs.fa",
-    "unmapped_hosts.fq",
-    "unmapped_otus.fq",
-)
 
 
 async def upgrade(ctx: MigrationContext):
@@ -55,18 +47,30 @@ async def upgrade(ctx: MigrationContext):
             ).scalar()
 
         if await asyncio.to_thread(old_path.is_dir) and not exists:
-            try:
-                await asyncio.to_thread(os.makedirs, target_path)
-            except FileExistsError:
-                pass
+            await asyncio.to_thread(target_path.mkdir, exist_ok=True, parents=True)
 
             analysis_files = []
 
             for filename in sorted(os.listdir(old_path)):
-                if filename in TARGET_FILES:
+                if filename in (
+                    "hmm.tsv",
+                    "assembly.fa",
+                    "orfs.fa",
+                    "unmapped_hosts.fq",
+                    "unmapped_otus.fq",
+                ):
                     analysis_files.append(filename)
 
-                    await move_nuvs_files(filename, old_path, target_path)
+                    if filename == "hmm.tsv":
+                        await asyncio.to_thread(
+                            shutil.copy, old_path / "hmm.tsv", target_path / "hmm.tsv"
+                        )
+                    else:
+                        await asyncio.to_thread(
+                            compress_file,
+                            old_path / filename,
+                            target_path / f"{filename}.gz",
+                        )
 
             await create_nuvs_analysis_files(
                 ctx.pg,
@@ -81,11 +85,11 @@ async def test_upgrade(ctx, snapshot):
         await conn.run_sync(SQLAnalysisFile.metadata.create_all)
         await conn.commit()
 
-    test_dir = ctx.data_path / "samples" / "foo" / "analysis" / "bar"
-    test_dir.mkdir(parents=True, exist_ok=True)
-    test_dir.joinpath("assembly.fa").write_text("FASTA file")
-    test_dir.joinpath("hmm.tsv").write_text("HMM file")
-    test_dir.joinpath("unmapped_otus.fq").write_text("FASTQ file")
+    analysis_path = ctx.data_path / "samples" / "foo" / "analysis" / "bar"
+    analysis_path.mkdir(parents=True, exist_ok=True)
+    analysis_path.joinpath("assembly.fa").write_text("FASTA file")
+    analysis_path.joinpath("hmm.tsv").write_text("HMM file")
+    analysis_path.joinpath("unmapped_otus.fq").write_text("FASTQ file")
 
     await ctx.mongo.analyses.insert_one(
         {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}}
@@ -93,7 +97,7 @@ async def test_upgrade(ctx, snapshot):
 
     await upgrade(ctx)
 
-    assert set(os.listdir(ctx.data_path / "analyses" / "bar")) == {
+    assert {path.name for path in (ctx.data_path / "analyses" / "bar").iterdir()} == {
         "assembly.fa.gz",
         "hmm.tsv",
         "unmapped_otus.fq.gz",
