@@ -260,5 +260,12 @@
       'name': 'ensure notes and labels fields in sample documents',
       'revision': 'wo0wk22ngsgn',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 38,
+      'name': 'deduplicate sample names',
+      'revision': 'zma2wj6b39hs',
+    }),
   ])
 # ---

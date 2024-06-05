@@ -352,9 +352,11 @@ async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None
     async with AsyncSession(pg) as session:
         result = await session.execute(
             select(SQLGroup).where(
-                (SQLGroup.id == group_id)
-                if isinstance(group_id, int)
-                else SQLGroup.legacy_id == group_id,
+                (
+                    (SQLGroup.id == group_id)
+                    if isinstance(group_id, int)
+                    else SQLGroup.legacy_id == group_id
+                ),
             ),
         )
 
@@ -492,30 +494,3 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
             {"_id": sample["_id"]},
             {"$set": {"is_compressed": True}},
         )
-
-
-class NameGenerator:
-    """Generates unique incrementing sample names based on a base name and a space
-    id.
-    """
-
-    def __init__(self, mongo: "Mongo", base_name: str, space_id: str):
-        self.base_name = base_name
-        self.space_id = space_id
-        self.db = mongo
-        self.sample_number = 1
-
-    async def get(self, session: AsyncIOMotorClientSession):
-        self.sample_number += 1
-
-        while await self.db.samples.count_documents(
-            {
-                "name": f"{self.base_name} ({self.sample_number})",
-                "space_id": self.space_id,
-            },
-            limit=1,
-            session=session,
-        ):
-            self.sample_number += 1
-
-        return f"{self.base_name} ({self.sample_number})"

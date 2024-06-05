@@ -34,7 +34,6 @@ from virtool.samples.checks import (
 )
 from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
-    NameGenerator,
     compose_sample_workflow_query,
     define_initial_workflows,
     recalculate_workflow_tags,
@@ -570,55 +569,6 @@ class SamplesData(DataLayerDomain):
                 sample,
             )
             await tracker.add(1)
-
-    async def deduplicate_sample_names(self):
-        """Find all samples with duplicate names in the same space and rename
-        them with increasing integers by order of creation.
-        """
-        async with self._mongo.create_session() as session:
-            async for duplicate_name_documents in self._mongo.samples.aggregate(
-                [
-                    {
-                        "$group": {
-                            "_id": {"name": "$name", "space_id": "$space_id"},
-                            "count": {"$sum": 1},
-                            "documents": {
-                                "$push": {"_id": "$_id", "created_at": "$created_at"},
-                            },
-                        },
-                    },
-                    {"$match": {"count": {"$gt": 1}}},
-                    {"$unwind": "$documents"},
-                    {"$sort": {"documents.created_at": 1}},
-                    {
-                        "$group": {
-                            "_id": "$_id",
-                            "sample_ids": {"$push": "$documents._id"},
-                        },
-                    },
-                    {
-                        "$project": {
-                            "name": "$_id.name",
-                            "space_id": "$_id.space_id",
-                            "_id": 0,
-                            "sample_ids": 1,
-                        },
-                    },
-                ],
-                session=session,
-            ):
-                name_generator = NameGenerator(
-                    self._mongo,
-                    duplicate_name_documents["name"],
-                    duplicate_name_documents.get("space_id", None),
-                )
-
-                for sample_id in duplicate_name_documents["sample_ids"][1:]:
-                    await self._mongo.samples.update_one(
-                        {"_id": sample_id},
-                        {"$set": {"name": await name_generator.get(session)}},
-                        session=session,
-                    )
 
     async def update_sample_workflows(self):
         sample_ids = await self._mongo.samples.distinct("_id")
