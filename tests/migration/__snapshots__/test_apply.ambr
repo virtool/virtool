@@ -246,5 +246,12 @@
       'name': 'migrate nuvs files',
       'revision': 'jlq24f8q12pk',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 36,
+      'name': 'rename process to task',
+      'revision': 'uejy8b1tlmvv',
+    }),
   ])
 # ---
