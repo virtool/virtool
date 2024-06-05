@@ -1,11 +1,6 @@
-from asyncio import to_thread
-from pathlib import Path
-
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.utils import file_stats
 
 from virtool.analyses.models import SQLAnalysisFile
-from virtool.analyses.utils import check_nuvs_file_type
 
 
 async def create_analysis_file(
@@ -44,47 +39,3 @@ async def create_analysis_file(
         await session.commit()
 
         return analysis_file
-
-
-async def create_nuvs_analysis_files(
-    pg: AsyncEngine,
-    analysis_id: str,
-    files: list,
-    file_path: Path,
-):
-    """Create a row in the `analysis_files` SQL table that represents an NuVs analysis
-    result file.
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param analysis_id: ID that corresponds to a parent analysis
-    :param files: a list of analysis files
-    :param file_path: the path to the analysis files directory
-    """
-    analysis_files = []
-
-    for filename in files:
-        file_type = check_nuvs_file_type(filename)
-
-        if not filename.endswith(".tsv"):
-            filename += ".gz"
-
-        size = (await to_thread(file_stats, file_path / filename))["size"]
-
-        analysis_files.append(
-            SQLAnalysisFile(
-                name=filename,
-                analysis=analysis_id,
-                format=file_type,
-                size=size,
-            ),
-        )
-
-    async with AsyncSession(pg) as session:
-        session.add_all(analysis_files)
-
-        await session.flush()
-
-        for analysis_file in analysis_files:
-            analysis_file.name_on_disk = f"{analysis_file.id}-{analysis_file.name}"
-
-        await session.commit()

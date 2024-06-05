@@ -1,14 +1,10 @@
-import shutil
-from asyncio import to_thread
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.future import select
-from virtool_core.utils import compress_file
 
 from virtool.analyses.models import SQLAnalysisFile
-
 
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 
@@ -37,26 +33,6 @@ async def attach_analysis_files(
         )
 
     return {**document, "files": [result.to_dict() for result in results]}
-
-
-def check_nuvs_file_type(file_name: str) -> str:
-    """
-    Get the NuVs analysis file type based on the extension of given `file_name`
-
-    :param file_name: NuVs analysis file name
-    :return: file type
-
-    """
-    if file_name.endswith(".tsv"):
-        return "tsv"
-
-    if file_name.endswith(".fa"):
-        return "fasta"
-
-    if file_name.endswith(".fq"):
-        return "fastq"
-
-    raise ValueError("Filename has unrecognized extension")
 
 
 def find_nuvs_sequence_by_index(
@@ -114,21 +90,3 @@ def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -
 
     """
     return join_analysis_path(data_path, analysis_id, sample_id) / "results.json"
-
-
-async def move_nuvs_files(filename: str, file_path: Path, target_path: Path):
-    """
-    Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files
-    and FASTQ files.
-
-    :param filename: the name of the analysis file
-    :param file_path: the path to the original file
-    :param target_path: the path to the new directory
-
-    """
-    if filename == "hmm.tsv":
-        await to_thread(shutil.copy, file_path / "hmm.tsv", target_path / "hmm.tsv")
-    else:
-        await to_thread(
-            compress_file, file_path / filename, target_path / f"{filename}.gz"
-        )
