@@ -15,7 +15,7 @@ async def test_groups_and_users(fake2, snapshot):
     matcher = path_type(
         {
             "last_password_change": (datetime,),
-        }
+        },
     )
 
     assert group.dict() == snapshot(matcher=matcher)
@@ -64,15 +64,15 @@ async def test_uploads(fake2: DataFaker, snapshot):
     user = await fake2.users.create()
 
     assert await fake2.uploads.create(user=user) == snapshot(
-        name="upload", matcher=matcher
+        name="upload", matcher=matcher,
     )
 
     assert await fake2.uploads.create(
-        user=user, upload_type=UploadType.subtraction
+        user=user, upload_type=UploadType.subtraction,
     ) == snapshot(name="upload[subtraction]", matcher=matcher)
 
     assert await fake2.uploads.create(user=user, reserved=True) == snapshot(
-        name="upload[reserved]", matcher=matcher
+        name="upload[reserved]", matcher=matcher,
     )
 
 
@@ -80,6 +80,6 @@ async def test_subtractions(fake2: DataFaker, snapshot_recent):
 
     user = await fake2.users.create()
     upload = await fake2.uploads.create(user=user, upload_type="subtraction", name="foobar.fq.gz")
-    subtraction = await fake2.subtractions.create(user_id=user.id, upload=upload)
+    subtraction = await fake2.subtractions.create(user=user, upload=upload)
 
     assert subtraction == snapshot_recent
