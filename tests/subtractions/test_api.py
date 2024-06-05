@@ -1,7 +1,6 @@
 import asyncio
 import os
 from pathlib import Path
-from datetime import datetime
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
@@ -117,7 +116,7 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-async def test_get_from_job(fake2: DataFaker, spawn_job_client, snapshot):
+async def test_get_from_job(fake2: DataFaker, spawn_job_client, snapshot_recent):
     client = await spawn_job_client(authorize=True)
 
     # create the uploads using fake2.
@@ -130,12 +129,8 @@ async def test_get_from_job(fake2: DataFaker, spawn_job_client, snapshot):
     assert resp.status == 200
 
     value = await resp.json()
-    if "created_at" in value:
-        value["created_at"] = '2024-05-27T21:44:47.261000Z'
-    if "job" in value and "created_at" in value["job"]:
-        value["job"]["created_at"] = '2024-05-27T21:44:47.261000Z'
 
-    assert value == snapshot
+    assert value == snapshot_recent
 
 
 @pytest.mark.parametrize(
