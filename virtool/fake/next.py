@@ -528,8 +528,7 @@ class SubtractionFakerPiece(DataFakerPiece):
                                                             user_id=user_id,
                                                             space_id=0)
 
-        gc = NucleotideComposition(**{k: 0.2 for k in "actgn"})
-        finalize_request = FinalizeSubtractionRequest(count=1, gc=gc)
+        finalize_request = FinalizeSubtractionRequest(count=1, gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}))
         subtraction = await self._layer.subtractions.finalize(subtraction_id=subtraction.id, data=finalize_request)
 
         return subtraction
