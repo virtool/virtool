@@ -120,7 +120,6 @@ async def test_get(
 async def test_get_from_job(fake2: DataFaker, spawn_job_client, snapshot_recent):
     client = await spawn_job_client(authorize=True)
 
-    # create the uploads using fake2.
     user = await fake2.users.create()
     upload = await fake2.uploads.create(
         user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz",
