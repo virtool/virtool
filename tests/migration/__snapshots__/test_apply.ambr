@@ -253,5 +253,12 @@
       'name': 'rename process to task',
       'revision': 'uejy8b1tlmvv',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 37,
+      'name': 'ensure notes and labels fields in sample documents',
+      'revision': 'wo0wk22ngsgn',
+    }),
   ])
 # ---
