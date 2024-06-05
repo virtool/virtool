@@ -76,10 +76,10 @@ async def test_uploads(fake2: DataFaker, snapshot):
     )
 
 
-async def test_subtractions(fake2: DataFaker, snapshot):
+async def test_subtractions(fake2: DataFaker, snapshot_recent):
 
     user = await fake2.users.create()
     upload = await fake2.uploads.create(user=user, upload_type="subtraction", name="foobar.fq.gz")
     subtraction = await fake2.subtractions.create(user_id=user.id, upload=upload)
 
-    assert subtraction == snapshot
+    assert subtraction == snapshot_recent
