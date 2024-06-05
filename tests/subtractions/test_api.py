@@ -1,6 +1,7 @@
 import asyncio
 import os
 from pathlib import Path
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
@@ -11,7 +12,7 @@ from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.models import SQLUpload, UploadType
 
 
 async def test_find_empty_subtractions(
@@ -121,8 +122,10 @@ async def test_get_from_job(fake2: DataFaker, spawn_job_client, snapshot_recent)
 
     # create the uploads using fake2.
     user = await fake2.users.create()
-    upload = await fake2.uploads.create(user=user, upload_type="subtraction", name="foobar.fq.gz")
-    subtraction = await fake2.subtractions.create(user_id=user.id, upload=upload)
+    upload = await fake2.uploads.create(
+        user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz",
+    )
+    subtraction = await fake2.subtractions.create(user=user, upload=upload)
 
     resp = await client.get(f"/subtractions/{subtraction.id}")
 

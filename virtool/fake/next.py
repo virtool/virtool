@@ -503,7 +503,7 @@ class SubtractionFakerPiece(DataFakerPiece):
 
     async def create(
             self,
-            user_id: str,
+            user: User,
             upload: Upload,
     ) -> Subtraction:
         """Create a fake subtraction.
@@ -512,8 +512,8 @@ class SubtractionFakerPiece(DataFakerPiece):
         - Create a new subtraction using data_layer.subtractions.create().
         - Upload files using data_layer.subtractions.upload_file().
         - Finalize the subtraction using data_layer.subtractions.finalize().
-
-        :param user_id: the user
+        
+        :param user the user
         :param upload the fake upload
         :return: the created subtraction
         """
@@ -525,7 +525,7 @@ class SubtractionFakerPiece(DataFakerPiece):
 
         subtraction = await self._layer.subtractions.create(data=subtraction_request,
                                                             subtraction_id="foobar",
-                                                            user_id=user_id,
+                                                            user_id=user.id,
                                                             space_id=0)
 
         finalize_request = FinalizeSubtractionRequest(count=1, gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}))
