@@ -12,7 +12,7 @@ from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.models import SQLUpload, UploadType
 
 
 async def test_find_empty_subtractions(
@@ -117,15 +117,22 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-async def test_get_from_job(fake, spawn_job_client, snapshot):
+async def test_get_from_job(fake2: DataFaker, spawn_job_client, snapshot_recent):
     client = await spawn_job_client(authenticated=True)
 
-    subtraction = await fake.subtractions.insert()
+    user = await fake2.users.create()
+    upload = await fake2.uploads.create(
+        user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz",
+    )
+    subtraction = await fake2.subtractions.create(user=user, upload=upload)
 
-    resp = await client.get(f"/subtractions/{subtraction['_id']}")
+    resp = await client.get(f"/subtractions/{subtraction.id}")
 
     assert resp.status == 200
-    assert await resp.json() == snapshot
+
+    value = await resp.json()
+
+    assert value == snapshot_recent
 
 
 @pytest.mark.parametrize(

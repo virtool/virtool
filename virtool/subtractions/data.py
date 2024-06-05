@@ -2,9 +2,8 @@ import asyncio
 import math
 import shutil
 from asyncio import CancelledError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, AsyncGenerator
 
-from aiohttp import MultipartReader
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -45,7 +44,7 @@ from virtool.subtractions.utils import (
     join_subtraction_path,
 )
 from virtool.uploads.models import SQLUpload
-from virtool.uploads.utils import multipart_file_chunker, naive_writer
+from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -344,10 +343,7 @@ class SubtractionsData(DataLayerDomain):
         raise ResourceNotFoundError
 
     async def upload_file(
-        self,
-        subtraction_id: str,
-        filename: str,
-        reader: MultipartReader,
+        self, subtraction_id: str, filename: str, chunker: AsyncGenerator[bytearray, None],
     ) -> SubtractionFile:
         """Handle a subtraction file upload.
 
@@ -360,7 +356,7 @@ class SubtractionsData(DataLayerDomain):
 
         :param subtraction_id: the id of the subtraction
         :param filename: the name of the file
-        :param reader: the multipart reader containing the file content
+        :param chunker: the multipart reader containing the file content
         :return: the subtraction file resource model
         """
         document = await self._mongo.subtraction.find_one(subtraction_id)
@@ -394,7 +390,7 @@ class SubtractionsData(DataLayerDomain):
                 except IntegrityError:
                     raise ResourceConflictError("File name already exists")
 
-                size = await naive_writer(multipart_file_chunker(reader), path)
+                size = await naive_writer(chunker, path)
 
                 subtraction_file.size = size
                 subtraction_file.uploaded_at = virtool.utils.timestamp()

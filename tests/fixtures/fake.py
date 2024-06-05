@@ -263,15 +263,6 @@ def app(mongo, pg, tmp_path, config, data_layer):
 
 
 @pytest.fixture()
-def fake(mongo, pg):
-    """Provides a :class:`FakeGenerator` object for generating deterministic fake data.
-
-    This is a legacy fixture and should not be used in new tests.
-    """
-    return FakeGenerator(mongo, pg)
-
-
-@pytest.fixture()
 def fake2(
     data_layer: "DataLayer",
     example_path: Path,

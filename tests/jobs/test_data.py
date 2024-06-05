@@ -6,6 +6,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
 from virtool_core.models.job import JobState
+from virtool.fake.next import DataFaker
 
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
@@ -54,18 +55,15 @@ async def test_create(
     mongo,
     test_random_alphanumeric,
     static_time,
-    fake,
+    fake2: DataFaker,
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    assert (
-        await jobs_data.create(
-            "create_sample", {"sample_id": "foo"}, user["_id"], 0, job_id=job_id
-        )
-        == snapshot
-    )
+    job = await jobs_data.create("create_sample", {"sample_id": "foo"}, user.id, 0, job_id=job_id)
+
+    assert job == snapshot
 
     assert await mongo.jobs.find_one() == snapshot
 

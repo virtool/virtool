@@ -294,64 +294,6 @@ class JobsData:
 
         return await self.get(job_id)
 
-    async def bulk_archive(self, job_ids: List[str]) -> List[JobMinimal]:
-        """Archive multiple jobs at the same time.
-
-        :param job_ids: the ids of the jobs to archive
-        :return: the archived jobs
-        """
-        existing_jobs = await self._mongo.jobs.distinct("_id")
-
-        jobs_not_found = [job for job in job_ids if job not in existing_jobs]
-
-        if len(jobs_not_found) != 0:
-            raise ResourceNotFoundError(f"Jobs not found: {jobs_not_found}")
-
-        async with self._mongo.create_session() as session:
-            await self._mongo.jobs.update_many(
-                {"_id": {"$in": job_ids}},
-                {"$set": {"archived": True}},
-                session=session,
-            )
-
-        pipeline = [
-            {"$match": {"_id": {"$in": job_ids}}},
-            {
-                "$group": {
-                    "_id": "$_id",
-                    "created_at": {"$first": "$created_at"},
-                    "archived": {"$first": "$archived"},
-                    "progress": {"$first": "$progress"},
-                    "stage": {"$first": "$stage"},
-                    "state": {"$first": "$state"},
-                    "user": {"$first": "$user"},
-                    "workflow": {"$first": "$workflow"},
-                },
-            },
-        ]
-
-        archived_jobs = []
-
-        async for agg in self._mongo.jobs.aggregate(pipeline):
-            user = await self._mongo.users.find_one(agg["user"]["id"])
-            archived_jobs.append(
-                {
-                    "id": agg["_id"],
-                    "created_at": agg["created_at"],
-                    "archived": agg["archived"],
-                    "progress": agg["progress"],
-                    "stage": agg["stage"],
-                    "state": agg["state"],
-                    "user": {
-                        "id": user["_id"],
-                        "handle": user["handle"],
-                    },
-                    "workflow": agg["workflow"],
-                },
-            )
-
-        return [JobMinimal(**document) for document in archived_jobs]
-
     async def ping(self, job_id: str) -> JobPing:
         """Update the `ping` field on a job to the current time and
         return .

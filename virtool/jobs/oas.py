@@ -363,4 +363,4 @@ class ArchiveJobSchema(BaseModel):
 
 
 class ArchiveJobsRequest(BaseModel):
-    updates: List[ArchiveJobSchema]
+    update: ArchiveJobSchema
