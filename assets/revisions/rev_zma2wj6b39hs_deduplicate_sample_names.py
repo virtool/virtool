@@ -18,8 +18,8 @@ name = "deduplicate sample names"
 created_at = arrow.get("2024-06-05 17:07:52.959084")
 revision_id = "zma2wj6b39hs"
 
-alembic_down_revision = "None"
-virtool_down_revision = "uejy8b1tlmvv"
+alembic_down_revision = None
+virtool_down_revision = "wo0wk22ngsgn"
 
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None
