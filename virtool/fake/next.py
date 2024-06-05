@@ -121,10 +121,10 @@ class DataFaker:
         self.jobs = JobsFakerPiece(self)
         self.labels = LabelsFakerPiece(self)
         self.ml = MLFakerPiece(self)
+        self.subtractions = SubtractionFakerPiece(self)
         self.tasks = TasksFakerPiece(self)
         self.users = UsersFakerPiece(self)
         self.uploads = UploadsFakerPiece(self)
-        self.subtractions = SubtractionFakerPiece(self)
 
         self.mongo = mongo
 
