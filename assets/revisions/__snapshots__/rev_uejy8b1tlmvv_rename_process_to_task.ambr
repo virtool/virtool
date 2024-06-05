@@ -1,0 +1,56 @@
+# serializer version: 1
+# name: test_upgrade
+  list([
+    dict({
+      '_id': 'ref_needs_migration',
+      'process': dict({
+        'id': 'process_id',
+      }),
+    }),
+    dict({
+      '_id': 'ref_no_proccess',
+    }),
+    dict({
+      '_id': 'ref_already migrated',
+      'task': dict({
+        'id': 'task_id',
+      }),
+    }),
+  ])
+# ---
+# name: test_upgrade.1
+  list([
+    dict({
+      '_id': 'ref_needs_migration',
+      'task': dict({
+        'id': 'process_id',
+      }),
+    }),
+    dict({
+      '_id': 'ref_no_proccess',
+      'task': None,
+    }),
+    dict({
+      '_id': 'ref_already migrated',
+      'task': dict({
+        'id': 'task_id',
+      }),
+    }),
+  ])
+# ---
+# name: test_upgrade.2
+  list([
+    dict({
+      '_id': 'hmm',
+      'task': dict({
+        'id': 'process_id',
+      }),
+    }),
+    dict({
+      '_id': 'no_upgrade',
+      'process': dict({
+        'id': 'process_id',
+      }),
+    }),
+  ])
+# ---
