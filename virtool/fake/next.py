@@ -1,20 +1,21 @@
-"""
-Easily create fake data.
+"""Easily create fake data.
 
 """
 import asyncio
 import gzip
 from pathlib import Path
-from typing import Type, AsyncGenerator
+from typing import AsyncGenerator, Type
 
 import aiofiles
 from faker import Faker
 from faker.providers import (
     BaseProvider,
-    python,
     color,
-    lorem,
     file,
+    lorem,
+    python,
+)
+from faker.providers import (
     job as job_provider,
 )
 from sqlalchemy import update
@@ -25,31 +26,34 @@ from virtool_core.models.job import Job, JobState
 from virtool_core.models.label import Label
 from virtool_core.models.ml import MLModel
 from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.subtraction import Subtraction
 from virtool_core.models.task import Task
 from virtool_core.models.upload import Upload
 from virtool_core.models.user import User
-from virtool_core.models.subtraction import Subtraction
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
-from virtool.groups.oas import UpdateGroupRequest, PermissionsUpdate
+from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.mongo.core import Mongo
 from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
 from virtool.releases import ReleaseManifestItem
+from virtool.subtractions.oas import (
+    CreateSubtractionRequest,
+    FinalizeSubtractionRequest,
+    NucleotideComposition,
+)
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
 from virtool.uploads.models import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.oas import UpdateUserRequest
-from virtool.subtractions.oas import CreateSubtractionRequest, FinalizeSubtractionRequest, NucleotideComposition
 
 
 async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
-    """
-    Read a chunk of size `CHUNK_SIZE` from a file.
+    """Read a chunk of size `CHUNK_SIZE` from a file.
 
     This is used to hijack the upload process and create fake uploads.
 
@@ -61,8 +65,7 @@ async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
 
 
 async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
-    """
-    Decompress and Read a chunk of size `CHUNK_SIZE` from a file.
+    """Decompress and Read a chunk of size `CHUNK_SIZE` from a file.
 
     This is used to hijack the upload process and create fake uploads. It will
     decompress the file at ``path`` before reading it.
@@ -94,7 +97,7 @@ class VirtoolProvider(BaseProvider):
 
     def workflow(self) -> str:
         return self.random_choices(
-            [name.replace("job_", "") for name in WORKFLOW_NAMES], 1
+            [name.replace("job_", "") for name in WORKFLOW_NAMES], 1,
         )[0]
 
 
@@ -140,14 +143,13 @@ class JobsFakerPiece(DataFakerPiece):
     model = Job
 
     async def create(
-        self,
-        user: User,
-        archived: bool = False,
-        state: JobState | None = None,
-        workflow: str | None = None,
+            self,
+            user: User,
+            archived: bool = False,
+            state: JobState | None = None,
+            workflow: str | None = None,
     ) -> Job:
-        """
-        Create a fake job.
+        """Create a fake job.
 
         A completely valid job will be created which follows the rules:
 
@@ -166,7 +168,7 @@ class JobsFakerPiece(DataFakerPiece):
             JobState.RUNNING,
         ]:
             raise ValueError(
-                "Cannot create an archived job in the waiting, preparing, or running states"
+                "Cannot create an archived job in the waiting, preparing, or running states",
             )
 
         job = await self._layer.jobs.create(
@@ -186,7 +188,7 @@ class JobsFakerPiece(DataFakerPiece):
                     JobState.ERROR,
                     JobState.TERMINATED,
                     JobState.TIMEOUT,
-                ]
+                ],
             )
         else:
             target_state = self._faker.random_element(
@@ -199,7 +201,7 @@ class JobsFakerPiece(DataFakerPiece):
                     JobState.TERMINATED,
                     JobState.TIMEOUT,
                     JobState.WAITING,
-                ]
+                ],
             )
 
         previous_status = job.status[0]
@@ -217,7 +219,7 @@ class JobsFakerPiece(DataFakerPiece):
                 next_state = JobState.RUNNING
             else:
                 next_state = self._faker.random_element(
-                    [JobState.RUNNING, target_state]
+                    [JobState.RUNNING, target_state],
                 )
 
             progress += 10
@@ -243,13 +245,12 @@ class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
     async def create(
-        self,
-        permissions: PermissionsUpdate | None = None,
-        legacy_id: str | None = None,
-        name: str | None = None,
+            self,
+            permissions: PermissionsUpdate | None = None,
+            legacy_id: str | None = None,
+            name: str | None = None,
     ) -> Group:
-        """
-        :param permissions: Permissions for the group. If not provided, the group will
+        """:param permissions: Permissions for the group. If not provided, the group will
             have no permissions.
         :param legacy_id: An optional legacy ID for the group.
         :param name: The name of the group. If not provided, a unique name will be
@@ -269,7 +270,7 @@ class GroupsFakerPiece(DataFakerPiece):
                 await session.execute(
                     update(SQLGroup)
                     .where(SQLGroup.id == group.id)
-                    .values(legacy_id=legacy_id)
+                    .values(legacy_id=legacy_id),
                 )
                 await session.commit()
 
@@ -277,7 +278,7 @@ class GroupsFakerPiece(DataFakerPiece):
 
         if permissions:
             group = await self._layer.groups.update(
-                group.id, UpdateGroupRequest(permissions=permissions)
+                group.id, UpdateGroupRequest(permissions=permissions),
             )
 
         return group
@@ -287,8 +288,7 @@ class HMMFakerPiece(DataFakerPiece):
     model = HMM
 
     async def create(self, mongo: Mongo) -> HMM:
-        """
-        Create a new fake hmm.
+        """Create a new fake hmm.
 
         :param mongo: the mongo DB connection
 
@@ -305,7 +305,7 @@ class HMMFakerPiece(DataFakerPiece):
                         "gi": faker.pystr(),
                         "name": faker.pystr(),
                         "organism": faker.pystr(),
-                    }
+                    },
                 ],
                 "genera": {faker.pystr(): faker.pyint()},
                 "length": faker.pyint(),
@@ -316,7 +316,7 @@ class HMMFakerPiece(DataFakerPiece):
                 "count": faker.pyint(),
                 "families": {faker.pystr(): faker.pyint()},
                 "names": [faker.pystr()],
-            }
+            },
         )
 
         return HMM(**document)
@@ -326,8 +326,7 @@ class LabelsFakerPiece(DataFakerPiece):
     model = Label
 
     async def create(self) -> Label:
-        """
-        Create a new fake label.
+        """Create a new fake label.
 
         :return: a new fake label
         """
@@ -355,8 +354,7 @@ class MLFakerPiece(DataFakerPiece):
         )
 
     def create_release_manifest_item(self) -> ReleaseManifestItem:
-        """
-        Create a fake release manifest item like you would receive from the
+        """Create a fake release manifest item like you would receive from the
         www.virtool.ca releases endpoints
 
         """
@@ -378,8 +376,7 @@ class TasksFakerPiece(DataFakerPiece):
     model = Task
 
     async def create(self) -> Task:
-        """
-        Create a new fake random task.
+        """Create a new fake random task.
 
         :return: a new fake task
         """
@@ -390,14 +387,13 @@ class TasksFakerPiece(DataFakerPiece):
                     AddSubtractionFilesTask,
                     CloneReferenceTask,
                     CleanReferencesTask,
-                ]
+                ],
             ),
             {},
         )
 
     async def create_with_class(self, cls: Type[BaseTask], context: dict) -> Task:
-        """
-        Create a fake task.
+        """Create a fake task.
 
         :param cls: the type of task
         :param context: the context required for the task
@@ -411,14 +407,13 @@ class UploadsFakerPiece(DataFakerPiece):
     model = Upload
 
     async def create(
-        self,
-        user: User,
-        upload_type: UploadType = UploadType.reads,
-        name: str = "test.fq.gz",
-        reserved: bool = False,
+            self,
+            user: User,
+            upload_type: UploadType = UploadType.reads,
+            name: str = "test.fq.gz",
+            reserved: bool = False,
     ) -> Upload:
-        """
-        Create a fake upload.
+        """Create a fake upload.
 
         A completely valid user will be created.
 
@@ -435,7 +430,7 @@ class UploadsFakerPiece(DataFakerPiece):
         fake_file_path = example_path / "reads/single.fq.gz"
 
         upload = await self._layer.uploads.create(
-            fake_file_chunker(fake_file_path), name, upload_type, user.id
+            fake_file_chunker(fake_file_path), name, upload_type, user.id,
         )
 
         if reserved:
@@ -448,15 +443,14 @@ class UsersFakerPiece(DataFakerPiece):
     model = User
 
     async def create(
-        self,
-        handle: str | None = None,
-        groups: list[Group] | None = None,
-        password: str | None = None,
-        primary_group: Group | None = None,
-        administrator_role: AdministratorRole | None = None,
+            self,
+            handle: str | None = None,
+            groups: list[Group] | None = None,
+            password: str | None = None,
+            primary_group: Group | None = None,
+            administrator_role: AdministratorRole | None = None,
     ) -> User:
-        """
-        Create a fake user.
+        """Create a fake user.
 
         A completely valid user will be created.
 
@@ -475,7 +469,7 @@ class UsersFakerPiece(DataFakerPiece):
 
         if administrator_role:
             user = await self._layer.users.set_administrator_role(
-                user.id, administrator_role
+                user.id, administrator_role,
             )
 
         if groups and primary_group:
@@ -497,7 +491,7 @@ class UsersFakerPiece(DataFakerPiece):
             return await self._layer.users.update(
                 user.id,
                 UpdateUserRequest(
-                    groups=[primary_group.id], primary_group=primary_group.id
+                    groups=[primary_group.id], primary_group=primary_group.id,
                 ),
             )
 
@@ -510,10 +504,9 @@ class SubtractionFakerPiece(DataFakerPiece):
     async def create(
             self,
             user_id: str,
-            upload: Upload
+            upload: Upload,
     ) -> Subtraction:
-        """
-        Create a fake subtraction.
+        """Create a fake subtraction.
 
         This method will:
         - Create a new subtraction using data_layer.subtractions.create().
@@ -524,11 +517,10 @@ class SubtractionFakerPiece(DataFakerPiece):
         :param upload the fake upload
         :return: the created subtraction
         """
-
         subtraction_request = CreateSubtractionRequest(
             name="foo",
             nickname="bar",
-            upload_id=upload.id
+            upload_id=upload.id,
         )
 
         subtraction = await self._layer.subtractions.create(data=subtraction_request,
