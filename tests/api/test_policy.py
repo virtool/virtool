@@ -1,5 +1,4 @@
-"""
-Tests for Virtool's route policies.
+"""Tests for Virtool's route policies.
 
 These are essential to security and are exhaustively tested and don't use snapshots.
 Do not use snapshots for these test.
@@ -16,19 +15,19 @@ from virtool_core.models.enums import Permission
 from virtool_core.models.roles import AdministratorRole
 
 from tests.fixtures.client import ClientSpawner
-from virtool.authorization.permissions import LegacyPermission
-from virtool.errors import PolicyError
 from virtool.api.policy import (
-    policy,
-    PublicRoutePolicy,
-    DefaultRoutePolicy,
     AdministratorRoutePolicy,
+    DefaultRoutePolicy,
     PermissionRoutePolicy,
+    PublicRoutePolicy,
+    policy,
 )
 from virtool.api.routes import Routes
+from virtool.authorization.permissions import LegacyPermission
+from virtool.errors import PolicyError
 
 
-@pytest.fixture
+@pytest.fixture()
 def privilege_routes():
     def func(route_policy):
         routes = Routes()
@@ -150,10 +149,7 @@ async def test_public(
     privilege_routes,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test that all clients can access public endpoints.
-
-    """
+    """Test that all clients can access public endpoints."""
     client = await spawn_client(
         addon_route_table=privilege_routes(PublicRoutePolicy),
         administrator=administrator,
@@ -178,10 +174,7 @@ async def test_default(
     privilege_routes,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test that a request to a non-public endpoint fails with a 401 status code.
-
-    """
+    """Test that a request to a non-public endpoint fails with a 401 status code."""
     client = await spawn_client(
         addon_route_table=privilege_routes(DefaultRoutePolicy),
         administrator=administrator,
@@ -215,10 +208,7 @@ async def test_no_policy(
     privilege_routes,
     spawn_client: ClientSpawner,
 ):
-    """
-    Test that routes fallback on the default if they have no policy explicitly defined.
-
-    """
+    """Test that routes fallback on the default if they have no policy explicitly defined."""
     client = await spawn_client(
         addon_route_table=privilege_routes(PublicRoutePolicy),
         administrator=administrator,
@@ -252,13 +242,10 @@ async def test_administrator(
     spawn_client: ClientSpawner,
     privilege_routes,
 ):
-    """
-    Test that only authenticated, administrator clients can access admin endpoints.
-
-    """
+    """Test that only authenticated, administrator clients can access admin endpoints."""
     client = await spawn_client(
         addon_route_table=privilege_routes(
-            AdministratorRoutePolicy(AdministratorRole.BASE)
+            AdministratorRoutePolicy(AdministratorRole.BASE),
         ),
         administrator=administrator,
         authenticated=authenticated,
@@ -304,7 +291,7 @@ async def test_permissions(
 ):
     client = await spawn_client(
         addon_route_table=privilege_routes(
-            PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE)
+            PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE),
         ),
         administrator=administrator,
         authenticated=authenticated,
@@ -345,8 +332,7 @@ async def test_permissions(
 
 
 async def test_more_than_one_function():
-    """
-    Test that attempting to load more than one policy on a function-based route leads to
+    """Test that attempting to load more than one policy on a function-based route leads to
     a ``PolicyError``.
 
     """
@@ -363,8 +349,7 @@ async def test_more_than_one_function():
 
 
 async def test_more_than_one_view(spawn_client):
-    """
-    Test that attempting to load more than one policy on a view-based route leads to
+    """Test that attempting to load more than one policy on a view-based route leads to
     a ``PolicyError``.
 
     """

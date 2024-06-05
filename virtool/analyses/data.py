@@ -1,49 +1,44 @@
 import asyncio
 import math
-import os
 from datetime import datetime
-from shutil import rmtree
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import sentry_sdk
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
-from virtool_core.models.analysis import AnalysisSearchResult, Analysis, AnalysisFile
+from virtool_core.models.analysis import Analysis, AnalysisFile, AnalysisSearchResult
 from virtool_core.utils import rm
 
 import virtool.analyses.format
-import virtool.samples.db
 import virtool.uploads.db
 from virtool.analyses.checks import (
-    check_analysis_workflow,
     check_analysis_nuvs_sequence,
-    check_if_analysis_running,
+    check_analysis_workflow,
     check_if_analysis_modified,
+    check_if_analysis_running,
 )
-from virtool.analyses.db import TARGET_FILES, filter_analyses_by_sample_rights
-from virtool.analyses.files import create_analysis_file, create_nuvs_analysis_files
+from virtool.analyses.db import filter_analyses_by_sample_rights
+from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.analyses.utils import (
     attach_analysis_files,
-    join_analysis_path,
-    move_nuvs_files,
 )
 from virtool.blast.models import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
-    ResourceNotFoundError,
     ResourceConflictError,
+    ResourceNotFoundError,
 )
-from virtool.data.events import emits, Operation, emit
+from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.ml.transforms import AttachMLTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field, get_new_id
+from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
@@ -52,10 +47,6 @@ from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
     subtraction_processor,
-)
-from virtool.tasks.progress import (
-    AccumulatingProgressHandlerWrapper,
-    AbstractProgressHandler,
 )
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
@@ -73,10 +64,13 @@ class AnalysisData(DataLayerDomain):
         self._pg = pg
 
     async def find(
-        self, page: int, per_page: int, client, sample_id: str = None
+        self,
+        page: int,
+        per_page: int,
+        client,
+        sample_id: str = None,
     ) -> AnalysisSearchResult:
-        """
-        List all analysis documents.
+        """List all analysis documents.
 
         :param page: the page number
         :param per_page: the number of documents per page
@@ -84,7 +78,6 @@ class AnalysisData(DataLayerDomain):
         :param sample_id: sample id to search by
         :return: a list of all analysis documents
         """
-
         sort = {"created_at": -1}
 
         skip_count = 0
@@ -102,7 +95,7 @@ class AnalysisData(DataLayerDomain):
                         {"$skip": skip_count},
                         {"$limit": per_page},
                     ],
-                }
+                },
             },
             {
                 "$project": {
@@ -121,7 +114,7 @@ class AnalysisData(DataLayerDomain):
                         "workflow": True,
                     },
                     "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
-                }
+                },
             },
         ]
 
@@ -141,10 +134,13 @@ class AnalysisData(DataLayerDomain):
         documents, total_count = data
 
         with sentry_sdk.start_span(
-            op="mongo", description="filter_analyses_by_sample_rights"
+            op="mongo",
+            description="filter_analyses_by_sample_rights",
         ):
             documents = await filter_analyses_by_sample_rights(
-                client, self._mongo, documents
+                client,
+                self._mongo,
+                documents,
             )
 
         documents = await apply_transforms(
@@ -159,9 +155,7 @@ class AnalysisData(DataLayerDomain):
         )
 
         return AnalysisSearchResult(
-            **{
-                "documents": documents,
-            },
+            documents=documents,
             found_count=total_count,
             total_count=total_count,
             page=page,
@@ -170,10 +164,11 @@ class AnalysisData(DataLayerDomain):
         )
 
     async def get(
-        self, analysis_id: str, if_modified_since: datetime | None
+        self,
+        analysis_id: str,
+        if_modified_since: datetime | None,
     ) -> Analysis:
-        """
-        Get a single analysis by its ID.
+        """Get a single analysis by its ID.
 
         :param analysis_id: the analysis ID
         :param if_modified_since: the date the document should have been last modified
@@ -190,7 +185,9 @@ class AnalysisData(DataLayerDomain):
 
         if analysis["ready"]:
             analysis = await virtool.analyses.format.format_analysis(
-                self._config, self._mongo, analysis
+                self._config,
+                self._mongo,
+                analysis,
             )
 
         transforms = [
@@ -207,14 +204,18 @@ class AnalysisData(DataLayerDomain):
         analysis = await apply_transforms(subtraction_processor(analysis), transforms)
 
         return Analysis(
-            **{**analysis, "job": analysis["job"] if analysis["job"] else None}
+            **{**analysis, "job": analysis["job"] if analysis["job"] else None},
         )
 
+    @emits(Operation.CREATE, "analyses")
     async def create(
-        self, data: CreateAnalysisRequest, sample_id: str, user_id: str, space_id: int
+        self,
+        data: CreateAnalysisRequest,
+        sample_id: str,
+        user_id: str,
+        space_id: int,
     ) -> Analysis:
-        """
-        Creates a new analysis.
+        """Creates a new analysis.
 
         Ensures that a valid subtraction host was the submitted. Configures read and
         write permissions on the sample document and assigns it a creator username
@@ -228,7 +229,8 @@ class AnalysisData(DataLayerDomain):
 
         """
         index_id, index_version = await get_current_id_and_version(
-            self._mongo, data.ref_id
+            self._mongo,
+            data.ref_id,
         )
 
         created_at = virtool.utils.timestamp()
@@ -261,7 +263,7 @@ class AnalysisData(DataLayerDomain):
                         "id": user_id,
                     },
                     "workflow": data.workflow.value,
-                }
+                },
             )
 
         await self.data.jobs.create(
@@ -282,8 +284,7 @@ class AnalysisData(DataLayerDomain):
         return await self.get(analysis_id, None)
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
-        """
-        Checks if the client has the `read` or `write` rights.
+        """Checks if the client has the `read` or `write` rights.
 
         :param analysis_id: the analysis ID
         :param client: the client object
@@ -319,8 +320,7 @@ class AnalysisData(DataLayerDomain):
             return write
 
     async def delete(self, analysis_id: str, jobs_api_flag: bool):
-        """
-        Delete a single analysis by its ID.
+        """Delete a single analysis by its ID.
 
         :param analysis_id: the analysis ID
         :param jobs_api_flag: checks if the jobs_api is handling the request
@@ -357,10 +357,13 @@ class AnalysisData(DataLayerDomain):
         emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
-        self, chunks, analysis_id: str, analysis_format: str, name: str
+        self,
+        chunks,
+        analysis_id: str,
+        analysis_format: str,
+        name: str,
     ) -> Optional[AnalysisFile]:
-        """
-        Uploads a new analysis result file.
+        """Uploads a new analysis result file.
 
         :param reader: the file reader
         :param analysis_id: the analysis ID
@@ -368,14 +371,16 @@ class AnalysisData(DataLayerDomain):
         :param name: the name of the analysis file
         :return: the new analysis file
         """
-
         document = await self._mongo.analyses.find_one(analysis_id)
 
         if document is None:
             raise ResourceNotFoundError
 
         analysis_file = await create_analysis_file(
-            self._pg, analysis_id, analysis_format, name
+            self._pg,
+            analysis_id,
+            analysis_format,
+            name,
         )
 
         upload_id = analysis_file["id"]
@@ -393,19 +398,20 @@ class AnalysisData(DataLayerDomain):
             return None
 
         analysis_file = await virtool.uploads.db.finalize(
-            self._pg, size, upload_id, SQLAnalysisFile
+            self._pg,
+            size,
+            upload_id,
+            SQLAnalysisFile,
         )
 
         return AnalysisFile(**analysis_file)
 
     async def get_file_name(self, upload_id: int) -> str:
-        """
-        Get a file generated during the analysis.
+        """Get a file generated during the analysis.
 
         :param upload_id: the upload ID
         :return: the name on disk of the analysis file
         """
-
         analysis_file = await get_row_by_id(self._pg, SQLAnalysisFile, upload_id)
 
         if analysis_file:
@@ -414,8 +420,7 @@ class AnalysisData(DataLayerDomain):
         raise ResourceNotFoundError()
 
     async def download(self, analysis_id: str, extension: str) -> Tuple[str, str]:
-        """
-        Get an analysis to be downloaded in CSV or XSLX format.
+        """Get an analysis to be downloaded in CSV or XSLX format.
 
         :param analysis_id: the analysis ID
         :param extension: the file extension
@@ -429,28 +434,32 @@ class AnalysisData(DataLayerDomain):
         if extension == "xlsx":
             return (
                 await virtool.analyses.format.format_analysis_to_excel(
-                    self._config, self._mongo, document
+                    self._config,
+                    self._mongo,
+                    document,
                 ),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
         return (
             await virtool.analyses.format.format_analysis_to_csv(
-                self._config, self._mongo, document
+                self._config,
+                self._mongo,
+                document,
             ),
             "text/csv",
         )
 
     async def blast(self, analysis_id: str, sequence_index: int) -> Optional[str]:
-        """
-        BLAST a contig sequence that is part of a NuVs result record.
+        """BLAST a contig sequence that is part of a NuVs result record.
 
         :param analysis_id: the analysis ID
         :param sequence_index: the sequence index
         :return: the nuvs sequence
         """
         document = await self._mongo.analyses.find_one(
-            {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
+            {"_id": analysis_id},
+            ["ready", "workflow", "results", "sample"],
         )
 
         await wait_for_checks(
@@ -465,7 +474,7 @@ class AnalysisData(DataLayerDomain):
             await session.execute(
                 delete(SQLNuVsBlast)
                 .where(SQLNuVsBlast.analysis_id == analysis_id)
-                .where(SQLNuVsBlast.sequence_index == sequence_index)
+                .where(SQLNuVsBlast.sequence_index == sequence_index),
             )
             await session.commit()
 
@@ -500,24 +509,23 @@ class AnalysisData(DataLayerDomain):
 
     @emits(Operation.UPDATE)
     async def finalize(self, analysis_id: str, results: dict) -> Analysis:
-        """
-        Sets the result for an analysis and marks it as ready.
+        """Sets the result for an analysis and marks it as ready.
 
         :param analysis_id: the analysis ID
         :param results: the analysis results
         :return: the analysis
         """
-
         document = await self._mongo.analyses.find_one({"_id": analysis_id}, ["ready"])
 
         if not document:
             raise ResourceNotFoundError
 
-        if "ready" in document and document["ready"]:
+        if document.get("ready"):
             raise ResourceConflictError
 
         document = await self._mongo.analyses.find_one_and_update(
-            {"_id": analysis_id}, {"$set": {"results": results, "ready": True}}
+            {"_id": analysis_id},
+            {"$set": {"results": results, "ready": True}},
         )
 
         sample_id = document["sample"]["id"]
@@ -536,49 +544,3 @@ class AnalysisData(DataLayerDomain):
         )
 
         return analysis
-
-    async def store_nuvs_files(self, progress_handler: AbstractProgressHandler):
-        """Move existing NuVs analysis files to `<data_path>/analyses/:id`."""
-
-        count = await self._mongo.analyses.count_documents({"workflow": "nuvs"})
-
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
-
-        async for analysis in self._mongo.analyses.find({"workflow": "nuvs"}):
-            analysis_id = analysis["_id"]
-            sample_id = analysis["sample"]["id"]
-
-            old_path = join_analysis_path(
-                self._config.data_path, analysis_id, sample_id
-            )
-
-            target_path = self._config.data_path / "analyses" / analysis_id
-
-            async with AsyncSession(self._pg) as session:
-                exists = (
-                    await session.execute(
-                        select(SQLAnalysisFile).filter_by(analysis=analysis_id)
-                    )
-                ).scalar()
-
-            if await asyncio.to_thread(old_path.is_dir) and not exists:
-                try:
-                    await asyncio.to_thread(os.makedirs, target_path)
-                except FileExistsError:
-                    pass
-
-                analysis_files = []
-
-                for filename in sorted(os.listdir(old_path)):
-                    if filename in TARGET_FILES:
-                        analysis_files.append(filename)
-
-                        await move_nuvs_files(filename, old_path, target_path)
-
-                await create_nuvs_analysis_files(
-                    self._pg, analysis_id, analysis_files, target_path
-                )
-
-                await asyncio.to_thread(rmtree, old_path, ignore_errors=True)
-
-            await tracker.add(1)

@@ -6,15 +6,15 @@ import alembic.command
 import alembic.config
 import arrow
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 from virtool.config.cls import MigrationConfig
-from virtool.migration.cls import RevisionSource, GenericRevision
+from virtool.migration.cls import GenericRevision, RevisionSource
 from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import (
-    fetch_last_applied_revision,
     SQLRevision,
+    fetch_last_applied_revision,
     list_applied_revisions,
 )
 from virtool.migration.show import load_all_revisions
@@ -23,8 +23,7 @@ logger = get_logger("migration")
 
 
 async def apply(config: MigrationConfig):
-    """
-    Apply revisions up to the most recent revision provided by the Virtool release.
+    """Apply revisions up to the most recent revision provided by the Virtool release.
 
     The following safety measures are taken:
     * Revisions that have already been successfully applied will not be reapplied.
@@ -79,7 +78,9 @@ async def apply(config: MigrationConfig):
         # revisions in the wrong order.
         if revision.id in applied_revision_ids:
             logger.info(
-                "Revision is already applied", id=revision.id, name=revision.name
+                "Revision is already applied",
+                id=revision.id,
+                name=revision.name,
             )
             continue
 
@@ -91,8 +92,7 @@ async def apply(config: MigrationConfig):
 
 
 async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
-    """
-    Apply a single revision to Virtool data sources.
+    """Apply a single revision to Virtool data sources.
 
     The revision can be either a Virtool revision or an Alembic revision. Alembic
     revisions will be applied using the Alembic CLI. Virtool revisions will be applied
@@ -117,7 +117,7 @@ async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
                 created_at=revision.created_at,
                 name=revision.name,
                 revision=revision.id,
-            )
+            ),
         )
 
         await session.commit()
@@ -126,10 +126,7 @@ async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
 
 
 async def apply_alembic(revision: str):
-    """
-    Apply the Alembic revision with the given id.
-
-    """
+    """Apply the Alembic revision with the given id."""
     await asyncio.to_thread(
         alembic.command.upgrade,
         alembic.config.Config(Path(__file__).parent.parent.parent / "alembic.ini"),
@@ -140,17 +137,14 @@ async def apply_alembic(revision: str):
 
 
 async def ensure_revisions_table(pg: AsyncEngine):
-    """
-    Ensure that the `revisions` table exists in the database.
+    """Ensure that the `revisions` table exists in the database.
 
     :param pg: the PostgreSQL database connection
     """
-
-    async with AsyncSession(pg) as session:
-        async with session.begin():
-            await session.execute(
-                text(
-                    """
+    async with AsyncSession(pg) as session, session.begin():
+        await session.execute(
+            text(
+                """
                     CREATE TABLE IF NOT EXISTS revisions (
                         id SERIAL PRIMARY KEY,
                         name varchar(64) NOT NULL,
@@ -158,6 +152,6 @@ async def ensure_revisions_table(pg: AsyncEngine):
                         created_at timestamp without time zone NOT NULL,
                         applied_at timestamp without time zone NOT NULL
                     )
-                    """
-                )
-            )
+                    """,
+            ),
+        )

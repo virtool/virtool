@@ -1,5 +1,4 @@
-"""
-Manage revisions in Alembic and other Virtool data.
+"""Manage revisions in Alembic and other Virtool data.
 
 * Virtool revisions are performed on PostgreSQL MongoDB, OpenFGA, and data files.
 * Alembic revisions are for PostgreSQL only.
@@ -39,4 +38,10 @@ Revisions containing file operations musts be written with the assumption that t
 will fail and have to be re-run.
 
 """
+
 from virtool.migration.cls import MigrationContext, MigrationError
+
+__all__ = [
+    "MigrationContext",
+    "MigrationError",
+]

@@ -69,7 +69,9 @@ class IndexFilesTransform(AbstractTransform):
 
 
 class IndexCountsTransform(AbstractTransform):
-    """Attaches modification counts to index documents based on OTU collection queries."""
+    """Attaches modification counts to index documents based on OTU collection
+    queries.
+    """
 
     def __init__(self, mongo: "Mongo"):
         self._mongo = mongo

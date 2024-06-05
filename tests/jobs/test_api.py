@@ -6,7 +6,7 @@ from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 from virtool_core.models.job import JobState
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 
@@ -188,9 +188,14 @@ async def test_get(error, fake2: DataFaker, snapshot, spawn_client):
 
 
 class TestAcquire:
-    async def test_ok(self, fake2: DataFaker, snapshot, spawn_job_client):
+    async def test_ok(
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_job_client: JobClientSpawner,
+    ):
         """Test that a job can be acquired."""
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
 
         job = await fake2.jobs.create(
             await fake2.users.create(),
@@ -206,7 +211,7 @@ class TestAcquire:
 
     async def test_already_acquired(self, fake2: DataFaker, spawn_job_client):
         """Test that a 400 is returned when the job is already acquired."""
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
 
         user = await fake2.users.create()
         job = await fake2.jobs.create(user, state=JobState.WAITING)
@@ -224,7 +229,7 @@ class TestAcquire:
 
     async def test_not_found(self, spawn_job_client):
         """Test that a 404 is returned when the job doesn't exist."""
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
 
         resp = await client.patch("/jobs/foo", json={"acquired": True})
 
@@ -236,7 +241,12 @@ class TestAcquire:
 
 
 class TestArchive:
-    async def test_ok(self, fake2: DataFaker, snapshot, spawn_client: ClientSpawner):
+    async def test_ok(
+        self,
+        fake2: DataFaker,
+        snapshot,
+        spawn_client: ClientSpawner,
+    ):
         """Test that a job can be archived."""
         client = await spawn_client(authenticated=True)
 
@@ -282,7 +292,7 @@ class TestArchive:
 class TestPing:
     async def test_ok(self, fake2: DataFaker, spawn_job_client):
         """Test that a job can be pinged."""
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
 
         job = await fake2.jobs.create(
             await fake2.users.create(),
@@ -301,7 +311,7 @@ class TestPing:
 
     async def test_not_found(self, spawn_job_client):
         """Test that a 404 is returned when the job doesn't exist."""
-        client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authenticated=True)
 
         resp = await client.put("/jobs/foo/ping", data={})
 

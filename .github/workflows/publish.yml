@@ -23,8 +23,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Version
-        run: echo ${{ github.event.release.tag_name }} > VERSION
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.release.tag_name }}
       - name: Login to Registry
         uses: docker/login-action@v3
         with:

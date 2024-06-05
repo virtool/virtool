@@ -369,8 +369,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
             docs = [
                 otu_data.data.otu_id
                 for otu_data in data
-                if otu_data.data.history_method == "update"
-                or otu_data.data.history_method == "create"
+                if otu_data.data.history_method in ("update", "create")
             ]
 
             joined_documents = await bulk_join_ids(mongo, docs, session)

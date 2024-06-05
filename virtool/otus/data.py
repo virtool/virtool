@@ -1,8 +1,9 @@
 import asyncio
 from copy import deepcopy
 from pathlib import Path
-from typing import Mapping, Optional, Tuple
+from typing import Mapping
 
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
 from virtool_core.models.enums import HistoryMethod
 from virtool_core.models.otu import OTU, Sequence
@@ -40,7 +41,7 @@ class OTUData:
         self._mongo = mongo
         self._data_path = data_path
 
-    async def find(self, query: Mapping, term: Optional[str], verified: Optional[bool]):
+    async def find(self, query: Mapping, term: str | None, verified: bool | None):
         return await virtool.otus.db.find(self._mongo, term, query, verified)
 
     async def get(self, otu_id: str) -> OTU:
@@ -69,7 +70,7 @@ class OTUData:
             },
         )
 
-    async def get_fasta(self, otu_id: str) -> Optional[Tuple[str, str]]:
+    async def get_fasta(self, otu_id: str) -> tuple[str, str] | None:
         """Generate a FASTA filename and body for an OTU's sequences.
 
         :param otu_id: the ID of the OTU
@@ -107,7 +108,7 @@ class OTUData:
         self,
         otu_id: str,
         isolate_id: str,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """Get the OTU name and isolate name for a OTU-isolate combination specified by
         `otu_id` and `isolate_id`.
 
@@ -131,7 +132,7 @@ class OTUData:
 
         return otu["name"], virtool.otus.utils.format_isolate_name(isolate)
 
-    async def get_isolate_fasta(self, otu_id: str, isolate_id: str) -> Tuple[str, str]:
+    async def get_isolate_fasta(self, otu_id: str, isolate_id: str) -> tuple[str, str]:
         """Generate a FASTA filename and body for the sequences associated with the
         isolate identified by the passed ``otu_id`` and ``isolate_id``.
 
@@ -167,7 +168,7 @@ class OTUData:
             isolate_name,
         ), "\n".join(fasta)
 
-    async def get_sequence_fasta(self, sequence_id: str) -> Tuple[str, str]:
+    async def get_sequence_fasta(self, sequence_id: str) -> tuple[str, str]:
         """Generate a FASTA filename and body for the sequence associated with the
         passed ``sequence_id``.
 
@@ -212,8 +213,9 @@ class OTUData:
         :param user_id: the ID of the creating user
         :return: the OTU
         """
-        async with self._mongo.create_session() as session:
-            document = await self._mongo.otus.insert_one(
+
+        async def func(session: AsyncIOMotorClientSession) -> Document:
+            document_ = await self._mongo.otus.insert_one(
                 {
                     "name": data.name,
                     "abbreviation": data.abbreviation,
@@ -233,11 +235,15 @@ class OTUData:
                 self._data_path,
                 HistoryMethod.create,
                 None,
-                document,
-                compose_create_description(document),
+                document_,
+                compose_create_description(document_),
                 user_id,
                 session=session,
             )
+
+            return document_
+
+        document = await self._mongo.with_transaction(func)
 
         return await self.get(document["_id"])
 
@@ -270,10 +276,10 @@ class OTUData:
         if "schema" in data:
             update["schema"] = data["schema"]
 
-        old = await virtool.otus.db.join(self._mongo, otu_id)
+        async def func(session: AsyncIOMotorClientSession):
+            old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
-        async with self._mongo.create_session() as session:
-            document = await self._mongo.otus.find_one_and_update(
+            document_ = await self._mongo.otus.find_one_and_update(
                 {"_id": otu_id},
                 {"$set": update, "$inc": {"version": 1}},
                 session=session,
@@ -282,14 +288,14 @@ class OTUData:
             await virtool.otus.db.update_sequence_segments(
                 self._mongo,
                 old,
-                document,
+                document_,
                 session=session,
             )
 
             new = await virtool.otus.db.join(
                 self._mongo,
                 otu_id,
-                document,
+                document_,
                 session=session,
             )
 
@@ -311,9 +317,11 @@ class OTUData:
                 session=session,
             )
 
+        await self._mongo.with_transaction(func)
+
         return await self.get(otu_id)
 
-    async def remove(self, otu_id: str, user_id: str) -> Optional[DeleteResult]:
+    async def remove(self, otu_id: str, user_id: str) -> DeleteResult | None:
         """Remove an OTU.
 
         Create a history document to record the change.
@@ -328,7 +336,7 @@ class OTUData:
         if not joined:
             return None
 
-        async with self._mongo.create_session() as session:
+        async def func(session: AsyncIOMotorClientSession) -> DeleteResult | None:
             _, delete_result, _ = await asyncio.gather(
                 self._mongo.sequences.delete_many({"otu_id": otu_id}, session=session),
                 self._mongo.otus.delete_one({"_id": otu_id}, session=session),
@@ -356,7 +364,9 @@ class OTUData:
                 session=session,
             )
 
-        return delete_result
+            return delete_result
+
+        return await self._mongo.with_transaction(func)
 
     async def add_isolate(
         self,
@@ -365,23 +375,9 @@ class OTUData:
         source_name: str,
         user_id: str,
         default: bool = False,
-        isolate_id: Optional[str] = None,
+        isolate_id: str | None = None,
     ):
-        document = await self._mongo.otus.find_one(otu_id)
-
-        isolates = deepcopy(document["isolates"])
-
-        # True if the new isolate should be default and any existing isolates should
-        # be non-default.
-        will_be_default = not isolates or default
-
-        # Set ``default`` to ``False`` for all existing isolates if the new one
-        # should be default.
-        if will_be_default:
-            for isolate in isolates:
-                isolate["default"] = False
-
-        async with self._mongo.create_session() as session:
+        async def func(session: AsyncIOMotorClientSession) -> Document:
             document = await self._mongo.otus.find_one(otu_id, session=session)
 
             isolates = deepcopy(document["isolates"])
@@ -393,10 +389,23 @@ class OTUData:
             # Set ``default`` to ``False`` for all existing isolates if the new one
             # should be default.
             if will_be_default:
-                for isolate in isolates:
-                    isolate["default"] = False
+                for isolate_ in isolates:
+                    isolate_["default"] = False
 
-            # Get the complete, joined entry before the update.
+            document = await self._mongo.otus.find_one(otu_id, session=session)
+
+            isolates = deepcopy(document["isolates"])
+
+            # True if the new isolate should be default and any existing isolates should
+            # be non-default.
+            will_be_default = not isolates or default
+
+            # Set ``default`` to ``False`` for all existing isolates if the new one
+            # should be default.
+            if will_be_default:
+                for isolate_ in isolates:
+                    isolate_["default"] = False
+
             old = await virtool.otus.db.join(
                 self._mongo,
                 otu_id,
@@ -404,19 +413,18 @@ class OTUData:
                 session=session,
             )
 
-            existing_ids = [isolate["id"] for isolate in isolates]
+            existing_ids = [i["id"] for i in isolates]
 
-            if isolate_id is None:
-                isolate_id = virtool.utils.random_alphanumeric(
-                    length=3,
-                    excluded=existing_ids,
-                )
+            new_isolate_id = isolate_id or virtool.utils.random_alphanumeric(
+                length=3,
+                excluded=existing_ids,
+            )
 
-            if isolate_id in existing_ids:
-                raise ValueError(f"Isolate ID already exists: {isolate_id}")
+            if new_isolate_id in existing_ids:
+                raise ValueError(f"Isolate ID already exists: {new_isolate_id}")
 
-            isolate = {
-                "id": isolate_id,
+            isolate_ = {
+                "id": new_isolate_id,
                 "default": will_be_default,
                 "source_type": source_type,
                 "source_name": source_name,
@@ -426,7 +434,7 @@ class OTUData:
             await self._mongo.otus.update_one(
                 {"_id": otu_id},
                 {
-                    "$set": {"isolates": [*isolates, isolate], "verified": False},
+                    "$set": {"isolates": [*isolates, isolate_], "verified": False},
                     "$inc": {"version": 1},
                 },
                 session=session,
@@ -437,7 +445,7 @@ class OTUData:
 
             await update_otu_verification(self._mongo, new, session=session)
 
-            description = f"Added {format_isolate_name(isolate)}"
+            description = f"Added {format_isolate_name(isolate_)}"
 
             if will_be_default:
                 description += " as default"
@@ -453,6 +461,10 @@ class OTUData:
                 session=session,
             )
 
+            return isolate_
+
+        isolate = await self._mongo.with_transaction(func)
+
         return {**isolate, "sequences": []}
 
     async def update_isolate(
@@ -460,8 +472,8 @@ class OTUData:
         otu_id: str,
         isolate_id: str,
         user_id: str,
-        source_type: Optional[str] = None,
-        source_name: Optional[str] = None,
+        source_type: str | None = None,
+        source_name: str | None = None,
     ):
         isolates = await get_one_field(self._mongo.otus, "isolates", otu_id)
 
@@ -476,7 +488,7 @@ class OTUData:
 
         new_isolate_name = format_isolate_name(isolate)
 
-        async with self._mongo.create_session() as session:
+        async def func(session: AsyncIOMotorClientSession) -> Document:
             old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
             # Replace the isolates list with the update one.
@@ -490,7 +502,7 @@ class OTUData:
             )
 
             # Get the joined entry now that it has been updated.
-            new = await virtool.otus.db.join(
+            new_ = await virtool.otus.db.join(
                 self._mongo,
                 otu_id,
                 document,
@@ -499,7 +511,7 @@ class OTUData:
 
             await virtool.otus.db.update_otu_verification(
                 self._mongo,
-                new,
+                new_,
                 session=session,
             )
 
@@ -509,11 +521,15 @@ class OTUData:
                 self._data_path,
                 HistoryMethod.edit_isolate,
                 old,
-                new,
+                new_,
                 f"Renamed {old_isolate_name} to {new_isolate_name}",
                 user_id,
                 session=session,
             )
+
+            return new_
+
+        new = await self._mongo.with_transaction(func)
 
         complete = await virtool.otus.db.join_and_format(
             self._mongo,
@@ -537,7 +553,8 @@ class OTUData:
         :return: the updated isolate
 
         """
-        async with self._mongo.create_session() as session:
+
+        async def func(session: AsyncIOMotorClientSession) -> Document:
             document = await self._mongo.otus.find_one(otu_id, session=session)
 
             isolate = find_isolate(document["isolates"], isolate_id)
@@ -581,8 +598,6 @@ class OTUData:
 
             await virtool.otus.db.update_otu_verification(self._mongo, new)
 
-            isolate_name = format_isolate_name(isolate)
-
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 self._mongo,
@@ -590,15 +605,25 @@ class OTUData:
                 HistoryMethod.set_as_default,
                 old,
                 new,
-                f"Set {isolate_name} as default",
+                f"Set {format_isolate_name(isolate)} as default",
                 user_id,
                 session=session,
             )
 
-        return find_isolate(new["isolates"], isolate_id)
+            return find_isolate(new["isolates"], isolate_id)
+
+        return await self._mongo.with_transaction(func)
 
     async def remove_isolate(self, otu_id: str, isolate_id: str, user_id: str):
-        async with self._mongo.create_session() as session:
+        """Remove an isolate.
+
+        :param otu_id: the ID of the parent OTU
+        :param isolate_id: the ID of the isolate to remove
+        :param user_id: the ID of the requesting user
+
+        """
+
+        async def func(session: AsyncIOMotorClientSession):
             document = await self._mongo.otus.find_one(otu_id)
 
             isolates = deepcopy(document["isolates"])
@@ -667,6 +692,8 @@ class OTUData:
                 session=session,
             )
 
+        await self._mongo.with_transaction(func)
+
     async def create_sequence(
         self,
         otu_id: str,
@@ -676,11 +703,11 @@ class OTUData:
         sequence: str,
         user_id: str,
         host: str = "",
-        segment: Optional[str] = None,
-        sequence_id: Optional[str] = None,
-        target: Optional[str] = None,
+        segment: str | None = None,
+        sequence_id: str | None = None,
+        target: str | None = None,
     ):
-        async with self._mongo.create_session() as session:
+        async def func(session: AsyncIOMotorClientSession) -> Document:
             old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
             to_insert = {
@@ -698,7 +725,7 @@ class OTUData:
             if sequence_id:
                 to_insert["_id"] = sequence_id
 
-            sequence_document = await self._mongo.sequences.insert_one(
+            document = await self._mongo.sequences.insert_one(
                 to_insert,
                 session=session,
             )
@@ -735,7 +762,9 @@ class OTUData:
                 session=session,
             )
 
-        return base_processor(sequence_document)
+            return document
+
+        return base_processor(await self._mongo.with_transaction(func))
 
     async def get_sequence(
         self,
@@ -779,10 +808,10 @@ class OTUData:
         if "sequence" in data:
             update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
-        old = await virtool.otus.db.join(self._mongo, otu_id)
+        async def func(session: AsyncIOMotorClientSession) -> Document:
+            old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
-        async with self._mongo.create_session() as session:
-            sequence_document = await self._mongo.sequences.find_one_and_update(
+            document = await self._mongo.sequences.find_one_and_update(
                 {"_id": sequence_id},
                 {"$set": update},
                 session=session,
@@ -809,7 +838,9 @@ class OTUData:
                 session=session,
             )
 
-        return base_processor(sequence_document)
+            return document
+
+        return base_processor(await self._mongo.with_transaction(func))
 
     async def remove_sequence(
         self,
@@ -828,7 +859,7 @@ class OTUData:
         """
         old = await virtool.otus.db.join(self._mongo, otu_id)
 
-        async with self._mongo.create_session() as session:
+        async def func(session: AsyncIOMotorClientSession):
             await self._mongo.sequences.delete_one(
                 {"_id": sequence_id},
                 session=session,
@@ -861,3 +892,5 @@ class OTUData:
                 user_id,
                 session=session,
             )
+
+        await self._mongo.with_transaction(func)

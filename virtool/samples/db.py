@@ -4,7 +4,7 @@ import asyncio
 import os
 from asyncio import to_thread
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
@@ -22,16 +22,13 @@ from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import PATHOSCOPE_TASK_NAMES, join_legacy_read_paths
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.utils import base_processor
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
 
 SAMPLE_RIGHTS_PROJECTION = {
     "_id": False,
@@ -355,9 +352,11 @@ async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None
     async with AsyncSession(pg) as session:
         result = await session.execute(
             select(SQLGroup).where(
-                (SQLGroup.id == group_id)
-                if isinstance(group_id, int)
-                else SQLGroup.legacy_id == group_id,
+                (
+                    (SQLGroup.id == group_id)
+                    if isinstance(group_id, int)
+                    else SQLGroup.legacy_id == group_id
+                ),
             ),
         )
 
@@ -430,7 +429,8 @@ async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, A
 
 
 async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str, any]):
-    """Creates a row in the `sample_reads` table for each file in a sample's `files` array.
+    """Creates a row in the `sample_reads` table for each file in a sample's `files`
+    array.
 
     Also, creates a row in the `uploads` table for information stored in a file's
     `from` field with a relation to the `SampleRead`.
@@ -470,8 +470,8 @@ async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str
 
 
 async def update_is_compressed(db, sample: Dict[str, Any]):
-    """Update the ``is_compressed`` field for the passed ``sample`` in the database if all
-    of its files are compressed.
+    """Update the ``is_compressed`` field for the passed ``sample`` in the database if
+    all of its files are compressed.
 
     :param db: the application database
     :param sample: the sample document
@@ -494,28 +494,3 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
             {"_id": sample["_id"]},
             {"$set": {"is_compressed": True}},
         )
-
-
-class NameGenerator:
-    """Generates unique incrementing sample names based on a base name and a space id."""
-
-    def __init__(self, mongo: "Mongo", base_name: str, space_id: str):
-        self.base_name = base_name
-        self.space_id = space_id
-        self.db = mongo
-        self.sample_number = 1
-
-    async def get(self, session: AsyncIOMotorClientSession):
-        self.sample_number += 1
-
-        while await self.db.samples.count_documents(
-            {
-                "name": f"{self.base_name} ({self.sample_number})",
-                "space_id": self.space_id,
-            },
-            limit=1,
-            session=session,
-        ):
-            self.sample_number += 1
-
-        return f"{self.base_name} ({self.sample_number})"

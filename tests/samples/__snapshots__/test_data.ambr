@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: TestCreate.test_ok[force_choice][jobs_create_sample]
   list([
-    b'7cf872dc',
+    '7cf872dc',
   ])
 # ---
 # name: TestCreate.test_ok[force_choice][mongo]
@@ -53,7 +53,7 @@
 # ---
 # name: TestCreate.test_ok[none][jobs_create_sample]
   list([
-    b'7cf872dc',
+    '7cf872dc',
   ])
 # ---
 # name: TestCreate.test_ok[none][mongo]
@@ -105,7 +105,7 @@
 # ---
 # name: TestCreate.test_ok[users_primary_group][jobs_create_sample]
   list([
-    b'7cf872dc',
+    '7cf872dc',
   ])
 # ---
 # name: TestCreate.test_ok[users_primary_group][mongo]
@@ -243,78 +243,4 @@
       'pathoscope': <WorkflowState.COMPLETE: 'complete'>,
     }),
   })
-# ---
-# name: test_finalize.1
-  list([
-    dict({
-      '_id': 'test',
-      'all_read': True,
-      'all_write': True,
-      'created_at': 'not_approximately_now_datetime',
-      'files': list([
-        dict({
-          'download_url': '/download/samples/files/file_1.fq.gz',
-          'id': 'foo',
-          'name': 'Bar.fq.gz',
-        }),
-      ]),
-      'format': 'fastq',
-      'group': 'none',
-      'group_read': True,
-      'group_write': True,
-      'hold': False,
-      'host': '',
-      'is_legacy': False,
-      'isolate': '',
-      'labels': list([
-        1,
-      ]),
-      'library_type': 'normal',
-      'locale': '',
-      'name': 'Test',
-      'notes': '',
-      'nuvs': False,
-      'pathoscope': True,
-      'quality': dict({
-        'bases': list([
-          list([
-            1543,
-          ]),
-        ]),
-        'composition': list([
-          list([
-            6372,
-          ]),
-        ]),
-        'count': 7069,
-        'encoding': 'OuBQPPuwYimrxkNpPWUx',
-        'gc': 34222440,
-        'length': list([
-          3237,
-        ]),
-        'sequences': list([
-          7091,
-        ]),
-      }),
-      'ready': True,
-      'subtractions': list([
-        dict({
-          'id': 'apple',
-          'name': 'Apple',
-        }),
-        dict({
-          'id': 'pear',
-          'name': 'Pear',
-        }),
-      ]),
-      'user': dict({
-        'id': 'bf1b993c',
-      }),
-      'workflows': dict({
-        'aodp': 'incompatible',
-        'nuvs': 'pending',
-        'pathoscope': 'complete',
-      }),
-    }),
-  ])
 # ---

@@ -1,9 +1,9 @@
-"""
-Context for migrations.
-"""
+"""Context for migrations."""
+
 import asyncio
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -60,11 +60,12 @@ class MigrationContext:
     authorization: AuthorizationClient
     mongo: AsyncIOMotorDatabase
     pg: AsyncEngine
+    data_path: Path
 
 
 async def create_migration_context(config: MigrationConfig) -> MigrationContext:
-    """
-    Create a migration context that provides access to MongoDB, OpenFGA, and PostgreSQL.
+    """Create a migration context that provides access to MongoDB, OpenFGA, and
+    PostgreSQL.
 
     Connect to all data services and expose their clients
     in the returned context object.
@@ -92,13 +93,19 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
 
     mongo_database, openfga = await asyncio.gather(
         virtool.mongo.connect.connect_mongo(
-            config.mongodb_connection_string, config.mongodb_name
+            config.mongodb_connection_string,
+            config.mongodb_name,
         ),
         connect_openfga(
-            config.openfga_host, config.openfga_scheme, config.openfga_store_name
+            config.openfga_host,
+            config.openfga_scheme,
+            config.openfga_store_name,
         ),
     )
 
     return MigrationContext(
-        authorization=AuthorizationClient(openfga), mongo=mongo_database, pg=pg
+        authorization=AuthorizationClient(openfga),
+        mongo=mongo_database,
+        pg=pg,
+        data_path=config.data_path,
     )

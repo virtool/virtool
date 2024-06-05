@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.redis import Redis
 
 from virtool.account.data import AccountData
 from virtool.administrators.data import AdministratorsData
@@ -97,7 +97,7 @@ def create_data_layer(
     jobs_client = JobsClient(redis)
 
     data_layer = DataLayer(
-        AccountData(authorization_client, mongo, pg, redis),
+        AccountData(authorization_client, mongo, pg),
         AdministratorsData(authorization_client, mongo, pg),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),

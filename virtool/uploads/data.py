@@ -3,9 +3,9 @@ import math
 from asyncio import to_thread
 from typing import List
 
-from sqlalchemy import func, select, update
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.upload import Upload, UploadMinimal, UploadSearchResult
+from sqlalchemy import select, update, func
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from virtool_core.models.upload import Upload, UploadSearchResult
 from virtool_core.utils import rm
 
 import virtool.utils
@@ -28,53 +28,11 @@ class UploadsData(DataLayerDomain):
         self._pg: AsyncEngine = pg
 
     async def find(
-        self,
-        user,
-        page: int,
-        per_page: int,
-        upload_type,
-        paginate,
-    ) -> List[UploadMinimal] | UploadSearchResult:
-        """Find and filter uploads."""
-        if paginate:
-            return await self._find_beta(user, page, per_page, upload_type)
-
-        filters = [
-            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
-            SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
-        ]
-
-        uploads = []
-
-        async with AsyncSession(self._pg) as session:
-            if user:
-                filters.append(SQLUpload.user == user)
-
-            if upload_type:
-                filters.append(SQLUpload.type == upload_type)
-
-            results = await session.execute(
-                select(SQLUpload).where(*filters).order_by(SQLUpload.created_at.desc()),
-            )
-
-            for result in results.unique().scalars().all():
-                uploads.append(result.to_dict())
-
-            return [
-                UploadMinimal(**upload)
-                for upload in await apply_transforms(
-                    uploads,
-                    [AttachUserTransform(self._mongo)],
-                )
-            ]
-
-    async def _find_beta(
-        self,
-        user,
-        page: int,
-        per_page: int,
-        upload_type,
+        self, user, page: int, per_page: int, upload_type
     ) -> UploadSearchResult:
+        """
+        Find and filter uploads.
+        """
         base_filters = [
             SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
             SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
@@ -278,34 +236,3 @@ class UploadsData(DataLayerDomain):
                 .execution_options(synchronize_session="fetch"),
             )
             await session.commit()
-
-    async def migrate_to_postgres(self):
-        """Transforms documents in the `files` collection into rows in the `uploads` SQL
-        table.
-
-        """
-        async for document in self._mongo.files.find():
-            async with AsyncSession(self._pg) as session:
-                exists = (
-                    await session.execute(
-                        select(SQLUpload).filter_by(name_on_disk=document["_id"]),
-                    )
-                ).scalar()
-
-                if not exists:
-                    upload = SQLUpload(
-                        name=document["name"],
-                        name_on_disk=document["_id"],
-                        ready=document["ready"],
-                        removed=False,
-                        reserved=document["reserved"],
-                        size=document["size"],
-                        type=document["type"],
-                        user=document["user"]["id"],
-                        uploaded_at=document["uploaded_at"],
-                    )
-
-                    session.add(upload)
-                    await session.commit()
-
-                    await self._mongo.files.delete_one({"_id": document["_id"]})

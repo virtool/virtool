@@ -1,6 +1,7 @@
 """Easily create fake data.
 
 """
+
 import asyncio
 import gzip
 from pathlib import Path
@@ -35,17 +36,20 @@ from virtool.data.layer import DataLayer
 from virtool.example import example_path
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
-from virtool.indexes.tasks import EnsureIndexFilesTask
 from virtool.jobs.utils import WORKFLOW_NAMES
+from virtool.ml.tasks import SyncMLModelsTask
 from virtool.mongo.core import Mongo
-from virtool.references.tasks import CleanReferencesTask, CloneReferenceTask
+from virtool.references.tasks import (
+    CleanReferencesTask,
+    CloneReferenceTask,
+    RefreshReferenceReleasesTask,
+)
 from virtool.releases import ReleaseManifestItem
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
     FinalizeSubtractionRequest,
     NucleotideComposition,
 )
-from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.task import BaseTask
 from virtool.uploads.models import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
@@ -383,8 +387,8 @@ class TasksFakerPiece(DataFakerPiece):
         return await self._layer.tasks.create(
             self._faker.random_element(
                 [
-                    EnsureIndexFilesTask,
-                    AddSubtractionFilesTask,
+                    RefreshReferenceReleasesTask,
+                    SyncMLModelsTask,
                     CloneReferenceTask,
                     CleanReferencesTask,
                 ],

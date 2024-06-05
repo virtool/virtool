@@ -1,12 +1,12 @@
 import asyncio
 from asyncio import CancelledError
 
-from aioredis import Redis
 from structlog import get_logger
+from virtool_core.redis import Redis
 
-from virtool.data.events import EventListener, Operation
+from virtool.data.events import Operation, listen_for_events
 from virtool.users.sessions import SessionData
-from virtool.ws.cls import WSInsertMessage, WSDeleteMessage
+from virtool.ws.cls import WSDeleteMessage, WSInsertMessage
 from virtool.ws.connection import WSConnection
 
 logger = get_logger("ws")
@@ -21,20 +21,26 @@ class WSServer:
     async def run(self):
         """Start the Websocket server."""
         try:
-            async for event in EventListener(self._redis):
+            async for event in listen_for_events(self._redis):
                 if event.operation == Operation.CREATE:
                     message = WSInsertMessage(
-                        interface=event.domain, operation="insert", data=event.data
+                        interface=event.domain,
+                        operation="insert",
+                        data=event.data,
                     )
 
                 elif event.operation == Operation.UPDATE:
                     message = WSDeleteMessage(
-                        interface=event.domain, operation="update", data=event.data
+                        interface=event.domain,
+                        operation="update",
+                        data=event.data,
                     )
 
                 else:
                     message = WSDeleteMessage(
-                        interface=event.domain, operation="delete", data=[event.data.id]
+                        interface=event.domain,
+                        operation="delete",
+                        data=[event.data.id],
                     )
 
                 logger.info(
@@ -48,7 +54,7 @@ class WSServer:
                     *[
                         connection.send(message)
                         for connection in self.authenticated_connections
-                    ]
+                    ],
                 )
 
         except CancelledError:
@@ -57,8 +63,7 @@ class WSServer:
         await self.close()
 
     def add_connection(self, connection: WSConnection):
-        """
-        Add a connection to the websocket server.
+        """Add a connection to the websocket server.
 
         :param connection: the connection to add
 
@@ -67,8 +72,7 @@ class WSServer:
         logger.info("Established Websocket connection", user_id=connection.user_id)
 
     def remove_connection(self, connection: WSConnection):
-        """
-        Close and remove a connection.
+        """Close and remove a connection.
 
         :param connection: the connection to remove
 
@@ -80,9 +84,7 @@ class WSServer:
             pass
 
     async def periodically_close_expired_websocket_connections(self):
-        """
-        Periodically check for and close connections with expired sessions.
-        """
+        """Periodically check for and close connections with expired sessions."""
         session_data = SessionData(self._redis)
 
         while True:
@@ -90,7 +92,7 @@ class WSServer:
 
             for connection in self._connections:
                 if not await session_data.check_session_is_authenticated(
-                    connection.session_id
+                    connection.session_id,
                 ):
                     await connection.close(1001)
 
@@ -98,17 +100,11 @@ class WSServer:
 
     @property
     def authenticated_connections(self) -> list[WSConnection]:
-        """
-        A list of all authenticated connections.
-
-        """
+        """A list of all authenticated connections."""
         return [conn for conn in self._connections if conn.user_id]
 
     async def close(self):
-        """
-        Close the server and all connections.
-
-        """
+        """Close the server and all connections."""
         logger.info("Closing WebSocket server")
 
         for connection in self._connections:

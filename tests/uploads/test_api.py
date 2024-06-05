@@ -2,12 +2,10 @@ from pathlib import Path
 
 import pytest
 from aiohttp import ClientResponse
-from syrupy.matchers import path_type
+from syrupy import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner
-from virtool.config import get_config_from_app
-from virtool.config.cls import ServerConfig
 from virtool.fake.next import DataFaker
 from virtool.uploads.models import UploadType
 
@@ -24,9 +22,8 @@ class TestUpload:
         self,
         upload_request_form,
         tmp_path,
-        snapshot,
+        snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Test `POST /uploads` to assure a file can be uploaded."""
         client = await spawn_client(
@@ -40,7 +37,8 @@ class TestUpload:
         )
 
         assert resp.status == 201
-        assert await resp.json() == snapshot(matcher=path_type({"created_at": (str,)}))
+        print(await resp.json())
+        assert await resp.json() == snapshot_recent()
 
     async def test_no_upload_type(
         self,
@@ -64,7 +62,6 @@ class TestUpload:
 
     async def test_bad_upload_type(
         self,
-        snapshot,
         spawn_client: ClientSpawner,
         upload_request_form,
     ):
@@ -80,7 +77,20 @@ class TestUpload:
         )
 
         assert resp.status == 400
-        assert await resp.json() == snapshot
+        assert await resp.json() == [
+            {
+                "ctx": {
+                    "enum_values": ["hmm", "reference", "reads", "subtraction"],
+                },
+                "in": "query string",
+                "loc": ["type"],
+                "msg": (
+                    "value is not a valid enumeration member; permitted: 'hmm', "
+                    "'reference', 'reads', 'subtraction'"
+                ),
+                "type": "type_error.enum",
+            },
+        ]
 
 
 class TestFind:
@@ -162,14 +172,12 @@ class TestFind:
 
 
 async def test_get(
-    config: ServerConfig,
     example_path: Path,
     fake2: DataFaker,
     spawn_client: ClientSpawner,
 ):
     """Test `GET /uploads/:id` to assure that it lets you download a file."""
     client = await spawn_client(authenticated=True)
-    get_config_from_app(client.app).data_path = config.data_path
 
     upload = await fake2.uploads.create(user=await fake2.users.create())
 

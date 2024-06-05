@@ -1,9 +1,10 @@
 """The base class for all Virtool tasks, and associated utilities."""
+
 import asyncio
 from asyncio import to_thread
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List, Callable, Awaitable, TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Type
 
 from structlog import get_logger
 
@@ -23,14 +24,14 @@ class BaseTask:
     name: str
     """The name of the task (eg. 'add_subtraction_files')."""
 
-    steps: List[Callable[[], Awaitable]] = []
+    steps: list[Callable[[], Awaitable]] = []
     """A list of methods that are executed in sequence during the task run."""
 
     def __init__(
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         self.context = context
@@ -61,8 +62,7 @@ class BaseTask:
         """
 
     def create_progress_handler(self):
-        """
-        Get a ``TaskProgressHandler`` that is wired up to the task object's
+        """Get a ``TaskProgressHandler`` that is wired up to the task object's
         progress handling.
 
         """
@@ -70,19 +70,18 @@ class BaseTask:
 
     @classmethod
     async def from_task_id(cls, data: "DataLayer", task_id: int):
-        """
-        Create a task object given a ``task_id`` and a reference to the application data
-        layer.
-
+        """Create a task object given a ``task_id`` and a reference to the application
+        data layer.
         """
         task, temp_dir = await asyncio.gather(
-            data.tasks.get(task_id), to_thread(get_temp_dir)
+            data.tasks.get(task_id),
+            to_thread(get_temp_dir),
         )
 
         return cls(task_id, data, task.context, temp_dir)
 
     @property
-    def step_name(self) -> Optional[str]:
+    def step_name(self) -> str | None:
         if self.step:
             return self.step.__name__
 
@@ -90,10 +89,7 @@ class BaseTask:
 
     @property
     def step_number(self) -> int:
-        """
-        The number of the active step.
-
-        """
+        """The number of the active step."""
         if self.step is None:
             return 0
 
@@ -101,8 +97,7 @@ class BaseTask:
 
     @property
     def step_progress_basis(self) -> int:
-        """
-        The starting progress value for the current step.
+        """The starting progress value for the current step.
 
         If the step is the second of four, this value would be 25.
 
@@ -110,11 +105,7 @@ class BaseTask:
         return round(100 * (self.step_number - 1) / (len(self.steps)))
 
     async def run(self):
-        """
-        Run the task.
-
-        """
-
+        """Run the task."""
         for func in self.steps:
             if self.errored:
                 break
@@ -141,7 +132,7 @@ class BaseTask:
                 await func()
             except Exception as err:
                 log.exception("Encountered error in task")
-                await self._set_error(f"{type(err)}: {str(err)}")
+                await self._set_error(f"{type(err)}: {err!s}")
 
         if self.errored:
             await self.cleanup()
@@ -151,36 +142,26 @@ class BaseTask:
         await to_thread(self.temp_dir.cleanup)
 
     async def cleanup(self):
-        """
-        Override this method to run cleanup if the task fails.
-        """
-        ...
+        """Override this method to run cleanup if the task fails."""
 
     async def _set_step_progress(self, progress: int):
-        """
-        Update the overall progress using the progress of a subtask
-        """
+        """Update the overall progress using the progress of a subtask"""
         await self._set_progress(
-            round(self.step_progress_basis + progress * (1 / len(self.steps)))
+            round(self.step_progress_basis + progress * (1 / len(self.steps))),
         )
 
     async def _set_progress(self, progress: int):
-        """
-        Update the overall progress value for the task.
-        """
+        """Update the overall progress value for the task."""
         await self.data.tasks.update(self.task_id, TaskUpdate(progress=progress))
 
     async def _set_error(self, error: str):
-        """
-        Set task error status
-        """
+        """Set task error status"""
         await self.data.tasks.update(self.task_id, TaskUpdate(error=error))
         self.errored = True
 
 
 def get_task_from_name(task_name: str) -> Type[BaseTask]:
-    """
-    Get a task subclass by its ``name``.
+    """Get a task subclass by its ``name``.
 
     For example, ``get_task_from_name("add_subtraction_files")`` will return the
     ``AddSubtractionFilesTask`` class.

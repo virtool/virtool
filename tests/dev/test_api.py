@@ -1,14 +1,10 @@
-import pytest
+from tests.fixtures.client import ClientSpawner
 
 
-
-@pytest.mark.parametrize("dev", [True, False])
-async def test_dev_mode(dev, spawn_client):
-    """
-    Ensure that developer endpoint is not available when not in developer mode.
-    """
-    client = await spawn_client(authenticated=True, config_overrides={"dev": dev})
+async def test_dev_mode(spawn_client: ClientSpawner):
+    """Ensure that developer endpoint is not available when not in developer mode."""
+    client = await spawn_client(authenticated=True)
 
     resp = await client.post("/dev", {"command": "foo"})
 
-    assert resp.status == 204 if dev else 404
+    assert resp.status == 404
