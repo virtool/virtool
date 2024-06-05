@@ -33,22 +33,6 @@ class MoveSampleFilesTask(BaseTask):
         await self.data.samples.move_sample_files(self.create_progress_handler())
 
 
-class DeduplicateSampleNamesTask(BaseTask):
-    """
-    Deduplicate sample names in the database. Will append a numbers to the end
-    of the sample name in order of sample creation if duplicates are found.
-    """
-
-    name = "deduplicate_sample_names"
-
-    def __init__(self, task_id, data, context, temp_dir):
-        super().__init__(task_id, data, context, temp_dir)
-        self.steps = [self.deduplicate_sample_names]
-
-    async def deduplicate_sample_names(self):
-        await self.data.samples.deduplicate_sample_names()
-
-
 class UpdateSampleWorkflowsTask(BaseTask):
     """
     Updates workflows, nuvs, and pathoscoope fields for samples

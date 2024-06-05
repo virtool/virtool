@@ -10,8 +10,6 @@ from datetime import timedelta
 
 import arrow
 import pytest
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
 
