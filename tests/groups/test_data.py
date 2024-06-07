@@ -16,11 +16,11 @@ from virtool.users.utils import generate_base_permissions
 
 
 async def test_list(
-    data_layer: DataLayer, fake2: DataFaker, snapshot: SnapshotAssertion
+        data_layer: DataLayer, fake: DataFaker, snapshot: SnapshotAssertion,
 ):
     """Test that the method lists all groups in the instance."""
     for _ in range(10):
-        await fake2.groups.create()
+        await fake.groups.create()
 
     assert await data_layer.groups.list() == snapshot
 
@@ -31,13 +31,14 @@ class TestFind:
         self,
         page: int,
         data_layer: DataLayer,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that the correct page of groups and the correct search metadata values
-        are returned when `page` is `1` or `2`."""
+        are returned when `page` is `1` or `2`.
+        """
         for _ in range(15):
-            await fake2.groups.create()
+            await fake.groups.create()
 
         result = await data_layer.groups.find(page, 10)
         assert result.items == snapshot_recent
@@ -52,7 +53,7 @@ class TestFind:
         self,
         term: str,
         data_layer: DataLayer,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that only matching groups are returned when a search term is provided."""
@@ -63,20 +64,18 @@ class TestFind:
 
 
 class TestGet:
-    async def test_ok(self, data_layer: DataLayer, fake2: DataFaker, snapshot):
+    async def test_ok(self, data_layer: DataLayer, fake: DataFaker, snapshot):
+        """Ensure the correct group is returned when passed a postgres integer ID
         """
-        Ensure the correct group is returned when passed a postgres integer ID
-        """
-        group = await fake2.groups.create()
+        group = await fake.groups.create()
 
-        await fake2.users.create(groups=[group])
-        await fake2.users.create(groups=[group])
+        await fake.users.create(groups=[group])
+        await fake.users.create(groups=[group])
 
         assert await data_layer.groups.get(group.id) == snapshot
 
     async def test_not_found(self, data_layer: DataLayer):
-        """
-        Ensure the correct exception is raised when the group does not exist.
+        """Ensure the correct exception is raised when the group does not exist.
         """
         with pytest.raises(ResourceNotFoundError):
             await data_layer.groups.get(5)
@@ -134,7 +133,7 @@ async def test_update_permissions(
     group = await data_layer.groups.update(
         group.id,
         UpdateGroupRequest(
-            **{"permissions": {"create_sample": True, "modify_subtraction": True}}
+            permissions={"create_sample": True, "modify_subtraction": True},
         ),
     )
 
@@ -144,31 +143,31 @@ async def test_update_permissions(
             **generate_base_permissions(),
             "create_sample": True,
             "modify_subtraction": True,
-        }
+        },
     )
     assert await get_row_by_id(pg, SQLGroup, group.id) == snapshot(name="pg_added")
 
     group = await data_layer.groups.update(
-        group.id, UpdateGroupRequest(**{"permissions": {"create_sample": False}})
+        group.id, UpdateGroupRequest(permissions={"create_sample": False}),
     )
     assert group == snapshot(name="group_removed")
     assert group.permissions == Permissions(
-        **{**generate_base_permissions(), "modify_subtraction": True}
+        **{**generate_base_permissions(), "modify_subtraction": True},
     )
     assert await get_row_by_id(pg, SQLGroup, group.id) == snapshot(name="pg_removed")
 
 
 class TestDelete:
-    async def test_ok(self, data_layer: DataLayer, pg: AsyncEngine, fake2):
+    async def test_ok(self, data_layer: DataLayer, pg: AsyncEngine, fake):
         """Test that deletion of a group removes it from both databases."""
-        user = await fake2.users.create()
+        user = await fake.users.create()
         group = await data_layer.groups.create("Test")
         await data_layer.users.update(user.id, UpdateUserRequest(groups=[group.id]))
 
         async with AsyncSession(pg) as session:
             user_associations = (
                 await session.execute(
-                    select(SQLUserGroup).where(SQLUserGroup.group_id == group.id)
+                    select(SQLUserGroup).where(SQLUserGroup.group_id == group.id),
                 )
             ).all()
 
@@ -181,7 +180,7 @@ class TestDelete:
         async with AsyncSession(pg) as session:
             users = (
                 await session.execute(
-                    select(SQLUserGroup).where(SQLUserGroup.group_id == group.id)
+                    select(SQLUserGroup).where(SQLUserGroup.group_id == group.id),
                 )
             ).all()
 

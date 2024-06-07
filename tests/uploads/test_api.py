@@ -101,7 +101,7 @@ class TestFind:
     async def test(
         self,
         upload_type: UploadType | None,
-        fake2: DataFaker,
+            fake: DataFaker,
         spawn_client: ClientSpawner,
         snapshot,
         static_time,
@@ -109,11 +109,11 @@ class TestFind:
         """Test `GET /uploads` to assure that it returns the correct `upload` documents."""
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
-        await fake2.uploads.create(user=user)
-        await fake2.uploads.create(user=user, upload_type=UploadType.reference)
-        await fake2.uploads.create(user=user, upload_type=UploadType.subtraction)
+        await fake.uploads.create(user=user)
+        await fake.uploads.create(user=user, upload_type=UploadType.reference)
+        await fake.uploads.create(user=user, upload_type=UploadType.subtraction)
 
         url = "/uploads"
 
@@ -140,7 +140,7 @@ class TestFind:
         self,
         page: int | None,
         per_page: int | None,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
         static_time,
@@ -150,12 +150,12 @@ class TestFind:
             authenticated=True,
         )
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
-        await fake2.uploads.create(user=user)
-        await fake2.uploads.create(user=user, reserved=True)
-        await fake2.uploads.create(user=user, upload_type=UploadType.reference)
-        await fake2.uploads.create(user=user, upload_type=UploadType.subtraction)
+        await fake.uploads.create(user=user)
+        await fake.uploads.create(user=user, reserved=True)
+        await fake.uploads.create(user=user, upload_type=UploadType.reference)
+        await fake.uploads.create(user=user, upload_type=UploadType.subtraction)
 
         url = "/uploads?paginate=true"
 
@@ -173,13 +173,13 @@ class TestFind:
 
 async def test_get(
     example_path: Path,
-    fake2: DataFaker,
+        fake: DataFaker,
     spawn_client: ClientSpawner,
 ):
     """Test `GET /uploads/:id` to assure that it lets you download a file."""
     client = await spawn_client(authenticated=True)
 
-    upload = await fake2.uploads.create(user=await fake2.users.create())
+    upload = await fake.uploads.create(user=await fake.users.create())
 
     resp: ClientResponse = await client.get(f"/uploads/{upload.id}")
 
@@ -187,14 +187,14 @@ async def test_get(
     assert await resp.read() == open(example_path / "reads/single.fq.gz", "rb").read()
 
 
-async def test_delete(fake2: DataFaker, resp_is, spawn_client: ClientSpawner):
+async def test_delete(fake: DataFaker, resp_is, spawn_client: ClientSpawner):
     """Test `DELETE /uploads/:id to assure that it properly deletes an existing
     `uploads` row and file.
 
     """
     client = await spawn_client(authenticated=True, administrator=True)
 
-    upload = await fake2.uploads.create(user=await fake2.users.create())
+    upload = await fake.uploads.create(user=await fake.users.create())
 
     resp = await client.delete(f"/uploads/{upload.id}")
     await resp_is.no_content(resp)

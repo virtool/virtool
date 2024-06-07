@@ -128,7 +128,7 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
 
 
 async def test_get_api_keys(
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     snapshot,
@@ -136,7 +136,7 @@ async def test_get_api_keys(
 ):
     client = await spawn_client(authenticated=True)
 
-    group = await fake2.groups.create()
+    group = await fake.groups.create()
 
     await mongo.keys.insert_many(
         [
@@ -177,7 +177,7 @@ class TestCreateAPIKey:
         has_perm,
         req_perm,
         data_layer: DataLayer,
-        fake2: DataFaker,
+            fake: DataFaker,
         mocker,
         snapshot,
         spawn_client: ClientSpawner,
@@ -189,7 +189,7 @@ class TestCreateAPIKey:
             return_value=("raw_key", "hashed_key"),
         )
 
-        group = await fake2.groups.create(
+        group = await fake.groups.create(
             PermissionsUpdate(**{Permission.create_sample: True}),
         )
 
@@ -248,7 +248,7 @@ class TestUpdateAPIKey:
         has_admin: bool,
         has_perm: bool,
         data_layer: DataLayer,
-        fake2: DataFaker,
+            fake: DataFaker,
         mongo: Mongo,
         snapshot,
         spawn_client: ClientSpawner,
@@ -256,7 +256,7 @@ class TestUpdateAPIKey:
     ):
         client = await spawn_client(authenticated=True)
 
-        group = await fake2.groups.create(
+        group = await fake.groups.create(
             permissions=PermissionsUpdate(
                 create_sample=True,
                 modify_subtraction=(has_perm if has_perm != "missing" else False),
@@ -344,13 +344,13 @@ async def test_remove_api_key(
 
 
 async def test_remove_all_api_keys(
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await mongo.keys.insert_many(
         [
@@ -536,7 +536,7 @@ async def test_login(
 async def test_login_reset(
     spawn_client,
     snapshot,
-    fake2,
+        fake: DataFaker,
     request_path,
     correct_code,
     data_layer: DataLayer,

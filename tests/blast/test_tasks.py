@@ -13,14 +13,14 @@ from virtool.utils import get_temp_dir
 
 async def test_task(
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await asyncio.gather(
         mongo.samples.insert_one({"_id": "sample"}),

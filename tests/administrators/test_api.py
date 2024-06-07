@@ -41,7 +41,7 @@ async def test_get_roles(spawn_client: ClientSpawner, snapshot: SnapshotAssertio
 async def test_list_users(
     authorization_client: AuthorizationClient,
     spawn_client: ClientSpawner,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot: SnapshotAssertion,
 ):
     client = await spawn_client(
@@ -49,8 +49,8 @@ async def test_list_users(
         authenticated=True,
     )
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
     await authorization_client.add(
         AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
@@ -67,7 +67,7 @@ async def test_list_users(
 
 async def test_get_user(
     authorization_client: AuthorizationClient,
-    fake2: DataFaker,
+        fake: DataFaker,
     spawn_client: ClientSpawner,
     snapshot: SnapshotAssertion,
     static_time,
@@ -77,7 +77,7 @@ async def test_get_user(
         authenticated=True,
     )
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await authorization_client.add(
         AdministratorRoleAssignment(user.id, AdministratorRole.BASE),
@@ -93,7 +93,7 @@ async def test_get_user(
 async def test_create(
     error: str | None,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     resp_is,
     snapshot: SnapshotAssertion,
@@ -105,7 +105,7 @@ async def test_create(
 
     client = await spawn_client(administrator=True, authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await get_data_from_app(client.app).settings.update(
         UpdateSettingsRequest(minimum_password_length=8),
@@ -159,7 +159,7 @@ async def test_create(
     [None, AdministratorRole.USERS, AdministratorRole.FULL],
 )
 async def test_update_admin_role(
-    fake2: DataFaker,
+        fake: DataFaker,
     spawn_client: ClientSpawner,
     snapshot: SnapshotAssertion,
     role: AdministratorRole,
@@ -169,7 +169,7 @@ async def test_update_admin_role(
         authenticated=True,
     )
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     resp = await client.put(f"/admin/users/{user.id}/role", {"role": role})
 
@@ -180,7 +180,7 @@ async def test_update_admin_role(
 class TestUpdateUser:
     async def test_force_reset(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -189,7 +189,7 @@ class TestUpdateUser:
             authenticated=True,
         )
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         resp = await client.patch(f"/admin/users/{user.id}", {"force_reset": True})
         body = await resp.json()
@@ -200,7 +200,7 @@ class TestUpdateUser:
 
     async def test_groups(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -210,10 +210,10 @@ class TestUpdateUser:
             authenticated=True,
         )
 
-        group_1 = await fake2.groups.create()
-        group_2 = await fake2.groups.create()
+        group_1 = await fake.groups.create()
+        group_2 = await fake.groups.create()
 
-        user = await fake2.users.create(groups=[group_1])
+        user = await fake.users.create(groups=[group_1])
 
         resp = await client.patch(
             f"/admin/users/{user.id}",
@@ -249,7 +249,7 @@ class TestUpdateUser:
     async def test_password(
         self,
         mongo: Mongo,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         password,
@@ -262,7 +262,7 @@ class TestUpdateUser:
             authenticated=True,
         )
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         resp = await client.patch(
             f"/admin/users/{user.id}",
@@ -291,7 +291,7 @@ class TestUpdateUser:
     async def test_primary_group(
         self,
         is_member: bool,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -304,8 +304,8 @@ class TestUpdateUser:
             authenticated=True,
         )
 
-        group = await fake2.groups.create()
-        user = await fake2.users.create(groups=([group] if is_member else []))
+        group = await fake.groups.create()
+        user = await fake.users.create(groups=([group] if is_member else []))
 
         resp = await client.patch(
             f"/admin/users/{user.id}",
@@ -325,7 +325,7 @@ class TestAdministratorRoles:
     async def test_ok(
         self,
         role: AdministratorRole,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -335,7 +335,7 @@ class TestAdministratorRoles:
             authenticated=True,
         )
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         resp = await client.put(f"/admin/users/{user.id}/role", {"role": role})
         body = await resp.json()
@@ -377,7 +377,7 @@ class TestAdministratorRoles:
         self,
         role: AdministratorRole,
         data_layer: DataLayer,
-        fake2: DataFaker,
+            fake: DataFaker,
         spawn_client: ClientSpawner,
     ):
         """Test that an administrator with a lower role or non-administrator can't change a
@@ -387,7 +387,7 @@ class TestAdministratorRoles:
 
         await data_layer.users.set_administrator_role(client.user.id, role)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         resp = await client.put(
             f"/admin/users/{user.id}/role",

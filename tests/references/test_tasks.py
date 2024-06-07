@@ -48,7 +48,7 @@ TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
 async def test_clean_references_task(
     update,
     data_layer,
-    fake2,
+        fake: DataFaker,
     mocker,
     mongo,
     pg,
@@ -76,7 +76,7 @@ async def test_clean_references_task(
         created_at=static_time.datetime,
     )
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     if update:
         updates = [
@@ -176,13 +176,13 @@ async def test_import_reference_task(
     assert_reference_created,
     data_layer: DataLayer,
     data_path: Path,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     static_time,
     tmpdir,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     upload = await data_layer.uploads.create(
         fake_file_chunker(TEST_FILES_PATH / "reference.json.gz"),
@@ -285,14 +285,14 @@ async def test_remote_reference_task(
 
 @pytest.fixture()
 async def create_reference(
-    fake2: DataFaker,
+        fake: DataFaker,
     data_layer: DataLayer,
     mongo,
     pg,
     static_time,
     tmpdir,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     upload = await data_layer.uploads.create(
         fake_file_chunker(TEST_FILES_PATH / "reference.json.gz"),
@@ -351,7 +351,7 @@ async def test_clone_reference_task(
     assert_reference_created,
     create_reference: str,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo,
     pg: AsyncEngine,
     static_time,
@@ -359,7 +359,7 @@ async def test_clone_reference_task(
 ):
     manifest = await get_manifest(mongo, create_reference)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await mongo.references.insert_one(
         {

@@ -61,7 +61,7 @@ async def test_list(
 
 
 async def test_get(
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     spawn_client: ClientSpawner,
@@ -73,7 +73,7 @@ async def test_get(
         flags=[FlagName.SPACES],
     )
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -136,7 +136,7 @@ async def test_update(
 
 
 async def test_list_space_members(
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     spawn_client: ClientSpawner,
@@ -148,8 +148,8 @@ async def test_list_space_members(
         flags=[FlagName.SPACES],
     )
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -178,7 +178,7 @@ async def test_list_space_members(
 
 
 async def test_update_member_roles(
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     spawn_client: ClientSpawner,
@@ -190,7 +190,7 @@ async def test_update_member_roles(
         flags=[FlagName.SPACES],
     )
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -220,7 +220,7 @@ async def test_update_member_roles(
 
 
 async def test_remove_member(
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -231,7 +231,7 @@ async def test_remove_member(
         flags=[FlagName.SPACES],
     )
 
-    user_1 = await fake2.users.create()
+    user_1 = await fake.users.create()
 
     async with AsyncSession(pg) as session:
         session.add(

@@ -23,7 +23,7 @@ from virtool.utils import get_http_session_from_app
 
 async def test_find(
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     mongo: Mongo,
@@ -32,8 +32,8 @@ async def test_find(
 ):
     client = await spawn_client(authenticated=True)
 
-    group = await fake2.groups.create()
-    user = await fake2.users.create()
+    group = await fake.groups.create()
+    user = await fake.users.create()
     await data_layer.users.update(client.user.id, UpdateUserRequest(groups=[group.id]))
 
     await mongo.references.insert_many(
@@ -133,11 +133,11 @@ async def test_find(
 
 
 @pytest.mark.parametrize("error", [404, None])
-async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake2, static_time):
+async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake: DataFaker, static_time):
     client = await spawn_client(authenticated=True, administrator=True)
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
     if error is None:
         await mongo.references.insert_one(
@@ -263,7 +263,7 @@ class TestCreate:
 
     async def test_clone(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
@@ -274,8 +274,8 @@ class TestCreate:
             permissions=[Permission.create_ref],
         )
 
-        user_1 = await fake2.users.create()
-        user_2 = await fake2.users.create()
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
 
         await mongo.references.insert_one(
             {
@@ -353,7 +353,7 @@ class TestCreate:
 async def test_edit(
     data_type: str,
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker,
     resp_is,
     snapshot,
@@ -363,9 +363,9 @@ async def test_edit(
 ):
     client = await spawn_client(authenticated=True)
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
-    user_3 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
+    user_3 = await fake.users.create()
 
     if error != "404":
         await mongo.references.insert_one(
@@ -455,15 +455,15 @@ async def test_edit(
 
 
 async def test_delete(
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
     client = await spawn_client(authenticated=True)
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
     await mongo.references.insert_one(
         {
@@ -837,7 +837,7 @@ class TestCreateOTU:
 
 async def test_create_index(
     check_ref_right,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker,
     resp_is,
     mongo: Mongo,
@@ -851,7 +851,7 @@ async def test_create_index(
         base_url="https://virtool.example.com",
     )
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await asyncio.gather(
         mongo.references.insert_one(
@@ -892,7 +892,7 @@ async def test_create_index(
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_user(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -910,7 +910,7 @@ async def test_create_user(
     """
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     document = {
         "_id": "foo",
@@ -974,7 +974,7 @@ async def test_create_user(
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_group(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -990,8 +990,8 @@ async def test_create_group(
     """
     client = await spawn_client(authenticated=True)
 
-    group_1 = await fake2.groups.create()
-    group_2 = await fake2.groups.create()
+    group_1 = await fake.groups.create()
+    group_2 = await fake.groups.create()
 
     if error != "404":
         await mongo.references.insert_one(
@@ -1040,7 +1040,7 @@ async def test_create_group(
 @pytest.mark.parametrize("error", [None, "404_ref", "404_user"])
 async def test_update_user(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -1049,7 +1049,7 @@ async def test_update_user(
 ):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     if error != "404_ref":
         await mongo.references.insert_one(
@@ -1105,7 +1105,7 @@ async def test_update_user(
 )
 async def test_update_group(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot,
     mongo: Mongo,
@@ -1114,7 +1114,7 @@ async def test_update_group(
 ):
     client = await spawn_client(authenticated=True)
 
-    group = await fake2.groups.create()
+    group = await fake.groups.create()
 
     if error != "404_ref":
         await mongo.references.insert_one(
@@ -1171,7 +1171,7 @@ async def test_update_group(
 )
 async def test_delete_user(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -1180,7 +1180,7 @@ async def test_delete_user(
 ):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     if error != "404_ref":
         await mongo.references.insert_one(
@@ -1230,7 +1230,7 @@ async def test_delete_user(
 @pytest.mark.parametrize("error", [None, "404_group", "404_ref"])
 async def test_delete_group(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -1239,7 +1239,7 @@ async def test_delete_group(
 ):
     client = await spawn_client(authenticated=True)
 
-    group = await fake2.groups.create()
+    group = await fake.groups.create()
 
     if error != "404_ref":
         await mongo.references.insert_one(

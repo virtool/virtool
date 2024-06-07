@@ -32,7 +32,7 @@ async def test_find_empty_subtractions(
 async def test_find(
     page: int | None,
     per_page: int | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot,
     mongo: Mongo,
     spawn_client: ClientSpawner,
@@ -40,8 +40,8 @@ async def test_find(
 ):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user)
+    user = await fake.users.create()
+    job = await fake.jobs.create(user)
 
     await mongo.subtraction.insert_many(
         [
@@ -82,14 +82,14 @@ async def test_find(
 
 
 async def test_get(
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     snapshot,
     static_time,
 ):
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user)
+    user = await fake.users.create()
+    job = await fake.jobs.create(user)
 
     client = await spawn_client(authenticated=True)
 
@@ -117,14 +117,14 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-async def test_get_from_job(fake2: DataFaker, spawn_job_client, snapshot_recent):
+async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
     client = await spawn_job_client(authenticated=True)
 
-    user = await fake2.users.create()
-    upload = await fake2.uploads.create(
+    user = await fake.users.create()
+    upload = await fake.uploads.create(
         user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz",
     )
-    subtraction = await fake2.subtractions.create(user=user, upload=upload)
+    subtraction = await fake.subtractions.create(user=user, upload=upload)
 
     resp = await client.get(f"/subtractions/{subtraction.id}")
 
@@ -150,13 +150,13 @@ async def test_edit(
     data: dict,
     has_job: bool,
     has_user: bool,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await mongo.samples.insert_many(
         [
@@ -185,7 +185,7 @@ async def test_edit(
         document["user"] = {"id": user.id}
 
     if has_job:
-        job = await fake2.jobs.create(user)
+        job = await fake.jobs.create(user)
         document["job"] = {"id": job.id}
 
     client = await spawn_client(
@@ -205,7 +205,7 @@ async def test_edit(
 @pytest.mark.parametrize("exists", [True, False])
 async def test_delete(
     exists: bool,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     mongo: Mongo,
     spawn_client: ClientSpawner,
@@ -219,8 +219,8 @@ async def test_delete(
     get_config_from_app(client.app).data_path = tmp_path
 
     if exists:
-        user = await fake2.users.create()
-        job = await fake2.jobs.create(user)
+        user = await fake.users.create()
+        job = await fake.jobs.create(user)
 
         await mongo.subtraction.insert_one(
             {
@@ -294,7 +294,7 @@ async def test_upload(
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize(
     error: str | None,
-    fake2,
+        fake: DataFaker,
     snapshot,
     mongo: Mongo,
     spawn_job_client,
@@ -304,8 +304,8 @@ async def test_finalize(
 ):
     client = await spawn_job_client(authenticated=True)
 
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user)
+    user = await fake.users.create()
+    job = await fake.jobs.create(user)
 
     document = {
         "_id": "foo",
@@ -357,7 +357,7 @@ async def test_finalize(
 async def test_job_remove(
     exists: bool,
     ready: bool,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot,
     mongo: Mongo,
@@ -369,8 +369,8 @@ async def test_job_remove(
 
     get_config_from_app(client.app).data_path = tmp_path
 
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user)
+    user = await fake.users.create()
+    job = await fake.jobs.create(user)
 
     if exists:
         await asyncio.gather(
@@ -466,7 +466,7 @@ async def test_download_subtraction_files(
 
 
 async def test_create(
-    fake2,
+        fake: DataFaker,
     pg,
     mongo: Mongo,
     spawn_client,
@@ -474,7 +474,7 @@ async def test_create(
     snapshot,
     static_time,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     async with AsyncSession(pg) as session:
         upload = SQLUpload(

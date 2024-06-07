@@ -8,7 +8,7 @@ from virtool.mongo.core import Mongo
 class TestFind:
     async def test_find(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -16,8 +16,8 @@ class TestFind:
         """Test that a ``GET /labels`` return a complete list of labels."""
         client = await spawn_client(authenticated=True)
 
-        label_1 = await fake2.labels.create()
-        label_2 = await fake2.labels.create()
+        label_1 = await fake.labels.create()
+        label_2 = await fake.labels.create()
 
         await mongo.samples.insert_many(
             [
@@ -41,14 +41,14 @@ class TestFind:
 
     async def test_find_by_name(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``GET /labels`` with a `find` query returns a particular label. Also test for partial matches."""
         client = await spawn_client(authenticated=True)
 
-        label = await fake2.labels.create()
+        label = await fake.labels.create()
 
         term = label.name[:2].lower()
 
@@ -66,7 +66,7 @@ class TestFind:
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot,
     mongo: Mongo,
     spawn_client: ClientSpawner,
@@ -74,8 +74,8 @@ async def test_get(
     """Test that a ``GET /labels/:label_id`` return the correct label document."""
     client = await spawn_client(authenticated=True)
 
-    label_1 = await fake2.labels.create()
-    label_2 = await fake2.labels.create()
+    label_1 = await fake.labels.create()
+    label_2 = await fake.labels.create()
 
     await mongo.samples.insert_many(
         [
@@ -95,14 +95,14 @@ async def test_get(
 @pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
 async def test_create(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     spawn_client: ClientSpawner,
 ):
     """Test that a label can be added to the database at ``POST /labels``."""
     client = await spawn_client(authenticated=True)
 
-    label = await fake2.labels.create()
+    label = await fake.labels.create()
 
     data = {"name": "Bug", "color": "#a83432", "description": "This is a bug"}
 
@@ -133,7 +133,7 @@ async def test_create(
 @pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot,
     mongo: Mongo,
@@ -142,8 +142,8 @@ async def test_edit(
     """Test that a label can be updated at ``PATCH /labels/:label_id``."""
     client = await spawn_client(authenticated=True)
 
-    label_1 = await fake2.labels.create()
-    label_2 = await fake2.labels.create()
+    label_1 = await fake.labels.create()
+    label_2 = await fake.labels.create()
 
     await mongo.samples.insert_many(
         [
@@ -191,7 +191,7 @@ async def test_edit(
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
     status: int,
-    fake2: DataFaker,
+        fake: DataFaker,
     mock_samples: list[dict],
     snapshot,
     mongo: Mongo,
@@ -203,9 +203,9 @@ async def test_remove(
     """
     client = await spawn_client(authenticated=True)
 
-    label_1 = await fake2.labels.create()
-    label_2 = await fake2.labels.create()
-    label_3 = await fake2.labels.create()
+    label_1 = await fake.labels.create()
+    label_2 = await fake.labels.create()
+    label_3 = await fake.labels.create()
 
     await mongo.subtraction.insert_many(
         [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}],

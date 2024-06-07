@@ -20,10 +20,10 @@ from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture()
-async def get_sample_ready_false(fake2: DataFaker, mongo: Mongo, static_time):
-    label = await fake2.labels.create()
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user, workflow="create_sample")
+async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
+    label = await fake.labels.create()
+    user = await fake.users.create()
+    job = await fake.jobs.create(user, workflow="create_sample")
 
     await mongo.subtraction.insert_many(
         [
@@ -84,7 +84,7 @@ class TestCreate:
         self,
         group_setting: str,
         data_layer: DataLayer,
-        fake2: DataFaker,
+            fake: DataFaker,
         pg: AsyncEngine,
         mongo: Mongo,
         snapshot_recent,
@@ -96,7 +96,7 @@ class TestCreate:
             permissions=[Permission.create_sample],
         )
 
-        group = await fake2.groups.create()
+        group = await fake.groups.create()
 
         await data_layer.settings.update(
             UpdateSettingsRequest(
@@ -115,8 +115,8 @@ class TestCreate:
             UpdateUserRequest(primary_group=group.id),
         )
 
-        label = await fake2.labels.create()
-        upload = await fake2.uploads.create(user=await fake2.users.create())
+        label = await fake.labels.create()
+        upload = await fake.uploads.create(user=await fake.users.create())
 
         await asyncio.gather(
             mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),

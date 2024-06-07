@@ -123,13 +123,13 @@ async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static
 
 
 async def test_get_reference_groups(
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
     """Test that reference groups are returned whether they have integer or string ids."""
-    group_1 = await fake2.groups.create()
-    group_2 = await fake2.groups.create(legacy_id="group_2")
+    group_1 = await fake.groups.create()
+    group_2 = await fake.groups.create(legacy_id="group_2")
 
     assert (
         await get_reference_groups(

@@ -13,7 +13,7 @@ from virtool.mongo.core import Mongo
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     resp_is,
     snapshot,
     mongo: Mongo,
@@ -26,7 +26,7 @@ async def test_get(
     """Test that a valid request returns a complete otu document."""
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     if not error:
         await asyncio.gather(
@@ -211,7 +211,7 @@ class TestEdit:
         self,
         change_count,
         data,
-        fake2,
+            fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,
@@ -224,7 +224,7 @@ class TestEdit:
     ):
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
         test_change.update({"user": {"id": user.id}, "_id": "6116cba1.0"})
 
         await asyncio.gather(

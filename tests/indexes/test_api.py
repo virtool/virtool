@@ -34,7 +34,7 @@ OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 class TestFind:
     async def test(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         mocker,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
@@ -43,10 +43,10 @@ class TestFind:
     ):
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
-        job_1 = await fake2.jobs.create(user=user, workflow="build_index")
-        job_2 = await fake2.jobs.create(user=user, workflow="build_index")
+        job_1 = await fake.jobs.create(user=user, workflow="build_index")
+        job_2 = await fake.jobs.create(user=user, workflow="build_index")
 
         await asyncio.gather(
             mongo.history.insert_many(
@@ -112,7 +112,7 @@ class TestFind:
 
     async def test_ready(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -120,8 +120,8 @@ class TestFind:
     ):
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
-        job = await fake2.jobs.create(user=user)
+        user = await fake.users.create()
+        job = await fake.jobs.create(user=user)
 
         await asyncio.gather(
             mongo.indexes.insert_many(
@@ -169,7 +169,7 @@ class TestFind:
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker,
     resp_is,
     snapshot,
@@ -179,7 +179,7 @@ async def test_get(
 ):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await asyncio.gather(
         mongo.references.insert_many(
@@ -198,7 +198,7 @@ async def test_get(
         ),
     )
 
-    job = await fake2.jobs.create(user=user, workflow="build_index")
+    job = await fake.jobs.create(user=user, workflow="build_index")
 
     if not error:
         await mongo.indexes.insert_one(
@@ -296,7 +296,7 @@ class TestCreate:
     async def test(
         self,
         check_ref_right,
-        fake2: DataFaker,
+            fake: DataFaker,
         mocker,
         resp_is,
         snapshot: SnapshotAssertion,
@@ -314,7 +314,7 @@ class TestCreate:
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         await asyncio.gather(
             mongo.references.insert_one(
@@ -401,7 +401,7 @@ class TestCreate:
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_find_history(
     error,
-    fake2,
+        fake: DataFaker,
     static_time,
     snapshot,
     mongo: Mongo,
@@ -413,8 +413,8 @@ async def test_find_history(
     if not error:
         await mongo.indexes.insert_one({"_id": "foobar", "version": 0})
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
     await asyncio.gather(
         mongo.history.insert_many(
@@ -483,7 +483,7 @@ async def test_find_history(
 @pytest.mark.parametrize("error", [None, 404])
 async def test_delete_index(
     error,
-    fake2,
+        fake: DataFaker,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
     static_time,
@@ -492,7 +492,7 @@ async def test_delete_index(
 
     client = await spawn_job_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     if error != 404:
         await asyncio.gather(
@@ -541,7 +541,7 @@ async def test_delete_index(
 async def test_upload(
     error: str | None,
     data_path: Path,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
@@ -555,7 +555,7 @@ async def test_upload(
     files = {"file": open(path, "rb")}
 
     user, _ = await asyncio.gather(
-        fake2.users.create(),
+        fake.users.create(),
         mongo.references.insert_many(
             [
                 {"_id": "bar", "name": "Bar", "data_type": "genome"},
@@ -611,7 +611,7 @@ async def test_upload(
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
@@ -622,8 +622,8 @@ async def test_finalize(
     """Test that an index can be finalized using the Jobs API."""
     client = await spawn_job_client(authenticated=True)
 
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user=user, workflow="build_index")
+    user = await fake.users.create()
+    job = await fake.jobs.create(user=user, workflow="build_index")
 
     if error == "409_genome":
         files = ["reference.fa.gz"]

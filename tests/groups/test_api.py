@@ -9,16 +9,16 @@ from virtool.groups.oas import PermissionsUpdate
 class TestFind:
     async def test_list(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         """Test that a full list of groups is returned when pagination is not toggled."""
         for _ in range(10):
-            await fake2.groups.create()
+            await fake.groups.create()
 
         # Need a capitalized group name to make sure ordering is case-insensitive.
-        await fake2.groups.create(name="Caps")
+        await fake.groups.create(name="Caps")
 
         client = await spawn_client(authenticated=True)
 
@@ -29,7 +29,7 @@ class TestFind:
 
     async def test_paginate(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -37,12 +37,12 @@ class TestFind:
         are returned when `page` is `1` or `2`.
         """
         for _ in range(4):
-            await fake2.groups.create()
+            await fake.groups.create()
 
-        await fake2.groups.create(name="Caps")
+        await fake.groups.create(name="Caps")
 
         for _ in range(10):
-            await fake2.groups.create()
+            await fake.groups.create()
 
         client = await spawn_client(authenticated=True)
 
@@ -69,7 +69,7 @@ class TestCreate:
 
     async def test_duplicate(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -79,7 +79,7 @@ class TestCreate:
             authenticated=True,
         )
 
-        group = await fake2.groups.create()
+        group = await fake.groups.create()
 
         resp = await client.post("/groups", data={"name": group.name})
 
@@ -90,7 +90,7 @@ class TestCreate:
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot,
     spawn_client: ClientSpawner,
 ):
@@ -100,10 +100,10 @@ async def test_get(
         authenticated=True,
     )
 
-    group = await fake2.groups.create()
-    await fake2.groups.create()
+    group = await fake.groups.create()
+    await fake.groups.create()
 
-    await fake2.users.create(groups=[group])
+    await fake.users.create(groups=[group])
 
     resp = await client.get(f"/groups/{group.id if status == 200 else 5}")
 
@@ -114,7 +114,7 @@ async def test_get(
 class TestUpdate:
     async def test(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
     ):
@@ -123,13 +123,13 @@ class TestUpdate:
             authenticated=True,
         )
 
-        group = await fake2.groups.create()
-        await fake2.groups.create()
+        group = await fake.groups.create()
+        await fake.groups.create()
 
-        await fake2.users.create()
-        await fake2.users.create(groups=[group])
-        await fake2.users.create(groups=[group])
-        await fake2.users.create(groups=[group])
+        await fake.users.create()
+        await fake.users.create(groups=[group])
+        await fake.users.create(groups=[group])
+        await fake.users.create(groups=[group])
 
         resp = await client.patch(
             f"/groups/{group.id}",
@@ -155,15 +155,15 @@ class TestUpdate:
 
 
 @pytest.mark.parametrize("status", [204, 404])
-async def test_delete(status: int, fake2: DataFaker, spawn_client: ClientSpawner):
+async def test_delete(status: int, fake: DataFaker, spawn_client: ClientSpawner):
     """Test that an existing document can be removed at ``DELETE /groups/:group_id``."""
     client = await spawn_client(administrator=True, authenticated=True)
 
-    group = await fake2.groups.create(
+    group = await fake.groups.create(
         permissions=PermissionsUpdate(create_sample=True, remove_file=True),
     )
 
-    await fake2.users.create(groups=[group])
+    await fake.users.create(groups=[group])
 
     resp = await client.delete(f"/groups/{5 if status == 404 else group.id}")
 

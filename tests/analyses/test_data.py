@@ -16,8 +16,8 @@ from virtool.samples.oas import CreateAnalysisRequest
 
 
 @pytest.fixture()
-async def setup_sample(mongo: "Mongo", fake2: DataFaker) -> str:
-    user = await fake2.users.create()
+async def setup_sample(mongo: "Mongo", fake: DataFaker) -> str:
+    user = await fake.users.create()
 
     await asyncio.gather(
         mongo.samples.insert_one({"_id": "test_sample", "name": "Test Sample"}),

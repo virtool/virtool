@@ -6,20 +6,20 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
 from virtool_core.models.job import JobState
-from virtool.fake.next import DataFaker
 
+from virtool.fake.next import DataFaker
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.jobs.utils import compose_status
 
 
-@pytest.fixture
+@pytest.fixture()
 async def jobs_data(mongo, mocker, pg: AsyncEngine) -> JobsData:
     return JobsData(mocker.Mock(spec=JobsClient), mongo, pg)
 
 
-async def test_cancel(mongo, fake2, jobs_data: JobsData, snapshot, static_time):
-    user = await fake2.users.create()
+async def test_cancel(mongo, fake: DataFaker, jobs_data: JobsData, snapshot, static_time):
+    user = await fake.users.create()
 
     await mongo.jobs.insert_one(
         {
@@ -32,14 +32,14 @@ async def test_cancel(mongo, fake2, jobs_data: JobsData, snapshot, static_time):
                     "error": None,
                     "progress": 0.33,
                     "timestamp": static_time.datetime,
-                }
+                },
             ],
             "rights": {},
             "archived": False,
             "workflow": "build_index",
             "args": {},
             "user": {"id": user.id},
-        }
+        },
     )
 
     assert await jobs_data.cancel("foo") == snapshot
@@ -55,11 +55,11 @@ async def test_create(
     mongo,
     test_random_alphanumeric,
     static_time,
-    fake2: DataFaker,
+        fake: DataFaker,
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     job = await jobs_data.create("create_sample", {"sample_id": "foo"}, user.id, 0, job_id=job_id)
 
@@ -69,9 +69,9 @@ async def test_create(
 
 
 async def test_acquire(
-    mongo, fake2, jobs_data: JobsData, mocker, pg, snapshot, static_time
+        mongo, fake: DataFaker, jobs_data: JobsData, mocker, pg, snapshot, static_time,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
@@ -85,15 +85,15 @@ async def test_acquire(
             "workflow": "build_index",
             "args": {},
             "user": {"id": user.id},
-        }
+        },
     )
 
     assert await jobs_data.acquire("foo") == snapshot
     assert await mongo.jobs.find_one() == snapshot
 
 
-async def test_archive(mongo, fake2, jobs_data: JobsData, pg, snapshot, static_time):
-    user = await fake2.users.create()
+async def test_archive(mongo, fake: DataFaker, jobs_data: JobsData, pg, snapshot, static_time):
+    user = await fake.users.create()
 
     status = compose_status(JobState.WAITING, None)
 
@@ -108,7 +108,7 @@ async def test_archive(mongo, fake2, jobs_data: JobsData, pg, snapshot, static_t
             "rights": {},
             "workflow": "build_index",
             "args": {},
-        }
+        },
     )
 
     assert await jobs_data.archive("foo") == snapshot
@@ -121,14 +121,14 @@ async def test_force_delete_jobs(mongo, jobs_data: JobsData):
     await jobs_data.force_delete()
 
     jobs_data._client.cancel.assert_has_calls(
-        [call("foo"), call("bar")], any_order=True
+        [call("foo"), call("bar")], any_order=True,
     )
 
     assert await mongo.jobs.count_documents({}) == 0
 
 
-async def test_timeout(fake2, mongo, jobs_data: JobsData, snapshot):
-    user = await fake2.users.create()
+async def test_timeout(fake: DataFaker, mongo, jobs_data: JobsData, snapshot):
+    user = await fake.users.create()
 
     now = arrow.utcnow()
 
