@@ -1,4 +1,7 @@
-async def test_create_fake_hmm(fake2, snapshot):
-    hmm = await fake2.hmm.create(fake2.mongo)
+from virtool.fake.next import DataFaker
+
+
+async def test_create_fake_hmm(fake: DataFaker, snapshot):
+    hmm = await fake.hmm.create(fake.mongo)
 
     assert hmm == snapshot

@@ -19,20 +19,20 @@ _job_response_matcher = path_type(
 class TestFind:
     async def test_basic(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
 
-        user_1 = await fake2.users.create()
-        user_2 = await fake2.users.create()
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
 
         for _ in range(4):
-            await fake2.jobs.create(user=user_1)
+            await fake.jobs.create(user=user_1)
 
         for _ in range(7):
-            await fake2.jobs.create(user=user_2)
+            await fake.jobs.create(user=user_2)
 
         resp = await client.get("/jobs?per_page=5")
 
@@ -43,20 +43,20 @@ class TestFind:
     async def test_archived(
         self,
         archived: bool,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
         """Test that jobs are filtered correctly when archived is ``true`` or ``false``."""
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
-        await fake2.jobs.create(user=user)
-        await fake2.jobs.create(user=user, archived=True)
-        await fake2.jobs.create(user=user)
-        await fake2.jobs.create(user=user, archived=True)
-        await fake2.jobs.create(user=user)
+        await fake.jobs.create(user=user)
+        await fake.jobs.create(user=user, archived=True)
+        await fake.jobs.create(user=user)
+        await fake.jobs.create(user=user, archived=True)
+        await fake.jobs.create(user=user)
 
         resp = await client.get(f"/jobs?archived={archived}")
         body = await resp.json()
@@ -65,20 +65,20 @@ class TestFind:
         assert body == snapshot(matcher=_job_response_matcher)
         assert all(job["archived"] == archived for job in body["documents"])
 
-    async def test_user(self, fake2: DataFaker, spawn_client: ClientSpawner):
+    async def test_user(self, fake: DataFaker, spawn_client: ClientSpawner):
         """Test that jobs are filtered correctly when user id(s) are provided."""
         client = await spawn_client(authenticated=True)
 
-        user_1 = await fake2.users.create()
-        user_2 = await fake2.users.create()
-        user_3 = await fake2.users.create()
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
+        user_3 = await fake.users.create()
 
-        await fake2.jobs.create(user=user_1)
-        await fake2.jobs.create(user=user_2)
-        await fake2.jobs.create(user=user_1)
-        await fake2.jobs.create(user=user_2)
-        await fake2.jobs.create(user=user_1)
-        await fake2.jobs.create(user=user_3)
+        await fake.jobs.create(user=user_1)
+        await fake.jobs.create(user=user_2)
+        await fake.jobs.create(user=user_1)
+        await fake.jobs.create(user=user_2)
+        await fake.jobs.create(user=user_1)
+        await fake.jobs.create(user=user_3)
 
         resp_1 = await client.get(f"/jobs?user={user_1.id}")
         body_1 = await resp_1.json()
@@ -116,29 +116,29 @@ class TestFind:
     async def test_state(
         self,
         state: str,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
 
-        user_1 = await fake2.users.create()
-        user_2 = await fake2.users.create()
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
 
-        await fake2.jobs.create(user=user_1)
-        await fake2.jobs.create(user=user_2, state=JobState.PREPARING)
-        await fake2.jobs.create(user=user_2, state=JobState.RUNNING)
-        await fake2.jobs.create(user=user_2)
-        await fake2.jobs.create(user=user_1, state=JobState.WAITING)
-        await fake2.jobs.create(user=user_1)
-        await fake2.jobs.create(user=user_2, state=JobState.ERROR)
-        await fake2.jobs.create(user=user_1, state=JobState.CANCELLED)
-        await fake2.jobs.create(user=user_1, state=JobState.COMPLETE)
-        await fake2.jobs.create(user=user_1)
-        await fake2.jobs.create(user=user_2)
-        await fake2.jobs.create(user=user_2, state=JobState.TERMINATED)
-        await fake2.jobs.create(user=user_1, state=JobState.TIMEOUT)
-        await fake2.jobs.create(user=user_1)
+        await fake.jobs.create(user=user_1)
+        await fake.jobs.create(user=user_2, state=JobState.PREPARING)
+        await fake.jobs.create(user=user_2, state=JobState.RUNNING)
+        await fake.jobs.create(user=user_2)
+        await fake.jobs.create(user=user_1, state=JobState.WAITING)
+        await fake.jobs.create(user=user_1)
+        await fake.jobs.create(user=user_2, state=JobState.ERROR)
+        await fake.jobs.create(user=user_1, state=JobState.CANCELLED)
+        await fake.jobs.create(user=user_1, state=JobState.COMPLETE)
+        await fake.jobs.create(user=user_1)
+        await fake.jobs.create(user=user_2)
+        await fake.jobs.create(user=user_2, state=JobState.TERMINATED)
+        await fake.jobs.create(user=user_1, state=JobState.TIMEOUT)
+        await fake.jobs.create(user=user_1)
 
         resp = await client.get(f"/jobs?state={state}")
         body = await resp.json()
@@ -159,15 +159,15 @@ class TestFind:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, fake2: DataFaker, snapshot, spawn_client):
+async def test_get(error, fake: DataFaker, snapshot, spawn_client):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     job_id = "foo"
 
     if error is None:
-        job = await fake2.jobs.create(user=user)
+        job = await fake.jobs.create(user=user)
         job_id = job.id
 
     resp = await client.get(f"/jobs/{job_id}")
@@ -190,15 +190,15 @@ async def test_get(error, fake2: DataFaker, snapshot, spawn_client):
 class TestAcquire:
     async def test_ok(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_job_client: JobClientSpawner,
     ):
         """Test that a job can be acquired."""
         client = await spawn_job_client(authenticated=True)
 
-        job = await fake2.jobs.create(
-            await fake2.users.create(),
+        job = await fake.jobs.create(
+            await fake.users.create(),
             state=JobState.WAITING,
         )
 
@@ -209,12 +209,12 @@ class TestAcquire:
         assert body == snapshot(matcher=_job_response_matcher)
         assert "key" in body
 
-    async def test_already_acquired(self, fake2: DataFaker, spawn_job_client):
+    async def test_already_acquired(self, fake: DataFaker, spawn_job_client):
         """Test that a 400 is returned when the job is already acquired."""
         client = await spawn_job_client(authenticated=True)
 
-        user = await fake2.users.create()
-        job = await fake2.jobs.create(user, state=JobState.WAITING)
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=JobState.WAITING)
 
         resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
         assert resp.status == 200
@@ -243,14 +243,14 @@ class TestAcquire:
 class TestArchive:
     async def test_ok(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
         """Test that a job can be archived."""
         client = await spawn_client(authenticated=True)
 
-        job = await fake2.jobs.create(await fake2.users.create())
+        job = await fake.jobs.create(await fake.users.create())
 
         resp = await client.patch(f"/jobs/{job.id}/archive", data={"archived": True})
 
@@ -259,14 +259,14 @@ class TestArchive:
 
     async def test_already_archived(
         self,
-        fake2: DataFaker,
+            fake: DataFaker,
         spawn_client: ClientSpawner,
     ):
         """Test that a 400 is returned when the job is already archived."""
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
-        job = await fake2.jobs.create(user, archived=True)
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, archived=True)
 
         resp = await client.patch(f"/jobs/{job.id}/archive", data={"archived": True})
 
@@ -290,12 +290,12 @@ class TestArchive:
 
 
 class TestPing:
-    async def test_ok(self, fake2: DataFaker, spawn_job_client):
+    async def test_ok(self, fake: DataFaker, spawn_job_client):
         """Test that a job can be pinged."""
         client = await spawn_job_client(authenticated=True)
 
-        job = await fake2.jobs.create(
-            await fake2.users.create(),
+        job = await fake.jobs.create(
+            await fake.users.create(),
             state=JobState.RUNNING,
         )
 
@@ -322,10 +322,10 @@ class TestPing:
     "error",
     [None, 404, "409_complete", "409_errored", "409_cancelled"],
 )
-async def test_cancel(error, snapshot, mongo, fake2, resp_is, spawn_client, test_job):
+async def test_cancel(error, snapshot, mongo, fake: DataFaker, resp_is, spawn_client, test_job):
     client = await spawn_client(authenticated=True, permissions=[Permission.cancel_job])
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     test_job["user"] = {"id": user.id}
 
@@ -367,7 +367,7 @@ class TestPushStatus:
     async def test(
         self,
         error,
-        fake2,
+            fake: DataFaker,
         snapshot,
         resp_is,
         mongo: Mongo,
@@ -377,7 +377,7 @@ class TestPushStatus:
     ):
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
         test_job["user"] = {"id": user.id}
 
         if error != 409:
@@ -404,7 +404,7 @@ class TestPushStatus:
 
     async def test_name_and_description(
         self,
-        fake2,
+            fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,
@@ -413,7 +413,7 @@ class TestPushStatus:
     ):
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
@@ -434,7 +434,7 @@ class TestPushStatus:
 
     async def test_bad_state(
         self,
-        fake2,
+            fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,
@@ -443,7 +443,7 @@ class TestPushStatus:
         """Check that an unallowed state is rejected with 422."""
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]
@@ -476,7 +476,7 @@ class TestPushStatus:
         error_type,
         traceback,
         details,
-        fake2,
+            fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,
@@ -486,7 +486,7 @@ class TestPushStatus:
         """Ensure valid and invalid error inputs are handled correctly."""
         client = await spawn_client(authenticated=True)
 
-        user = await fake2.users.create()
+        user = await fake.users.create()
         test_job["user"] = {"id": user.id}
 
         del test_job["status"][-1]

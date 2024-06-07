@@ -7,13 +7,14 @@ import pytest
 from virtool_core.utils import decompress_file
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 
 
 @pytest.fixture()
-async def fake_hmm_status(mongo, fake2, static_time):
-    user = await fake2.users.create()
+async def fake_hmm_status(mongo, fake: DataFaker, static_time):
+    user = await fake.users.create()
 
     await mongo.status.insert_one(
         {

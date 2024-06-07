@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError
 from virtool.messages.data import MessagesData
@@ -8,14 +8,14 @@ from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
 from virtool.mongo.core import Mongo
 
 
-@pytest.fixture
+@pytest.fixture()
 async def messages_data(pg: AsyncEngine, mongo: Mongo) -> MessagesData:
     return MessagesData(pg, mongo)
 
 
 class TestGet:
-    async def test_active(self, snapshot, static_time, messages_data, pg, fake2):
-        user = await fake2.users.create()
+    async def test_active(self, snapshot, static_time, messages_data, pg, fake):
+        user = await fake.users.create()
 
         async with AsyncSession(pg) as session:
             session.add_all(
@@ -36,7 +36,7 @@ class TestGet:
                         updated_at=static_time.datetime,
                         user=user.id,
                     ),
-                ]
+                ],
             )
             await session.commit()
 
@@ -53,7 +53,7 @@ class TestGet:
                     created_at=static_time.datetime,
                     updated_at=static_time.datetime,
                     user="test",
-                )
+                ),
             )
             await session.commit()
 
@@ -61,11 +61,11 @@ class TestGet:
             await messages_data.get()
 
 
-async def test_create(snapshot, static_time, messages_data, fake2):
-    user = await fake2.users.create()
+async def test_create(snapshot, static_time, messages_data, fake):
+    user = await fake.users.create()
 
     create_request = CreateMessageRequest(
-        color="blue", message="This is a test message"
+        color="blue", message="This is a test message",
     )
 
     await messages_data.create(create_request, user.id)
@@ -73,8 +73,8 @@ async def test_create(snapshot, static_time, messages_data, fake2):
     assert await messages_data.get() == snapshot
 
 
-async def test_update(snapshot, pg, static_time, messages_data, fake2):
-    user = await fake2.users.create()
+async def test_update(snapshot, pg, static_time, messages_data, fake):
+    user = await fake.users.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -85,7 +85,7 @@ async def test_update(snapshot, pg, static_time, messages_data, fake2):
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
                 user=user.id,
-            )
+            ),
         )
         await session.commit()
 

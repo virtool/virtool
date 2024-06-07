@@ -1,9 +1,11 @@
-async def test_get_status(config, data_layer, fake2, mongo, snapshot, static_time):
-    """
-    Test that function works when the HMM data are being updated and when they are not.
+from virtool.fake.next import DataFaker
+
+
+async def test_get_status(config, data_layer, fake: DataFaker, mongo, snapshot, static_time):
+    """Test that function works when the HMM data are being updated and when they are not.
 
     """
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await mongo.status.insert_one(
         {
@@ -38,7 +40,7 @@ async def test_get_status(config, data_layer, fake2, mongo, snapshot, static_tim
                 "size": 85904451,
             },
             "errors": [],
-        }
+        },
     )
 
     assert await data_layer.hmms.get_status() == snapshot

@@ -7,11 +7,11 @@ from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
 
 
-async def test_list(fake2, snapshot, spawn_client):
+async def test_list(fake: DataFaker, snapshot, spawn_client):
     """Test that a GET request to `/ml` returns a list of HMMs."""
     client = await spawn_client(authenticated=True)
 
-    await fake2.ml.populate()
+    await fake.ml.populate()
 
     resp = await client.get("/ml")
 
@@ -22,11 +22,11 @@ async def test_list(fake2, snapshot, spawn_client):
     )
 
 
-async def test_get(fake2, snapshot, spawn_client):
+async def test_get(fake: DataFaker, snapshot, spawn_client):
     """Test that a GET request to `/ml/:id` returns the details for a model."""
     client = await spawn_client(authenticated=True)
 
-    await fake2.ml.populate()
+    await fake.ml.populate()
 
     resp = await client.get("/ml/1")
 
@@ -37,13 +37,13 @@ async def test_get(fake2, snapshot, spawn_client):
     )
 
 
-async def test_download_release(fake2: DataFaker, spawn_client: ClientSpawner):
+async def test_download_release(fake: DataFaker, spawn_client: ClientSpawner):
     """Test that a GET request to `/ml/:id/releases/:id/model.tar.gz` returns a file
     download of the model archive for that release.
     """
     client = await spawn_client(authenticated=True)
 
-    await fake2.ml.populate()
+    await fake.ml.populate()
 
     resp: ClientResponse = await client.get("/ml/1/releases/1/model.tar.gz")
 

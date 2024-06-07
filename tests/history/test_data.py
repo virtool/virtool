@@ -14,13 +14,13 @@ from virtool.mongo.core import Mongo
 async def test_get(
     data_path: Path,
     file,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
     static_time,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await asyncio.gather(
         mongo.references.insert_one(

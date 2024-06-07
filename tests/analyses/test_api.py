@@ -32,7 +32,7 @@ def create_files(test_files_path, tmp_path):
 
 
 async def test_find(
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
@@ -43,10 +43,10 @@ async def test_find(
 
     client = await spawn_client(authenticated=True)
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
-    job = await fake2.jobs.create(user=user_2)
+    job = await fake.jobs.create(user=user_2)
 
     await asyncio.gather(
         mongo.references.insert_many(
@@ -141,7 +141,7 @@ async def test_get(
     ready: bool,
     exists: bool,
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -152,10 +152,10 @@ async def test_get(
 ):
     client = await spawn_client(authenticated=True)
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
-    job = await fake2.jobs.create(user=user_2, state=JobState.COMPLETE)
+    job = await fake.jobs.create(user=user_2, state=JobState.COMPLETE)
 
     await asyncio.gather(
         mongo.subtraction.insert_many(
@@ -258,14 +258,14 @@ async def test_get(
 async def test_get_304(
     ready: bool,
     mongo: Mongo,
-    fake2: DataFaker,
+        fake: DataFaker,
     pg,
     spawn_client: ClientSpawner,
     static_time,
 ):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await asyncio.gather(
         mongo.subtraction.insert_many(
@@ -318,7 +318,7 @@ async def test_get_304(
 @pytest.mark.parametrize("error", [None, "403", "404_analysis", "404_sample", "409"])
 async def test_remove(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     resp_is,
     spawn_client: ClientSpawner,
@@ -329,7 +329,7 @@ async def test_remove(
 
     get_config_from_app(client.app).data_path = tmp_path
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await asyncio.gather(
         mongo.indexes.insert_one(
@@ -679,16 +679,16 @@ async def test_blast(
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
 async def test_finalize(
     error: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
     static_time,
 ):
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create()
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create()
 
-    job = await fake2.jobs.create(user=user_2)
+    job = await fake.jobs.create(user=user_2)
 
     patch_json = {"results": {"result": "TEST_RESULT", "hits": []}}
 
@@ -758,13 +758,13 @@ async def test_finalize(
 
 
 async def test_finalize_large(
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
     static_time,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     faker = Faker(1)
 

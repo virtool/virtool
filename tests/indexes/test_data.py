@@ -10,18 +10,18 @@ from virtool.mongo.core import Mongo
 
 async def test_finalize(
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot,
     static_time,
 ):
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user=user)
+    user = await fake.users.create()
+    job = await fake.jobs.create(user=user)
 
     await asyncio.gather(
         mongo.references.insert_one(
-            {"_id": "bar", "name": "Bar", "data_type": "genome"}
+            {"_id": "bar", "name": "Bar", "data_type": "genome"},
         ),
         mongo.indexes.insert_one(
             {
@@ -33,7 +33,7 @@ async def test_finalize(
                 "job": {"id": job.id},
                 "has_files": True,
                 "manifest": {},
-            }
+            },
         ),
     )
 
@@ -89,7 +89,7 @@ async def test_finalize(
                     type="fasta",
                     size=1234567,
                 ),
-            ]
+            ],
         )
         await session.commit()
 

@@ -195,7 +195,7 @@ class ClientSpawner(Protocol):
 def spawn_client(
     aiohttp_client,
     data_path: Path,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker,
     mongo_connection_string: str,
     mongo_name: str,
@@ -365,7 +365,7 @@ def spawn_client(
 
         if permissions:
             groups = [
-                await fake2.groups.create(
+                await fake.groups.create(
                     permissions=PermissionsUpdate(
                         **{
                             permission: True
@@ -376,7 +376,7 @@ def spawn_client(
                 ),
             ]
 
-        test_client_user = await fake2.users.create(
+        test_client_user = await fake.users.create(
             administrator_role=AdministratorRole.FULL if administrator else None,
             groups=groups,
             handle="bob",
@@ -458,7 +458,7 @@ def spawn_job_client(
             job_id, key = "test_job", "test_key"
 
             await mongo.jobs.insert_one(
-                {"_id": "test_job", "key": hash_key("test_key")}
+                {"_id": "test_job", "key": hash_key("test_key")},
             )
 
             # Create Basic Authentication header.

@@ -6,11 +6,11 @@ from virtool.fake.next import DataFaker
 from virtool.uploads.models import UploadType
 
 
-async def test_groups_and_users(fake2, snapshot):
-    group = await fake2.groups.create()
+async def test_groups_and_users(fake: DataFaker, snapshot):
+    group = await fake.groups.create()
 
-    user_1 = await fake2.users.create()
-    user_2 = await fake2.users.create(groups=[group])
+    user_1 = await fake.users.create()
+    user_2 = await fake.users.create(groups=[group])
 
     matcher = path_type(
         {
@@ -22,7 +22,7 @@ async def test_groups_and_users(fake2, snapshot):
     assert user_1 == snapshot(matcher=matcher)
     assert user_2 == snapshot(matcher=matcher)
 
-    job = await fake2.jobs.create(user_1)
+    job = await fake.jobs.create(user_1)
 
     assert job == snapshot(
         name="job",
@@ -36,10 +36,10 @@ async def test_groups_and_users(fake2, snapshot):
     )
 
 
-async def test_jobs(fake2: DataFaker, snapshot):
-    user = await fake2.users.create()
+async def test_jobs(fake: DataFaker, snapshot):
+    user = await fake.users.create()
 
-    assert await fake2.jobs.create(user) == snapshot(
+    assert await fake.jobs.create(user) == snapshot(
         name="job",
         matcher=path_type(
             {
@@ -51,7 +51,7 @@ async def test_jobs(fake2: DataFaker, snapshot):
     )
 
 
-async def test_uploads(fake2: DataFaker, snapshot):
+async def test_uploads(fake: DataFaker, snapshot):
     matcher = path_type(
         {
             "created_at": (datetime,),
@@ -61,25 +61,24 @@ async def test_uploads(fake2: DataFaker, snapshot):
         regex=True,
     )
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
-    assert await fake2.uploads.create(user=user) == snapshot(
+    assert await fake.uploads.create(user=user) == snapshot(
         name="upload", matcher=matcher,
     )
 
-    assert await fake2.uploads.create(
+    assert await fake.uploads.create(
         user=user, upload_type=UploadType.subtraction,
     ) == snapshot(name="upload[subtraction]", matcher=matcher)
 
-    assert await fake2.uploads.create(user=user, reserved=True) == snapshot(
+    assert await fake.uploads.create(user=user, reserved=True) == snapshot(
         name="upload[reserved]", matcher=matcher,
     )
 
 
-async def test_subtractions(fake2: DataFaker, snapshot_recent):
-
-    user = await fake2.users.create()
-    upload = await fake2.uploads.create(user=user, upload_type="subtraction", name="foobar.fq.gz")
-    subtraction = await fake2.subtractions.create(user=user, upload=upload)
+async def test_subtractions(fake: DataFaker, snapshot_recent):
+    user = await fake.users.create()
+    upload = await fake.uploads.create(user=user, upload_type="subtraction", name="foobar.fq.gz")
+    subtraction = await fake.subtractions.create(user=user, upload=upload)
 
     assert subtraction == snapshot_recent

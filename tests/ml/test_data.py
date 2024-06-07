@@ -19,7 +19,7 @@ from virtool.tasks.models import SQLTask
 async def test_list(
     has_last_checked_at: bool,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
@@ -29,7 +29,7 @@ async def test_list(
     This test also indirectly tests that MLData.load() can be used by the data faker
     to populate the database with ML models and releases.
     """
-    await fake2.ml.populate()
+    await fake.ml.populate()
 
     if has_last_checked_at:
         async with AsyncSession(pg) as session:
@@ -51,11 +51,11 @@ async def test_list(
 
 async def test_get(
     data_layer: DataLayer,
-    fake2,
+        fake: DataFaker,
     snapshot,
 ):
     """Test that MLData.get() returns a complete representation of an ML model."""
-    await fake2.ml.populate()
+    await fake.ml.populate()
 
     assert await data_layer.ml.get(1) == snapshot(
         matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
@@ -66,7 +66,7 @@ async def test_load(
     data_path: Path,
     data_layer: DataLayer,
     example_path,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker: MockerFixture,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
@@ -85,7 +85,7 @@ async def test_load(
 
     spy = mocker.spy(data_layer.ml._http, "download")
 
-    first = [fake2.ml.create_release_manifest_item() for _ in range(3)]
+    first = [fake.ml.create_release_manifest_item() for _ in range(3)]
 
     await data_layer.ml.load({"ml-plant-viruses": first})
 
@@ -98,9 +98,9 @@ async def test_load(
         {
             "ml-plant-viruses": [
                 *first,
-                *[fake2.ml.create_release_manifest_item() for _ in range(2)],
+                *[fake.ml.create_release_manifest_item() for _ in range(2)],
             ],
-            "ml-insect-viruses": [fake2.ml.create_release_manifest_item()],
+            "ml-insect-viruses": [fake.ml.create_release_manifest_item()],
         },
     )
 

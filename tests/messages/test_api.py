@@ -2,13 +2,14 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.fixtures.client import ClientSpawner
+from virtool.fake.next import DataFaker
 from virtool.messages.models import SQLInstanceMessage
 
 
 @pytest.fixture()
-async def insert_test_message(fake2, pg, static_time):
+async def insert_test_message(fake: DataFaker, pg, static_time):
     async def insert(active=True):
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         async with AsyncSession(pg) as session:
             session.add(

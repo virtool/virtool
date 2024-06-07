@@ -1,6 +1,7 @@
 import pytest
 from virtool_core.models.job import JobState
 
+from virtool.fake.next import DataFaker
 from virtool.jobs.client import DummyJobsClient
 from virtool.jobs.data import JobsData
 
@@ -17,14 +18,12 @@ async def sleep_patch():
         (JobState.WAITING.value, True),
     ],
 )
-async def test_relist_jobs(fake2, pg, mongo, mocker, state, listed, snapshot):
-    """
-    Test that jobs are relisted in redis that are in the waiting state and are no longer in redis.
+async def test_relist_jobs(fake: DataFaker, pg, mongo, mocker, state, listed, snapshot):
+    """Test that jobs are relisted in redis that are in the waiting state and are no longer in redis.
 
     """
-
-    user = await fake2.users.create()
-    job = await fake2.jobs.create(user)
+    user = await fake.users.create()
+    job = await fake.jobs.create(user)
     dummy_client = DummyJobsClient()
 
     mocker.patch("virtool.jobs.data.asyncio.sleep", function=sleep_patch)

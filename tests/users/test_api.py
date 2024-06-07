@@ -21,13 +21,13 @@ from virtool.users.utils import check_password
 @pytest.fixture()
 async def setup_update_user(
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     spawn_client: ClientSpawner,
 ):
     client = await spawn_client(administrator=True, authenticated=True)
 
-    group_1 = await fake2.groups.create()
-    group_2 = await fake2.groups.create()
+    group_1 = await fake.groups.create()
+    group_2 = await fake.groups.create()
 
     await data_layer.groups.update(
         group_1.id,
@@ -41,13 +41,13 @@ async def setup_update_user(
         ),
     )
 
-    return client, group_1, group_2, await fake2.users.create(groups=[group_1])
+    return client, group_1, group_2, await fake.users.create(groups=[group_1])
 
 
 @pytest.mark.parametrize("find", [None, "fred"])
 async def test_find(
     find: str | None,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -59,8 +59,8 @@ async def test_find(
         permissions=[Permission.create_sample],
     )
 
-    await fake2.users.create(handle=find)
-    await fake2.users.create()
+    await fake.users.create(handle=find)
+    await fake.users.create()
 
     url = "/users"
 
@@ -76,7 +76,7 @@ async def test_find(
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -84,14 +84,14 @@ async def test_get(
     """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(administrator=True, authenticated=True)
 
-    group = await fake2.groups.create()
+    group = await fake.groups.create()
 
-    user = await fake2.users.create(
-        groups=[group, await fake2.groups.create()],
+    user = await fake.users.create(
+        groups=[group, await fake.groups.create()],
         primary_group=group,
     )
 
-    await fake2.users.create()
+    await fake.users.create()
 
     resp = await client.get(f"/users/{'foo' if status == 404 else user.id}")
 
@@ -103,7 +103,7 @@ async def test_get(
 async def test_create(
     error: str | None,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     mongo: Mongo,
     resp_is,
     snapshot: SnapshotAssertion,
@@ -115,7 +115,7 @@ async def test_create(
 
     client = await spawn_client(administrator=True, authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await get_data_from_app(client.app).settings.update(
         UpdateSettingsRequest(minimum_password_length=8),

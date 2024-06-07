@@ -263,7 +263,7 @@ def app(mongo, pg, tmp_path, config, data_layer):
 
 
 @pytest.fixture()
-def fake2(
+def fake(
     data_layer: "DataLayer",
     example_path: Path,
     mocker,

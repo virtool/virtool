@@ -15,14 +15,14 @@ async def test_create_fake_sample(
     paired,
     finalized,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot,
     spawn_client: ClientSpawner,
     static_time,
 ):
     client = await spawn_client(authenticated=True)
 
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     await create_fake_sample(
         client.app,

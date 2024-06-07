@@ -18,11 +18,11 @@ async def test_create(
     data_path: Path,
     data_layer: DataLayer,
     example_path: Path,
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
     fake_file_path = example_path / "reads/single.fq.gz"
 
@@ -56,10 +56,10 @@ async def test_create(
 async def test_delete(
     data_path: Path,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot_recent: SnapshotAssertion,
 ):
-    before = await fake2.uploads.create(user=await fake2.users.create())
+    before = await fake.uploads.create(user=await fake.users.create())
 
     path = data_path / "files" / before.name_on_disk
 
@@ -86,14 +86,14 @@ async def test_delete(
 async def test_release(
     multi: bool,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     pg: AsyncEngine,
 ):
-    user = await fake2.users.create()
+    user = await fake.users.create()
 
-    upload_1 = await fake2.uploads.create(user=user, reserved=True)
-    upload_2 = await fake2.uploads.create(user=user, reserved=True)
-    upload_3 = await fake2.uploads.create(user=user, reserved=True)
+    upload_1 = await fake.uploads.create(user=user, reserved=True)
+    upload_2 = await fake.uploads.create(user=user, reserved=True)
+    upload_3 = await fake.uploads.create(user=user, reserved=True)
 
     assert all([upload_1.reserved, upload_2.reserved, upload_3.reserved])
 

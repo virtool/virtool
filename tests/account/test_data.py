@@ -25,7 +25,7 @@ from virtool.users.pg import SQLUser
 async def test_create_api_key(
     has_permission: bool,
     data_layer: DataLayer,
-    fake2: DataFaker,
+        fake: DataFaker,
     mocker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
@@ -38,8 +38,8 @@ async def test_create_api_key(
     mocker.patch("virtool.account.mongo.get_alternate_id", make_mocked_coro("foo_0"))
     mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
-    group_1 = await fake2.groups.create()
-    group_2 = await fake2.groups.create(
+    group_1 = await fake.groups.create()
+    group_2 = await fake.groups.create(
         PermissionsUpdate(
             **{
                 Permission.create_sample: True,
@@ -48,7 +48,7 @@ async def test_create_api_key(
         ),
     )
 
-    user = await fake2.users.create(groups=[group_1, group_2])
+    user = await fake.users.create(groups=[group_1, group_2])
 
     _, api_key = await data_layer.account.create_key(
         CreateKeysRequest(
@@ -63,9 +63,9 @@ async def test_create_api_key(
 
 
 class TestGetKey:
-    async def test_ok(self, data_layer: DataLayer, fake2: DataFaker):
+    async def test_ok(self, data_layer: DataLayer, fake: DataFaker):
         """Test that a created key can later be retrieved by its id."""
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         _, api_key = await data_layer.account.create_key(
             CreateKeysRequest(
@@ -80,9 +80,9 @@ class TestGetKey:
 
         assert await data_layer.account.get_key(user.id, api_key.id) == api_key
 
-    async def test_not_found(self, data_layer: DataLayer, fake2: DataFaker):
+    async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """Test that ``ResourceNotFoundError`` is raised when a key id is not found."""
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         _, api_key = await data_layer.account.create_key(
             CreateKeysRequest(
@@ -100,9 +100,9 @@ class TestGetKey:
 
 
 class TestGetKeyBySecret:
-    async def test_ok(self, data_layer: DataLayer, fake2: DataFaker):
+    async def test_ok(self, data_layer: DataLayer, fake: DataFaker):
         """Test that a created key can later be retrieved by its secret value."""
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         secret, api_key = await data_layer.account.create_key(
             CreateKeysRequest(
@@ -117,9 +117,9 @@ class TestGetKeyBySecret:
 
         assert await data_layer.account.get_key_by_secret(user.id, secret) == api_key
 
-    async def test_not_found(self, data_layer: DataLayer, fake2: DataFaker):
+    async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """Test that ``ResourceNotFoundError`` is raised when the key secret is invalid."""
-        user = await fake2.users.create()
+        user = await fake.users.create()
 
         await data_layer.account.create_key(
             CreateKeysRequest(
@@ -154,10 +154,10 @@ async def test_update(
     data_layer: DataLayer,
     mongo: Mongo,
     pg: AsyncEngine,
-    fake2: DataFaker,
+        fake: DataFaker,
     snapshot_recent: SnapshotAssertion,
 ):
-    user = await fake2.users.create(password="hello_world_1")
+    user = await fake.users.create(password="hello_world_1")
 
     await data_layer.account.update(
         user.id,
