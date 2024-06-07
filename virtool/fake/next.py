@@ -1,6 +1,4 @@
-"""Easily create fake data.
-
-"""
+"""Easily create fake data."""
 
 import asyncio
 import gzip
@@ -101,7 +99,8 @@ class VirtoolProvider(BaseProvider):
 
     def workflow(self) -> str:
         return self.random_choices(
-            [name.replace("job_", "") for name in WORKFLOW_NAMES], 1,
+            [name.replace("job_", "") for name in WORKFLOW_NAMES],
+            1,
         )[0]
 
 
@@ -120,20 +119,20 @@ class DataFaker:
         self.faker.add_provider(file)
         self.faker.add_provider(job_provider)
 
-        self.groups = GroupsFakerPiece(self)
-        self.hmm = HMMFakerPiece(self)
-        self.jobs = JobsFakerPiece(self)
-        self.labels = LabelsFakerPiece(self)
-        self.ml = MLFakerPiece(self)
-        self.subtractions = SubtractionFakerPiece(self)
-        self.tasks = TasksFakerPiece(self)
-        self.users = UsersFakerPiece(self)
-        self.uploads = UploadsFakerPiece(self)
+        self.groups = GroupsFakerDomain(self)
+        self.hmm = HMMFakerDomain(self)
+        self.jobs = JobsFakerDomain(self)
+        self.labels = LabelsFakerDomain(self)
+        self.ml = MLFakerDomain(self)
+        self.subtractions = SubtractionFakerDomain(self)
+        self.tasks = TasksFakerDomain(self)
+        self.users = UsersFakerDomain(self)
+        self.uploads = UploadsFakerDomain(self)
 
         self.mongo = mongo
 
 
-class DataFakerPiece:
+class DataFakerDomain:
     def __init__(self, data_faker: DataFaker):
         self._faker = data_faker.faker
         self._layer: DataLayer = data_faker.layer
@@ -143,15 +142,15 @@ class DataFakerPiece:
         self.history = []
 
 
-class JobsFakerPiece(DataFakerPiece):
+class JobsFakerDomain(DataFakerDomain):
     model = Job
 
     async def create(
-            self,
-            user: User,
-            archived: bool = False,
-            state: JobState | None = None,
-            workflow: str | None = None,
+        self,
+        user: User,
+        archived: bool = False,
+        state: JobState | None = None,
+        workflow: str | None = None,
     ) -> Job:
         """Create a fake job.
 
@@ -245,14 +244,14 @@ class JobsFakerPiece(DataFakerPiece):
         return await self._layer.jobs.get(job.id)
 
 
-class GroupsFakerPiece(DataFakerPiece):
+class GroupsFakerDomain(DataFakerDomain):
     model = Group
 
     async def create(
-            self,
-            permissions: PermissionsUpdate | None = None,
-            legacy_id: str | None = None,
-            name: str | None = None,
+        self,
+        permissions: PermissionsUpdate | None = None,
+        legacy_id: str | None = None,
+        name: str | None = None,
     ) -> Group:
         """:param permissions: Permissions for the group. If not provided, the group will
             have no permissions.
@@ -282,13 +281,14 @@ class GroupsFakerPiece(DataFakerPiece):
 
         if permissions:
             group = await self._layer.groups.update(
-                group.id, UpdateGroupRequest(permissions=permissions),
+                group.id,
+                UpdateGroupRequest(permissions=permissions),
             )
 
         return group
 
 
-class HMMFakerPiece(DataFakerPiece):
+class HMMFakerDomain(DataFakerDomain):
     model = HMM
 
     async def create(self, mongo: Mongo) -> HMM:
@@ -326,7 +326,7 @@ class HMMFakerPiece(DataFakerPiece):
         return HMM(**document)
 
 
-class LabelsFakerPiece(DataFakerPiece):
+class LabelsFakerDomain(DataFakerDomain):
     model = Label
 
     async def create(self) -> Label:
@@ -341,7 +341,7 @@ class LabelsFakerPiece(DataFakerPiece):
         )
 
 
-class MLFakerPiece(DataFakerPiece):
+class MLFakerDomain(DataFakerDomain):
     model = MLModel
 
     async def populate(self):
@@ -376,7 +376,7 @@ class MLFakerPiece(DataFakerPiece):
         )
 
 
-class TasksFakerPiece(DataFakerPiece):
+class TasksFakerDomain(DataFakerDomain):
     model = Task
 
     async def create(self) -> Task:
@@ -407,15 +407,15 @@ class TasksFakerPiece(DataFakerPiece):
         return await self._layer.tasks.create(cls, context)
 
 
-class UploadsFakerPiece(DataFakerPiece):
+class UploadsFakerDomain(DataFakerDomain):
     model = Upload
 
     async def create(
-            self,
-            user: User,
-            upload_type: UploadType = UploadType.reads,
-            name: str = "test.fq.gz",
-            reserved: bool = False,
+        self,
+        user: User,
+        upload_type: UploadType = UploadType.reads,
+        name: str = "test.fq.gz",
+        reserved: bool = False,
     ) -> Upload:
         """Create a fake upload.
 
@@ -434,7 +434,10 @@ class UploadsFakerPiece(DataFakerPiece):
         fake_file_path = example_path / "reads/single.fq.gz"
 
         upload = await self._layer.uploads.create(
-            fake_file_chunker(fake_file_path), name, upload_type, user.id,
+            fake_file_chunker(fake_file_path),
+            name,
+            upload_type,
+            user.id,
         )
 
         if reserved:
@@ -443,16 +446,16 @@ class UploadsFakerPiece(DataFakerPiece):
         return await self._layer.uploads.get(upload.id)
 
 
-class UsersFakerPiece(DataFakerPiece):
+class UsersFakerDomain(DataFakerDomain):
     model = User
 
     async def create(
-            self,
-            handle: str | None = None,
-            groups: list[Group] | None = None,
-            password: str | None = None,
-            primary_group: Group | None = None,
-            administrator_role: AdministratorRole | None = None,
+        self,
+        handle: str | None = None,
+        groups: list[Group] | None = None,
+        password: str | None = None,
+        primary_group: Group | None = None,
+        administrator_role: AdministratorRole | None = None,
     ) -> User:
         """Create a fake user.
 
@@ -473,7 +476,8 @@ class UsersFakerPiece(DataFakerPiece):
 
         if administrator_role:
             user = await self._layer.users.set_administrator_role(
-                user.id, administrator_role,
+                user.id,
+                administrator_role,
             )
 
         if groups and primary_group:
@@ -495,20 +499,21 @@ class UsersFakerPiece(DataFakerPiece):
             return await self._layer.users.update(
                 user.id,
                 UpdateUserRequest(
-                    groups=[primary_group.id], primary_group=primary_group.id,
+                    groups=[primary_group.id],
+                    primary_group=primary_group.id,
                 ),
             )
 
         return user
 
 
-class SubtractionFakerPiece(DataFakerPiece):
+class SubtractionFakerDomain(DataFakerDomain):
     model = Subtraction
 
     async def create(
-            self,
-            user: User,
-            upload: Upload,
+        self,
+        user: User,
+        upload: Upload,
     ) -> Subtraction:
         """Create a fake subtraction.
 
@@ -516,7 +521,7 @@ class SubtractionFakerPiece(DataFakerPiece):
         - Create a new subtraction using data_layer.subtractions.create().
         - Upload files using data_layer.subtractions.upload_file().
         - Finalize the subtraction using data_layer.subtractions.finalize().
-        
+
         :param user the user
         :param upload the fake upload
         :return: the created subtraction
@@ -527,12 +532,18 @@ class SubtractionFakerPiece(DataFakerPiece):
             upload_id=upload.id,
         )
 
-        subtraction = await self._layer.subtractions.create(data=subtraction_request,
-                                                            subtraction_id="foobar",
-                                                            user_id=user.id,
-                                                            space_id=0)
+        subtraction = await self._layer.subtractions.create(
+            data=subtraction_request,
+            subtraction_id="foobar",
+            user_id=user.id,
+            space_id=0,
+        )
 
-        finalize_request = FinalizeSubtractionRequest(count=1, gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}))
-        subtraction = await self._layer.subtractions.finalize(subtraction_id=subtraction.id, data=finalize_request)
+        finalize_request = FinalizeSubtractionRequest(
+            count=1, gc=NucleotideComposition(**{k: 0.2 for k in "actgn"})
+        )
+        subtraction = await self._layer.subtractions.finalize(
+            subtraction_id=subtraction.id, data=finalize_request
+        )
 
         return subtraction
