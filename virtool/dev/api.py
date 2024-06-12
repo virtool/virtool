@@ -1,11 +1,10 @@
 from virtool.api.errors import APINoContent
 from virtool.api.routes import Routes
-from virtool.data.utils import get_data_from_req
-from virtool.mongo.utils import get_mongo_from_req
+from virtool.data.utils import get_data_from_app, get_data_from_req
+from virtool.fake.next import DataFaker
+from virtool.mongo.utils import get_mongo_from_app, get_mongo_from_req
 from virtool.samples.fake import create_fake_sample
-from virtool.subtractions.fake import (
-    create_fake_finalized_subtraction,
-)
+from virtool.uploads.models import UploadType
 from virtool.utils import random_alphanumeric
 
 routes = Routes()
@@ -15,6 +14,7 @@ routes = Routes()
 async def dev(req):
     data = await req.json()
     command = data.get("command")
+    app = req.app
 
     if command == "clear_users":
         mongo = get_mongo_from_req(req)
@@ -24,7 +24,20 @@ async def dev(req):
         await mongo.keys.delete_many({})
 
     if command == "create_subtraction":
-        await create_fake_finalized_subtraction(req.app)
+        layer = get_data_from_app(app)
+        mongo = get_mongo_from_app(app)
+        pg = app["pg"]
+
+        fake = DataFaker(layer, mongo, pg)
+
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+            name="foobar.fq.gz",
+        )
+
+        await fake.subtractions.create(user=user, upload=upload)
 
     if command == "create_sample":
         await create_fake_sample(
