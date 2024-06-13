@@ -1,5 +1,6 @@
 import asyncio
-from asyncio import Task as AsyncioTask, CancelledError
+from asyncio import CancelledError
+from asyncio import Task as AsyncioTask
 
 from structlog import get_logger
 from virtool_core.models.task import Task
@@ -31,8 +32,7 @@ class TaskRunner:
         """
 
     async def run(self):
-        """
-        Start the task runner.
+        """Start the task runner.
 
         The task runner pulls task IDs from the tasks client, fetches them from the
         databases, and runs them.
@@ -41,18 +41,17 @@ class TaskRunner:
         received, the runner will wait for the current task to finish before exiting.
 
         """
-        logger.info("Started task runner")
+        logger.info("started task runner")
 
         try:
             while True:
-                logger.info("Waiting for next task")
+                logger.info("waiting for next task")
                 await self._run_task(await self._tasks_client.pop())
         except CancelledError:
             await self._shutdown()
 
     async def _run_task(self, task_id: int):
-        """
-        Run a task given a ``task_id``.
+        """Run a task given a ``task_id``.
 
         Once the task begins, the current :class:``BaseTask`` object can be accessed at
         ``self.current_task`` and the asyncio task can be accessed at
@@ -60,12 +59,11 @@ class TaskRunner:
 
         :param task_id: the ID of the task to run
         """
-
         sql_task: Task = await self._data.tasks.get(task_id)
 
         log = logger.bind(id=task_id, name=sql_task.type)
 
-        log.info("Starting task")
+        log.info("starting task")
 
         cls = get_task_from_name(sql_task.type)
 
@@ -77,24 +75,22 @@ class TaskRunner:
         log.info("Finished task")
 
     async def _shutdown(self):
-        """
-        Gracefully shutdown the task runner.
+        """Gracefully shutdown the task runner.
 
         Any running task is given a grace period to finish its work. If a kill signal
         is received during the grace period, the task will be forcibly stopped.
         """
-
-        logger.info("Received stop signal")
+        logger.info("received stop signal")
 
         if self.asyncio_task and not self.asyncio_task.done():
             log = logger.bind(name=self.current_task.name, id=self.current_task.task_id)
 
             try:
-                log.info("Waiting for task to finish")
+                log.info("waiting for task to finish")
                 await self.asyncio_task
-                logger.info("Finished task")
+                logger.info("finished task")
             except asyncio.CancelledError:
-                logger.critical("Shutdown forced before task completed")
+                logger.critical("shutdown forced before task completed")
                 raise
 
-        logger.info("Closing")
+        logger.info("closing")

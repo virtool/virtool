@@ -9,6 +9,6 @@ async def test_check_mongo_version(version: str, log, test_motor, mocker):
 
     try:
         await check_mongo_version(test_motor)
-        assert log.has("Found MongoDB", version=version)
+        assert log.has("found mongo", version=version)
     except SystemExit as e:
         assert e.code == 1

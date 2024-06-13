@@ -33,8 +33,7 @@ from virtool.tasks.startup import (
 
 
 def run_task_runner(config: TaskRunnerConfig):
-    """
-    Run the task runner service.
+    """Run the task runner service.
 
     :param config: the task runner configuration object
     """
@@ -57,7 +56,7 @@ def run_task_runner(config: TaskRunnerConfig):
             startup_events,
             startup_task_runner,
             startup_sentry,
-        ]
+        ],
     )
 
     app.on_shutdown.extend(
@@ -67,15 +66,14 @@ def run_task_runner(config: TaskRunnerConfig):
             shutdown_http_client,
             shutdown_executors,
             shutdown_redis,
-        ]
+        ],
     )
 
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)
 
 
 def run_task_spawner(config: TaskSpawnerConfig):
-    """
-    Run the task spawner service.
+    """Run the task spawner service.
 
     :param config: the task spawner configuration object
     """
@@ -91,16 +89,17 @@ def run_task_spawner(config: TaskSpawnerConfig):
     app.on_startup.extend(
         [
             startup_version,
+            startup_sentry,
             startup_http_client_session,
             startup_databases_for_spawner,
             startup_datalayer_for_spawner,
             startup_executors,
             startup_task_spawner,
-        ]
+        ],
     )
 
     app.on_shutdown.extend(
-        [shutdown_http_client, shutdown_executors, shutdown_scheduler, shutdown_redis]
+        [shutdown_http_client, shutdown_executors, shutdown_scheduler, shutdown_redis],
     )
 
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)

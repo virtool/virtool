@@ -551,7 +551,7 @@ async def upload_reads(req):
     except OSError:
         raise APIBadRequest("File is not compressed")
     except asyncio.CancelledError:
-        logger.info("Sample reads upload aborted", sample_id=sample_id)
+        logger.info("sample reads upload aborted", sample_id=sample_id)
         return Response(status=499)
     try:
         reads = await create_reads_file(

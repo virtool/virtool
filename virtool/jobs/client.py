@@ -48,7 +48,7 @@ class JobsClient(AbstractJobsClient):
         :param job_id: the job ID
         """
         await self._redis.rpush(f"jobs_{workflow}", job_id)
-        logger.debug("Enqueued job", id=job_id, workflow=workflow)
+        logger.info("enqueued job in redis", id=job_id, workflow=workflow)
 
     async def cancel(self, job_id: str) -> JobCancellationResult:
         """Cancel the job with the given `job_id`.
@@ -72,11 +72,11 @@ class JobsClient(AbstractJobsClient):
         )
 
         if any(counts):
-            logger.debug("Removed job from Redis job list", id=job_id)
+            logger.info("removed job from redis job list", id=job_id)
             return JobCancellationResult.REMOVED_FROM_QUEUE
 
         await self._redis.publish("channel:cancel", job_id)
-        logger.debug("Requested job cancellation via Redis", id=job_id)
+        logger.info("requested job cancellation via redis", id=job_id)
 
         return JobCancellationResult.CANCELLATION_DISPATCHED
 

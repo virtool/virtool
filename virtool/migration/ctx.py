@@ -78,7 +78,7 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
         logger.critical("Invalid PostgreSQL connection string")
         sys.exit(1)
 
-    logger.info("Connecting to PostgreSQL")
+    logger.info("connecting to postgres")
 
     try:
         pg = create_async_engine(

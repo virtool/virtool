@@ -155,7 +155,7 @@ async def fetch_and_update_release(
             upsert=True,
         )
 
-        logger.info("Fetched and updated HMM release")
+        logger.info("fetched and updated hmm release")
 
         return release
 

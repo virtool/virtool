@@ -1,15 +1,11 @@
-"""
-The definition of the command line interface for Virtool.
+"""The definition of the command line interface for Virtool."""
 
-We
-"""
 import asyncio
 import json
 
 import click
 import uvloop
 from structlog import get_logger
-from virtool_core.logging import configure_logs
 
 from virtool.app import run_api_server
 from virtool.config.cls import (
@@ -24,6 +20,7 @@ from virtool.config.options import (
     base_url_option,
     data_path_option,
     dev_option,
+    flags_option,
     mongodb_connection_string_option,
     no_check_db_option,
     no_revision_check_option,
@@ -31,9 +28,9 @@ from virtool.config.options import (
     postgres_connection_string_option,
     redis_connection_string_option,
     sentry_dsn_option,
-    flags_option,
 )
 from virtool.jobs.main import run_jobs_server
+from virtool.logs import LogFormat, configure_logging
 from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions
@@ -45,7 +42,7 @@ logger = get_logger("config")
 
 def create_default_map():
     try:
-        with open("./config.json", "r") as f:
+        with open("./config.json") as f:
             return json.load(f)
     except FileNotFoundError:
         return None
@@ -58,14 +55,12 @@ def entry():
 
 
 @click.group()
-def cli():
-    ...
+def cli(): ...
 
 
 @cli.group("server")
 def server():
     """Run Virtool HTTP services."""
-    ...
 
 
 @server.command("api")
@@ -84,8 +79,11 @@ def server():
 @sentry_dsn_option
 def start_api_server(**kwargs):
     """Start a Virtool public API server."""
-    configure_logs(kwargs["dev"])
-    logger.info("Starting the public api service")
+    configure_logging(
+        LogFormat.TEXT if kwargs["dev"] else LogFormat.JSON,
+        bool(kwargs["sentry_dsn"]),
+    )
+    logger.info("starting the public api service")
 
     run_api_server(ServerConfig(**kwargs))
 
@@ -104,9 +102,12 @@ def start_api_server(**kwargs):
 @sentry_dsn_option
 def start_jobs_api(**kwargs):
     """Start a Virtool jobs API server"""
-    configure_logs(kwargs["dev"])
+    configure_logging(
+        LogFormat.TEXT if kwargs["dev"] else LogFormat.JSON,
+        bool(kwargs["sentry_dsn"]),
+    )
 
-    logger.info("Starting the jobs api service")
+    logger.info("starting the jobs api service")
 
     run_jobs_server(
         ServerConfig(
@@ -117,7 +118,7 @@ def start_jobs_api(**kwargs):
             b2c_tenant="",
             b2c_user_flow="",
             use_b2c=False,
-        )
+        ),
     )
 
 
@@ -130,7 +131,6 @@ def oas():
 @cli.group("migration")
 def migration():
     """Run and manage Virtool data migrations."""
-    ...
 
 
 @migration.command("apply")
@@ -140,8 +140,8 @@ def migration():
 @postgres_connection_string_option
 def migration_apply(**kwargs):
     """Apply all pending migrations."""
-    configure_logs(False)
-    logger.info("Starting migration")
+    configure_logging(LogFormat.TEXT, False)
+    logger.info("starting migration")
     asyncio.run(apply(MigrationConfig(**kwargs)))
 
 
@@ -155,44 +155,50 @@ def migration_create(name: str):
 @migration.command("show")
 def migration_show(**kwargs):
     """Apply all pending migrations."""
-    configure_logs(False)
+    configure_logging(LogFormat.TEXT, False)
     show_revisions()
 
 
 @cli.group("tasks")
 def tasks():
     """Manage Virtool tasks."""
-    ...
 
 
 @tasks.command("runner")
 @address_options
 @data_path_option
+@dev_option
 @mongodb_connection_string_option
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_task_runner(**kwargs):
+def start_task_runner(dev: bool, **kwargs):
     """Start a service that pulls tasks queued in Redis and runs them."""
-    configure_logs(False)
+    configure_logging(
+        LogFormat.TEXT if dev else LogFormat.JSON,
+        bool(kwargs["sentry_dsn"]),
+    )
 
-    logger.info("Starting tasks runner")
+    logger.info("starting tasks runner")
 
     run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
 
 
 @tasks.command("spawner")
+@address_options
+@dev_option
 @postgres_connection_string_option
 @redis_connection_string_option
-@address_options
-def tasks_spawner(**kwargs):
-    """
-    Schedule all periodically run tasks on hardcoded schedules
-    """
-    configure_logs(False)
+@sentry_dsn_option
+def tasks_spawner(dev: bool, **kwargs):
+    """Schedule all periodically run tasks on hardcoded schedules"""
+    configure_logging(
+        LogFormat.TEXT if dev else LogFormat.JSON,
+        bool(kwargs["sentry_dsn"]),
+    )
 
-    logger.info("Starting task spawner")
+    logger.info("starting task spawner")
 
     run_task_spawner(TaskSpawnerConfig(**kwargs, base_url=""))

@@ -83,11 +83,11 @@ async def startup_b2c(app: App):
 
 async def startup_check_db(app: App):
     if get_config_from_app(app).no_check_db:
-        return logger.info("Skipping database checks")
+        return logger.info("skipping database checks")
 
     mongo = get_mongo_from_app(app)
 
-    logger.info("Checking database")
+    logger.info("checking database")
     await migrate_status(mongo)
 
     # Make sure the indexes collection exists before later trying to set an compound
@@ -180,7 +180,7 @@ async def startup_http_client_session(app: App):
     :param app: the application object
 
     """
-    logger.info("Starting HTTP client")
+    logger.info("starting http client")
 
     app["client"] = ClientSession(
         headers={"User-Agent": f"virtool/{get_version_from_app(app)}"},
@@ -197,10 +197,10 @@ async def startup_sentry(app: App):
     :param app: the application object
     """
     if get_config_from_app(app).sentry_dsn:
-        logger.info("Configuring Sentry")
+        logger.info("configuring sentry")
         setup(app["version"], get_config_from_app(app).sentry_dsn)
     else:
-        logger.info("Skipped configuring Sentry")
+        logger.info("skipped configuring sentry")
 
 
 async def startup_settings(app: App):
@@ -233,14 +233,14 @@ async def startup_version(app: App):
     """
     version = await determine_server_version()
 
-    logger.info("Starting Virtool", version=version, mode=app["mode"])
+    logger.info("starting virtool", version=version, mode=app["mode"])
 
     app["version"] = version
 
 
 async def startup_ws(app: App):
     """Start the websocket server."""
-    logger.info("Starting websocket server")
+    logger.info("starting websocket server")
 
     ws = WSServer(app["redis"])
 

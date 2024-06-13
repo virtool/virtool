@@ -1,10 +1,9 @@
 from asyncio import to_thread
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, AsyncGenerator, Callable
 
 import aiofiles
 from aiohttp import MultipartReader
-from typing import AsyncGenerator
 from cerberus import Validator
 from structlog import get_logger
 
@@ -17,8 +16,7 @@ CHUNK_SIZE = 1024 * 1000 * 50
 
 
 def is_gzip_compressed(chunk: bytes):
-    """
-    Check if a file is gzip compressed.
+    """Check if a file is gzip compressed.
 
     Peek at the first two bytes for the gzip magic number and raise and exception if it
     is not present.
@@ -32,17 +30,16 @@ def is_gzip_compressed(chunk: bytes):
 
 
 def naive_validator(req) -> Validator.errors:
-    """
-    Validate `name` given in an HTTP request using cerberus
-
-    """
+    """Validate `name` given in an HTTP request using cerberus"""
     v = Validator({"name": {"type": "string", "required": True}}, allow_unknown=True)
 
     if not v.validate(dict(req.query)):
         return v.errors
 
 
-async def multipart_file_chunker(reader: MultipartReader) -> AsyncGenerator[bytearray, None]:
+async def multipart_file_chunker(
+    reader: MultipartReader,
+) -> AsyncGenerator[bytearray, None]:
     """Iterates through a ``MultipartReader`` as ``bytearray`` chunks."""
     file = await reader.next()
 
@@ -60,8 +57,7 @@ async def naive_writer(
     path: Path,
     on_first_chunk: Callable[[bytes], Any] | None = None,
 ) -> int:
-    """
-    Write a new file from an HTTP multipart request.
+    """Write a new file from an HTTP multipart request.
 
     :param chunker: yields chunks of a file acquired from a multipart request
     :param path: the file path to write the data to
@@ -76,7 +72,9 @@ async def naive_writer(
         async for chunk in chunker:
             if type(chunk) is str:
                 logger.warning(
-                    "Got string chunk while writing file", path=path, chunk=chunk
+                    "got string chunk while writing file",
+                    path=path,
+                    chunk=chunk,
                 )
                 break
 
@@ -87,15 +85,13 @@ async def naive_writer(
 
             size += len(chunk)
 
-    logger.info("Wrote file", path=path, size=size)
+    logger.info("wrote file", path=path, size=size)
 
     return size
 
 
 async def get_upload_path(config: Config, name_on_disk: str) -> Path:
-    """
-    Get the local upload path and return it.
-    """
+    """Get the local upload path and return it."""
     upload_path = config.data_path / "files" / name_on_disk
 
     if not await to_thread(upload_path.exists):
