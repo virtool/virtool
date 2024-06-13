@@ -2,9 +2,9 @@ import asyncio
 from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Type, List, Tuple
+from typing import List, Tuple, Type
 
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
@@ -18,9 +18,7 @@ logger = get_logger("spawner")
 
 @dataclass
 class PeriodicTask:
-    """
-    A dataclass that holds information about a periodic task registration.
-    """
+    """A dataclass that holds information about a periodic task registration."""
 
     task: Type[BaseTask]
     interval: int
@@ -35,28 +33,25 @@ class TaskSpawnerService:
         self.registered = []
 
     async def register(self, tasks: List[Tuple[Type[BaseTask], int]]):
-        """
-        Registers tasks and sets the last triggered time attribute.
-        """
+        """Registers tasks and sets the last triggered time attribute."""
         for task, interval in tasks:
             async with AsyncSession(self._pg) as session:
                 result = (
                     await session.execute(
                         select(SQLTask)
                         .filter_by(type=str(task.name))
-                        .order_by(desc(SQLTask.created_at))
+                        .order_by(desc(SQLTask.created_at)),
                     )
                 ).scalar()
             if result is not None:
                 self.registered.append(
-                    PeriodicTask(task, interval, last_triggered=result.created_at)
+                    PeriodicTask(task, interval, last_triggered=result.created_at),
                 )
             else:
                 self.registered.append(PeriodicTask(task, interval))
 
     async def run(self, tasks: List[Tuple[Type[BaseTask], int]]):
-        """
-        Run the task spawner service.
+        """Run the task spawner service.
 
         The task spawner service will periodically check for tasks that need to be run
         and spawn them.
@@ -72,35 +67,32 @@ class TaskSpawnerService:
                 await asyncio.sleep(self.wait_time)
 
         except CancelledError:
-            logger.info("Stopped Task Spawner")
+            logger.info("stopped task spawner")
 
     @property
     def wait_time(self):
-        """
-        Time until the next task can be run.
-        """
+        """Time until the next task can be run."""
         return min(
             calculate_wait_time(item.interval, item.last_triggered)
             for item in self.registered
         )
 
     async def check_or_spawn_task(self, periodic_task: PeriodicTask):
-        """
-        Spawns task if enough time has passed.
-        """
+        """Spawns task if enough time has passed."""
         if check_interval_exceeded(
-            periodic_task.interval, periodic_task.last_triggered
+            periodic_task.interval,
+            periodic_task.last_triggered,
         ):
+            logger.info("spawning task", name=periodic_task.task.name)
+
             task = await self._tasks_datalayer.create(periodic_task.task)
-            logger.info("Spawning task", name=periodic_task.task.name)
             periodic_task.last_triggered = task.created_at
 
         return periodic_task
 
 
 def check_interval_exceeded(interval: int, last_triggered: datetime | None):
-    """
-    Checks whether the time elapsed has exceeded the set interval.
+    """Checks whether the time elapsed has exceeded the set interval.
     :param interval: how frequently the task should be triggered in seconds
     :param last_triggered: the time the task was last triggered
     """
@@ -110,8 +102,7 @@ def check_interval_exceeded(interval: int, last_triggered: datetime | None):
 
 
 def calculate_wait_time(interval: int, last_triggered: datetime | None):
-    """
-    Calculates the wait time.
+    """Calculates the wait time.
     :param interval: how frequently the task should be triggered in seconds
     :param last_triggered: the time the task was last triggered
     """

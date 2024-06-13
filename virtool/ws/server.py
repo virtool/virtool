@@ -69,7 +69,7 @@ class WSServer:
 
         """
         self._connections.append(connection)
-        logger.info("Established Websocket connection", user_id=connection.user_id)
+        logger.info("established websocket connection", user_id=connection.user_id)
 
     def remove_connection(self, connection: WSConnection):
         """Close and remove a connection.
@@ -79,7 +79,7 @@ class WSServer:
         """
         try:
             self._connections.remove(connection)
-            logger.info("Closed WebSocket connection", user_id=connection.user_id)
+            logger.info("closed websocket connection", user_id=connection.user_id)
         except ValueError:
             pass
 
@@ -88,7 +88,7 @@ class WSServer:
         session_data = SessionData(self._redis)
 
         while True:
-            logger.info("Closing expired websocket connections")
+            logger.info("closing expired websocket connections")
 
             for connection in self._connections:
                 if not await session_data.check_session_is_authenticated(
@@ -105,9 +105,9 @@ class WSServer:
 
     async def close(self):
         """Close the server and all connections."""
-        logger.info("Closing WebSocket server")
+        logger.info("closing websocket server")
 
         for connection in self._connections:
             await connection.close(1001)
 
-        logger.info("Closed WebSocket server")
+        logger.info("closed websocket server")

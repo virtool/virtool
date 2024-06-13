@@ -1,6 +1,7 @@
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
+from structlog import get_logger
 from virtool_core.models.roles import AdministratorRole, SpaceRoleType
 from virtool_core.models.user import User
 
@@ -37,6 +38,8 @@ from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
 
 routes = Routes()
+
+logger = get_logger("users")
 
 
 @routes.view("/users")
@@ -133,6 +136,7 @@ class FirstUserView(PydanticView):
             403: Not permitted
         """
         if await get_data_from_req(self.request).users.check_users_exist():
+            logger.error("attempted to create first user when users already exist")
             raise APIConflict("Virtool already has at least one user")
 
         if data.handle == "virtool":

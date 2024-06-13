@@ -15,7 +15,7 @@ async def migrate_status(mongo: "Mongo"):
     :param mongo: the application MongoDB object
 
     """
-    logger.info("Updating HMM status")
+    logger.info("updating hmm status")
 
     try:
         await mongo.status.insert_one(

@@ -109,12 +109,12 @@ async def check_data_revision_version(pg: AsyncEngine):
     async with AsyncSession(pg) as session:
         result = await session.execute(
             select(SQLRevision).where(
-                SQLRevision.revision == REQUIRED_VIRTOOL_REVISION
+                SQLRevision.revision == REQUIRED_VIRTOOL_REVISION,
             ),
         )
 
         if result.first():
-            log.info("Found required revision")
+            log.info("found required revision")
             return
 
     log.critical("The required revision has not been applied")

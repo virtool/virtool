@@ -90,7 +90,7 @@ async def get_release(
     if etag:
         headers["If-None-Match"] = etag
 
-    logger.info("Making GitHub request", url=url)
+    logger.info("making gitHub request", url=url)
 
     async with session.get(
         url,
@@ -101,17 +101,10 @@ async def get_release(
 
         if int(rate_limit) / int(rate_limit_remaining) > 2.0:
             logger.warning(
-                "Less than half of GitHub remaining",
+                "less than half of github rate limit remaining",
                 remaining=rate_limit_remaining,
                 limit=rate_limit,
             )
-
-        logger.debug(
-            "Fetched GitHub release",
-            slug=slug,
-            id=release_id,
-            http_status=resp.status,
-        )
 
         if resp.status == 200:
             data = await resp.json()
