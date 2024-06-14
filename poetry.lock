@@ -3226,13 +3226,13 @@ test = ["Cython (>=0.29.36,<0.30.0)", "aiohttp (==3.9.0b0)", "aiohttp (>=3.8.1)"
 
 [[package]]
 name = "virtool-core"
-version = "12.3.2"
+version = "14.0.2"
 description = "Core utilities for Virtool."
 optional = false
-python-versions = "<3.13,>3.9"
+python-versions = "<3.13,>=3.12"
 files = [
-    {file = "virtool_core-12.3.2-py3-none-any.whl", hash = "sha256:61c9cdf67102a4100031952b04e86f5e57a298dcc33a64b7319f48b49ae86914"},
-    {file = "virtool_core-12.3.2.tar.gz", hash = "sha256:e1ab31a51e17b6f5be3825a7fe63d4dfb9fdc37fdbd7cdbfd7f296dc5f72e78a"},
+    {file = "virtool_core-14.0.2-py3-none-any.whl", hash = "sha256:368444aefbc352451c741b1c5684c3a9f8f405f9bb762edcafdfb312cf026cfe"},
+    {file = "virtool_core-14.0.2.tar.gz", hash = "sha256:54e3ed4b57b1d2e83a18b92b895f9c5c894215a3bf2409378bcb2d4a3d9558b7"},
 ]
 
 [package.dependencies]
@@ -3426,4 +3426,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "6f4bdf1e3522690248a52a946c5fa7f2c488340514a622b5193c81f11cc5ce86"
+content-hash = "3beae058477904b07293b5cdc42a94509b03895eb2c56d443c5dd852687814ff"
