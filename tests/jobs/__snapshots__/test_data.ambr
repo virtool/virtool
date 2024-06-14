@@ -10,8 +10,6 @@
     'key': 'key',
     'ping': None,
     'progress': 3,
-    'rights': dict({
-    }),
     'stage': None,
     'state': <JobState.PREPARING: 'preparing'>,
     'status': list([
@@ -70,8 +68,6 @@
     'id': 'foo',
     'ping': None,
     'progress': 0,
-    'rights': dict({
-    }),
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
     'status': list([
@@ -129,8 +125,6 @@
     'id': 'foo',
     'ping': None,
     'progress': 0,
-    'rights': dict({
-    }),
     'stage': 'foo',
     'state': <JobState.RUNNING: 'running'>,
     'status': list([
@@ -186,8 +180,6 @@
     'id': 'fb085f7f',
     'ping': None,
     'progress': 0,
-    'rights': dict({
-    }),
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
     'status': list([
@@ -252,8 +244,6 @@
     'id': 'bar',
     'ping': None,
     'progress': 0,
-    'rights': dict({
-    }),
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
     'status': list([
