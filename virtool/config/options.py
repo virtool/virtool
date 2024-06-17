@@ -1,5 +1,4 @@
-"""
-Reusable Click options for CLI subcommands.
+"""Reusable Click options for CLI subcommands.
 
 Decorate a Click command with these options to add them to the command:
 
@@ -10,6 +9,7 @@ def my_command(host, port):
     ...
 ```
 """
+
 import os
 
 import click
@@ -112,14 +112,14 @@ flags_option = click.option(
 mongodb_connection_string_option = click.option(
     "--mongodb-connection-string",
     default=get_from_environment(
-        "mongodb_connection_string", "mongodb://root:virtool@localhost:27017/virtool"
+        "mongodb_connection_string", "mongodb://root:virtool@localhost:27017/virtool",
     ),
     help="The MongoDB connection string",
     type=str,
 )
 
 no_check_db_option = click.option(
-    "--no-check-db", help="Start without checking and repairing database", is_flag=True
+    "--no-check-db", help="Start without checking and repairing database", is_flag=True,
 )
 
 no_revision_check_option = click.option(
@@ -127,6 +127,13 @@ no_revision_check_option = click.option(
     default=get_from_environment("no_revision_check", False),
     help="Disable the MongoDB revision check",
     is_flag=True,
+)
+
+real_ip_header_option = click.option(
+    "--real-ip-header",
+    default=get_from_environment("real_ip_header", ""),
+    help="The request header containing the original client's IP address",
+    type=str,
 )
 
 
@@ -169,7 +176,7 @@ postgres_connection_string_option = click.option(
 redis_connection_string_option = click.option(
     "--redis-connection-string",
     default=get_from_environment(
-        "redis_connection_string", "redis://root:virtool@localhost:6379"
+        "redis_connection_string", "redis://root:virtool@localhost:6379",
     ),
     help="The Redis connection string",
     required=True,

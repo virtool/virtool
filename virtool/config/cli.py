@@ -26,6 +26,7 @@ from virtool.config.options import (
     no_revision_check_option,
     openfga_options,
     postgres_connection_string_option,
+    real_ip_header_option,
     redis_connection_string_option,
     sentry_dsn_option,
 )
@@ -75,6 +76,7 @@ def server():
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
+@real_ip_header_option
 @redis_connection_string_option
 @sentry_dsn_option
 def start_api_server(**kwargs):
@@ -98,6 +100,7 @@ def start_api_server(**kwargs):
 @no_revision_check_option
 @openfga_options
 @postgres_connection_string_option
+@real_ip_header_option
 @redis_connection_string_option
 @sentry_dsn_option
 def start_jobs_api(**kwargs):
