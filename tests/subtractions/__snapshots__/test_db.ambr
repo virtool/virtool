@@ -1,4 +1,50 @@
 # serializer version: 1
+# name: test_attach_subtractions
+  dict({
+    'id': 'sub_1',
+    'subtractions': list([
+      dict({
+        'id': '7cf872dc',
+        'name': 'foo',
+      }),
+      dict({
+        'id': 'da42dca3',
+        'name': 'foo',
+      }),
+    ]),
+  })
+# ---
+# name: test_attach_subtractions.1
+  list([
+    dict({
+      'id': 'sub_1',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+        dict({
+          'id': 'da42dca3',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_2',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_3',
+      'subtractions': list([
+      ]),
+    }),
+  ])
+# ---
 # name: test_attach_subtractions[documents0]
   dict({
     'id': 'sub_1',
