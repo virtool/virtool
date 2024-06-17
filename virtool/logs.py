@@ -1,16 +1,7 @@
-import logging
-from enum import Enum
-from logging import INFO
-
 import structlog
 from sentry_sdk import capture_message
-
-
-class LogFormat(Enum):
-    """The available log formats."""
-
-    JSON = "json"
-    TEXT = "text"
+from structlog import PrintLoggerFactory
+from structlog.processors import LogfmtRenderer
 
 
 def sentry_processor(logger, method_name: str, event_dict: dict) -> dict:
@@ -21,12 +12,12 @@ def sentry_processor(logger, method_name: str, event_dict: dict) -> dict:
         event_dict,
     )
 
-    capture_message(message)
+    capture_message(message, level=event_dict["level"].lower())
 
     return event_dict
 
 
-def configure_logging(fmt: LogFormat, use_sentry: bool):
+def configure_logging(use_sentry: bool):
     """Configure logging for Virtool.
 
     If ``dev`` is enabled, logs will be in color and include debug messages.
@@ -36,32 +27,23 @@ def configure_logging(fmt: LogFormat, use_sentry: bool):
     :param use_sentry: whether to send logs to Sentry
 
     """
-    logging.basicConfig(level=INFO, format="%(message)s")
-
     processors = [
-        structlog.stdlib.filter_by_level,
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M.%S"),
+        structlog.processors.add_log_level,
+        structlog.processors.EventRenamer("msg"),
+        structlog.processors.TimeStamper(key="time", fmt="%Y-%m-%dT%H:%M:%SZ"),
     ]
 
     if use_sentry:
         processors.append(sentry_processor)
 
-    if fmt == LogFormat.JSON:
-        processors += [
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.JSONRenderer(),
-        ]
-    else:
-        processors += [
-            structlog.dev.ConsoleRenderer(colors=True, sort_keys=True),
-        ]
+    processors.append(
+        LogfmtRenderer(
+            key_order=["time", "level", "logger", "msg"],
+        ),
+    )
 
     structlog.configure(
         cache_logger_on_first_use=True,
-        logger_factory=structlog.stdlib.LoggerFactory(),
+        logger_factory=PrintLoggerFactory(),
         processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(INFO),
     )

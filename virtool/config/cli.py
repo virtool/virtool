@@ -31,7 +31,7 @@ from virtool.config.options import (
     sentry_dsn_option,
 )
 from virtool.jobs.main import run_jobs_server
-from virtool.logs import LogFormat, configure_logging
+from virtool.logs import configure_logging
 from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions
@@ -81,10 +81,7 @@ def server():
 @sentry_dsn_option
 def start_api_server(**kwargs):
     """Start a Virtool public API server."""
-    configure_logging(
-        LogFormat.TEXT if kwargs["dev"] else LogFormat.JSON,
-        bool(kwargs["sentry_dsn"]),
-    )
+    configure_logging(bool(kwargs["sentry_dsn"]))
     logger.info("starting the public api service")
 
     run_api_server(ServerConfig(**kwargs))
@@ -105,10 +102,7 @@ def start_api_server(**kwargs):
 @sentry_dsn_option
 def start_jobs_api(**kwargs):
     """Start a Virtool jobs API server"""
-    configure_logging(
-        LogFormat.TEXT if kwargs["dev"] else LogFormat.JSON,
-        bool(kwargs["sentry_dsn"]),
-    )
+    configure_logging(bool(kwargs["sentry_dsn"]))
 
     logger.info("starting the jobs api service")
 
@@ -143,7 +137,7 @@ def migration():
 @postgres_connection_string_option
 def migration_apply(**kwargs):
     """Apply all pending migrations."""
-    configure_logging(LogFormat.TEXT, False)
+    configure_logging(False)
     logger.info("starting migration")
     asyncio.run(apply(MigrationConfig(**kwargs)))
 
@@ -158,7 +152,7 @@ def migration_create(name: str):
 @migration.command("show")
 def migration_show(**kwargs):
     """Apply all pending migrations."""
-    configure_logging(LogFormat.TEXT, False)
+    configure_logging(False)
     show_revisions()
 
 
@@ -179,10 +173,7 @@ def tasks():
 @sentry_dsn_option
 def start_task_runner(dev: bool, **kwargs):
     """Start a service that pulls tasks queued in Redis and runs them."""
-    configure_logging(
-        LogFormat.TEXT if dev else LogFormat.JSON,
-        bool(kwargs["sentry_dsn"]),
-    )
+    configure_logging(bool(kwargs["sentry_dsn"]))
 
     logger.info("starting tasks runner")
 
@@ -197,10 +188,7 @@ def start_task_runner(dev: bool, **kwargs):
 @sentry_dsn_option
 def tasks_spawner(dev: bool, **kwargs):
     """Schedule all periodically run tasks on hardcoded schedules"""
-    configure_logging(
-        LogFormat.TEXT if dev else LogFormat.JSON,
-        bool(kwargs["sentry_dsn"]),
-    )
+    configure_logging(bool(kwargs["sentry_dsn"]))
 
     logger.info("starting task spawner")
 
