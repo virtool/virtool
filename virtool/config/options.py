@@ -78,6 +78,7 @@ def b2c_options(func):
 
     return func
 
+
 base_url_option = click.option(
     "--base-url",
     default=get_from_environment("base_url", ""),
