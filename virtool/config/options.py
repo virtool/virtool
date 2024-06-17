@@ -130,7 +130,7 @@ no_revision_check_option = click.option(
 )
 
 real_ip_header_option = click.option(
-    "--real_ip_header",
+    "--real-ip-header",
     default=get_from_environment("real_ip_header", ""),
     help="The request header containing the original client's IP address",
     type=str,
