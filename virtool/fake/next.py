@@ -534,7 +534,6 @@ class SubtractionFakerDomain(DataFakerDomain):
 
         subtraction = await self._layer.subtractions.create(
             data=subtraction_request,
-            subtraction_id="foobar",
             user_id=user.id,
             space_id=0,
         )
