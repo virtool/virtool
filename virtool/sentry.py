@@ -18,7 +18,7 @@ def traces_sampler(sampling_context: dict) -> float:
     if target_url == "/ws":
         return 0.0
 
-    return 0.2
+    return 0.6
 
 
 def setup(server_version: str | None, dsn: str):
