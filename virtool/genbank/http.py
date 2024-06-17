@@ -38,7 +38,7 @@ async def fetch(session: aiohttp.ClientSession, accession: int | str) -> dict | 
 
         if resp.status != 200:
             if "Failed to retrieve sequence" not in body:
-                logger.warning("Unexpected Genbank error", body=body)
+                logger.warning("unexpected genbank error", body=body)
 
             return None
 

@@ -12,8 +12,7 @@ logger = get_logger("mongo")
 
 
 async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDatabase:
-    """
-    Connect to a MongoDB server and return an application database object.
+    """Connect to a MongoDB server and return an application database object.
 
     :param connection_string: the mongoDB connection string
     :param db_name: the database name
@@ -22,12 +21,12 @@ async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDat
     """
     mongo_client = AsyncIOMotorClient(connection_string, serverSelectionTimeoutMS=6000)
 
-    logger.info("Connecting to MongoDB")
+    logger.info("connecting to mongo")
 
     try:
         await mongo_client.list_database_names()
     except (OperationFailure, ServerSelectionTimeoutError) as err:
-        logger.critical("Could not connect to MongoDB server", err=err)
+        logger.critical("could not connect to mongo", err=err)
         sys.exit(1)
 
     await check_mongo_version(mongo_client)
@@ -36,8 +35,7 @@ async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDat
 
 
 async def check_mongo_version(mongo: AsyncIOMotorClient) -> str:
-    """
-    Check the MongoDB version.
+    """Check the MongoDB version.
 
     Log a critical error and exit if it is too old. Return it otherwise.
 
@@ -55,14 +53,13 @@ async def check_mongo_version(mongo: AsyncIOMotorClient) -> str:
 
         sys.exit(1)
 
-    logger.info("Found MongoDB", version=mongo_version)
+    logger.info("found mongo", version=mongo_version)
 
     return mongo_version
 
 
 async def get_mongo_version(mongo: AsyncIOMotorClient) -> str:
-    """
-    Gets a server version string from the running MongoDB client.
+    """Gets a server version string from the running MongoDB client.
 
     :param mongo: the application database object
     :return: MongoDB server version in string format

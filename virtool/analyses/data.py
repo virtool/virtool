@@ -305,7 +305,7 @@ class AnalysisData(DataLayerDomain):
 
         if not sample:
             logger.warning(
-                "Parent sample not found for analysis",
+                "parent sample not found for analysis",
                 analysis_id=analysis_id,
                 sample_id=sample_id,
             )
@@ -392,7 +392,7 @@ class AnalysisData(DataLayerDomain):
         try:
             size = await naive_writer(chunks, analysis_file_path)
         except asyncio.CancelledError:
-            logger.info("Analysis file upload aborted", upload_id=upload_id)
+            logger.info("analysis file upload aborted", upload_id=upload_id)
             await delete_row(self._pg, upload_id, SQLAnalysisFile)
 
             return None

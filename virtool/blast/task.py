@@ -1,6 +1,6 @@
 import asyncio
 from tempfile import TemporaryDirectory
-from typing import Optional, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 
 from structlog import get_logger
 
@@ -26,7 +26,6 @@ BLAST_PARAMS = {
 
 
 class BLASTTask(BaseTask):
-
     """Runs a BLAST search against NCBI."""
 
     name = "blast"
@@ -46,8 +45,7 @@ class BLASTTask(BaseTask):
         self.rid: Optional[str] = None
 
     async def request(self):
-        """
-        Make the initial request to NCBI to start a BLAST search.
+        """Make the initial request to NCBI to start a BLAST search.
 
         Checks are conducted by the data layer and will store the results or error
         when the search completes. The task completes when either an error or
@@ -55,7 +53,6 @@ class BLASTTask(BaseTask):
         The BLAST will be retried up to 3 times if a single BLAST
         search exceeds 10 minutes.
         """
-
         log = logger.bind(rid=self.rid)
 
         blast_timeout_count: int = 0
@@ -63,7 +60,8 @@ class BLASTTask(BaseTask):
         while True:
             try:
                 blast = await self.data.blast.initialize_on_ncbi(
-                    self.analysis_id, self.sequence_index
+                    self.analysis_id,
+                    self.sequence_index,
                 )
 
                 self.rid = blast.rid
@@ -74,7 +72,8 @@ class BLASTTask(BaseTask):
 
             except asyncio.TimeoutError:
                 await self.data.blast.delete_nuvs_blast(
-                    self.analysis_id, self.sequence_index
+                    self.analysis_id,
+                    self.sequence_index,
                 )
 
                 log.info("Deleted BLAST due to timeout")
@@ -91,7 +90,8 @@ class BLASTTask(BaseTask):
 
             except asyncio.CancelledError:
                 await self.data.blast.delete_nuvs_blast(
-                    self.analysis_id, self.sequence_index
+                    self.analysis_id,
+                    self.sequence_index,
                 )
 
                 log.info("Deleted BLAST due to cancellation")
@@ -99,29 +99,30 @@ class BLASTTask(BaseTask):
                 break
 
     async def wait_for_blast_search(self):
-        """
-        Wait until the BLAST search completes.
+        """Wait until the BLAST search completes.
 
         Keep check the BLAST status on NCBI with increasingly longer intervals between
         checks.
         """
-
         interval = 3
 
         while True:
             await asyncio.sleep(interval)
 
             blast = await self.data.blast.check_nuvs_blast(
-                self.analysis_id, self.sequence_index
+                self.analysis_id,
+                self.sequence_index,
             )
 
             if blast.ready:
-                logger.info("Retrieved result for BLAST", rid=blast.rid)
+                logger.info("retrieved result for blast", rid=blast.rid)
                 break
 
             if blast.error:
                 logger.info(
-                    "Encountered error during BLAST", rid=blast.rid, error=blast.error
+                    "encountered error during blast",
+                    rid=blast.rid,
+                    error=blast.error,
                 )
                 await self._set_error(blast.error)
                 break

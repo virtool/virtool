@@ -1,17 +1,17 @@
 import asyncio
-from typing import List, Dict
+from typing import Dict, List
 
 import arrow
-from sqlalchemy import select, desc, asc
+from sqlalchemy import asc, desc, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import joinedload
 from structlog import get_logger
 from virtool_core.models.ml import (
+    MLModel,
     MLModelListResult,
     MLModelMinimal,
     MLModelRelease,
-    MLModel,
     MLModelReleaseMinimal,
 )
 
@@ -23,9 +23,9 @@ from virtool.data.http import HTTPClient
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.releases import (
-    fetch_release_manifest_from_virtool,
-    ReleaseType,
     ReleaseManifestItem,
+    ReleaseType,
+    fetch_release_manifest_from_virtool,
 )
 from virtool.tasks.models import SQLTask
 from virtool.utils import timestamp
@@ -47,8 +47,7 @@ class MLData(DataLayerDomain):
         self._pg = pg
 
     async def list(self) -> MLModelListResult:
-        """
-        Get a list of minimal representations of all ML models and the last time
+        """Get a list of minimal representations of all ML models and the last time
         it was synced with www.virtool.ca.
 
         :return: all ML models and the last time they were synced with www.virtool.ca.
@@ -58,7 +57,7 @@ class MLData(DataLayerDomain):
             model_result = await session.execute(
                 select(SQLMLModel)
                 .order_by(asc(SQLMLModel.name))
-                .options(joinedload(SQLMLModel.releases))
+                .options(joinedload(SQLMLModel.releases)),
             )
 
             items = [
@@ -78,7 +77,7 @@ class MLData(DataLayerDomain):
             task_result = await session.execute(
                 select(SQLTask)
                 .where(SQLTask.type == SyncMLModelsTask.name)
-                .order_by(desc(SQLTask.created_at))
+                .order_by(desc(SQLTask.created_at)),
             )
 
             task = task_result.scalars().first()
@@ -90,8 +89,7 @@ class MLData(DataLayerDomain):
             return MLModelListResult(items=items, last_synced_at=last_synced_at)
 
     async def get(self, model_id: int) -> MLModel:
-        """
-        Get the complete representation of an ML model.
+        """Get the complete representation of an ML model.
 
         :param model_id: the ID of the ML model to get.
         :return: the complete representation of the ML model.
@@ -101,7 +99,7 @@ class MLData(DataLayerDomain):
             result = await session.execute(
                 select(SQLMLModel)
                 .options(joinedload(SQLMLModel.releases))
-                .filter_by(id=model_id)
+                .filter_by(id=model_id),
             )
 
             model = result.scalars().unique().one_or_none()
@@ -134,15 +132,14 @@ class MLData(DataLayerDomain):
             )
 
     async def get_release(self, release_id: int) -> MLModelRelease:
-        """
-        Get an ML model release by its id.
+        """Get an ML model release by its id.
 
         :param release_id: the ID of the release to get.
         :return: the ML model release.
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLMLModelRelease).where(SQLMLModelRelease.id == release_id)
+                select(SQLMLModelRelease).where(SQLMLModelRelease.id == release_id),
             )
 
             release = result.scalars().unique().one_or_none()
@@ -151,12 +148,11 @@ class MLData(DataLayerDomain):
                 raise ResourceNotFoundError()
 
             return MLModelRelease(
-                **{**release.to_dict(), "model": release.model.to_dict()}
+                **{**release.to_dict(), "model": release.model.to_dict()},
             )
 
     async def download_release(self, release_id: int) -> FileDescriptor:
-        """
-        Download the latest release of an ML model.
+        """Download the latest release of an ML model.
 
         :param release_id: the ID of the release to download.
         :return: a file descriptor for the downloaded file.
@@ -178,8 +174,7 @@ class MLData(DataLayerDomain):
             )
 
     async def load(self, releases: Dict[str, List[ReleaseManifestItem]]):
-        """
-        Load into the database.
+        """Load into the database.
 
         This method is intended to be called by the `sync` method or data faking
         functions.
@@ -198,7 +193,7 @@ class MLData(DataLayerDomain):
                         await session.execute(
                             select(SQLMLModel)
                             .filter_by(name=repo_name)
-                            .options(joinedload(SQLMLModel.releases))
+                            .options(joinedload(SQLMLModel.releases)),
                         )
                     )
                     .scalars()
@@ -263,16 +258,16 @@ class MLData(DataLayerDomain):
                 await session.commit()
 
     async def sync(self):
-        """
-        Fetch the release manifests for ML models from www.virtool.ca and download any
+        """Fetch the release manifests for ML models from www.virtool.ca and download any
         missing data.
 
         This method is intended to be called periodically by a scheduled task.
         """
-        logger.info("Syncing ML models with www.virtool.ca")
+        logger.info("syncing ml models with www.virtool.ca")
 
         releases = await fetch_release_manifest_from_virtool(
-            self._http._session, ReleaseType.ML
+            self._http._session,
+            ReleaseType.ML,
         )
 
         if releases:
@@ -298,5 +293,6 @@ class MLData(DataLayerDomain):
             return await self.load(data)
 
         logger.warning(
-            "Could not fetch ML model releases", address="https://www.virtool.ca"
+            "could not fetch ml model releases",
+            address="https://www.virtool.ca",
         )

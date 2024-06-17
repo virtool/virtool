@@ -32,7 +32,9 @@ async def startup_databases_for_spawner(app: Application):
 
     redis = Redis(config.redis_connection_string)
 
-    pg, redis = await asyncio.gather(
+    print("redis", redis)
+
+    pg, _ = await asyncio.gather(
         connect_pg(config.postgres_connection_string),
         redis.connect(),
     )

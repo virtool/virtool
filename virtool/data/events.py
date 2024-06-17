@@ -51,7 +51,7 @@ class _InternalEventsTarget:
                 return
             except asyncio.QueueFull:
                 asyncio.sleep(5)
-        logger.error("Event queue full after multiple retries. Dropping event.")
+        logger.error("event queue full after multiple retries. dropping event.")
 
     async def get(self) -> Event:
         """Get an event from the target."""
@@ -144,7 +144,7 @@ class EventPublisher:
 
     async def run(self):
         """Start the event publisher."""
-        logger.info("Starting event publisher")
+        logger.info("starting event publisher")
 
         try:
             while True:

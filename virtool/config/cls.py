@@ -1,11 +1,11 @@
-"""
-Configuration classes for the Virtool subcommands.
+"""Configuration classes for the Virtool subcommands.
 
 These will be available in the application context and should be accessed using
 :func:`~virtool.utils.get_config_from_app` or
 :func:`~virtool.utils.get_config_from_request`.
 
 """
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypeAlias
@@ -18,10 +18,7 @@ from virtool.flags import FlagName
 
 @dataclass
 class MigrationConfig:
-    """
-    Configuration for the migration service.
-
-    """
+    """Configuration for the migration service."""
 
     data_path: Path
     mongodb_connection_string: str
@@ -32,8 +29,7 @@ class MigrationConfig:
 
     @property
     def mongodb_name(self) -> str:
-        """
-        Get the name of the MongoDB database.
+        """Get the name of the MongoDB database.
 
         :return: the database name
 
@@ -77,10 +73,7 @@ class ServerConfig:
 
 @dataclass
 class TaskRunnerConfig:
-    """
-    Configuration for the task runner service.
-
-    """
+    """Configuration for the task runner service."""
 
     base_url: str
     data_path: Path
@@ -105,15 +98,14 @@ class TaskRunnerConfig:
 
 @dataclass
 class TaskSpawnerConfig:
-    """
-    Configuration for the periodic task spawner
-    """
+    """Configuration for the periodic task spawner"""
 
     base_url: str
     host: str
     port: int
     postgres_connection_string: str
     redis_connection_string: str
+    sentry_dsn: str
 
 
 Config: TypeAlias = ServerConfig | TaskRunnerConfig | TaskSpawnerConfig
