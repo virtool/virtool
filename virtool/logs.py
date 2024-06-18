@@ -6,10 +6,16 @@ from structlog.processors import LogfmtRenderer
 
 def sentry_processor(logger, method_name: str, event_dict: dict) -> dict:
     """A structlog processor that sends log messages to Sentry."""
-    message = structlog.dev.ConsoleRenderer(sort_keys=True)(
-        logger,
-        method_name,
-        event_dict,
+    message = f"{event_dict['time']} {event_dict['level']}\t{event_dict['msg']}"
+
+    message = "\t".join(
+        [message]
+        + [
+            f"{key}={event_dict[key]}"
+            for key in [
+                key for key in event_dict if key not in ["time", "level", "msg"]
+            ]
+        ],
     )
 
     capture_message(message, level=event_dict["level"].lower())
