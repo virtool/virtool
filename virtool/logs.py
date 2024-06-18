@@ -1,26 +1,15 @@
+import logging
+import sys
+
 import structlog
-from sentry_sdk import capture_message
-from structlog import PrintLoggerFactory
 from structlog.processors import LogfmtRenderer
+from structlog_sentry import SentryProcessor
 
-
-def sentry_processor(logger, method_name: str, event_dict: dict) -> dict:
-    """A structlog processor that sends log messages to Sentry."""
-    message = f"{event_dict['time']} {event_dict['level']}\t{event_dict['msg']}"
-
-    message = "\t".join(
-        [message]
-        + [
-            f"{key}={event_dict[key]}"
-            for key in [
-                key for key in event_dict if key not in ["time", "level", "msg"]
-            ]
-        ],
-    )
-
-    capture_message(message, level=event_dict["level"].lower())
-
-    return event_dict
+logging.basicConfig(
+    format="%(message)s",
+    stream=sys.stdout,
+    level=logging.INFO,
+)
 
 
 def configure_logging(use_sentry: bool):
@@ -29,27 +18,33 @@ def configure_logging(use_sentry: bool):
     If ``dev`` is enabled, logs will be in color and include debug messages.
     If ``dev`` is disabled, logs will be plain JSON.
 
-    :param fmt: the log format
     :param use_sentry: whether to send logs to Sentry
 
     """
     processors = [
-        structlog.processors.add_log_level,
-        structlog.processors.EventRenamer("msg"),
-        structlog.processors.TimeStamper(key="time", fmt="%Y-%m-%dT%H:%M:%SZ"),
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="%Y-%m-%dT%H:%M:%SZ"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.UnicodeDecoder(),
     ]
 
     if use_sentry:
-        processors.append(sentry_processor)
+        processors.append(
+            SentryProcessor(event_level=logging.WARNING, level=logging.INFO),
+        )
 
     processors.append(
         LogfmtRenderer(
-            key_order=["time", "level", "logger", "msg"],
+            key_order=["timestamp", "level", "logger", "event"],
         ),
     )
 
     structlog.configure(
         cache_logger_on_first_use=True,
-        logger_factory=PrintLoggerFactory(),
+        logger_factory=structlog.stdlib.LoggerFactory(),
         processors=processors,
+        wrapper_class=structlog.stdlib.BoundLogger,
     )

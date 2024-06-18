@@ -3051,6 +3051,21 @@ tests = ["freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=
 typing = ["mypy (>=1.4)", "rich", "twisted"]
 
 [[package]]
+name = "structlog-sentry"
+version = "2.1.0"
+description = "Sentry integration for structlog"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "structlog_sentry-2.1.0-py3-none-any.whl", hash = "sha256:8f631fc4cf9890f8ea368f057861b62ceef30dd75726a85706869807926e22d0"},
+    {file = "structlog_sentry-2.1.0.tar.gz", hash = "sha256:ee4fb04a381f25570017dd26345ea15b6461cbf87ae0a315e20ddd822ad4256b"},
+]
+
+[package.dependencies]
+sentry-sdk = "*"
+structlog = "*"
+
+[[package]]
 name = "swagger-ui-bundle"
 version = "1.1.0"
 description = "Swagger UI bundled for usage with Python"
@@ -3426,4 +3441,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "3beae058477904b07293b5cdc42a94509b03895eb2c56d443c5dd852687814ff"
+content-hash = "7473c903712ee85d3210466e3346a6fbad0f0e0c01173bff8221c49570a229c6"
