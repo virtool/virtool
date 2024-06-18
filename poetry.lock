@@ -3241,13 +3241,13 @@ test = ["Cython (>=0.29.36,<0.30.0)", "aiohttp (==3.9.0b0)", "aiohttp (>=3.8.1)"
 
 [[package]]
 name = "virtool-core"
-version = "14.0.2"
+version = "14.0.3"
 description = "Core utilities for Virtool."
 optional = false
 python-versions = "<3.13,>=3.12"
 files = [
-    {file = "virtool_core-14.0.2-py3-none-any.whl", hash = "sha256:368444aefbc352451c741b1c5684c3a9f8f405f9bb762edcafdfb312cf026cfe"},
-    {file = "virtool_core-14.0.2.tar.gz", hash = "sha256:54e3ed4b57b1d2e83a18b92b895f9c5c894215a3bf2409378bcb2d4a3d9558b7"},
+    {file = "virtool_core-14.0.3-py3-none-any.whl", hash = "sha256:44f3a8b101555f08ccd71fed53eb856d1d2f75f12b84f78399ad8fb5a0cf1efe"},
+    {file = "virtool_core-14.0.3.tar.gz", hash = "sha256:efe23cdfc47e790ffe1ca7c1ef8de56ad2a2f16bacc747e65038111b4bc7e4a0"},
 ]
 
 [package.dependencies]
