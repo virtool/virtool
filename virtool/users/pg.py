@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Index, ForeignKey
+from sqlalchemy import ForeignKey, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,11 +13,13 @@ class SQLUserGroup(Base):
     __tablename__ = "user_groups"
 
     group_id: Mapped[int] = mapped_column(
-        ForeignKey("groups.id", ondelete="CASCADE"), primary_key=True
+        ForeignKey("groups.id", ondelete="CASCADE"),
+        primary_key=True,
     )
     primary: Mapped[bool] = mapped_column(default=False)
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
     )
 
     group: Mapped["SQLGroup"] = relationship(lazy="joined")
@@ -53,7 +55,9 @@ class SQLUser(Base):
     settings: Mapped[dict] = mapped_column(JSONB)
 
     user_group_associations: Mapped[list[SQLUserGroup]] = relationship(
-        back_populates="user", cascade="all, delete-orphan", lazy="joined"
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="joined",
     )
 
     groups: AssociationProxy[list[SQLGroup]] = AssociationProxy(
@@ -77,7 +81,7 @@ class SQLUser(Base):
     def to_dict(self):
         return {
             **super().to_dict(),
-            "groups": self.groups,
+            "groups": sorted(self.groups, key=lambda x: x.name),
             "primary_group": self.primary_group,
         }
 
