@@ -2,7 +2,7 @@ import asyncio
 import random
 
 from pymongo.errors import DuplicateKeyError
-from sqlalchemy import update, delete, insert, select
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
 from virtool_core.models.roles import AdministratorRole
@@ -16,21 +16,21 @@ from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceNotFoundError,
     ResourceError,
+    ResourceNotFoundError,
 )
-from virtool.data.events import emits, Operation
+from virtool.data.events import Operation, emits
 from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
-from virtool.groups.transforms import AttachPrimaryGroupTransform, AttachGroupsTransform
+from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import id_exists, get_one_field
+from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.db import (
     B2CUserAttributes,
     compose_groups_update,
 )
-from virtool.users.mongo import compose_primary_group_update
 from virtool.users.mongo import (
+    compose_primary_group_update,
     create_user,
 )
 from virtool.users.oas import UpdateUserRequest
@@ -62,7 +62,10 @@ class UsersData(DataLayerDomain):
     name = "users"
 
     def __init__(
-        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+        self,
+        authorization_client: AuthorizationClient,
+        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
@@ -75,8 +78,7 @@ class UsersData(DataLayerDomain):
         administrator: bool | None = None,
         term: str | None = None,
     ) -> UserSearchResult:
-        """
-        Find users.
+        """Find users.
 
         Optionally filter by administrator status or search term.
 
@@ -85,9 +87,8 @@ class UsersData(DataLayerDomain):
         :param administrator: whether to filter by administrator status
         :param term: a search term to filter by user handle
         """
-
         administrator_roles = dict(
-            await self._authorization_client.list_administrators()
+            await self._authorization_client.list_administrators(),
         )
 
         administrator_query = {}
@@ -126,8 +127,7 @@ class UsersData(DataLayerDomain):
         return UserSearchResult(**result)
 
     async def get(self, user_id: str) -> User:
-        """
-        Get a user by their ``user_id``.
+        """Get a user by their ``user_id``.
 
         :param user_id: the user's ID
         :return: the user
@@ -157,8 +157,7 @@ class UsersData(DataLayerDomain):
         )
 
     async def get_by_handle(self, handle: str) -> User:
-        """
-        Get a user by their ``handle``.
+        """Get a user by their ``handle``.
 
         :param handle: the user's unique handle
         :return: the user
@@ -177,8 +176,7 @@ class UsersData(DataLayerDomain):
         password: str,
         force_reset: bool = False,
     ) -> User:
-        """
-        Create a new user.
+        """Create a new user.
 
         :param handle: the requested handle for the user
         :param password: a password
@@ -205,7 +203,7 @@ class UsersData(DataLayerDomain):
                     legacy_id=document["_id"],
                     password=document["password"],
                     settings=DEFAULT_USER_SETTINGS,
-                )
+                ),
             )
 
         return await self.get(document["_id"])
@@ -217,8 +215,7 @@ class UsersData(DataLayerDomain):
         b2c_user_attributes: B2CUserAttributes,
         force_reset: bool = False,
     ) -> User:
-        """
-        Create a new user using Azure B2C information.
+        """Create a new user using Azure B2C information.
 
         :param handle: the requested handle for the user
         :param force_reset: force the user to reset password on next login
@@ -250,14 +247,13 @@ class UsersData(DataLayerDomain):
                     legacy_id=document["_id"],
                     password=None,
                     settings=DEFAULT_USER_SETTINGS,
-                )
+                ),
             )
 
         return await self.get(document["_id"])
 
     async def create_first(self, handle: str, password: str) -> User:
-        """
-        Create the first instance user.
+        """Create the first instance user.
 
         :param handle: the user handle
         :param password: the password
@@ -276,10 +272,10 @@ class UsersData(DataLayerDomain):
         return await self.get(document.id)
 
     async def find_or_create_b2c_user(
-        self, b2c_user_attributes: B2CUserAttributes
+        self,
+        b2c_user_attributes: B2CUserAttributes,
     ) -> User:
-        """
-        Search for existing user using an OID.
+        """Search for existing user using an OID.
 
         If not found, create new user with the OID and user attributes. Auto-generate a
         handle.
@@ -288,7 +284,8 @@ class UsersData(DataLayerDomain):
         :return: the found or created user
         """
         if document := await self._mongo.users.find_one(
-            {"b2c_oid": b2c_user_attributes.oid}, ["_id"]
+            {"b2c_oid": b2c_user_attributes.oid},
+            ["_id"],
         ):
             return await self.get(document["_id"])
 
@@ -305,10 +302,11 @@ class UsersData(DataLayerDomain):
         return user
 
     async def set_administrator_role(
-        self, user_id: str, role: AdministratorRole
+        self,
+        user_id: str,
+        role: AdministratorRole,
     ) -> User:
-        """
-        Set a user's administrator role.
+        """Set a user's administrator role.
 
         Sets the user's legacy administrator flag to ``True`` if the ``FULL`` user role
         is set. Otherwise, sets the flag to ``False``.
@@ -317,7 +315,6 @@ class UsersData(DataLayerDomain):
         :param role: the administrator role
         :return: the administrator
         """
-
         if not await id_exists(self._mongo.users, user_id):
             raise ResourceNotFoundError("User does not exist")
 
@@ -328,20 +325,20 @@ class UsersData(DataLayerDomain):
             if admin_tuple[1] is not None:
                 await self._authorization_client.remove(
                     AdministratorRoleAssignment(
-                        user_id, AdministratorRole(admin_tuple[1])
-                    )
+                        user_id,
+                        AdministratorRole(admin_tuple[1]),
+                    ),
                 )
         else:
             await self._authorization_client.add(
-                AdministratorRoleAssignment(user_id, AdministratorRole(role))
+                AdministratorRoleAssignment(user_id, AdministratorRole(role)),
             )
 
         return await self.get(user_id)
 
     @emits(Operation.UPDATE)
     async def update(self, user_id: str, data: UpdateUserRequest) -> User:
-        """
-        Update a user.
+        """Update a user.
 
         Sessions and API keys are updated as well.
 
@@ -364,7 +361,7 @@ class UsersData(DataLayerDomain):
         if "force_reset" in data:
             for u in (mongo_update, pg_update):
                 u.update(
-                    {"force_reset": data["force_reset"], "invalidate_sessions": True}
+                    {"force_reset": data["force_reset"], "invalidate_sessions": True},
                 )
 
         if "password" in data:
@@ -374,18 +371,22 @@ class UsersData(DataLayerDomain):
                         "password": virtool.users.utils.hash_password(data["password"]),
                         "last_password_change": virtool.utils.timestamp(),
                         "invalidate_sessions": True,
-                    }
+                    },
                 )
 
         if "groups" in data:
             current_primary_group = await get_one_field(
-                self._mongo.users, "primary_group", user_id
+                self._mongo.users,
+                "primary_group",
+                user_id,
             )
 
             mongo_update.update(
                 await compose_groups_update(
-                    self._pg, data["groups"], current_primary_group
-                )
+                    self._pg,
+                    data["groups"],
+                    current_primary_group,
+                ),
             )
 
         if "primary_group" in data:
@@ -396,7 +397,7 @@ class UsersData(DataLayerDomain):
                     data.get("groups"),
                     data["primary_group"],
                     user_id,
-                )
+                ),
             )
 
         async with both_transactions(self._mongo, self._pg) as (
@@ -405,14 +406,16 @@ class UsersData(DataLayerDomain):
         ):
             if mongo_update:
                 result = await self._mongo.users.update_one(
-                    {"_id": user_id}, {"$set": mongo_update}, session=mongo_session
+                    {"_id": user_id},
+                    {"$set": mongo_update},
+                    session=mongo_session,
                 )
 
                 if not result.modified_count:
                     raise ResourceNotFoundError("User not found")
 
             result = await pg_session.execute(
-                select(SQLUser).where(SQLUser.legacy_id == user_id)
+                select(SQLUser).where(SQLUser.legacy_id == user_id),
             )
 
             user = result.unique().scalar_one_or_none()
@@ -420,7 +423,9 @@ class UsersData(DataLayerDomain):
             if user:
                 if pg_update:
                     result = await pg_session.execute(
-                        update(SQLUser).where(SQLUser.id == user.id).values(**pg_update)
+                        update(SQLUser)
+                        .where(SQLUser.id == user.id)
+                        .values(**pg_update),
                     )
 
                     if not result.rowcount:
@@ -432,7 +437,7 @@ class UsersData(DataLayerDomain):
 
                 if "groups" in data:
                     await pg_session.execute(
-                        delete(SQLUserGroup).where(SQLUserGroup.user_id == user.id)
+                        delete(SQLUserGroup).where(SQLUserGroup.user_id == user.id),
                     )
 
                     if data["groups"]:
@@ -442,18 +447,22 @@ class UsersData(DataLayerDomain):
                                 [
                                     {"user_id": user.id, "group_id": group_id}
                                     for group_id in data["groups"]
-                                ]
-                            )
+                                ],
+                            ),
                         )
 
                 if "primary_group" in data:
-                    await pg_session.execute(update(SQLUserGroup).values(primary=False))
+                    await pg_session.execute(
+                        update(SQLUserGroup)
+                        .where(SQLUserGroup.user_id == user.id)
+                        .values(primary=False),
+                    )
 
                     result = await pg_session.execute(
                         update(SQLUserGroup)
                         .where(SQLUser.id == user.id)
                         .where(SQLUserGroup.group_id == data["primary_group"])
-                        .values(primary=True)
+                        .values(primary=True),
                     )
 
                     if not result.rowcount:
@@ -469,8 +478,7 @@ class UsersData(DataLayerDomain):
         return await self.get(user_id)
 
     async def check_users_exist(self) -> bool:
-        """
-        Checks that users exist.
+        """Checks that users exist.
 
         :returns: True if users exist otherwise False
         """
