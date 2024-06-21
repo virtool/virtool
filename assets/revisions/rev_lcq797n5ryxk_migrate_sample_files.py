@@ -26,7 +26,7 @@ name = "migrate sample files"
 created_at = arrow.get("2024-06-07 17:11:53.878606")
 revision_id = "lcq797n5ryxk"
 
-alembic_down_revision = "None"
+alembic_down_revision = None
 virtool_down_revision = "zma2wj6b39hs"
 
 # Change this if an Alembic revision is required to run this migration.
@@ -37,16 +37,13 @@ def check_is_legacy(sample: dict[str, any]) -> bool:
     """Check if a sample has legacy read files.
 
     :param sample: the sample document
-    :return: legacy boolean
+    :return: whether the sample is a legacy sample
     """
     files = sample.get("files")
 
     return (
-        # All files have the `raw` flag set false indicating they are legacy data.
         all(file.get("raw", False) is False for file in files)
-        and
-        # File naming matches expectations.
-        files[0]["name"] == "reads_1.fastq"
+        and files[0]["name"] == "reads_1.fastq"
         and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
@@ -55,7 +52,7 @@ def check_is_compressed(sample: dict[str, any]) -> bool:
     """Check if a sample has compressed read files.
 
     :param sample: the sample document
-    :return: compressed boolean
+    :return: whether the sample read files are compressed
     """
     files = sample.get("files")
 
@@ -70,7 +67,7 @@ def check_is_compressed(sample: dict[str, any]) -> bool:
 def join_legacy_read_paths(data_path: Path, sample):
     """Create a list of paths for the read files associated with the `sample`.
 
-    :param config: the application configuration
+    :param data_path: the location of the data directory
     :param sample: the sample document
     :return: a list of sample read paths
     """
@@ -163,7 +160,7 @@ async def upgrade(ctx: MigrationContext):
                     name=from_["name"],
                     name_on_disk=from_["id"],
                     size=from_["size"],
-                    uploaded_at=from_.get("uplo aded_at"),
+                    uploaded_at=from_.get("uploaded_at"),
                     removed=True,
                     reserved=True,
                 )
