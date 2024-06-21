@@ -1,7 +1,5 @@
-from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.subtractions.oas import FinalizeSubtractionRequest
 from virtool.uploads.models import UploadType
 
 

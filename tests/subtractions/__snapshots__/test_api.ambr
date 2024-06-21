@@ -1,11 +1,137 @@
 # serializer version: 1
+# name: TestFinalize.test_finalize_subtraction_already_finalized_error
+  dict({
+    'id': 'conflict',
+    'message': 'Subtraction has already been finalized',
+  })
+# ---
+# name: TestFinalize.test_finalize_subtraction_not_found_error
+  dict({
+    'id': 'not_found',
+    'message': 'Not found',
+  })
+# ---
+# name: TestFinalize.test_finalize_subtraction_success
+  dict({
+    'count': 100,
+    'created_at': '2024-06-24T17:45:37.923000Z',
+    'file': dict({
+      'id': 1,
+      'name': 'foobar.fq.gz',
+    }),
+    'files': list([
+    ]),
+    'gc': dict({
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': '2024-06-24T17:45:37.944000Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+    ]),
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestFinalize.test_finalize_success
+  dict({
+    'count': 100,
+    'created_at': '2024-06-24T17:29:38.945000Z',
+    'file': dict({
+      'id': 1,
+      'name': 'foobar.fq.gz',
+    }),
+    'files': list([
+    ]),
+    'gc': dict({
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': '2024-06-24T17:29:38.966000Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+    ]),
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestUpload.test_subtraction_file_conflict_error
+  dict({
+    'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 1,
+    'subtraction': '7cf872dc',
+    'type': 'bowtie2',
+  })
+# ---
+# name: TestUpload.test_subtraction_file_create_success
+  dict({
+    'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 1,
+    'subtraction': '7cf872dc',
+    'type': 'bowtie2',
+  })
+# ---
+# name: TestUpload.test_subtraction_file_created
+  dict({
+    'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 1,
+    'subtraction': '7cf872dc',
+    'type': 'bowtie2',
+  })
+# ---
 # name: test_create
   dict({
     'count': None,
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': '2024-06-24T21:32:15.888000Z',
     'file': dict({
       'id': 1,
-      'name': 'palm.fa.gz',
+      'name': 'foobar.fq.gz',
     }),
     'files': list([
     ]),
@@ -32,7 +158,7 @@
       'files': list([
         dict({
           'id': 1,
-          'name': 'palm.fa.gz',
+          'name': 'foobar.fq.gz',
         }),
       ]),
       'subtraction_id': 'abc123',
@@ -53,7 +179,7 @@
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+        'timestamp': datetime.datetime(2024, 6, 24, 21, 32, 17, 962000),
       }),
     ]),
     'user': dict({
@@ -62,25 +188,37 @@
     'workflow': 'create_subtraction',
   })
 # ---
-# name: test_edit[False-False-data0]
+# name: test_edit[data0]
   dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'files': list([
     ]),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
-    'id': 'apple',
-    'job': None,
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
     'linked_samples': list([
       dict({
         'id': '12',
@@ -92,235 +230,7 @@
       }),
     ]),
     'name': 'Bar',
-    'nickname': 'Apple',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-False-data0].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'name': 'Bar',
-    'nickname': 'Apple',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-False-data1]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': None,
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Malus domestica',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-False-data1].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'name': 'Malus domestica',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-False-data2]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': None,
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Malus domestica',
-    'nickname': '',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-False-data2].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'name': 'Malus domestica',
-    'nickname': '',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-False-data3]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': None,
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Bar',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-False-data3].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'name': 'Bar',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[False-True-data0]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': None,
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Bar',
-    'nickname': 'Apple',
+    'nickname': 'bar',
     'ready': True,
     'user': dict({
       'handle': 'leeashley',
@@ -328,49 +238,69 @@
     }),
   })
 # ---
-# name: test_edit[False-True-data0].1
+# name: test_edit[data0].1
   dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
+    }),
+    'job': dict({
+      'id': 'fb085f7f',
     }),
     'name': 'Bar',
-    'nickname': 'Apple',
+    'nickname': 'bar',
     'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
     'user': dict({
       'id': 'bf1b993c',
     }),
   })
 # ---
-# name: test_edit[False-True-data1]
+# name: test_edit[data1]
   dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'files': list([
     ]),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
-    'id': 'apple',
-    'job': None,
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
     'linked_samples': list([
       dict({
         'id': '12',
@@ -381,7 +311,7 @@
         'name': 'Sample 22',
       }),
     ]),
-    'name': 'Malus domestica',
+    'name': 'foo',
     'nickname': 'Bar Subtraction',
     'ready': True,
     'user': dict({
@@ -390,49 +320,69 @@
     }),
   })
 # ---
-# name: test_edit[False-True-data1].1
+# name: test_edit[data1].1
   dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
-    'name': 'Malus domestica',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'name': 'foo',
     'nickname': 'Bar Subtraction',
     'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
     'user': dict({
       'id': 'bf1b993c',
     }),
   })
 # ---
-# name: test_edit[False-True-data2]
+# name: test_edit[data2]
   dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'files': list([
     ]),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
-    'id': 'apple',
-    'job': None,
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
     'linked_samples': list([
       dict({
         'id': '12',
@@ -443,7 +393,7 @@
         'name': 'Sample 22',
       }),
     ]),
-    'name': 'Malus domestica',
+    'name': 'foo',
     'nickname': '',
     'ready': True,
     'user': dict({
@@ -452,641 +402,68 @@
     }),
   })
 # ---
-# name: test_edit[False-True-data2].1
+# name: test_edit[data2].1
   dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
-    'name': 'Malus domestica',
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'name': 'foo',
     'nickname': '',
     'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
     'user': dict({
       'id': 'bf1b993c',
     }),
   })
 # ---
-# name: test_edit[False-True-data3]
+# name: test_edit[data3]
   dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'files': list([
     ]),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
-    'id': 'apple',
-    'job': None,
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Bar',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[False-True-data3].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'name': 'Bar',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[True-False-data0]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
+    'id': '7cf872dc',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
+      'created_at': 'approximately_now_isoformat',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
       'user': dict({
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
-      'workflow': 'jobs_pathoscope_bowtie',
-    }),
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Bar',
-    'nickname': 'Apple',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-False-data0].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'job': dict({
-      'id': 'fb085f7f',
-    }),
-    'name': 'Bar',
-    'nickname': 'Apple',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-False-data1]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': dict({
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'jobs_pathoscope_bowtie',
-    }),
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Malus domestica',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-False-data1].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'job': dict({
-      'id': 'fb085f7f',
-    }),
-    'name': 'Malus domestica',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-False-data2]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': dict({
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'jobs_pathoscope_bowtie',
-    }),
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Malus domestica',
-    'nickname': '',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-False-data2].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'job': dict({
-      'id': 'fb085f7f',
-    }),
-    'name': 'Malus domestica',
-    'nickname': '',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-False-data3]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': dict({
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'jobs_pathoscope_bowtie',
-    }),
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Bar',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-False-data3].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'job': dict({
-      'id': 'fb085f7f',
-    }),
-    'name': 'Bar',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': None,
-  })
-# ---
-# name: test_edit[True-True-data0]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': dict({
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'jobs_pathoscope_bowtie',
-    }),
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Bar',
-    'nickname': 'Apple',
-    'ready': True,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[True-True-data0].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'job': dict({
-      'id': 'fb085f7f',
-    }),
-    'name': 'Bar',
-    'nickname': 'Apple',
-    'ready': True,
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[True-True-data1]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': dict({
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'jobs_pathoscope_bowtie',
-    }),
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Malus domestica',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[True-True-data1].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'job': dict({
-      'id': 'fb085f7f',
-    }),
-    'name': 'Malus domestica',
-    'nickname': 'Bar Subtraction',
-    'ready': True,
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[True-True-data2]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': dict({
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'jobs_pathoscope_bowtie',
-    }),
-    'linked_samples': list([
-      dict({
-        'id': '12',
-        'name': 'Sample 12',
-      }),
-      dict({
-        'id': '22',
-        'name': 'Sample 22',
-      }),
-    ]),
-    'name': 'Malus domestica',
-    'nickname': '',
-    'ready': True,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[True-True-data2].1
-  dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'job': dict({
-      'id': 'fb085f7f',
-    }),
-    'name': 'Malus domestica',
-    'nickname': '',
-    'ready': True,
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-  })
-# ---
-# name: test_edit[True-True-data3]
-  dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
-    'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
-    }),
-    'files': list([
-    ]),
-    'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
-      'n': 0.2,
-      't': 0.26,
-    }),
-    'id': 'apple',
-    'job': dict({
-      'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'jobs_pathoscope_bowtie',
+      'workflow': 'create_subtraction',
     }),
     'linked_samples': list([
       dict({
@@ -1107,21 +484,22 @@
     }),
   })
 # ---
-# name: test_edit[True-True-data3].1
+# name: test_edit[data3].1
   dict({
-    '_id': 'apple',
-    'count': 11,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
     'job': dict({
       'id': 'fb085f7f',
@@ -1129,6 +507,10 @@
     'name': 'Bar',
     'nickname': 'Bar Subtraction',
     'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
     'user': dict({
       'id': 'bf1b993c',
     }),
@@ -1143,30 +525,6 @@
       'name': 'Apis_mellifera.1.fa.gz',
     }),
     'files': list([
-      dict({
-        'download_url': '/subtractions/foo/files/subtraction.fq.gz',
-        'id': 1,
-        'name': 'subtraction.fq.gz',
-        'size': 12345,
-        'subtraction': 'foo',
-        'type': 'fasta',
-      }),
-      dict({
-        'download_url': '/subtractions/foo/files/subtraction.1.bt2',
-        'id': 2,
-        'name': 'subtraction.1.bt2',
-        'size': 56437,
-        'subtraction': 'foo',
-        'type': 'bowtie2',
-      }),
-      dict({
-        'download_url': '/subtractions/foo/files/subtraction.2.bt2',
-        'id': 3,
-        'name': 'subtraction.2.bt2',
-        'size': 93845,
-        'subtraction': 'foo',
-        'type': 'bowtie2',
-      }),
     ]),
     'gc': dict({
       'a': 0.319,
@@ -1230,298 +588,37 @@
 # name: test_find[2-1]
   dict({
     'documents': list([
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.0.fa.gz',
-        }),
-        'id': 'id_0',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 0',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.1.fa.gz',
-        }),
-        'id': 'id_1',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 1',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
     ]),
-    'found_count': 5,
+    'found_count': 0,
     'page': 1,
-    'page_count': 3,
+    'page_count': 0,
     'per_page': 2,
-    'ready_count': 5,
-    'total_count': 5,
+    'ready_count': 0,
+    'total_count': 0,
   })
 # ---
 # name: test_find[2-2]
   dict({
     'documents': list([
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.2.fa.gz',
-        }),
-        'id': 'id_2',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 2',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.3.fa.gz',
-        }),
-        'id': 'id_3',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 3',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
     ]),
-    'found_count': 5,
+    'found_count': 0,
     'page': 2,
-    'page_count': 3,
+    'page_count': 0,
     'per_page': 2,
-    'ready_count': 5,
-    'total_count': 5,
+    'ready_count': 0,
+    'total_count': 0,
   })
 # ---
 # name: test_find[None-None]
   dict({
     'documents': list([
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.0.fa.gz',
-        }),
-        'id': 'id_0',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 0',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.1.fa.gz',
-        }),
-        'id': 'id_1',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 1',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.2.fa.gz',
-        }),
-        'id': 'id_2',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 2',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.3.fa.gz',
-        }),
-        'id': 'id_3',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 3',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
-      dict({
-        'count': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file': dict({
-          'id': 642,
-          'name': 'Apis_mellifera.4.fa.gz',
-        }),
-        'id': 'id_4',
-        'job': dict({
-          'archived': False,
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
-          'state': 'preparing',
-          'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
-          }),
-          'workflow': 'jobs_pathoscope_bowtie',
-        }),
-        'name': 'Test 4',
-        'nickname': '',
-        'ready': True,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
     ]),
-    'found_count': 5,
+    'found_count': 0,
     'page': 1,
-    'page_count': 1,
+    'page_count': 0,
     'per_page': 25,
-    'ready_count': 5,
-    'total_count': 5,
+    'ready_count': 0,
+    'total_count': 0,
   })
 # ---
 # name: test_find_empty_subtractions
@@ -1538,43 +635,43 @@
 # ---
 # name: test_get
   dict({
-    'count': 11,
-    'created_at': '2015-10-06T20:00:00Z',
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
     'file': dict({
-      'id': 642,
-      'name': 'Apis_mellifera.1.fa.gz',
+      'id': 1,
+      'name': 'foobar.fq.gz',
     }),
     'files': list([
     ]),
     'gc': dict({
-      'a': 0.21,
-      'c': 0.29,
-      'g': 0.19,
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
       'n': 0.2,
-      't': 0.26,
+      't': 0.2,
     }),
-    'id': 'apple',
+    'id': '3cbb22cc',
     'job': dict({
       'archived': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
-      'state': 'preparing',
+      'created_at': 'approximately_now_isoformat',
+      'id': '7cf872dc',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 'fb085f7f',
       }),
-      'workflow': 'jobs_pathoscope_bowtie',
+      'workflow': 'create_subtraction',
     }),
     'linked_samples': list([
     ]),
-    'name': 'Malus domestica',
-    'nickname': 'Apple',
+    'name': 'foo',
+    'nickname': 'bar',
     'ready': True,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
     }),
   })
 # ---
@@ -1595,7 +692,7 @@
       'n': 0.2,
       't': 0.2,
     }),
-    'id': 'foobar',
+    'id': '7cf872dc',
     'job': dict({
       'archived': False,
       'created_at': 'approximately_now_isoformat',
