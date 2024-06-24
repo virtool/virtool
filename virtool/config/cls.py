@@ -59,6 +59,7 @@ class ServerConfig:
     openfga_store_name: str
     port: int
     postgres_connection_string: str
+    real_ip_header: str
     redis_connection_string: str
     use_b2c: bool
     sentry_dsn: str | None

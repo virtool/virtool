@@ -54,7 +54,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'bill',
     'id': 1,
     'invalidate_sessions': False,
@@ -124,7 +125,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'bill',
     'id': 1,
     'invalidate_sessions': False,
@@ -194,7 +196,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'bill',
     'id': 1,
     'invalidate_sessions': False,
@@ -264,7 +267,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': True,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'bill',
     'id': 1,
     'invalidate_sessions': False,
@@ -345,7 +349,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': False,
@@ -369,7 +374,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': True,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': True,
@@ -393,7 +399,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': True,
@@ -588,7 +595,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': False,
@@ -659,7 +667,8 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [],
+    'groups': list([
+    ]),
     'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': False,
@@ -736,7 +745,9 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [<SQLGroup(id=1, legacy_id=None, name=musicians, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>],
+    'groups': list([
+      <SQLGroup(id=1, legacy_id=None, name=musicians, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>,
+    ]),
     'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': True,
@@ -817,7 +828,9 @@
     'b2c_oid': None,
     'email': '',
     'force_reset': False,
-    'groups': [<SQLGroup(id=1, legacy_id=None, name=musicians, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>],
+    'groups': list([
+      <SQLGroup(id=1, legacy_id=None, name=musicians, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>,
+    ]),
     'handle': 'leeashley',
     'id': 1,
     'invalidate_sessions': False,

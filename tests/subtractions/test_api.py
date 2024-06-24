@@ -5,16 +5,13 @@ from http import HTTPStatus
 from pathlib import Path
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.subtractions.models import SQLSubtractionFile
-from virtool.uploads.models import SQLUpload, UploadType
+from virtool.uploads.models import UploadType
 
 
 async def test_find_empty_subtractions(
@@ -452,64 +449,6 @@ class TestRemoveAsJob:
         assert resp.status == HTTPStatus.NOT_FOUND
 
 
-#
-# @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
-# async def test_download_subtraction_files(
-#     error,
-#     mongo,
-#     pg: AsyncEngine,
-#     spawn_job_client,
-#     tmp_path,
-# ):
-#     client = await spawn_job_client(authenticated=True)
-#
-#     get_config_from_app(client.app).data_path = tmp_path
-#
-#     test_dir = tmp_path / "subtractions" / "foo"
-#     test_dir.mkdir(parents=True)
-#
-#     if error != "400_path":
-#         test_dir.joinpath("subtraction.fa.gz").write_text("FASTA file")
-#         test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
-#
-#     if error != "400_subtraction":
-#         await mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"})
-#
-#     if error != "400_file":
-#         async with AsyncSession(pg) as session:
-#             session.add_all(
-#                 [
-#                     SQLSubtractionFile(
-#                         id=1,
-#                         name="subtraction.fa.gz",
-#                         subtraction="foo",
-#                         type="fasta",
-#                     ),
-#                     SQLSubtractionFile(
-#                         id=2, tmp_path,
-#                         name="subtraction.1.bt2",
-#                         subtraction="foo",
-#                         type="bowtie2",
-#                     ),
-#                 ],
-#             )
-#             await session.commit()
-#
-#     fasta_resp = await client.get("/subtractions/foo/files/subtraction.fa.gz")
-#     bowtie_resp = await client.get("/subtractions/foo/files/subtraction.1.bt2")
-#
-#     if not error:
-#         assert fasta_resp.status == bowtie_resp.status == HTTPStatus.OK
-#     else:
-#         assert fasta_resp.status == bowtie_resp.status == HTTPStatus.NOT_FOUND
-#         return
-#
-#     path = get_config_from_app(client.app).data_path / "subtractions" / "foo"
-#
-#     assert (path / "subtraction.fa.gz").read_bytes() == await fasta_resp.content.read()
-#     assert (path / "subtraction.1.bt2").read_bytes() == await bowtie_resp.content.read()
-
-
 class TestDownloadSubtractionFiles:
     @pytest.fixture(autouse=True)
     async def _setup(self, fake: DataFaker, spawn_client: ClientSpawner, tmp_path):
@@ -569,10 +508,10 @@ class TestDownloadSubtractionFiles:
         await self._write_files()
 
         fasta_resp = await self.client.get(
-            f"/subtractions/NOT_FOUND_ID/files/{self.FASTA_FILE_NAME}"
+            f"/subtractions/NOT_FOUND_ID/files/{self.FASTA_FILE_NAME}",
         )
         bowtie_resp = await self.client.get(
-            f"/subtractions/NOT_FOUND_ID/files/{self.BOWTIE_FILE_NAME}"
+            f"/subtractions/NOT_FOUND_ID/files/{self.BOWTIE_FILE_NAME}",
         )
 
         assert fasta_resp.status == bowtie_resp.status == HTTPStatus.NOT_FOUND
