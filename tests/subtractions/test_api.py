@@ -304,7 +304,7 @@ class TestFinalize:
             "count": 100,
         }
 
-        resp = await client.patch(f"/subtractions/{subtraction.id}", data=data)
+        resp = await client.patch(f"/subtractions/{subtraction.id}", json=data)
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
@@ -321,7 +321,7 @@ class TestFinalize:
             "count": 100,
         }
 
-        resp = await client.patch("/subtractions/NOT_FOUND_ID", data=data)
+        resp = await client.patch("/subtractions/NOT_FOUND_ID", json=data)
 
         assert resp.status == HTTPStatus.NOT_FOUND
         assert await resp.json() == snapshot
@@ -351,7 +351,7 @@ class TestFinalize:
             "count": 100,
         }
 
-        resp = await client.patch(f"/subtractions/{subtraction.id}", data=data)
+        resp = await client.patch(f"/subtractions/{subtraction.id}", json=data)
 
         assert resp.status == HTTPStatus.CONFLICT
         assert await resp.json() == snapshot

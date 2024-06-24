@@ -1,4 +1,58 @@
 # serializer version: 1
+# name: TestFinalize.test_conflict
+  dict({
+    'id': 'conflict',
+    'message': 'Subtraction has already been finalized',
+  })
+# ---
+# name: TestFinalize.test_not_found
+  dict({
+    'id': 'not_found',
+    'message': 'Not found',
+  })
+# ---
+# name: TestFinalize.test_success
+  dict({
+    'count': 100,
+    'created_at': '2024-06-24T23:31:20.412000Z',
+    'file': dict({
+      'id': 1,
+      'name': 'foobar.fq.gz',
+    }),
+    'files': list([
+    ]),
+    'gc': dict({
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': '2024-06-24T23:31:20.429000Z',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+    ]),
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: TestUploadSubtractionFile.test_create
   dict({
     'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
@@ -63,7 +117,7 @@
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': datetime.datetime(2024, 6, 24, 23, 9, 41, 130000),
+        'timestamp': datetime.datetime(2024, 6, 24, 23, 31, 26, 178000),
       }),
     ]),
     'user': dict({
