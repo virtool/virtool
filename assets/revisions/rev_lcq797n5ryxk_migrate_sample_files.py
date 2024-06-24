@@ -162,7 +162,7 @@ async def upgrade(ctx: MigrationContext):
             sample_id = sample["_id"]
             for file in sample["files"]:
                 from_ = file.get("from")
-                print("file", file)
+
                 upload = SQLUpload(
                     name=from_["name"],
                     name_on_disk=from_["id"],

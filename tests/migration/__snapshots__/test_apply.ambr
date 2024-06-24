@@ -267,5 +267,12 @@
       'name': 'deduplicate sample names',
       'revision': 'zma2wj6b39hs',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 39,
+      'name': 'migrate sample files',
+      'revision': 'lcq797n5ryxk',
+    }),
   ])
 # ---
