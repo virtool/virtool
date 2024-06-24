@@ -537,4 +537,5 @@ async def test_create(
     )
 
     assert resp.status == HTTPStatus.CREATED
-    assert await resp.json() == snapshot_recent assert await mongo.jobs.find_one() == snapshot_recent(name="job")
+    assert await resp.json() == snapshot_recent
+    assert await mongo.jobs.find_one() == snapshot_recent(name="job")
