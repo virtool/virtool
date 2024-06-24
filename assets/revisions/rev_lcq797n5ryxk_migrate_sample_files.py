@@ -11,7 +11,6 @@ from pathlib import Path
 
 import arrow
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pymongo import ReturnDocument
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.utils import compress_file, file_stats
@@ -63,16 +62,17 @@ def check_is_compressed(sample: dict[str, any]) -> bool:
     return all(name in {"reads_1.fq.gz", "reads_2.fq.gz"} for name in names)
 
 
-def join_legacy_read_paths(data_path: Path, sample):
+def join_legacy_read_paths(data_path: Path, paired: bool, sample_id: int):
     """Create a list of paths for the read files associated with the `sample`.
 
     :param data_path: the location of the data directory
-    :param sample: the sample document
+    :param paired: whether paired or single end reads are used
+    :param sample_id: the unique identifier of the sample
     :return: a list of sample read paths
     """
-    sample_path = data_path / "samples" / sample["_id"]
+    sample_path = data_path / "samples" / sample_id
 
-    if sample["paired"]:
+    if paired:
         return [
             sample_path / "reads_1.fastq",
             sample_path / "reads_2.fastq",
@@ -84,17 +84,20 @@ def join_legacy_read_paths(data_path: Path, sample):
 async def compress_sample_reads(
     db: AsyncIOMotorDatabase,
     data_path: Path,
-    sample: dict[str, any],
+    sample_files: dict[str, any],
+    paired: bool,
+    sample_id: int,
 ):
     """Compress the reads for one legacy samples.
 
     :param db: the application database object
     :param data_path: the location of the data directory
-    :param sample: the sample document
+    :param files: the read files to be compressed
+    :param paired: whether paired or single end reads are used
+    :param sample_id: the unique identifier of the sample
 
     """
-    paths = join_legacy_read_paths(data_path, sample)
-    sample_id = sample["_id"]
+    paths = join_legacy_read_paths(data_path, paired, sample_id)
 
     files = []
 
@@ -115,25 +118,24 @@ async def compress_sample_reads(
                 "download_url": f"/download/samples/{sample_id}/{target_filename}",
                 "size": stats["size"],
                 "raw": False,
-                "from": sample["files"][i]["from"],
+                "from": sample_files[i]["from"],
             },
         )
 
-    sample = await db.samples.find_one_and_update(
+    await db.samples.update_one(
         {"_id": sample_id},
         {"$set": {"files": files, "is_compressed": True}},
-        return_document=ReturnDocument.AFTER,
     )
 
     for path in paths:
         await to_thread(os.remove, path)
 
-    return sample
+    return files
 
 
 async def upgrade(ctx: MigrationContext):
     async for sample in ctx.mongo.samples.find({"files": {"$exists": True}}):
-        files = sample.get("files")
+        files = sample["files"]
         sample["files"] = [files] if isinstance(files, dict) else files
 
         if "is_legacy" not in sample:
@@ -144,7 +146,13 @@ async def upgrade(ctx: MigrationContext):
             )
 
         if not check_is_compressed(sample):
-            sample = await compress_sample_reads(ctx.mongo, ctx.data_path, sample)
+            sample["files"] = await compress_sample_reads(
+                ctx.mongo,
+                ctx.data_path,
+                sample["files"],
+                sample["paired"],
+                sample["_id"],
+            )
 
         async with AsyncSession(
             ctx.pg,
@@ -154,7 +162,7 @@ async def upgrade(ctx: MigrationContext):
             sample_id = sample["_id"]
             for file in sample["files"]:
                 from_ = file.get("from")
-
+                print("file", file)
                 upload = SQLUpload(
                     name=from_["name"],
                     name_on_disk=from_["id"],
@@ -181,7 +189,6 @@ async def upgrade(ctx: MigrationContext):
                 session=mongo_session,
             )
 
-            await pg_session.flush()
             await pg_session.commit()
 
 
@@ -287,6 +294,20 @@ async def test_upgrade(ctx, snapshot):
                 },
             },
         },
+        {
+            "_id": "unpaired_legacy_partial_compression",
+            "paired": False,
+            "files": {
+                "name": "reads_1.fastq",
+                "size": 1,
+                "raw": False,
+                "from": {
+                    "id": "unpaired_legacy_partial_compression.fastq",
+                    "name": "unpaired_legacy_partial_compression.fastq",
+                    "size": 1,
+                },
+            },
+        },
     ]
 
     for sample in samples:
@@ -299,19 +320,30 @@ async def test_upgrade(ctx, snapshot):
             for file in files:
                 read_path.joinpath(file["name"]).write_text(file["name"])
 
+    (
+        ctx.data_path
+        / "samples"
+        / "unpaired_legacy_partial_compression"
+        / "reads_1.fq.gz"
+    ).write_text("unpaired_legacy_partial_compression")
+
     await ctx.mongo.samples.insert_many(samples)
 
     await upgrade(ctx)
 
-    assert [sample async for sample in ctx.mongo.samples.find({})] == snapshot
+    assert [sample async for sample in ctx.mongo.samples.find({})] == snapshot(
+        name="mongo_after",
+    )
 
     async with AsyncSession(ctx.pg) as session:
         assert (
             await session.execute(select(SQLUpload))
-        ).unique().scalars().all() == snapshot
+        ).unique().scalars().all() == snapshot(name="SQLUploads after")
         assert (
             await session.execute(select(SQLSampleReads))
-        ).scalars().all() == snapshot
+        ).scalars().all() == snapshot(name="SQLSampleReads after")
 
     for sample in samples:
-        assert os.listdir(ctx.data_path / "samples" / sample["_id"]) == snapshot
+        assert os.listdir(ctx.data_path / "samples" / sample["_id"]) == snapshot(
+            name=f"{sample["_id"]}files after",
+        )
