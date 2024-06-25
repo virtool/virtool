@@ -17,7 +17,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),
@@ -69,7 +69,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),
@@ -96,7 +96,7 @@
       'files': list([
         dict({
           'id': 1,
-          'name': 'foobar.fq.gz',
+          'name': 'test.fq.gz',
         }),
       ]),
       'subtraction_id': 'abc123',
@@ -117,7 +117,7 @@
         'state': 'waiting',
         'step_description': None,
         'step_name': None,
-        'timestamp': datetime.datetime(2024, 6, 25, 17, 13, 22, 998000),
+        'timestamp': datetime.datetime(2024, 6, 26, 19, 36, 44, 366000),
       }),
     ]),
     'user': dict({
@@ -132,7 +132,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),
@@ -184,7 +184,7 @@
     'deleted': False,
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'gc': dict({
       'a': 0.2,
@@ -214,7 +214,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),
@@ -266,7 +266,7 @@
     'deleted': False,
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'gc': dict({
       'a': 0.2,
@@ -296,7 +296,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),
@@ -348,7 +348,7 @@
     'deleted': False,
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'gc': dict({
       'a': 0.2,
@@ -378,7 +378,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),
@@ -430,7 +430,7 @@
     'deleted': False,
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'gc': dict({
       'a': 0.2,
@@ -457,37 +457,298 @@
 # name: test_find[2-1]
   dict({
     'documents': list([
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '3cbb22cc',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '09d01419',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'da42dca3',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
     ]),
-    'found_count': 0,
+    'found_count': 5,
     'page': 1,
-    'page_count': 0,
+    'page_count': 3,
     'per_page': 2,
-    'ready_count': 0,
-    'total_count': 0,
+    'ready_count': 5,
+    'total_count': 5,
   })
 # ---
 # name: test_find[2-2]
   dict({
     'documents': list([
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '3cbb22cc',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '153ff459',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'f60bae36',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
     ]),
-    'found_count': 0,
+    'found_count': 5,
     'page': 2,
-    'page_count': 0,
+    'page_count': 3,
     'per_page': 2,
-    'ready_count': 0,
-    'total_count': 0,
+    'ready_count': 5,
+    'total_count': 5,
   })
 # ---
 # name: test_find[None-None]
   dict({
     'documents': list([
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '3cbb22cc',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '09d01419',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'da42dca3',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '153ff459',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'f60bae36',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '031ff6cb',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7aa59bf4',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '83e4c4f6',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '606cd773',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
     ]),
-    'found_count': 0,
+    'found_count': 5,
     'page': 1,
-    'page_count': 0,
+    'page_count': 1,
     'per_page': 25,
-    'ready_count': 0,
-    'total_count': 0,
+    'ready_count': 5,
+    'total_count': 5,
   })
 # ---
 # name: test_find_empty_subtractions
@@ -508,7 +769,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),
@@ -550,7 +811,7 @@
     'created_at': 'approximately_now_isoformat',
     'file': dict({
       'id': 1,
-      'name': 'foobar.fq.gz',
+      'name': 'test.fq.gz',
     }),
     'files': list([
     ]),

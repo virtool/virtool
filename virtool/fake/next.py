@@ -541,13 +541,12 @@ class SubtractionFakerDomain(DataFakerDomain):
         )
 
         if finalized:
-            finalize_request = FinalizeSubtractionRequest(
-                count=1,
-                gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
-            )
-            subtraction = await self._layer.subtractions.finalize(
+            finalize_request = subtraction = await self._layer.subtractions.finalize(
                 subtraction_id=subtraction.id,
-                data=finalize_request,
+                data=FinalizeSubtractionRequest(
+                    count=1,
+                    gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
+                ),
             )
 
         return subtraction

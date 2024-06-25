@@ -1,7 +1,4 @@
-from __future__ import annotations
-
 import os
-from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -25,7 +22,7 @@ async def test_find_empty_subtractions(
 
     resp = await client.get("/subtractions")
 
-    assert resp.status == HTTPStatus.OK
+    assert resp.status == 200
     assert await resp.json() == snapshot
 
 
@@ -34,7 +31,7 @@ async def test_find(
     page: int | None,
     per_page: int | None,
     fake: DataFaker,
-    snapshot_recent,
+    snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
 ):
     client = await spawn_client(authenticated=True)
@@ -43,10 +40,10 @@ async def test_find(
     upload = await fake.uploads.create(
         user=user,
         upload_type=UploadType.subtraction,
-        name="foobar.fq.gz",
     )
 
-    (await fake.subtractions.create(user=user, upload=upload) for _ in range(5))
+    for _ in range(5):
+        await fake.subtractions.create(user=user, upload=upload)
 
     query = []
     path = "/subtractions"
@@ -60,14 +57,14 @@ async def test_find(
 
     resp = await client.get(path)
 
-    assert resp.status == HTTPStatus.OK
+    assert resp.status == 200
     assert await resp.json() == snapshot_recent
 
 
 async def test_get(
     fake: DataFaker,
     spawn_client: ClientSpawner,
-    snapshot_recent,
+    snapshot_recent: SnapshotAssertion,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -75,14 +72,13 @@ async def test_get(
     upload = await fake.uploads.create(
         user=user,
         upload_type=UploadType.subtraction,
-        name="foobar.fq.gz",
     )
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
     resp = await client.get(f"/subtractions/{subtraction.id}")
 
-    assert resp.status == HTTPStatus.OK
+    assert resp.status == 200
     assert await resp.json() == snapshot_recent
 
 
@@ -93,13 +89,12 @@ async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
     upload = await fake.uploads.create(
         user=user,
         upload_type=UploadType.subtraction,
-        name="foobar.fq.gz",
     )
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
     resp = await client.get(f"/subtractions/{subtraction.id}")
 
-    assert resp.status == HTTPStatus.OK
+    assert resp.status == 200
     assert await resp.json() == snapshot_recent
 
 
@@ -123,7 +118,6 @@ async def test_edit(
     upload = await fake.uploads.create(
         user=user,
         upload_type=UploadType.subtraction,
-        name="foobar.fq.gz",
     )
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
@@ -143,13 +137,13 @@ async def test_edit(
 
     resp = await client.patch(f"/subtractions/{subtraction.id}", data)
 
-    assert resp.status == HTTPStatus.OK
+    assert resp.status == 200
     assert await resp.json() == snapshot_recent
     assert await mongo.subtraction.find_one() == snapshot_recent
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_remove_by_user(
+async def test_delete_by_user(
     exists: bool,
     fake: DataFaker,
     spawn_client: ClientSpawner,
@@ -164,7 +158,6 @@ async def test_remove_by_user(
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
         subtraction = await fake.subtractions.create(
             user=user,
@@ -174,10 +167,10 @@ async def test_remove_by_user(
 
         resp = await client.delete(f"subtractions/{subtraction.id}")
 
-        assert resp.status == HTTPStatus.NO_CONTENT
+        assert resp.status == 204
     else:
-        resp = await client.delete("subtractions/TEST_MISSING_ID")
-        assert resp.status == HTTPStatus.NOT_FOUND
+        resp = await client.delete("subtractions/does_not_exist")
+        assert resp.status == 404
 
 
 class TestUploadSubtractionFile:
@@ -195,7 +188,7 @@ class TestUploadSubtractionFile:
     """
 
     @pytest.fixture(autouse=True)
-    async def setup(
+    async def _setup(
         self,
         fake: DataFaker,
         tmp_path: Path,
@@ -213,15 +206,9 @@ class TestUploadSubtractionFile:
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
 
         self.subtraction = await fake.subtractions.create(user=user, upload=upload)
-
-        async def teardown():
-            self.test_file_directory.joinpath(self.VALID_SUBTRACTION_FILE_NAME).unlink()
-
-        return teardown
 
     async def test_not_found(
         self,
@@ -231,7 +218,7 @@ class TestUploadSubtractionFile:
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.put(
-            f"/subtractions/TEST_MISSING_ID/files/{self.VALID_SUBTRACTION_FILE_NAME}",
+            f"/subtractions/does_not_exist/files/{self.VALID_SUBTRACTION_FILE_NAME}",
             data={"file": bytes(1)},
         )
 
@@ -240,7 +227,7 @@ class TestUploadSubtractionFile:
     async def test_create(
         self,
         spawn_job_client: JobClientSpawner,
-        snapshot_recent,
+        snapshot_recent: SnapshotAssertion,
     ):
         client = await spawn_job_client(authenticated=True)
 
@@ -249,7 +236,7 @@ class TestUploadSubtractionFile:
             data={"file": bytes(1)},
         )
 
-        assert resp.status == HTTPStatus.CREATED
+        assert resp.status == 201
         assert await resp.json() == snapshot_recent
         assert os.listdir(
             self.test_subtraction_file_directory / self.subtraction.id,
@@ -306,13 +293,12 @@ class TestFinalize:
         self,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
-        snapshot_recent,
+        snapshot_recent: SnapshotAssertion,
     ):
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
         subtraction = await fake.subtractions.create(
             user=user,
@@ -329,7 +315,7 @@ class TestFinalize:
 
         resp = await client.patch(f"/subtractions/{subtraction.id}", json=data)
 
-        assert resp.status == HTTPStatus.OK
+        assert resp.status == 200
         assert await resp.json() == snapshot_recent
 
     async def test_not_found(
@@ -344,9 +330,9 @@ class TestFinalize:
             "count": 100,
         }
 
-        resp = await client.patch("/subtractions/TEST_MISSING_ID", json=data)
+        resp = await client.patch("/subtractions/does_not_exist", json=data)
 
-        assert resp.status == HTTPStatus.NOT_FOUND
+        assert resp.status == 404
         assert await resp.json() == snapshot
 
     async def test_conflict(
@@ -359,7 +345,6 @@ class TestFinalize:
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
         subtraction = await fake.subtractions.create(
             user=user,
@@ -376,7 +361,7 @@ class TestFinalize:
 
         resp = await client.patch(f"/subtractions/{subtraction.id}", json=data)
 
-        assert resp.status == HTTPStatus.CONFLICT
+        assert resp.status == 409
         assert await resp.json() == snapshot
 
     async def test_finalize_subtraction_invalid_input_error(
@@ -389,7 +374,6 @@ class TestFinalize:
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
         subtraction = await fake.subtractions.create(
             user=user,
@@ -428,7 +412,6 @@ class TestRemoveAsJob:
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
         subtraction = await fake.subtractions.create(
             user=user,
@@ -457,7 +440,6 @@ class TestRemoveAsJob:
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
         subtraction = await fake.subtractions.create(
             user=user,
@@ -479,9 +461,9 @@ class TestRemoveAsJob:
         spawn_job_client: JobClientSpawner,
     ):
         client = await spawn_job_client(authenticated=True)
-        resp = await client.delete("subtractions/TEST_MISSING_ID")
+        resp = await client.delete("subtractions/does_not_exist")
 
-        assert resp.status == HTTPStatus.NOT_FOUND
+        assert resp.status == 404
 
 
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
@@ -530,9 +512,9 @@ async def test_download_subtraction_files(
     bowtie_resp = await client.get("/subtractions/foo/files/subtraction.1.bt2")
 
     if not error:
-        assert fasta_resp.status == bowtie_resp.status == HTTPStatus.OK
+        assert fasta_resp.status == bowtie_resp.status == 200
     else:
-        assert fasta_resp.status == bowtie_resp.status == HTTPStatus.NOT_FOUND
+        assert fasta_resp.status == bowtie_resp.status == 404
         return
 
     path = get_config_from_app(client.app).data_path / "subtractions" / "foo"
@@ -543,7 +525,7 @@ async def test_download_subtraction_files(
 
 class TestDownloadSubtractionF:
     @pytest.fixture(autouse=True)
-    async def setup(
+    async def _setup(
         self,
         fake: DataFaker,
         tmp_path: Path,
@@ -558,17 +540,12 @@ class TestDownloadSubtractionF:
         upload = await fake.uploads.create(
             user=self.user,
             upload_type=UploadType.subtraction,
-            name="foobar.fq.gz",
         )
 
         self.subtraction = await fake.subtractions.create(user=self.user, upload=upload)
 
         self.test_dir: Path = tmp_path / "subtractions" / self.subtraction.id
         self.test_dir.mkdir(exist_ok=True, parents=True)
-
-        async def teardown(): ...
-
-        return teardown
 
     async def _write_files(self):
         self.test_dir.joinpath(self.FASTA_FILE).write_text(self.FASTA_TEXT)
@@ -591,15 +568,16 @@ class TestDownloadSubtractionF:
         await self._write_files()
 
         client = await spawn_job_client(authenticated=True)
+
         fasta_resp = await client.get(
-            f"/subtractions/TEST_MISSING_ID/files/{self.FASTA_FILE}",
+            f"/subtractions/does_not_exist/files/{self.FASTA_FILE}",
         )
         bowtie_resp = await client.get(
-            f"/subtractions/TEST_MISSING_ID/files/{self.BOWTIE2_FILE}",
+            f"/subtractions/does_not_exist/files/{self.BOWTIE2_FILE}",
         )
 
-        assert fasta_resp.status == HTTPStatus.NOT_FOUND
-        assert bowtie_resp.status == HTTPStatus.NOT_FOUND
+        assert fasta_resp.status == 404
+        assert bowtie_resp.status == 404
 
     async def test_not_found_file(
         self,
@@ -614,8 +592,8 @@ class TestDownloadSubtractionF:
         bowtie_resp = await client.get(
             f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
         )
-        assert fasta_resp.status == HTTPStatus.NOT_FOUND
-        assert bowtie_resp.status == HTTPStatus.NOT_FOUND
+        assert fasta_resp.status == 404
+        assert bowtie_resp.status == 404
 
     async def test_not_found_path(
         self,
@@ -628,8 +606,27 @@ class TestDownloadSubtractionF:
         bowtie_resp = await client.get(
             f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
         )
-        assert fasta_resp.status == HTTPStatus.NOT_FOUND
-        assert bowtie_resp.status == HTTPStatus.NOT_FOUND
+        assert fasta_resp.status == 404
+        assert bowtie_resp.status == 404
+
+    async def test_success(
+        self,
+        spawn_job_client: JobClientSpawner,
+    ):
+        await self._write_files()
+
+        client = await spawn_job_client(authenticated=True)
+
+        fasta_resp = await client.get(
+            f"/subtractions/{self.subtraction.id}/files/{self.FASTA_FILE}",
+        )
+        bowtie_resp = await client.get(
+            f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
+        )
+
+        assert fasta_resp.status == 200
+        assert bowtie_resp.status == 200
+        await self._assert_response(fasta_resp, bowtie_resp)
 
 
 async def test_create(
@@ -637,13 +634,12 @@ async def test_create(
     mongo: Mongo,
     spawn_client: ClientSpawner,
     mocker,
-    snapshot_recent,
+    snapshot_recent: SnapshotAssertion,
 ):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user,
         upload_type=UploadType.subtraction,
-        name="foobar.fq.gz",
     )
 
     mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
@@ -659,6 +655,6 @@ async def test_create(
         {"name": "Calamus", "nickname": "Rim Palm", "upload_id": upload.id},
     )
 
-    assert resp.status == HTTPStatus.CREATED
+    assert resp.status == 201
     assert await resp.json() == snapshot_recent
     assert await mongo.jobs.find_one() == snapshot_recent(name="job")
