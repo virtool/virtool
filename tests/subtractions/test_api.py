@@ -385,7 +385,7 @@ class TestFinalize:
 
 
 class TestRemoveAsJob:
-    async def test_remove_ready_success(
+    async def test_remove_ready(
         self,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
@@ -414,7 +414,7 @@ class TestRemoveAsJob:
 
         await resp_is.conflict(resp, "Only unfinalized subtractions can be deleted")
 
-    async def test_remove_not_ready_error(
+    async def test_remove_not_ready(
         self,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
@@ -442,7 +442,7 @@ class TestRemoveAsJob:
 
         await resp_is.no_content(resp)
 
-    async def test_remove_not_found_error(
+    async def test_remove_not_found(
         self,
         spawn_job_client: JobClientSpawner,
     ):
