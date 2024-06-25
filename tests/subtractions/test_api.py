@@ -14,7 +14,7 @@ from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
-from virtool.uploads.models import SQLUpload, UploadType
+from virtool.uploads.models import UploadType
 
 
 async def test_find_empty_subtractions(
@@ -187,7 +187,7 @@ class TestUploadSubtractionFile:
         fake: DataFaker,
         tmp_path: Path,
     ):
-        test_dir = tmp_path / "files"
+        test_dir: Path = tmp_path / "files"
         test_dir.mkdir(exist_ok=True)
 
         self.test_file_directory: Path = test_dir
@@ -283,7 +283,7 @@ class TestFinalize:
         self,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
-        snapshot,
+        snapshot_recent,
     ):
         user = await fake.users.create()
         upload = await fake.uploads.create(
@@ -307,7 +307,7 @@ class TestFinalize:
         resp = await client.patch(f"/subtractions/{subtraction.id}", json=data)
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot_recent
 
     async def test_not_found(
         self,
@@ -507,6 +507,88 @@ async def test_download_subtraction_files(
 
     assert (path / "subtraction.fa.gz").read_bytes() == await fasta_resp.content.read()
     assert (path / "subtraction.1.bt2").read_bytes() == await bowtie_resp.content.read()
+
+
+class TestDownloadSubtractionF:
+    @pytest.fixture(autouse=True)
+    async def setup(
+        self,
+        fake: DataFaker,
+        tmp_path: Path,
+    ):
+        self.FASTA_FILE = "subtraction.fa.gz"
+        self.BOWTIE2_FILE = "subtraction.1.bt2"
+
+        self.FASTA_TEXT = "fasta"
+        self.BOWTIE2_TEXT = "bowtie"
+
+        self.user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=self.user,
+            upload_type=UploadType.subtraction,
+            name="foobar.fq.gz",
+        )
+
+        self.subtraction = await fake.subtractions.create(user=self.user, upload=upload)
+
+        self.test_dir: Path = tmp_path / "subtractions" / self.subtraction.id
+        self.test_dir.mkdir(exist_ok=True, parents=True)
+
+        async def teardown(): ...
+
+        return teardown
+
+    async def _write_files(self):
+        self.test_dir.joinpath(self.FASTA_FILE).write_text(self.FASTA_TEXT)
+        self.test_dir.joinpath(self.BOWTIE2_FILE).write_text(self.BOWTIE2_TEXT)
+
+    async def _assert_response(self, fasta_resp, bowtie_resp):
+        assert await fasta_resp.text() == self.FASTA_TEXT
+        assert await bowtie_resp.text() == self.BOWTIE2_TEXT
+        assert (
+            self.test_dir / self.FASTA_FILE
+        ).read_bytes() == await fasta_resp.content.read()
+        assert (
+            self.test_dir / self.BOWTIE2_FILE
+        ).read_bytes() == await bowtie_resp.content.read()
+
+    async def test_remove_sucess(
+        self,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        await self._write_files()
+
+        client = await spawn_job_client(authenticated=True)
+
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                [
+                    SQLSubtractionFile(
+                        id=1,
+                        name="subtraction.fa.gz",
+                        subtraction="foo",
+                        type="fasta",
+                    ),
+                    SQLSubtractionFile(
+                        id=2,
+                        name="subtraction.1.bt2",
+                        subtraction="foo",
+                        type="bowtie2",
+                    ),
+                ],
+            )
+            await session.commit()
+
+        fasta_resp = await client.get(
+            f"/subtractions/{self.subtraction.id}/files/{self.FASTA_FILE}",
+        )
+        bowtie_resp = await client.get(
+            f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
+        )
+
+        assert fasta_resp.status == HTTPStatus.OK
+        assert bowtie_resp.status == HTTPStatus.OK
 
 
 async def test_create(
