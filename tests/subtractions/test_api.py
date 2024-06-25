@@ -176,11 +176,24 @@ async def test_remove_by_user(
 
         assert resp.status == HTTPStatus.NO_CONTENT
     else:
-        resp = await client.delete("subtractions/NOT_FOUND_ID")
+        resp = await client.delete("subtractions/TEST_MISSING_ID")
         assert resp.status == HTTPStatus.NOT_FOUND
 
 
 class TestUploadSubtractionFile:
+    """
+    Test suite for uploading subtraction files.
+
+    Fixtures:
+        - setup: Prepares the test environment, creating necessary directories and test data.
+
+    Test cases:
+        - test_not_found: Verifies the API response when attempting to upload to a non-existent subtraction.
+        - test_create: Checks successful creation of a subtraction file.
+        - test_subtraction_file_invalid_name_error: Ensures proper handling of invalid file names.
+        - test_subtraction_file_name_conflict_error: Verifies handling of file name conflicts.
+    """
+
     @pytest.fixture(autouse=True)
     async def setup(
         self,
@@ -279,6 +292,16 @@ class TestUploadSubtractionFile:
 
 
 class TestFinalize:
+    """
+    Test suite for finalizing subtractions.
+
+    Test cases:
+        - test_success: Verifies successful finalization of a subtraction.
+        - test_not_found: Checks the API response when attempting to finalize a non-existent subtraction.
+        - test_conflict: Ensures proper handling when attempting to finalize an already finalized subtraction.
+        - test_finalize_subtraction_invalid_input_error: Verifies error handling for invalid input during finalization.
+    """
+
     async def test_success(
         self,
         fake: DataFaker,
@@ -321,7 +344,7 @@ class TestFinalize:
             "count": 100,
         }
 
-        resp = await client.patch("/subtractions/NOT_FOUND_ID", json=data)
+        resp = await client.patch("/subtractions/TEST_MISSING_ID", json=data)
 
         assert resp.status == HTTPStatus.NOT_FOUND
         assert await resp.json() == snapshot
@@ -385,6 +408,15 @@ class TestFinalize:
 
 
 class TestRemoveAsJob:
+    """
+    Test suite for removing subtractions when authenticated as a job.
+
+    Test cases:
+        - test_remove_ready: Verifies that a finalized subtraction cannot be deleted.
+        - test_remove_not_ready: Checks successful deletion of an unfinalized subtraction.
+        - test_remove_not_found: Ensures proper handling when attempting to delete a non-existent subtraction.
+    """
+
     async def test_remove_ready(
         self,
         fake: DataFaker,
@@ -447,7 +479,7 @@ class TestRemoveAsJob:
         spawn_job_client: JobClientSpawner,
     ):
         client = await spawn_job_client(authenticated=True)
-        resp = await client.delete("subtractions/NOT_FOUND_ID")
+        resp = await client.delete("subtractions/TEST_MISSING_ID")
 
         assert resp.status == HTTPStatus.NOT_FOUND
 
@@ -552,43 +584,52 @@ class TestDownloadSubtractionF:
             self.test_dir / self.BOWTIE2_FILE
         ).read_bytes() == await bowtie_resp.content.read()
 
-    async def test_remove_sucess(
+    async def test_not_found_subtraction(
         self,
-        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
         await self._write_files()
 
         client = await spawn_job_client(authenticated=True)
+        fasta_resp = await client.get(
+            f"/subtractions/TEST_MISSING_ID/files/{self.FASTA_FILE}",
+        )
+        bowtie_resp = await client.get(
+            f"/subtractions/TEST_MISSING_ID/files/{self.BOWTIE2_FILE}",
+        )
 
-        async with AsyncSession(pg) as session:
-            session.add_all(
-                [
-                    SQLSubtractionFile(
-                        id=1,
-                        name="subtraction.fa.gz",
-                        subtraction="foo",
-                        type="fasta",
-                    ),
-                    SQLSubtractionFile(
-                        id=2,
-                        name="subtraction.1.bt2",
-                        subtraction="foo",
-                        type="bowtie2",
-                    ),
-                ],
-            )
-            await session.commit()
+        assert fasta_resp.status == HTTPStatus.NOT_FOUND
+        assert bowtie_resp.status == HTTPStatus.NOT_FOUND
 
+    async def test_not_found_file(
+        self,
+        spawn_job_client: JobClientSpawner,
+    ):
+        await self._write_files()
+
+        client = await spawn_job_client(authenticated=True)
         fasta_resp = await client.get(
             f"/subtractions/{self.subtraction.id}/files/{self.FASTA_FILE}",
         )
         bowtie_resp = await client.get(
             f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
         )
+        assert fasta_resp.status == HTTPStatus.NOT_FOUND
+        assert bowtie_resp.status == HTTPStatus.NOT_FOUND
 
-        assert fasta_resp.status == HTTPStatus.OK
-        assert bowtie_resp.status == HTTPStatus.OK
+    async def test_not_found_path(
+        self,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+        fasta_resp = await client.get(
+            f"/subtractions/{self.subtraction.id}/files/{self.FASTA_FILE}",
+        )
+        bowtie_resp = await client.get(
+            f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
+        )
+        assert fasta_resp.status == HTTPStatus.NOT_FOUND
+        assert bowtie_resp.status == HTTPStatus.NOT_FOUND
 
 
 async def test_create(
