@@ -1,0 +1,101 @@
+# serializer version: 1
+# name: test_upgrade
+  list([
+    dict({
+      '_id': 'complete_legacy_job',
+      'acquired': False,
+      'archived': False,
+      'key': None,
+      'status': list([
+        dict({
+          'error': None,
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+        }),
+        dict({
+          'error': None,
+          'progress': 17,
+          'stage': 'make_sample_dir',
+          'state': 'running',
+        }),
+        dict({
+          'error': None,
+          'progress': 100,
+          'stage': 'clean_watch',
+          'state': 'complete',
+        }),
+      ]),
+      'workflow': 'create_sample',
+    }),
+    dict({
+      '_id': 'instant_complete_legacy_job',
+      'acquired': False,
+      'archived': False,
+      'key': None,
+      'status': list([
+        dict({
+          'error': None,
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+        }),
+        dict({
+          'error': None,
+          'progress': 100,
+          'stage': 'clean_watch',
+          'state': 'complete',
+        }),
+      ]),
+      'workflow': 'create_sample',
+    }),
+    dict({
+      '_id': 'incomplete_legacy_job',
+      'acquired': False,
+      'archived': False,
+      'key': None,
+      'status': list([
+        dict({
+          'error': None,
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+        }),
+        dict({
+          'error': None,
+          'progress': 17,
+          'stage': 'make_sample_dir',
+          'state': 'running',
+        }),
+      ]),
+      'workflow': 'create_sample',
+    }),
+    dict({
+      '_id': 'modern_job',
+      'acquired': True,
+      'archived': False,
+      'key': 'job-api-key',
+      'status': list([
+        dict({
+          'error': None,
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+        }),
+        dict({
+          'error': None,
+          'progress': 50,
+          'stage': 'run_fast_qc',
+          'state': 'running',
+        }),
+        dict({
+          'error': None,
+          'progress': 100,
+          'stage': 'clean_watch',
+          'state': 'complete',
+        }),
+      ]),
+      'workflow': 'create_sample',
+    }),
+  ])
+# ---
