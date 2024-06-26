@@ -44,10 +44,6 @@ from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
-from virtool.tasks.progress import (
-    AbstractProgressHandler,
-    AccumulatingProgressHandlerWrapper,
-)
 from virtool.uploads.models import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
@@ -521,54 +517,6 @@ class SamplesData(DataLayerDomain):
                 raise ResourceConflictError(
                     f"Subtractions do not exist: {','.join(non_existent_subtractions)}",
                 )
-
-    async def compress_samples(self, progress_handler: AbstractProgressHandler):
-        """Compress all uncompressed legacy samples.
-
-        :param progress_handler: a progress handler object
-        """
-        query = {"is_legacy": True, "is_compressed": {"$exists": False}}
-
-        count = await self._mongo.samples.count_documents(query)
-
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
-
-        while True:
-            sample = await self._mongo.samples.find_one(query)
-
-            if sample is None:
-                break
-
-            await virtool.samples.db.compress_sample_reads(
-                self._mongo,
-                self._config,
-                sample,
-            )
-
-            await tracker.add(1)
-
-    async def move_sample_files(self, progress_handler: AbstractProgressHandler):
-        query = {
-            "files": {"$exists": True},
-            "$or": [{"is_legacy": False}, {"is_legacy": True, "is_compressed": True}],
-        }
-
-        count = await self._mongo.samples.count_documents(query)
-
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, count)
-
-        while True:
-            sample = await self._mongo.samples.find_one(query)
-
-            if sample is None:
-                break
-
-            await virtool.samples.db.move_sample_files_to_pg(
-                self._mongo,
-                self._pg,
-                sample,
-            )
-            await tracker.add(1)
 
     async def update_sample_workflows(self):
         sample_ids = await self._mongo.samples.distinct("_id")

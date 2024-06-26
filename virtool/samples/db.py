@@ -1,8 +1,6 @@
 """Code for working with samples in the database and filesystem."""
 
 import asyncio
-import os
-from asyncio import to_thread
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
@@ -11,21 +9,19 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.samples import WorkflowState
 from virtool_core.models.settings import Settings
-from virtool_core.utils import compress_file, file_stats
 
 import virtool.errors
 import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
 from virtool.api.errors import APINotFound
-from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
-from virtool.samples.utils import PATHOSCOPE_TASK_NAMES, join_legacy_read_paths
+from virtool.samples.utils import PATHOSCOPE_TASK_NAMES
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
 from virtool.utils import base_processor
@@ -364,133 +360,3 @@ async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None
             return "Group does not exist"
 
     return None
-
-
-def check_is_legacy(sample: Dict[str, Any]) -> bool:
-    """Check if a sample has legacy read files.
-
-    :param sample: the sample document
-    :return: legacy boolean
-    """
-    files = sample["files"]
-
-    return (
-        all(file.get("raw", False) is False for file in files)
-        and files[0]["name"] == "reads_1.fastq"
-        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
-    )
-
-
-async def compress_sample_reads(db: "Mongo", config: Config, sample: Dict[str, Any]):
-    """Compress the reads for one legacy samples.
-
-    :param db: the application database object
-    :param config: the application configuration dictionary
-    :param sample: the sample document
-
-    """
-    await update_is_compressed(db, sample)
-
-    if not check_is_legacy(sample):
-        return
-
-    paths = join_legacy_read_paths(config, sample)
-
-    data_path = config.data_path
-    sample_id = sample["_id"]
-
-    files = []
-
-    for i, path in enumerate(paths):
-        target_filename = (
-            "reads_1.fq.gz" if "reads_1.fastq" in str(path) else "reads_2.fq.gz"
-        )
-
-        target_path = data_path / "samples" / sample_id / target_filename
-
-        await to_thread(compress_file, path, target_path, 1)
-
-        stats = await to_thread(file_stats, target_path)
-
-        files.append(
-            {
-                "name": target_filename,
-                "download_url": f"/download/samples/{sample_id}/{target_filename}",
-                "size": stats["size"],
-                "raw": False,
-                "from": sample["files"][i]["from"],
-            },
-        )
-
-    await db.samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
-
-    for path in paths:
-        await to_thread(os.remove, path)
-
-
-async def move_sample_files_to_pg(db: "Mongo", pg: AsyncEngine, sample: Dict[str, any]):
-    """Creates a row in the `sample_reads` table for each file in a sample's `files`
-    array.
-
-    Also, creates a row in the `uploads` table for information stored in a file's
-    `from` field with a relation to the `SampleRead`.
-
-    :param db: the application database object
-    :param pg: the PostgreSQL AsyncEngine object
-    :param sample: the sample document
-    """
-    files = sample.get("files")
-    sample_id = sample["_id"]
-
-    async with AsyncSession(pg) as session:
-        for file_ in files:
-            from_ = file_.get("from")
-
-            upload = SQLUpload(
-                name=from_["name"],
-                name_on_disk=from_["id"],
-                size=from_["size"],
-                uploaded_at=from_.get("uploaded_at"),
-            )
-
-            reads = SQLSampleReads(
-                name=file_["name"],
-                name_on_disk=file_["name"],
-                size=file_["size"],
-                sample=sample_id,
-            )
-
-            upload.reads.append(reads)
-
-            session.add_all([upload, reads])
-
-        await session.commit()
-
-        await db.samples.update_one({"_id": sample_id}, {"$unset": {"files": ""}})
-
-
-async def update_is_compressed(db, sample: Dict[str, Any]):
-    """Update the ``is_compressed`` field for the passed ``sample`` in the database if
-    all of its files are compressed.
-
-    :param db: the application database
-    :param sample: the sample document
-
-    """
-    files = sample["files"]
-
-    names = [file["name"] for file in files]
-
-    is_compressed = names in (
-        ["reads_1.fq.gz"],
-        [
-            "reads_1.fq.gz",
-            "reads_2.fq.gz",
-        ],
-    )
-
-    if is_compressed:
-        await db.samples.update_one(
-            {"_id": sample["_id"]},
-            {"$set": {"is_compressed": True}},
-        )

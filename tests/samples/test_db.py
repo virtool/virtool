@@ -1,24 +1,17 @@
-import gzip
-import os
-import shutil
-from asyncio import gather
 from pathlib import Path
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro, make_mocked_request
+from aiohttp.test_utils import make_mocked_request
 
 from virtool.data.utils import get_data_from_app
 from virtool.mongo.core import Mongo
 from virtool.samples.db import (
-    check_is_legacy,
     compose_sample_workflow_query,
-    compress_sample_reads,
     create_sample,
     define_initial_workflows,
     derive_workflow_state,
     get_sample_owner,
     recalculate_workflow_tags,
-    update_is_compressed,
 )
 from virtool.samples.utils import calculate_workflow_tags
 
@@ -261,127 +254,6 @@ async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client)
 
     assert result == snapshot
     assert await mongo.samples.find_one() == snapshot
-
-
-class TestCheckIsLegacy:
-    @pytest.mark.parametrize(
-        "is_legacy,files",
-        [
-            (False, [{"raw": True}]),
-            (True, [{"raw": False}]),
-            (False, [{"raw": True}, {"raw": False}]),
-            (True, [{"raw": False}, {"raw": False}]),
-        ],
-    )
-    def test_raw(self, is_legacy, files):
-        """Test that checks check ``raw`` files field correctly."""
-        files[0]["name"] = "reads_1.fastq"
-
-        try:
-            files[1]["name"] = "reads_2.fastq"
-        except IndexError:
-            pass
-
-        sample = {"_id": "foo", "paired": len(files) == 2, "files": files}
-
-        assert check_is_legacy(sample) is is_legacy
-
-    @pytest.mark.parametrize("paired", [True, False])
-    def test_names(self, paired):
-        """Test that checks fail when names are not as expected."""
-        files = [{"name": "reads.fastq", "raw": False}]
-
-        if paired:
-            files.append({"name": "reads_two.fastq", "raw": False})
-
-        sample = {"_id": "foo", "files": files, "paired": paired}
-
-        assert check_is_legacy(sample) is False
-
-
-async def test_update_is_compressed(snapshot, mongo):
-    """Test that samples with both files gzipped are flagged with ``is_compressed``."""
-    samples = [
-        {
-            "_id": "foo",
-            "files": [
-                {"name": "reads_1.fq.gz"},
-                {"name": "reads_2.fq.gz"},
-            ],
-        },
-        {"_id": "baz", "files": [{"name": "reads_1.fastq"}]},
-        {"_id": "bar", "files": [{"name": "reads_1.fq.gz"}]},
-    ]
-
-    await mongo.samples.insert_many(samples, session=None)
-    await gather(*[update_is_compressed(mongo, s) for s in samples])
-
-    assert await mongo.samples.find().to_list(None) == snapshot
-
-
-@pytest.mark.parametrize("paired", [True, False])
-async def test_compress_sample_reads(paired, mocker, mongo, snapshot, tmp_path, config):
-    m_update_is_compressed = mocker.patch(
-        "virtool.samples.db.update_is_compressed",
-        make_mocked_coro(),
-    )
-
-    sample_dir = tmp_path / "samples" / "foo"
-    sample_dir.mkdir(parents=True)
-
-    shutil.copy(FASTQ_PATH, sample_dir / "reads_1.fastq")
-
-    if paired:
-        shutil.copy(FASTQ_PATH, sample_dir / "reads_2.fastq")
-
-    app = {"config": config, "mongo": mongo}
-
-    sample_id = "foo"
-
-    reads_file = {
-        "name": "reads_1.fastq",
-        "download_url": f"/download/samples/{sample_id}/reads_1.fastq",
-        "size": 3750821789,
-        "raw": False,
-        "from": {
-            "id": "M_S11_R1_001.fastq",
-            "name": "M_S11_R1_001.fastq",
-            "size": 3750821789,
-        },
-    }
-
-    files = [reads_file]
-
-    if paired:
-        files.append(
-            {
-                **reads_file,
-                "name": "reads_2.fastq",
-                "download_url": f"/download/samples/{sample_id}/reads_2.fastq",
-            },
-        )
-
-    sample = {"_id": sample_id, "files": files, "paired": paired}
-
-    await mongo.samples.insert_one(sample)
-
-    await compress_sample_reads(mongo, config, sample)
-
-    assert set(os.listdir(sample_dir)) == snapshot
-
-    with open(FASTQ_PATH) as f:
-        expected_content = f.read()
-
-    with gzip.open(sample_dir / "reads_1.fq.gz", "rt") as f:
-        assert expected_content == f.read()
-
-    if paired:
-        with gzip.open(sample_dir / "reads_2.fq.gz", "rt") as f:
-            assert expected_content == f.read()
-
-    assert await mongo.samples.find_one() == snapshot
-
-    m_update_is_compressed.assert_called_with(app["mongo"], sample)
 
 
 class TestComposeWorkflowQuery:
