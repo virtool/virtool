@@ -135,9 +135,6 @@ async def compress_sample_reads(
 
 async def upgrade(ctx: MigrationContext):
     async for sample in ctx.mongo.samples.find({"files": {"$exists": True}}):
-        files = sample["files"]
-        sample["files"] = [files] if isinstance(files, dict) else files
-
         if "is_legacy" not in sample:
             sample["is_legacy"] = check_is_legacy(sample)
             ctx.mongo.samples.update_one(
@@ -281,32 +278,20 @@ async def test_upgrade(ctx, snapshot):
             ],
         },
         {
-            "_id": "unpaired_unknown_legacy_file_object",
-            "paired": False,
-            "files": {
-                "name": "reads_1.fastq",
-                "size": 1,
-                "raw": False,
-                "from": {
-                    "id": "unpaired_unknown_legacy_file_object.fastq",
-                    "name": "unpaired_unknown_legacy_file_object.fastq",
-                    "size": 1,
-                },
-            },
-        },
-        {
             "_id": "unpaired_legacy_partial_compression",
             "paired": False,
-            "files": {
-                "name": "reads_1.fastq",
-                "size": 1,
-                "raw": False,
-                "from": {
-                    "id": "unpaired_legacy_partial_compression.fastq",
-                    "name": "unpaired_legacy_partial_compression.fastq",
+            "files": [
+                {
+                    "name": "reads_1.fastq",
                     "size": 1,
-                },
-            },
+                    "raw": False,
+                    "from": {
+                        "id": "unpaired_legacy_partial_compression.fastq",
+                        "name": "unpaired_legacy_partial_compression.fastq",
+                        "size": 1,
+                    },
+                }
+            ],
         },
     ]
 
