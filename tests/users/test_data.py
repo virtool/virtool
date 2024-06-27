@@ -41,7 +41,11 @@ async def test_find(
         primary_group=group_1,
     )
     user_2 = await fake.users.create()
+
     await fake.users.create()
+
+    # The sort should be case-insensitive, and we expect to find Adam first.
+    await fake.users.create(handle="Adam")
 
     await authorization_client.add(
         AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
