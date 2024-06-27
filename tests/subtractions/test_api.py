@@ -143,7 +143,7 @@ async def test_edit(
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_delete_as_user(
+async def test_delete_by_user(
     exists: bool,
     fake: DataFaker,
     spawn_client: ClientSpawner,
@@ -173,7 +173,7 @@ async def test_delete_as_user(
         assert resp.status == 404
 
 
-class TestUploadSubtractionFileAsJob:
+class TestUploadSubtractionFile:
     """
     Test suite for uploading subtraction files.
 
@@ -208,11 +208,21 @@ class TestUploadSubtractionFileAsJob:
             upload_type=UploadType.subtraction,
         )
 
-        self.subtraction = await fake.subtractions.create(
-            user=user,
-            upload=upload,
-            finalized=False,
+        self.subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+    async def test_not_found(
+        self,
+        spawn_job_client: JobClientSpawner,
+        resp_is,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.put(
+            f"/subtractions/does_not_exist/files/{self.VALID_SUBTRACTION_FILE_NAME}",
+            data={"file": bytes(1)},
         )
+
+        await resp_is.not_found(resp)
 
     async def test_create(
         self,
@@ -234,21 +244,7 @@ class TestUploadSubtractionFileAsJob:
             self.VALID_SUBTRACTION_FILE_NAME,
         ]
 
-    async def test_not_found(
-        self,
-        spawn_job_client: JobClientSpawner,
-        resp_is,
-    ):
-        client = await spawn_job_client(authenticated=True)
-
-        resp = await client.put(
-            f"/subtractions/does_not_exist/files/{self.VALID_SUBTRACTION_FILE_NAME}",
-            data={"file": bytes(1)},
-        )
-
-        await resp_is.not_found(resp)
-
-    async def test_invalid_input(
+    async def test_subtraction_file_invalid_name_error(
         self,
         spawn_job_client: JobClientSpawner,
         resp_is,
@@ -262,7 +258,7 @@ class TestUploadSubtractionFileAsJob:
 
         await resp_is.not_found(resp, "Unsupported subtraction file name")
 
-    async def test_conflict(
+    async def test_subtraction_file_name_conflict_error(
         self,
         spawn_job_client: JobClientSpawner,
         resp_is,
