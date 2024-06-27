@@ -16,6 +16,8 @@
     'key': str,
     'ping': None,
     'progress': 3,
+    'rights': dict({
+    }),
     'stage': None,
     'state': 'preparing',
     'status': list([
@@ -61,6 +63,8 @@
     'id': '7cf872dc',
     'ping': None,
     'progress': 10,
+    'rights': dict({
+    }),
     'stage': 'NzFJEUSgqMReEKilxKJT',
     'state': 'preparing',
     'status': list([
@@ -1015,6 +1019,8 @@
     'id': '4c530449',
     'ping': None,
     'progress': 0,
+    'rights': dict({
+    }),
     'stage': 'mk_analysis_dir',
     'state': 'running',
     'status': list([
@@ -1069,6 +1075,8 @@
     'id': '7cf872dc',
     'ping': None,
     'progress': 10,
+    'rights': dict({
+    }),
     'stage': 'NzFJEUSgqMReEKilxKJT',
     'state': 'preparing',
     'status': list([

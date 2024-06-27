@@ -1,4 +1,68 @@
 # serializer version: 1
+# name: TestFinalize.test_conflict
+  dict({
+    'id': 'conflict',
+    'message': 'Subtraction has already been finalized',
+  })
+# ---
+# name: TestFinalize.test_not_found
+  dict({
+    'id': 'not_found',
+    'message': 'Not found',
+  })
+# ---
+# name: TestFinalize.test_success
+  dict({
+    'count': 100,
+    'created_at': 'approximately_now_isoformat',
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'files': list([
+    ]),
+    'gc': dict({
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+    ]),
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: TestUploadSubtractionFileAsJob.test_create
+  dict({
+    'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 1,
+    'subtraction': '7cf872dc',
+    'type': 'bowtie2',
+  })
+# ---
 # name: test_create[job]
   dict({
     '_id': 'bf1b993c',
@@ -61,6 +125,855 @@
     }),
   })
 # ---
+# name: test_edit[data0]
+  dict({
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'files': list([
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+        'id': 1,
+        'name': 'subtraction.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.2.bt2',
+        'id': 2,
+        'name': 'subtraction.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.3.bt2',
+        'id': 6,
+        'name': 'subtraction.3.bt2',
+        'size': 3257,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.4.bt2',
+        'id': 5,
+        'name': 'subtraction.4.bt2',
+        'size': 29870386,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.fa.gz',
+        'id': 7,
+        'name': 'subtraction.fa.gz',
+        'size': 36461731,
+        'subtraction': '7cf872dc',
+        'type': 'fasta',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.1.bt2',
+        'id': 4,
+        'name': 'subtraction.rev.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.2.bt2',
+        'id': 3,
+        'name': 'subtraction.rev.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+    ]),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+      dict({
+        'id': '12',
+        'name': 'Sample 12',
+      }),
+      dict({
+        'id': '22',
+        'name': 'Sample 22',
+      }),
+    ]),
+    'name': 'Bar',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_edit[data0].1
+  dict({
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'name': 'Bar',
+    'nickname': 'bar',
+    'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_edit[data1]
+  dict({
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'files': list([
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+        'id': 1,
+        'name': 'subtraction.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.2.bt2',
+        'id': 2,
+        'name': 'subtraction.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.3.bt2',
+        'id': 6,
+        'name': 'subtraction.3.bt2',
+        'size': 3257,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.4.bt2',
+        'id': 5,
+        'name': 'subtraction.4.bt2',
+        'size': 29870386,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.fa.gz',
+        'id': 7,
+        'name': 'subtraction.fa.gz',
+        'size': 36461731,
+        'subtraction': '7cf872dc',
+        'type': 'fasta',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.1.bt2',
+        'id': 4,
+        'name': 'subtraction.rev.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.2.bt2',
+        'id': 3,
+        'name': 'subtraction.rev.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+    ]),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+      dict({
+        'id': '12',
+        'name': 'Sample 12',
+      }),
+      dict({
+        'id': '22',
+        'name': 'Sample 22',
+      }),
+    ]),
+    'name': 'foo',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_edit[data1].1
+  dict({
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'name': 'foo',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_edit[data2]
+  dict({
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'files': list([
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+        'id': 1,
+        'name': 'subtraction.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.2.bt2',
+        'id': 2,
+        'name': 'subtraction.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.3.bt2',
+        'id': 6,
+        'name': 'subtraction.3.bt2',
+        'size': 3257,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.4.bt2',
+        'id': 5,
+        'name': 'subtraction.4.bt2',
+        'size': 29870386,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.fa.gz',
+        'id': 7,
+        'name': 'subtraction.fa.gz',
+        'size': 36461731,
+        'subtraction': '7cf872dc',
+        'type': 'fasta',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.1.bt2',
+        'id': 4,
+        'name': 'subtraction.rev.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.2.bt2',
+        'id': 3,
+        'name': 'subtraction.rev.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+    ]),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+      dict({
+        'id': '12',
+        'name': 'Sample 12',
+      }),
+      dict({
+        'id': '22',
+        'name': 'Sample 22',
+      }),
+    ]),
+    'name': 'foo',
+    'nickname': '',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_edit[data2].1
+  dict({
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'name': 'foo',
+    'nickname': '',
+    'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_edit[data3]
+  dict({
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'files': list([
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+        'id': 1,
+        'name': 'subtraction.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.2.bt2',
+        'id': 2,
+        'name': 'subtraction.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.3.bt2',
+        'id': 6,
+        'name': 'subtraction.3.bt2',
+        'size': 3257,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.4.bt2',
+        'id': 5,
+        'name': 'subtraction.4.bt2',
+        'size': 29870386,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.fa.gz',
+        'id': 7,
+        'name': 'subtraction.fa.gz',
+        'size': 36461731,
+        'subtraction': '7cf872dc',
+        'type': 'fasta',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.1.bt2',
+        'id': 4,
+        'name': 'subtraction.rev.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.2.bt2',
+        'id': 3,
+        'name': 'subtraction.rev.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+    ]),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+      dict({
+        'id': '12',
+        'name': 'Sample 12',
+      }),
+      dict({
+        'id': '22',
+        'name': 'Sample 22',
+      }),
+    ]),
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_edit[data3].1
+  dict({
+    '_id': '7cf872dc',
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'job': dict({
+      'id': 'fb085f7f',
+    }),
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'ready': True,
+    'space': dict({
+      'id': 0,
+    }),
+    'upload': 1,
+    'user': dict({
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
+# name: test_find[2-1]
+  dict({
+    'documents': list([
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '3cbb22cc',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '09d01419',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'da42dca3',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
+    'found_count': 5,
+    'page': 1,
+    'page_count': 3,
+    'per_page': 2,
+    'ready_count': 5,
+    'total_count': 5,
+  })
+# ---
+# name: test_find[2-2]
+  dict({
+    'documents': list([
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '3cbb22cc',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '153ff459',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'f60bae36',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
+    'found_count': 5,
+    'page': 2,
+    'page_count': 3,
+    'per_page': 2,
+    'ready_count': 5,
+    'total_count': 5,
+  })
+# ---
+# name: test_find[None-None]
+  dict({
+    'documents': list([
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '3cbb22cc',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7cf872dc',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '09d01419',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'da42dca3',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '153ff459',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': 'f60bae36',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '031ff6cb',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '7aa59bf4',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'count': 1,
+        'created_at': 'approximately_now_isoformat',
+        'file': dict({
+          'id': 1,
+          'name': 'test.fq.gz',
+        }),
+        'id': '83e4c4f6',
+        'job': dict({
+          'archived': False,
+          'created_at': 'approximately_now_isoformat',
+          'id': '606cd773',
+          'progress': 0,
+          'stage': None,
+          'state': 'waiting',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'fb085f7f',
+          }),
+          'workflow': 'create_subtraction',
+        }),
+        'name': 'foo',
+        'nickname': 'bar',
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+    ]),
+    'found_count': 5,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'ready_count': 5,
+    'total_count': 5,
+  })
+# ---
 # name: test_find_empty_subtractions
   dict({
     'documents': list([
@@ -71,5 +984,201 @@
     'per_page': 25,
     'ready_count': 0,
     'total_count': 0,
+  })
+# ---
+# name: test_get
+  dict({
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'files': list([
+      dict({
+        'download_url': '/subtractions/3cbb22cc/files/subtraction.1.bt2',
+        'id': 1,
+        'name': 'subtraction.1.bt2',
+        'size': 44026551,
+        'subtraction': '3cbb22cc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/3cbb22cc/files/subtraction.2.bt2',
+        'id': 2,
+        'name': 'subtraction.2.bt2',
+        'size': 29870392,
+        'subtraction': '3cbb22cc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/3cbb22cc/files/subtraction.rev.2.bt2',
+        'id': 3,
+        'name': 'subtraction.rev.2.bt2',
+        'size': 29870392,
+        'subtraction': '3cbb22cc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/3cbb22cc/files/subtraction.rev.1.bt2',
+        'id': 4,
+        'name': 'subtraction.rev.1.bt2',
+        'size': 44026551,
+        'subtraction': '3cbb22cc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/3cbb22cc/files/subtraction.4.bt2',
+        'id': 5,
+        'name': 'subtraction.4.bt2',
+        'size': 29870386,
+        'subtraction': '3cbb22cc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/3cbb22cc/files/subtraction.3.bt2',
+        'id': 6,
+        'name': 'subtraction.3.bt2',
+        'size': 3257,
+        'subtraction': '3cbb22cc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/3cbb22cc/files/subtraction.fa.gz',
+        'id': 7,
+        'name': 'subtraction.fa.gz',
+        'size': 36461731,
+        'subtraction': '3cbb22cc',
+        'type': 'fasta',
+      }),
+    ]),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': '3cbb22cc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': '7cf872dc',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'fb085f7f',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+    ]),
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'fb085f7f',
+    }),
+  })
+# ---
+# name: test_get_from_job
+  dict({
+    'count': 1,
+    'created_at': 'approximately_now_isoformat',
+    'file': dict({
+      'id': 1,
+      'name': 'test.fq.gz',
+    }),
+    'files': list([
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.1.bt2',
+        'id': 1,
+        'name': 'subtraction.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.2.bt2',
+        'id': 2,
+        'name': 'subtraction.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.3.bt2',
+        'id': 6,
+        'name': 'subtraction.3.bt2',
+        'size': 3257,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.4.bt2',
+        'id': 5,
+        'name': 'subtraction.4.bt2',
+        'size': 29870386,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.fa.gz',
+        'id': 7,
+        'name': 'subtraction.fa.gz',
+        'size': 36461731,
+        'subtraction': '7cf872dc',
+        'type': 'fasta',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.1.bt2',
+        'id': 4,
+        'name': 'subtraction.rev.1.bt2',
+        'size': 44026551,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': '/subtractions/7cf872dc/files/subtraction.rev.2.bt2',
+        'id': 3,
+        'name': 'subtraction.rev.2.bt2',
+        'size': 29870392,
+        'subtraction': '7cf872dc',
+        'type': 'bowtie2',
+      }),
+    ]),
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': '7cf872dc',
+    'job': dict({
+      'archived': False,
+      'created_at': 'approximately_now_isoformat',
+      'id': 'fb085f7f',
+      'progress': 0,
+      'stage': None,
+      'state': 'waiting',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      }),
+      'workflow': 'create_subtraction',
+    }),
+    'linked_samples': list([
+    ]),
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    }),
   })
 # ---

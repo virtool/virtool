@@ -25,7 +25,6 @@
     }),
     dict({
       '_id': 'subtraction_2',
-      'deleted': False,
       'file': dict({
         'id': 'file_2.fa',
         'name': 'file_2.fa',
