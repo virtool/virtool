@@ -535,18 +535,29 @@ class SubtractionFakerDomain(DataFakerDomain):
         )
 
         subtraction = await self._layer.subtractions.create(
-            data=subtraction_request,
-            user_id=user.id,
-            space_id=0,
+            CreateSubtractionRequest(
+                name="foo",
+                nickname="bar",
+                upload_id=upload.id,
+            ),
+            user.id,
+            0,
         )
 
-        if finalized:
-            finalize_request = subtraction = await self._layer.subtractions.finalize(
-                subtraction_id=subtraction.id,
-                data=FinalizeSubtractionRequest(
-                    count=1,
-                    gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
-                ),
+        if not finalized:
+            return subtraction
+
+        for path in (example_path / "subtractions" / "arabidopsis_thaliana").iterdir():
+            await self._layer.subtractions.upload_file(
+                subtraction.id,
+                path.name,
+                fake_file_chunker(path),
             )
 
-        return subtraction
+        return await self._layer.subtractions.finalize(
+            subtraction.id,
+            FinalizeSubtractionRequest(
+                count=1,
+                gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
+            ),
+        )

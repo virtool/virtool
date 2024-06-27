@@ -2,12 +2,12 @@ import os
 from pathlib import Path
 
 import pytest
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.subtractions.models import SQLSubtractionFile
@@ -466,114 +466,64 @@ class TestRemoveAsJob:
         assert resp.status == 404
 
 
-@pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
-async def test_download_subtraction_files(
-    error,
-    mongo,
-    pg: AsyncEngine,
-    spawn_job_client,
-    tmp_path,
-):
-    client = await spawn_job_client(authenticated=True)
-
-    get_config_from_app(client.app).data_path = tmp_path
-
-    test_dir = tmp_path / "subtractions" / "foo"
-    test_dir.mkdir(parents=True)
-
-    if error != "400_path":
-        test_dir.joinpath("subtraction.fa.gz").write_text("FASTA file")
-        test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
-
-    if error != "400_subtraction":
-        await mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"})
-
-    if error != "400_file":
-        async with AsyncSession(pg) as session:
-            session.add_all(
-                [
-                    SQLSubtractionFile(
-                        id=1,
-                        name="subtraction.fa.gz",
-                        subtraction="foo",
-                        type="fasta",
-                    ),
-                    SQLSubtractionFile(
-                        id=2,
-                        name="subtraction.1.bt2",
-                        subtraction="foo",
-                        type="bowtie2",
-                    ),
-                ],
-            )
-            await session.commit()
-
-    fasta_resp = await client.get("/subtractions/foo/files/subtraction.fa.gz")
-    bowtie_resp = await client.get("/subtractions/foo/files/subtraction.1.bt2")
-
-    if not error:
-        assert fasta_resp.status == bowtie_resp.status == 200
-    else:
-        assert fasta_resp.status == bowtie_resp.status == 404
-        return
-
-    path = get_config_from_app(client.app).data_path / "subtractions" / "foo"
-
-    assert (path / "subtraction.fa.gz").read_bytes() == await fasta_resp.content.read()
-    assert (path / "subtraction.1.bt2").read_bytes() == await bowtie_resp.content.read()
-
-
-class TestDownloadSubtractionF:
-    @pytest.fixture(autouse=True)
-    async def _setup(
+class TestDownloadSubtractionFile:
+    async def test_success(
         self,
+        data_path: Path,
         fake: DataFaker,
-        tmp_path: Path,
+        spawn_job_client: JobClientSpawner,
     ):
-        self.FASTA_FILE = "subtraction.fa.gz"
-        self.BOWTIE2_FILE = "subtraction.1.bt2"
+        """Test that Bowtie2 and FASTA subtraction files can be downloaded successfully
+        when they are represented in the database and exist on disk.
+        """
+        client = await spawn_job_client(authenticated=True)
 
-        self.FASTA_TEXT = "fasta"
-        self.BOWTIE2_TEXT = "bowtie"
-
-        self.user = await fake.users.create()
+        user = await fake.users.create()
         upload = await fake.uploads.create(
-            user=self.user,
+            user=user,
             upload_type=UploadType.subtraction,
         )
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-        self.subtraction = await fake.subtractions.create(user=self.user, upload=upload)
+        bowtie_resp = await client.get(
+            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
+        )
+        fasta_resp = await client.get(
+            f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
+        )
 
-        self.test_dir: Path = tmp_path / "subtractions" / self.subtraction.id
-        self.test_dir.mkdir(exist_ok=True, parents=True)
+        assert bowtie_resp.status == 200
+        assert fasta_resp.status == 200
 
-    async def _write_files(self):
-        self.test_dir.joinpath(self.FASTA_FILE).write_text(self.FASTA_TEXT)
-        self.test_dir.joinpath(self.BOWTIE2_FILE).write_text(self.BOWTIE2_TEXT)
-
-    async def _assert_response(self, fasta_resp, bowtie_resp):
-        assert await fasta_resp.text() == self.FASTA_TEXT
-        assert await bowtie_resp.text() == self.BOWTIE2_TEXT
         assert (
-            self.test_dir / self.FASTA_FILE
-        ).read_bytes() == await fasta_resp.content.read()
-        assert (
-            self.test_dir / self.BOWTIE2_FILE
+            data_path / "subtractions" / subtraction.id / "subtraction.1.bt2"
         ).read_bytes() == await bowtie_resp.content.read()
+        assert (
+            data_path / "subtractions" / subtraction.id / "subtraction.fa.gz"
+        ).read_bytes() == await fasta_resp.content.read()
 
     async def test_not_found_subtraction(
         self,
+        fake: DataFaker,
         spawn_job_client: JobClientSpawner,
     ):
-        await self._write_files()
-
+        """Test that a 404 response is returned when attempting to download a
+        file for a subtraction does not exist.
+        """
         client = await spawn_job_client(authenticated=True)
 
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+        await fake.subtractions.create(user=user, upload=upload)
+
         fasta_resp = await client.get(
-            f"/subtractions/does_not_exist/files/{self.FASTA_FILE}",
+            "/subtractions/does_not_exist/files/subtraction.fa.gz",
         )
         bowtie_resp = await client.get(
-            f"/subtractions/does_not_exist/files/{self.BOWTIE2_FILE}",
+            "/subtractions/does_not_exist/files/subtraction.1.bt2",
         )
 
         assert fasta_resp.status == 404
@@ -581,59 +531,81 @@ class TestDownloadSubtractionF:
 
     async def test_not_found_file(
         self,
+        fake: DataFaker,
+        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
-        await self._write_files()
-
+        """Test that a 404 response is returned when attempting to download a
+        subtraction file that doesn't exist.
+        """
         client = await spawn_job_client(authenticated=True)
-        fasta_resp = await client.get(
-            f"/subtractions/{self.subtraction.id}/files/{self.FASTA_FILE}",
+
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
         )
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                delete(SQLSubtractionFile).where(
+                    SQLSubtractionFile.subtraction == subtraction.id,
+                ),
+            )
+            await session.commit()
+
         bowtie_resp = await client.get(
-            f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
+            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
         )
-        assert fasta_resp.status == 404
+        fasta_resp = await client.get(
+            f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
+        )
+
         assert bowtie_resp.status == 404
+        assert fasta_resp.status == 404
 
     async def test_not_found_path(
         self,
+        data_path: Path,
+        fake: DataFaker,
         spawn_job_client: JobClientSpawner,
     ):
+        """Test that a 404 response is returned when attempting to download a file
+        that has a database entry but does not exist on disk.
+        """
         client = await spawn_job_client(authenticated=True)
-        fasta_resp = await client.get(
-            f"/subtractions/{self.subtraction.id}/files/{self.FASTA_FILE}",
+
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
         )
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        Path.unlink(
+            data_path / "subtractions" / subtraction.id / "subtraction.1.bt2",
+        )
+
+        Path.unlink(
+            data_path / "subtractions" / subtraction.id / "subtraction.fa.gz",
+        )
+
         bowtie_resp = await client.get(
-            f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
+            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
         )
-        assert fasta_resp.status == 404
+        fasta_resp = await client.get(
+            f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
+        )
+
         assert bowtie_resp.status == 404
-
-    async def test_success(
-        self,
-        spawn_job_client: JobClientSpawner,
-    ):
-        await self._write_files()
-
-        client = await spawn_job_client(authenticated=True)
-
-        fasta_resp = await client.get(
-            f"/subtractions/{self.subtraction.id}/files/{self.FASTA_FILE}",
-        )
-        bowtie_resp = await client.get(
-            f"/subtractions/{self.subtraction.id}/files/{self.BOWTIE2_FILE}",
-        )
-
-        assert fasta_resp.status == 200
-        assert bowtie_resp.status == 200
-        await self._assert_response(fasta_resp, bowtie_resp)
+        assert fasta_resp.status == 404
 
 
 async def test_create(
     fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
-    mocker,
     snapshot_recent: SnapshotAssertion,
 ):
     user = await fake.users.create()
@@ -641,8 +613,6 @@ async def test_create(
         user=user,
         upload_type=UploadType.subtraction,
     )
-
-    mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
 
     client = await spawn_client(
         authenticated=True,
@@ -656,5 +626,9 @@ async def test_create(
     )
 
     assert resp.status == 201
-    assert await resp.json() == snapshot_recent
-    assert await mongo.jobs.find_one() == snapshot_recent(name="job")
+    assert await resp.json() == snapshot_recent(name="resp")
+
+    assert await mongo.jobs.find_one(
+        {},
+        projection={"status.timestamp": False},
+    ) == snapshot_recent(name="job")
