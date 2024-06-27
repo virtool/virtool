@@ -752,7 +752,7 @@
     'documents': list([
       dict({
         'count': 1,
-        'created_at': 'approximately_now_isoformat',
+        'created_at': 'not_approximately_now_isoformat',
         'file': dict({
           'id': 1,
           'name': 'test.fq.gz',
@@ -760,7 +760,7 @@
         'id': '3cbb22cc',
         'job': dict({
           'archived': False,
-          'created_at': 'approximately_now_isoformat',
+          'created_at': 'not_approximately_now_isoformat',
           'id': '7cf872dc',
           'progress': 0,
           'stage': None,
