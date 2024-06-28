@@ -368,7 +368,7 @@ class TestFinalize:
         assert resp.status == 409
         assert await resp.json() == snapshot
 
-    async def test_finalize_subtraction_invalid_input_error(
+    async def test_invalid_input(
         self,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
