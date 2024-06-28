@@ -528,11 +528,6 @@ class SubtractionFakerDomain(DataFakerDomain):
         :param finalized whether the subtraction should be finalized
         :return: the created subtraction
         """
-        subtraction_request = CreateSubtractionRequest(
-            name="foo",
-            nickname="bar",
-            upload_id=upload.id,
-        )
 
         subtraction = await self._layer.subtractions.create(
             CreateSubtractionRequest(
