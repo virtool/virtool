@@ -95,8 +95,6 @@
     'id': '7cf872dc',
     'ping': None,
     'progress': 50,
-    'rights': dict({
-    }),
     'stage': 'JURZHTCWaKMqqBTFitpK',
     'state': <JobState.TIMEOUT: 'timeout'>,
     'status': list([
@@ -178,8 +176,6 @@
     'id': 'fb085f7f',
     'ping': None,
     'progress': 10,
-    'rights': dict({
-    }),
     'stage': 'NzFJEUSgqMReEKilxKJT',
     'state': <JobState.PREPARING: 'preparing'>,
     'status': list([
