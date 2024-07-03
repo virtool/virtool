@@ -14,7 +14,7 @@ name = "update job documents"
 created_at = arrow.get("2024-06-24 20:52:26.979589")
 revision_id = "u4tep9xyu4hc"
 
-alembic_down_revision = "None"
+alembic_down_revision = None
 virtool_down_revision = "zma2wj6b39hs"
 
 # Change this if an Alembic revision is required to run this migration.
@@ -23,8 +23,14 @@ required_alembic_revision = None
 
 async def upgrade(ctx: MigrationContext):
     ctx.mongo.jobs.update_many({"key": {"$exists": False}}, {"$set": {"key": None}})
-    ctx.mongo.jobs.update_many({"acquired": None}, {"$set": {"acquired": False}})
-    ctx.mongo.jobs.update_many({"archived": None}, {"$set": {"archived": False}})
+    ctx.mongo.jobs.update_many(
+        {"acquired": {"$exists": False}},
+        {"$set": {"acquired": False}},
+    )
+    ctx.mongo.jobs.update_many(
+        {"archived": {"$exists": False}},
+        {"$set": {"archived": False}},
+    )
     ctx.mongo.jobs.update_many(
         {"task": {"$exists": True}},
         {"$rename": {"task": "workflow"}},
