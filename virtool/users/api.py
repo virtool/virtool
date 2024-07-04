@@ -44,15 +44,27 @@ logger = get_logger("users")
 
 @routes.view("/users")
 class UsersView(PydanticView):
+    """A view for listing and creating users."""
+
     async def get(
         self,
+        active: bool = Field(
+            default=True,
+            description="Filter by active status.",
+        ),
         find: str | None = Field(
             description="Filter by partial matches to user handles.",
         ),
     ) -> r200[User]:
-        """List all users.
+        """Find users.
 
-        Lists all users in the instance.
+        Find all Virtool users.
+
+        The ``active`` query parameter can be used to filter users by their active
+        status.
+
+        The ``find`` query parameter can be used to filter users by partial matches to
+        their handles.
 
         Status Codes:
             200: Successful operation
@@ -60,7 +72,10 @@ class UsersView(PydanticView):
         mongo = get_mongo_from_req(self.request)
         pg = self.request.app["pg"]
 
-        mongo_query = compose_regex_query(find, ["handle"]) if find else {}
+        mongo_query = {"active": active}
+
+        if find:
+            mongo_query.update(compose_regex_query(find, ["handle"]))
 
         data = await paginate(
             mongo.users,
@@ -85,7 +100,10 @@ class UsersView(PydanticView):
         return json_response(data)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def post(self, data: CreateUserRequest) -> r201[User] | r400 | r403:
+    async def post(
+        self,
+        data: CreateUserRequest,
+    ) -> r201[User] | r400 | r403:
         """Create a user.
 
         Creates a new user.
@@ -120,8 +138,13 @@ class UsersView(PydanticView):
 
 @routes.view("/users/first")
 class FirstUserView(PydanticView):
+    """A view for creating the first user."""
+
     @policy(PublicRoutePolicy)
-    async def put(self, data: CreateFirstUserRequest) -> r201[User] | r400 | r403:
+    async def put(
+        self,
+        data: CreateFirstUserRequest,
+    ) -> r201[User] | r400 | r403:
         """Create a first user.
 
         Creates the first user for the instance. This endpoint will not succeed more
@@ -171,6 +194,8 @@ class FirstUserView(PydanticView):
 
 @routes.view("/users/{user_id}")
 class UserView(PydanticView):
+    """A view for retrieving and updating users."""
+
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(self, user_id: str, /) -> r200[User] | r403 | r404:
         """Retrieve a user.

@@ -1,37 +1,35 @@
 import asyncio
-from typing import Union
-
 
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r404, r202, r400, r201, r403
+from aiohttp_pydantic.oas.typing import r200, r201, r202, r400, r403, r404
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User
 from virtool_core.utils import document_enum
 
 from virtool.administrators.oas import (
-    UpdateAdministratorRoleRequest,
     ListAdministratorResponse,
     ListRolesResponse,
+    RunActionRequest,
+    UpdateAdministratorRoleRequest,
     UpdateUserRequest,
     UserResponse,
-    RunActionRequest,
 )
-from virtool.api.errors import APINotFound, APIBadRequest, APIForbidden
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadRequest, APIForbidden, APINotFound
+from virtool.api.policy import AdministratorRoutePolicy, policy
+from virtool.api.routes import Routes
 from virtool.authorization.client import (
     AuthorizationClient,
     get_authorization_client_from_req,
 )
 from virtool.data.errors import (
-    ResourceNotFoundError,
-    ResourceError,
     ResourceConflictError,
+    ResourceError,
+    ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.api.policy import policy, AdministratorRoutePolicy
-from virtool.api.routes import Routes
-from virtool.flags import flag, FlagName
+from virtool.flags import FlagName, flag
 from virtool.users.checks import check_password_length
 from virtool.users.oas import CreateUserRequest
 
@@ -48,8 +46,7 @@ AVAILABLE_ROLES = [
 class RolesView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def get(self) -> r200[ListRolesResponse]:
-        """
-        List administrator roles.
+        """List administrator roles.
 
         Status Codes:
             200: Successful operation
@@ -61,17 +58,18 @@ class RolesView(PydanticView):
 class AdminUsersView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(
-        self, administrator: bool | None = None, term: str | None = None
+        self,
+        active: bool = True,
+        administrator: bool | None = None,
+        term: str | None = None,
     ) -> r200[ListAdministratorResponse]:
-        """
-        Find users.
+        """Find users.
 
         Returns a paginated list of users.
 
         Status Codes:
             200: Successful operation
         """
-
         url_query = self.request.query
 
         try:
@@ -88,15 +86,15 @@ class AdminUsersView(PydanticView):
             await get_data_from_req(self.request).users.find(
                 page,
                 per_page,
+                active,
                 administrator,
                 term,
-            )
+            ),
         )
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def post(self, data: CreateUserRequest) -> r201[User] | r400 | r403:
-        """
-        Create a user.
+        """Create a user.
 
         Creates a new user.
 
@@ -114,7 +112,9 @@ class AdminUsersView(PydanticView):
 
         try:
             user = await get_data_from_req(self.request).users.create(
-                data.handle, data.password, data.force_reset
+                data.handle,
+                data.password,
+                data.force_reset,
             )
         except ResourceConflictError as err:
             raise APIBadRequest(str(err))
@@ -130,8 +130,7 @@ class AdminUsersView(PydanticView):
 class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def get(self, user_id: str, /) -> r200[UserResponse] | r404:
-        """
-        Get a user.
+        """Get a user.
 
         Fetches the details of a user.
 
@@ -139,7 +138,6 @@ class AdminUserView(PydanticView):
             200: Successful operation
             404: User not found
         """
-
         try:
             user = await get_data_from_req(self.request).users.get(user_id)
         except ResourceNotFoundError:
@@ -149,27 +147,32 @@ class AdminUserView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
-        self, user_id: str, /, data: UpdateUserRequest
+        self,
+        user_id: str,
+        /,
+        data: UpdateUserRequest,
     ) -> r200[UserResponse] | r404:
-        """
-        Update a user.
+        """Update a user.
 
         Status Codes:
             200: Successful operation
             404: User not found
         """
-
         if not await check_administrator_can_update_user(
             get_authorization_client_from_req(self.request),
             self.request["client"].user_id,
             user_id,
         ):
             raise APIForbidden(
-                "Insufficient privileges", error_id="insufficient_privileges"
+                "Insufficient privileges",
+                error_id="insufficient_privileges",
             )
 
         if data.password is not None:
-            if error := await check_password_length(self.request, password=data.password):
+            if error := await check_password_length(
+                self.request,
+                password=data.password,
+            ):
                 raise APIBadRequest(error)
 
         try:
@@ -186,10 +189,12 @@ class AdminUserView(PydanticView):
 class AdminRoleView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
     async def put(
-        self, user_id: str, /, data: UpdateAdministratorRoleRequest
-    ) -> Union[r200[UserResponse], r404]:
-        """
-        Set administrator role.
+        self,
+        user_id: str,
+        /,
+        data: UpdateAdministratorRoleRequest,
+    ) -> r200[UserResponse] | r404:
+        """Set administrator role.
 
         Updates the user's administrator role.
 
@@ -197,13 +202,12 @@ class AdminRoleView(PydanticView):
             201: Successful operation
             404: User not found
         """
-
         if user_id == self.request["client"].user_id:
             raise APIBadRequest("Cannot change own role")
 
         try:
             administrator = await get_data_from_req(
-                self.request
+                self.request,
             ).users.set_administrator_role(user_id, data.role)
         except ResourceNotFoundError:
             raise APINotFound()
@@ -214,9 +218,8 @@ class AdminRoleView(PydanticView):
 @routes.view("/admin/actions")
 class AdminActionsView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
-    async def put(self, data: RunActionRequest) -> Union[r202, r400]:
-        """
-        Initiate an action
+    async def put(self, data: RunActionRequest) -> r202 | r400:
+        """Initiate an action
 
         Starts an action with the given name.
 
@@ -224,7 +227,6 @@ class AdminActionsView(PydanticView):
             200: Successful operation
             404: User not found
         """
-
         try:
             await get_data_from_req(self.request).administrators.run_action(data.name)
         except ResourceError:
@@ -234,10 +236,11 @@ class AdminActionsView(PydanticView):
 
 
 async def check_administrator_can_update_user(
-    authorization_client: AuthorizationClient, req_user_id: str, user_id: str
+    authorization_client: AuthorizationClient,
+    req_user_id: str,
+    user_id: str,
 ) -> bool:
-    """
-    Check if an administrator user has sufficient permissions to update another user
+    """Check if an administrator user has sufficient permissions to update another user
 
     Returns True if the user to be edited is not an administrator or if the requesting
     user is a full administrator.
