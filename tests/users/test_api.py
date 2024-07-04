@@ -6,6 +6,9 @@ from virtool_core.models.enums import Permission
 from virtool_core.models.roles import SpaceReferenceRole, SpaceSampleRole
 
 from tests.fixtures.client import ClientSpawner
+from tests.fixtures.core import StaticTime
+from tests.fixtures.response import RespIs
+from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
@@ -21,7 +24,7 @@ from virtool.users.utils import check_password
 @pytest.fixture()
 async def setup_update_user(
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     spawn_client: ClientSpawner,
 ):
     client = await spawn_client(administrator=True, authenticated=True)
@@ -47,7 +50,7 @@ async def setup_update_user(
 @pytest.mark.parametrize("find", [None, "fred"])
 async def test_find(
     find: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -76,7 +79,7 @@ async def test_find(
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -103,12 +106,12 @@ async def test_get(
 async def test_create(
     error: str | None,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
-    resp_is,
+    resp_is: RespIs,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    static_time,
+    static_time: StaticTime,
 ):
     """Test that a valid request results in a user document being properly inserted."""
     await mongo.users.create_index("handle", unique=True, sparse=True)
@@ -267,7 +270,12 @@ class TestUpdate:
 
 
 @pytest.mark.parametrize("user", ["test", "bob"])
-async def test_list_permissions(spawn_client, user, snapshot: SnapshotAssertion):
+async def test_list_permissions(
+    authorization_client: AuthorizationClient,
+    spawn_client: ClientSpawner,
+    user,
+    snapshot: SnapshotAssertion,
+):
     client = await spawn_client(
         authenticated=True,
         permissions=[Permission.create_sample, Permission.create_ref],
