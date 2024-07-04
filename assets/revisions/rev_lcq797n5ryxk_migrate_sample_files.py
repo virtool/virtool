@@ -37,7 +37,7 @@ def check_is_legacy(sample: dict[str, any]) -> bool:
     :param sample: the sample document
     :return: whether the sample is a legacy sample
     """
-    files = sample.get("files")
+    files = sample["files"]
 
     return (
         all(file.get("raw", False) is False for file in files)
@@ -52,37 +52,16 @@ def check_is_compressed(sample: dict[str, any]) -> bool:
     :param sample: the sample document
     :return: whether the sample read files are compressed
     """
-    files = sample.get("files")
-
-    if not files or not sample.get("is_legacy") or sample.get("is_compressed"):
+    if not sample.get("is_legacy") or sample.get("is_compressed"):
         return True
 
-    names = [file["name"] for file in files]
-
-    return all(name in {"reads_1.fq.gz", "reads_2.fq.gz"} for name in names)
-
-
-def join_legacy_read_paths(data_path: Path, paired: bool, sample_id: int):
-    """Create a list of paths for the read files associated with the `sample`.
-
-    :param data_path: the location of the data directory
-    :param paired: whether paired or single end reads are used
-    :param sample_id: the unique identifier of the sample
-    :return: a list of sample read paths
-    """
-    sample_path = data_path / "samples" / sample_id
-
-    if paired:
-        return [
-            sample_path / "reads_1.fastq",
-            sample_path / "reads_2.fastq",
-        ]
-
-    return [sample_path / "reads_1.fastq"]
+    return all(
+        file["name"] in {"reads_1.fq.gz", "reads_2.fq.gz"} for file in sample["files"]
+    )
 
 
 async def compress_sample_reads(
-    db: AsyncIOMotorDatabase,
+    mongo: AsyncIOMotorDatabase,
     data_path: Path,
     sample_files: dict[str, any],
     paired: bool,
@@ -90,14 +69,18 @@ async def compress_sample_reads(
 ):
     """Compress the reads for one legacy samples.
 
-    :param db: the application database object
+    :param mongo: the application database object
     :param data_path: the location of the data directory
     :param files: the read files to be compressed
     :param paired: whether paired or single end reads are used
     :param sample_id: the unique identifier of the sample
 
     """
-    paths = join_legacy_read_paths(data_path, paired, sample_id)
+    sample_path = data_path / "samples" / sample_id
+    paths = [sample_path / "reads_1.fastq"]
+
+    if paired:
+        paths.append(sample_path / "reads_2.fastq")
 
     files = []
 
@@ -122,7 +105,7 @@ async def compress_sample_reads(
             },
         )
 
-    await db.samples.update_one(
+    await mongo.samples.update_one(
         {"_id": sample_id},
         {"$set": {"files": files, "is_compressed": True}},
     )
@@ -290,7 +273,7 @@ async def test_upgrade(ctx, snapshot):
                         "name": "unpaired_legacy_partial_compression.fastq",
                         "size": 1,
                     },
-                }
+                },
             ],
         },
     ]
