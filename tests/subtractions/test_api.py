@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 from pathlib import Path
 
@@ -187,49 +188,59 @@ class TestUploadSubtractionFileAsJob:
         - test_subtraction_file_name_conflict_error: Verifies handling of file name conflicts.
     """
 
-    @pytest.fixture(autouse=True)
-    async def _setup(
+    VALID_SUBTRACTION_FILE_NAME = "subtraction.1.bt2"
+    INVALID_SUBTRACTION_FILE_NAME = "reference.1.bt2"
+
+    @dataclass
+    class Context:
+        file_directory: Path
+        subtraction_directory: Path
+
+    async def ctx(
         self,
-        fake: DataFaker,
         tmp_path: Path,
     ):
         test_dir: Path = tmp_path / "files"
         test_dir.mkdir(exist_ok=True)
 
-        self.test_file_directory: Path = test_dir
-        self.test_subtraction_file_directory: Path = tmp_path / "subtractions"
+        file_directory: Path = test_dir
+        subtraction_directory: Path = tmp_path / "subtractions"
 
-        self.VALID_SUBTRACTION_FILE_NAME = "subtraction.1.bt2"
-        self.INVALID_SUBTRACTION_FILE_NAME = "reference.1.bt2"
+        return self.Context(
+            file_directory=file_directory,
+            subtraction_directory=subtraction_directory,
+        )
 
+    async def test_create(
+        self,
+        ctx: Context,
+        fake: DataFaker,
+        spawn_job_client: JobClientSpawner,
+        snapshot_recent: SnapshotAssertion,
+    ):
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
             upload_type=UploadType.subtraction,
         )
 
-        self.subtraction = await fake.subtractions.create(
+        subtraction = await fake.subtractions.create(
             user=user,
             upload=upload,
             finalized=False,
         )
 
-    async def test_create(
-        self,
-        spawn_job_client: JobClientSpawner,
-        snapshot_recent: SnapshotAssertion,
-    ):
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.put(
-            f"/subtractions/{self.subtraction.id}/files/{self.VALID_SUBTRACTION_FILE_NAME}",
+            f"/subtractions/{subtraction.id}/files/{self.VALID_SUBTRACTION_FILE_NAME}",
             data={"file": bytes(1)},
         )
 
         assert resp.status == 201
         assert await resp.json() == snapshot_recent
         assert os.listdir(
-            self.test_subtraction_file_directory / self.subtraction.id,
+            ctx.subtraction_directory / subtraction.id,
         ) == [
             self.VALID_SUBTRACTION_FILE_NAME,
         ]
@@ -253,10 +264,22 @@ class TestUploadSubtractionFileAsJob:
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        subtraction = await fake.subtractions.create(
+            user=user,
+            upload=upload,
+            finalized=False,
+        )
+
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.put(
-            f"/subtractions/{self.subtraction.id}/files/{self.subtraction.id}",
+            f"/subtractions/{subtraction.id}/files/invalid_input"
             data={"file": bytes(1)},
         )
 
@@ -267,15 +290,27 @@ class TestUploadSubtractionFileAsJob:
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        subtraction = await fake.subtractions.create(
+            user=user,
+            upload=upload,
+            finalized=False,
+        )
+
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.put(
-            f"/subtractions/{self.subtraction.id}/files/{self.VALID_SUBTRACTION_FILE_NAME}",
+            f"/subtractions/{subtraction.id}/files/{self.VALID_SUBTRACTION_FILE_NAME}",
             data={"file": bytes(1)},
         )
 
         resp = await client.put(
-            f"/subtractions/{self.subtraction.id}/files/{self.VALID_SUBTRACTION_FILE_NAME}",
+            f"/subtractions/{subtraction.id}/files/{self.VALID_SUBTRACTION_FILE_NAME}",
             data={"file": bytes(1)},
         )
 

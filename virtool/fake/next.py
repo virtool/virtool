@@ -539,7 +539,13 @@ class SubtractionFakerDomain(DataFakerDomain):
             0,
         )
 
-        for path in (example_path / "subtractions" / "arabidopsis_thaliana").iterdir():
+        for path in sorted(
+            path
+            for path in (
+                example_path / "subtractions" / "arabidopsis_thaliana"
+            ).iterdir()
+            if path.is_file() and path.suffix == ".fasta"
+        ):
             await self._layer.subtractions.upload_file(
                 subtraction.id,
                 path.name,
