@@ -515,6 +515,7 @@ class SubtractionFakerDomain(DataFakerDomain):
         user: User,
         upload: Upload,
         finalized: bool = True,
+        upload_files: bool = True,
     ) -> Subtraction:
         """Create a fake subtraction.
 
@@ -539,18 +540,19 @@ class SubtractionFakerDomain(DataFakerDomain):
             0,
         )
 
-        for path in sorted(
-            path
-            for path in (
-                example_path / "subtractions" / "arabidopsis_thaliana"
-            ).iterdir()
-            if path.is_file() and path.suffix == ".fasta"
-        ):
-            await self._layer.subtractions.upload_file(
-                subtraction.id,
-                path.name,
-                fake_file_chunker(path),
-            )
+        if upload_files:
+            for path in sorted(
+                path
+                for path in (
+                    example_path / "subtractions" / "arabidopsis_thaliana"
+                ).iterdir()
+                if path.is_file() and path.suffix == ".fasta"
+            ):
+                await self._layer.subtractions.upload_file(
+                    subtraction.id,
+                    path.name,
+                    fake_file_chunker(path),
+                )
 
         if not finalized:
             return await self._layer.subtractions.get(subtraction.id)
