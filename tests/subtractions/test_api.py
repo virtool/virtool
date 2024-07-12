@@ -279,7 +279,7 @@ class TestUploadSubtractionFileAsJob:
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.put(
-            f"/subtractions/{subtraction.id}/files/invalid_input"
+            f"/subtractions/{subtraction.id}/files/invalid_input",
             data={"file": bytes(1)},
         )
 
