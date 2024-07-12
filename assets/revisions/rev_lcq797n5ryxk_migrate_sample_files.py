@@ -10,7 +10,6 @@ from asyncio import to_thread
 from pathlib import Path
 
 import arrow
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.utils import compress_file, file_stats
@@ -37,12 +36,8 @@ def check_is_legacy(sample: dict[str, any]) -> bool:
     :param sample: the sample document
     :return: whether the sample is a legacy sample
     """
-    files = sample["files"]
-
-    return (
-        all(file.get("raw", False) is False for file in files)
-        and files[0]["name"] == "reads_1.fastq"
-        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+    return not any(file.get("raw", False) for file in sample["files"]) and all(
+        file["name"] in {"reads_1.fastq", "reads_2.fastq"} for file in sample["files"]
     )
 
 
@@ -52,19 +47,20 @@ def check_is_compressed(sample: dict[str, any]) -> bool:
     :param sample: the sample document
     :return: whether the sample read files are compressed
     """
-    if not sample.get("is_legacy") or sample.get("is_compressed"):
-        return True
-
-    return all(
-        file["name"] in {"reads_1.fq.gz", "reads_2.fq.gz"} for file in sample["files"]
+    return (
+        not sample.get("is_legacy")
+        or sample.get("is_compressed")
+        or all(
+            file["name"] in {"reads_1.fq.gz", "reads_2.fq.gz"}
+            for file in sample["files"]
+        )
     )
 
 
 async def compress_sample_reads(
-    mongo: AsyncIOMotorDatabase,
     data_path: Path,
+    paths: list[Path],
     sample_files: dict[str, any],
-    paired: bool,
     sample_id: int,
 ):
     """Compress the reads for one legacy samples.
@@ -75,13 +71,8 @@ async def compress_sample_reads(
     :param paired: whether paired or single end reads are used
     :param sample_id: the unique identifier of the sample
 
+    :return: a list of the compressed read files
     """
-    sample_path = data_path / "samples" / sample_id
-    paths = [sample_path / "reads_1.fastq"]
-
-    if paired:
-        paths.append(sample_path / "reads_2.fastq")
-
     files = []
 
     for i, path in enumerate(paths):
@@ -105,14 +96,6 @@ async def compress_sample_reads(
             },
         )
 
-    await mongo.samples.update_one(
-        {"_id": sample_id},
-        {"$set": {"files": files, "is_compressed": True}},
-    )
-
-    for path in paths:
-        await to_thread(os.remove, path)
-
     return files
 
 
@@ -120,17 +103,17 @@ async def upgrade(ctx: MigrationContext):
     async for sample in ctx.mongo.samples.find({"files": {"$exists": True}}):
         if "is_legacy" not in sample:
             sample["is_legacy"] = check_is_legacy(sample)
-            ctx.mongo.samples.update_one(
-                {"_id": sample["_id"]},
-                {"$set": {"is_legacy": sample["is_legacy"]}},
-            )
+
+        sample_path = ctx.data_path / "samples" / sample["_id"]
+        paths = [sample_path / "reads_1.fastq"]
+        if sample["paired"]:
+            paths.append(sample_path / "reads_2.fastq")
 
         if not check_is_compressed(sample):
             sample["files"] = await compress_sample_reads(
-                ctx.mongo,
                 ctx.data_path,
+                paths,
                 sample["files"],
-                sample["paired"],
                 sample["_id"],
             )
 
@@ -165,11 +148,17 @@ async def upgrade(ctx: MigrationContext):
 
             await ctx.mongo.samples.update_one(
                 {"_id": sample_id},
-                {"$unset": {"files": ""}},
+                {
+                    "$unset": {"files": ""},
+                    "$set": {"is_compressed": True, "is_legacy": sample["is_legacy"]},
+                },
                 session=mongo_session,
             )
 
             await pg_session.commit()
+
+        for path in paths:
+            await to_thread(path.unlink, missing_ok=True)
 
 
 async def test_upgrade(ctx, snapshot):

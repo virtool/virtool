@@ -50,6 +50,7 @@
     }),
     dict({
       '_id': 'unpaired_legacy_compressed',
+      'is_compressed': True,
       'is_legacy': True,
       'paired': False,
     }),
