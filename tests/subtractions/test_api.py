@@ -196,6 +196,7 @@ class TestUploadSubtractionFileAsJob:
         file_directory: Path
         subtraction_directory: Path
 
+    @pytest.fixture()
     async def ctx(
         self,
         tmp_path: Path,
@@ -228,6 +229,7 @@ class TestUploadSubtractionFileAsJob:
             user=user,
             upload=upload,
             finalized=False,
+            upload_files=False,
         )
 
         client = await spawn_job_client(authenticated=True)
@@ -261,6 +263,7 @@ class TestUploadSubtractionFileAsJob:
 
     async def test_invalid_input(
         self,
+        fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
@@ -287,6 +290,7 @@ class TestUploadSubtractionFileAsJob:
 
     async def test_conflict(
         self,
+        fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
@@ -343,7 +347,7 @@ class TestFinalize:
             user=user,
             upload=upload,
             finalized=False,
-            uploaded=False,
+            upload_files=False,
         )
 
         client = await spawn_job_client(authenticated=True)
