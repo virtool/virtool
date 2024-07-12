@@ -343,6 +343,7 @@ class TestFinalize:
             user=user,
             upload=upload,
             finalized=False,
+            uploaded=False,
         )
 
         client = await spawn_job_client(authenticated=True)
