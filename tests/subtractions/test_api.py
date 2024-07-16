@@ -196,6 +196,7 @@ class TestUploadSubtractionFileAsJob:
         file_directory: Path
         subtraction_directory: Path
 
+    @pytest.fixture()
     def ctx(
         self,
         tmp_path: Path,
