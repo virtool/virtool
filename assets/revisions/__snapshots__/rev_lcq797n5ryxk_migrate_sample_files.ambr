@@ -1,0 +1,90 @@
+# serializer version: 1
+# name: test_upgrade[SQLSampleReads after]
+  list([
+    <SQLSampleReads(id=1, sample=unpaired_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=1, uploaded_at=None)>,
+    <SQLSampleReads(id=2, sample=paired_unknown_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=2, uploaded_at=None)>,
+    <SQLSampleReads(id=3, sample=paired_unknown_legacy, name=reads_2.fq.gz, name_on_disk=reads_2.fq.gz, size=44, upload=3, uploaded_at=None)>,
+    <SQLSampleReads(id=4, sample=unpaired_unknown_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=4, uploaded_at=None)>,
+    <SQLSampleReads(id=5, sample=unpaired_legacy_compressed, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=1, upload=5, uploaded_at=None)>,
+    <SQLSampleReads(id=6, sample=unpaired_legacy_partial_compression, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=6, uploaded_at=None)>,
+  ])
+# ---
+# name: test_upgrade[SQLUploads after]
+  list([
+    <SQLUpload(id=1, created_at=None, name=unpaired_legacy.fastq, name_on_disk=unpaired_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=2, created_at=None, name=paired_unknown_legacy.fastq, name_on_disk=paired_unknown_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=3, created_at=None, name=paired_unknown_legacy_2.fastq, name_on_disk=paired_unknown_legacy_2.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=4, created_at=None, name=unpaired_unknown_legacy.fastq, name_on_disk=unpaired_unknown_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=5, created_at=None, name=unpaired_unknown_legacy_compressed.fastq, name_on_disk=unpaired_unknown_legacy_compressed.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=6, created_at=None, name=unpaired_legacy_partial_compression.fastq, name_on_disk=unpaired_legacy_partial_compression.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+  ])
+# ---
+# name: test_upgrade[modern_samplefiles after]
+  list([
+  ])
+# ---
+# name: test_upgrade[mongo_after]
+  list([
+    dict({
+      '_id': 'modern_sample',
+      'is_legacy': False,
+      'paired': False,
+    }),
+    dict({
+      '_id': 'unpaired_legacy',
+      'is_compressed': True,
+      'is_legacy': True,
+      'paired': False,
+    }),
+    dict({
+      '_id': 'paired_unknown_legacy',
+      'is_compressed': True,
+      'is_legacy': True,
+      'paired': True,
+    }),
+    dict({
+      '_id': 'unpaired_unknown_legacy',
+      'is_compressed': True,
+      'is_legacy': True,
+      'paired': False,
+    }),
+    dict({
+      '_id': 'unpaired_legacy_compressed',
+      'is_compressed': True,
+      'is_legacy': True,
+      'paired': False,
+    }),
+    dict({
+      '_id': 'unpaired_legacy_partial_compression',
+      'is_compressed': True,
+      'is_legacy': True,
+      'paired': False,
+    }),
+  ])
+# ---
+# name: test_upgrade[paired_unknown_legacyfiles after]
+  list([
+    'reads_2.fq.gz',
+    'reads_1.fq.gz',
+  ])
+# ---
+# name: test_upgrade[unpaired_legacy_compressedfiles after]
+  list([
+    'reads_1.fq.gz',
+  ])
+# ---
+# name: test_upgrade[unpaired_legacy_partial_compressionfiles after]
+  list([
+    'reads_1.fq.gz',
+  ])
+# ---
+# name: test_upgrade[unpaired_legacyfiles after]
+  list([
+    'reads_1.fq.gz',
+  ])
+# ---
+# name: test_upgrade[unpaired_unknown_legacyfiles after]
+  list([
+    'reads_1.fq.gz',
+  ])
+# ---
