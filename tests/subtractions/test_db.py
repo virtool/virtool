@@ -21,7 +21,7 @@ async def test_attach_subtractions(fake: DataFaker, mongo, snapshot):
         ]
     ]
 
-    documents = [
+    cases = [
         {"id": "sub_1", "subtractions": subtraction_ids},
         [
             {"id": "sub_1", "subtractions": subtraction_ids},
@@ -30,8 +30,8 @@ async def test_attach_subtractions(fake: DataFaker, mongo, snapshot):
         ],
     ]
 
-    for document in documents:
-        result = await apply_transforms(document, [AttachSubtractionsTransform(mongo)])
+    for case in cases:
+        result = await apply_transforms(case, [AttachSubtractionsTransform(mongo)])
 
         assert result == snapshot
 
