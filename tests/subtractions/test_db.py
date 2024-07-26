@@ -1,3 +1,5 @@
+import pytest
+
 import virtool.subtractions.db
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
@@ -8,7 +10,11 @@ from virtool.subtractions.db import (
 from virtool.uploads.models import UploadType
 
 
-async def test_attach_subtractions(fake: DataFaker, mongo, snapshot):
+@pytest.mark.parametrize(
+    "case",
+    ["single", "multiple"],
+)
+async def test_attach_subtractions(case, fake: DataFaker, mongo, snapshot):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
@@ -21,18 +27,17 @@ async def test_attach_subtractions(fake: DataFaker, mongo, snapshot):
         ]
     ]
 
-    cases = [
-        {"id": "sub_1", "subtractions": subtraction_ids},
-        [
+    if case == "single":
+        documents = {"id": "sub_1", "subtractions": subtraction_ids}
+        result = await apply_transforms(documents, [AttachSubtractionsTransform(mongo)])
+        assert result == snapshot
+    elif case == "multiple":
+        documents = [
             {"id": "sub_1", "subtractions": subtraction_ids},
             {"id": "sub_2", "subtractions": [subtraction_ids[0]]},
             {"id": "sub_3", "subtractions": []},
-        ],
-    ]
-
-    for case in cases:
-        result = await apply_transforms(case, [AttachSubtractionsTransform(mongo)])
-
+        ]
+        result = await apply_transforms(documents, [AttachSubtractionsTransform(mongo)])
         assert result == snapshot
 
 
