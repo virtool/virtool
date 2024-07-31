@@ -191,34 +191,16 @@ class TestUploadSubtractionFileAsJob:
     VALID_SUBTRACTION_FILE_NAME = "subtraction.1.bt2"
     INVALID_SUBTRACTION_FILE_NAME = "reference.1.bt2"
 
-    @dataclass
-    class Context:
-        file_directory: Path
-        subtraction_directory: Path
-
-    @pytest.fixture()
-    def ctx(
-        self,
-        tmp_path: Path,
-    ):
-        test_dir: Path = tmp_path / "files"
-        test_dir.mkdir(exist_ok=True)
-
-        file_directory: Path = test_dir
-        subtraction_directory: Path = tmp_path / "subtractions"
-
-        return self.Context(
-            file_directory=file_directory,
-            subtraction_directory=subtraction_directory,
-        )
-
     async def test_create(
         self,
-        ctx: Context,
+        tmp_path: Path,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         snapshot_recent: SnapshotAssertion,
     ):
+        # test_dir: Path = tmp_path / "files"
+        # test_dir.mkdir(exist_ok=True)
+
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -242,7 +224,7 @@ class TestUploadSubtractionFileAsJob:
         assert resp.status == 201
         assert await resp.json() == snapshot_recent
         assert os.listdir(
-            ctx.subtraction_directory / subtraction.id,
+            tmp_path / "subtractions" / subtraction.id,
         ) == [
             self.VALID_SUBTRACTION_FILE_NAME,
         ]
