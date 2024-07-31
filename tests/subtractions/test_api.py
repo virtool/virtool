@@ -175,31 +175,17 @@ async def test_delete_as_user(
 
 
 class TestUploadSubtractionFileAsJob:
-    """
-    Test suite for uploading subtraction files.
-
-    Fixtures:
-        - setup: Prepares the test environment, creating necessary directories and test data.
-
-    Test cases:
-        - test_not_found: Verifies the API response when attempting to upload to a non-existent subtraction.
-        - test_create: Checks successful creation of a subtraction file.
-        - test_subtraction_file_invalid_name_error: Ensures proper handling of invalid file names.
-        - test_subtraction_file_name_conflict_error: Verifies handling of file name conflicts.
-    """
-
     VALID_SUBTRACTION_FILE_NAME = "subtraction.1.bt2"
     INVALID_SUBTRACTION_FILE_NAME = "reference.1.bt2"
 
     async def test_create(
         self,
-        tmp_path: Path,
+        data_path: Path,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         snapshot_recent: SnapshotAssertion,
     ):
-        # test_dir: Path = tmp_path / "files"
-        # test_dir.mkdir(exist_ok=True)
+        """Checks successful creation of a subtraction file."""
 
         user = await fake.users.create()
         upload = await fake.uploads.create(
@@ -224,7 +210,7 @@ class TestUploadSubtractionFileAsJob:
         assert resp.status == 201
         assert await resp.json() == snapshot_recent
         assert os.listdir(
-            tmp_path / "subtractions" / subtraction.id,
+            data_path / "subtractions" / subtraction.id,
         ) == [
             self.VALID_SUBTRACTION_FILE_NAME,
         ]
@@ -234,6 +220,7 @@ class TestUploadSubtractionFileAsJob:
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
+        """Verifies the API response when attempting to upload to a non-existent subtraction."""
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.put(
@@ -249,6 +236,7 @@ class TestUploadSubtractionFileAsJob:
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
+        """Ensures proper handling of invalid file names."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -276,6 +264,7 @@ class TestUploadSubtractionFileAsJob:
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
+        """Verifies handling of file name conflicts."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -304,22 +293,13 @@ class TestUploadSubtractionFileAsJob:
 
 
 class TestFinalize:
-    """
-    Test suite for finalizing subtractions.
-
-    Test cases:
-        - test_success: Verifies successful finalization of a subtraction.
-        - test_not_found: Checks the API response when attempting to finalize a non-existent subtraction.
-        - test_conflict: Ensures proper handling when attempting to finalize an already finalized subtraction.
-        - test_finalize_subtraction_invalid_input_error: Verifies error handling for invalid input during finalization.
-    """
-
     async def test_success(
         self,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         snapshot_recent: SnapshotAssertion,
     ):
+        """Verifies successful finalization of a subtraction."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -349,6 +329,7 @@ class TestFinalize:
         spawn_job_client: JobClientSpawner,
         snapshot,
     ):
+        """Checks the API response when attempting to finalize a non-existent subtraction."""
         client = await spawn_job_client(authenticated=True)
 
         data = {
@@ -367,6 +348,7 @@ class TestFinalize:
         spawn_job_client: JobClientSpawner,
         snapshot,
     ):
+        """Ensures proper handling when attempting to finalize an already finalized subtraction."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -396,6 +378,7 @@ class TestFinalize:
         spawn_job_client: JobClientSpawner,
         resp_is,
     ):
+        """Verifies error handling for invalid input during finalization."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
