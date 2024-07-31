@@ -401,15 +401,6 @@ class TestFinalize:
 
 
 class TestRemoveAsJob:
-    """
-    Test suite for removing subtractions when authenticated as a job.
-
-    Test cases:
-        - test_remove_ready: Verifies that a finalized subtraction cannot be deleted.
-        - test_remove_not_ready: Checks successful deletion of an unfinalized subtraction.
-        - test_remove_not_found: Ensures proper handling when attempting to delete a non-existent subtraction.
-    """
-
     async def test_remove_ready(
         self,
         fake: DataFaker,
@@ -417,6 +408,7 @@ class TestRemoveAsJob:
         mongo: Mongo,
         resp_is,
     ):
+        """Verifies that a finalized subtraction cannot be deleted."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -445,6 +437,7 @@ class TestRemoveAsJob:
         mongo: Mongo,
         resp_is,
     ):
+        """Checks successful deletion of an unfinalized subtraction."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -469,6 +462,7 @@ class TestRemoveAsJob:
         self,
         spawn_job_client: JobClientSpawner,
     ):
+        """Ensures proper handling when attempting to delete a non-existent subtraction."""
         client = await spawn_job_client(authenticated=True)
         resp = await client.delete("subtractions/does_not_exist")
 
