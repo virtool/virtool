@@ -586,9 +586,9 @@ class TestDownloadSubtractionFile:
         )
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-        (data_path / "subtractions" / subtraction.id / "subtraction.1.bt2",).unlink()
+        (data_path / "subtractions" / subtraction.id / "subtraction.1.bt2").unlink()
 
-        (data_path / "subtractions" / subtraction.id / "subtraction.fa.gz",).unlink()
+        (data_path / "subtractions" / subtraction.id / "subtraction.fa.gz").unlink()
 
         bowtie_resp = await client.get(
             f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
