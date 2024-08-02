@@ -10,28 +10,41 @@ from virtool.subtractions.db import (
 from virtool.uploads.models import UploadType
 
 
-@pytest.mark.parametrize(
-    "case",
-    ["single", "multiple"],
-)
-async def test_attach_subtractions(case, fake: DataFaker, mongo, snapshot):
-    user = await fake.users.create()
-    upload = await fake.uploads.create(
-        user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
-    )
+class TestAttachSubtractions:
+    async def test_single(self, fake: DataFaker, mongo, snapshot):
+        """Test attaching a single subtraction."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
+        )
 
-    subtraction_ids = [
-        subtraction.id
-        for subtraction in [
-            await fake.subtractions.create(user=user, upload=upload) for _ in range(2)
+        subtraction_ids = [
+            subtraction.id
+            for subtraction in [
+                await fake.subtractions.create(user=user, upload=upload)
+                for _ in range(2)
+            ]
         ]
-    ]
 
-    if case == "single":
         documents = {"id": "sub_1", "subtractions": subtraction_ids}
         result = await apply_transforms(documents, [AttachSubtractionsTransform(mongo)])
         assert result == snapshot
-    elif case == "multiple":
+
+    async def test_multiple(self, fake: DataFaker, mongo, snapshot):
+        """Test attaching multiple subtractions."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
+        )
+
+        subtraction_ids = [
+            subtraction.id
+            for subtraction in [
+                await fake.subtractions.create(user=user, upload=upload)
+                for _ in range(2)
+            ]
+        ]
+
         documents = [
             {"id": "sub_1", "subtractions": subtraction_ids},
             {"id": "sub_2", "subtractions": [subtraction_ids[0]]},
