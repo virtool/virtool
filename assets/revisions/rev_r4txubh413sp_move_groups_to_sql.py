@@ -1,10 +1,10 @@
-"""
-Move groups to SQL
+"""Move groups to SQL
 
 Revision ID: r4txubh413sp
 Date: 2023-08-08 21:57:09.069211
 
 """
+
 import arrow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,8 +25,7 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    """
-    Move groups to SQL.
+    """Move groups to SQL.
 
     Some groups may already exist in both databases. In this case, no action is taken.
     """
@@ -34,7 +33,7 @@ async def upgrade(ctx: MigrationContext):
         async for old_group in ctx.mongo.groups.find({}):
             group = (
                 await session.execute(
-                    select(SQLGroup).where(SQLGroup.legacy_id == old_group["_id"])
+                    select(SQLGroup).where(SQLGroup.legacy_id == old_group["_id"]),
                 )
             ).one_or_none()
 
@@ -42,9 +41,9 @@ async def upgrade(ctx: MigrationContext):
                 session.add(
                     SQLGroup(
                         legacy_id=old_group["_id"],
-                        name=old_group["name"],
+                        name=old_group.get("name") or old_group["_id"],
                         permissions=old_group["permissions"],
-                    )
+                    ),
                 )
 
         await session.commit()
@@ -77,14 +76,20 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                 "name": "Group 4",
                 "permissions": {"create_sample": False},
             },
-        ]
+            {
+                "_id": "group 5 (legacy)",
+                "permissions": {"create_sample": False},
+            },
+        ],
     )
 
     async with AsyncSession(ctx.pg) as session:
         session.add(
             SQLGroup(
-                legacy_id="group_3", name="Group 3", permissions={"create_sample": True}
-            )
+                legacy_id="group_3",
+                name="Group 3",
+                permissions={"create_sample": True},
+            ),
         )
         await session.commit()
 
