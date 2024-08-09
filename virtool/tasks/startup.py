@@ -13,8 +13,6 @@ from virtool.ml.tasks import SyncMLModelsTask
 from virtool.pg.utils import connect_pg
 from virtool.references.tasks import CleanReferencesTask, RefreshReferenceReleasesTask
 from virtool.samples.tasks import (
-    CompressSamplesTask,
-    MoveSampleFilesTask,
     UpdateSampleWorkflowsTask,
 )
 from virtool.tasks.client import TasksClient
@@ -54,9 +52,7 @@ async def startup_task_spawner(app: Application):
     """Starts the task spawner."""
     tasks = [
         (CleanReferencesTask, 3600),
-        (CompressSamplesTask, 3600),
         (HMMRefreshTask, 600),
-        (MoveSampleFilesTask, 3600),
         (RefreshReferenceReleasesTask, 600),
         (SyncMLModelsTask, 600),
         (TimeoutJobsTask, 3600),

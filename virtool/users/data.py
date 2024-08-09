@@ -76,15 +76,18 @@ class UsersData(DataLayerDomain):
         self,
         page: int,
         per_page: int,
-        administrator: bool | None = None,
-        term: str | None = None,
+        active: bool,
+        administrator: bool | None,
+        term: str,
     ) -> UserSearchResult:
         """Find users.
 
-        Optionally filter by administrator status or search term.
+        Optionally filter by a partial match to the users' handles or the active or
+        administrator status.
 
         :param page: the page number
         :param per_page: the number of items per page
+        :param active: whether to filter by active status
         :param administrator: whether to filter by administrator status
         :param term: a search term to filter by user handle
         """
@@ -92,13 +95,14 @@ class UsersData(DataLayerDomain):
             await self._authorization_client.list_administrators(),
         )
 
-        administrator_query = {}
+        query = {"active": active}
 
         if administrator is not None:
             operator = "$in" if administrator else "$nin"
-            administrator_query = {"_id": {operator: list(administrator_roles.keys())}}
+            query["_id"] = {operator: list(administrator_roles.keys())}
 
-        term_query = compose_regex_query(term, ["handle"]) if term else {}
+        if term:
+            query.update(compose_regex_query(term, ["handle"]))
 
         projection = {field: True for field in PROJECTION}
 
@@ -116,12 +120,12 @@ class UsersData(DataLayerDomain):
                             {"$count": "total_count"},
                         ],
                         "found_count": [
-                            {"$match": {**administrator_query, **term_query}},
+                            {"$match": query},
                             {"$count": "found_count"},
                         ],
                         "data": [
                             {
-                                "$match": {**administrator_query, **term_query},
+                                "$match": query,
                             },
                             {
                                 "$project": {

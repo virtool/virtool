@@ -7,6 +7,7 @@ from syrupy.filters import props
 from syrupy.matchers import path_type
 from virtool_core.models.group import GroupMinimal
 from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.user import UserSearchResult
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
@@ -21,41 +22,88 @@ from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser
 
 
-@pytest.mark.parametrize("term", [None, "test_user", "missing-handle"])
-@pytest.mark.parametrize("administrator", [True, False, None])
-async def test_find(
-    term: str | None,
-    administrator: bool | None,
-    authorization_client: AuthorizationClient,
-    data_layer: DataLayer,
-    fake: DataFaker,
-    snapshot: SnapshotAssertion,
-    static_time,
-):
-    group_1 = await fake.groups.create()
-    group_2 = await fake.groups.create()
+class TestFind:
+    """Tests for the ``find`` method of the ``Users`` data layer."""
 
-    user_1 = await fake.users.create(
-        handle="test_user",
-        groups=[group_1, group_2],
-        primary_group=group_1,
-    )
-    user_2 = await fake.users.create()
+    @pytest.fixture(autouse=True)
+    async def _setup(
+        self,
+        authorization_client: AuthorizationClient,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        group_1 = await fake.groups.create()
+        group_2 = await fake.groups.create()
 
-    await fake.users.create()
+        self.users = [
+            await fake.users.create(
+                handle="fred",
+                groups=[group_1, group_2],
+                primary_group=group_1,
+            ),
+            await fake.users.create(),
+            await fake.users.create(),
+            # The sort should be case-insensitive, and we expect to find Adam first.
+            await fake.users.create(handle="Adam"),
+            # This user should be filtered by the `active` parameter.
+            await fake.users.create(),
+        ]
 
-    # The sort should be case-insensitive, and we expect to find Adam first.
-    await fake.users.create(handle="Adam")
+        user_1, user_2, _, _, user_5 = self.users
 
-    await authorization_client.add(
-        AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
-        AdministratorRoleAssignment(user_2.id, AdministratorRole.FULL),
-    )
+        await data_layer.users.update(user_5.id, UpdateUserRequest(active=False))
 
-    assert (
-        await data_layer.users.find(1, 25, term=term, administrator=administrator)
-        == snapshot
-    )
+        await authorization_client.add(
+            AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
+            AdministratorRoleAssignment(user_2.id, AdministratorRole.FULL),
+        )
+
+    async def test_active(
+        self,
+        data_layer: DataLayer,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that only active users are returned when the `active` parameter is set
+        to `True`.
+        """
+        assert await data_layer.users.find(1, 25, False, None, "") == snapshot_recent
+
+    @pytest.mark.parametrize("term", ["fre", "ada"])
+    async def test_term(
+        self,
+        term: str,
+        data_layer: DataLayer,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that only matching (case-insensitive) records are returned when a handle
+        is provided.
+        """
+        assert await data_layer.users.find(1, 25, True, None, term) == snapshot_recent
+
+    async def test_no_term(
+        self,
+        data_layer: DataLayer,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that all users are returned when no term is provided."""
+        assert await data_layer.users.find(1, 25, True, None, "") == snapshot_recent
+
+    async def test_handle_doesnt_exist(self, data_layer: DataLayer):
+        """Test that no items are returned when the queried handle doesn't exist."""
+        assert await data_layer.users.find(
+            1,
+            25,
+            True,
+            None,
+            "missing-handle",
+        ) == UserSearchResult(
+            found_count=0,
+            page=1,
+            page_count=0,
+            per_page=25,
+            total_count=5,
+            items=[],
+        )
 
 
 class TestCreate:
@@ -72,6 +120,7 @@ class TestCreate:
         pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
     ):
+        """Test that setting and unsetting ``force_reset`` works as expected."""
         if force_reset is None:
             user = await data_layer.users.create(password="hello_world", handle="bill")
         else:
