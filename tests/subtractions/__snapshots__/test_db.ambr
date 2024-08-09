@@ -1,4 +1,81 @@
 # serializer version: 1
+# name: TestAttachSubtractions.test_multiple
+  list([
+    dict({
+      'id': 'sub_1',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+        dict({
+          'id': 'da42dca3',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_2',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_3',
+      'subtractions': list([
+      ]),
+    }),
+  ])
+# ---
+# name: TestAttachSubtractions.test_single
+  dict({
+    'id': 'sub_1',
+    'subtractions': list([
+      dict({
+        'id': '7cf872dc',
+        'name': 'foo',
+      }),
+      dict({
+        'id': 'da42dca3',
+        'name': 'foo',
+      }),
+    ]),
+  })
+# ---
+# name: test_attach_subtractions.1
+  list([
+    dict({
+      'id': 'sub_1',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+        dict({
+          'id': 'da42dca3',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_2',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_3',
+      'subtractions': list([
+      ]),
+    }),
+  ])
+# ---
 # name: test_attach_subtractions[documents0]
   dict({
     'id': 'sub_1',
@@ -44,4 +121,50 @@
       ]),
     }),
   ])
+# ---
+# name: test_attach_subtractions[multiple]
+  list([
+    dict({
+      'id': 'sub_1',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+        dict({
+          'id': 'da42dca3',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_2',
+      'subtractions': list([
+        dict({
+          'id': '7cf872dc',
+          'name': 'foo',
+        }),
+      ]),
+    }),
+    dict({
+      'id': 'sub_3',
+      'subtractions': list([
+      ]),
+    }),
+  ])
+# ---
+# name: test_attach_subtractions[single]
+  dict({
+    'id': 'sub_1',
+    'subtractions': list([
+      dict({
+        'id': '7cf872dc',
+        'name': 'foo',
+      }),
+      dict({
+        'id': 'da42dca3',
+        'name': 'foo',
+      }),
+    ]),
+  })
 # ---

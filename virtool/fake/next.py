@@ -514,6 +514,8 @@ class SubtractionFakerDomain(DataFakerDomain):
         self,
         user: User,
         upload: Upload,
+        finalized: bool = True,
+        upload_files: bool = True,
     ) -> Subtraction:
         """Create a fake subtraction.
 
@@ -524,26 +526,37 @@ class SubtractionFakerDomain(DataFakerDomain):
 
         :param user the user
         :param upload the fake upload
+        :param finalized whether the subtraction should be finalized
         :return: the created subtraction
         """
-        subtraction_request = CreateSubtractionRequest(
-            name="foo",
-            nickname="bar",
-            upload_id=upload.id,
-        )
 
         subtraction = await self._layer.subtractions.create(
-            data=subtraction_request,
-            subtraction_id="foobar",
-            user_id=user.id,
-            space_id=0,
+            CreateSubtractionRequest(
+                name="foo",
+                nickname="bar",
+                upload_id=upload.id,
+            ),
+            user.id,
+            0,
         )
 
-        finalize_request = FinalizeSubtractionRequest(
-            count=1, gc=NucleotideComposition(**{k: 0.2 for k in "actgn"})
-        )
-        subtraction = await self._layer.subtractions.finalize(
-            subtraction_id=subtraction.id, data=finalize_request
-        )
+        if upload_files:
+            for path in sorted(
+                (example_path / "subtractions" / "arabidopsis_thaliana").iterdir()
+            ):
+                await self._layer.subtractions.upload_file(
+                    subtraction.id,
+                    path.name,
+                    fake_file_chunker(path),
+                )
 
-        return subtraction
+        if not finalized:
+            return await self._layer.subtractions.get(subtraction.id)
+
+        return await self._layer.subtractions.finalize(
+            subtraction.id,
+            FinalizeSubtractionRequest(
+                count=1,
+                gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
+            ),
+        )
