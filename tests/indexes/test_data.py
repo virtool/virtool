@@ -10,7 +10,7 @@ from virtool.mongo.core import Mongo
 
 async def test_finalize(
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot,
