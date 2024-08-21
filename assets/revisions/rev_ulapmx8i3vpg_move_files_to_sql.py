@@ -34,7 +34,7 @@ async def upgrade(ctx: MigrationContext):
             ).scalar()
 
             size = document.get("size")
-            if size is None:
+            if size is None and (ctx.data_path / "files").exists():
                 file_path = ctx.data_path / "files" / document["_id"]
                 size = file_path.stat().st_size if file_path.exists() else 0
 
