@@ -36,7 +36,7 @@ async def upgrade(ctx: MigrationContext):
             size = document.get("size")
             if size is None:
                 file_path = ctx.data_path / "files" / document["_id"]
-                size = file_path.stat().st_size
+                size = file_path.stat().st_size if file_path.exists() else 0
 
             user = document["user"]
 
