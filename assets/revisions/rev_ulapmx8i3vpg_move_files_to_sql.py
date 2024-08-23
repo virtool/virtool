@@ -23,10 +23,17 @@ virtool_down_revision = None
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = "e694fb270acb"
 
+hmm = "hmm"
+reference = "reference"
+reads = "reads"
+subtraction = "subtraction"
+
 
 async def upgrade(ctx: MigrationContext):
     async with AsyncSession(ctx.pg) as session:
-        async for document in ctx.mongo.files.find():
+        async for document in ctx.mongo.files.find(
+            {"type": {"$in": ["hmm", "reference", "reads", "subtraction"]}},
+        ):
             exists = (
                 await session.execute(
                     select(SQLUpload).filter_by(name_on_disk=document["_id"]),
@@ -101,6 +108,15 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                 "ready": True,
                 "reserved": False,
                 "type": "reads",
+                "user": None,
+                "uploaded_at": arrow.get("2024-05-16T22:44:08.942465").naive,
+            },
+            {
+                "_id": "file_5.fasta.gz",
+                "name": "File 5",
+                "ready": True,
+                "reserved": False,
+                "type": "sample_replacement",
                 "user": None,
                 "uploaded_at": arrow.get("2024-05-16T22:44:08.942465").naive,
             },
