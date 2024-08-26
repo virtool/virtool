@@ -3,7 +3,7 @@
   list([
     dict({
       '_id': 'complete_legacy_job',
-      'acquired': False,
+      'acquired': True,
       'archived': False,
       'key': None,
       'status': list([
@@ -30,7 +30,7 @@
     }),
     dict({
       '_id': 'instant_complete_legacy_job',
-      'acquired': False,
+      'acquired': True,
       'archived': False,
       'key': None,
       'status': list([
@@ -51,7 +51,7 @@
     }),
     dict({
       '_id': 'incomplete_legacy_job',
-      'acquired': False,
+      'acquired': True,
       'archived': False,
       'key': None,
       'status': list([

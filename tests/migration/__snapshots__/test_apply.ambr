@@ -274,5 +274,12 @@
       'name': 'migrate sample files',
       'revision': 'lcq797n5ryxk',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 40,
+      'name': 'update job documents',
+      'revision': 'u4tep9xyu4hc',
+    }),
   ])
 # ---
