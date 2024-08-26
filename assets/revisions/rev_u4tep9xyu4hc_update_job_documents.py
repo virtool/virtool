@@ -22,16 +22,18 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    ctx.mongo.jobs.update_many({"key": {"$exists": False}}, {"$set": {"key": None}})
-    ctx.mongo.jobs.update_many(
+    await ctx.mongo.jobs.update_many(
+        {"key": {"$exists": False}}, {"$set": {"key": None}}
+    )
+    await ctx.mongo.jobs.update_many(
         {"acquired": {"$exists": False}},
         {"$set": {"acquired": True}},
     )
-    ctx.mongo.jobs.update_many(
+    await ctx.mongo.jobs.update_many(
         {"archived": {"$exists": False}},
         {"$set": {"archived": False}},
     )
-    ctx.mongo.jobs.update_many(
+    await ctx.mongo.jobs.update_many(
         {"task": {"$exists": True}},
         {"$rename": {"task": "workflow"}},
     )
