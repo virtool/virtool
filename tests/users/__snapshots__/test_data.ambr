@@ -283,6 +283,272 @@
     }),
   })
 # ---
+# name: TestFind.test_active
+  dict({
+    'found_count': 1,
+    'items': list([
+      dict({
+        'active': False,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'bburton',
+        'id': 'da42dca3',
+        'last_password_change': 'approximately_now_datetime',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': None,
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
+# name: TestFind.test_no_term
+  dict({
+    'found_count': 4,
+    'items': list([
+      dict({
+        'active': True,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'Adam',
+        'id': '3cbb22cc',
+        'last_password_change': 'approximately_now_datetime',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': dict({
+          'id': 1,
+          'legacy_id': None,
+          'name': 'musicians',
+        }),
+      }),
+      dict({
+        'active': True,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+          dict({
+            'id': 2,
+            'legacy_id': None,
+            'name': 'architects',
+          }),
+          dict({
+            'id': 1,
+            'legacy_id': None,
+            'name': 'musicians',
+          }),
+        ]),
+        'handle': 'fred',
+        'id': 'bf1b993c',
+        'last_password_change': 'approximately_now_datetime',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': dict({
+          'id': 1,
+          'legacy_id': None,
+          'name': 'musicians',
+        }),
+      }),
+      dict({
+        'active': True,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'lucasmichael',
+        'id': '7cf872dc',
+        'last_password_change': 'approximately_now_datetime',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': dict({
+          'id': 1,
+          'legacy_id': None,
+          'name': 'musicians',
+        }),
+      }),
+      dict({
+        'active': True,
+        'administrator_role': <AdministratorRole.FULL: 'full'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'sean96',
+        'id': 'fb085f7f',
+        'last_password_change': 'approximately_now_datetime',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': dict({
+          'id': 1,
+          'legacy_id': None,
+          'name': 'musicians',
+        }),
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
+# name: TestFind.test_term[ada]
+  dict({
+    'found_count': 1,
+    'items': list([
+      dict({
+        'active': True,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'Adam',
+        'id': '3cbb22cc',
+        'last_password_change': 'approximately_now_datetime',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': None,
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
+# name: TestFind.test_term[fre]
+  dict({
+    'found_count': 1,
+    'items': list([
+      dict({
+        'active': True,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+          dict({
+            'id': 2,
+            'legacy_id': None,
+            'name': 'architects',
+          }),
+          dict({
+            'id': 1,
+            'legacy_id': None,
+            'name': 'musicians',
+          }),
+        ]),
+        'handle': 'fred',
+        'id': 'bf1b993c',
+        'last_password_change': 'approximately_now_datetime',
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': dict({
+          'id': 1,
+          'legacy_id': None,
+          'name': 'musicians',
+        }),
+      }),
+    ]),
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
 # name: TestUpdate.test_force_reset[mongo_1]
   dict({
     '_id': 'bf1b993c',
@@ -847,8 +1113,34 @@
 # ---
 # name: test_find[False-None]
   dict({
-    'found_count': 1,
+    'found_count': 2,
     'items': list([
+      dict({
+        'active': True,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'Adam',
+        'id': '3cbb22cc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': None,
+      }),
       dict({
         'active': True,
         'administrator_role': None,
@@ -879,7 +1171,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[False-missing-handle]
@@ -890,7 +1182,7 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[False-test_user]
@@ -901,13 +1193,43 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[None-None]
   dict({
-    'found_count': 3,
+    'found_count': 4,
     'items': list([
+      dict({
+        'active': True,
+        'administrator_role': None,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'Adam',
+        'id': '3cbb22cc',
+        'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': dict({
+          'id': 1,
+          'legacy_id': None,
+          'name': 'musicians',
+        }),
+      }),
       dict({
         'active': True,
         'administrator_role': None,
@@ -1012,7 +1334,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[None-missing-handle]
@@ -1023,7 +1345,7 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[None-test_user]
@@ -1074,7 +1396,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[True-None]
@@ -1155,7 +1477,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[True-missing-handle]
@@ -1166,7 +1488,7 @@
     'page': 1,
     'page_count': 0,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[True-test_user]
@@ -1217,7 +1539,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find_or_create_b2c_user[False]

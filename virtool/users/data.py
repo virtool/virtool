@@ -1,4 +1,5 @@
 import asyncio
+import math
 import random
 
 from pymongo.errors import DuplicateKeyError
@@ -10,7 +11,7 @@ from virtool_core.models.user import User, UserSearchResult
 
 import virtool.users.utils
 import virtool.utils
-from virtool.api.utils import compose_regex_query, paginate_aggregate
+from virtool.api.utils import compose_regex_query
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.domain import DataLayerDomain
@@ -75,15 +76,18 @@ class UsersData(DataLayerDomain):
         self,
         page: int,
         per_page: int,
-        administrator: bool | None = None,
-        term: str | None = None,
+        active: bool,
+        administrator: bool | None,
+        term: str,
     ) -> UserSearchResult:
         """Find users.
 
-        Optionally filter by administrator status or search term.
+        Optionally filter by a partial match to the users' handles or the active or
+        administrator status.
 
         :param page: the page number
         :param per_page: the number of items per page
+        :param active: whether to filter by active status
         :param administrator: whether to filter by administrator status
         :param term: a search term to filter by user handle
         """
@@ -91,40 +95,94 @@ class UsersData(DataLayerDomain):
             await self._authorization_client.list_administrators(),
         )
 
-        administrator_query = {}
+        query = {"active": active}
 
         if administrator is not None:
             operator = "$in" if administrator else "$nin"
-            administrator_query = {"_id": {operator: list(administrator_roles.keys())}}
+            query["_id"] = {operator: list(administrator_roles.keys())}
 
-        term_query = compose_regex_query(term, ["handle"]) if term else {}
+        if term:
+            query.update(compose_regex_query(term, ["handle"]))
 
-        client_query = {**administrator_query, **term_query}
+        projection = {field: True for field in PROJECTION}
 
-        result = await paginate_aggregate(
-            self._mongo.users,
-            page,
-            per_page,
-            client_query,
-            sort="handle",
-            projection={field: True for field in PROJECTION},
-        )
+        skip_count = 0
 
-        result["items"] = await apply_transforms(
-            [base_processor(item) for item in result["items"]],
+        if page > 1:
+            skip_count = (page - 1) * per_page
+
+        async for paginate_dict in self._mongo.users.aggregate(
             [
-                AttachPermissionsTransform(self._pg),
-                AttachPrimaryGroupTransform(self._pg),
-                AttachGroupsTransform(self._pg),
+                {"$match": {}},
+                {
+                    "$facet": {
+                        "total_count": [
+                            {"$count": "total_count"},
+                        ],
+                        "found_count": [
+                            {"$match": query},
+                            {"$count": "found_count"},
+                        ],
+                        "data": [
+                            {
+                                "$match": query,
+                            },
+                            {
+                                "$project": {
+                                    **projection,
+                                    "lower_handle": {"$toLower": "$handle"},
+                                },
+                            },
+                            {"$sort": {"lower_handle": 1}},
+                            {
+                                "$project": {
+                                    "lower_handle": False,
+                                },
+                            },
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
+                        ],
+                    },
+                },
+                {
+                    "$project": {
+                        "data": projection,
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0],
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0],
+                        },
+                    },
+                },
             ],
-        )
+        ):
+            data = paginate_dict["data"]
+            total_count = paginate_dict.get("total_count", 0)
+            found_count = paginate_dict.get("found_count", 0)
 
-        result["items"] = [
-            User(**user, administrator_role=administrator_roles.get(user["id"]))
-            for user in result["items"]
-        ]
+            items = await apply_transforms(
+                [base_processor(item) for item in data],
+                [
+                    AttachPermissionsTransform(self._pg),
+                    AttachPrimaryGroupTransform(self._pg),
+                    AttachGroupsTransform(self._pg),
+                ],
+            )
 
-        return UserSearchResult(**result)
+            items = [
+                User(**user, administrator_role=administrator_roles.get(user["id"]))
+                for user in items
+            ]
+
+            return UserSearchResult(
+                items=items,
+                found_count=found_count,
+                page=page,
+                page_count=math.ceil(found_count / per_page),
+                per_page=per_page,
+                total_count=total_count,
+            )
 
     async def get(self, user_id: str) -> User:
         """Get a user by their ``user_id``.

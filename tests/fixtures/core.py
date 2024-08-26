@@ -2,6 +2,7 @@ from pathlib import Path
 
 import arrow
 import pytest
+from pytest_mock import MockerFixture
 
 from virtool.example import example_path as virtool_example_path
 
@@ -23,17 +24,17 @@ class StaticTime:
     iso = "2015-10-06T20:00:00Z"
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_req():
     return MockRequest()
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_files_path():
     return Path(__file__).parent.parent / "test_files"
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_random_alphanumeric(mocker):
     class RandomAlphanumericTester:
         def __init__(self):
@@ -75,21 +76,22 @@ def test_random_alphanumeric(mocker):
             return self.choices[-1]
 
     return mocker.patch(
-        "virtool.utils.random_alphanumeric", new=RandomAlphanumericTester()
+        "virtool.utils.random_alphanumeric",
+        new=RandomAlphanumericTester(),
     )
 
 
 @pytest.fixture(scope="session")
-def static_time_obj():
+def static_time_obj() -> StaticTime:
     return StaticTime()
 
 
-@pytest.fixture
-def static_time(mocker, static_time_obj):
+@pytest.fixture()
+def static_time(mocker: MockerFixture, static_time_obj: StaticTime) -> StaticTime:
     mocker.patch("virtool.utils.timestamp", return_value=static_time_obj.datetime)
     return static_time_obj
 
 
-@pytest.fixture
-def example_path():
+@pytest.fixture()
+def example_path() -> Path:
     return virtool_example_path
