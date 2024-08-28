@@ -48,17 +48,19 @@ async def upgrade(ctx: MigrationContext):
             index_id,
         )
 
-        if manifest := index.get("manifest"):
-            try:
-                await ensure_json(
-                    ctx.mongo,
-                    index_path,
-                    ctx.data_path,
-                    index["reference"]["id"],
-                    manifest,
-                )
-            except IndexError:
-                continue
+        if not index_path.is_dir():
+            continue
+
+        try:
+            await ensure_json(
+                ctx.mongo,
+                index_path,
+                ctx.data_path,
+                index["reference"]["id"],
+                index.get("manifest"),
+            )
+        except IndexError:
+            continue
 
         async with AsyncSession(ctx.pg) as session:
             first = (
@@ -228,57 +230,144 @@ def get_index_file_type_from_name(file_name: str) -> IndexType:
     raise ValueError(f"Filename does not map to valid IndexType: {file_name}")
 
 
-@pytest.mark.parametrize(
-    "files, has_manifest",
-    [["DNE", True], ["empty", True], ["full", True], ["not_ready", True]],
-)
-async def test_upgrade(
-    ctx: MigrationContext,
-    snapshot,
-    files,
-    create_task_index,
-    has_manifest,
-):
-    """Test that ``files`` field is populated for index documents in the following cases:
+class TestUpgrade:
+    """Test that SQLFiles are create as is appropriate for indexes.
 
-    - Index document has no existing "files" field
-    - ``files`` field is an empty list
-    - index document is ready to be populated
+    - Files exist and have been added to SQL
+    - Files exist but have not been added to SQL
+    - Files do not exist
 
-    Also, ensure that a index JSON file is generated if missing.
-
+    Also, ensures that an index JSON file is generated if missing.
     """
-    print(files, has_manifest)
-    async with ctx.pg.begin() as conn:
-        await conn.run_sync(SQLIndexFile.metadata.create_all)
-        await conn.commit()
 
-    task_index = await create_task_index()
+    @pytest.mark.parametrize(
+        "previously_upgraded",
+        [
+            True,
+            False,
+        ],
+    )
+    async def test_upgrade(
+        self,
+        ctx: MigrationContext,
+        snapshot,
+        previously_upgraded,
+        create_task_index,
+    ):
+        async with ctx.pg.begin() as conn:
+            await conn.run_sync(SQLIndexFile.metadata.create_all)
+            await conn.commit()
 
-    test_dir = ctx.data_path / "references" / task_index["reference"]["id"] / "index_1"
-    test_dir.joinpath("reference.fa.gz").write_text("FASTA file")
-    test_dir.joinpath("reference.1.bt2").write_text("Bowtie2 file")
+        task_index = await create_task_index()
 
-    update = {}
+        test_dir = (
+            ctx.data_path / "references" / task_index["reference"]["id"] / "index_1"
+        )
 
-    if files == "empty":
-        update["files"] = []
+        test_dir.joinpath("reference.fa.gz").write_text("FASTA file")
+        test_dir.joinpath("reference.1.bt2").write_text("Bowtie2 file")
 
-    if files == "full":
-        update["files"] = ["full"]
+        if previously_upgraded:
+            with gzip.open(test_dir / "reference.json.gz", "wt") as file:
+                file.write("Complete index json")
 
-    if files == "not_ready":
-        update["ready"] = False
+            async with AsyncSession(ctx.pg) as session:
+                session.add_all(
+                    [
+                        SQLIndexFile(
+                            name=f"previously upgraded {path.name}",
+                            index="index_1",
+                            type=get_index_file_type_from_name(path.name),
+                            size=5,
+                        )
+                        for path in sorted(test_dir.iterdir())
+                    ],
+                )
+                await session.commit()
 
-    await ctx.mongo.indexes.update_one({"_id": "index_1"}, {"$set": {"files": update}})
+        await upgrade(ctx)
 
-    await upgrade(ctx)
+        async with AsyncSession(ctx.pg) as session:
+            assert (
+                await session.execute(select(SQLIndexFile))
+            ).scalars().all() == snapshot
 
-    async with AsyncSession(ctx.pg) as session:
-        assert (await session.execute(select(SQLIndexFile))).scalars().all() == snapshot
+        with gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f:
+            assert f.read() == snapshot(name="json")
 
-    with gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f:
-        assert f.read() == snapshot(name="json")
+    async def test_upgrade_no_files(
+        self,
+        ctx: MigrationContext,
+        snapshot,
+        create_task_index,
+    ):
+        async with ctx.pg.begin() as conn:
+            await conn.run_sync(SQLIndexFile.metadata.create_all)
+            await conn.commit()
+
+        task_index = await create_task_index()
+
+        await ctx.mongo.indexes.update_one(
+            {"_id": "index_1"},
+            {"$unset": {"manifest": ""}},
+        )
+
+        test_dir = (
+            ctx.data_path / "references" / task_index["reference"]["id"] / "index_1"
+        )
+        test_dir.rmdir()
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            assert (
+                await session.execute(select(SQLIndexFile))
+            ).scalars().all() == snapshot
+
+        with (
+            pytest.raises(FileNotFoundError),
+            gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f,
+        ):
+            f.read()
+
+    async def test_upgrade_not_ready(
+        self,
+        ctx: MigrationContext,
+        snapshot,
+        create_task_index,
+    ):
+        async with ctx.pg.begin() as conn:
+            await conn.run_sync(SQLIndexFile.metadata.create_all)
+            await conn.commit()
+
+        task_index = await create_task_index()
+
+        await ctx.mongo.indexes.update_one(
+            {"_id": "index_1"},
+            {"$set": {"ready": False}},
+        )
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            assert (
+                await session.execute(select(SQLIndexFile))
+            ).scalars().all() == snapshot
+
+        with (
+            pytest.raises(FileNotFoundError),
+            gzip.open(
+                Path(
+                    ctx.data_path
+                    / "references"
+                    / task_index["reference"]["id"]
+                    / "index_1",
+                )
+                / "reference.json.gz",
+                "rt",
+            ) as f,
+        ):
+            f.read()
 
 
 @pytest.fixture()

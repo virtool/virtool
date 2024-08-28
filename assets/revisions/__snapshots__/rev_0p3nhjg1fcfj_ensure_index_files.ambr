@@ -1,41 +1,29 @@
 # serializer version: 1
-# name: test_upgrade[DNE-True]
+# name: TestUpgrade.test_upgrade[False]
   list([
     <SQLIndexFile(id=1, name=reference.1.bt2, index=index_1, type=bowtie2, size=12)>,
     <SQLIndexFile(id=2, name=reference.fa.gz, index=index_1, type=fasta, size=10)>,
     <SQLIndexFile(id=3, name=reference.json.gz, index=index_1, type=json, size=322)>,
   ])
 # ---
-# name: test_upgrade[DNE-True][json]
+# name: TestUpgrade.test_upgrade[False][json]
   '{"data_type":"genome","organism":"virus","otus":[{"_id":"6116cba1","name":"Prunus virus F","abbreviation":"PVF","isolates":[{"id":"cab8b360","default":true,"source_name":"8816-v2","source_type":"isolate","sequences":[{"_id":"abcd1234","accession":"KX269872","definition":"Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.","host":"sweet cherry","sequence":"TGTTTAAGAGATTAAACAACCGCTTTC","segment":null}]}],"schema":[]}],"targets":null}'
 # ---
-# name: test_upgrade[empty-True]
+# name: TestUpgrade.test_upgrade[True]
   list([
-    <SQLIndexFile(id=1, name=reference.1.bt2, index=index_1, type=bowtie2, size=12)>,
-    <SQLIndexFile(id=2, name=reference.fa.gz, index=index_1, type=fasta, size=10)>,
-    <SQLIndexFile(id=3, name=reference.json.gz, index=index_1, type=json, size=322)>,
+    <SQLIndexFile(id=1, name=previously upgraded reference.1.bt2, index=index_1, type=bowtie2, size=5)>,
+    <SQLIndexFile(id=2, name=previously upgraded reference.fa.gz, index=index_1, type=fasta, size=5)>,
+    <SQLIndexFile(id=3, name=previously upgraded reference.json.gz, index=index_1, type=json, size=5)>,
   ])
 # ---
-# name: test_upgrade[empty-True][json]
-  '{"data_type":"genome","organism":"virus","otus":[{"_id":"6116cba1","name":"Prunus virus F","abbreviation":"PVF","isolates":[{"id":"cab8b360","default":true,"source_name":"8816-v2","source_type":"isolate","sequences":[{"_id":"abcd1234","accession":"KX269872","definition":"Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.","host":"sweet cherry","sequence":"TGTTTAAGAGATTAAACAACCGCTTTC","segment":null}]}],"schema":[]}],"targets":null}'
+# name: TestUpgrade.test_upgrade[True][json]
+  'Complete index json'
 # ---
-# name: test_upgrade[full-True]
+# name: TestUpgrade.test_upgrade_no_files
   list([
-    <SQLIndexFile(id=1, name=reference.1.bt2, index=index_1, type=bowtie2, size=12)>,
-    <SQLIndexFile(id=2, name=reference.fa.gz, index=index_1, type=fasta, size=10)>,
-    <SQLIndexFile(id=3, name=reference.json.gz, index=index_1, type=json, size=322)>,
   ])
 # ---
-# name: test_upgrade[full-True][json]
-  '{"data_type":"genome","organism":"virus","otus":[{"_id":"6116cba1","name":"Prunus virus F","abbreviation":"PVF","isolates":[{"id":"cab8b360","default":true,"source_name":"8816-v2","source_type":"isolate","sequences":[{"_id":"abcd1234","accession":"KX269872","definition":"Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.","host":"sweet cherry","sequence":"TGTTTAAGAGATTAAACAACCGCTTTC","segment":null}]}],"schema":[]}],"targets":null}'
-# ---
-# name: test_upgrade[not_ready-True]
+# name: TestUpgrade.test_upgrade_not_ready
   list([
-    <SQLIndexFile(id=1, name=reference.1.bt2, index=index_1, type=bowtie2, size=12)>,
-    <SQLIndexFile(id=2, name=reference.fa.gz, index=index_1, type=fasta, size=10)>,
-    <SQLIndexFile(id=3, name=reference.json.gz, index=index_1, type=json, size=322)>,
   ])
-# ---
-# name: test_upgrade[not_ready-True][json]
-  '{"data_type":"genome","organism":"virus","otus":[{"_id":"6116cba1","name":"Prunus virus F","abbreviation":"PVF","isolates":[{"id":"cab8b360","default":true,"source_name":"8816-v2","source_type":"isolate","sequences":[{"_id":"abcd1234","accession":"KX269872","definition":"Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.","host":"sweet cherry","sequence":"TGTTTAAGAGATTAAACAACCGCTTTC","segment":null}]}],"schema":[]}],"targets":null}'
 # ---
