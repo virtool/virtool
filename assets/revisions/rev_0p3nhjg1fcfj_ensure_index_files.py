@@ -57,7 +57,7 @@ async def upgrade(ctx: MigrationContext):
                 index_path,
                 ctx.data_path,
                 index["reference"]["id"],
-                index.get("manifest"),
+                index["manifest"],
             )
         except IndexError:
             continue
@@ -240,6 +240,7 @@ class TestUpgrade:
     Also, ensures that an index JSON file is generated if missing.
     """
 
+    @staticmethod
     @pytest.mark.parametrize(
         "previously_upgraded",
         [
@@ -248,7 +249,6 @@ class TestUpgrade:
         ],
     )
     async def test_upgrade(
-        self,
         ctx: MigrationContext,
         snapshot,
         previously_upgraded,
@@ -295,8 +295,8 @@ class TestUpgrade:
         with gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f:
             assert f.read() == snapshot(name="json")
 
+    @staticmethod
     async def test_upgrade_no_files(
-        self,
         ctx: MigrationContext,
         snapshot,
         create_task_index,
@@ -330,8 +330,8 @@ class TestUpgrade:
         ):
             f.read()
 
+    @staticmethod
     async def test_upgrade_not_ready(
-        self,
         ctx: MigrationContext,
         snapshot,
         create_task_index,
