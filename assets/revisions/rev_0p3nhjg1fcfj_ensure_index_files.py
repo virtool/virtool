@@ -182,7 +182,7 @@ def format_otu_for_export(otu: Document) -> Document:
         "name": otu["name"],
         "abbreviation": otu["abbreviation"],
         "isolates": isolates,
-        "schema": otu["schema"],
+        "schema": otu.get("schema", []),
     }
 
 
