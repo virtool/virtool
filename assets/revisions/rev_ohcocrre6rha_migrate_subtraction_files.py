@@ -71,7 +71,7 @@ async def ensure_subtraction_file_name(
 
     lowercase_path = path.with_name(lowercase_id)
     if not lowercase_path.is_dir():
-        raise FileNotFoundError
+        raise FileNotFoundError(f"Subtraction directory not found: {lowercase_path}")
 
     lowercase_path.rename(path)
 
