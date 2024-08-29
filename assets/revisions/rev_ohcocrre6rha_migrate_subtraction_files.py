@@ -1,5 +1,4 @@
-"""
-migrate subtraction files
+"""migrate subtraction files
 
 Revision ID: ohcocrre6rha
 Date: 2024-05-28 22:51:14.495234
@@ -14,6 +13,7 @@ from glob import glob
 from pathlib import Path
 
 import arrow
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy import SnapshotAssertion
@@ -47,10 +47,41 @@ def join_subtraction_index_path(data_path: Path, subtraction_id: str) -> Path:
     return join_subtraction_path(data_path, subtraction_id) / "subtraction"
 
 
+async def ensure_subtraction_file_name(
+    ctx: MigrationContext,
+    subtraction_id: str,
+) -> None:
+    """Update the name of the subtraction directory to match the casing of the ID.
+
+    :param ctx: the migration context
+    :param subtraction_id: the id of the subtraction
+    """
+    path = join_subtraction_path(ctx.data_path, subtraction_id)
+
+    if path.is_dir():
+        return
+
+    lowercase_id = subtraction_id.lower()
+
+    # Ensure that there is no existing subtraction that matches the lowercase id
+    if await ctx.mongo.subtraction.find_one({"_id": lowercase_id}):
+        raise ValueError(
+            f"File name conflict, {lowercase_id} already exists in the database",
+        )
+
+    lowercase_path = path.with_name(lowercase_id)
+    if not lowercase_path.is_dir():
+        raise FileNotFoundError
+
+    lowercase_path.rename(path)
+
+
 async def upgrade(ctx: MigrationContext):
     async for subtraction in ctx.mongo.subtraction.find({"deleted": False}):
         subtraction_id = subtraction["_id"]
         path = join_subtraction_path(ctx.data_path, subtraction_id)
+
+        await ensure_subtraction_file_name(ctx, subtraction_id)
 
         if not glob(f"{path}/*.fa.gz"):
             await generate_fasta_file(ctx.data_path, subtraction_id)
@@ -111,7 +142,9 @@ async def generate_fasta_file(data_path: Path, subtraction_id: str):
 
 
 async def test_upgrade(
-    ctx: MigrationContext, snapshot: SnapshotAssertion, test_files_path
+    ctx: MigrationContext,
+    snapshot: SnapshotAssertion,
+    test_files_path,
 ):
     async with ctx.pg.begin() as conn:
         await conn.run_sync(SQLSubtractionFile.metadata.create_all)
@@ -163,3 +196,40 @@ async def test_upgrade(
         assert (
             await session.execute(select(SQLSubtractionFile))
         ).scalars().all() == snapshot
+
+
+class TestEnsureSubtractionFileName:
+    @staticmethod
+    async def test_ensure_subtraction_file_name(
+        ctx: MigrationContext,
+        snapshot: SnapshotAssertion,
+    ):
+        subtraction_path = ctx.data_path / "subtractions" / "foo"
+        subtraction_path.mkdir(parents=True)
+        (subtraction_path / "foo.txt").write_text("foo")
+
+        await ensure_subtraction_file_name(ctx, "Foo")
+
+        updated_path = ctx.data_path / "subtractions" / "Foo"
+        assert updated_path.is_dir()
+        assert [file.name for file in updated_path.iterdir()] == snapshot
+
+    @staticmethod
+    async def test_ensure_subtraction_file_name_has_conflict(ctx):
+        subtraction_path = ctx.data_path / "subtractions" / "foo"
+        subtraction_path.mkdir(parents=True)
+
+        await ctx.mongo.subtraction.insert_one(
+            {
+                "_id": "foo",
+                "name": "foo",
+                "deleted": False,
+            },
+        )
+        with pytest.raises(ValueError):
+            await ensure_subtraction_file_name(ctx, "Foo")
+
+    @staticmethod
+    async def test_ensure_subtraction_file_name_no_file(ctx):
+        with pytest.raises(FileNotFoundError):
+            await ensure_subtraction_file_name(ctx, "Foo")
