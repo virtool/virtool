@@ -69,7 +69,7 @@ async def ensure_subtraction_file_name(
             f"File name conflict, {lowercase_id} already exists in the database",
         )
 
-    lowercase_path = path.with_name(lowercase_id)
+    lowercase_path = path.with_name(lowercase_id.replace(" ", "_"))
     if not lowercase_path.is_dir():
         raise FileNotFoundError(f"Subtraction directory not found: {lowercase_path}")
 
@@ -204,13 +204,13 @@ class TestEnsureSubtractionFileName:
         ctx: MigrationContext,
         snapshot: SnapshotAssertion,
     ):
-        subtraction_path = ctx.data_path / "subtractions" / "foo"
+        subtraction_path = ctx.data_path / "subtractions" / "foo_bar"
         subtraction_path.mkdir(parents=True)
         (subtraction_path / "foo.txt").write_text("foo")
 
-        await ensure_subtraction_file_name(ctx, "Foo")
+        await ensure_subtraction_file_name(ctx, "Foo Bar")
 
-        updated_path = ctx.data_path / "subtractions" / "Foo"
+        updated_path = ctx.data_path / "subtractions" / "Foo_Bar"
         assert updated_path.is_dir()
         assert [file.name for file in updated_path.iterdir()] == snapshot
 
