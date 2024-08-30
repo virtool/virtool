@@ -47,7 +47,7 @@ def join_subtraction_index_path(data_path: Path, subtraction_id: str) -> Path:
     return join_subtraction_path(data_path, subtraction_id) / "subtraction"
 
 
-async def ensure_subtraction_file_name(
+async def ensure_subtraction_folder_name(
     ctx: MigrationContext,
     subtraction_id: str,
 ) -> None:
@@ -81,12 +81,12 @@ async def upgrade(ctx: MigrationContext):
         subtraction_id = subtraction["_id"]
         path = join_subtraction_path(ctx.data_path, subtraction_id)
 
-        await ensure_subtraction_file_name(ctx, subtraction_id)
+        await ensure_subtraction_folder_name(ctx, subtraction_id)
+
+        await rename_bowtie_files(path)
 
         if not glob(f"{path}/*.fa.gz"):
             await generate_fasta_file(ctx.data_path, subtraction_id)
-
-        await rename_bowtie_files(path)
 
         subtraction_files = []
 
@@ -208,7 +208,7 @@ class TestEnsureSubtractionFileName:
         subtraction_path.mkdir(parents=True)
         (subtraction_path / "foo.txt").write_text("foo")
 
-        await ensure_subtraction_file_name(ctx, "Foo Bar")
+        await ensure_subtraction_folder_name(ctx, "Foo Bar")
 
         updated_path = ctx.data_path / "subtractions" / "Foo_Bar"
         assert updated_path.is_dir()
@@ -227,9 +227,9 @@ class TestEnsureSubtractionFileName:
             },
         )
         with pytest.raises(ValueError):
-            await ensure_subtraction_file_name(ctx, "Foo")
+            await ensure_subtraction_folder_name(ctx, "Foo")
 
     @staticmethod
     async def test_ensure_subtraction_file_name_no_file(ctx):
         with pytest.raises(FileNotFoundError):
-            await ensure_subtraction_file_name(ctx, "Foo")
+            await ensure_subtraction_folder_name(ctx, "Foo")
