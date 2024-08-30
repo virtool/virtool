@@ -33,7 +33,7 @@ COPY alembic.ini run.py ./
 COPY --from=version /VERSION .
 COPY assets ./assets
 COPY virtool ./virtool
-COPY assets/bowtie2-inspect /user/local/bin/bowtie2-inspect
+COPY assets/bowtie2-inspect /usr/local/bin/bowtie2-inspect
 
 EXPOSE 9950
 ENTRYPOINT ["python", "run.py"]
