@@ -1,5 +1,4 @@
-"""
-ensure index files
+"""ensure index files
 
 Revision ID: 0p3nhjg1fcfj
 Date: 2024-05-22 20:47:09.866326
@@ -7,7 +6,7 @@ Date: 2024-05-22 20:47:09.866326
 """
 
 import gzip
-from asyncio import to_thread, gather
+from asyncio import gather, to_thread
 from pathlib import Path
 
 import arrow
@@ -20,7 +19,7 @@ from virtool_core.utils import file_stats
 from virtool.api.custom_json import dump_bytes
 from virtool.history.db import patch_to_version
 from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.models import SQLIndexFile, IndexType
+from virtool.indexes.models import IndexType, SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.migration import MigrationContext
 from virtool.types import Document
@@ -48,6 +47,9 @@ async def upgrade(ctx: MigrationContext):
             index["reference"]["id"],
             index_id,
         )
+
+        if not index_path.is_dir():
+            continue
 
         try:
             await ensure_json(
@@ -93,8 +95,7 @@ async def ensure_json(
     ref_id: str,
     manifest: dict,
 ):
-    """
-    Ensure that a there is a compressed JSON representation of the index found at
+    """Ensure that a there is a compressed JSON representation of the index found at
     `path`` exists.
 
     :param mongo: the application mongo client
@@ -128,10 +129,11 @@ async def ensure_json(
 
 
 async def export_index(
-    data_path: Path, mongo: "Mongo", manifest: dict[str, int]
+    data_path: Path,
+    mongo: "Mongo",
+    manifest: dict[str, int],
 ) -> list[Document]:
-    """
-    Dump OTUs to a JSON-serializable data structure based on an index manifest.
+    """Dump OTUs to a JSON-serializable data structure based on an index manifest.
 
     :param data_path: the application data path
     :param mongo: the application mongo client
@@ -148,8 +150,7 @@ async def export_index(
 
 
 def format_otu_for_export(otu: Document) -> Document:
-    """
-    Prepare a raw, joined OTU for export.
+    """Prepare a raw, joined OTU for export.
 
     If the OTU has a remote ID use this as the `_id` for export. This makes the OTU
     compatible with the original remote reference.
@@ -181,13 +182,12 @@ def format_otu_for_export(otu: Document) -> Document:
         "name": otu["name"],
         "abbreviation": otu["abbreviation"],
         "isolates": isolates,
-        "schema": otu["schema"],
+        "schema": otu.get("schema", []),
     }
 
 
 def format_sequence_for_export(sequence: Document) -> Document:
-    """
-    Prepare a raw sequence document for export.
+    """Prepare a raw sequence document for export.
 
     If the sequence has a remote ID use this as the `_id` for export. This makes the
     sequence compatible with the original remote reference.
@@ -230,57 +230,147 @@ def get_index_file_type_from_name(file_name: str) -> IndexType:
     raise ValueError(f"Filename does not map to valid IndexType: {file_name}")
 
 
-@pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
-async def test_upgrade(
-    ctx: MigrationContext,
-    snapshot,
-    files,
-    create_task_index,
-):
-    """
-    Test that ``files`` field is populated for index documents in the following cases:
+class TestUpgrade:
+    """Test that SQLFiles are create as is appropriate for indexes.
 
-    - Index document has no existing "files" field
-    - ``files`` field is an empty list
-    - index document is ready to be populated
+    - Files exist and have been added to SQL
+    - Files exist but have not been added to SQL
+    - Files do not exist
 
-    Also, ensure that a index JSON file is generated if missing.
-
+    Also, ensures that an index JSON file is generated if missing.
     """
 
-    async with ctx.pg.begin() as conn:
-        await conn.run_sync(SQLIndexFile.metadata.create_all)
-        await conn.commit()
+    @staticmethod
+    @pytest.mark.parametrize(
+        "previously_upgraded",
+        [
+            True,
+            False,
+        ],
+    )
+    async def test_upgrade(
+        ctx: MigrationContext,
+        snapshot,
+        previously_upgraded,
+        create_task_index,
+    ):
+        async with ctx.pg.begin() as conn:
+            await conn.run_sync(SQLIndexFile.metadata.create_all)
+            await conn.commit()
 
-    task_index = await create_task_index()
+        task_index = await create_task_index()
 
-    test_dir = ctx.data_path / "references" / task_index["reference"]["id"] / "index_1"
-    test_dir.joinpath("reference.fa.gz").write_text("FASTA file")
-    test_dir.joinpath("reference.1.bt2").write_text("Bowtie2 file")
+        test_dir = (
+            ctx.data_path / "references" / task_index["reference"]["id"] / "index_1"
+        )
 
-    update = {}
+        test_dir.joinpath("reference.fa.gz").write_text("FASTA file")
+        test_dir.joinpath("reference.1.bt2").write_text("Bowtie2 file")
 
-    if files == "empty":
-        update["files"] = []
+        if previously_upgraded:
+            with gzip.open(test_dir / "reference.json.gz", "wt") as file:
+                file.write("Complete index json")
 
-    if files == "full":
-        update["files"] = ["full"]
+            async with AsyncSession(ctx.pg) as session:
+                session.add_all(
+                    [
+                        SQLIndexFile(
+                            name=f"previously upgraded {path.name}",
+                            index="index_1",
+                            type=get_index_file_type_from_name(path.name),
+                            size=5,
+                        )
+                        for path in sorted(test_dir.iterdir())
+                    ],
+                )
+                await session.commit()
 
-    if files == "not_ready":
-        update["ready"] = False
+        await upgrade(ctx)
 
-    await ctx.mongo.indexes.update_one({"_id": "index_1"}, {"$set": {"files": update}})
+        async with AsyncSession(ctx.pg) as session:
+            assert (
+                await session.execute(select(SQLIndexFile))
+            ).scalars().all() == snapshot
 
-    await upgrade(ctx)
+        with gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f:
+            assert f.read() == snapshot(name="json")
 
-    async with AsyncSession(ctx.pg) as session:
-        assert (await session.execute(select(SQLIndexFile))).scalars().all() == snapshot
+    @staticmethod
+    async def test_upgrade_no_files(
+        ctx: MigrationContext,
+        snapshot,
+        create_task_index,
+    ):
+        async with ctx.pg.begin() as conn:
+            await conn.run_sync(SQLIndexFile.metadata.create_all)
+            await conn.commit()
 
-    with gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f:
-        assert f.read() == snapshot(name="json")
+        task_index = await create_task_index()
+
+        await ctx.mongo.indexes.update_one(
+            {"_id": "index_1"},
+            {"$unset": {"manifest": ""}},
+        )
+
+        test_dir = (
+            ctx.data_path / "references" / task_index["reference"]["id"] / "index_1"
+        )
+        test_dir.rmdir()
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            assert (
+                await session.execute(select(SQLIndexFile))
+            ).scalars().all() == snapshot
+
+        with (
+            pytest.raises(FileNotFoundError),
+            gzip.open(Path(test_dir) / "reference.json.gz", "rt") as f,
+        ):
+            f.read()
+
+    @staticmethod
+    async def test_upgrade_not_ready(
+        ctx: MigrationContext,
+        snapshot,
+        create_task_index,
+    ):
+        async with ctx.pg.begin() as conn:
+            await conn.run_sync(SQLIndexFile.metadata.create_all)
+            await conn.commit()
+
+        task_index = await create_task_index()
+
+        await ctx.mongo.indexes.update_one(
+            {"_id": "index_1"},
+            {"$set": {"ready": False}},
+        )
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            assert (
+                await session.execute(select(SQLIndexFile))
+            ).scalars().all() == snapshot
+
+        with (
+            pytest.raises(FileNotFoundError),
+            gzip.open(
+                Path(
+                    ctx.data_path
+                    / "references"
+                    / task_index["reference"]["id"]
+                    / "index_1",
+                )
+                / "reference.json.gz",
+                "rt",
+            ) as f,
+        ):
+            f.read()
 
 
-@pytest.fixture
+@pytest.fixture()
 async def create_task_index(
     config,
     mongo,
@@ -305,19 +395,10 @@ async def create_task_index(
             mongo.otus.insert_one(test_otu),
             mongo.sequences.insert_one(test_sequence),
             mongo.references.insert_one({**reference, "_id": ref_id}),
-            mongo.indexes.insert_one(
-                {
-                    "_id": "index_1",
-                    "name": "Index 1",
-                    "deleted": False,
-                    "manifest": {test_otu["_id"]: test_otu["version"]},
-                    "ready": True,
-                    "reference": {"id": ref_id},
-                }
-            ),
+            mongo.indexes.insert_one(index),
         )
 
-        index_dir = config.data_path / "references" / ref_id / "index_1"
+        index_dir = config.data_path / "references" / ref_id / index["_id"]
         index_dir.mkdir(parents=True)
 
         return index

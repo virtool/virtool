@@ -64,21 +64,28 @@ async def test_uploads(fake: DataFaker, snapshot):
     user = await fake.users.create()
 
     assert await fake.uploads.create(user=user) == snapshot(
-        name="upload", matcher=matcher,
+        name="upload",
+        matcher=matcher,
     )
 
     assert await fake.uploads.create(
-        user=user, upload_type=UploadType.subtraction,
+        user=user,
+        upload_type=UploadType.subtraction,
     ) == snapshot(name="upload[subtraction]", matcher=matcher)
 
     assert await fake.uploads.create(user=user, reserved=True) == snapshot(
-        name="upload[reserved]", matcher=matcher,
+        name="upload[reserved]",
+        matcher=matcher,
     )
 
 
 async def test_subtractions(fake: DataFaker, snapshot_recent):
     user = await fake.users.create()
-    upload = await fake.uploads.create(user=user, upload_type="subtraction", name="foobar.fq.gz")
+    upload = await fake.uploads.create(
+        user=user,
+        upload_type=UploadType.subtraction,
+        name="foobar.fq.gz",
+    )
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
     assert subtraction == snapshot_recent
