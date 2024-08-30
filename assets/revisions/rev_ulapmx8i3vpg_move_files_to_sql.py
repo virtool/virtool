@@ -23,11 +23,6 @@ virtool_down_revision = None
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = "e694fb270acb"
 
-hmm = "hmm"
-reference = "reference"
-reads = "reads"
-subtraction = "subtraction"
-
 
 async def upgrade(ctx: MigrationContext):
     async with AsyncSession(ctx.pg) as session:
