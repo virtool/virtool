@@ -1,4 +1,9 @@
 # serializer version: 1
+# name: TestEnsureSubtractionFileName.test_ensure_subtraction_file_name
+  list([
+    'foo.txt',
+  ])
+# ---
 # name: test_upgrade
   '''
   >host_1
