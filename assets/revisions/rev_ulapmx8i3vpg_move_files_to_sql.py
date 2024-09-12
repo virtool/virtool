@@ -1,5 +1,4 @@
-"""
-move files to sql
+"""move files to sql
 
 Revision ID: ulapmx8i3vpg
 Date: 2024-05-16 22:44:08.942465
@@ -27,12 +26,21 @@ required_alembic_revision = "e694fb270acb"
 
 async def upgrade(ctx: MigrationContext):
     async with AsyncSession(ctx.pg) as session:
-        async for document in ctx.mongo.files.find():
+        async for document in ctx.mongo.files.find(
+            {"type": {"$in": ["hmm", "reference", "reads", "subtraction"]}},
+        ):
             exists = (
                 await session.execute(
                     select(SQLUpload).filter_by(name_on_disk=document["_id"]),
                 )
             ).scalar()
+
+            size = document.get("size")
+            if size is None and (ctx.data_path / "files").exists():
+                file_path = ctx.data_path / "files" / document["_id"]
+                size = file_path.stat().st_size if file_path.exists() else 0
+
+            user = document["user"]
 
             if not exists:
                 session.add(
@@ -42,11 +50,11 @@ async def upgrade(ctx: MigrationContext):
                         ready=document["ready"],
                         removed=False,
                         reserved=document["reserved"],
-                        size=document["size"],
+                        size=size,
                         type=document["type"],
-                        user=document["user"]["id"],
+                        user=user if user is None else user["id"],
                         uploaded_at=document["uploaded_at"],
-                    )
+                    ),
                 )
 
         await session.commit()
@@ -89,8 +97,30 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                 "user": {"id": "user_3_id"},
                 "uploaded_at": arrow.get("2024-05-16T22:44:08.942465").naive,
             },
-        ]
+            {
+                "_id": "file_4.fasta.gz",
+                "name": "File 4",
+                "ready": True,
+                "reserved": False,
+                "type": "reads",
+                "user": None,
+                "uploaded_at": arrow.get("2024-05-16T22:44:08.942465").naive,
+            },
+            {
+                "_id": "file_5.fasta.gz",
+                "name": "File 5",
+                "ready": True,
+                "reserved": False,
+                "type": "sample_replacement",
+                "user": None,
+                "uploaded_at": arrow.get("2024-05-16T22:44:08.942465").naive,
+            },
+        ],
     )
+
+    read_path = ctx.data_path / "files"
+    read_path.mkdir(parents=True, exist_ok=True)
+    read_path.joinpath("file_4.fasta.gz").write_text("file contents")
 
     async with AsyncSession(ctx.pg) as session:
         session.add(
@@ -104,7 +134,7 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                 type="subtraction",
                 user="user_3",
                 uploaded_at=arrow.get("2024-05-16T22:44:08.942465").naive,
-            )
+            ),
         )
         await session.commit()
 
