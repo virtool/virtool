@@ -1,17 +1,15 @@
-import asyncio
 import math
 
-from sqlalchemy import delete, select, func
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.group import GroupMinimal, Group, GroupSearchResult
+from virtool_core.models.group import Group, GroupMinimal, GroupSearchResult
 from virtool_core.models.user import UserNested
 
 from virtool.authorization.client import AuthorizationClient
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.data.events import emits, Operation, emit
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import both_transactions
-
 from virtool.groups.mongo import (
     update_member_users_and_api_keys,
 )
@@ -26,15 +24,17 @@ class GroupsData:
     name = "groups"
 
     def __init__(
-        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+        self,
+        authorization_client: AuthorizationClient,
+        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
 
     async def list(self) -> list[GroupMinimal]:
-        """
-        List all user groups.
+        """List all user groups.
 
         :return: a list of all user groups
 
@@ -44,8 +44,7 @@ class GroupsData:
             return [GroupMinimal(**group.to_dict()) for group in result.scalars()]
 
     async def find(self, page: int, per_page: int, term: str = "") -> GroupSearchResult:
-        """
-        Finds all user groups matching the term
+        """Finds all user groups matching the term
 
         :return: a list of all user groups
 
@@ -61,28 +60,28 @@ class GroupsData:
             skip = 0
 
         async with AsyncSession(self._pg) as session:
-            total_count_results, found_count_results, results = await asyncio.gather(
-                session.execute(
-                    select(select(func.count(SQLGroup.id).label("total")).subquery())
-                ),
-                session.execute(
-                    select(
-                        select(func.count(SQLGroup.id).label("found"))
-                        .where(*filters)
-                        .subquery()
-                    )
-                ),
-                session.execute(
-                    select(SQLGroup)
+            total_count_result = await session.execute(
+                select(select(func.count(SQLGroup.id).label("total")).subquery()),
+            )
+
+            found_count_result = await session.execute(
+                select(
+                    select(func.count(SQLGroup.id).label("found"))
                     .where(*filters)
-                    .order_by(SQLGroup.name)
-                    .offset(skip)
-                    .limit(per_page)
+                    .subquery(),
                 ),
             )
 
-            total_count = total_count_results.scalar()
-            found_count = found_count_results.scalar()
+            results = await session.execute(
+                select(SQLGroup)
+                .where(*filters)
+                .order_by(SQLGroup.name)
+                .offset(skip)
+                .limit(per_page),
+            )
+
+            found_count = found_count_result.scalar()
+            total_count = total_count_result.scalar()
 
             groups = [row.to_dict() for row in results.unique().scalars()]
 
@@ -96,35 +95,35 @@ class GroupsData:
         )
 
     async def get(self, group_id: int) -> Group:
-        """
-        Get a single group by its ID.
+        """Get a single group by its ID.
 
         :param group_id: the group's ID
         :return: the group
         """
-
         async with AsyncSession(self._pg) as session:
             group: SQLGroup | None = await session.get(SQLGroup, group_id)
 
             if group:
                 users = [
                     UserNested(**base_processor(user))
-                    async for user in self._mongo.users.find({"groups": group_id}).sort("handle", 1)
+                    async for user in self._mongo.users.find({"groups": group_id}).sort(
+                        "handle",
+                        1,
+                    )
                 ]
 
                 return Group(
                     **{
                         **group.to_dict(),
                         "users": users,
-                    }
+                    },
                 )
 
         raise ResourceNotFoundError
 
     @emits(Operation.CREATE)
     async def create(self, name: str) -> Group:
-        """
-        Create new group with the given name.
+        """Create new group with the given name.
 
         :param name: the id for the new group
         :return: the group
@@ -152,8 +151,7 @@ class GroupsData:
 
     @emits(Operation.UPDATE)
     async def update(self, group_id: int, data: UpdateGroupRequest) -> Group:
-        """
-        Update the name or permissions for a group.
+        """Update the name or permissions for a group.
 
         :param group_id: the id of the group
         :param data: updates to the current group permissions or name
@@ -161,7 +159,6 @@ class GroupsData:
         :raises ResourceNotFoundError: if the group does not exist
 
         """
-
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
@@ -184,14 +181,16 @@ class GroupsData:
             if db_update:
                 group.update(db_update)
                 await update_member_users_and_api_keys(
-                    self._mongo, mongo_session, pg_session, group.id
+                    self._mongo,
+                    mongo_session,
+                    pg_session,
+                    group.id,
                 )
 
         return await self.get(group_id)
 
     async def delete(self, group_id: int):
-        """
-        Delete a group by its id.
+        """Delete a group by its id.
 
         Deletes the group and updates all member user permissions if they are affected
         by deletion of the group.
@@ -207,14 +206,17 @@ class GroupsData:
             pg_session,
         ):
             result = await pg_session.execute(
-                delete(SQLGroup).where(SQLGroup.id == group_id)
+                delete(SQLGroup).where(SQLGroup.id == group_id),
             )
 
             if not result.rowcount:
                 raise ResourceNotFoundError
 
             await update_member_users_and_api_keys(
-                self._mongo, mongo_session, pg_session, group_id
+                self._mongo,
+                mongo_session,
+                pg_session,
+                group_id,
             )
 
         emit(group, "groups", "delete", Operation.DELETE)

@@ -1,10 +1,9 @@
 import asyncio
 import math
 from asyncio import to_thread
-from typing import List
 
-from sqlalchemy import select, update, func
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy import func, select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.upload import Upload, UploadSearchResult
 from virtool_core.utils import rm
 
@@ -28,11 +27,13 @@ class UploadsData(DataLayerDomain):
         self._pg: AsyncEngine = pg
 
     async def find(
-        self, user, page: int, per_page: int, upload_type
+        self,
+        user,
+        page: int,
+        per_page: int,
+        upload_type,
     ) -> UploadSearchResult:
-        """
-        Find and filter uploads.
-        """
+        """Find and filter uploads."""
         base_filters = [
             SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
             SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
@@ -73,16 +74,14 @@ class UploadsData(DataLayerDomain):
                 .limit(per_page)
             )
 
-            total_count_results, found_count_results, results = await asyncio.gather(
-                session.execute(select(total_query)),
-                session.execute(select(found_query)),
-                session.execute(query),
-            )
+            uploads = [
+                row.to_dict()
+                for row in (await session.execute(query)).unique().scalars()
+            ]
 
-            total_count = total_count_results.scalar()
-            found_count = found_count_results.scalar()
+            found_count = (await session.execute(select(found_query))).scalar()
 
-            uploads = [row.to_dict() for row in results.unique().scalars()]
+            total_count = (await session.execute(select(total_query))).scalar()
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._mongo)])
 
@@ -196,7 +195,7 @@ class UploadsData(DataLayerDomain):
 
         return upload
 
-    async def release(self, upload_ids: int | List[int]):
+    async def release(self, upload_ids: int | list[int]):
         """Release the uploads in `upload_ids` by setting the `reserved` field to
         `False`.
 
@@ -217,7 +216,7 @@ class UploadsData(DataLayerDomain):
 
             await session.commit()
 
-    async def reserve(self, upload_ids: int | List[int]):
+    async def reserve(self, upload_ids: int | list[int]):
         """Reserve the uploads in `upload_ids` by setting the `reserved` field to
         `True`.
 
