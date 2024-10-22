@@ -92,6 +92,7 @@ def run_task_spawner(config: TaskSpawnerConfig):
             startup_sentry,
             startup_http_client_session,
             startup_databases_for_spawner,
+            startup_events,
             startup_datalayer_for_spawner,
             startup_executors,
             startup_task_spawner,

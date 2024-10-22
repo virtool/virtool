@@ -1,10 +1,10 @@
 import asyncio
 import functools
 from asyncio import CancelledError
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import AsyncGenerator, Awaitable, Callable
 
 from structlog import get_logger
 from virtool_core.models.basemodel import BaseModel
@@ -42,7 +42,8 @@ class _InternalEventsTarget:
 
     """
 
-    q = asyncio.Queue(maxsize=1000)
+    def __init__(self):
+        self.q = asyncio.Queue(maxsize=1000)
 
     def emit(self, event: Event):
         for _ in range(3):
@@ -51,6 +52,7 @@ class _InternalEventsTarget:
                 return
             except asyncio.QueueFull:
                 asyncio.sleep(5)
+
         logger.error("event queue full after multiple retries. dropping event.")
 
     async def get(self) -> Event:
@@ -77,7 +79,6 @@ async def dangerously_get_event() -> Event:
     """Get an event directly from the target.
 
     This should only be used in tests.
-
     """
     return await _events_target.get()
 
@@ -178,7 +179,7 @@ class EventPublisher:
                 )
 
                 logger.info(
-                    "Published event",
+                    "published event",
                     domain=event.domain,
                     name=event.name,
                     operation=event.operation,
