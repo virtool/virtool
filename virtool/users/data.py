@@ -518,7 +518,7 @@ class UsersData(DataLayerDomain):
 
                     result = await pg_session.execute(
                         update(SQLUserGroup)
-                        .where(SQLUser.id == user.id)
+                        .where(SQLUserGroup.user_id == user.id)
                         .where(SQLUserGroup.group_id == data["primary_group"])
                         .values(primary=True),
                     )

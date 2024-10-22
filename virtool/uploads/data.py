@@ -1,10 +1,9 @@
 import asyncio
 import math
 from asyncio import to_thread
-from typing import List
 
-from sqlalchemy import select, update, func
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy import func, select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.upload import Upload, UploadSearchResult
 from virtool_core.utils import rm
 
@@ -28,11 +27,13 @@ class UploadsData(DataLayerDomain):
         self._pg: AsyncEngine = pg
 
     async def find(
-        self, user, page: int, per_page: int, upload_type
+        self,
+        user,
+        page: int,
+        per_page: int,
+        upload_type,
     ) -> UploadSearchResult:
-        """
-        Find and filter uploads.
-        """
+        """Find and filter uploads."""
         base_filters = [
             SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
             SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
@@ -47,16 +48,14 @@ class UploadsData(DataLayerDomain):
         if upload_type:
             filters.append(SQLUpload.type == upload_type)  # skipcq: PTC-W0068,PYL-R1714
 
-        total_query = (
-            select(func.count(SQLUpload.id).label("total"))
-            .where(*base_filters)
-            .subquery()
+        found_query = (
+            select(func.count(SQLUpload.id))
+            .where(*base_filters, *filters)
+            .label("found")
         )
 
-        found_query = (
-            select(func.count(SQLUpload.id).label("found"))
-            .where(*base_filters, *filters)
-            .subquery()
+        total_query = (
+            select(func.count(SQLUpload.id)).where(*base_filters).label("total")
         )
 
         skip = 0
@@ -65,6 +64,15 @@ class UploadsData(DataLayerDomain):
             skip = (page - 1) * per_page
 
         async with AsyncSession(self._pg) as session:
+            count_result = await session.execute(
+                select(
+                    found_query,
+                    total_query,
+                ),
+            )
+
+            found_count, total_count = count_result.fetchone()
+
             query = (
                 select(SQLUpload)
                 .where(*base_filters, *filters)
@@ -73,16 +81,10 @@ class UploadsData(DataLayerDomain):
                 .limit(per_page)
             )
 
-            total_count_results, found_count_results, results = await asyncio.gather(
-                session.execute(select(total_query)),
-                session.execute(select(found_query)),
-                session.execute(query),
-            )
-
-            total_count = total_count_results.scalar()
-            found_count = found_count_results.scalar()
-
-            uploads = [row.to_dict() for row in results.unique().scalars()]
+            uploads = [
+                row.to_dict()
+                for row in (await session.execute(query)).unique().scalars()
+            ]
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._mongo)])
 
@@ -196,7 +198,7 @@ class UploadsData(DataLayerDomain):
 
         return upload
 
-    async def release(self, upload_ids: int | List[int]):
+    async def release(self, upload_ids: int | list[int]):
         """Release the uploads in `upload_ids` by setting the `reserved` field to
         `False`.
 
@@ -217,7 +219,7 @@ class UploadsData(DataLayerDomain):
 
             await session.commit()
 
-    async def reserve(self, upload_ids: int | List[int]):
+    async def reserve(self, upload_ids: int | list[int]):
         """Reserve the uploads in `upload_ids` by setting the `reserved` field to
         `True`.
 
