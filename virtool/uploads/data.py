@@ -48,16 +48,14 @@ class UploadsData(DataLayerDomain):
         if upload_type:
             filters.append(SQLUpload.type == upload_type)  # skipcq: PTC-W0068,PYL-R1714
 
-        total_query = (
-            select(func.count(SQLUpload.id).label("total"))
-            .where(*base_filters)
-            .subquery()
+        found_query = (
+            select(func.count(SQLUpload.id))
+            .where(*base_filters, *filters)
+            .label("found")
         )
 
-        found_query = (
-            select(func.count(SQLUpload.id).label("found"))
-            .where(*base_filters, *filters)
-            .subquery()
+        total_query = (
+            select(func.count(SQLUpload.id)).where(*base_filters).label("total")
         )
 
         skip = 0
@@ -66,6 +64,15 @@ class UploadsData(DataLayerDomain):
             skip = (page - 1) * per_page
 
         async with AsyncSession(self._pg) as session:
+            count_result = await session.execute(
+                select(
+                    found_query,
+                    total_query,
+                ),
+            )
+
+            found_count, total_count = count_result.fetchone()
+
             query = (
                 select(SQLUpload)
                 .where(*base_filters, *filters)
@@ -78,10 +85,6 @@ class UploadsData(DataLayerDomain):
                 row.to_dict()
                 for row in (await session.execute(query)).unique().scalars()
             ]
-
-            found_count = (await session.execute(select(found_query))).scalar()
-
-            total_count = (await session.execute(select(total_query))).scalar()
 
         uploads = await apply_transforms(uploads, [AttachUserTransform(self._mongo)])
 

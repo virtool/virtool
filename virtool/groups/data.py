@@ -60,19 +60,16 @@ class GroupsData:
             skip = 0
 
         async with AsyncSession(self._pg) as session:
-            total_count_result = await session.execute(
-                select(select(func.count(SQLGroup.id).label("total")).subquery()),
-            )
-
-            found_count_result = await session.execute(
+            count_result = await session.execute(
                 select(
-                    select(func.count(SQLGroup.id).label("found"))
-                    .where(*filters)
-                    .subquery(),
+                    select(func.count(SQLGroup.id)).where(*filters).label("found"),
+                    select(func.count(SQLGroup.id)).label("total"),
                 ),
             )
 
-            results = await session.execute(
+            found_count, total_count = count_result.fetchone()
+
+            result = await session.execute(
                 select(SQLGroup)
                 .where(*filters)
                 .order_by(SQLGroup.name)
@@ -80,10 +77,7 @@ class GroupsData:
                 .limit(per_page),
             )
 
-            found_count = found_count_result.scalar()
-            total_count = total_count_result.scalar()
-
-            groups = [row.to_dict() for row in results.unique().scalars()]
+            groups = [row.to_dict() for row in result.unique().scalars()]
 
         return GroupSearchResult(
             items=groups,
