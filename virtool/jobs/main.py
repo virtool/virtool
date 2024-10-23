@@ -59,7 +59,7 @@ async def create_app(config: ServerConfig):
 
 async def shutdown(app: App):
     try:
-        app["redis"].close()
+        await app["redis"].close()
     except KeyError:
         ...
 
