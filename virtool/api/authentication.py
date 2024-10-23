@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from contextlib import suppress
-from typing import Callable
 
 import jwt
 from aiohttp import BasicAuth, web
@@ -9,10 +9,11 @@ from structlog import get_logger
 from virtool.api.client import UserClient
 from virtool.api.errors import APIUnauthorized
 from virtool.api.policy import (
-    get_handler_policy,
     PublicRoutePolicy,
+    get_handler_policy,
 )
 from virtool.config import get_config_from_req
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.oidc.utils import validate_token
@@ -23,8 +24,7 @@ logger = get_logger("authn")
 
 
 def get_ip(req: Request) -> str:
-    """
-    A convenience function for getting the client IP address from a
+    """A convenience function for getting the client IP address from a
     :class:`~Request` object.
 
     :param req: the request
@@ -35,8 +35,7 @@ def get_ip(req: Request) -> str:
 
 
 def decode_authorization(authorization: str) -> tuple[str, str]:
-    """
-    Parse and decode an API key from an HTTP authorization header value.
+    """Parse and decode an API key from an HTTP authorization header value.
 
     :param authorization: the authorization header value for an API request
     :return: the user id and API key parsed from the authorization header
@@ -51,19 +50,29 @@ def decode_authorization(authorization: str) -> tuple[str, str]:
 
 
 async def authenticate_with_api_key(
-    req: Request, handler: Callable, handle: str, key: str
+    req: Request,
+    handler: Callable,
+    handle: str,
+    key: str,
 ) -> Response:
     """Authenticate the request with the provided user handle and API key."""
-    user = await get_data_from_req(req).users.get_by_handle(handle)
+    log = logger.bind(handle=handle)
 
-    logger.info("authenticating api key", user=user.id)
+    try:
+        user = await get_data_from_req(req).users.get_by_handle(handle)
+    except ResourceNotFoundError:
+        log.info("handle not found while authenticating with api key")
+        APIUnauthorized.raise_invalid_authorization_header()
+
+    if not user.active:
+        log.info("specified user not active while authenticating with api key")
+        APIUnauthorized.raise_invalid_authorization_header()
 
     key = await get_data_from_req(req).account.get_key_by_secret(user.id, key)
 
-    if not user or not user.active or not key:
-        raise APIUnauthorized(
-            "Invalid authorization header", error_id="invalid_authorization_header"
-        )
+    if not key:
+        log.info("invalid key while authenticating with api key")
+        APIUnauthorized.raise_invalid_authorization_header()
 
     req["client"] = UserClient(
         administrator_role=user.administrator_role,
@@ -78,8 +87,7 @@ async def authenticate_with_api_key(
 
 
 async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
-    """
-    Authenticate requests when req.app["config"].use_b2c is True.
+    """Authenticate requests when req.app["config"].use_b2c is True.
 
     If no id_token cookie is attached to request, redirect to /acquire_tokens
 
@@ -98,7 +106,8 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
 
     if token is None:
         raise APIUnauthorized(
-            "No B2C token found in headers or cookies", error_id="no_b2c_token"
+            "No B2C token found in headers or cookies",
+            error_id="no_b2c_token",
         )
 
     try:
@@ -112,7 +121,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
             given_name=token_claims.get("given_name", ""),
             family_name=token_claims.get("family_name", ""),
             oid=token_claims["oid"],
-        )
+        ),
     )
 
     if user.active is False:
@@ -163,8 +172,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
 
 @web.middleware
 async def authentication_middleware(req: Request, handler) -> Response:
-    """
-    Handle requests based on client type and authentication status.
+    """Handle requests based on client type and authentication status.
 
     :param req: the request to handle
     :param handler: the handler to call with the request if authenticated
@@ -189,7 +197,8 @@ async def authentication_middleware(req: Request, handler) -> Response:
             holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
         except AuthError:
             raise APIUnauthorized(
-                "Malformed Authorization header", "malformed_authorization_header"
+                "Malformed Authorization header",
+                "malformed_authorization_header",
             )
 
         if holder_id.startswith("job"):
