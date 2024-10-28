@@ -6,7 +6,7 @@ _routes = RouteTableDef()
 
 
 @_routes.get("/foo")
-def public_test_route(req: Request):
+async def public_test_route(req: Request):
     headers = {"Location": "/foo", "Content-Location": "/bar"}
     return Response(status=200, headers=headers)
 
