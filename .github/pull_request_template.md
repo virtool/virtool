@@ -1,4 +1,3 @@
-## Changes
 <!---
 Describe your changes in a bulleted list.
 
