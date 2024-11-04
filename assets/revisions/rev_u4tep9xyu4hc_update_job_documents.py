@@ -23,7 +23,8 @@ required_alembic_revision = None
 
 async def upgrade(ctx: MigrationContext):
     await ctx.mongo.jobs.update_many(
-        {"key": {"$exists": False}}, {"$set": {"key": None}}
+        {"key": {"$exists": False}},
+        {"$set": {"key": None}},
     )
     await ctx.mongo.jobs.update_many(
         {"acquired": {"$exists": False}},
@@ -87,18 +88,19 @@ async def upgrade(ctx: MigrationContext):
                             "input": "$status",
                             "as": "single_status",
                             "in": {
-                                "$setField": {
-                                    "field": "progress",
-                                    "input": "$$single_status",
-                                    "value": {
-                                        "$toInt": {
-                                            "$multiply": [
-                                                "$$single_status.progress",
-                                                100,
-                                            ],
+                                "$mergeObjects": [
+                                    "$$single_status",
+                                    {
+                                        "progress": {
+                                            "$toInt": {
+                                                "$multiply": [
+                                                    "$$single_status.progress",
+                                                    100,
+                                                ],
+                                            },
                                         },
                                     },
-                                },
+                                ],
                             },
                         },
                     },
