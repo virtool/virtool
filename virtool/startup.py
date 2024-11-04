@@ -231,7 +231,7 @@ async def startup_version(app: App):
     :param app: the application object
 
     """
-    version = await determine_server_version()
+    version = await asyncio.to_thread(determine_server_version)
 
     logger.info("starting virtool", version=version, mode=app["mode"])
 

@@ -7,13 +7,11 @@ downloads.
 import asyncio
 import csv
 import io
-import json
 import statistics
 from asyncio import gather
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
-import aiofiles
 import openpyxl.styles
 import visvalingamwyatt as vw
 from virtool_core.models.enums import AnalysisWorkflow
@@ -22,6 +20,7 @@ import virtool.analyses.utils
 from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.otus.utils import format_isolate_name
+from virtool.utils import load_json
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -70,9 +69,9 @@ async def load_results(config: Config, document: dict[str, Any]) -> dict:
             document["sample"]["id"],
         )
 
-        async with aiofiles.open(path, "r") as f:
-            data = json.loads(await f.read())
-            return {**document, "results": data}
+        data = await asyncio.to_thread(load_json, path)
+
+        return {**document, "results": data}
 
     return document
 

@@ -5,12 +5,14 @@ import hashlib
 import os
 import secrets
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Any, Dict, Iterable, Optional, Tuple, Type
+from typing import Any
 
 import arrow
+import orjson
 from aiohttp import ClientSession
 from aiohttp.web import Application
 from pydantic import BaseModel
@@ -26,7 +28,7 @@ SUB_DIRS = [
 ]
 
 
-def base_processor(document: Optional[Dict]) -> Optional[Dict]:
+def base_processor(document: dict | None) -> dict | None:
     """Converts a document from MongoDB into one that form a JSON response.
 
     Removes the '_id' key and reassigns it to `id`.
@@ -87,12 +89,12 @@ def ensure_data_dir(data_path: Path):
         os.makedirs(data_path / subdir, exist_ok=True)
 
 
-def generate_key() -> Tuple[str, str]:
+def generate_key() -> tuple[str, str]:
     key = secrets.token_hex(32)
     return key, hash_key(key)
 
 
-def get_safely(dct: Dict, *keys) -> Any:
+def get_safely(dct: dict, *keys) -> Any:
     """Get values from nested dictionaries while returning ``None`` when a ``KeyError``
     or ``TypeError`` is raised.
     """
@@ -115,7 +117,7 @@ def get_all_subclasses(cls):
     return all_subclasses
 
 
-def get_model_by_name(name: str) -> Type[BaseModel]:
+def get_model_by_name(name: str) -> type[BaseModel]:
     for cls in get_all_subclasses(BaseModel):
         if cls.__name__ == name:
             return cls
@@ -131,10 +133,20 @@ def hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
+def load_json(path: Path) -> Any:
+    """Load the JSON file at `path` and return it as a Python object.
+
+    :param path: the path to the JSON file
+    :return: the loaded JSON object
+    """
+    with open(path, "rb") as f:
+        return orjson.loads(f.read())
+
+
 def random_alphanumeric(
-    length: Optional[int] = 6,
-    mixed_case: Optional[bool] = False,
-    excluded: Optional[Iterable[str]] = None,
+    length: int | None = 6,
+    mixed_case: bool | None = False,
+    excluded: Iterable[str] | None = None,
 ) -> str:
     """Generates a random string composed of letters and numbers.
 

@@ -1,7 +1,6 @@
 """Work with HMM data in the database."""
 
 import asyncio
-import json
 from pathlib import Path
 
 import aiofiles
@@ -17,7 +16,7 @@ from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
 from virtool.mongo.core import Mongo
 from virtool.types import Document
-from virtool.utils import base_processor
+from virtool.utils import base_processor, load_json
 
 logger = get_logger("hmms")
 
@@ -75,8 +74,7 @@ async def get_hmms_referenced_in_files(mongo: Mongo, data_path: Path) -> set[str
     hmm_ids = set()
 
     for path in paths:
-        async with aiofiles.open(path, "r") as f:
-            data = json.loads(await f.read())
+        data = await asyncio.to_thread(load_json, path)
 
         for sequence in data:
             for orf in sequence["orfs"]:
