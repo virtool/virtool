@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import arrow
@@ -95,3 +96,12 @@ def static_time(mocker: MockerFixture, static_time_obj: StaticTime) -> StaticTim
 @pytest.fixture()
 def example_path() -> Path:
     return virtool_example_path
+
+
+@pytest.fixture()
+def pwd(tmp_path: Path):
+    """Use a temporary directory as the current working directory."""
+    prev_dir_path = Path.cwd()
+    os.chdir(tmp_path)
+    yield tmp_path
+    os.chdir(prev_dir_path)
