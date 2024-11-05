@@ -1,11 +1,9 @@
-from asyncio import to_thread
 import datetime
 import json
 import os
+from asyncio import to_thread
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
-import aiofiles
 import arrow
 import dictdiffer
 from virtool_core.models.enums import HistoryMethod
@@ -14,8 +12,7 @@ from virtool.config import get_config_from_app
 
 
 def calculate_diff(old: dict, new: dict) -> list:
-    """
-    Calculate the diff for a joined otu document before and after modification.
+    """Calculate the diff for a joined otu document before and after modification.
 
     :param old: the joined otu document before modification
     :param new: the joined otu document after modification
@@ -26,8 +23,7 @@ def calculate_diff(old: dict, new: dict) -> list:
 
 
 def compose_create_description(document: dict) -> str:
-    """
-    Compose a change description for the creation of a new OTU given its document.
+    """Compose a change description for the creation of a new OTU given its document.
 
     :param document: the OTU document
     :return: a change description
@@ -47,13 +43,12 @@ def compose_create_description(document: dict) -> str:
 
 
 def compose_edit_description(
-    name: Optional[str],
-    abbreviation: Optional[str],
-    old_abbreviation: Optional[str],
-    schema: Optional[dict],
+    name: str | None,
+    abbreviation: str | None,
+    old_abbreviation: str | None,
+    schema: dict | None,
 ) -> str:
-    """
-    Compose a change description for an edit on an existing OTU.
+    """Compose a change description for an edit on an existing OTU.
 
     :param name: an updated name value
     :param abbreviation: an updated abbreviation value
@@ -95,8 +90,7 @@ def compose_edit_description(
 
 
 def compose_remove_description(document: dict) -> str:
-    """
-    Compose a change description for removing an OTU.
+    """Compose a change description for removing an OTU.
 
     :param document: the OTU document that is being removed
     :return: a change description
@@ -114,16 +108,16 @@ def compose_remove_description(document: dict) -> str:
 
 
 def compose_history_description(
-    history_method: HistoryMethod, name: str, abbreviation: str = None
+    history_method: HistoryMethod,
+    name: str,
+    abbreviation: str = None,
 ) -> str:
-    """
-    Compose a change description for removing an OTU.
+    """Compose a change description for removing an OTU.
 
     :param document: the OTU document that is being removed
     :return: a change description
 
     """
-
     e = "" if history_method.value[-1] == "e" else "e"
 
     description = f"{history_method.value.capitalize()}{e}d {name}"
@@ -135,10 +129,10 @@ def compose_history_description(
 
 
 def derive_otu_information(
-    old: Optional[dict], new: Optional[dict]
-) -> Tuple[str, str, Union[int, str], str]:
-    """
-    Derive OTU information for a new change document
+    old: dict | None,
+    new: dict | None,
+) -> tuple[str, str, int | str, str]:
+    """Derive OTU information for a new change document
     from the old and new joined OTU documents.
 
     :param old: the old, joined OTU document
@@ -169,9 +163,8 @@ def derive_otu_information(
     return otu_id, otu_name, otu_version, ref_id
 
 
-def join_diff_path(data_path: Path, otu_id: str, otu_version: Union[int, str]) -> Path:
-    """
-    Derive the path to a diff file based on the application
+def join_diff_path(data_path: Path, otu_id: str, otu_version: int | str) -> Path:
+    """Derive the path to a diff file based on the application
     `data_path` configuration and the OTU ID and version.
 
     :param data_path: the application data path
@@ -184,8 +177,7 @@ def join_diff_path(data_path: Path, otu_id: str, otu_version: Union[int, str]) -
 
 
 def json_encoder(o):
-    """
-    A custom JSON encoder function that stores `datetime` objects
+    """A custom JSON encoder function that stores `datetime` objects
     as ISO format date strings.
 
     :param o: a JSON value object
@@ -199,8 +191,7 @@ def json_encoder(o):
 
 
 def json_object_hook(o: dict) -> dict:
-    """
-    A JSON decoder hook for converting `created_at` fields from
+    """A JSON decoder hook for converting `created_at` fields from
     ISO format dates to `datetime` objects.
 
     :param o: the JSON parsing dict
@@ -214,20 +205,16 @@ def json_object_hook(o: dict) -> dict:
     return o
 
 
-async def read_diff_file(data_path: Path, otu_id: str, otu_version: Union[int, str]):
-    """
-    Read a history diff JSON file.
-
-    """
+def read_diff_file(data_path: Path, otu_id: str, otu_version: int | str):
+    """Read a history diff JSON file."""
     path = join_diff_path(data_path, otu_id, otu_version)
 
-    async with aiofiles.open(path, "r") as f:
-        return json.loads(await f.read(), object_hook=json_object_hook)
+    with open(path) as f:
+        return json.load(f, object_hook=json_object_hook)
 
 
-async def remove_diff_files(app, id_list: List[str]):
-    """
-    Remove multiple diff files given a list of change IDs (`id_list`).
+async def remove_diff_files(app, id_list: list[str]):
+    """Remove multiple diff files given a list of change IDs (`id_list`).
 
     :param app: the application object
     :param id_list: a list of change IDs to remove diff files for
@@ -246,11 +233,13 @@ async def remove_diff_files(app, id_list: List[str]):
             pass
 
 
-async def write_diff_file(
-    data_path: Path, otu_id: str, otu_version: Union[int, str], body
+def write_diff_file(
+    data_path: Path,
+    otu_id: str,
+    otu_version: int | str,
+    body,
 ):
     path = join_diff_path(data_path, otu_id, otu_version)
 
-    async with aiofiles.open(path, "w") as f:
-        json_string = json.dumps(body, default=json_encoder)
-        await f.write(json_string)
+    with open(path, "w") as f:
+        json.dump(body, f, default=json_encoder)

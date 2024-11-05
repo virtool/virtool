@@ -3,7 +3,7 @@
 import asyncio
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import bson
 import dictdiffer
@@ -58,7 +58,8 @@ class DiffTransform(AbstractTransform):
         if document["diff"] == "file":
             otu_id, otu_version = document["id"].split(".")
 
-            document["diff"] = await virtool.history.utils.read_diff_file(
+            document["diff"] = await asyncio.to_thread(
+                virtool.history.utils.read_diff_file,
                 self._data_path,
                 otu_id,
                 otu_version,
@@ -126,8 +127,8 @@ async def add(
 
 async def prepare_add(
     history_method: HistoryMethod,
-    old: Optional[dict],
-    new: Optional[dict],
+    old: dict | None,
+    new: dict | None,
     user_id: str,
     data_path: Path,
 ) -> Document:
@@ -178,7 +179,7 @@ async def prepare_add(
     return document
 
 
-async def find(mongo, req_query, base_query: Optional[Document] = None):
+async def find(mongo, req_query, base_query: Document | None = None):
     data = await paginate(
         mongo.history,
         {},
@@ -198,7 +199,7 @@ async def find(mongo, req_query, base_query: Optional[Document] = None):
     }
 
 
-async def get(app, change_id: str) -> Optional[Document]:
+async def get(app, change_id: str) -> Document | None:
     """Get a complete history document identified by the passed `changed_id`.
 
     Loads diff field from file if necessary. Returns `None` if the document does not
@@ -253,7 +254,7 @@ async def get_contributors(mongo: "Mongo", query: dict) -> list[dict]:
 async def get_most_recent_change(
     mongo: "Mongo",
     otu_id: str,
-    session: Optional[AsyncIOMotorClientSession] = None,
+    session: AsyncIOMotorClientSession | None = None,
 ) -> Document:
     """Get the most recent change for the otu identified by the passed ``otu_id``.
 
@@ -313,7 +314,8 @@ async def patch_to_version(
             reverted_history_ids.append(change["_id"])
 
             if change["diff"] == "file":
-                change["diff"] = await virtool.history.utils.read_diff_file(
+                change["diff"] = await asyncio.to_thread(
+                    virtool.history.utils.read_diff_file,
                     data_path,
                     otu_id,
                     change["otu"]["version"],

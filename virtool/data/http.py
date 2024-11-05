@@ -1,10 +1,11 @@
 """An HTTP client for the data layer."""
 
-import asyncio
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 from aiohttp import ClientSession
+
+from virtool.data.file import ChunkWriter
 
 
 class HTTPClientError(Exception): ...
@@ -27,7 +28,8 @@ class HTTPClient:
         target: Path,
         progress_handler: Callable[[float | int], Awaitable[int]] | None = None,
     ):
-        """Download the binary file ``url`` to the location specified by ``target_path``.
+        """Download the binary file at ``url`` to the location specified by
+        ``target_path``.
 
         :param url: the download URL for the release
         :param target: the path to write the downloaded file to.
@@ -39,45 +41,12 @@ class HTTPClient:
             if resp.status > 399:
                 raise HTTPClientError
 
-            q: asyncio.Queue[bytes | None] = asyncio.Queue()
+            async with ChunkWriter(target) as writer:
+                async for chunk in resp.content.iter_chunked(DOWNLOAD_CHUNK_SIZE):
+                    await writer.write(chunk)
 
-            write_task = asyncio.create_task(
-                asyncio.to_thread(self._write_download, q, target),
-            )
-
-            async for chunk in resp.content.iter_chunked(DOWNLOAD_CHUNK_SIZE):
-                await q.put(chunk)
-
-                if progress_handler:
-                    await progress_handler(len(chunk))
-
-            await q.put(None)
-            await q.join()
-            await write_task
-
-            return
-
-    def _write_download(self, q: asyncio.Queue, target: Path):
-        try:
-            with open(target, "wb") as handle:
-                while True:
-                    try:
-                        chunk = q.get_nowait()
-                    except asyncio.QueueEmpty:
-                        continue
-
-                    if chunk is not None:
-                        handle.write(chunk)
-                        q.task_done()
-                        continue
-
-                    q.task_done()
-                    break
-
-        except Exception:
-            if target.exists():
-                target.unlink()
-            raise
+                    if progress_handler:
+                        await progress_handler(len(chunk))
 
 
 async def download_file(

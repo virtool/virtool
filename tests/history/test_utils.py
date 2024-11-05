@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 import pytest
+
 from virtool.history.utils import (
     calculate_diff,
     compose_create_description,
@@ -21,8 +22,7 @@ TEST_DIFF_PATH = Path.cwd() / "tests" / "test_files" / "diff.json"
 
 
 def test_calculate_diff(test_otu_edit):
-    """
-    Test that a diff is correctly calculated. Should work since the tested function is a very light wrapper for the
+    """Test that a diff is correctly calculated. Should work since the tested function is a very light wrapper for the
     dict differ function.
 
     """
@@ -115,7 +115,11 @@ def test_compose_create_description(document, description):
     ],
 )
 def test_compose_edit_description(
-    name, abbreviation, old_abbreviation, schema, description
+    name,
+    abbreviation,
+    old_abbreviation,
+    schema,
+    description,
 ):
     assert (
         compose_edit_description(name, abbreviation, old_abbreviation, schema)
@@ -143,10 +147,7 @@ def test_compose_remove_description(has_abbreviation):
 @pytest.mark.parametrize("version", [None, "3", 5])
 @pytest.mark.parametrize("missing", [None, "old", "new"])
 def test_derive_otu_information(version, missing):
-    """
-    Test that OTU information is derived correctly from the old and new versions of a joined OTU.
-
-    """
+    """Test that OTU information is derived correctly from the old and new versions of a joined OTU."""
     old = None
     new = None
 
@@ -186,10 +187,7 @@ def test_join_diff_path(tmp_path):
 
 @pytest.mark.parametrize("is_datetime", [True, False])
 def test_json_encoder(is_datetime, static_time):
-    """
-    Test that the custom encoder correctly encodes `datetime` objects to ISO format dates.
-
-    """
+    """Test that the custom encoder correctly encodes `datetime` objects to ISO format dates."""
     o = "foo"
 
     if is_datetime:
@@ -201,10 +199,7 @@ def test_json_encoder(is_datetime, static_time):
 
 
 def test_json_object_hook(static_time):
-    """
-    Test that the hook function correctly decodes created_at ISO format fields to naive `datetime` objects.
-
-    """
+    """Test that the hook function correctly decodes created_at ISO format fields to naive `datetime` objects."""
     o = {"foo": "bar", "created_at": static_time.iso}
 
     result = json_object_hook(o)
@@ -213,24 +208,19 @@ def test_json_object_hook(static_time):
 
 
 async def test_read_diff_file(mocker, snapshot):
-    """
-    Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects.
-
-    """
+    """Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects."""
     m = mocker.patch(
-        "virtool.history.utils.join_diff_path", return_value=TEST_DIFF_PATH
+        "virtool.history.utils.join_diff_path",
+        return_value=TEST_DIFF_PATH,
     )
 
-    assert await read_diff_file("foo", "bar", "baz") == snapshot
+    assert read_diff_file("foo", "bar", "baz") == snapshot
 
     m.assert_called_with("foo", "bar", "baz")
 
 
 async def test_remove_diff_files(loop, tmp_path, config):
-    """
-    Test that diff files are removed correctly and the function can handle a non-existent diff file.
-
-    """
+    """Test that diff files are removed correctly and the function can handle a non-existent diff file."""
     history_dir = tmp_path / "history"
     history_dir.mkdir()
 
@@ -249,18 +239,15 @@ async def test_remove_diff_files(loop, tmp_path, config):
 
 
 async def test_write_diff_file(snapshot, tmp_path):
-    """
-    Test that a diff file is written correctly.
-
-    """
+    """Test that a diff file is written correctly."""
     (tmp_path / "history").mkdir()
 
-    with open(TEST_DIFF_PATH, "r") as f:
+    with open(TEST_DIFF_PATH) as f:
         diff = json.load(f)
 
     await write_diff_file(tmp_path, "foo", "1", diff)
 
     path = tmp_path / "history" / "foo_1.json"
 
-    with open(path, "r") as f:
+    with open(path) as f:
         assert json.load(f) == snapshot
