@@ -117,19 +117,26 @@ async def upgrade(ctx: MigrationContext):
                 sample["_id"],
             )
 
-        async with AsyncSession(
-            ctx.pg,
-        ) as pg_session, await (
-            ctx.mongo.client.start_session()
-        ) as mongo_session, mongo_session.start_transaction():
+        async with (
+            AsyncSession(
+                ctx.pg,
+            ) as pg_session,
+            await ctx.mongo.client.start_session() as mongo_session,
+            mongo_session.start_transaction(),
+        ):
             sample_id = sample["_id"]
             for file in sample["files"]:
                 from_ = file.get("from")
 
+                from_size = from_.get("size")
+                if from_size is None and (ctx.data_path / "files").exists():
+                    file_path = ctx.data_path / "files" / from_.get("id")
+                    from_size = file_path.stat().st_size if file_path.exists() else 0
+
                 upload = SQLUpload(
                     name=from_["name"],
                     name_on_disk=from_["id"],
-                    size=from_["size"],
+                    size=from_size,
                     uploaded_at=from_.get("uploaded_at"),
                     removed=True,
                     reserved=True,
@@ -186,6 +193,38 @@ async def test_upgrade(ctx, snapshot):
                         "id": "unpaired_legacy.fastq",
                         "name": "unpaired_legacy.fastq",
                         "size": 1,
+                    },
+                },
+            ],
+        },
+        {
+            "_id": "unpaired_legacy_no_from_size",
+            "is_legacy": True,
+            "paired": False,
+            "files": [
+                {
+                    "name": "reads_1.fastq",
+                    "size": 1,
+                    "raw": True,
+                    "from": {
+                        "id": "unpaired_legacy_no_from_size.fastq",
+                        "name": "unpaired_legacy_no_from_size.fastq",
+                    },
+                },
+            ],
+        },
+        {
+            "_id": "unpaired_legacy_no_from_size_unrecoverable",
+            "is_legacy": True,
+            "paired": False,
+            "files": [
+                {
+                    "name": "reads_1.fastq",
+                    "size": 1,
+                    "raw": True,
+                    "from": {
+                        "id": "unpaired_legacy_no_from_size_unrecoverable.fastq",
+                        "name": "unpaired_legacy_no_from_size_unrecoverable.fastq",
                     },
                 },
             ],
@@ -270,12 +309,19 @@ async def test_upgrade(ctx, snapshot):
     for sample in samples:
         read_path = ctx.data_path / "samples" / sample["_id"]
         read_path.mkdir(parents=True, exist_ok=True)
+        files_path = ctx.data_path / "files"
+        files_path.mkdir(parents=True, exist_ok=True)
+
         files = sample.get("files")
 
         if files:
             files = [files] if isinstance(files, dict) else files
             for file in files:
                 read_path.joinpath(file["name"]).write_text(file["name"])
+
+    (ctx.data_path / "files").joinpath("unpaired_legacy_no_from_size.fastq").write_text(
+        "unpaired_legacy_no_from_size",
+    )
 
     (
         ctx.data_path

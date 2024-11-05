@@ -2,21 +2,25 @@
 # name: test_upgrade[SQLSampleReads after]
   list([
     <SQLSampleReads(id=1, sample=unpaired_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=1, uploaded_at=None)>,
-    <SQLSampleReads(id=2, sample=paired_unknown_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=2, uploaded_at=None)>,
-    <SQLSampleReads(id=3, sample=paired_unknown_legacy, name=reads_2.fq.gz, name_on_disk=reads_2.fq.gz, size=44, upload=3, uploaded_at=None)>,
-    <SQLSampleReads(id=4, sample=unpaired_unknown_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=4, uploaded_at=None)>,
-    <SQLSampleReads(id=5, sample=unpaired_legacy_compressed, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=1, upload=5, uploaded_at=None)>,
-    <SQLSampleReads(id=6, sample=unpaired_legacy_partial_compression, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=6, uploaded_at=None)>,
+    <SQLSampleReads(id=2, sample=unpaired_legacy_no_from_size, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=2, uploaded_at=None)>,
+    <SQLSampleReads(id=3, sample=unpaired_legacy_no_from_size_unrecoverable, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=3, uploaded_at=None)>,
+    <SQLSampleReads(id=4, sample=paired_unknown_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=4, uploaded_at=None)>,
+    <SQLSampleReads(id=5, sample=paired_unknown_legacy, name=reads_2.fq.gz, name_on_disk=reads_2.fq.gz, size=44, upload=5, uploaded_at=None)>,
+    <SQLSampleReads(id=6, sample=unpaired_unknown_legacy, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=6, uploaded_at=None)>,
+    <SQLSampleReads(id=7, sample=unpaired_legacy_compressed, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=1, upload=7, uploaded_at=None)>,
+    <SQLSampleReads(id=8, sample=unpaired_legacy_partial_compression, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=44, upload=8, uploaded_at=None)>,
   ])
 # ---
 # name: test_upgrade[SQLUploads after]
   list([
     <SQLUpload(id=1, created_at=None, name=unpaired_legacy.fastq, name_on_disk=unpaired_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
-    <SQLUpload(id=2, created_at=None, name=paired_unknown_legacy.fastq, name_on_disk=paired_unknown_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
-    <SQLUpload(id=3, created_at=None, name=paired_unknown_legacy_2.fastq, name_on_disk=paired_unknown_legacy_2.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
-    <SQLUpload(id=4, created_at=None, name=unpaired_unknown_legacy.fastq, name_on_disk=unpaired_unknown_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
-    <SQLUpload(id=5, created_at=None, name=unpaired_unknown_legacy_compressed.fastq, name_on_disk=unpaired_unknown_legacy_compressed.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
-    <SQLUpload(id=6, created_at=None, name=unpaired_legacy_partial_compression.fastq, name_on_disk=unpaired_legacy_partial_compression.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=2, created_at=None, name=unpaired_legacy_no_from_size.fastq, name_on_disk=unpaired_legacy_no_from_size.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=28, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=3, created_at=None, name=unpaired_legacy_no_from_size_unrecoverable.fastq, name_on_disk=unpaired_legacy_no_from_size_unrecoverable.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=0, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=4, created_at=None, name=paired_unknown_legacy.fastq, name_on_disk=paired_unknown_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=5, created_at=None, name=paired_unknown_legacy_2.fastq, name_on_disk=paired_unknown_legacy_2.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=6, created_at=None, name=unpaired_unknown_legacy.fastq, name_on_disk=unpaired_unknown_legacy.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=7, created_at=None, name=unpaired_unknown_legacy_compressed.fastq, name_on_disk=unpaired_unknown_legacy_compressed.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
+    <SQLUpload(id=8, created_at=None, name=unpaired_legacy_partial_compression.fastq, name_on_disk=unpaired_legacy_partial_compression.fastq, ready=False, removed=True, removed_at=None, reserved=True, size=1, space=None, type=None, user=None, uploaded_at=None)>,
   ])
 # ---
 # name: test_upgrade[modern_samplefiles after]
@@ -32,6 +36,18 @@
     }),
     dict({
       '_id': 'unpaired_legacy',
+      'is_compressed': True,
+      'is_legacy': True,
+      'paired': False,
+    }),
+    dict({
+      '_id': 'unpaired_legacy_no_from_size',
+      'is_compressed': True,
+      'is_legacy': True,
+      'paired': False,
+    }),
+    dict({
+      '_id': 'unpaired_legacy_no_from_size_unrecoverable',
       'is_compressed': True,
       'is_legacy': True,
       'paired': False,
@@ -69,6 +85,16 @@
   ])
 # ---
 # name: test_upgrade[unpaired_legacy_compressedfiles after]
+  list([
+    'reads_1.fq.gz',
+  ])
+# ---
+# name: test_upgrade[unpaired_legacy_no_from_size_unrecoverablefiles after]
+  list([
+    'reads_1.fq.gz',
+  ])
+# ---
+# name: test_upgrade[unpaired_legacy_no_from_sizefiles after]
   list([
     'reads_1.fq.gz',
   ])
