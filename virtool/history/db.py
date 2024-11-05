@@ -118,7 +118,13 @@ async def add(
         history_path = data_path / "history"
         await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
 
-        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
+        await asyncio.to_thread(
+            write_diff_file,
+            data_path,
+            otu_id,
+            otu_version,
+            document["diff"],
+        )
 
         await mongo.history.insert_one(dict(document, diff="file"), session=session)
 
@@ -173,7 +179,9 @@ async def prepare_add(
     await asyncio.to_thread(history_path.mkdir, parents=True, exist_ok=True)
 
     if len(bson.encode(document)) > 16793600:
-        await write_diff_file(data_path, otu_id, otu_version, document["diff"])
+        await asyncio.to_thread(
+            write_diff_file, data_path, otu_id, otu_version, document["diff"]
+        )
         document["diff"] = "file"
 
     return document

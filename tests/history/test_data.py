@@ -2,7 +2,6 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from syrupy import SnapshotAssertion
 
 from virtool.fake.next import DataFaker
@@ -14,7 +13,7 @@ from virtool.mongo.core import Mongo
 async def test_get(
     data_path: Path,
     file,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
@@ -42,9 +41,7 @@ async def test_get(
 
     mocker.patch(
         "virtool.history.utils.read_diff_file",
-        make_mocked_coro(return_value="loaded"),
+        return_value="loaded",
     )
 
-    history = HistoryData(data_path, mongo)
-
-    assert await history.get("baz.2") == snapshot
+    assert await HistoryData(data_path, mongo).get("baz.2") == snapshot
