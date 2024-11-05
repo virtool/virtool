@@ -3,20 +3,18 @@
 import asyncio
 from pathlib import Path
 
-import aiofiles
 import aiohttp.client_exceptions
 from aiohttp import ClientSession
 from structlog import get_logger
 
 import virtool.analyses.utils
 import virtool.utils
-from virtool.api.custom_json import dump_bytes
 from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
 from virtool.mongo.core import Mongo
 from virtool.types import Document
-from virtool.utils import base_processor, load_json
+from virtool.utils import base_processor, dump_json, load_json
 
 logger = get_logger("hmms")
 
@@ -190,9 +188,10 @@ async def generate_annotations_json_file(data_path: Path, mongo: Mongo) -> Path:
     annotations_path = data_path / "hmm" / "annotations.json"
     annotations_path.parent.mkdir(parents=True, exist_ok=True)
 
-    documents = [base_processor(document) async for document in mongo.hmm.find({})]
-
-    async with aiofiles.open(annotations_path, "wb") as f:
-        await f.write(dump_bytes(documents))
+    await asyncio.to_thread(
+        dump_json,
+        annotations_path,
+        [base_processor(document) async for document in mongo.hmm.find({})],
+    )
 
     return annotations_path

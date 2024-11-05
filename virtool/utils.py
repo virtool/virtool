@@ -17,6 +17,8 @@ from aiohttp import ClientSession
 from aiohttp.web import Application
 from pydantic import BaseModel
 
+from virtool.api.custom_json import dump_bytes
+
 SUB_DIRS = [
     "files",
     "references",
@@ -131,6 +133,16 @@ def get_temp_dir():
 
 def hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
+
+
+def dump_json(path: Path, data: Any) -> Any:
+    """Dump JSON serializable ``data`` to a file at `path`.
+
+    :param path: the path to the JSON file
+    :param data: the data to dump
+    """
+    with open(path, "wb") as f:
+        f.write(dump_bytes(data))
 
 
 def load_json(path: Path) -> Any:
