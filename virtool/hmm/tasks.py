@@ -1,13 +1,13 @@
-import json
+import asyncio
 from asyncio import to_thread
 from tempfile import TemporaryDirectory
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-import aiofiles
 from structlog import get_logger
 from virtool_core.utils import decompress_tgz
 
 from virtool.data.http import download_file
+from virtool.utils import load_json
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -19,8 +19,7 @@ logger = get_logger("hmms")
 
 
 class HMMInstallTask(BaseTask):
-    """
-    Runs a background Task that:
+    """Runs a background Task that:
         - downloads the official profiles.hmm.gz file
         - decompresses the hmm.tar.gz file
         - moves the file to the correct data path
@@ -41,7 +40,7 @@ class HMMInstallTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -53,14 +52,12 @@ class HMMInstallTask(BaseTask):
         ]
 
     async def download(self):
-        """
-        Download the HMM release archive.
-
-        """
+        """Download the HMM release archive."""
         release = self.context["release"]
 
         tracker = AccumulatingProgressHandlerWrapper(
-            self.create_progress_handler(), release["size"]
+            self.create_progress_handler(),
+            release["size"],
         )
 
         try:
@@ -79,8 +76,10 @@ class HMMInstallTask(BaseTask):
         await to_thread(decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path)
 
     async def install(self):
-        async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
-            annotations = json.loads(await f.read())
+        annotations = await asyncio.to_thread(
+            load_json,
+            self.temp_path / "hmm" / "annotations.json",
+        )
 
         await self.data.hmms.install(
             annotations,
@@ -95,9 +94,7 @@ class HMMInstallTask(BaseTask):
 
 
 class HMMRefreshTask(BaseTask):
-    """
-    Periodically refreshes the release information for HMMs.
-    """
+    """Periodically refreshes the release information for HMMs."""
 
     name = "refresh_hmms"
 

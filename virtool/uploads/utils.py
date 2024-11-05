@@ -1,14 +1,15 @@
 from asyncio import to_thread
+from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable
+from typing import Any
 
-import aiofiles
 from aiohttp import MultipartReader
 from cerberus import Validator
 from structlog import get_logger
 
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.file import ChunkWriter
 
 logger = get_logger("uploads")
 
@@ -66,9 +67,9 @@ async def naive_writer(
     """
     size = 0
 
-    await to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+    await to_thread(path.parent.mkdir, exist_ok=True, parents=True)
 
-    async with aiofiles.open(path, "wb") as f:
+    async with ChunkWriter(path) as writer:
         async for chunk in chunker:
             if type(chunk) is str:
                 logger.warning(
@@ -81,8 +82,7 @@ async def naive_writer(
             if size == 0 and on_first_chunk:
                 on_first_chunk(chunk)
 
-            await f.write(chunk)
-
+            await writer.write(chunk)
             size += len(chunk)
 
     logger.info("wrote file", path=path, size=size)

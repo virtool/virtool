@@ -1,32 +1,35 @@
-"""
-An HTTP client for the data layer.
+"""An HTTP client for the data layer."""
 
-"""
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Callable, Union, Awaitable
 
-import aiofiles
 from aiohttp import ClientSession
 
-from virtool.errors import WebError
+from virtool.data.file import ChunkWriter
 
 
-class HTTPClientError(Exception):
-    ...
+class HTTPClientError(Exception): ...
+
+
+DOWNLOAD_CHUNK_SIZE = 1024 * 1024 * 4
+"""The size of the chunks to download in bytes."""
 
 
 class HTTPClient:
     """A client for making HTTP requests from the Virtool backend."""
 
     def __init__(self, session: ClientSession) -> None:
-        """
-        :param session: the aiohttp client session
-        """
+        """:param session: the aiohttp client session"""
         self._session = session
 
-    async def download(self, url: str, target: Path, progress_handler=None):
-        """
-        Download the binary file ``url`` to the location specified by ``target_path``.
+    async def download(
+        self,
+        url: str,
+        target: Path,
+        progress_handler: Callable[[float | int], Awaitable[int]] | None = None,
+    ):
+        """Download the binary file at ``url`` to the location specified by
+        ``target_path``.
 
         :param url: the download URL for the release
         :param target: the path to write the downloaded file to.
@@ -38,14 +41,9 @@ class HTTPClient:
             if resp.status > 399:
                 raise HTTPClientError
 
-            async with aiofiles.open(target, "wb") as handle:
-                while True:
-                    chunk = await resp.content.read(4096)
-
-                    if not chunk:
-                        break
-
-                    await handle.write(chunk)
+            async with ChunkWriter(target) as writer:
+                async for chunk in resp.content.iter_chunked(DOWNLOAD_CHUNK_SIZE):
+                    await writer.write(chunk)
 
                     if progress_handler:
                         await progress_handler(len(chunk))
@@ -54,10 +52,9 @@ class HTTPClient:
 async def download_file(
     url: str,
     target_path: Path,
-    progress_handler: Callable[[Union[float, int]], Awaitable[int]] | None = None,
+    progress_handler: Callable[[float | int], Awaitable[int]] | None = None,
 ):
-    """
-    Download the binary file ``url`` to the location specified by ``target_path``.
+    """Download the binary file ``url`` to the location specified by ``target_path``.
 
     :param url: the download URL for the release
     :param target_path: the path to write the downloaded file to.
@@ -65,19 +62,5 @@ async def download_file(
         when it changes.
 
     """
-
     async with ClientSession() as session, session.get(url) as resp:
-        if resp.status != 200:
-            raise WebError
-
-        async with aiofiles.open(target_path, "wb") as handle:
-            while True:
-                chunk = await resp.content.read(4096)
-
-                if not chunk:
-                    break
-
-                await handle.write(chunk)
-
-                if progress_handler:
-                    await progress_handler(len(chunk))
+        await HTTPClient(session).download(url, target_path, progress_handler)

@@ -124,7 +124,7 @@ async def apply_transforms(
     """
     with sentry_sdk.start_span(
         op="apply_transforms",
-        description=", ".join([p.__class__.__name__ for p in pipeline]),
+        name=", ".join([p.__class__.__name__ for p in pipeline]),
     ):
         if isinstance(documents, list):
             all_prepared = await gather(
@@ -134,7 +134,7 @@ async def apply_transforms(
                 ],
             )
 
-            for prepared, transform in zip(all_prepared, pipeline):
+            for prepared, transform in zip(all_prepared, pipeline, strict=False):
                 documents = await transform.attach_many(
                     [transform.preprocess(d) for d in documents],
                     prepared,
@@ -152,7 +152,7 @@ async def apply_transforms(
             ],
         )
 
-        for p, transform in zip(prepared, pipeline):
+        for p, transform in zip(prepared, pipeline, strict=False):
             document = await transform.attach_one(transform.preprocess(document), p)
 
         return document
