@@ -117,11 +117,13 @@ async def upgrade(ctx: MigrationContext):
                 sample["_id"],
             )
 
-        async with AsyncSession(
-            ctx.pg,
-        ) as pg_session, await (
-            ctx.mongo.client.start_session()
-        ) as mongo_session, mongo_session.start_transaction():
+        async with (
+            AsyncSession(
+                ctx.pg,
+            ) as pg_session,
+            await ctx.mongo.client.start_session() as mongo_session,
+            mongo_session.start_transaction(),
+        ):
             sample_id = sample["_id"]
             for file in sample["files"]:
                 from_ = file.get("from")
@@ -294,10 +296,11 @@ async def test_upgrade(ctx, snapshot):
 
     async with AsyncSession(ctx.pg) as session:
         assert (
-            await session.execute(select(SQLUpload))
+            await session.execute(select(SQLUpload).order_by(SQLUpload.id))
         ).unique().scalars().all() == snapshot(name="SQLUploads after")
+
         assert (
-            await session.execute(select(SQLSampleReads))
+            await session.execute(select(SQLSampleReads).order_by(SQLSampleReads.id))
         ).scalars().all() == snapshot(name="SQLSampleReads after")
 
     for sample in samples:

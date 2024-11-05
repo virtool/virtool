@@ -17,5 +17,5 @@ class TestFindServerVersion:
         """Test that the function returns "Unknown" when the VERSION file does not
         exist.
         """
-        assert (pwd / "VERSION").exists() == False
+        assert (pwd / "VERSION").exists() is False
         assert determine_server_version() == "Unknown"
