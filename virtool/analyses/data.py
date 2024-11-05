@@ -1,7 +1,6 @@
 import asyncio
 import math
 from datetime import datetime
-from typing import Optional, Tuple
 
 import sentry_sdk
 from sqlalchemy import delete
@@ -120,7 +119,7 @@ class AnalysisData(DataLayerDomain):
 
         data: tuple[list[dict], int] | None = None
 
-        with sentry_sdk.start_span(op="mongo", description="aggregate_find_analyses"):
+        with sentry_sdk.start_span(op="mongo", name="aggregate_find_analyses"):
             async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
                 data = (
                     paginate_dict["data"],
@@ -133,10 +132,7 @@ class AnalysisData(DataLayerDomain):
 
         documents, total_count = data
 
-        with sentry_sdk.start_span(
-            op="mongo",
-            description="filter_analyses_by_sample_rights",
-        ):
+        with sentry_sdk.start_span(op="mongo", name="filter_analyses_by_sample_rights"):
             documents = await filter_analyses_by_sample_rights(
                 client,
                 self._mongo,
@@ -362,7 +358,7 @@ class AnalysisData(DataLayerDomain):
         analysis_id: str,
         analysis_format: str,
         name: str,
-    ) -> Optional[AnalysisFile]:
+    ) -> AnalysisFile | None:
         """Uploads a new analysis result file.
 
         :param reader: the file reader
@@ -419,7 +415,7 @@ class AnalysisData(DataLayerDomain):
 
         raise ResourceNotFoundError()
 
-    async def download(self, analysis_id: str, extension: str) -> Tuple[str, str]:
+    async def download(self, analysis_id: str, extension: str) -> tuple[str, str]:
         """Get an analysis to be downloaded in CSV or XSLX format.
 
         :param analysis_id: the analysis ID
@@ -450,7 +446,7 @@ class AnalysisData(DataLayerDomain):
             "text/csv",
         )
 
-    async def blast(self, analysis_id: str, sequence_index: int) -> Optional[str]:
+    async def blast(self, analysis_id: str, sequence_index: int) -> str | None:
         """BLAST a contig sequence that is part of a NuVs result record.
 
         :param analysis_id: the analysis ID
