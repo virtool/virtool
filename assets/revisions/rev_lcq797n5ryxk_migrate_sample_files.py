@@ -304,6 +304,8 @@ async def test_upgrade(ctx, snapshot):
         ).scalars().all() == snapshot(name="SQLSampleReads after")
 
     for sample in samples:
-        assert os.listdir(ctx.data_path / "samples" / sample["_id"]) == snapshot(
+        assert sorted(
+            os.listdir(ctx.data_path / "samples" / sample["_id"])
+        ) == snapshot(
             name=f"{sample["_id"]}files after",
         )
