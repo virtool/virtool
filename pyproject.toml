@@ -81,6 +81,8 @@ sphinx-toolbox = "^3.5.0"
 pytest-structlog = "^0.6"
 mypy = "^1.6.0"
 ruff = "^0.4.1"
+pytest-profiling = "^1.7.0"
+snakeviz = "^2.2.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
