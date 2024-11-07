@@ -305,7 +305,7 @@ class TestUpgrade:
             await conn.run_sync(SQLIndexFile.metadata.create_all)
             await conn.commit()
 
-        task_index = await create_task_index()
+        task_index = await create_task_index(ctx)
 
         await ctx.mongo.indexes.update_one(
             {"_id": "index_1"},
@@ -340,7 +340,7 @@ class TestUpgrade:
             await conn.run_sync(SQLIndexFile.metadata.create_all)
             await conn.commit()
 
-        task_index = await create_task_index()
+        task_index = await create_task_index(ctx)
 
         await ctx.mongo.indexes.update_one(
             {"_id": "index_1"},
