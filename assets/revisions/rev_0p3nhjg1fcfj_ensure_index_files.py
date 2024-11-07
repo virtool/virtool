@@ -258,7 +258,7 @@ class TestUpgrade:
             await conn.run_sync(SQLIndexFile.metadata.create_all)
             await conn.commit()
 
-        task_index = await create_task_index()
+        task_index = await create_task_index(ctx)
 
         test_dir = (
             ctx.data_path / "references" / task_index["reference"]["id"] / "index_1"
@@ -373,12 +373,11 @@ class TestUpgrade:
 @pytest.fixture()
 async def create_task_index(
     config,
-    mongo,
     reference,
     test_otu,
     test_sequence,
 ):
-    async def func():
+    async def func(ctx: MigrationContext):
         test_sequence["accession"] = "KX269872"
         ref_id = test_otu["reference"]["id"]
 
@@ -392,10 +391,10 @@ async def create_task_index(
         }
 
         await gather(
-            mongo.otus.insert_one(test_otu),
-            mongo.sequences.insert_one(test_sequence),
-            mongo.references.insert_one({**reference, "_id": ref_id}),
-            mongo.indexes.insert_one(index),
+            ctx.mongo.otus.insert_one(test_otu),
+            ctx.mongo.sequences.insert_one(test_sequence),
+            ctx.mongo.references.insert_one({**reference, "_id": ref_id}),
+            ctx.mongo.indexes.insert_one(index),
         )
 
         index_dir = config.data_path / "references" / ref_id / index["_id"]
