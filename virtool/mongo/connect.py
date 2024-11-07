@@ -48,8 +48,9 @@ async def connect_mongo(connection_string: str, db_name: str) -> Mongo:
     :return: database
 
     """
-    motor_database = await connect_motor_database(connection_string, db_name)
-    return Mongo(motor_database, RandomIdProvider())
+    return Mongo(
+        await connect_motor_database(connection_string, db_name), RandomIdProvider()
+    )
 
 
 async def check_mongo_version(mongo: AsyncIOMotorClient) -> str:

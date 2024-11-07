@@ -17,64 +17,61 @@ from virtool.authorization.permissions import ResourceType
 
 
 @pytest.fixture(scope="session")
-async def _authorization_client_cache() -> dict[str, [AuthorizationClient, OpenFgaApi]]:
+async def _openfga_api_cache() -> dict[str, OpenFgaApi]:
     cache = {}
 
     yield cache
 
     await asyncio.gather(
-        *[client.close() for client, _ in cache.values()],
+        *[client.close() for client in cache.values()],
     )
 
 
 @pytest.fixture()
-async def _authorization_client_openfga_api(
-    _authorization_client_cache: dict[str, tuple[AuthorizationClient, OpenFgaApi]],
+async def openfga_api(
+    _openfga_api_cache: dict[str, OpenFgaApi],
     openfga_host: str,
-    openfga_scheme,
+    openfga_scheme: OpenfgaScheme,
     openfga_store_name: str,
-) -> tuple[AuthorizationClient, OpenFgaApi]:
+) -> OpenFgaApi:
     """An :class:`AuthorizationClient` instance backed by a testing OpenFGA server."""
-    if openfga_store_name in _authorization_client_cache:
-        return _authorization_client_cache[openfga_store_name]
+    if openfga_store_name in _openfga_api_cache:
+        return _openfga_api_cache[openfga_store_name]
 
     configuration = openfga_sdk.Configuration(
         api_scheme=openfga_scheme.value,
         api_host=openfga_host,
     )
 
-    api_instance = openfga_sdk.OpenFgaApi(openfga_sdk.ApiClient(configuration))
+    openfga_api_ = openfga_sdk.OpenFgaApi(openfga_sdk.ApiClient(configuration))
 
     configuration.store_id = await get_or_create_openfga_store(
-        api_instance,
+        openfga_api_,
         openfga_store_name,
     )
 
-    await write_openfga_authorization_model(api_instance)
+    await write_openfga_authorization_model(openfga_api_)
 
-    authorization_client = AuthorizationClient(api_instance)
+    _openfga_api_cache[openfga_store_name] = openfga_api_
 
-    _authorization_client_cache[openfga_store_name] = authorization_client, api_instance
-
-    return authorization_client, api_instance
+    return openfga_api_
 
 
 @pytest.fixture()
-async def authorization_client(
-    _authorization_client_openfga_api: tuple[AuthorizationClient, OpenFgaApi],
-    openfga_host: str,
-    openfga_scheme,
-    openfga_store_name: str,
-) -> AuthorizationClient:
+async def authorization_client(mocker, openfga_api: OpenFgaApi) -> AuthorizationClient:
     """An :class:`AuthorizationClient` instance backed by a testing OpenFGA server."""
-    authorization_client, openfga_api = _authorization_client_openfga_api
-
     await asyncio.gather(
         delete_openfga_tuples(openfga_api, ResourceType.SPACE, 0),
         delete_openfga_tuples(openfga_api, ResourceType.APP, "virtool"),
     )
 
-    return authorization_client
+    client = AuthorizationClient(openfga_api)
+
+    mocker.patch.object(client, "close", return_value=None)
+
+    await client.close()
+
+    return client
 
 
 @pytest.fixture()

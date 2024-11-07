@@ -18,5 +18,6 @@ __pycache__
 config.json
 settings.json
 env
+prof
 tags
 .vscode

@@ -3,9 +3,11 @@ import datetime
 import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.redis import Redis
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.snapshot_date import validate_time
+from virtool.authorization.client import AuthorizationClient
 from virtool.mongo.core import Mongo
 
 
@@ -57,12 +59,16 @@ def test_nested_timestamps(snapshot_recent):
 
 
 async def test_data_and_client_databases(
-    motor_database: Mongo,
+    authorization_client: AuthorizationClient,
+    mongo: Mongo,
     pg: AsyncEngine,
+    redis: Redis,
     spawn_client: ClientSpawner,
 ):
     """Test that data layer, database, and client fixtures refer to the same clients."""
     client = await spawn_client()
 
-    assert motor_database is client.mongo.motor_database
-    assert pg is client.pg
+    assert authorization_client is client.app["authorization"]
+    assert mongo is client.app["mongo"]
+    assert pg is client.app["pg"]
+    assert redis is client.app["redis"]

@@ -5,8 +5,7 @@ from virtool_core.models.enums import Permission
 
 
 def check_legacy_password(password: str, salt: str, hashed: str) -> bool:
-    """
-    Check if a unicode ``password`` and ``salt``
+    """Check if a unicode ``password`` and ``salt``
     match a ``hashed`` password from the database.
 
     This is for use only with legacy SHA512 hashed passwords. New password hash with
@@ -25,8 +24,7 @@ def check_legacy_password(password: str, salt: str, hashed: str) -> bool:
 
 
 def check_password(password: str, hashed: bytes) -> bool:
-    """
-    Check if a unicode ``password`` matches a ``hashed_password``.
+    """Check if a unicode ``password`` matches a ``hashed_password``.
 
     :param password: the password to check.
     :param hashed: the salted and hashed password from the database
@@ -37,8 +35,7 @@ def check_password(password: str, hashed: bytes) -> bool:
 
 
 def generate_base_permissions() -> dict[str, bool]:
-    """
-    Return a `dict` keyed with all Virtool permissions where all the values are `False`.
+    """Return a `dict` keyed with all Virtool permissions where all the values are `False`.
 
     :return: all-false permissions
     """
@@ -46,8 +43,7 @@ def generate_base_permissions() -> dict[str, bool]:
 
 
 def hash_password(password: str) -> bytes:
-    """
-    Salt and hash a unicode password. Uses bcrypt.
+    """Salt and hash a unicode password. Uses bcrypt.
 
     :param password: a password string to salt and hash
     :return: a salt and hashed password
@@ -57,8 +53,7 @@ def hash_password(password: str) -> bytes:
 
 
 def limit_permissions(permissions, limit_filter: dict) -> dict:
-    """
-    Make sure permission values in `permissions` do not exceed those in `limit_filter`.
+    """Make sure permission values in `permissions` do not exceed those in `limit_filter`.
     Returns a filtered set of permissions.
 
     :param limit_filter: the limiting permissions that cannot be exceeded

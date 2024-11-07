@@ -7,7 +7,6 @@ from typing import Any, Protocol
 import pytest
 from aiohttp import BasicAuth, ClientResponse
 from aiohttp.web import RouteTableDef
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import Permission
 from virtool_core.models.group import GroupMinimal
@@ -18,6 +17,7 @@ from virtool_core.redis import Redis
 import virtool.jobs.main
 from virtool.api.custom_json import dump_string
 from virtool.app import create_app
+from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.openfga import OpenfgaScheme
 from virtool.config.cls import ServerConfig
 from virtool.data.layer import DataLayer
@@ -87,6 +87,8 @@ class VirtoolTestClient:
 
         self.pg: AsyncEngine = self.app["pg"]
         """The server SQLAlchemy engine."""
+
+        self.redis: Redis = self.app["redis"]
 
         self.user: VirtoolTestClientUser = test_client_user
         """
@@ -198,12 +200,13 @@ class ClientSpawner(Protocol):
 @pytest.fixture()
 def spawn_client(
     aiohttp_client,
+    authorization_client: AuthorizationClient,
     data_path: Path,
     fake: DataFaker,
     mocker,
+    mongo: Mongo,
     mongo_connection_string: str,
     mongo_name: str,
-    motor_database: AsyncIOMotorDatabase,
     openfga_host: str,
     openfga_scheme: OpenfgaScheme,
     openfga_store_name: str,
@@ -360,9 +363,13 @@ def spawn_client(
             use_b2c=False,
         )
 
-        # mocker.patch("virtool.startup.connect_openfga", return_value=pg)
+        mocker.patch(
+            "virtool.startup.connect_authorization_client",
+            return_value=authorization_client,
+        )
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
-        mocker.patch("virtool.startup.connect_mongo", return_value=motor_database)
+        mocker.patch("virtool.startup.connect_mongo", return_value=mongo)
+        mocker.patch("virtool.startup._connect_redis", return_value=redis)
 
         app = create_app(config)
 
