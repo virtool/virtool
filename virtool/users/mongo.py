@@ -1,8 +1,8 @@
-"""
-Utilities for working with users in the database.
+"""Utilities for working with users in the database.
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
+
 import random
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -15,12 +15,11 @@ from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
-from virtool.users.db import B2CUserAttributes, ATTACH_PROJECTION
+from virtool.users.db import ATTACH_PROJECTION, B2CUserAttributes
 from virtool.users.settings import DEFAULT_USER_SETTINGS
 from virtool.users.utils import (
-    hash_password,
-    check_password,
     check_legacy_password,
+    check_password,
 )
 from virtool.utils import base_processor
 
@@ -32,8 +31,7 @@ async def compose_primary_group_update(
     group_id: int,
     user_id: str,
 ) -> Document:
-    """
-    Compose an update dict for changing a user's `primary_group`.
+    """Compose an update dict for changing a user's `primary_group`.
 
     If the ``group_id`` is ``None``, no change will be made. If the ``group_id`` is
     ``"none"``, the ``primary_group`` will be set to ``"none"``.
@@ -46,7 +44,6 @@ async def compose_primary_group_update(
     :return: an update
 
     """
-
     if group_id in (None, "none"):
         return {
             "primary_group": None,
@@ -91,7 +88,8 @@ async def create_user(
             raise ValueError("Missing b2c_user_attributes")
 
         if await mongo.users.count_documents(
-            {"b2c_oid": b2c_user_attributes.oid}, limit=1
+            {"b2c_oid": b2c_user_attributes.oid},
+            limit=1,
         ):
             raise ResourceConflictError("User oid already exists")
 
@@ -101,10 +99,10 @@ async def create_user(
                 "b2c_display_name": b2c_user_attributes.display_name,
                 "b2c_given_name": b2c_user_attributes.given_name,
                 "b2c_family_name": b2c_user_attributes.family_name,
-            }
+            },
         )
     else:
-        document["password"] = hash_password(password)
+        document["password"] = virtool.users.utils.hash_password(password)
 
     try:
         return await mongo.users.insert_one(document, session=session)
@@ -113,8 +111,7 @@ async def create_user(
 
 
 async def generate_handle(collection, given_name: str, family_name: str) -> str:
-    """
-    Create handle for new B2C users in Virtool using values from ID token and random
+    """Create handle for new B2C users in Virtool using values from ID token and random
     integer.
 
     :param collection: the mongo collection to check for existing usernames
@@ -132,8 +129,7 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
 
 
 async def validate_credentials(mongo: "Mongo", user_id: str, password: str) -> bool:
-    """
-    Check if the ``user_id`` and ``password`` are valid.
+    """Check if the ``user_id`` and ``password`` are valid.
 
     Returns ``True`` if the username exists and the password is correct. Returns
     ``False`` if the username does not exist or the password is incorrect.
@@ -157,7 +153,9 @@ async def validate_credentials(mongo: "Mongo", user_id: str, password: str) -> b
         pass
 
     if "salt" in document and check_legacy_password(
-        password, document["salt"], document["password"]
+        password,
+        document["salt"],
+        document["password"],
     ):
         return True
 
@@ -166,7 +164,7 @@ async def validate_credentials(mongo: "Mongo", user_id: str, password: str) -> b
 
 async def extend_user(mongo: Mongo, user: Document) -> Document:
     user_data = base_processor(
-        await mongo.users.find_one(user["id"], ATTACH_PROJECTION)
+        await mongo.users.find_one(user["id"], ATTACH_PROJECTION),
     )
 
     return {
