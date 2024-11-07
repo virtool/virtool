@@ -5,13 +5,19 @@ from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
 from semver import VersionInfo
 from structlog import get_logger
 
+from virtool.mongo.core import Mongo
+from virtool.mongo.identifier import RandomIdProvider
+
 MINIMUM_MONGO_VERSION = "3.6.0"
 
 
 logger = get_logger("mongo")
 
 
-async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDatabase:
+async def connect_motor_database(
+    connection_string: str,
+    db_name: str,
+) -> AsyncIOMotorDatabase:
     """Connect to a MongoDB server and return an application database object.
 
     :param connection_string: the mongoDB connection string
@@ -32,6 +38,18 @@ async def connect_mongo(connection_string: str, db_name: str) -> AsyncIOMotorDat
     await check_mongo_version(mongo_client)
 
     return mongo_client[db_name]
+
+
+async def connect_mongo(connection_string: str, db_name: str) -> Mongo:
+    """Connect to a MongoDB server and return an application database object.
+
+    :param connection_string: the mongoDB connection string
+    :param db_name: the database name
+    :return: database
+
+    """
+    motor_database = await connect_motor_database(connection_string, db_name)
+    return Mongo(motor_database, RandomIdProvider())
 
 
 async def check_mongo_version(mongo: AsyncIOMotorClient) -> str:

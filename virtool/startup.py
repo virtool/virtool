@@ -21,8 +21,6 @@ from virtool.data.layer import create_data_layer
 from virtool.data.utils import get_data_from_app
 from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
-from virtool.mongo.core import Mongo
-from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.oidc.utils import JWKArgs
@@ -124,7 +122,10 @@ async def startup_databases(app: App):
     redis = Redis(config.redis_connection_string)
 
     mongo, pg, _, openfga_instance = await asyncio.gather(
-        connect_mongo(config.mongodb_connection_string, config.mongodb_database),
+        connect_mongo(
+            config.mongodb_connection_string,
+            config.mongodb_database,
+        ),
         connect_pg(config.postgres_connection_string),
         redis.connect(),
         connect_openfga(
@@ -140,7 +141,7 @@ async def startup_databases(app: App):
     app.update(
         {
             "authorization": AuthorizationClient(openfga_instance),
-            "mongo": Mongo(mongo, RandomIdProvider()),
+            "mongo": mongo,
             "pg": pg,
             "redis": redis,
         },
