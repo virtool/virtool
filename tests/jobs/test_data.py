@@ -18,7 +18,9 @@ async def jobs_data(mongo, mocker, pg: AsyncEngine) -> JobsData:
     return JobsData(mocker.Mock(spec=JobsClient), mongo, pg)
 
 
-async def test_cancel(mongo, fake: DataFaker, jobs_data: JobsData, snapshot, static_time):
+async def test_cancel(
+    mongo, fake: DataFaker, jobs_data: JobsData, snapshot, static_time
+):
     user = await fake.users.create()
 
     await mongo.jobs.insert_one(
@@ -53,15 +55,16 @@ async def test_create(
     mocker,
     snapshot,
     mongo,
-    test_random_alphanumeric,
     static_time,
-        fake: DataFaker,
+    fake: DataFaker,
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
     user = await fake.users.create()
 
-    job = await jobs_data.create("create_sample", {"sample_id": "foo"}, user.id, 0, job_id=job_id)
+    job = await jobs_data.create(
+        "create_sample", {"sample_id": "foo"}, user.id, 0, job_id=job_id
+    )
 
     assert job == snapshot
 
@@ -69,7 +72,13 @@ async def test_create(
 
 
 async def test_acquire(
-        mongo, fake: DataFaker, jobs_data: JobsData, mocker, pg, snapshot, static_time,
+    mongo,
+    fake: DataFaker,
+    jobs_data: JobsData,
+    mocker,
+    pg,
+    snapshot,
+    static_time,
 ):
     user = await fake.users.create()
 
@@ -92,7 +101,9 @@ async def test_acquire(
     assert await mongo.jobs.find_one() == snapshot
 
 
-async def test_archive(mongo, fake: DataFaker, jobs_data: JobsData, pg, snapshot, static_time):
+async def test_archive(
+    mongo, fake: DataFaker, jobs_data: JobsData, pg, snapshot, static_time
+):
     user = await fake.users.create()
 
     status = compose_status(JobState.WAITING, None)
@@ -121,7 +132,8 @@ async def test_force_delete_jobs(mongo, jobs_data: JobsData):
     await jobs_data.force_delete()
 
     jobs_data._client.cancel.assert_has_calls(
-        [call("foo"), call("bar")], any_order=True,
+        [call("foo"), call("bar")],
+        any_order=True,
     )
 
     assert await mongo.jobs.count_documents({}) == 0

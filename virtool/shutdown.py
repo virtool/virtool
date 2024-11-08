@@ -14,7 +14,7 @@ async def shutdown_authorization_client(app: Application):
     :param app: The application object
     """
     logger.info("closing authorization client")
-    await get_authorization_client_from_app(app).openfga.close()
+    await get_authorization_client_from_app(app).close()
 
 
 async def shutdown_executors(app: Application):
@@ -33,7 +33,7 @@ async def shutdown_http_client(app: Application):
 
     :param app: The application object
     """
-    logger.info("closing HTTP client session")
+    logger.info("closing http client session")
     await get_http_session_from_app(app).close()
 
 
@@ -42,7 +42,7 @@ async def shutdown_redis(app: Application):
 
     :param app: the application object
     """
-    logger.info("closing Redis connection")
+    logger.info("closing redis connection")
 
     try:
         await app["redis"].close()
@@ -55,4 +55,5 @@ async def shutdown_scheduler(app: Application):
 
     :param app: The application object
     """
+    logger.info("closing scheduler")
     await get_scheduler_from_app(app).close()

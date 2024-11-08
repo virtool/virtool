@@ -1,5 +1,5 @@
-from faker import Faker
 from virtool.fake.wrapper import FakerWrapper
+
 
 def test_get_mongo_id(snapshot):
     wrapper = FakerWrapper()

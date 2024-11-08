@@ -1,7 +1,10 @@
+import asyncio
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 
 import virtool.indexes.db
 from tests.fixtures.client import ClientSpawner
@@ -19,34 +22,35 @@ from virtool.mongo.core import Mongo
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
 async def test_create(
-    index_id,
-    mocker,
-    snapshot,
-    mongo,
-    test_random_alphanumeric,
+    index_id: str | None,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
-    await mongo.references.insert_one({"_id": "foo"})
-
-    await mongo.history.insert_one(
-        {
-            "_id": "abc",
-            "index": {"id": "unbuilt", "version": "unbuilt"},
-            "reference": {"id": "foo"},
-        },
+    await asyncio.gather(
+        mongo.references.insert_one({"_id": "foo"}),
+        mongo.history.insert_one(
+            {
+                "_id": "abc",
+                "index": {"id": "unbuilt", "version": "unbuilt"},
+                "reference": {"id": "foo"},
+            },
+        ),
     )
 
     mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
 
-    document = await virtool.indexes.db.create(
-        mongo,
-        "foo",
-        "test",
-        "bar",
-        index_id=index_id,
+    assert (
+        await virtool.indexes.db.create(
+            mongo,
+            "foo",
+            "test",
+            "bar",
+            index_id=index_id,
+        )
+        == snapshot
     )
-
-    assert document == snapshot
     assert await mongo.history.find_one("abc") == snapshot
 
 

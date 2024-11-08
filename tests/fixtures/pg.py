@@ -5,7 +5,6 @@ import asyncio
 import orjson
 import pytest
 from sqlalchemy import text
-from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from virtool.api.custom_json import dump_string
@@ -32,7 +31,7 @@ def pg_db_name(worker_id: str):
     eg. test_2 (for worker-2)
 
     """
-    return f"test_{worker_id}"
+    return f"vt_test_{worker_id}"
 
 
 @pytest.fixture(scope="session")
@@ -66,68 +65,52 @@ async def engine(
     Test database are specific to xdist workers.
 
     """
-    engine = create_async_engine(
+    engine_without_db = create_async_engine(
         pg_base_connection_string,
         isolation_level="AUTOCOMMIT",
-        json_serializer=dump_string,
-        json_deserializer=orjson.loads,
-        pool_recycle=1800,
     )
 
-    async with engine.connect() as conn:
-        try:
-            await conn.execute(text(f"CREATE DATABASE {pg_db_name}"))
-        except ProgrammingError as exc:
-            if "DuplicateDatabaseError" not in str(exc):
-                raise
+    async with engine_without_db.connect() as conn:
+        await conn.execute(
+            text(
+                f"DROP DATABASE IF EXISTS {pg_db_name};",
+            ),
+        )
+        await conn.execute(
+            text(
+                f"CREATE DATABASE {pg_db_name};",
+            ),
+        )
 
-    await engine.dispose()
-
-    pg = create_async_engine(
+    engine = create_async_engine(
         pg_connection_string,
+        echo=False,
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
-        pool_recycle=1800,
     )
 
-    async with pg.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.commit()
 
-    return pg
+    yield engine
+
+    await engine.dispose()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 async def pg(engine: AsyncEngine):
     async with AsyncSession(engine) as session:
+        tables = ",".join(table.name for table in Base.metadata.sorted_tables)
+
         await session.execute(
             text(
-                """
-                TRUNCATE TABLE analysis_files,
-                    groups,
-                    index_files,
-                    instance_messages,
-                    labels,
-                    sample_artifacts,
-                    subtraction_files,
-                    ml_model_releases,
-                    ml_models,
-                    nuvs_blast,
-                    revisions,
-                    sample_reads,
-                    spaces,
-                    tasks,
-                    uploads,
-                    user_groups,
-                    users
-                RESTART IDENTITY
+                f"""
+                TRUNCATE TABLE {tables} RESTART IDENTITY CASCADE;
                 """,
             ),
         )
-        await session.commit()
 
-    # This is necessary to prevent InvalidCachedStatementError exceptions in some tests.
-    await engine.dispose()
+        await session.commit()
 
     return engine

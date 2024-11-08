@@ -9,6 +9,8 @@ schema conflicts between tests.
 
 import os
 from pathlib import Path
+from random import choices
+from string import ascii_lowercase
 
 import alembic.command
 import alembic.config
@@ -92,11 +94,17 @@ def revisions_path(mocker, tmpdir) -> Path:
 
 
 @pytest.fixture()
+def migration_mongo_name(worker_id: str) -> str:
+    suffix = "".join(choices(ascii_lowercase, k=3))
+    return f"vt-test-{worker_id}-mig-{suffix}"
+
+
+@pytest.fixture()
 def migration_config(
     data_path: Path,
     migration_pg_connection_string: str,
     mongo_connection_string: str,
-    mongo_name: str,
+    migration_mongo_name: str,
     openfga_host: str,
     openfga_scheme: OpenfgaScheme,
     openfga_store_name: str,
@@ -107,7 +115,7 @@ def migration_config(
     """
     return MigrationConfig(
         data_path=data_path,
-        mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
+        mongodb_connection_string=f"{mongo_connection_string}/{migration_mongo_name}?authSource=admin",
         openfga_host=openfga_host,
         openfga_scheme=openfga_scheme,
         openfga_store_name=openfga_store_name,
@@ -116,11 +124,15 @@ def migration_config(
 
 
 @pytest.fixture()
-async def ctx(migration_config: MigrationConfig, mongo_name) -> MigrationContext:
+async def ctx(
+    migration_config: MigrationConfig, migration_mongo_name: str
+) -> MigrationContext:
     """A migration context for testing backed by test instances of backing services."""
     ctx = await create_migration_context(migration_config)
     yield ctx
-    await ctx.mongo.client.drop_database(ctx.mongo.client.get_database(mongo_name))
+    await ctx.mongo.client.drop_database(
+        ctx.mongo.client.get_database(migration_mongo_name)
+    )
 
 
 @pytest.fixture()
