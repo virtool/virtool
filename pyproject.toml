@@ -66,29 +66,27 @@ structlog-sentry = "^2.1.0"
 virtool = "virtool.config.cli:entry"
 
 [tool.poetry.group.dev.dependencies]
-aiohttp-devtools = "^0.0.2"
-pytest-mock = "^3.11.1"
-pytest-regressions = "^2.2.0"
-pytest-xdist = "^3.3.1"
-pytest-aiohttp = "^1.0.4"
-pytest-rerunfailures = "^10.2"
+mypy = "^1.6.0"
+pytest-aiohttp = "^1.0.5"
 pytest-asyncio = "^0.21.0"
+pytest-mock = "^3.14.0"
+pytest-profiling = "^1.7.0"
+pytest-regressions = "^2.2.0"
+pytest-rerunfailures = "^10.2"
+pytest-structlog = "^0.6"
+pytest-xdist = "^3.3.1"
+ruff = "^0.4.1"
+snakeviz = "^2.2.0"
 sphinx = "^7.0.1"
 sphinx-autobuild = "^2021.3.14"
-sphinx-autofixture = "^0.4.0"
 sphinx-autodoc-typehints = "^1.24.0"
+sphinx-autofixture = "^0.4.0"
 sphinx-toolbox = "^3.5.0"
-pytest-structlog = "^0.6"
-mypy = "^1.6.0"
-ruff = "^0.4.1"
-pytest-profiling = "^1.7.0"
-snakeviz = "^2.2.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 python_files = ["test_*.py", "rev_*.py"]
 testpaths = ["tests", "assets/revisions"]
-
 
 [tool.ruff]
 target-version = "py312"
