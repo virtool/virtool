@@ -166,6 +166,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [build, oas, test]
     if: github.event_name == 'push'
+    permissions:
+      contents: write
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
