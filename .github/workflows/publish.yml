@@ -18,7 +18,6 @@ jobs:
   ghcr:
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool'
-
     permissions:
       contents: read
       packages: write
