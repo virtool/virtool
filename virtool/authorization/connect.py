@@ -18,8 +18,12 @@ async def connect_openfga(
     openfga_scheme: str,
     openfga_store_name: str,
 ) -> OpenFgaApi:
-    """Connects to an OpenFGA server and configures the store id.
-    Returns the application client instance.
+    """Connect to an OpenFGA server and configure the store ID.
+
+    :param openfga_host: the OpenFGA server host
+    :param openfga_scheme: the OpenFGA server scheme
+    :param openfga_store_name: the name of the OpenFGA store
+    :return: an OpenFGA API instance
     """
     configuration = OpenFgaConfiguration(
         api_scheme=openfga_scheme,
@@ -50,13 +54,13 @@ async def connect_authorization_client(
     openfga_scheme: str,
     openfga_store_name: str,
 ) -> AuthorizationClient:
-    """Connects to an OpenFGA server and configures the store id.
-    Returns the application client instance.
+    """Connects to a backing OpenFGA server and return a
+    :class:``AuthorizationClient``.
     """
-    openfga_api = await connect_openfga(
-        openfga_host,
-        openfga_scheme,
-        openfga_store_name,
+    return AuthorizationClient(
+        await connect_openfga(
+            openfga_host,
+            openfga_scheme,
+            openfga_store_name,
+        )
     )
-
-    return AuthorizationClient(openfga_api)

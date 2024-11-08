@@ -26,12 +26,11 @@ async def delete_openfga_tuples(
     object_type: ResourceType,
     object_id: int | str,
 ):
-    """Delete all tuples for a given object type and id in the provided OpenFGA API
-    instance.
+    """Delete all tuples for a given object type and ID in OpenFGA.
 
     :param api_instance: the OpenFGA API instance.
-    :param object_type:
-    :param object_id:s
+    :param object_type: the type of the object to delete tuples for.
+    :param object_id: the ID of the object to delete tuples for.
     """
     response = await api_instance.read(
         ReadRequest(
@@ -52,9 +51,11 @@ async def delete_openfga_tuples(
 async def get_or_create_openfga_store(
     api_instance: OpenFgaApi,
     openfga_store_name: str,
-):
-    """Get the ID of the OpenFGA store with the passed ``openfga_store_name`` or create
-    one and return the ID.
+) -> str:
+    """Get or create a named OpenFGA store.
+
+    Returns an existing named store with the passed ``openfga_store_name``. If none
+    exists, a new store is created and its ID is returned.
 
     :return: the store id
     """
