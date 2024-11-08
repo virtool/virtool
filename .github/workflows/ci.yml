@@ -1,7 +1,6 @@
 name: ci
 
 on:
-  merge_group:
   pull_request:
     branches:
       - "main"
@@ -27,6 +26,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+
   # Generate the OpenAPI specification and upload it as an artifact.
   oas:
     runs-on: ubuntu-22.04
@@ -62,7 +62,6 @@ jobs:
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
-          
 
   # Run our test suite.
   test:
