@@ -13,7 +13,7 @@ from virtool.mongo.core import Mongo
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot,
     mongo: Mongo,
@@ -211,7 +211,7 @@ class TestEdit:
         self,
         change_count,
         data,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,
@@ -374,7 +374,6 @@ class TestAddIsolate:
         check_ref_right,
         resp_is,
         test_otu,
-        test_random_alphanumeric,
     ):
         """Test that a new default isolate can be added, setting ``default`` to ``False``
         on all other isolates in the process.
@@ -403,8 +402,13 @@ class TestAddIsolate:
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
-        assert await mongo.otus.find_one("6116cba1") == snapshot
-        assert await mongo.history.find_one() == snapshot
+        otus, history = await asyncio.gather(
+            mongo.otus.find_one("6116cba1"),
+            mongo.history.find_one(),
+        )
+
+        assert otus == snapshot
+        assert history == snapshot
 
     async def test_first(
         self,
@@ -415,7 +419,6 @@ class TestAddIsolate:
         check_ref_right,
         resp_is,
         test_otu,
-        test_random_alphanumeric,
     ):
         """Test that the first isolate for a otu is set as the ``default`` otu even if ``default`` is set to ``False``
         in the POST input.
@@ -445,8 +448,13 @@ class TestAddIsolate:
         assert resp.headers["Location"] == snapshot
         assert await resp.json() == snapshot
 
-        assert await mongo.otus.find_one("6116cba1") == snapshot
-        assert await mongo.history.find_one() == snapshot
+        otus, history = await asyncio.gather(
+            mongo.otus.find_one("6116cba1"),
+            mongo.history.find_one(),
+        )
+
+        assert otus == snapshot
+        assert history == snapshot
 
     async def test_force_case(
         self,
@@ -457,7 +465,6 @@ class TestAddIsolate:
         check_ref_right,
         resp_is,
         test_otu,
-        test_random_alphanumeric,
     ):
         """Test that the ``source_type`` value is forced to lower case."""
         client = await spawn_client(
@@ -538,14 +545,15 @@ class TestUpdateIsolate:
             },
         )
 
-        await mongo.otus.insert_one(test_otu)
-
-        await mongo.references.insert_one(
-            {
-                "_id": "hxn167",
-                "restrict_source_types": False,
-                "source_types": ["isolate"],
-            },
+        await asyncio.gather(
+            mongo.otus.insert_one(test_otu),
+            mongo.references.insert_one(
+                {
+                    "_id": "hxn167",
+                    "restrict_source_types": False,
+                    "source_types": ["isolate"],
+                },
+            ),
         )
 
         resp = await client.patch("/otus/6116cba1/isolates/test", data)
@@ -639,7 +647,6 @@ class TestSetAsDefault:
         check_ref_right,
         resp_is,
         test_otu,
-        test_random_alphanumeric,
         static_time,
     ):
         """Test changing the default isolate results in the correct changes, history, and response."""
@@ -681,7 +688,6 @@ class TestSetAsDefault:
         test_otu,
         static_time,
         test_change,
-        test_random_alphanumeric,
     ):
         """Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
         Specifically no increment in version.
@@ -918,7 +924,6 @@ async def test_create_sequence(
     check_ref_right,
     resp_is,
     test_otu,
-    test_random_alphanumeric,
     test_ref,
     segment,
 ):

@@ -1,7 +1,7 @@
 import asyncio
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
-from typing import Mapping
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
@@ -375,7 +375,6 @@ class OTUData:
         source_name: str,
         user_id: str,
         default: bool = False,
-        isolate_id: str | None = None,
     ):
         async def func(session: AsyncIOMotorClientSession) -> Document:
             document = await self._mongo.otus.find_one(otu_id, session=session)
@@ -413,15 +412,13 @@ class OTUData:
                 session=session,
             )
 
-            existing_ids = [i["id"] for i in isolates]
+            existing_isolate_ids = {i["id"] for i in isolates}
 
-            new_isolate_id = isolate_id or virtool.utils.random_alphanumeric(
-                length=3,
-                excluded=existing_ids,
-            )
+            while True:
+                new_isolate_id = self._mongo.id_provider.get()
 
-            if new_isolate_id in existing_ids:
-                raise ValueError(f"Isolate ID already exists: {new_isolate_id}")
+                if new_isolate_id not in existing_isolate_ids:
+                    break
 
             isolate_ = {
                 "id": new_isolate_id,

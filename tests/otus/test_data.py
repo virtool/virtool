@@ -2,6 +2,7 @@ import asyncio
 from asyncio import gather
 
 import pytest
+from syrupy import SnapshotAssertion
 
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
@@ -20,11 +21,10 @@ from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceR
 async def test_create(
     data: CreateOTURequest,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     snapshot,
     static_time,
-    test_random_alphanumeric,
     test_ref,
     tmp_path,
 ):
@@ -37,7 +37,8 @@ async def test_create(
     )
 
     assert await asyncio.gather(
-        mongo.otus.find_one(), mongo.history.find_one(),
+        mongo.otus.find_one(),
+        mongo.history.find_one(),
     ) == snapshot(name="db")
 
 
@@ -70,47 +71,46 @@ async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
 
 
 @pytest.mark.parametrize(
-    "data", [UpdateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus")],
+    "data",
+    [UpdateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus")],
 )
 async def test_update(
     data: UpdateOTURequest,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
     test_otu,
-    test_random_alphanumeric,
     test_ref,
     tmp_path,
 ):
     await mongo.references.insert_one(test_ref)
 
     user, _ = await asyncio.gather(
-        fake.users.create(), mongo.otus.insert_one(test_otu),
+        fake.users.create(),
+        mongo.otus.insert_one(test_otu),
     )
 
     assert await data_layer.otus.update("6116cba1", data, user.id) == snapshot
 
     assert await asyncio.gather(
-        mongo.otus.find_one(), mongo.history.find_one(),
+        mongo.otus.find_one(),
+        mongo.history.find_one(),
     ) == snapshot(name="db")
 
 
 @pytest.mark.parametrize("default", [True, False])
 @pytest.mark.parametrize("empty", [True, False], ids=["empty", "not_empty"])
 @pytest.mark.parametrize("existing_default", [True, False])
-@pytest.mark.parametrize("isolate_id", [None, "isolate"])
 async def test_add_isolate(
     default,
     empty,
     existing_default,
-    isolate_id,
     mongo,
     snapshot,
     test_otu,
     static_time,
-    test_random_alphanumeric,
     tmp_path,
     data_layer,
 ):
@@ -133,7 +133,6 @@ async def test_add_isolate(
             "isolate",
             "B",
             default=default,
-            isolate_id=isolate_id,
         )
         == snapshot
     )
@@ -142,7 +141,12 @@ async def test_add_isolate(
 
 
 async def test_update_isolate(
-        mongo, snapshot, test_otu, static_time, tmp_path, data_layer,
+    mongo,
+    snapshot,
+    test_otu,
+    static_time,
+    tmp_path,
+    data_layer,
 ):
     await mongo.otus.insert_one(test_otu)
 
@@ -172,9 +176,7 @@ async def test_remove_isolate(
     tmp_path,
     data_layer,
 ):
-    """Test removing an isolate. Make sure the default isolate is reassigned if the default isolate is removed.
-
-    """
+    """Test removing an isolate. Make sure the default isolate is reassigned if the default isolate is removed."""
     test_otu["isolates"].append(
         {
             "default": False,
@@ -185,7 +187,8 @@ async def test_remove_isolate(
     )
 
     await gather(
-        mongo.otus.insert_one(test_otu), mongo.sequences.insert_one(test_sequence),
+        mongo.otus.insert_one(test_otu),
+        mongo.sequences.insert_one(test_sequence),
     )
 
     await data_layer.otus.remove_isolate("6116cba1", isolate_id, "bob")
@@ -201,7 +204,12 @@ async def test_remove_isolate(
 
 
 async def test_set_default(
-        mongo, snapshot, test_otu, static_time, tmp_path, data_layer,
+    mongo,
+    snapshot,
+    test_otu,
+    static_time,
+    tmp_path,
+    data_layer,
 ):
     test_otu["isolates"].append(
         {"default": False, "id": "bar", "source_type": "isolate", "source_name": "A"},
@@ -219,7 +227,12 @@ async def test_set_default(
 
 
 async def test_remove_sequence(
-        snapshot, mongo, test_otu, static_time, tmp_path, data_layer,
+    snapshot,
+    mongo,
+    test_otu,
+    static_time,
+    tmp_path,
+    data_layer,
 ):
     await gather(
         mongo.otus.insert_one(test_otu),
@@ -251,12 +264,11 @@ async def test_create_sequence(
     host,
     segment,
     sequence_id,
-    snapshot,
+    data_layer: DataLayer,
     mongo,
+    snapshot: SnapshotAssertion,
     static_time,
-    test_random_alphanumeric,
     tmp_path,
-    data_layer,
 ):
     await mongo.otus.insert_one(
         {
@@ -269,20 +281,17 @@ async def test_create_sequence(
         },
     )
 
-    assert (
-        await data_layer.otus.create_sequence(
-            "bar",
-            "baz",
-            "abc123",
-            "A made up sequence",
-            "ATGCGTGTACTG AGAGTAT\nATTTATACCACAC",
-            "bob",
-            host=host,
-            segment=segment,
-            sequence_id=sequence_id,
-        )
-        == snapshot(name="return")
-    )
+    assert await data_layer.otus.create_sequence(
+        "bar",
+        "baz",
+        "abc123",
+        "A made up sequence",
+        "ATGCGTGTACTG AGAGTAT\nATTTATACCACAC",
+        "bob",
+        host=host,
+        segment=segment,
+        sequence_id=sequence_id,
+    ) == snapshot(name="return")
 
     assert await mongo.otus.find_one() == snapshot(name="otu")
     assert await mongo.sequences.find_one() == snapshot(name="sequence")
@@ -315,12 +324,16 @@ async def test_get_sequence(
     if missing:
         with pytest.raises(ResourceNotFoundError):
             await data_layer.otus.get_sequence(
-                test_otu["_id"], test_sequence["isolate_id"], test_sequence["_id"],
+                test_otu["_id"],
+                test_sequence["isolate_id"],
+                test_sequence["_id"],
             )
     else:
         assert (
             await data_layer.otus.get_sequence(
-                test_otu["_id"], test_sequence["isolate_id"], test_sequence["_id"],
+                test_otu["_id"],
+                test_sequence["isolate_id"],
+                test_sequence["_id"],
             )
             == snapshot
         )
@@ -343,7 +356,8 @@ async def test_update_sequence(
 
     """
     await gather(
-        mongo.otus.insert_one(test_otu), mongo.sequences.insert_one(test_sequence),
+        mongo.otus.insert_one(test_otu),
+        mongo.sequences.insert_one(test_sequence),
     )
 
     update = UpdateSequenceRequest(
@@ -357,13 +371,19 @@ async def test_update_sequence(
         update.sequence = sequence
 
     return_value = await data_layer.otus.update_sequence(
-        test_otu["_id"], test_isolate["id"], test_sequence["_id"], "bob", update,
+        test_otu["_id"],
+        test_isolate["id"],
+        test_sequence["_id"],
+        "bob",
+        update,
     )
 
     assert return_value == snapshot(name="return")
 
     assert await asyncio.gather(
-        mongo.otus.find_one(), mongo.history.find_one(), mongo.sequences.find_one(),
+        mongo.otus.find_one(),
+        mongo.history.find_one(),
+        mongo.sequences.find_one(),
     ) == snapshot(name="db")
 
 
@@ -395,7 +415,8 @@ async def test_get_isolate_fasta(mongo, data_layer, test_otu, test_sequence):
 
     assert (
         await data_layer.otus.get_isolate_fasta(
-            test_otu["_id"], test_otu["isolates"][0]["id"],
+            test_otu["_id"],
+            test_otu["isolates"][0]["id"],
         )
         == expected
     )
