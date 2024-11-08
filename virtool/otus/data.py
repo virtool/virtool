@@ -10,7 +10,6 @@ from virtool_core.models.otu import OTU, Sequence
 
 import virtool.history.db
 import virtool.otus.db
-import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.downloads.utils import format_fasta_entry, format_fasta_filename
