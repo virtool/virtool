@@ -14,6 +14,8 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # Build the Docker image so we now it is successful before we create a release and try
+  # to push a production image to the registry.
   build:
     runs-on: ubuntu-22.04
     steps:
@@ -25,6 +27,44 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+  # Generate the OpenAPI specification and upload it as an artifact.
+  oas:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Setup Poetry
+        id: setup-poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Write OAS
+        run: |
+          mkdir -p virtool/spec
+          poetry run python run.py oas > virtool/spec/openapi.json
+      - name: Upload OAS
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi.json
+          path: virtool/spec/openapi.json
+          
+
+  # Run our test suite.
   test:
     runs-on: ubuntu-22.04
     services:
@@ -95,40 +135,8 @@ jobs:
           --redis-connection-string redis://localhost:6379
           --snapshot-details
           --snapshot-warn-unused
-  oas:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Setup Poetry
-        id: setup-poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load Cached Packages
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install Packages
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
-      - name: Write OAS
-        run: |
-          mkdir -p virtool/spec
-          poetry run python run.py oas > virtool/spec/openapi.json
-      - name: Upload OAS
-        uses: actions/upload-artifact@v4
-        with:
-          name: openapi.json
-          path: virtool/spec/openapi.json
+
+
   release:
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push'
@@ -177,10 +185,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-  hooks:
-    runs-on: ubuntu-22.04
-    needs: [release]
-    if: github.repository_owner == 'Virtool' && github.event_name == 'push'
-    steps:
-      - name: Trigger Cloudflare
+
+      # Trigger a Cloudflare hook that rebuilds and deploys our docs.
+      - name: Trigger Cloudflare Hook
         run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
