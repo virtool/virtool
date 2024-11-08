@@ -82,14 +82,6 @@ class VirtoolTestClient:
         self.app = self._test_client.server.app
         """The test server's application object."""
 
-        self.mongo = get_mongo_from_app(self.app)
-        """The server Mongo object."""
-
-        self.pg: AsyncEngine = self.app["pg"]
-        """The server SQLAlchemy engine."""
-
-        self.redis: Redis = self.app["redis"]
-
         self.user: VirtoolTestClientUser = test_client_user
         """
         The user associated with the client.

@@ -10,25 +10,6 @@ from pymongo import WriteConcern
 import virtool.mongo.core
 from virtool.mongo.identifier import FakeIdProvider
 
-COLLECTION_NAMES = (
-    "analyses",
-    "groups",
-    "history",
-    "indexes",
-    "jobs",
-    "otus",
-    "references",
-    "samples",
-    "settings",
-    "subtractions",
-    "users",
-)
-
-
-class MockDeleteResult:
-    def __init__(self, deleted_count):
-        self.deleted_count = deleted_count
-
 
 @pytest.fixture(scope="session")
 def mongo_connection_string(request):
