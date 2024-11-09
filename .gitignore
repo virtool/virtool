@@ -18,6 +18,7 @@ __pycache__
 config.json
 settings.json
 env
+node_modules
 prof
 tags
 .vscode

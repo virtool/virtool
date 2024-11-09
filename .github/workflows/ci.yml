@@ -135,7 +135,6 @@ jobs:
           --snapshot-details
           --snapshot-warn-unused
 
-
   release:
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push'
@@ -157,14 +156,14 @@ jobs:
         with:
           node-version: 20
       - name: Install semantic-release
-        run: npm i semantic-release@v23.0.8 conventional-changelog-conventionalcommits@7.0.2
+        run: npm i semantic-release@v23.0.8 @semantic-release/exec@v6.0.3 conventional-changelog-conventionalcommits@7.0.2
       - name: Run semantic-release
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
-      - name: Pull
-        run: git pull
+      - name: Checkout Tag
+        run: git checkout ${{ steps.semantic.outputs.gitTag }}
       - name: Login to Registry
         uses: docker/login-action@v3
         with:
