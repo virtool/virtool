@@ -13,27 +13,6 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  try-release:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install semantic-release
-        run: npm i
-      - name: Run semantic-release
-        id: semantic
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release --dry-run
-      - name: Echo Tag
-        run: echo ${{ steps.semantic.outputs.gitTag }}
-
   # Build the Docker image so we now it is successful before we create a release and try
   # to push a production image to the registry.
   build:
@@ -177,7 +156,7 @@ jobs:
         with:
           node-version: 20
       - name: Install semantic-release
-        run: npm i semantic-release@v23.0.8 conventional-changelog-conventionalcommits@7.0.2
+        run: npm i semantic-release@v23.0.8 @semantic-release/exec@v6.0.3 conventional-changelog-conventionalcommits@7.0.2
       - name: Run semantic-release
         id: semantic
         env:

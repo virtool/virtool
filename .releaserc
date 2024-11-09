@@ -33,7 +33,7 @@
       [
          "@semantic-release/exec",
          {
-            "successCmd": "echo ${nextRelease} > $GITHUB_OUTPUT"
+            "successCmd": "echo \"git-tag=${nextRelease.gitTag}\" >> $GITHUB_OUTPUT"
          }
       ]
    ],
