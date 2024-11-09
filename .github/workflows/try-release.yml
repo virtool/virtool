@@ -1,4 +1,4 @@
-name: ci
+name: try-release
 
 on:
   workflow_dispatch:
