@@ -20,13 +20,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Install semantic-release
         run: npm i semantic-release@v23.0.8 conventional-changelog-conventionalcommits@7.0.2
       - name: Run semantic-release
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: npx semantic-release --dry-run
       - name: Echo Tag
         run: echo ${{ steps.semantic.outputs.gitTag }}
 
