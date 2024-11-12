@@ -165,23 +165,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
       - name: Checkout Tag
-        if: steps.semantic.outputs.gitTag != ''
-        run: git checkout ${{ steps.semantic.outputs.gitTag }}
+        if: steps.semantic.outputs.git-tag != ''
+        run: git checkout ${{ steps.semantic.outputs.git-tag }}
       - name: Login to Registry
-        if: steps.semantic.outputs.gitTag != ''
+        if: steps.semantic.outputs.git-tag != ''
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract Docker Metadata
-        if: steps.semantic.outputs.gitTag != ''
+        if: steps.semantic.outputs.git-tag != ''
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
       - name: Build and Push
-        if: steps.semantic.outputs.gitTag != ''
+        if: steps.semantic.outputs.git-tag != ''
         id: push
         uses: docker/build-push-action@v5
         with:
@@ -192,5 +192,5 @@ jobs:
 
       # Trigger a Cloudflare hook that rebuilds and deploys our docs.
       - name: Trigger Cloudflare Hook
-        if: steps.semantic.outputs.gitTag != ''
+        if: steps.semantic.outputs.git-tag != ''
         run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
