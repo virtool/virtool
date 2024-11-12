@@ -145,8 +145,6 @@ jobs:
       git-tag: ${{ steps.semantic.outputs.git-tag }}
     permissions:
       contents: write
-      id-token: write
-      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -185,6 +183,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          context: git
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
       - name: Build and Push
         id: push
