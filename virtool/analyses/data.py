@@ -437,7 +437,11 @@ class AnalysisData(DataLayerDomain):
 
         raise ResourceNotFoundError()
 
-    async def download(self, analysis_id: str, extension: str) -> tuple[str, str]:
+    async def download(
+        self,
+        analysis_id: str,
+        extension: str,
+    ) -> tuple[bytes | str, str]:
         """Get an analysis to be downloaded in CSV or XSLX format.
 
         :param analysis_id: the analysis ID
@@ -445,6 +449,16 @@ class AnalysisData(DataLayerDomain):
         :return: formatted file and file content type
         """
         document = await self._mongo.analyses.find_one(analysis_id)
+
+        if document["results"] == "sql":
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLAnalysisResult.results).where(
+                        SQLAnalysisResult.analysis_id == analysis_id,
+                    ),
+                )
+
+                document["results"] = result.scalars().one()
 
         if not document:
             raise ResourceNotFoundError()
@@ -465,7 +479,6 @@ class AnalysisData(DataLayerDomain):
                 self._mongo,
                 document,
             ),
-            await virtool.analyses.format.format_analysis_to_csv(analysis),
             "text/csv",
         )
 
