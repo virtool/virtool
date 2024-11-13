@@ -3,16 +3,16 @@ from datetime import datetime
 import pytest
 
 from virtool.analyses.checks import (
+    check_analysis_nuvs_sequence,
+    check_if_analysis_is_nuvs,
+    check_if_analysis_is_running,
     check_if_analysis_modified,
     check_if_analysis_ready,
-    check_analysis_workflow,
-    check_if_analysis_running,
-    check_analysis_nuvs_sequence,
 )
 from virtool.data.errors import (
-    ResourceNotModifiedError,
     ResourceConflictError,
     ResourceNotFoundError,
+    ResourceNotModifiedError,
 )
 
 
@@ -25,7 +25,7 @@ def analysis(static_time):
             "hits": [
                 {"index": 0, "sequence": "TGATTGTCGTCCAATGGCTAGAAA"},
                 {"index": 1, "sequence": "CAAATAGATTTAAACCCATTTATA"},
-            ]
+            ],
         },
     }
 
@@ -50,23 +50,39 @@ class TestCheckAnalysisReady:
             await check_if_analysis_ready(True, True)
 
 
-class TestCheckAnalysisWorkflow:
+class TestCheckIfAnalysisIsNuvs:
     async def test_ok(self):
-        assert await check_analysis_workflow("nuvs") is None
+        """Test that the function doesn't raise and exception when the workflow is
+        'nuvs'.
+        """
+        assert await check_if_analysis_is_nuvs("nuvs") is None
 
     async def test_error(self):
+        """Test that the function raises an exception when the workflow is not
+        'nuvs'.
+        """
         with pytest.raises(ResourceConflictError) as err:
-            await check_analysis_workflow("pathoscope")
+            await check_if_analysis_is_nuvs("pathoscope")
+
         assert "Not a NuVs analysis" in str(err)
 
 
-class TestCheckAnalysisRunning:
+class TestCheckAnalysisIsRunning:
+    """Tests for the check_if_analysis_running function."""
+
     async def test_ok(self):
-        assert await check_if_analysis_running(True) is None
+        """Test that the function doesn't raise an exception when the analysis is
+        not running.
+        """
+        assert await check_if_analysis_is_running(True) is None
 
     async def test_error(self):
+        """Test that the function raises an exception when the analysis is still
+        running.
+        """
         with pytest.raises(ResourceConflictError) as err:
-            await check_if_analysis_running(False)
+            await check_if_analysis_is_running(False)
+
         assert "Analysis is still running" in str(err)
 
 

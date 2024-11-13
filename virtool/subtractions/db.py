@@ -1,17 +1,15 @@
 """Work with subtractions in the database."""
 
 import asyncio
-import glob
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
+from virtool.subtractions.utils import get_subtraction_files
 from virtool.types import Document
 from virtool.utils import base_processor
 
@@ -21,7 +19,6 @@ def subtraction_processor(document: Document) -> Document:
 
     :param document: the subtraction document to process
     :return: the processed document
-
     """
     return {**base_processor(document), "subtractions": document["subtractions"] or []}
 
@@ -35,7 +32,7 @@ class AttachSubtractionsTransform(AbstractTransform):
         self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, "subtractions": prepared}
+        return {**document, "subtractions": sorted(prepared, key=lambda x: x["name"])}
 
     async def prepare_one(self, document: Document) -> Any:
         return [
@@ -101,25 +98,6 @@ async def attach_computed(
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 
 
-async def check_subtraction_fasta_files(mongo: "Mongo", config: Config) -> list:
-    """Check subtraction directories for files
-
-    :param mongo: the application database client
-    :param config: the application configuration
-    :return: a list of subtraction IDs without FASTA files
-
-    """
-    subtractions_without_fasta = []
-
-    async for subtraction in mongo.subtraction.find({"deleted": False}):
-        path = join_subtraction_path(config, subtraction["_id"])
-
-        if not glob.glob(f"{path}/*.fa.gz"):
-            subtractions_without_fasta.append(subtraction["_id"])
-
-    return subtractions_without_fasta
-
-
 async def get_linked_samples(mongo: "Mongo", subtraction_id: str) -> list[dict]:
     """Find all samples containing given 'subtraction_id' in 'subtractions' field.
 
@@ -153,21 +131,3 @@ async def unlink_default_subtractions(
         {"$pull": {"subtractions": subtraction_id}},
         session=session,
     )
-
-
-async def get_subtraction_names(
-    mongo: "Mongo",
-    subtraction_ids: list[str],
-) -> list[dict[str, str]]:
-    """Retrieve a list of subtraction names and ids.
-
-    :param mongo: the application database client
-    :param subtraction_ids: list containing subtraction ids
-    :return: list of dictionaries containing {"_id": sub_id, "name": sub_name}
-    """
-    subtractions = await mongo.subtraction.find(
-        {"_id": {"$in": subtraction_ids}},
-        projection=["_id", "name"],
-    ).to_list(length=len(subtraction_ids))
-
-    return subtractions

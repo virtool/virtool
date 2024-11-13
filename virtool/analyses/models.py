@@ -1,14 +1,12 @@
 from sqlalchemy import BigInteger, Column, DateTime, Enum, Integer, String
+from sqlalchemy.dialects.postgresql import JSONB
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
 
 
 class AnalysisFormat(str, SQLEnum):
-    """
-    Enumerated type for analysis file formats
-
-    """
+    """Enumerated type for analysis file formats"""
 
     sam = "sam"
     bam = "bam"
@@ -19,11 +17,22 @@ class AnalysisFormat(str, SQLEnum):
     json = "json"
 
 
-class SQLAnalysisFile(Base):
-    """
-    SQL model to store new analysis files
+class SQLAnalysisResult(Base):
+    """SQL model to store analysis results.
 
+    This is a temporary table and should be removed after analyses have been completely
+    moved to Postgre.
     """
+
+    __tablename__ = "analysis_results"
+
+    id = Column(Integer, primary_key=True)
+    analysis_id = Column(String, unique=True)
+    results = Column(JSONB)
+
+
+class SQLAnalysisFile(Base):
+    """SQL model to store new analysis files"""
 
     __tablename__ = "analysis_files"
 

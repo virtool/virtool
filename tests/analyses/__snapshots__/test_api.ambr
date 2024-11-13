@@ -79,11 +79,7 @@
     'reference': dict({
       'id': 'baz',
     }),
-    'results': dict({
-      'hits': list([
-      ]),
-      'result': 'TEST_RESULT',
-    }),
+    'results': 'sql',
     'sample': dict({
       'id': 'sample1',
     }),
@@ -270,9 +266,21 @@
       'id': 'bar',
       'version': 3,
     }),
-    'job': None,
+    'job': dict({
+      'archived': False,
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': '3cbb22cc',
+      'progress': 100,
+      'stage': 'JURZHTCWaKMqqBTFitpK',
+      'state': 'complete',
+      'user': dict({
+        'handle': 'zclark',
+        'id': '7cf872dc',
+      }),
+      'workflow': 'jobs_aodp',
+    }),
     'ml': None,
-    'ready': False,
+    'ready': True,
     'reference': dict({
       'data_type': 'genome',
       'id': 'baz',
@@ -287,12 +295,12 @@
     }),
     'subtractions': list([
       dict({
-        'id': 'plum',
-        'name': 'Plum',
-      }),
-      dict({
         'id': 'apple',
         'name': 'Apple',
+      }),
+      dict({
+        'id': 'plum',
+        'name': 'Plum',
       }),
     ]),
     'updated_at': '2015-10-06T20:00:00Z',

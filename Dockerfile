@@ -6,11 +6,10 @@ ENV PATH="/root/.local/bin:${PATH}" \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
     POETRY_VIRTUALENVS_CREATE=1
 WORKDIR /app
-COPY . ./
+COPY pyproject.toml poetry.lock ./
 RUN poetry install --without dev
+COPY . ./
 RUN poetry install --only-root
-RUN ls -la .venv/bin && \
-    find .venv -name "virtool" -type f
 
 FROM python:3.12-bookworm as version
 COPY .git .
