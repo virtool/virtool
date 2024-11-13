@@ -14,8 +14,8 @@ async def attach_analysis_files(
     analysis_id: str,
     document: dict[str, any],
 ) -> dict[str, any]:
-    """Get analysis result file details for a specific analysis to attach to analysis `GET`
-    response.
+    """Get analysis result file details for a specific analysis to attach to analysis
+    `GET` response.
 
     :param pg: PostgreSQL AsyncEngine object
     :param analysis_id: An id for a specific analysis
@@ -77,7 +77,8 @@ def join_analysis_path(data_path: Path, analysis_id: str, sample_id: str) -> Pat
 
 
 def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -> Path:
-    """Join the path to an analysis JSON file for the given sample-analysis ID combination.
+    """Join the path to an analysis JSON file for the given sample-analysis ID
+    combination.
 
     Analysis JSON files are created when the analysis data is too large for a MongoDB
     document.
