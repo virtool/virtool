@@ -191,7 +191,7 @@ class AnalysisData(DataLayerDomain):
 
                     document["results"] = result.scalars().one()
 
-            analysis = await virtool.analyses.format.format_analysis(
+            document = await virtool.analyses.format.format_analysis(
                 self._config,
                 self._mongo,
                 document,
@@ -345,7 +345,10 @@ class AnalysisData(DataLayerDomain):
             pg_session,
         ):
             await asyncio.gather(
-                self._mongo.analyses.delete_one({"_id": analysis.id}),
+                self._mongo.analyses.delete_one(
+                    {"_id": analysis.id},
+                    session=mongo_session,
+                ),
                 pg_session.execute(
                     delete(SQLAnalysisResult).where(
                         SQLAnalysisResult.analysis_id == analysis_id,
@@ -579,6 +582,7 @@ class AnalysisData(DataLayerDomain):
             document = await self._mongo.analyses.find_one_and_update(
                 {"_id": analysis_id},
                 {"$set": {"results": "sql", "ready": True}},
+                session=mongo_session,
             )
 
         sample_id = document["sample"]["id"]

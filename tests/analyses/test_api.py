@@ -5,7 +5,7 @@ from pprint import pprint
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 from virtool_core.models.job import JobState
 
@@ -678,13 +678,13 @@ async def test_finalize(
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        document = await mongo.analyses.find_one()
+        document,row = await asyncio.gather(
+            mongo.analyses.find_one(),
+            get_row_by_id(pg, SQLAnalysisResult, 1),
+        )
 
         assert document == snapshot
         assert document["ready"] is True
 
-        async with AsyncSession(pg) as session:
-            row = await get_row_by_id(pg, SQLAnalysisResult, 1)
-
-            assert row.analysis_id == "analysis1"
-            assert row.results == {"result": "TEST_RESULT", "hits": []}
+        assert row.analysis_id == "analysis1"
+        assert row.results == {"result": "TEST_RESULT", "hits": []}
