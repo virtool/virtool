@@ -138,6 +138,13 @@ class AnalysisData(DataLayerDomain):
             documents,
         )
 
+
+        # Have to do this because Iimi analyses have ``None`` for subtractions.
+        # TODO: Make all analyses have an empty list for subtractions.
+        for document in documents:
+            if document.get("subtractions") is None:
+                document["subtractions"] = []
+
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
             [
@@ -196,6 +203,11 @@ class AnalysisData(DataLayerDomain):
                 self._mongo,
                 document,
             )
+
+        # Have to do this because Iimi analyses have ``None`` for subtractions.
+        # TODO: Make all analyses have an empty list for subtractions.
+        if document.get("subtractions") is None:
+            document["subtractions"] = []
 
         transforms = [
             AttachJobTransform(self._mongo),
