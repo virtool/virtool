@@ -13,9 +13,9 @@ import virtool.analyses.format
 import virtool.uploads.db
 from virtool.analyses.checks import (
     check_analysis_nuvs_sequence,
-    check_analysis_workflow,
+    check_if_analysis_is_nuvs,
     check_if_analysis_modified,
-    check_if_analysis_running,
+    check_if_analysis_not_ready,
 )
 from virtool.analyses.db import filter_analyses_by_sample_rights
 from virtool.analyses.files import create_analysis_file
@@ -149,13 +149,15 @@ class AnalysisData(DataLayerDomain):
             ],
         )
 
-        return AnalysisSearchResult(
-            documents=documents,
-            found_count=total_count,
-            total_count=total_count,
-            page=page,
-            page_count=int(math.ceil(total_count / per_page)),
-            per_page=per_page,
+        return AnalysisSearchResult.parse_obj(
+            {
+                "documents": documents,
+                "found_count": total_count,
+                "total_count": total_count,
+                "page": page,
+                "page_count": int(math.ceil(total_count / per_page)),
+                "per_page": per_page,
+            },
         )
 
     async def get(
@@ -208,8 +210,8 @@ class AnalysisData(DataLayerDomain):
 
         analysis = await apply_transforms(analysis, transforms)
 
-        return Analysis(
-            **{**analysis, "job": analysis["job"] if analysis["job"] else None},
+        return Analysis.parse_obj(
+            {**analysis, "job": analysis["job"] if analysis["job"] else None},
         )
 
     @emits(Operation.CREATE, "analyses")
@@ -247,30 +249,29 @@ class AnalysisData(DataLayerDomain):
             get_one_field(self._mongo.samples, "name", sample_id),
         )
 
-        async with self._mongo.create_session() as session:
-            await self._mongo.analyses.insert_one(
-                {
-                    "_id": analysis_id,
-                    "created_at": created_at,
-                    "files": [],
-                    "index": {"id": index_id, "version": index_version},
-                    "job": {"id": job_id},
-                    "ml": data.ml,
-                    "reference": {
-                        "id": data.ref_id,
-                    },
-                    "ready": False,
-                    "results": None,
-                    "sample": {"id": sample_id},
-                    "space": {"id": space_id},
-                    "subtractions": data.subtractions,
-                    "updated_at": created_at,
-                    "user": {
-                        "id": user_id,
-                    },
-                    "workflow": data.workflow.value,
+        await self._mongo.analyses.insert_one(
+            {
+                "_id": analysis_id,
+                "created_at": created_at,
+                "files": [],
+                "index": {"id": index_id, "version": index_version},
+                "job": {"id": job_id},
+                "ml": data.ml,
+                "reference": {
+                    "id": data.ref_id,
                 },
-            )
+                "ready": False,
+                "results": None,
+                "sample": {"id": sample_id},
+                "space": {"id": space_id},
+                "subtractions": data.subtractions,
+                "updated_at": created_at,
+                "user": {
+                    "id": user_id,
+                },
+                "workflow": data.workflow.value,
+            },
+        )
 
         await self.data.jobs.create(
             data.workflow.value,
@@ -364,7 +365,7 @@ class AnalysisData(DataLayerDomain):
                 True,
             )
         except FileNotFoundError:
-            ...
+            pass
 
         await recalculate_workflow_tags(self._mongo, analysis.sample.id)
 
@@ -385,7 +386,7 @@ class AnalysisData(DataLayerDomain):
     ) -> AnalysisFile | None:
         """Uploads a new analysis result file.
 
-        :param reader: the file reader
+        :param chunks: a chunker that yields chunks of data
         :param analysis_id: the analysis ID
         :param analysis_format: the format of the analysis
         :param name: the name of the analysis file
@@ -507,8 +508,8 @@ class AnalysisData(DataLayerDomain):
                 document["results"] = result.scalars().one()
 
         await wait_for_checks(
-            check_analysis_workflow(document["workflow"]),
-            check_if_analysis_running(document["ready"]),
+            check_if_analysis_is_nuvs(document["workflow"]),
+            check_if_analysis_not_ready(document["ready"]),
             check_analysis_nuvs_sequence(document, sequence_index),
         )
 

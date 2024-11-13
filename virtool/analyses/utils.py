@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.future import select
@@ -10,10 +10,11 @@ WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 
 
 async def attach_analysis_files(
-    pg: AsyncEngine, analysis_id: str, document: Dict[str, any]
-) -> Dict[str, any]:
-    """
-    Get analysis result file details for a specific analysis to attach to analysis `GET`
+    pg: AsyncEngine,
+    analysis_id: str,
+    document: dict[str, any],
+) -> dict[str, any]:
+    """Get analysis result file details for a specific analysis to attach to analysis `GET`
     response.
 
     :param pg: PostgreSQL AsyncEngine object
@@ -25,7 +26,7 @@ async def attach_analysis_files(
         results = (
             (
                 await session.execute(
-                    select(SQLAnalysisFile).filter_by(analysis=analysis_id)
+                    select(SQLAnalysisFile).filter_by(analysis=analysis_id),
                 )
             )
             .scalars()
@@ -36,10 +37,10 @@ async def attach_analysis_files(
 
 
 def find_nuvs_sequence_by_index(
-    document: Dict[str, Any], sequence_index: int
-) -> Optional[str]:
-    """
-    Get a sequence from a NuVs analysis document by its sequence index.
+    document: dict[str, Any],
+    sequence_index: int,
+) -> str | None:
+    """Get a sequence from a NuVs analysis document by its sequence index.
 
     :param document: a NuVs analysis document
     :param sequence_index: the index of the sequence to get
@@ -64,8 +65,7 @@ def find_nuvs_sequence_by_index(
 
 
 def join_analysis_path(data_path: Path, analysis_id: str, sample_id: str) -> Path:
-    """
-    Returns the path to an analysis JSON output file.
+    """Returns the path to an analysis JSON output file.
 
     :param data_path: the application data path
     :param analysis_id: the id of the NuVs analysis
@@ -77,8 +77,7 @@ def join_analysis_path(data_path: Path, analysis_id: str, sample_id: str) -> Pat
 
 
 def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -> Path:
-    """
-    Join the path to an analysis JSON file for the given sample-analysis ID combination.
+    """Join the path to an analysis JSON file for the given sample-analysis ID combination.
 
     Analysis JSON files are created when the analysis data is too large for a MongoDB
     document.
