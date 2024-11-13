@@ -138,7 +138,6 @@ class AnalysisData(DataLayerDomain):
             documents,
         )
 
-
         # Have to do this because Iimi analyses have ``None`` for subtractions.
         # TODO: Make all analyses have an empty list for subtractions.
         for document in documents:
