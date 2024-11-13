@@ -1106,7 +1106,7 @@ async def test_analyze(
     match error:
         case None:
             assert resp.status == 201
-            assert resp.headers["Location"] == "/analyses/fb085f7f"
+            assert resp.headers["Location"] == "/analyses/bf1b993c"
             assert await resp.json() == snapshot
         case "400_reference":
             await resp_is.bad_request(resp, "Reference does not exist")

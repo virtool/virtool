@@ -14,8 +14,8 @@ import virtool.uploads.db
 from virtool.analyses.checks import (
     check_analysis_nuvs_sequence,
     check_if_analysis_is_nuvs,
+    check_if_analysis_is_running,
     check_if_analysis_modified,
-    check_if_analysis_not_ready,
 )
 from virtool.analyses.db import filter_analyses_by_sample_rights
 from virtool.analyses.files import create_analysis_file
@@ -49,7 +49,7 @@ from virtool.subtractions.db import (
 )
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import wait_for_checks
+from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("analyses")
 
@@ -139,7 +139,7 @@ class AnalysisData(DataLayerDomain):
         )
 
         documents = await apply_transforms(
-            documents,
+            [base_processor(d) for d in documents],
             [
                 AttachMLTransform(self._pg),
                 AttachJobTransform(self._mongo),
@@ -178,10 +178,10 @@ class AnalysisData(DataLayerDomain):
 
         await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
-        analysis = await attach_analysis_files(self._pg, analysis_id, document)
+        document = await attach_analysis_files(self._pg, analysis_id, document)
 
-        if analysis["ready"]:
-            if analysis["results"] == "sql":
+        if document["ready"]:
+            if document["results"] == "sql":
                 async with AsyncSession(self._pg) as session:
                     result = await session.execute(
                         select(SQLAnalysisResult.results).where(
@@ -189,12 +189,12 @@ class AnalysisData(DataLayerDomain):
                         ),
                     )
 
-                    analysis["results"] = result.scalars().one()
+                    document["results"] = result.scalars().one()
 
             analysis = await virtool.analyses.format.format_analysis(
                 self._config,
                 self._mongo,
-                analysis,
+                document,
             )
 
         transforms = [
@@ -205,13 +205,13 @@ class AnalysisData(DataLayerDomain):
             AttachUserTransform(self._mongo),
         ]
 
-        if analysis["workflow"] == "nuvs":
+        if document["workflow"] == "nuvs":
             transforms.append(AttachNuVsBLAST(self._pg))
 
-        analysis = await apply_transforms(analysis, transforms)
+        document = await apply_transforms(base_processor(document), transforms)
 
         return Analysis.parse_obj(
-            {**analysis, "job": analysis["job"] if analysis["job"] else None},
+            {**document, "job": document["job"] if document["job"] else None},
         )
 
     @emits(Operation.CREATE, "analyses")
@@ -238,16 +238,15 @@ class AnalysisData(DataLayerDomain):
         created_at = virtool.utils.timestamp()
 
         (
-            analysis_id,
             (index_id, index_version),
-            job_id,
             sample_name,
         ) = await asyncio.gather(
-            get_new_id(self._mongo.analyses),
             get_current_id_and_version(self._mongo, data.ref_id),
-            get_new_id(self._mongo.jobs),
             get_one_field(self._mongo.samples, "name", sample_id),
         )
+
+        analysis_id = await get_new_id(self._mongo.analyses)
+        job_id = await get_new_id(self._mongo.jobs)
 
         await self._mongo.analyses.insert_one(
             {
@@ -509,7 +508,7 @@ class AnalysisData(DataLayerDomain):
 
         await wait_for_checks(
             check_if_analysis_is_nuvs(document["workflow"]),
-            check_if_analysis_not_ready(document["ready"]),
+            check_if_analysis_is_running(document["ready"]),
             check_analysis_nuvs_sequence(document, sequence_index),
         )
 

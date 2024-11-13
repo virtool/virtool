@@ -281,5 +281,12 @@
       'name': 'update job documents',
       'revision': 'u4tep9xyu4hc',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 41,
+      'name': 'Add analysis results table',
+      'revision': 'b79c1e6cf56c',
+    }),
   ])
 # ---

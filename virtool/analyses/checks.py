@@ -32,12 +32,13 @@ async def check_if_analysis_ready(jobs_api_flag: bool, ready: bool) -> None:
         raise ResourceConflictError()
 
 
-async def check_analysis_workflow(workflow: str) -> None:
+async def check_if_analysis_is_nuvs(workflow: str) -> None:
     if workflow != "nuvs":
         raise ResourceConflictError("Not a NuVs analysis")
 
 
-async def check_if_analysis_running(ready: bool) -> None:
+async def check_if_analysis_is_running(ready: bool) -> None:
+    """Raise a `ResourceConflictError` if the analysis is ready."""
     if not ready:
         raise ResourceConflictError("Analysis is still running")
 

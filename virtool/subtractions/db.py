@@ -32,7 +32,7 @@ class AttachSubtractionsTransform(AbstractTransform):
         self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, "subtractions": prepared}
+        return {**document, "subtractions": sorted(prepared, key=lambda x: x["name"])}
 
     async def prepare_one(self, document: Document) -> Any:
         return [

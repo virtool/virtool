@@ -5,8 +5,8 @@ import pytest
 from virtool.analyses.checks import (
     check_analysis_nuvs_sequence,
     check_if_analysis_is_nuvs,
+    check_if_analysis_is_running,
     check_if_analysis_modified,
-    check_if_analysis_not_ready,
     check_if_analysis_ready,
 )
 from virtool.data.errors import (
@@ -67,21 +67,21 @@ class TestCheckIfAnalysisIsNuvs:
         assert "Not a NuVs analysis" in str(err)
 
 
-class TestCheckAnalysisRunning:
+class TestCheckAnalysisIsRunning:
     """Tests for the check_if_analysis_running function."""
 
     async def test_ok(self):
         """Test that the function doesn't raise an exception when the analysis is
         not running.
         """
-        assert await check_if_analysis_not_ready(True) is None
+        assert await check_if_analysis_is_running(True) is None
 
     async def test_error(self):
         """Test that the function raises an exception when the analysis is still
         running.
         """
         with pytest.raises(ResourceConflictError) as err:
-            await check_if_analysis_not_ready(False)
+            await check_if_analysis_is_running(False)
 
         assert "Analysis is still running" in str(err)
 

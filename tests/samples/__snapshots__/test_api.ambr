@@ -2337,7 +2337,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'index': dict({
       'id': 'test',
       'version': 4,
@@ -2345,7 +2345,7 @@
     'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
