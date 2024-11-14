@@ -14,6 +14,12 @@
       ]),
     }),
     dict({
+      '_id': 'already_migrated',
+      'subtractions': list([
+        'malus',
+      ]),
+    }),
+    dict({
       '_id': 'baz',
       'subtractions': list([
       ]),
@@ -30,6 +36,12 @@
     }),
     dict({
       '_id': 'bar',
+      'subtractions': list([
+        'malus',
+      ]),
+    }),
+    dict({
+      '_id': 'already_migrated',
       'subtractions': list([
         'malus',
       ]),

@@ -1,10 +1,10 @@
-"""
-Add subtractions field
+"""Add subtractions field
 
 Revision ID: 1keyha5n6l0j
 Date: 2022-06-09 22:04:28.890559
 
 """
+
 from asyncio import gather
 
 import arrow
@@ -37,9 +37,7 @@ async def upgrade(ctx: MigrationContext):
 
             updates.append(update)
 
-        if updates:
-            async with await ctx.mongo.client.start_session() as session, session.start_transaction():
-                await collection.bulk_write(updates, session=session)
+        await collection.bulk_write(updates)
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):
@@ -48,15 +46,17 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
             [
                 {"_id": "foo", "subtraction": {"id": "prunus"}},
                 {"_id": "bar", "subtraction": {"id": "malus"}},
+                {"_id": "already_migrated", "subtractions": ["malus"]},
                 {"_id": "baz", "subtraction": None},
-            ]
+            ],
         ),
         ctx.mongo.analyses.insert_many(
             [
                 {"_id": "foo", "subtraction": {"id": "prunus"}},
                 {"_id": "bar", "subtraction": {"id": "malus"}},
+                {"_id": "already_migrated", "subtractions": ["malus"]},
                 {"_id": "baz", "subtraction": None},
-            ]
+            ],
         ),
     )
 
