@@ -1,10 +1,10 @@
-"""
-Nest analysis results field
+"""Nest analysis results field
 
 Revision ID: 7emq1brv0zz6
 Date: 2022-06-09 20:38:11.017655
 
 """
+
 import asyncio
 
 import arrow
@@ -24,8 +24,7 @@ virtool_down_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    """
-    Move the ``subtracted_count`` and ``read_count`` fields from the document to the
+    """Move the ``subtracted_count`` and ``read_count`` fields from the document to the
     ``results`` sub-document.
 
     This supports the new jobs API model where only a ``results`` field can be set on
@@ -54,17 +53,28 @@ async def upgrade(ctx: MigrationContext):
                                 "results": {
                                     **results,
                                     "read_count": document["read_count"],
-                                    "subtracted_count": document["subtracted_count"],
-                                }
+                                    # TODO: add a migration that detects cases where subtraction_count DNE and set a flag
+                                    # As is this prevents the crash during migration, but does not correct the underlying
+                                    # data structure problem
+                                    **(
+                                        {
+                                            "subtracted_count": document[
+                                                "subtracted_count"
+                                            ],
+                                        }
+                                        if "subtracted_count" in document
+                                        else {}
+                                    ),
+                                },
                             },
                             "$unset": {"read_count": "", "subtracted_count": ""},
                         },
-                    )
+                    ),
                 )
 
             elif document["workflow"] == "nuvs":
                 await writer.add(
-                    UpdateOne({"_id": _id}, {"$set": {"results": results}})
+                    UpdateOne({"_id": _id}, {"$set": {"results": results}}),
                 )
 
             elif document["workflow"] == "aodp":
@@ -80,7 +90,7 @@ async def upgrade(ctx: MigrationContext):
                                     "remainder_pair_count": document[
                                         "remainder_pair_count"
                                     ],
-                                }
+                                },
                             },
                             "$unset": {
                                 "join_histogram": "",
@@ -88,7 +98,7 @@ async def upgrade(ctx: MigrationContext):
                                 "remainder_pair_count": "",
                             },
                         },
-                    )
+                    ),
                 )
 
     if await ctx.mongo.analyses.count_documents(query) > 0:
@@ -147,7 +157,7 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                     "results": None,
                     "workflow": "aodp",
                 },
-            ]
+            ],
         ),
     )
 
