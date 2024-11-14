@@ -133,6 +133,12 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                     "subtracted_count": 112,
                     "workflow": "pathoscope_bowtie",
                 },
+                {
+                    "_id": "no_subtracted_count",
+                    "read_count": 1209,
+                    "results": [1, 2, 3, 4, 5],
+                    "workflow": "pathoscope_bowtie",
+                },
                 {"_id": "baz", "results": [9, 8, 7, 6, 5], "workflow": "nuvs"},
                 {
                     "_id": "bad",
