@@ -227,7 +227,8 @@ class TestUpgrade:
             await conn.run_sync(SQLUpload.metadata.create_all)
             await conn.commit()
 
-    async def test_modern_sample(self, ctx, verify_snapshots, setup_pg):
+    @staticmethod
+    async def test_modern_sample(ctx, verify_snapshots, setup_pg):
         sample = {
             "_id": "modern_sample",
             "is_legacy": False,
@@ -243,8 +244,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_unpaired_legacy(
-        self,
         ctx,
         create_files,
         verify_snapshots,
@@ -275,8 +276,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_unpaired_legacy_pre_existing_upload(
-        self,
         create_files,
         ctx,
         verify_snapshots,
@@ -321,8 +322,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_unpaired_legacy_no_from_size(
-        self,
         create_files,
         ctx,
         verify_snapshots,
@@ -358,8 +359,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_unpaired_legacy_no_from_size_unrecoverable(
-        self,
         create_files,
         ctx,
         verify_snapshots,
@@ -392,8 +393,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_paired_unknown_legacy(
-        self,
         create_files,
         ctx,
         verify_snapshots,
@@ -433,8 +434,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_unpaired_unknown_legacy(
-        self,
         create_files,
         ctx,
         verify_snapshots,
@@ -464,8 +465,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_unpaired_legacy_compressed(
-        self,
         create_files,
         ctx,
         verify_snapshots,
@@ -496,8 +497,8 @@ class TestUpgrade:
 
         await verify_snapshots(sample)
 
+    @staticmethod
     async def test_unpaired_legacy_partial_compression(
-        self,
         create_files,
         ctx,
         verify_snapshots,
