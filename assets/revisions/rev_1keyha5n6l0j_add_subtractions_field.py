@@ -37,7 +37,8 @@ async def upgrade(ctx: MigrationContext):
 
             updates.append(update)
 
-        await collection.bulk_write(updates)
+        if updates:
+            await collection.bulk_write(updates)
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):
